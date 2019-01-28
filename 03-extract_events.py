@@ -1,6 +1,6 @@
 """
 ============================================
-02. Extract events from the stimulus channel
+03. Extract events from the stimulus channel
 ============================================
 
 The events are extracted from stimulus channel 'STI101'. The events are saved
@@ -12,27 +12,23 @@ import os.path as op
 import mne
 from mne.parallel import parallel_func
 
-from library.config import study_path, meg_dir, N_JOBS
+import config
 
 
-def run_events(subject_id):
-    subject = "sub%03d" % subject_id
+def run_events(subject):
     print("processing subject: %s" % subject)
-    in_path = op.join(study_path, 'ds117', subject, 'MEG')
-    out_path = op.join(meg_dir, subject)
-    for run in range(1, 7):
-        run_fname = op.join(in_path, 'run_%02d_raw.fif' % (run,))
-        raw = mne.io.read_raw_fif(run_fname)
-        mask = 4096 + 256  # mask for excluding high order bits
-        events = mne.find_events(raw, stim_channel='STI101',
-                                 consecutive='increasing', mask=mask,
-                                 mask_type='not_and', min_duration=0.003)
+    meg_subject_dir = op.join(config.meg_dir, subject)
+    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_raw.fif' % subject)]
+    eve_fnames_out = [op.join(meg_subject_dir, '%s_audvis_filt-eve.fif' % subject)]
 
-        print("  S %s - R %s" % (subject, run))
+    for raw_fname_in, eve_fname_out in zip(raw_fnames_in, eve_fnames_out):
+        raw = mne.io.read_raw_fif(raw_fname_in)
+        events = mne.find_events(raw)
 
-        fname_events = op.join(out_path, 'run_%02d-eve.fif' % run)
-        mne.write_events(fname_events, events)
+        print("subject: %s - file: %s" % (subject, raw_fname_in))
+
+        mne.write_events(eve_fname_out, events)
 
 
-parallel, run_func, _ = parallel_func(run_events, n_jobs=N_JOBS)
-parallel(run_func(subject_id) for subject_id in range(1, 20))
+parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
+parallel(run_func(subject) for subject in config.subjects)

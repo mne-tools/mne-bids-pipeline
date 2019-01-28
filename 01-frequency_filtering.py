@@ -1,6 +1,6 @@
 """
 ===========================
-04. Filter using MNE-python
+01. Filter using MNE-python
 ===========================
 
 The data are bandpass filtered (1 - 40 Hz) using linear-phase fir filter with
@@ -19,8 +19,7 @@ from mne.parallel import parallel_func
 import config
 
 
-def run_filter(subject_id):
-    subject = "sub%03d" % subject_id
+def run_filter(subject):
     print("processing subject: %s" % subject)
     # XXX : put the study-specific names in the config file
     meg_subject_dir = op.join(config.meg_dir, subject)

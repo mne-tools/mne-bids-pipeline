@@ -25,7 +25,9 @@ def run_ica(subject_id, tsss=None):
     data_path = op.join(meg_dir, subject)
     raws = list()
     print("  Loading runs")
-    for run in range(1, 7):
+    
+    # XXX get the number of runs from the data
+    for run in range(1, 7): 
         if tsss:
             run_fname = op.join(data_path, 'run_%02d_filt_tsss_%d_raw.fif'
                                 % (run, tsss))

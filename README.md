@@ -17,6 +17,7 @@ file is meant to contain study specific parameters:
 - `l_freq` : the low-frequency cut-off in the highpass filtering step. Keep it None if no highpass filtering should be applied.
 - `ctc` : for maxfiltering, path to the cross talk file on this machine.  
 - `cal` : for maxiltering, path to the calibration file on this machine. 
+- `reference_run` : specify which run to use for HPI recalibration, all other runs will have head position adjusted to this one.
 - `st_duration`: a float that specifies the buffer duration in seconds, default = 10 s, meaning it acts like a 0.1 Hz highpass filter. If None, no temporal spatial filtering is applied during MaxFilter.
 - `resample_sfreq` : a float that specifies at which sampling frequency the data should be resampled. If None then no resampling will be done.
 - `decimate` : integer that says how much to decimate data at the epochs level. It is typically an alternative to the `resample_sfreq` parameter.
@@ -40,9 +41,9 @@ Preprocessing steps
 
    [01-frequency_filtering.py](01-frequency_filtering.py): Read raw data and apply lowpass or/and highpass filtering
    
-   [02-maxwell_filtering_sss.py](02-maxwell_filtering_sss.py): Read raw data and apply lowpass or/and highpass filtering
+   [02-maxwell_filtering.py](02-maxwell_filtering_sss.py): Run maxfilter and do lowpass filter at 40 Hz.
    
-   [03-extract_events.py](03-extract_events.py): Extract events or annotations or markers from the data and save it to disk.
+   [03-extract_events.py](03-extract_events.py): Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101.
 
    [04-artifact_correction_ica.py](04-artifact_correction_ica.py): Run Independant Component Analysis (ICA) for artifact correction.
 
@@ -51,31 +52,18 @@ Preprocessing steps
    [05-make_epochs.py](05-make_epochs.py): Run Independant Component Analysis (ICA) for artifact correction.
 
 
-Steps ...
-------------------
+Getting started
+---------------
 
-First, clone the repository using git:
+First, you need to make sure you have mne-python installed and working on your system. See [installation instructions](http://martinos.org/mne/stable/install_mne_python.html) and once is done you should be able to run in a terminal this:
 
-	$ git clone https://github.com/mne-tools/mne-study-analysis-template.git
+    $ python -c "import mne; mne.sys_info()"
 
-Next, make sure your system is properly configured. You should have the dependencies installed,
-namely: numpy, scipy, matplotlib, scikit-learn, pysurfer, mayavi, mne-python, sphinx_gallery,
-and freesurfer.
+Once you have mne-python installed on your machine you need the analysis script that you'll need to adjust to your need. You can [download](https://github.com/mne-tools/mne-study-template/archive/master.zip) the current version of these script, or get them through git:
 
-The easiest way to get the Python dependencies is to use the `environment.yml` file that we ship
-inside the `scripts/` folder. First, download [Anaconda](https://anaconda.org/) and then run the following two commands:
+	$ git clone https://github.com/mne-tools/mne-study-template.git
 
-	$ conda env create -f environment.yml
-	$ source activate mne
-
-For freesurfer, follow the instructions on [their website](https://surfer.nmr.mgh.harvard.edu/). Then, go to the `scripts/processing` folder and do:
-
-	$ make check
-
-You may want to edit the file `scripts/processing/library/config.py` 
-to specify the number of subjects you can to run in parallel (N_JOBS). Note that
-using more `N_JOBS` will increase the memory requirements as the data will be
-copied across parallel processes.
+For source analysis you'll also need freesurfer, follow the instructions on [their website](https://surfer.nmr.mgh.harvard.edu/).
 
 Authors
 -------

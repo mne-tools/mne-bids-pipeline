@@ -81,4 +81,6 @@ def run_epochs(subject):
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
-parallel(run_func(subject) for subject in subjects)
+
+subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
+parallel(run_func(subject) for subject in subjects_iterable)

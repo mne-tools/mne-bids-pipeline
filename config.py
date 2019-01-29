@@ -15,7 +15,7 @@ import numpy as np
 # DIRECTORIES
 # -----------
 # Let's set the `study path`` where the data is stored on your system
-study_path = '~/mne-data/MNE-sample-data'
+study_path = '/Users/sophie/Dropbox/CBD_Hackaton_PreProc/MNE-sample-data/'
 
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
@@ -30,7 +30,8 @@ meg_dir = os.path.join(study_path, 'MEG')
 # A list of ``subject names``
 # These are the ``nips`` in neurospin lingo
 
-subjects = ('sample')
+# XXX how to write this if we want to process only one subject?
+subjects = 'sample'
 
 # ``bad subjects``  that should not be included in the analysis
 exclude_subjects = []

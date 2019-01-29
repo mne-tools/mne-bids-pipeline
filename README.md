@@ -51,6 +51,14 @@ Preprocessing steps
 
    [05-make_epochs.py](05-make_epochs.py): Run Independant Component Analysis (ICA) for artifact correction.
 
+To Do
+-------------------
+- add visualization options
+- description of how to debug/ run script in interactive mode
+- work on artifact rejection scripts (04_)
+- document the scripts
+
+
 
 Getting started
 ---------------

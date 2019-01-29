@@ -62,5 +62,8 @@ def run_ica(subject_id, tsss=None):
 
 # Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=N_JOBS)
-parallel(run_func(subject_id) for subject_id in range(1, 20))
+subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
+parallel(run_func(subject) for subject in subjects_iterable)
+
+# XXX what is this?
 parallel(run_func(3, tsss) for tsss in (10, 1))  # Maxwell filtered data

@@ -53,4 +53,6 @@ def run_maxwell_filter(subject):
 
 
 parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects)
+
+subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
+parallel(run_func(subject) for subject in subjects_iterable)

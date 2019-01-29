@@ -22,6 +22,7 @@ directory.
 import os.path as op
 
 import mne
+from mne.parallel import parallel_func
 
 import config
 
@@ -35,19 +36,20 @@ def run_maxwell_filter(subject):
     raw_fnames_out = [op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)]
 
     # To match their processing, transform to the head position of the defined run
-    info = mne.io.read_info(sss_fname_in % config.reference_run)
+    info = mne.io.read_info(raw_fnames_in[config.mf_reference_run])
     destination = info['dev_head_t']
-    # Get the origin they used
-    # XXX : origin should be in the config file
-    origin = info['proc_history'][0]['max_info']['sss_info']['origin']
 
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
         raw = mne.io.read_raw_fif(raw_fname_in)
 
-        print('    st_duration=%d' % (st_duration,))
+        print('    st_duration=%d' % (config.mf_st_duration,))
         raw_sss = mne.preprocessing.maxwell_filter(
-            raw, calibration=cal, cross_talk=ctc, st_duration=st_duration,
-            origin=origin, destination=destination, head_pos=head_pos)
+            raw,
+            calibration=config.mf_cal_fname,
+            cross_talk=config.mf_ctc_fname,
+            st_duration=config.mf_st_duration,
+            origin=config.mf_head_origin,
+            destination=destination)
 
         raw_sss.save(raw_fname_out, overwrite=True)
 

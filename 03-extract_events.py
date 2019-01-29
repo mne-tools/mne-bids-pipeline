@@ -31,5 +31,5 @@ def run_events(subject):
 
 
 parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
-subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
+subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects
 parallel(run_func(subject) for subject in subjects_iterable)

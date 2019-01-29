@@ -15,7 +15,8 @@ import numpy as np
 # DIRECTORIES
 # -----------
 # Let's set the `study path`` where the data is stored on your system
-study_path = '/Users/sophie/Dropbox/CBD_Hackaton_PreProc/MNE-sample-data/'
+# study_path = '/Users/sophie/Dropbox/CBD_Hackaton_PreProc/MNE-sample-data/'
+study_path = '../MNE-sample-data/'
 
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
@@ -31,7 +32,7 @@ meg_dir = os.path.join(study_path, 'MEG')
 # These are the ``nips`` in neurospin lingo
 
 # XXX how to write this if we want to process only one subject?
-subjects = 'sample'
+subjects = ['sample']
 
 # ``bad subjects``  that should not be included in the analysis
 exclude_subjects = []
@@ -51,23 +52,23 @@ exclude_subjects = []
 # ``bad channels``, to be removed before maxfilter is applied
 # you either get them from your recording notes, or from visualizing the data
 
-bads = dict(subject_01=['MEG0213', 'MEG1711', 'EEG034', 'EEG035'],
-            subject_02=['MEG0213', 'MEG1233', 'EEG036'],
-            subject_03=['MEG0213', 'MEG1512'])
+bads = dict(sample=['MEG 2443', 'EEG 053'])
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
-# ------------
+# --------------------------
 #
 # Here you name/ replace  extra channels that were recorded, for instance EOG, ECG
 # ``set_channel_types`` defines types of channels
-# example : set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog', 'EEG063': 'ecg', 'EEG064': 'misc'}
+# example :
+# set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog', 'EEG063': 'ecg', 'EEG064': 'misc'}
 set_channel_types = None
 
 # ``rename_channels`` rename channels
-# example : rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062', 'EEG063': 'ECG063'}
+#
+# example :
+# rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062', 'EEG063': 'ECG063'}
 rename_channels = None
-
 
 ###############################################################################
 # FREQUENCY FILTERING
@@ -89,19 +90,20 @@ l_freq = 45.
 # Download the ``cross talk file`` and ``calibration file`` (these are machine specific)
 # path:
 # and place them in the study folder
-ctc = os.path.join(os.path.dirname(__file__), 'ct_sparse.fif')
-cal = os.path.join(os.path.dirname(__file__), 'sss_cal.dat')
+mf_ctc_fname = os.path.join(study_path, 'SSS', 'ct_sparse_mgh.fif')
+mf_cal_fname = os.path.join(study_path, 'SSS', 'sss_cal_mgh.dat')
 
-# ``ref_run `` : defines the reference run used to adjust the head position for
+# ``mf_reference_run `` : defines the reference run used to adjust the head position for
 # all other runs
-reference_run = 1
+mf_reference_run = 0  # take 1st run as reference for head position
 
-# ``st_duration `` : if None, no temporal-spatial filtering is applied during MaxFilter,
+# Set the origin for the head position
+mf_head_origin = (0., 0., 0.04)
+
+# ``mf_st_duration `` : if None, no temporal-spatial filtering is applied during MaxFilter,
 # otherwise, put a float that speficifies the buffer duration in seconds,
 # Elekta default = 10s, meaning it acts like a 0.1 Hz highpass filter
-st_duration = 30.
-
-
+mf_st_duration = 30.
 
 ###############################################################################
 # RESAMPLING
@@ -114,9 +116,8 @@ resample_sfreq = 256.
 
 # ``decim`` : integer that says how much to decimate data at the epochs level.
 # It is typically an alternative to the `resample_sfreq` parameter that
-# can be used for resampling raw data.
-decim = None
-
+# can be used for resampling raw data. 1 means no decimation.
+decim = 1
 
 ###############################################################################
 # AUTOMATIC REJECTION OF ARTIFACTS
@@ -125,19 +126,17 @@ decim = None
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
 # **Note**: these numbers tend to vary between subjects.
-reject = dict(meg=dict(mag=10e-12, grad=500e-12),
-              eeg=dict(eeg=3000e-6))
-
+reject = dict(grad=4000e-13, mag=4e-12, eog=150e-6)
 
 ###############################################################################
 # EPOCHING
 # --------
 #
 # ``tmin``: float that gives the start time before event of an epoch.
-tmin = -1.
+tmin = -0.2
 
 #  ``tmax`` : float that gives the end time after event of an epochs.
-tmax = 2.
+tmax = 0.5
 
 # ``baseline`` : tuple that specifies how to baseline the epochs; if None,
 # no baseline is applied
@@ -147,7 +146,8 @@ baseline = (None, 0.)
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
 
-event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}
+event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
+            'Visual/Left': 3, 'Visual/Right': 4}
 conditions = ['Auditory', 'Visual', 'Right', 'Left']
 
 ###############################################################################

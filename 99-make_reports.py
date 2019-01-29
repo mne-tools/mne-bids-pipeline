@@ -10,22 +10,21 @@ plots.
 from mayavi import mlab
 import os.path as op
 
-from mne import Report
 import mne
+from mne.parallel import parallel_func
 
 import config
 
 
-def make_report(subject_id):
-    subject = "sub%03d" % subject_id
+def run_report(subject):
     print("processing %s" % subject)
 
-    meg_path = op.join(meg_dir, subject)
-    ave_fname = op.join(meg_path, "%s-ave.fif" % subject)
+    meg_subject_dir = op.join(config.meg_dir, subject)
+    ave_fname = op.join(meg_subject_dir, "%s-ave.fif" % subject)
 
-    rep = Report(info_fname=ave_fname, subject=subject,
-                 subjects_dir=subjects_dir)
-    rep.parse_folder(meg_path)
+    rep = mne.Report(info_fname=ave_fname, subject=subject,
+                     subjects_dir=config.subjects_dir)
+    rep.parse_folder(meg_subject_dir)
 
     evokeds = mne.read_evokeds(ave_fname)
 
@@ -33,32 +32,35 @@ def make_report(subject_id):
     captions = list()
 
     for evoked in evokeds:
-        fig = fam.plot(spatial_colors=True, show=False, gfp=True)
+        fig = evoked.plot(spatial_colors=True, show=False, gfp=True)
         figs.append(fig)
         captions.append(evoked.condition)
 
-    fname_trans = op.join(study_path, 'MEG', 'subject', '%s-trans.fif' % subject)
-    mne.viz.plot_trans(fam.info, fname_trans, subject=subject,
-                       subjects_dir=subjects_dir, meg_sensors=True,
+    fname_trans = op.join(config.meg_subject_dir, '%s-trans.fif' % subject)
+    mne.viz.plot_trans(evoked.info, fname_trans, subject=subject,
+                       subjects_dir=config.subjects_dir, meg_sensors=True,
                        eeg_sensors=True)
     fig = mlab.gcf()
     figs.append(fig)
     captions.append('Coregistration')
 
-    rep.add_figs_to_section(figs, captions)
-    for evoked in evokeds:
-        fname = op.join(meg_path, 'mne_dSPM_inverse-%s'
-                        % evoked.condition)
-        stc = mne.read_source_estimate(fname, subject)
-        brain = stc.plot(views=['ven'], hemi='both')
+    # rep.add_figs_to_section(figs, captions)
+    # for evoked in evokeds:
+    #     fname = op.join(meg_path, 'mne_dSPM_inverse-%s'
+    #                     % evoked.condition)
+    #     stc = mne.read_source_estimate(fname, subject)
+    #     brain = stc.plot(views=['ven'], hemi='both')
 
-        brain.set_data_time_index(112)
+    #     brain.set_data_time_index(112)
 
-        fig = mlab.gcf()
-        rep._add_figs_to_section(fig, cond)
+    #     fig = mlab.gcf()
+    #     rep._add_figs_to_section(fig, cond)
 
-    rep.save(fname=op.join(meg_dir, 'report%s.html' % subject),
+    rep.save(fname=op.join(config.meg_subject_dir, 'report_%s.html' % subject),
              open_browser=False, overwrite=True)
+
+parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+parallel(run_func(subject) for subject in config.subjects)
 
 
 # # Group report
@@ -82,5 +84,5 @@ def make_report(subject_id):
 # fig = mlab.gcf()
 # rep.add_figs_to_section(fig, 'Average faces - scrambled')
 
-rep.save(fname=op.join(meg_dir, 'report_average.html'),
-         open_browser=False, overwrite=True)
+# rep.save(fname=op.join(meg_dir, 'report_average.html'),
+#          open_browser=False, overwrite=True)

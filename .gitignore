@@ -1,0 +1,5 @@
+*.pyc
+*.fif
+*.html
+*.pdf
+.DS_Store

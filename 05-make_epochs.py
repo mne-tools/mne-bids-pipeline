@@ -11,10 +11,12 @@ containing blinks are rejected. Finally
 the epochs are saved to disk. To save space, the epoch data can be decimated.
 """
 
+import os.path as op
 import mne
 from mne.parallel import parallel_func
 
 import config
+
 
 N_JOBS = max(config.N_JOBS // 4, 1)  # make less parallel runs to limit memory usage
 
@@ -35,23 +37,21 @@ events_id = {
 def run_epochs(subject):
     print("Processing subject: %s" % subject)
 
-    data_path = op.join(meg_dir, subject)
+    meg_subject_dir = op.join(config.meg_dir, subject)
 
-    # map to correct subject for bad channels
-    mapping = map_subjects[subject_id]
+    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)]
+    eve_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt-eve.fif' % subject)]
 
     raw_list = list()
     events_list = list()
     print("  Loading raw data")
-    for run in range(1, 7):
-        raw = mne.io.read_raw_fif(run_fname, preload=True)
+    for raw_fname, eve_fname in zip(raw_fnames_in, eve_fnames_in):
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
-        delay = int(round(0.0345 * raw.info['sfreq']))
-        events = mne.read_events(op.join(data_path, 'run_%02d-eve.fif' % run))
-        events[:, 0] = events[:, 0] + delay
+        events = mne.read_events(eve_fname)
         events_list.append(events)
 
-        raw.info['bads'] = bads[subject_id]
+        raw.info['bads'] = config.bads[subject]
         raw.interpolate_bads()
         raw_list.append(raw)
 
@@ -68,12 +68,12 @@ def run_epochs(subject):
 
     # Epoch the data
     print('  Epoching')
-    epochs = mne.Epochs(raw, events, config.events_id, config.tmin, config.tmax,
-                        proj=True, picks=picks, baseline=baseline, preload=False,
+    epochs = mne.Epochs(raw, events, config.event_id, config.tmin, config.tmax,
+                        proj=True, picks=picks, baseline=config.baseline, preload=False,
                         decim=config.decim, reject=config.reject)
 
     print('  Writing to disk')
-    epochs.save(op.join(data_path, '%s-tsss_%d-epo.fif' % (subject, tsss)))
+    epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
 
 
 ###############################################################################
@@ -81,6 +81,4 @@ def run_epochs(subject):
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
-
-subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects 
-parallel(run_func(subject) for subject in subjects_iterable)
+parallel(run_func(subject) for subject in config.subjects)

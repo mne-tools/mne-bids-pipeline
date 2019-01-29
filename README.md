@@ -17,17 +17,17 @@ file is meant to contain study specific parameters:
 - `l_freq` : the low-frequency cut-off in the highpass filtering step. Keep it None if no highpass filtering should be applied.
 - `ctc` : for maxfiltering, path to the cross talk file on this machine.  
 - `cal` : for maxiltering, path to the calibration file on this machine. 
-- `reference_run` : specify which run to use for HPI recalibration, all other runs will have head position adjusted to this one.
-- `st_duration`: a float that specifies the buffer duration in seconds, default = 10 s, meaning it acts like a 0.1 Hz highpass filter. If None, no temporal spatial filtering is applied during MaxFilter.
+- `mf_reference_run` : specify which run to use for HPI recalibration, all other runs will have head position adjusted to this one.
+- `mf_st_duration`: a float that specifies the buffer duration in seconds, default = 10 s, meaning it acts like a 0.1 Hz highpass filter. If None, no temporal spatial filtering is applied during MaxFilter.
+- `mf_head_origin`: The origin of the head used for maxwell filtering.
 - `resample_sfreq` : a float that specifies at which sampling frequency the data should be resampled. If None then no resampling will be done.
-- `decimate` : integer that says how much to decimate data at the epochs level. It is typically an alternative to the `resample_sfreq` parameter.
+- `decim` : integer that says how much to decimate data at the epochs level. It is typically an alternative to the `resample_sfreq` parameter.
 - `reject` : the default rejection limits to make some epochs as bads. This allows to remove strong transient artifacts. **Note**: these numbers tend to vary between subjects.
 - `tmin`: float that gives the start time before event of an epoch.
 - `tmax` : float that gives the end time after event of an epochs.
 - `baseline` : tuple that specifies how to baseline the epochs. If None, then no baseline applied.
 - `event_id` : python dictionary that maps events (trigger/marker values) to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
 - `runica` : boolean that says if ICA should be used or not.
-- 
 
 Advanced:
 
@@ -39,17 +39,15 @@ Advanced:
 Preprocessing steps
 -------------------
 
-   [01-frequency_filtering.py](01-frequency_filtering.py): Read raw data and apply lowpass or/and highpass filtering
-   
-   [02-maxwell_filtering.py](02-maxwell_filtering_sss.py): Run maxfilter and do lowpass filter at 40 Hz.
-   
-   [03-extract_events.py](03-extract_events.py): Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101.
-
-   [04-artifact_correction_ica.py](04-artifact_correction_ica.py): Run Independant Component Analysis (ICA) for artifact correction.
-
-   [05-artifact_correction_ssp.py](04-artifact_correction_ssp.py): Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors.
-
-   [05-make_epochs.py](05-make_epochs.py): Run Independant Component Analysis (ICA) for artifact correction.
+| Script      | Description                                                |
+|:-----------:|:----------------------------------------------------------:|
+| [01-frequency_filtering.py](01-frequency_filtering.py) | Read raw data and apply lowpass or/and highpass filtering |
+| [02-maxwell_filtering.py](02-maxwell_filtering_sss.py) | Run maxfilter and do lowpass filter at 40 Hz. |
+| [03-extract_events.py](03-extract_events.py) | Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101. |
+| [04-artifact_correction_ica.py](04-artifact_correction_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |
+| [05-artifact_correction_ssp.py](04-artifact_correction_ssp.py) | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
+| [05-make_epochs.py](05-make_epochs.py) | Extract epochs. |
+| [06-make_evoked.py](06-make_evoked.py) | Extract evoked data for each condition. |
 
 To Do
 -------------------
@@ -57,8 +55,6 @@ To Do
 - description of how to debug/ run script in interactive mode
 - work on artifact rejection scripts (04_)
 - document the scripts
-
-
 
 Getting started
 ---------------

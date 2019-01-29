@@ -43,8 +43,8 @@ jobs:
               conda update --yes --quiet conda;
               curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
               conda env create -f environment.yml
-              conda activate mne
-              echo "conda activate mne" >> $BASH_ENV;
+              source activate mne
+              echo "source activate mne" >> $BASH_ENV;
 
         # The conda-provided PyQt5 does not work on CircleCI for some reason,
         # possibly because the libGL expects a sufficiently modern libgcc

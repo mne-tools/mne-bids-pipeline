@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/mne-tools/mne-study-template.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-study-template)
+
 Study analysis template with MNE
 ================================
 

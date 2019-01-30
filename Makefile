@@ -24,10 +24,6 @@ recon:
 	$(PYTHON) 01-anatomy.py
 
 preproc:
-	@if test "$(LFREQ)" = "" ; then \
-		echo "LFREQ not set, use something like LFREQ=None make ..."; \
-		exit 1; \
-	fi
 	$(PYTHON) 02-extract_events.py
 	$(PYTHON) 03-maxwell_filtering.py
 	@sed -i -E "s/.*l_freq = .*/l_freq = 1/" library/config.py

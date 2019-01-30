@@ -23,7 +23,7 @@ preproces:
 	$(PYTHON) 02-maxwell_filtering.py
 	$(PYTHON) 03-extract_events.py
 	$(PYTHON) 04-artifact_correction_ica.py
-	# $(PYTHON) 04-artifact_correction_ssp.py
+	$(PYTHON) 04-artifact_correction_ssp.py
 	$(PYTHON) 05-make_epochs.py
 	$(PYTHON) 06-make_evoked.py
 	# $(PYTHON) 99-make_reports.py

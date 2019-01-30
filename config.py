@@ -188,3 +188,5 @@ h_trans_bandwidth = 'auto'
 
 #  ``N_JOBS`` : an integer that specifies how many subjects you want to run in parallel.
 N_JOBS = 1
+
+random_state = 42

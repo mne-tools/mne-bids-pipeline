@@ -32,19 +32,19 @@ meg_dir = os.path.join(study_path, 'MEG')
 # A list of ``subject names``
 # These are the ``nips`` in neurospin lingo
 
-# XXX how to write this if we want to process only one subject?
-subjects = ['sample']
+# To define the subjects, we use a list with all the subject names. Even if its
+# a single subject, it needs to be set up as a list with a single element.
+# See the following examples:
+#
+# subjects_list = ['sample']
+# subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
+#                  'subject_06', 'subject_08', 'subject_09', 'subject_10',
+#                  'subject_11', 'subject_12', 'subject_14']
+subjects_list = ['sample']
 
 # ``bad subjects``  that should not be included in the analysis
+# exclude_subjects = ['subject_01', 'subject_09', 'subject_24']
 exclude_subjects = []
-
-# subjects = ('subject_01', 'subject_02', 'subject_03', 'subject_05', 'subject_06',
-#             'subject_08', 'subject_09', 'subject_10', 'subject_11', 'subject_12',
-#             'subject_14', 'subject_15', 'subject_16', 'subject_17', 'subject_18',
-#             'subject_19', 'subject_23', 'subject_24', 'subject_25')
-
-# # ``bad subjects``  that should not be included in the analysis
-# exclude_subjects = {'subject_01', 'subject_09', 'subject_24'}
 
 ###############################################################################
 # BAD CHANNELS

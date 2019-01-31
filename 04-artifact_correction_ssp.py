@@ -37,4 +37,4 @@ def run_ssp(subject):
 
 # Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects)
+parallel(run_func(subject) for subject in config.subjects_list)

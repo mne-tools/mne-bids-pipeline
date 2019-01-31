@@ -53,6 +53,4 @@ def run_ica(subject, tsss=None):
 
 # Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
-subjects_iterable = [config.subjects] if isinstance(config.subjects, str) else config.subjects
-parallel(run_func(subject) for subject in subjects_iterable)
-
+parallel(run_func(subject) for subject in config.subjects_list)

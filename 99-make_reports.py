@@ -60,7 +60,7 @@ def run_report(subject):
              open_browser=False, overwrite=True)
 
 parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects)
+parallel(run_func(subject) for subject in config.subjects_list)
 
 
 # # Group report

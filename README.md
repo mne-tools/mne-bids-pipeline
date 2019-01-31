@@ -17,8 +17,8 @@ file is meant to contain study specific parameters:
 - `bads` : dictionary containing he list of bad channels for each subject
 - `h_freq` : the high-frequency cut-off in the lowpass filtering step. Keep it None if no lowpass filtering should be applied.
 - `l_freq` : the low-frequency cut-off in the highpass filtering step. Keep it None if no highpass filtering should be applied.
-- `ctc` : for maxfiltering, path to the cross talk file on this machine.  
-- `cal` : for maxiltering, path to the calibration file on this machine. 
+- `ctc` : for maxfiltering, path to the cross talk file on this machine.
+- `cal` : for maxiltering, path to the calibration file on this machine.
 - `mf_reference_run` : specify which run to use for HPI recalibration, all other runs will have head position adjusted to this one.
 - `mf_st_duration`: a float that specifies the buffer duration in seconds, default = 10 s, meaning it acts like a 0.1 Hz highpass filter. If None, no temporal spatial filtering is applied during MaxFilter.
 - `mf_head_origin`: The origin of the head used for maxwell filtering.

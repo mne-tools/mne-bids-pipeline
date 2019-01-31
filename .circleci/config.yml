@@ -43,20 +43,9 @@ jobs:
               conda update --yes --quiet conda;
               curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
               conda env create -f environment.yml
-              conda activate mne
-              echo "conda activate mne" >> $BASH_ENV;
+              source activate mne
+              echo "source activate mne" >> $BASH_ENV;
 
-        # The conda-provided PyQt5 does not work on CircleCI for some reason,
-        # possibly because the libGL expects a sufficiently modern libgcc
-        # and conda rolls their own (libgcc-ng package).
-        - run:
-            name: Patch Qt
-            command: |
-              conda remove --yes qt pyqt matplotlib sip libxcb icu vtk
-              pip uninstall --yes mayavi vtk
-              pip install vtk mayavi PyQt5 PyQt5-sip sip matplotlib
-              echo "export LD_PRELOAD=~/miniconda/envs/mne/lib/libgobject-2.0.so.0" >> $BASH_ENV
-              pip install --upgrade "https://api.github.com/repos/nipy/PySurfer/zipball/master"
         - save_cache:
             key: pip-cache
             paths:
@@ -73,7 +62,7 @@ jobs:
             name: Get data
             command: |
               mkdir -p ~/mne_data
-              python -c "import mne; print(mne.datasets.sample.data_path(update_path=True))";
+              make fetch
 
         - run:
             name: Verify data is there
@@ -84,7 +73,7 @@ jobs:
         - run:
             name: make html
             command: |
-              echo "hellooooo this is where magic happens"
+              make preproces
 
 
         # Save the outputs

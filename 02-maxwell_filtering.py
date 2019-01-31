@@ -3,6 +3,9 @@
 03. Maxwell filter using MNE-python
 ===================================
 
+XXX: this needs update: congig.mf_reference_run, config.mf_st_duration
+config.mf_cal_fname, config.mf_ctc_fname
+
 The data are Maxwell filtered using tSSS and movement compensation.
 
 Using tSSS with a short duration can be used as an alternative to highpass
@@ -42,7 +45,9 @@ def run_maxwell_filter(subject):
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
         raw = mne.io.read_raw_fif(raw_fname_in)
 
-        print('    st_duration=%d' % (config.mf_st_duration,))
+        if config.mf_st_duration:            
+            print('    st_duration=%d' % (config.mf_st_duration,))
+            
         raw_sss = mne.preprocessing.maxwell_filter(
             raw,
             calibration=config.mf_cal_fname,

@@ -99,12 +99,12 @@ mf_cal_fname = os.path.join(study_path, 'SSS', 'sss_cal_mgh.dat')
 mf_reference_run = 0  # take 1st run as reference for head position
 
 # Set the origin for the head position
-mf_head_origin = (0., 0., 0.04)
+mf_head_origin = 'auto'
 
 # ``mf_st_duration `` : if None, no temporal-spatial filtering is applied during MaxFilter,
 # otherwise, put a float that speficifies the buffer duration in seconds,
 # Elekta default = 10s, meaning it acts like a 0.1 Hz highpass filter
-mf_st_duration = 30.
+mf_st_duration = None
 
 ###############################################################################
 # RESAMPLING

@@ -22,17 +22,6 @@ N_JOBS = max(config.N_JOBS // 4, 1)  # make less parallel runs to limit memory u
 
 
 ###############################################################################
-# We define the events and the onset and offset of the epochs
-
-events_id = {
-    'auditory/left': 1,
-    'auditory/right': 2,
-    'visual/left': 3,
-    'visual/right': 4,
-}
-
-
-###############################################################################
 # Now we define a function to extract epochs for one subject
 def run_epochs(subject):
     print("Processing subject: %s" % subject)

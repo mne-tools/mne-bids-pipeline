@@ -3,6 +3,8 @@
 01. Filter using MNE-python
 ===========================
 
+XXX: this needs update so that it references config.h_freq config.l_blablabla
+
 The data are bandpass filtered (1 - 40 Hz) using linear-phase fir filter with
 delay compensation. For the lowpass filter the transition bandwidth is
 automatically defined. See
@@ -17,10 +19,6 @@ import mne
 from mne.parallel import parallel_func
 
 import config
-
-# set to True if you want to plot the raw data
-do_plot = False
-
 
 def run_filter(subject):
     print("processing subject: %s" % subject)
@@ -44,9 +42,6 @@ def run_filter(subject):
             h_trans_bandwidth=config.h_trans_bandwidth,
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
-
-        if do_plot:
-            raw.plot(n_channels=50, butterfly=True, group_by='position')
 
         raw.save(raw_fname_out, overwrite=True)
 

@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/mne-tools/mne-study-template.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-study-template)
+[![CircleCI](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline.svg?style=svg)](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline)
 
 Study analysis template with MNE
 ================================

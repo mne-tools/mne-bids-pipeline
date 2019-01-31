@@ -19,13 +19,13 @@ fetch:
 	$(PYTHON) 00-fetch_data.py
 
 preproces:
-	$(PYTHON) 01-frequency_filtering.py
-	$(PYTHON) 02-maxwell_filtering.py
+	$(PYTHON) 01-import_and_filter.py
+	$(PYTHON) 02-apply_maxwell_filter.py
 	$(PYTHON) 03-extract_events.py
-	$(PYTHON) 04-artifact_correction_ica.py
-	$(PYTHON) 04-artifact_correction_ssp.py
-	$(PYTHON) 05-make_epochs.py
-	$(PYTHON) 06-make_evoked.py
+	$(PYTHON) 04a-run_ica.py
+	$(PYTHON) 04b-compute_and_apply_ssp.py
+	$(PYTHON) 06-make_epochs.py
+	$(PYTHON) 07-make_evoked.py
 	# $(PYTHON) 99-make_reports.py
 
 all:

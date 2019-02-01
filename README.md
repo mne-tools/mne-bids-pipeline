@@ -37,6 +37,10 @@ Advanced:
 - `h_trans_bandwidth` : float that specifies the transition bandwidth of the lowpass filter. By default it's `'auto'` and uses default mne parameters.
 - `N_JOBS` : an integer that specifies how many subjects you want to run in parallel.
 
+- `decoding_conditions`: list of tuples of strings that contain the conditions to compare. For example: `[('Auditory/Left', 'Auditory/Right'), ('Auditory', 'Visual')]`
+- `decoding_metric` : the scikit-learn scoring metric to use. For example: 'roc_auc' or 'accuracy'
+- `decoding_n_splits` : the number of splits to use in the cross-validation. For example 5 that will mean 5-folds cross-validation.
+
 
 Preprocessing steps
 -------------------

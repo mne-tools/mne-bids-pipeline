@@ -10,20 +10,21 @@ import os.path as op
 
 import mne
 
-from library.config import meg_dir, l_freq, exclude_subjects
+import config
 
-all_evokeds = [list() for _ in range(7)]  # Container for all the categories
+# Container for all conditions:
+all_evokeds = [list() for _ in range(len(config.conditions))]
 
-for run in range(1, 20):
-    if run in exclude_subjects:
+for subject in config.subjects_list:
+    if subject in config.exclude_subjects:
+        print("ignoring subject: %s" % subject)
         continue
-    subject = "sub%03d" % run
-    print("processing subject: %s" % subject)
-    data_path = op.join(meg_dir, subject)
+    else:
+        print("processing subject: %s" % subject)
+    meg_subject_dir = op.join(config.meg_dir, subject)
+    fname_ave = op.join(meg_subject_dir, '%s-ave.fif' % subject)
 
-    evokeds = mne.read_evokeds(
-        op.join(meg_dir, subject, '%s_highpass-%sHz-ave.fif'
-                % (subject, l_freq)))
+    evokeds = mne.read_evokeds(fname_ave)
     assert len(evokeds) == len(all_evokeds)
     for idx, evoked in enumerate(evokeds):
         all_evokeds[idx].append(evoked)  # Insert to the container
@@ -32,6 +33,6 @@ for run in range(1, 20):
 for idx, evokeds in enumerate(all_evokeds):
     all_evokeds[idx] = mne.combine_evoked(evokeds, 'equal')  # Combine subjects
 
-mne.evoked.write_evokeds(
-    op.join(meg_dir, 'grand_average_highpass-%sHz-ave.fif' % l_freq),
-    all_evokeds)
+fname_grand_average = op.join(config.meg_dir, 'grand_average-ave.fif')
+print("Saving grand averate: %s" % fname_grand_average)
+mne.evoked.write_evokeds(fname_grand_average, all_evokeds)

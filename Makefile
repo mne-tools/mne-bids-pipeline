@@ -16,7 +16,7 @@ clean:
 	$(PYTHON) clean.py
 
 fetch:
-	$(PYTHON) 00-fetch_data.py
+	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"
 
 preproces:
 	$(PYTHON) 01-import_and_filter.py

@@ -63,7 +63,8 @@ def run_time_decoding(subject, condition1, condition2):
     scores = cross_val_multiscore(se, X=X, y=y, cv=cv)
 
     # let's save the scores now
-    a_vs_b = '%s_vs_%s' % (op.basename(condition1), op.basename(condition2))
+    a_vs_b = '%s_vs_%s' % (condition1, condition2)
+    a_vs_b = a_vs_b.replace(op.sep, '')
     fname_td = op.join(meg_subject_dir, '%s_%s_%s.mat'
                        % (subject, a_vs_b, config.decoding_metric))
     savemat(fname_td, {'scores': scores, 'times': epochs.times})

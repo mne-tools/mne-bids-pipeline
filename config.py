@@ -87,7 +87,7 @@ l_freq = None
 
 # ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
 # Keep it None if no lowpass filtering should be applied.
-h_freq = 45.
+h_freq = None
 
 
 ###############################################################################
@@ -118,7 +118,7 @@ mf_st_duration = None
 #
 # ``resample_sfreq``  : a float that specifies at which sampling frequency
 # the data should be resampled. If None then no resampling will be done.
-resample_sfreq = 256.
+resample_sfreq = None
 
 
 # ``decim`` : integer that says how much to decimate data at the epochs level.

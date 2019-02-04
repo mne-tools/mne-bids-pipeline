@@ -3,8 +3,6 @@
 01. Filter using MNE-python
 ===========================
 
-XXX: this needs update so that it references config.h_freq config.l_blablabla
-
 The data are bandpass filtered to the frequencies defined in config.py 
 (config.h_freq - config.l_freq Hz) using linear-phase fir filter with
 delay compensation. 

@@ -51,6 +51,8 @@ def run_filter(subject):
 
         raw.save(raw_fname_out, overwrite=True)
         
+        # XXX if we add multiple runs, this should probably plot an appended
+        # version of the data
         if config.plot:
             # plot raw data
             figure = raw.plot(n_channels = 50,butterfly=True, group_by='position') 

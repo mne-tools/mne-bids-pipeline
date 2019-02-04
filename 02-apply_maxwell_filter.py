@@ -2,24 +2,24 @@
 ===================================
 03. Maxwell filter using MNE-python
 ===================================
-
-XXX: this needs update: congig.mf_reference_run, config.mf_st_duration
-config.mf_cal_fname, config.mf_ctc_fname
-
-The data are Maxwell filtered using tSSS and movement compensation.
-
+  
+The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration is not None)
+and movement compensation.
 Using tSSS with a short duration can be used as an alternative to highpass
 filtering. Here we will use the default (10 sec) and a short window (1 sec).
 
-It is critical to mark bad channels before Maxwell
-filtering. Here for consistency we exploit the MaxFilter log files for
-determining the bad channels.
+The head position of all runs is corrected to the run specified in 
+config.mf_reference_run. 
 
-The data are also lowpass filtered at 40 Hz using linear-phase FIR filter with
-delay compensation. The transition bandwidth is automatically defined. See
-`Background information on filtering <http://mne-tools.github.io/dev/auto_tutorials/plot_background_filtering.html>`_
-for more. The filtered data are saved to separate files to the subject's'MEG'
-directory.
+It is critical to mark bad channels before Maxwell
+filtering. 
+
+The function loads machine-specific calibration files from the paths set for
+config.mf_ctc_fname  and config.mf_cal_fname. 
+
+# XXX – do we?
+Here for consistency we exploit the MaxFilter log files for
+determining the bad channels.
 """  # noqa: E501
 
 import os.path as op
@@ -57,7 +57,13 @@ def run_maxwell_filter(subject):
             destination=destination)
 
         raw_sss.save(raw_fname_out, overwrite=True)
-
+        
+        # XXX if we add multiple runs, this should probably plot an appended
+        # version of the data
+        if config.plot:
+            # plot maxfiltered data
+            figure = raw_sss.plot(n_channels = 50,butterfly=True, group_by='position') 
+            figure.show()
 
 parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

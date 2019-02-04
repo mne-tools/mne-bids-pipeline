@@ -58,7 +58,7 @@ def run_filter(subject):
             
             # plot power spectral densitiy
             figure = raw.plot_psd(area_mode='range', tmin = 10.0, tmax = 100.0,
-                                  fmin = 0., fmax = config.h_freq + 10., average=True)
+                                  fmin = 0., fmax = 50., average=True)
             figure.show()
             
             

@@ -12,6 +12,12 @@ import numpy as np
 from mne.datasets import sample
 
 
+# let the scripts generate plots or not
+# execute %matplotlib qt in your command line once to show the figures in 
+# separate windows
+
+plot = True
+
 ###############################################################################
 # DIRECTORIES
 # -----------

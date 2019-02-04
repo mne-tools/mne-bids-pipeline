@@ -29,12 +29,18 @@ def run_filter(subject):
 
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True, verbose='error')
+        
+        # add bad channels from config
+        # XXX allow to add bad channels per run
+        raw.info['bads'] = config.bads[subject]
+        print("added bads: ", raw.info['bads'])
+        
         # XXX : to add to config.py
         if config.set_channel_types is not None:
             raw.set_channel_types(config.set_channel_types)
         if config.rename_channels is not None:
             raw.rename_channels(config.rename_channels)
-
+    
         # Band-pass the data channels (MEG and EEG)
         raw.filter(
             config.l_freq, config.h_freq,
@@ -44,7 +50,19 @@ def run_filter(subject):
             fir_design='firwin')
 
         raw.save(raw_fname_out, overwrite=True)
-
-
+        
+        if config.plot:
+            # plot raw data
+            figure = raw.plot(n_channels = 50,butterfly=True, group_by='position') 
+            figure.show()
+            
+            # plot power spectral densitiy
+            figure = raw.plot_psd(area_mode='range', tmin = 10.0, tmax = 100.0,
+                                  fmin = 0., fmax = config.h_freq + 10., average=True)
+            figure.show()
+            
+            
+    
+            
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

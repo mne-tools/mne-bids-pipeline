@@ -5,12 +5,14 @@
 
 XXX: this needs update so that it references config.h_freq config.l_blablabla
 
-The data are bandpass filtered (1 - 40 Hz) using linear-phase fir filter with
-delay compensation. For the lowpass filter the transition bandwidth is
-automatically defined. See
+The data are bandpass filtered to the frequencies defined in config.py 
+(config.h_freq - config.l_freq Hz) using linear-phase fir filter with
+delay compensation. 
+The transition bandwidth is automatically defined. See
 `Background information on filtering <http://mne-tools.github.io/dev/auto_tutorials/plot_background_filtering.html>`_
 for more. The filtered data are saved to separate files to the subject's'MEG'
 directory.
+If config.plot = True plots raw data and power spectral density. 
 """  # noqa: E501
 
 import os.path as op

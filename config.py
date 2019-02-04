@@ -158,6 +158,24 @@ conditions = ['Auditory', 'Visual', 'Right', 'Left']
 runica = True
 
 ###############################################################################
+# DECODING
+# --------------
+#
+# decoding_conditions should be a list of conditions to be classified.
+# For example 'Auditory' vs. 'Visual' as well as
+# 'Auditory/Left' vs 'Auditory/Right'
+decoding_conditions = [('Auditory/Left', 'Auditory/Right'),
+                       ('Auditory', 'Visual')]
+decoding_metric = 'roc_auc'
+decoding_n_splits = 5
+
+###############################################################################
+# TIME-FREQUENCY
+# --------------
+#
+time_frequency_conditions = ['Auditory/Left']
+
+###############################################################################
 # SOURCE SPACE PARAMETERS
 # -----------------------
 #

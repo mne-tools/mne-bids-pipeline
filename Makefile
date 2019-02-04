@@ -16,7 +16,7 @@ clean:
 	$(PYTHON) clean.py
 
 fetch:
-	$(PYTHON) 00-fetch_data.py
+	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"
 
 preproces:
 	$(PYTHON) 01-import_and_filter.py
@@ -26,6 +26,9 @@ preproces:
 	$(PYTHON) 04b-compute_and_apply_ssp.py
 	$(PYTHON) 06-make_epochs.py
 	$(PYTHON) 07-make_evoked.py
+	$(PYTHON) 08-group_average_sensors.py
+	$(PYTHON) 09-sliding_estimator.py
+	$(PYTHON) 10-time_frequency.py
 	# $(PYTHON) 99-make_reports.py
 
 all:

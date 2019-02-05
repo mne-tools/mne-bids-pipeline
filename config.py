@@ -12,11 +12,16 @@ import numpy as np
 from mne.datasets import sample
 
 
+# let the scripts generate plots or not
+# execute %matplotlib qt in your command line once to show the figures in
+# separate windows
+
+plot = False
+
 ###############################################################################
 # DIRECTORIES
 # -----------
 # Let's set the `study path`` where the data is stored on your system
-# study_path = '/Users/sophie/Dropbox/CBD_Hackaton_PreProc/MNE-sample-data/'
 # study_path = '../MNE-sample-data/'
 study_path = sample.data_path()
 
@@ -75,13 +80,14 @@ rename_channels = None
 # FREQUENCY FILTERING
 # -------------------
 #
-# ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
-# Keep it None if no lowpass filtering should be applied.
-h_freq = None
 
 # ``l_freq``  : the low-frequency cut-off in the highpass filtering step.
 # Keep it None if no highpass filtering should be applied.
-l_freq = 45.
+l_freq = None
+
+# ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
+# Keep it None if no lowpass filtering should be applied.
+h_freq = None
 
 
 ###############################################################################
@@ -112,7 +118,7 @@ mf_st_duration = None
 #
 # ``resample_sfreq``  : a float that specifies at which sampling frequency
 # the data should be resampled. If None then no resampling will be done.
-resample_sfreq = 256.
+resample_sfreq = None
 
 
 # ``decim`` : integer that says how much to decimate data at the epochs level.

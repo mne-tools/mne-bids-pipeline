@@ -3,7 +3,7 @@ PYTHON = python
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  fetch         to fetch the data"
-	@echo "  preproces       run sensor space preprocessing from import to epochs"
+	@echo "  preprocess       run sensor space preprocessing from import to epochs"
 	@echo "  check         check if the dependencies are available"
 	@echo "  profile       to profile memory consumption"
 	@echo "  all           to build fetch data, run anatomy scripts and all the processing scripts with no highpass"
@@ -18,7 +18,7 @@ clean:
 fetch:
 	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"
 
-preproces:
+preprocess:
 	$(PYTHON) 01-import_and_filter.py
 	$(PYTHON) 02-apply_maxwell_filter.py
 	$(PYTHON) 03-extract_events.py
@@ -33,4 +33,4 @@ preproces:
 
 all:
 	$(MAKE) fetch
-	$(MAKE) preproces
+	$(MAKE) preprocess

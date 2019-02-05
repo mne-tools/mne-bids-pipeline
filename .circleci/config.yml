@@ -73,7 +73,7 @@ jobs:
         - run:
             name: make html
             command: |
-              make preproces
+              make preprocess
 
 
         # Save the outputs

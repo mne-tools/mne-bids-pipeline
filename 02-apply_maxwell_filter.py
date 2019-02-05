@@ -4,8 +4,9 @@
 ===================================
 The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration is not None)
 and movement compensation.
+
 Using tSSS with a short duration can be used as an alternative to highpass
-filtering. Here we will use the default (10 sec) and a short window (1 sec).
+filtering. For instance, a duration of 10 s acts like a 0.1 Hz highpass.
 
 The head position of all runs is corrected to the run specified in
 config.mf_reference_run.

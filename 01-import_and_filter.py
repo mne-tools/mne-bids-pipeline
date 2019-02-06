@@ -36,16 +36,21 @@ def run_filter(subject):
         raw_fnames_in = sorted(glob.glob(op.join(meg_subject_dir,
                                                  '%s_%s_raw.fif'
                                                  % (subject, config.study_name))))
- 
+
     if not raw_fnames_in:
         raise ValueError("No data found")
 
     raw_fnames_out = list()
-    for run_number in range(1, len(raw_fnames_in)+1):
+    if len(raw_fnames_in) == 1:
+        raw_fnames_out = [op.join(meg_subject_dir,
+                                  '%s_%s_filt_raw.fif'
+                                  % (subject, config.study_name))]
+    else:
+        for run_number in range(1, len(raw_fnames_in)+1):
 
-        raw_fnames_out.append(op.join(meg_subject_dir,
-                                      '%s_%s_run%02d_filt_raw.fif'
-                                      % (subject, config.study_name, run_number)))
+            raw_fnames_out.append(op.join(meg_subject_dir,
+                                          '%s_%s_run%02d_filt_raw.fif'
+                                          % (subject, config.study_name, run_number)))
 
     raws = []
     print("Loading %d runs" % len(raw_fnames_in))

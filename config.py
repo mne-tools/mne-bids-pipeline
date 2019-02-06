@@ -16,7 +16,7 @@ from mne.datasets import sample
 # execute %matplotlib qt in your command line once to show the figures in
 # separate windows
 
-plot = False
+plot = True
 
 ###############################################################################
 # DIRECTORIES
@@ -150,9 +150,11 @@ tmax = 0.5
 
 baseline = (None, 0.)
 
+# stimulus channel, which contains the events
+stim_channel = None # 'STI014'# 'STI101'
+
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
-
 event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
             'Visual/Left': 3, 'Visual/Right': 4}
 conditions = ['Auditory', 'Visual', 'Right', 'Left']

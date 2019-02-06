@@ -3,7 +3,8 @@
 03. Extract events from the stimulus channel
 ============================================
 
-Here, all events present in the stimulus channel 'STI101' are extracted. 
+Here, all events present in the stimulus channel indicated in config.stim_channel
+are extracted. 
 The events are saved to the subject's MEG directory.
 This is done early in the pipeline to avoid distorting event-time, for instance
 by resampling.  

@@ -27,6 +27,10 @@ def run_filter(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
+    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_raw.fif' % subject)]
+    raw_fnames_out = = list()
+
+
     # try to find multiple runs
     raw_fnames_in = sorted(glob.glob(op.join(meg_subject_dir,
                                              '%s_%s_run??_raw.fif'
@@ -93,6 +97,19 @@ def run_filter(subject):
         figure = raw_all.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
                                   fmin=0., fmax=50., average=True)
         figure.show()
+
+        # XXX if we add multiple runs, this should probably plot an appended
+        # version of the data
+        if config.plot:
+            # plot raw data
+            figure = raw.plot(n_channels=50, butterfly=True,
+                              group_by='position')
+            figure.show()
+
+            # plot power spectral densitiy
+            figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
+                                  fmin=0., fmax=50., average=True)
+            figure.show()
 
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)

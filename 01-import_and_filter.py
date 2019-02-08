@@ -19,7 +19,6 @@ import os.path as op
 import mne
 from mne.parallel import parallel_func
 from warnings import warn
-import sys
 
 import config
 

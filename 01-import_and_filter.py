@@ -21,7 +21,6 @@ from mne.parallel import parallel_func
 from warnings import warn
 import sys
 
-# import glob
 import config
 
 

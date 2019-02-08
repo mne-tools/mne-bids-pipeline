@@ -51,10 +51,10 @@ def run_filter(subject):
         base_raw_fname_in = '{subject}_{study_name}_raw.fif'
         base_raw_fname_out = '{subject}_{study_name}_filt_raw.fif'
 
-        raw_fnames_in.append(base_raw_fname_in.format(study_name=config.study_name,
-                                                      subject=subject))
-        raw_fnames_out.append(base_raw_fname_out.format(study_name=config.study_name,
-                                                        subject=subject))
+        raw_fnames_in.append(base_raw_fname_in.format(
+            study_name=config.study_name, subject=subject))
+        raw_fnames_out.append(base_raw_fname_out.format(
+            study_name=config.study_name, subject=subject))
 
     raws = []
     print("Try loading %d files" % len(raw_fnames_in))
@@ -90,9 +90,8 @@ def run_filter(subject):
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
 
-        raw.save(raw_fname_out, overwrite=True)
+        raw.save(op.join(meg_subject_dir, raw_fname_out), overwrite=True)
         raws.append(raw)
-
 
     if config.plot:
 
@@ -108,7 +107,7 @@ def run_filter(subject):
         figure = raw_all.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
                                   fmin=0., fmax=50., average=True)
         figure.show()
-        
+
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

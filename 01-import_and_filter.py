@@ -67,8 +67,9 @@ def run_filter(subject):
                 warn('Run %s not found for subject %s ' %
                      (raw_fname_in, subject))
                 continue
-        raw = mne.io.read_raw_fif(
-            raw_fname_path, preload=True, verbose='error')
+
+        raw = mne.io.read_raw_fif(raw_fname_path,
+                                  preload=True, verbose='error')
 
         # add bad channels from config
         # XXX allow to add bad channels per run

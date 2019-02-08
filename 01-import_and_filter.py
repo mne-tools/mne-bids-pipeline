@@ -18,7 +18,10 @@ import os.path as op
 
 import mne
 from mne.parallel import parallel_func
-import glob
+from warnings import warn
+import sys
+
+# import glob
 import config
 
 
@@ -27,39 +30,46 @@ def run_filter(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_raw.fif' % subject)]
-    raw_fnames_out = = list()
-
-
-    # try to find multiple runs
-    raw_fnames_in = sorted(glob.glob(op.join(meg_subject_dir,
-                                             '%s_%s_run??_raw.fif'
-                                             % (subject, config.study_name))))
-    # try to find a single file
-    if not raw_fnames_in:
-        raw_fnames_in = sorted(glob.glob(op.join(meg_subject_dir,
-                                                 '%s_%s_raw.fif'
-                                                 % (subject, config.study_name))))
-
-    if not raw_fnames_in:
-        raise ValueError("No data found")
-
+    raw_fnames_in = list()
     raw_fnames_out = list()
-    if len(raw_fnames_in) == 1:
-        raw_fnames_out = [op.join(meg_subject_dir,
-                                  '%s_%s_filt_raw.fif'
-                                  % (subject, config.study_name))]
-    else:
-        for run_number in range(1, len(raw_fnames_in)+1):
 
-            raw_fnames_out.append(op.join(meg_subject_dir,
-                                          '%s_%s_run%02d_filt_raw.fif'
-                                          % (subject, config.study_name, run_number)))
+    # input files
+    if config.runs:
+        base_raw_fname_in = '{subject}_{study_name}_{run}_raw.fif'
+        base_raw_fname_out = '{subject}_{study_name}_{run}_filt_raw.fif'
+
+        for run in config.runs:
+            raw_fnames_in.append(base_raw_fname_in.format(run=run,
+                                                          study_name=config.study_name,
+                                                          subject=subject))
+
+            raw_fnames_out.append(base_raw_fname_out.format(run=run,
+                                                            study_name=config.study_name,
+                                                            subject=subject))
+
+    else:
+        base_raw_fname_in = '{subject}_{study_name}_raw.fif'
+        base_raw_fname_out = '{subject}_{study_name}_filt_raw.fif'
+
+        raw_fnames_in.append(base_raw_fname_in.format(study_name=config.study_name,
+                                                      subject=subject))
+        raw_fnames_out.append(base_raw_fname_out.format(study_name=config.study_name,
+                                                        subject=subject))
 
     raws = []
-    print("Loading %d runs" % len(raw_fnames_in))
+    print("Try loading %d files" % len(raw_fnames_in))
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
-        raw = mne.io.read_raw_fif(raw_fname_in, preload=True, verbose='error')
+        print(raw_fname_in)
+        try:
+            raw = mne.io.read_raw_fif(op.join(meg_subject_dir, raw_fname_in),
+                                      preload=True, verbose='error')
+        except FileNotFoundError:
+            if not raws:
+                raise ValueError('Cannot find ' + raw_fname_in)
+            if raws:
+                runs_found = len(raws)
+                warn('Found only ' + str(runs_found) + ' runs')
+            break
 
         # add bad channels from config
         # XXX allow to add bad channels per run
@@ -83,6 +93,7 @@ def run_filter(subject):
         raw.save(raw_fname_out, overwrite=True)
         raws.append(raw)
 
+
     if config.plot:
 
         # concatenate runs for plotting
@@ -97,20 +108,7 @@ def run_filter(subject):
         figure = raw_all.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
                                   fmin=0., fmax=50., average=True)
         figure.show()
-
-        # XXX if we add multiple runs, this should probably plot an appended
-        # version of the data
-        if config.plot:
-            # plot raw data
-            figure = raw.plot(n_channels=50, butterfly=True,
-                              group_by='position')
-            figure.show()
-
-            # plot power spectral densitiy
-            figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                                  fmin=0., fmax=50., average=True)
-            figure.show()
-
+        
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

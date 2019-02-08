@@ -34,15 +34,15 @@ meg_dir = os.path.join(study_path, 'MEG')
 # ---------------
 #
 # The MEG-data needs to be stored in a folder named study_path/MEG/my_subject/
-# if the study contains multiple runs per subject, the files must be named
-# my_subject _ study_name _ runXX_raw.fif (run must be two digit)
-# if the study contains multiple runs, the files must be named
-# my_sbname _ study_name _raw.fif (run must be two digit)
-
 study_name = 'audvis'  # study name used in the file names
 
-# A list of ``subject names``
-# These are the ``nips`` in neurospin lingo
+# How did you name your runs?
+# naming should be consistant over subjects
+# put the number of runs you ideally expect to have per subject
+# the scripts will issue a warning if there are less
+# leave empty if there is just one file
+runs = []  # ['run01', 'run02']
+
 
 # To define the subjects, we use a list with all the subject names. Even if its
 # a single subject, it needs to be set up as a list with a single element.

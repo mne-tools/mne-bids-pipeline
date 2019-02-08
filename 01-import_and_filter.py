@@ -59,16 +59,17 @@ def run_filter(subject):
     print("Try loading %d files" % len(raw_fnames_in))
     for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
         print(raw_fname_in)
-        try:
-            raw = mne.io.read_raw_fif(op.join(meg_subject_dir, raw_fname_in),
-                                      preload=True, verbose='error')
-        except FileNotFoundError:
+
+        raw_fname_path = op.join(meg_subject_dir, raw_fname_in)
+        if not op.exists(raw_fname_path):
             if not raws:
-                raise ValueError('Cannot find ' + raw_fname_in)
-            if raws:
-                runs_found = len(raws)
-                warn('Found only ' + str(runs_found) + ' runs')
-            break
+                raise ValueError('Cannot find ' + raw_fname_path)
+            else:
+                warn('Run %s not found for subject %s ' %
+                     (raw_fname_in, subject))
+                continue
+        raw = mne.io.read_raw_fif(
+            raw_fname_path, preload=True, verbose='error')
 
         # add bad channels from config
         # XXX allow to add bad channels per run

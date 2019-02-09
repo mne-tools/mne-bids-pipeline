@@ -34,14 +34,15 @@ meg_dir = os.path.join(study_path, 'MEG')
 # ---------------
 #
 # The MEG-data needs to be stored in a folder named study_path/MEG/my_subject/
-study_name = 'audvis'  # study name used in the file names
+
+base_raw_fname = '{subject}_audvis{run}_raw.fif'
 
 # How did you name your runs?
 # naming should be consistant over subjects
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs =  [] # ['run01', 'run02']
+runs =  [''] # ['run01', 'run02']
 
 
 # To define the subjects, we use a list with all the subject names. Even if its

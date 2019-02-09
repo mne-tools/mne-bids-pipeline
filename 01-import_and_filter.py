@@ -28,45 +28,19 @@ def run_filter(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    raw_fnames_in = list()
-    raw_fnames_out = list()
-
-    # input files
-    if config.runs:
-        base_raw_fname_in = '{subject}_{study_name}_{run}_raw.fif'
-        base_raw_fname_out = '{subject}_{study_name}_{run}_filt_raw.fif'
-
-        for run in config.runs:
-            raw_fnames_in.append(base_raw_fname_in.format(run=run,
-                                                          study_name=config.study_name,
-                                                          subject=subject))
-
-            raw_fnames_out.append(base_raw_fname_out.format(run=run,
-                                                            study_name=config.study_name,
-                                                            subject=subject))
-
-    else:
-        base_raw_fname_in = '{subject}_{study_name}_raw.fif'
-        base_raw_fname_out = '{subject}_{study_name}_filt_raw.fif'
-
-        raw_fnames_in.append(base_raw_fname_in.format(
-            study_name=config.study_name, subject=subject))
-        raw_fnames_out.append(base_raw_fname_out.format(
-            study_name=config.study_name, subject=subject))
-
     raws = []
-    print("Try loading %d files" % len(raw_fnames_in))
-    for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
-        print(raw_fname_in)
+    for run in config.runs:
+        raw_fname_in = config.base_raw_fname.format(**locals())
+        run += '_filt'
+        raw_fname_out = config.base_raw_fname.format(**locals())
+        print("Input: ", raw_fname_in)
+        print("Output: ", raw_fname_out)
 
         raw_fname_path = op.join(meg_subject_dir, raw_fname_in)
         if not op.exists(raw_fname_path):
-            if not raws:
-                raise ValueError('Cannot find ' + raw_fname_path)
-            else:
-                warn('Run %s not found for subject %s ' %
-                     (raw_fname_in, subject))
-                continue
+            warn('Run %s not found for subject %s ' %
+                 (raw_fname_in, subject))
+            continue
 
         raw = mne.io.read_raw_fif(raw_fname_path,
                                   preload=True, verbose='error')
@@ -92,6 +66,9 @@ def run_filter(subject):
 
         raw.save(op.join(meg_subject_dir, raw_fname_out), overwrite=True)
         raws.append(raw)
+
+    if len(raws) == 0:
+        raise ValueError('No input raw data found.')
 
     if config.plot:
 

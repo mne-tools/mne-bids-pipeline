@@ -42,7 +42,7 @@ base_raw_fname = '{subject}_audvis{run}_raw.fif'
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs =  [''] # ['run01', 'run02']
+runs = ['']  # ['run01', 'run02']
 
 
 # To define the subjects, we use a list with all the subject names. Even if its
@@ -66,6 +66,9 @@ exclude_subjects = []
 # you either get them from your recording notes, or from visualizing the data
 
 bads = dict(sample=['MEG 2443', 'EEG 053'])
+
+# bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
+#                        run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS

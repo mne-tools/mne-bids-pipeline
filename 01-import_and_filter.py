@@ -30,6 +30,13 @@ def run_filter(subject):
 
     raws = []
     for run in config.runs:
+
+        # read bad channels for run from config
+        if run:
+            bads = config.bads[subject][run]
+        else:
+            bads = config.bads[subject]
+
         raw_fname_in = config.base_raw_fname.format(**locals())
         run += '_filt'
         raw_fname_out = config.base_raw_fname.format(**locals())
@@ -45,12 +52,10 @@ def run_filter(subject):
         raw = mne.io.read_raw_fif(raw_fname_path,
                                   preload=True, verbose='error')
 
-        # add bad channels from config
-        # XXX allow to add bad channels per run
-        raw.info['bads'] = config.bads[subject]
+        # add bad channels
+        raw.info['bads'] = bads
         print("added bads: ", raw.info['bads'])
 
-        # XXX : to add to config.py
         if config.set_channel_types is not None:
             raw.set_channel_types(config.set_channel_types)
         if config.rename_channels is not None:

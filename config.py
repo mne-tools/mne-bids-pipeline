@@ -30,33 +30,38 @@ subjects_dir = os.path.join(study_path, 'subjects')
 meg_dir = os.path.join(study_path, 'MEG')
 
 ###############################################################################
-# DEFINE SUBJECTS
+# SUBJECTS / RUNS
 # ---------------
-#
-# The MEG-data needs to be stored in a folder named study_path/MEG/my_subject/
+# 
+# The MEG-data need to be stored in a folder 
+# named my_study_path/MEG/my_subject/
 
-base_raw_fname = '{subject}_audvis{run}_raw.fif'
-
-# How did you name your runs?
-# naming should be consistant over subjects
-# put the number of runs you ideally expect to have per subject
-# the scripts will issue a warning if there are less
-# leave empty if there is just one file
-runs = ['']  # ['run01', 'run02']
-
+# This is the name of your experimnet
+study_name = 'audvis'
 
 # To define the subjects, we use a list with all the subject names. Even if its
-# a single subject, it needs to be set up as a list with a single element.
-# See the following examples:
-#
+# a single subject, it needs to be set up as a list with a single element, 
+# as in the example 
+
 subjects_list = ['sample']
 # subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
 #                  'subject_06', 'subject_08', 'subject_09', 'subject_10',
 #                  'subject_11', 'subject_12', 'subject_14']
 
-# ``bad subjects``  that should not be included in the analysis
-# exclude_subjects = ['subject_01', 'subject_09', 'subject_24']
-exclude_subjects = []
+# ``bad subjects`` that should not be excluded from the above
+exclude_subjects = []# ['subject_01']
+
+
+# Define the names of your ``runs``
+# The naming should be consistant over subjects. 
+# put the number of runs you ideally expect to have per subject
+# the scripts will issue a warning if there are less
+# leave empty if there is just one file
+runs = ['']  # ['run01', 'run02']
+
+# This generates the name for the raw files
+# Note that there is no underscore between study_name and run. 
+base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
 
 ###############################################################################
 # BAD CHANNELS
@@ -64,6 +69,7 @@ exclude_subjects = []
 #
 # ``bad channels``, to be removed before maxfilter is applied
 # you either get them from your recording notes, or from visualizing the data
+# Use the simple dict if you don't have runs, and the dict(dict) if you have runs
 
 bads = dict(sample=['MEG 2443', 'EEG 053'])
 
@@ -170,7 +176,7 @@ event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
 conditions = ['Auditory', 'Visual', 'Right', 'Left']
 
 ###############################################################################
-# ICA parameters
+# ICA PARAMETERS
 # --------------
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True

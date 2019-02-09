@@ -26,7 +26,6 @@ plot = False
 study_path = sample.data_path()
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
-
 subjects_dir = os.path.join(study_path, 'subjects')
 meg_dir = os.path.join(study_path, 'MEG')
 
@@ -34,18 +33,26 @@ meg_dir = os.path.join(study_path, 'MEG')
 # DEFINE SUBJECTS
 # ---------------
 #
-# A list of ``subject names``
-# These are the ``nips`` in neurospin lingo
+# The MEG-data needs to be stored in a folder named study_path/MEG/my_subject/
+
+base_raw_fname = '{subject}_audvis{run}_raw.fif'
+
+# How did you name your runs?
+# naming should be consistant over subjects
+# put the number of runs you ideally expect to have per subject
+# the scripts will issue a warning if there are less
+# leave empty if there is just one file
+runs =  [''] # ['run01', 'run02']
+
 
 # To define the subjects, we use a list with all the subject names. Even if its
 # a single subject, it needs to be set up as a list with a single element.
 # See the following examples:
 #
-# subjects_list = ['sample']
+subjects_list = ['sample']
 # subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
 #                  'subject_06', 'subject_08', 'subject_09', 'subject_10',
 #                  'subject_11', 'subject_12', 'subject_14']
-subjects_list = ['sample']
 
 # ``bad subjects``  that should not be included in the analysis
 # exclude_subjects = ['subject_01', 'subject_09', 'subject_24']
@@ -150,9 +157,11 @@ tmax = 0.5
 
 baseline = (None, 0.)
 
+# stimulus channel, which contains the events
+stim_channel = None  # 'STI014'# 'STI101'
+
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
-
 event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
             'Visual/Left': 3, 'Visual/Right': 4}
 conditions = ['Auditory', 'Visual', 'Right', 'Left']

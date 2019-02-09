@@ -18,7 +18,8 @@ from mne.parallel import parallel_func
 import config
 
 
-N_JOBS = max(config.N_JOBS // 4, 1)  # make less parallel runs to limit memory usage
+# make less parallel runs to limit memory usage
+N_JOBS = max(config.N_JOBS // 4, 1)
 
 
 ###############################################################################
@@ -28,15 +29,17 @@ def run_epochs(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)]
-    eve_fnames_in = [op.join(meg_subject_dir, '%s_audvis_filt-eve.fif' % subject)]
-
     raw_list = list()
     events_list = list()
     print("  Loading raw data")
-    for raw_fname, eve_fname in zip(raw_fnames_in, eve_fnames_in):
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
+    for run in config.runs:
+        run += '_filt_sss'
+        raw_fname = op.join(meg_subject_dir,
+                            config.base_raw_fname.format(**locals()))
+        eve_fname = op.splitext(raw_fname)[0] + '-eve.fif'
+
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
         events = mne.read_events(eve_fname)
         events_list.append(events)
 
@@ -58,8 +61,9 @@ def run_epochs(subject):
     # Epoch the data
     print('  Epoching')
     epochs = mne.Epochs(raw, events, config.event_id, config.tmin, config.tmax,
-                        proj=True, picks=picks, baseline=config.baseline, preload=False,
-                        decim=config.decim, reject=config.reject)
+                        proj=True, picks=picks, baseline=config.baseline,
+                        preload=False, decim=config.decim,
+                        reject=config.reject)
 
     print('  Writing to disk')
     epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))

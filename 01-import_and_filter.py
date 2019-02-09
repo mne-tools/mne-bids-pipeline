@@ -18,20 +18,32 @@ import os.path as op
 
 import mne
 from mne.parallel import parallel_func
+from warnings import warn
 
 import config
 
 
 def run_filter(subject):
     print("processing subject: %s" % subject)
-    # XXX : put the study-specific names in the config file
-    meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames_in = [op.join(meg_subject_dir, '%s_audvis_raw.fif' % subject)]
-    raw_fnames_out = [
-        op.join(meg_subject_dir, '%s_audvis_filt_raw.fif' % subject)]
 
-    for raw_fname_in, raw_fname_out in zip(raw_fnames_in, raw_fnames_out):
-        raw = mne.io.read_raw_fif(raw_fname_in, preload=True, verbose='error')
+    meg_subject_dir = op.join(config.meg_dir, subject)
+
+    raws = []
+    for run in config.runs:
+        raw_fname_in = config.base_raw_fname.format(**locals())
+        run += '_filt'
+        raw_fname_out = config.base_raw_fname.format(**locals())
+        print("Input: ", raw_fname_in)
+        print("Output: ", raw_fname_out)
+
+        raw_fname_path = op.join(meg_subject_dir, raw_fname_in)
+        if not op.exists(raw_fname_path):
+            warn('Run %s not found for subject %s ' %
+                 (raw_fname_in, subject))
+            continue
+
+        raw = mne.io.read_raw_fif(raw_fname_path,
+                                  preload=True, verbose='error')
 
         # add bad channels from config
         # XXX allow to add bad channels per run
@@ -52,20 +64,26 @@ def run_filter(subject):
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
 
-        raw.save(raw_fname_out, overwrite=True)
+        raw.save(op.join(meg_subject_dir, raw_fname_out), overwrite=True)
+        raws.append(raw)
 
-        # XXX if we add multiple runs, this should probably plot an appended
-        # version of the data
-        if config.plot:
-            # plot raw data
-            figure = raw.plot(n_channels=50, butterfly=True,
+    if len(raws) == 0:
+        raise ValueError('No input raw data found.')
+
+    if config.plot:
+
+        # concatenate runs for plotting
+        raw_all = mne.concatenate_raws(raws)
+
+        # plot raw data
+        figure = raw_all.plot(n_channels=50, butterfly=True,
                               group_by='position')
-            figure.show()
+        figure.show()
 
-            # plot power spectral densitiy
-            figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
+        # plot power spectral densitiy
+        figure = raw_all.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
                                   fmin=0., fmax=50., average=True)
-            figure.show()
+        figure.show()
 
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)

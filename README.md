@@ -11,7 +11,8 @@ file is meant to contain study specific parameters:
 - `meg_dir` : path pointing to the MEG files for all subjects
 - `subjects` : a list of the subject names
 - `exclude_subjects` : the list of subjects to exclude from the above
-- `study_name` : string defining what the files in your study are named. (e.g. study_name = 's_audvis')
+- `base_raw_fname` : string that describes how your files are named. For example: `'{subject}_audvis_{run}_raw.fif'`
+- `runs` : list of strings that specifies how your runs are named. For example `runs = ['run01', 'run02']`. If you have only one run it should be `runs = ['']`.
 - `set_channel_types` : set channel type of extra channels that were recorded (e.g. EOG, ECG etc.) Example: set type for EEG062 as EOG.
 - `rename_channels` : rename channels. Example: rename channel EEG062 to EOG062.
 - `bads` : dictionary containing he list of bad channels for each subject

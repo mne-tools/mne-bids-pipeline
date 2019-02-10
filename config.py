@@ -57,7 +57,7 @@ exclude_subjects = []# ['subject_01']
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs = ['']  # ['run01', 'run02']
+runs = [''] #['run01', 'run02']
 
 # This generates the name for the raw files
 # Note that there is no underscore between study_name and run. 

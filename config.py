@@ -32,16 +32,16 @@ meg_dir = os.path.join(study_path, 'MEG')
 ###############################################################################
 # SUBJECTS / RUNS
 # ---------------
-# 
-# The MEG-data need to be stored in a folder 
+#
+# The MEG-data need to be stored in a folder
 # named my_study_path/MEG/my_subject/
 
 # This is the name of your experimnet
 study_name = 'audvis'
 
 # To define the subjects, we use a list with all the subject names. Even if its
-# a single subject, it needs to be set up as a list with a single element, 
-# as in the example 
+# a single subject, it needs to be set up as a list with a single element,
+# as in the example
 
 subjects_list = ['sample']
 # subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
@@ -49,18 +49,18 @@ subjects_list = ['sample']
 #                  'subject_11', 'subject_12', 'subject_14']
 
 # ``bad subjects`` that should not be excluded from the above
-exclude_subjects = []# ['subject_01']
+exclude_subjects = []  # ['subject_01']
 
 
 # Define the names of your ``runs``
-# The naming should be consistant over subjects. 
+# The naming should be consistant over subjects.
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs = [''] #['run01', 'run02']
+runs = ['']  # ['run01', 'run02']
 
 # This generates the name for the raw files
-# Note that there is no underscore between study_name and run. 
+# Note that there is no underscore between study_name and run.
 base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
 
 ###############################################################################

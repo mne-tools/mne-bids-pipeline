@@ -73,21 +73,20 @@ def run_filter(subject):
         raws.append(raw)
 
         if config.plot:
-        
+
             # plot raw data
             figure = raw.plot(n_channels=50, butterfly=True,
-                                  group_by='position')
+                              group_by='position')
             figure.show()
-            
+
             # plot power spectral densitiy
             figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                                      fmin=0., fmax=50., average=True)
+                                  fmin=0., fmax=50., average=True)
             figure.show()
 
     if len(raws) == 0:
         raise ValueError('No input raw data found.')
 
-  
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

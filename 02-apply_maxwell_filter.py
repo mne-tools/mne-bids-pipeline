@@ -35,7 +35,7 @@ def run_maxwell_filter(subject):
     raw_fname_in = config.base_raw_fname.format(**locals())
     info = mne.io.read_info(op.join(meg_subject_dir, raw_fname_in))
     destination = info['dev_head_t']
-
+    
     for run in config.runs:
         run += '_filt'
         raw_fname_in = config.base_raw_fname.format(**locals())
@@ -62,10 +62,9 @@ def run_maxwell_filter(subject):
             destination=destination)
 
         raw_sss.save(raw_fname_out, overwrite=True)
-
-        # XXX if we add multiple runs, this should probably plot an appended
-        # version of the data
+    
         if config.plot:
+            
             # plot maxfiltered data
             figure = raw_sss.plot(
                 n_channels=50, butterfly=True, group_by='position')

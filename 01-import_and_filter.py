@@ -30,6 +30,13 @@ def run_filter(subject):
 
     raws = []
     for run in config.runs:
+
+        # read bad channels for run from config
+        if run:
+            bads = config.bads[subject][run]
+        else:
+            bads = config.bads[subject]
+
         raw_fname_in = config.base_raw_fname.format(**locals())
         run += '_filt'
         raw_fname_out = config.base_raw_fname.format(**locals())
@@ -45,12 +52,10 @@ def run_filter(subject):
         raw = mne.io.read_raw_fif(raw_fname_path,
                                   preload=True, verbose='error')
 
-        # add bad channels from config
-        # XXX allow to add bad channels per run
-        raw.info['bads'] = config.bads[subject]
+        # add bad channels
+        raw.info['bads'] = bads
         print("added bads: ", raw.info['bads'])
 
-        # XXX : to add to config.py
         if config.set_channel_types is not None:
             raw.set_channel_types(config.set_channel_types)
         if config.rename_channels is not None:
@@ -67,23 +72,20 @@ def run_filter(subject):
         raw.save(op.join(meg_subject_dir, raw_fname_out), overwrite=True)
         raws.append(raw)
 
+        if config.plot:
+
+            # plot raw data
+            figure = raw.plot(n_channels=50, butterfly=True,
+                              group_by='position')
+            figure.show()
+
+            # plot power spectral densitiy
+            figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
+                                  fmin=0., fmax=50., average=True)
+            figure.show()
+
     if len(raws) == 0:
         raise ValueError('No input raw data found.')
-
-    if config.plot:
-
-        # concatenate runs for plotting
-        raw_all = mne.concatenate_raws(raws)
-
-        # plot raw data
-        figure = raw_all.plot(n_channels=50, butterfly=True,
-                              group_by='position')
-        figure.show()
-
-        # plot power spectral densitiy
-        figure = raw_all.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                                  fmin=0., fmax=50., average=True)
-        figure.show()
 
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)

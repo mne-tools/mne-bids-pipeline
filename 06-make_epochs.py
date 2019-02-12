@@ -67,7 +67,17 @@ def run_epochs(subject):
 
     print('  Writing to disk')
     epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
-
+    
+    # produce high-pass filtered version of the data for ICA    
+    epochs_for_ICA = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),
+                                events, config.event_id, config.tmin, 
+                                config.tmax, proj=True, 
+                                picks=picks, baseline=config.baseline,
+                                preload=False, decim=config.decim,
+                                reject=config.reject)
+    
+    epochs_for_ICA.save(op.join(meg_subject_dir,
+                              '%s-epochs_for_ICA-epo.fif' % subject))
 
 ###############################################################################
 # Let us make the script parallel across subjects

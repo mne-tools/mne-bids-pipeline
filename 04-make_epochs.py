@@ -5,10 +5,9 @@
 
 The epochs are constructed by using the events created in script 03. MNE
 supports hierarchical events that allows selection to different groups more
-easily. Some channels were not properly defined during acquisition, so they
-are redefined before epoching. Bad EEG channels are interpolated and epochs
-containing blinks are rejected. Finally
-the epochs are saved to disk. To save space, the epoch data can be decimated.
+easily (see config.event_id). Automatic rejection is applied to the epochs.
+Finally the epochs are saved to disk.
+To save space, the epoch data can be decimated.
 """
 
 import os.path as op
@@ -44,7 +43,6 @@ def run_epochs(subject):
         events_list.append(events)
 
         raw.info['bads'] = config.bads[subject]
-        raw.interpolate_bads()
         raw_list.append(raw)
 
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
@@ -57,6 +55,8 @@ def run_epochs(subject):
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
     # to your epochs object.
+    
+    # XXX: nice example missing
 
     # Epoch the data
     print('  Epoching')

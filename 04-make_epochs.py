@@ -55,7 +55,7 @@ def run_epochs(subject):
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
     # to your epochs object.
-    
+
     # XXX: nice example missing
 
     # Epoch the data
@@ -64,6 +64,9 @@ def run_epochs(subject):
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.reject)
+
+    if config.plot:
+        epochs.plot()
 
     print('  Writing to disk')
     epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))

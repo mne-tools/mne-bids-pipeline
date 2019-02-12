@@ -69,9 +69,6 @@ def run_epochs(subject):
     epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
 
 
-###############################################################################
-# Let us make the script parallel across subjects
-
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

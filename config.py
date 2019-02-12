@@ -149,7 +149,7 @@ decim = 1
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
 # **Note**: these numbers tend to vary between subjects.
-reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+reject = {'grad': 4000e-13, 'mag': 4e-12}
 
 ###############################################################################
 # EPOCHING

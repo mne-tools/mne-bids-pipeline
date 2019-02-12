@@ -39,7 +39,7 @@ def run_events(subject):
         if config.plot:
             # plot events
             fig = mne.viz.plot_events(events, show=True)
-            fig.suptitle(f'run {run}')
+            fig.suptitle(run)
 
 
 parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)

@@ -19,7 +19,8 @@ import config
 def run_inverse(subject):
     print("processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_ave = op.join(meg_subject_dir, '%s-ave.fif' % subject)
+    fname_ave = op.join(meg_subject_dir, 
+                        config.base_ave_fname.format(**locals()))
     fname_fwd = op.join(meg_subject_dir,
                         '%s-%s-fwd.fif' % (subject, config.spacing))
     fname_cov = op.join(meg_subject_dir,

@@ -17,11 +17,15 @@ import config
 def run_evoked(subject):
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epo = op.join(meg_subject_dir, '%s-epo.fif' % subject)
-    fname_ave = op.join(meg_subject_dir, '%s-ave.fif' % subject)
+    epochs_fname = op.join(meg_subject_dir,
+                            config.base_epochs_fname.format(**locals()))
+
+    
+    fname_ave = op.join(meg_subject_dir, 
+                        config.base_ave_fname.format(**locals()))
 
     print('  Creating evoked datasets')
-    epochs = mne.read_epochs(fname_epo, preload=True)
+    epochs = mne.read_epochs(epochs_fname, preload=True)
 
     evokeds = []
     for condition in config.conditions:

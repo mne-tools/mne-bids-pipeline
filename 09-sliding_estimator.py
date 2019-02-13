@@ -36,10 +36,12 @@ def run_time_decoding(subject, condition1, condition2):
     print("processing subject: %s (%s vs %s)"
           % (subject, condition1, condition2))
 
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epochs = op.join(meg_subject_dir, '%s-epo.fif' % subject)
+    epochs_fname = op.join(meg_subject_dir,
+                            config.base_epochs_fname.format(**locals()))
 
-    epochs = mne.read_epochs(fname_epochs)
+    epochs = mne.read_epochs(epochs_fname)
 
     # We define the epochs and the labels
     epochs = mne.concatenate_epochs([epochs[condition1],

@@ -24,11 +24,10 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
     epochs_fname = op.join(meg_subject_dir,
                            config.base_epochs_fname.format(**locals()))
+    
     epochs_for_ICA_fname = op.splitext(epochs_fname)[0] + '_for_ICA.fif'
 
     epochs_for_ICA = mne.read_epochs(epochs_for_ICA_fname, preload=True)
-
-
     
     # run ICA on MEG and EEG
     picks_meg = mne.pick_types(epochs_for_ICA.info, meg=True, eeg=False,

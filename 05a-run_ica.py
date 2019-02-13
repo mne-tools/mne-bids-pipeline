@@ -24,21 +24,24 @@ decim = 11  # do not touch this value unless you know what you are doing
 
 
 def run_ica(subject, tsss=config.mf_st_duration):
-   
-    print("Processing subject: %s" % subject)
+    print("Processing subject: %s%s"
+          % (subject, (' (tSSS=%d)' % tsss) if tsss else ''))
     meg_subject_dir = op.join(config.meg_dir, subject)
-    epochs_fname = op.join(meg_subject_dir,'%s-epochs_for_ICA-epo.fif' % subject)
+    raw_fnames = op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)
     
-    epochs = mne.read_epochs(epochs_fname)
+    raw = mne.io.read_raw_fif(raw_fnames)
 
     # SSS reduces the data rank and the noise levels, so let's include
     # components based on a higher proportion of variance explained (0.999)
     # than we would otherwise do for non-Maxwell-filtered raw data (0.98)
     n_components = 0.999  # XXX: This can bring troubles to ICA
-    
-    ica_name = op.join(config.meg_dir, subject,
-                           '{0}-epochs-ica.fif'.format(subject))
-    
+    if tsss:
+        ica_name = op.join(config.meg_dir, subject,
+                           '{0}-tsss_{1}-ica.fif'.format(subject, tsss))
+    else:
+        ica_name = op.join(config.meg_dir, subject,
+                           '{0}-ica.fif'.format(subject))
+        
     # Here we only compute ICA for MEG because we only eliminate ECG artifacts,
     # which are not prevalent in EEG (blink artifacts are, but we will remove
     # trials with blinks at the epoching stage).
@@ -46,10 +49,10 @@ def run_ica(subject, tsss=config.mf_st_duration):
     ica = ICA(method='fastica', random_state=config.random_state,
               n_components=n_components)
     # XXX run ICA on MEG and EEG
-    picks = mne.pick_types(epochs.info, meg=True, eeg=False, eog=False,
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                            stim=False, exclude='bads')
     # XXX ut the rejection paramters into config
-    ica.fit(epochs, picks=picks, 
+    ica.fit(raw, picks=picks, 
             reject=dict(grad=grads_rejection_limit,
                         mag=mags_rejection_limit),
             decim=decim)

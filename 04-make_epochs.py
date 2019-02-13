@@ -54,9 +54,8 @@ def run_epochs(subject):
 
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
-    # to your epochs object.
-
-    # XXX: nice example missing
+    # to your epochs object:
+    # https://martinos.org/mne/dev/auto_tutorials/plot_metadata_epochs.html
 
     # Epoch the data
     print('  Epoching')

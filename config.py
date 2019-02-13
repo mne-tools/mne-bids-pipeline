@@ -62,6 +62,7 @@ runs = ['']  # ['run01', 'run02']
 # This generates the name for the raw files
 # Note that there is no underscore between study_name and run.
 base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
+base_epochs_fname = '{subject}_' + study_name + '_epo.fif'
 
 ###############################################################################
 # BAD CHANNELS

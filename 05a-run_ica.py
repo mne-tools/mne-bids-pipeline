@@ -24,12 +24,12 @@ decim = 11  # do not touch this value unless you know what you are doing
 
 
 def run_ica(subject, tsss=config.mf_st_duration):
-    print("Processing subject: %s%s"
-          % (subject, (' (tSSS=%d)' % tsss) if tsss else ''))
+   
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames = op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)
+    epochs_fname = op.join(meg_subject_dir,'%s-epochs_for_ICA-epo.fif' % subject)
     
-    raw = mne.io.read_raw_fif(raw_fnames)
+    epochs = mne.read_epochs(epochs_fname)
 
     # SSS reduces the data rank and the noise levels, so let's include
     # components based on a higher proportion of variance explained (0.999)

@@ -24,23 +24,23 @@ decim = 11  # do not touch this value unless you know what you are doing
 
 
 def run_ica(subject, tsss=config.mf_st_duration):
-    print("Processing subject: %s%s"
-          % (subject, (' (tSSS=%d)' % tsss) if tsss else ''))
-    meg_subject_dir = op.join(config.meg_dir, subject)
-    raw_fnames = op.join(meg_subject_dir, '%s_audvis_filt_sss_raw.fif' % subject)
+    print("Processing subject: %s" % subject)
     
-    raw = mne.io.read_raw_fif(raw_fnames)
+    meg_subject_dir = op.join(config.meg_dir, subject)
+   
+    epochs_fname = op.join(meg_subject_dir,
+                            config.base_epochs_fname.format(**locals()))
+    epochs_for_ICA_fname = op.splitext(epochs_fname)[0] + '_for_ICA.fif'
+
+    epochs_for_ICA = mne.read_epochs(epochs_for_ICA_fname, preload=True)
 
     # SSS reduces the data rank and the noise levels, so let's include
     # components based on a higher proportion of variance explained (0.999)
     # than we would otherwise do for non-Maxwell-filtered raw data (0.98)
     n_components = 0.999  # XXX: This can bring troubles to ICA
-    if tsss:
-        ica_name = op.join(config.meg_dir, subject,
-                           '{0}-tsss_{1}-ica.fif'.format(subject, tsss))
-    else:
-        ica_name = op.join(config.meg_dir, subject,
-                           '{0}-ica.fif'.format(subject))
+    
+    ica_name = op.join(config.meg_dir, 
+                       '{0}_{1}-ica.fif'.format(subject, config.study_name))
         
     # Here we only compute ICA for MEG because we only eliminate ECG artifacts,
     # which are not prevalent in EEG (blink artifacts are, but we will remove
@@ -48,14 +48,13 @@ def run_ica(subject, tsss=config.mf_st_duration):
     print('  Fitting ICA')
     ica = ICA(method='fastica', random_state=config.random_state,
               n_components=n_components)
+    
     # XXX run ICA on MEG and EEG
-    picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
+    picks = mne.pick_types(epochs_for_ICA.info, meg=True, eeg=False, eog=False,
                            stim=False, exclude='bads')
-    # XXX ut the rejection paramters into config
-    ica.fit(raw, picks=picks, 
-            reject=dict(grad=grads_rejection_limit,
-                        mag=mags_rejection_limit),
-            decim=decim)
+    
+    ica.fit(epochs_for_ICA, picks=picks, decim=decim)
+    
     print('  Fit %d components (explaining at least %0.1f%% of the variance)'
           % (ica.n_components_, 100 * n_components))
     ica.save(ica_name)

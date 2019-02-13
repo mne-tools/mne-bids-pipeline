@@ -5,10 +5,9 @@
 
 The epochs are constructed by using the events created in script 03. MNE
 supports hierarchical events that allows selection to different groups more
-easily. Some channels were not properly defined during acquisition, so they
-are redefined before epoching. Bad EEG channels are interpolated and epochs
-containing blinks are rejected. Finally
-the epochs are saved to disk. To save space, the epoch data can be decimated.
+easily (see config.event_id). Automatic rejection is applied to the epochs.
+Finally the epochs are saved to disk.
+To save space, the epoch data can be decimated.
 """
 
 import os.path as op
@@ -44,7 +43,6 @@ def run_epochs(subject):
         events_list.append(events)
 
         raw.info['bads'] = config.bads[subject]
-        raw.interpolate_bads()
         raw_list.append(raw)
 
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
@@ -56,7 +54,8 @@ def run_epochs(subject):
 
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
-    # to your epochs object.
+    # to your epochs object:
+    # https://martinos.org/mne/dev/auto_tutorials/plot_metadata_epochs.html
 
     # Epoch the data
     print('  Epoching')
@@ -64,6 +63,9 @@ def run_epochs(subject):
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.reject)
+
+    if config.plot:
+        epochs.plot()
 
     print('  Writing to disk')
     epochs.save(op.join(meg_subject_dir, '%s-epo.fif' % subject))
@@ -78,9 +80,6 @@ def run_epochs(subject):
     
     epochs_for_ICA.save(op.join(meg_subject_dir,
                               '%s-epochs_for_ICA-epo.fif' % subject))
-
-###############################################################################
-# Let us make the script parallel across subjects
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)

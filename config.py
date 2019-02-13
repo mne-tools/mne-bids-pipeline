@@ -148,8 +148,14 @@ decim = 1
 #
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
+# If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
+# a value for the eog channel (see examples below). 
 # **Note**: these numbers tend to vary between subjects.
-reject = dict(grad=4000e-13, mag=4e-12)
+# Examples: 
+# reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+# reject = None
+
+reject = {'grad': 4000e-13, 'mag': 4e-12}
 
 ###############################################################################
 # EPOCHING

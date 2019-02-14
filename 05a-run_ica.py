@@ -7,6 +7,7 @@ for this purpose only using fastICA. Separate ICAs are fitted and stored for
 MEG and EEG data. 
 To actually remove designated ICA components from your data, you will have to 
 run 06a-apply_ica.py. 
+# XXX 06a-apply_ica.py has to be added
 """
 
 import os.path as op

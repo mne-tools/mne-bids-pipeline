@@ -15,6 +15,7 @@ import os.path as op
 import mne
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
+from mne.report import Report
 
 import config
 
@@ -105,7 +106,6 @@ def run_ica(subject, tsss=config.mf_st_duration):
         
         if config.plot:
             # plot ICA components to html report
-            # XXX plotting takes very long
             from mne.report import Report
             report_name = op.join(meg_subject_dir,
                            '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
@@ -122,8 +122,10 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                            captions=(ch_type.upper() + 
                                                      ' - ICA Components'))
                 
-                figure.gcf()
+                # XXX how to close each figure within the loop to avoid 
+                # runtime error: > 20 figures opened
+                
+            report.save(report_name, overwrite=True, open_browser=False)
 
-# Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

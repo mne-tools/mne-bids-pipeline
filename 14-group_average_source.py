@@ -20,8 +20,11 @@ def morph_stc(subject):
 
     morphed_stcs = []
     for condition in config.conditions:
-        stc = mne.read_source_estimate(
-            op.join(meg_subject_dir, 'mne_dSPM_inverse-%s' % condition))
+        fname_stc = op.join(meg_subject_dir, '%s_%s_mne_dSPM_inverse-%s'
+                            % (config.study_name, subject,
+                               condition.replace(op.sep, '')))
+        stc = mne.read_source_estimate(fname_stc)
+
         morph = mne.compute_source_morph(stc, subject_from=subject,
                                          subject_to='fsaverage',
                                          subjects_dir=config.subjects_dir)
@@ -32,8 +35,10 @@ def morph_stc(subject):
 
     return morphed_stcs
 
+
 parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
-all_morphed_stcs = parallel(run_func(subject) for subject in config.subjects_list)
+all_morphed_stcs = parallel(run_func(subject)
+                            for subject in config.subjects_list)
 all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                     zip(all_morphed_stcs, config.subjects_list)
                     if subject not in config.exclude_subjects]

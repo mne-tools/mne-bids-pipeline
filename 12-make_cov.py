@@ -19,11 +19,20 @@ import config
 def run_covariance(subject):
     print("Processing subject: %s%s")
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epochs = op.join(meg_subject_dir,
-                            config.base_epochs_fname.format(**locals()))
-    fname_cov = op.join(meg_subject_dir, '%s-cov.fif' % subject)
+    extension = '-epo'
+    fname_epo = op.join(meg_subject_dir,
+                        config.base_fname.format(**locals()))
+    print("Input: ", fname_epo)
+
+    extension = '-cov'
+    fname_cov = op.join(meg_subject_dir,
+                        config.base_fname.format(**locals()))
+
+    print("Output: ", fname_cov)
+
+    epochs = mne.read_epochs(fname_epo, preload=True)
+
     print('  Computing regularized covariance')
-    epochs = mne.read_epochs(fname_epochs, preload=True)
     cv = KFold(3, random_state=config.random_state)  # make cv deterministic
     cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv)
     cov.save(fname_cov)

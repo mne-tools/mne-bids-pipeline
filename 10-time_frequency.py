@@ -24,9 +24,12 @@ n_cycles = freqs / 3.
 def run_time_frequency(subject):
     print("processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epochs = op.join(meg_subject_dir,
-                            config.base_epochs_fname.format(**locals()))
-    epochs = mne.read_epochs(fname_epochs)
+    extension = '-epo'
+    fname_in = op.join(meg_subject_dir,
+                       config.base_fname.format(**locals()))
+    print("Input: ", fname_in)
+
+    epochs = mne.read_epochs(fname_in)
 
     for condition in config.time_frequency_conditions:
         this_epochs = epochs[condition]
@@ -34,11 +37,13 @@ def run_time_frequency(subject):
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
         power.save(
-            op.join(meg_subject_dir, '%s_power_%s-tfr.h5'
-                    % (subject, condition.replace(op.sep, ''))), overwrite=True)
+            op.join(meg_subject_dir, '%s_%s_power_%s-tfr.h5'
+                    % (config.study_name, subject, 
+                       condition.replace(op.sep, ''))), overwrite=True)
         itc.save(
-            op.join(meg_subject_dir, '%s_itc_%s-tfr.h5'
-                    % (subject, condition.replace(op.sep, ''))), overwrite=True)
+            op.join(meg_subject_dir, '%s_%s_itc_%s-tfr.h5'
+                    % (config.study_name, subject, 
+                       condition.replace(op.sep, ''))), overwrite=True)
 
 
 parallel, run_func, _ = parallel_func(run_time_frequency, n_jobs=config.N_JOBS)

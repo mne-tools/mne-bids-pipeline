@@ -36,15 +36,15 @@ def run_filter(subject):
             bads = config.bads[subject][run]
         else:
             bads = config.bads[subject]
-        
+
         extension = run + '_raw'
         raw_fname_in = op.join(meg_subject_dir,
                                config.base_fname.format(**locals()))
-        
+
         extension = run + '_filt_raw'
         raw_fname_out = op.join(meg_subject_dir,
                                 config.base_fname.format(**locals()))
-        
+
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 

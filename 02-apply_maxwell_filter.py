@@ -26,27 +26,27 @@ import config
 
 def run_maxwell_filter(subject):
     print("processing subject: %s" % subject)
-    
+
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     # To match their processing, transform to the head position of the
     # defined run
     extension = config.runs[config.mf_reference_run] + '_filt_raw'
-    raw_fname_in = op.join(meg_subject_dir, 
+    raw_fname_in = op.join(meg_subject_dir,
                            config.base_fname.format(**locals()))
     info = mne.io.read_info(raw_fname_in)
     destination = info['dev_head_t']
-    
+
     for run in config.runs:
-        
+
         extension = run + '_filt_raw'
-        raw_fname_in = op.join(meg_subject_dir, 
+        raw_fname_in = op.join(meg_subject_dir,
                                config.base_fname.format(**locals()))
-        
+
         extension = run + '_sss_raw'
-        raw_fname_out = op.join(meg_subject_dir, 
+        raw_fname_out = op.join(meg_subject_dir,
                                 config.base_fname.format(**locals()))
-        
+
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 
@@ -64,9 +64,9 @@ def run_maxwell_filter(subject):
             destination=destination)
 
         raw_sss.save(raw_fname_out, overwrite=True)
-    
+
         if config.plot:
-            
+
             # plot maxfiltered data
             figure = raw_sss.plot(
                 n_channels=50, butterfly=True, group_by='position')

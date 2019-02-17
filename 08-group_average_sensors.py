@@ -22,10 +22,13 @@ for subject in config.subjects_list:
     else:
         print("processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_ave = op.join(meg_subject_dir, 
-                        config.base_ave_fname.format(**locals()))
-
-    evokeds = mne.read_evokeds(fname_ave)
+    extension = '-ave'
+    fname_in = op.join(meg_subject_dir,
+                            config.base_fname.format(**locals()))
+    
+    print("Input: ", fname_in)
+    
+    evokeds = mne.read_evokeds(fname_in)
     assert len(evokeds) == len(all_evokeds)
     for idx, evoked in enumerate(evokeds):
         all_evokeds[idx].append(evoked)  # Insert to the container
@@ -34,6 +37,9 @@ for subject in config.subjects_list:
 for idx, evokeds in enumerate(all_evokeds):
     all_evokeds[idx] = mne.combine_evoked(evokeds, 'equal')  # Combine subjects
 
-fname_grand_average = op.join(config.meg_dir, 'grand_average-ave.fif')
-print("Saving grand averate: %s" % fname_grand_average)
-mne.evoked.write_evokeds(fname_grand_average, all_evokeds)
+extension = 'grand_average-ave'
+fname_out = op.join(meg_subject_dir,
+                            '{0}_{1}.fif'.format(config.study_name,
+                                                        extension))    
+print("Saving grand averate: %s" % fname_out)
+mne.evoked.write_evokeds(fname_out, all_evokeds)

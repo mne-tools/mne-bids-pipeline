@@ -69,9 +69,9 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                 reject=config.reject)
 
     # run ICA on MEG and EEG
-    picks_meg = mne.pick_types(raw.info, meg=True, eeg=False,
+    picks_meg = mne.pick_types(epochs_for_ica.info, meg=True, eeg=False,
                                eog=False, stim=False, exclude='bads')
-    picks_eeg = mne.pick_types(raw.info, meg=False, eeg=True,
+    picks_eeg = mne.pick_types(epochs_for_ica.info, meg=False, eeg=True,
                                eog=False, stim=False, exclude='bads')
     all_picks = dict({'meg': picks_meg, 'eeg': picks_eeg})
 
@@ -102,7 +102,27 @@ def run_ica(subject, tsss=config.mf_st_duration):
                            '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name,
                                                         ch_type))
         ica.save(ica_name)
-
+        
+        if config.plot:
+            # plot ICA components to html report
+            # XXX plotting takes very long
+            from mne.report import Report
+            report_name = op.join(meg_subject_dir,
+                           '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
+                                                        ch_type))
+            report = Report(report_name, verbose=False)
+                   
+            for figure in ica.plot_properties(epochs_for_ica, 
+                                              picks = list(range(0,
+                                              ica.n_components_)),
+                                              psd_args={'fmax':60},
+                                              show=False):
+                                                  
+                report.add_figs_to_section(figure, section=subject,
+                                           captions=(ch_type.upper() + 
+                                                     ' - ICA Components'))
+                
+                figure.gcf()
 
 # Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)

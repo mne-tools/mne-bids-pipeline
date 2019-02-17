@@ -59,13 +59,11 @@ exclude_subjects = []  # ['subject_01']
 # leave empty if there is just one file
 runs = ['']  # ['run01', 'run02']
 
-# This generates the name for the raw files
-# Note that there is no underscore between study_name and run.
+# This generates the name for all files
+# with the names specified above
+# normally you should not have to touch this
 
-# XXX this can likely be done more efficiently
-base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
-base_epochs_fname = '{subject}_' + study_name + '_epo.fif'
-base_ave_fname = '{subject}_' + study_name + '_ave.fif'
+base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 ###############################################################################
 # BAD CHANNELS
@@ -75,10 +73,10 @@ base_ave_fname = '{subject}_' + study_name + '_ave.fif'
 # you either get them from your recording notes, or from visualizing the data
 # Use the simple dict if you don't have runs, and the dict(dict) if you have runs
 
-bads = dict(sample=['MEG 2443', 'EEG 053'])
+bads = dict(sample=dict(''=['MEG 2443', 'EEG 053']))
 
 # bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
-#                        run02=['MEG 2443', 'EEG 053', 'EEG 013']))
+#                          run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -153,9 +151,9 @@ decim = 1
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
 # If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
-# a value for the eog channel (see examples below). 
+# a value for the eog channel (see examples below).
 # **Note**: these numbers tend to vary between subjects.
-# Examples: 
+# Examples:
 # reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
 # reject = None
 

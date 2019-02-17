@@ -26,27 +26,29 @@ import config
 
 def run_maxwell_filter(subject):
     print("processing subject: %s" % subject)
-    # XXX : put the study-specific names in the config file
+    
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     # To match their processing, transform to the head position of the
     # defined run
-    run = config.runs[config.mf_reference_run] + '_filt'
-    raw_fname_in = config.base_raw_fname.format(**locals())
-    info = mne.io.read_info(op.join(meg_subject_dir, raw_fname_in))
+    extension = config.runs[config.mf_reference_run] + '_filt_raw'
+    raw_fname_in = op.join(meg_subject_dir, 
+                           config.base_fname.format(**locals()))
+    info = mne.io.read_info(raw_fname_in)
     destination = info['dev_head_t']
     
     for run in config.runs:
-        run += '_filt'
-        raw_fname_in = config.base_raw_fname.format(**locals())
-        run += '_sss'
-        raw_fname_out = config.base_raw_fname.format(**locals())
-
-        raw_fname_in = op.join(meg_subject_dir, raw_fname_in)
-        raw_fname_out = op.join(meg_subject_dir, raw_fname_out)
-
-        print("Reading: ", raw_fname_in)
-        print("Writing: ", raw_fname_out)
+        
+        extension = run + '_filt_raw'
+        raw_fname_in = op.join(meg_subject_dir, 
+                               config.base_fname.format(**locals()))
+        
+        extension = run + '_sss_raw'
+        raw_fname_out = op.join(meg_subject_dir, 
+                                config.base_fname.format(**locals()))
+        
+        print("Input: ", raw_fname_in)
+        print("Output: ", raw_fname_out)
 
         raw = mne.io.read_raw_fif(raw_fname_in)
 

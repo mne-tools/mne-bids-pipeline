@@ -11,6 +11,7 @@ To save space, the epoch data can be decimated.
 """
 
 import os.path as op
+from itertools import chain
 import mne
 from mne.parallel import parallel_func
 
@@ -33,18 +34,30 @@ def run_epochs(subject):
     print("  Loading raw data")
 
     for run in config.runs:
-        run += '_filt_sss'
-        raw_fname = op.join(meg_subject_dir,
-                            config.base_raw_fname.format(**locals()))
-        eve_fname = op.splitext(raw_fname)[0] + '-eve.fif'
+        extension = run + '_sss_raw'
+        raw_fname_in = op.join(meg_subject_dir, 
+                               config.base_fname.format(**locals()))
+        eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
+        print("Input: ", raw_fname_in, eve_fname)
+        
+        raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
         events = mne.read_events(eve_fname)
         events_list.append(events)
-
-        raw.info['bads'] = config.bads[subject]
+        
+        # XXX mark bads from any run – is it a problem for ICA
+        # if we just exclude the bads shared by all runs ? 
+        if run:
+            bads=set(chain(*config.bads[subject].values())) 
+        else:
+            bads = config.bads[subject]
+            
+        raw.info['bads'] = bads
+        print("added bads: ", raw.info['bads'])
+        
         raw_list.append(raw)
-
+    
+    print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
     raw.set_eeg_reference(projection=True)
     del raw_list
@@ -64,16 +77,19 @@ def run_epochs(subject):
                         preload=False, decim=config.decim,
                         reject=config.reject)
 
-    if config.plot:
-        epochs.plot()
-
     print('  Writing epochs to disk')
-    epochs_fname = op.join(meg_subject_dir,
-                            config.base_epochs_fname.format(**locals()))
-
+    extension = '-epo'
+    epochs_fname = op.join(meg_subject_dir, 
+                           config.base_fname.format(**locals()))
+    print("Output: ", epochs_fname)
     epochs.save(epochs_fname)
     
 
+
+    if config.plot:
+        epochs.plot()
+
+    
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

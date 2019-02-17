@@ -23,16 +23,16 @@ def run_events(subject):
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     for run in config.runs:
-        run += '_filt_sss'
+        extension = run + '_sss_raw'
         raw_fname_in = op.join(meg_subject_dir,
-                               config.base_raw_fname.format(**locals()))
+                               config.base_fname.format(**locals()))
         eve_fname_out = op.splitext(raw_fname_in)[0] + '-eve.fif'
 
         raw = mne.io.read_raw_fif(raw_fname_in)
         events = mne.find_events(raw, stim_channel=config.stim_channel)
 
-        print("subject: %s - file: %s" % (subject, raw_fname_in))
-        print("Writing: ", eve_fname_out)
+        print("Input: ", raw_fname_in)
+        print("Output: ", eve_fname_out)
 
         mne.write_events(eve_fname_out, events)
 

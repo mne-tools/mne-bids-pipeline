@@ -24,8 +24,8 @@ n_cycles = freqs / 3.
 def run_time_frequency(subject):
     print("processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epochs = op.join(meg_subject_dir, '%s-epo.fif' % subject)
-
+    fname_epochs = op.join(meg_subject_dir,
+                            config.base_epochs_fname.format(**locals()))
     epochs = mne.read_epochs(fname_epochs)
 
     for condition in config.time_frequency_conditions:

@@ -19,7 +19,8 @@ import config
 def run_covariance(subject):
     print("Processing subject: %s%s")
     meg_subject_dir = op.join(config.meg_dir, subject)
-    fname_epochs = op.join(meg_subject_dir, '%s-epo.fif' % subject)
+    fname_epochs = op.join(meg_subject_dir,
+                            config.base_epochs_fname.format(**locals()))
     fname_cov = op.join(meg_subject_dir, '%s-cov.fif' % subject)
     print('  Computing regularized covariance')
     epochs = mne.read_epochs(fname_epochs, preload=True)

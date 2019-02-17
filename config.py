@@ -61,7 +61,11 @@ runs = ['']  # ['run01', 'run02']
 
 # This generates the name for the raw files
 # Note that there is no underscore between study_name and run.
+
+# XXX this can likely be done more efficiently
 base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
+base_epochs_fname = '{subject}_' + study_name + '_epo.fif'
+base_ave_fname = '{subject}_' + study_name + '_ave.fif'
 
 ###############################################################################
 # BAD CHANNELS
@@ -151,8 +155,10 @@ decim = 1
 # If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
 # a value for the eog channel (see examples below). 
 # **Note**: these numbers tend to vary between subjects.
+# Examples: 
 # reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
 # reject = None
+
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 
 ###############################################################################

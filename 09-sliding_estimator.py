@@ -37,6 +37,8 @@ def run_time_decoding(subject, condition1, condition2):
           % (subject, condition1, condition2))
 
     print("Processing subject: %s" % subject)
+    meg_subject_dir = op.join(config.meg_dir, subject)
+    
     extension = '-epo'
     fname_in = op.join(meg_subject_dir,
                        config.base_fname.format(**locals()))

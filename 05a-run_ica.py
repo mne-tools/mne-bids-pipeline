@@ -32,21 +32,34 @@ def run_ica(subject, tsss=config.mf_st_duration):
     print("  Loading raw data")
 
     for run in config.runs:
-        run += '_filt_sss'
-        raw_fname = op.join(meg_subject_dir,
-                            config.base_raw_fname.format(**locals()))
-        eve_fname = op.splitext(raw_fname)[0] + '-eve.fif'
-
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        extension = run + '_sss_raw'
+        raw_fname_in = op.join(meg_subject_dir,
+                               config.base_fname.format(**locals()))
+        eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
+        print("Input: ", raw_fname_in, eve_fname)
+        
+        raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
+        
         events = mne.read_events(eve_fname)
         events_list.append(events)
-
-        raw.info['bads'] = config.bads[subject]
+        
+        # XXX mark bads from any run – is it a problem for ICA
+        # if we just exclude the bads shared by all runs ?
+        if run:
+            bads = set(chain(*config.bads[subject].values()))
+        else:
+            bads = config.bads[subject]
+        
+        raw.info['bads'] = bads
+        print("added bads: ", raw.info['bads'])
+        
         raw_list.append(raw)
 
+    print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
     raw.set_eeg_reference(projection=True)
     del raw_list
+
 
     # produce high-pass filtered version of the data for ICA
     epochs_for_ica = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),

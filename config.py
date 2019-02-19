@@ -57,15 +57,13 @@ exclude_subjects = []  # ['subject_01']
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs = ['']  # ['run01', 'run02']
+runs = [''] # ['run01', 'run02']
 
-# This generates the name for the raw files
-# Note that there is no underscore between study_name and run.
+# This generates the name for all files
+# with the names specified above
+# normally you should not have to touch this
 
-# XXX this can likely be done more efficiently
-base_raw_fname = '{subject}_' + study_name + '{run}_raw.fif'
-base_epochs_fname = '{subject}_' + study_name + '_epo.fif'
-base_ave_fname = '{subject}_' + study_name + '_ave.fif'
+base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 ###############################################################################
 # BAD CHANNELS
@@ -77,8 +75,8 @@ base_ave_fname = '{subject}_' + study_name + '_ave.fif'
 
 bads = dict(sample=['MEG 2443', 'EEG 053'])
 
-# bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
-#                        run02=['MEG 2443', 'EEG 053', 'EEG 013']))
+#bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
+#                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS

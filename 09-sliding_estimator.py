@@ -38,10 +38,13 @@ def run_time_decoding(subject, condition1, condition2):
 
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    epochs_fname = op.join(meg_subject_dir,
-                            config.base_epochs_fname.format(**locals()))
+    
+    extension = '-epo'
+    fname_in = op.join(meg_subject_dir,
+                       config.base_fname.format(**locals()))
+    print("Input: ", fname_in)
 
-    epochs = mne.read_epochs(epochs_fname)
+    epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels
     epochs = mne.concatenate_epochs([epochs[condition1],
@@ -67,12 +70,14 @@ def run_time_decoding(subject, condition1, condition2):
     # let's save the scores now
     a_vs_b = '%s_vs_%s' % (condition1, condition2)
     a_vs_b = a_vs_b.replace(op.sep, '')
-    fname_td = op.join(meg_subject_dir, '%s_%s_%s.mat'
-                       % (subject, a_vs_b, config.decoding_metric))
+    fname_td = op.join(meg_subject_dir, '%s_%s_%s_%s.mat'
+                       % (subject, config.study_name,a_vs_b,
+                          config.decoding_metric))
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
 # so we don't dispatch manually to multiple jobs.
+
 
 for subject in config.subjects_list:
     for conditions in config.decoding_conditions:

@@ -37,19 +37,23 @@ def run_filter(subject):
         else:
             bads = config.bads[subject]
 
-        raw_fname_in = config.base_raw_fname.format(**locals())
-        run += '_filt'
-        raw_fname_out = config.base_raw_fname.format(**locals())
+        extension = run + '_raw'
+        raw_fname_in = op.join(meg_subject_dir,
+                               config.base_fname.format(**locals()))
+
+        extension = run + '_filt_raw'
+        raw_fname_out = op.join(meg_subject_dir,
+                                config.base_fname.format(**locals()))
+
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 
-        raw_fname_path = op.join(meg_subject_dir, raw_fname_in)
-        if not op.exists(raw_fname_path):
+        if not op.exists(raw_fname_in):
             warn('Run %s not found for subject %s ' %
                  (raw_fname_in, subject))
             continue
 
-        raw = mne.io.read_raw_fif(raw_fname_path,
+        raw = mne.io.read_raw_fif(raw_fname_in,
                                   preload=True, verbose='error')
 
         # add bad channels
@@ -69,7 +73,7 @@ def run_filter(subject):
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
 
-        raw.save(op.join(meg_subject_dir, raw_fname_out), overwrite=True)
+        raw.save(raw_fname_out, overwrite=True)
         raws.append(raw)
 
         if config.plot:

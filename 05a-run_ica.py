@@ -39,7 +39,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
         print("Input: ", raw_fname_in, eve_fname)
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-        
+
         events = mne.read_events(eve_fname)
         events_list.append(events)
 
@@ -73,16 +73,16 @@ def run_ica(subject, tsss=config.mf_st_duration):
     picks_eeg = mne.pick_types(epochs_for_ica.info, meg=False, eeg=True,
                                eog=False, stim=False, exclude='bads')
     all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
-    
+
     # get number of components for ICA
     # compute_rank requires 0.18
     # n_components_meg = (mne.compute_rank(epochs_for_ica.copy()
     #                        .pick_types(meg=True)))['meg']
-    
+
     n_components_meg = 0.999
-    
-    n_components = {'meg':n_components_meg, 'eeg':0.999}
-    
+
+    n_components = {'meg': n_components_meg, 'eeg': 0.999}
+
     for ch_type in ['meg', 'eeg']:
         print('Running ICA for ' + ch_type)
 
@@ -90,7 +90,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
                   n_components=n_components[ch_type])
 
         picks = all_picks[ch_type]
-        
+
         ica.fit(epochs_for_ica, picks=picks, decim=decim)
 
         print('  Fit %d components (explaining at least %0.1f%% of the variance)'

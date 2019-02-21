@@ -188,8 +188,6 @@ conditions = ['Auditory', 'Visual', 'Right', 'Left']
 # --------------
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
-ecg_channel = 'ECG063'
-eog_channel = 'EOG061'
 
 rejcomps_man = dict(sample = dict(meg = [1,11],
                                   eeg=[1,9]))

@@ -66,7 +66,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
     epochs_for_ica = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),
                                 events, config.event_id, config.tmin,
                                 config.tmax, proj=True, baseline=config.baseline,
-                                preload=False, decim=config.decim,
+                                preload=True, decim=config.decim,
                                 reject=config.reject)
 
     # run ICA on MEG and EEG
@@ -83,6 +83,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
             # XXX this does not work on epochs:
             # meg_maxfilter_rank = epochs_for_ica.copy().pick_types(meg=True).estimate_rank()
+            meg_maxfilter_rank = mne.compute_rank(epochs_for_ica.copy().pick_types(meg=True))
             n_components = 0.999
 
         elif ch_type == 'eeg':

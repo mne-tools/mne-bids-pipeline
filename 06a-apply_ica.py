@@ -48,7 +48,7 @@ def run_evoked(subject):
                                eog=False, stim=False, exclude='bads')
     picks_eeg = mne.pick_types(raw.info, meg=False, eeg=True,
                                eog=False, stim=False, exclude='bads')
-    all_picks = dict({'meg': picks_meg, 'eeg': picks_eeg})
+    all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
 
     for ch_type in ['meg', 'eeg']:
         print(ch_type)
@@ -61,14 +61,21 @@ def run_evoked(subject):
         print('Reading ICA: ' + fname_ica)
         ica = read_ica(fname=fname_ica)
 
+        pick_ecg = mne.pick_types(raw.info, meg=False, eeg=False, 
+                                  ecg=True, eog=False)
+        
         # ECG
-        if config.ecg_channel and ch_type == 'meg':
-            print('using ECG channel')
-            picks_ecg = np.concatenate([picks, mne.pick_types(raw.info, meg=False,
-                                                              eeg=False, ecg=True,
-                                                              eog=False)])
+        # either needs an ecg channel, or avg of the mags
+        if pick_ecg or ch_type == 'meg':
+
+            picks_ecg = np.concatenate([picks, pick_ecg])
             # Create ecg epochs
-            ecg_epochs = create_ecg_epochs(raw, picks=picks_ecg, reject=None,
+            if ch_type == 'meg':
+                reject  = {'mag' : config.reject['mag'], 'grad' : config.reject['grad']}
+            elif ch_type == 'eeg':
+                    reject  = {'eeg' : config.reject['eeg']}
+                    
+            ecg_epochs = create_ecg_epochs(raw, picks=picks_ecg, reject=reject,
                                            baseline=(None, 0), tmin=-0.5,
                                            tmax=0.5)
 
@@ -101,12 +108,14 @@ def run_evoked(subject):
         else:
             print('no ECG channel!')
 
+        
         # EOG
-        if config.eog_channel:
+        pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, 
+                                  ecg=False, eog=True)
+        
+        if pick_eog:
             print('using EOG channel')
-            picks_eog = np.concatenate([picks, mne.pick_types(raw.info, meg=False,
-                                                              eeg=False, ecg=False,
-                                                              eog=True)])
+            picks_eog = np.concatenate([picks, pick_eog])
             # Create eog epochs
             eog_epochs = create_eog_epochs(raw, picks=picks_eog, reject=None,
                                            baseline=(None, 0), tmin=-0.5,
@@ -137,8 +146,9 @@ def run_evoked(subject):
         else:
             print('no EOG channel!')
 
-        ica_reject = np.ndarray.tolist(np.concatenate([ecg_inds, eog_inds,
-                                                       config.rejcomps_man[subject][ch_type]]))
+       
+        ica_reject = (list(ecg_inds) + list(eog_inds) +
+                      list(config.rejcomps_man[subject][ch_type]))
 
         # now reject the components
         print('Rejecting from ' + ch_type + ': ' + str(ica_reject))

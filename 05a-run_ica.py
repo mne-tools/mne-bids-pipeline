@@ -60,7 +60,6 @@ def run_ica(subject, tsss=config.mf_st_duration):
     raw.set_eeg_reference(projection=True)
     del raw_list
 
-
     # produce high-pass filtered version of the data for ICA
     epochs_for_ica = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),
                                 events, config.event_id, config.tmin,
@@ -73,32 +72,29 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                eog=False, stim=False, exclude='bads')
     picks_eeg = mne.pick_types(epochs_for_ica.info, meg=False, eeg=True,
                                eog=False, stim=False, exclude='bads')
-    all_picks = dict({'meg': picks_meg, 'eeg': picks_eeg})
-
+    all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
+    
+    # get number of components for ICA
+    # compute_rank requires 0.18
+    # n_components_meg = (mne.compute_rank(epochs_for_ica.copy()
+    #                        .pick_types(meg=True)))['meg']
+    
+    n_components_meg = 0.999
+    
+    n_components = {'meg':n_components_meg, 'eeg':0.999}
+    
     for ch_type in ['meg', 'eeg']:
         print('Running ICA for ' + ch_type)
 
-        if ch_type == 'meg':
-            # XXX requires MNE 0.18
-            # n_components = (mne.compute_rank(epochs_for_ica.copy()
-            #                .pick_types(meg=True)))
-            
-            n_components = 0.999
-
-        elif ch_type == 'eeg':
-            n_components = 0.999
-
         ica = ICA(method='fastica', random_state=config.random_state,
-                  n_components=n_components)
+                  n_components=n_components[ch_type])
 
         picks = all_picks[ch_type]
         
-        # XXX this breaks:
-        # *** TypeError: %i format: a number is required, not dict
         ica.fit(epochs_for_ica, picks=picks, decim=decim)
 
         print('  Fit %d components (explaining at least %0.1f%% of the variance)'
-              % (ica.n_components_, 100 * n_components))
+              % (ica.n_components_, 100 * n_components[ch_type]))
 
         ica_name = op.join(meg_subject_dir,
                            '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name,

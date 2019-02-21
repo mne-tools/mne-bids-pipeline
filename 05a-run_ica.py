@@ -80,8 +80,10 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
         if ch_type == 'meg':
             # XXX requires MNE 0.18
-            n_components = (mne.compute_rank(epochs_for_ica.copy()
-                            .pick_types(meg=True)))
+            # n_components = (mne.compute_rank(epochs_for_ica.copy()
+            #                .pick_types(meg=True)))
+            
+            n_components = 0.999
 
         elif ch_type == 'eeg':
             n_components = 0.999

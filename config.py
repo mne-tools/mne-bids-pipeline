@@ -16,7 +16,7 @@ from mne.datasets import sample
 # execute %matplotlib qt in your command line once to show the figures in
 # separate windows
 
-plot = True
+plot = False
 
 ###############################################################################
 # DIRECTORIES

@@ -7,7 +7,6 @@ for this purpose only using fastICA. Separate ICAs are fitted and stored for
 MEG and EEG data. 
 To actually remove designated ICA components from your data, you will have to 
 run 06a-apply_ica.py. 
-# XXX 06a-apply_ica.py has to be added
 """
 
 import os.path as op
@@ -19,7 +18,7 @@ from mne.report import Report
 
 import config
 
-
+# XXX do we need this?
 decim = 11  # do not touch this value unless you know what you are doing
 
 
@@ -38,29 +37,28 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                config.base_fname.format(**locals()))
         eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
         print("Input: ", raw_fname_in, eve_fname)
-        
+
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-        
+
         events = mne.read_events(eve_fname)
         events_list.append(events)
-        
+
         # XXX mark bads from any run – is it a problem for ICA
         # if we just exclude the bads shared by all runs ?
         if run:
             bads = set(chain(*config.bads[subject].values()))
         else:
             bads = config.bads[subject]
-        
+
         raw.info['bads'] = bads
         print("added bads: ", raw.info['bads'])
-        
+
         raw_list.append(raw)
 
     print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
     raw.set_eeg_reference(projection=True)
     del raw_list
-
 
     # produce high-pass filtered version of the data for ICA
     epochs_for_ica = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),
@@ -80,14 +78,10 @@ def run_ica(subject, tsss=config.mf_st_duration):
         print('Running ICA for ' + ch_type)
 
         if ch_type == 'meg':
-
-            # XXX this does not work on epochs:
-            # meg_maxfilter_rank = epochs_for_ica.copy().pick_types(meg=True).estimate_rank()
-            meg_maxfilter_rank = mne.compute_rank(epochs_for_ica.copy().pick_types(meg=True))
-            n_components = 0.999
+            n_components = mne.compute_rank(
+                epochs_for_ica.copy().pick_types(meg=True))
 
         elif ch_type == 'eeg':
-
             n_components = 0.999
 
         ica = ICA(method='fastica', random_state=config.random_state,
@@ -104,29 +98,30 @@ def run_ica(subject, tsss=config.mf_st_duration):
                            '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name,
                                                         ch_type))
         ica.save(ica_name)
-        
+
         if config.plot:
             # plot ICA components to html report
             from mne.report import Report
             report_name = op.join(meg_subject_dir,
-                           '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
-                                                        ch_type))
+                                  '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
+                                                                ch_type))
             report = Report(report_name, verbose=False)
-                   
-            for figure in ica.plot_properties(epochs_for_ica, 
-                                              picks = list(range(0,
-                                              ica.n_components_)),
-                                              psd_args={'fmax':60},
+
+            for figure in ica.plot_properties(epochs_for_ica,
+                                              picks=list(range(0,
+                                                               ica.n_components_)),
+                                              psd_args={'fmax': 60},
                                               show=False):
-                                                  
+
                 report.add_figs_to_section(figure, section=subject,
-                                           captions=(ch_type.upper() + 
+                                           captions=(ch_type.upper() +
                                                      ' - ICA Components'))
-                
-                # XXX how to close each figure within the loop to avoid 
+
+                # XXX how to close each figure within the loop to avoid
                 # runtime error: > 20 figures opened
-                
+
             report.save(report_name, overwrite=True, open_browser=False)
+
 
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

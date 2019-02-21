@@ -1,9 +1,16 @@
 """
 ===============
-06. Evoked data
+06. Apply ICA
 ===============
 
-The evoked data sets are created by averaging different conditions.
+Blinks and ECG artifacts are automatically detected and the corresponding ICA
+components are removed from the data.
+This relies on the ICAs computed in 05-run_ica.py
+!! If you manually add components to remove (config.rejcomps_man), 
+make sure you did not re-run the ICA in the meantime. Otherwise (especially if 
+the random state was not set, or you used a different machine, the component 
+order might differ). 
+
 """
 
 import os.path as op
@@ -61,26 +68,33 @@ def run_evoked(subject):
         print('Reading ICA: ' + fname_ica)
         ica = read_ica(fname=fname_ica)
 
-        pick_ecg = mne.pick_types(raw.info, meg=False, eeg=False, 
+        pick_ecg = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=True, eog=False)
-        
+
         # ECG
-        # either needs an ecg channel, or avg of the mags
+        # either needs an ecg channel, or avg of the mags (i.e. MEG data)
         if pick_ecg or ch_type == 'meg':
 
             picks_ecg = np.concatenate([picks, pick_ecg])
+
             # Create ecg epochs
             if ch_type == 'meg':
-                reject  = {'mag' : config.reject['mag'], 'grad' : config.reject['grad']}
+                reject = {'mag': config.reject['mag'],
+                          'grad': config.reject['grad']}
             elif ch_type == 'eeg':
-                    reject  = {'eeg' : config.reject['eeg']}
-                    
+                reject = {'eeg': config.reject['eeg']}
+
             ecg_epochs = create_ecg_epochs(raw, picks=picks_ecg, reject=reject,
                                            baseline=(None, 0), tmin=-0.5,
                                            tmax=0.5)
 
             ecg_average = ecg_epochs.average()
-            ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, method='ctps')
+
+            # XXX I had to lower the threshold for ctps (default 0.25), otherwise it does not
+            # find any components
+            # check how this behaves on other data
+            ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, method='ctps',
+                                                 threshold=0.1)
             del ecg_epochs
 
             if config.plot:
@@ -108,11 +122,10 @@ def run_evoked(subject):
         else:
             print('no ECG channel!')
 
-        
         # EOG
-        pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, 
+        pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
-        
+
         if pick_eog:
             print('using EOG channel')
             picks_eog = np.concatenate([picks, pick_eog])
@@ -146,7 +159,6 @@ def run_evoked(subject):
         else:
             print('no EOG channel!')
 
-       
         ica_reject = (list(ecg_inds) + list(eog_inds) +
                       list(config.rejcomps_man[subject][ch_type]))
 

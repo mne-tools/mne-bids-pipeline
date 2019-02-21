@@ -57,7 +57,7 @@ exclude_subjects = []  # ['subject_01']
 # put the number of runs you ideally expect to have per subject
 # the scripts will issue a warning if there are less
 # leave empty if there is just one file
-runs = [''] # ['run01', 'run02']
+runs = ['']  # ['run01', 'run02']
 
 # This generates the name for all files
 # with the names specified above
@@ -75,7 +75,7 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 bads = dict(sample=['MEG 2443', 'EEG 053'])
 
-#bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
+# bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
 #                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
@@ -151,9 +151,9 @@ decim = 1
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
 # If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
-# a value for the eog channel (see examples below). 
+# a value for the eog channel (see examples below).
 # **Note**: these numbers tend to vary between subjects.
-# Examples: 
+# Examples:
 # reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
 # reject = None
 
@@ -189,8 +189,8 @@ conditions = ['Auditory', 'Visual', 'Right', 'Left']
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
 
-rejcomps_man = dict(sample = dict(meg = [1,11],
-                                  eeg=[1,9]))
+rejcomps_man = dict(sample=dict(meg=[],
+                                eeg=[]))
 
 
 ###############################################################################

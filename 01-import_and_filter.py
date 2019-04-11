@@ -72,7 +72,10 @@ def run_filter(subject):
             h_trans_bandwidth=config.h_trans_bandwidth,
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
-
+        
+        if config.resample_sfreq:
+            raw.resample(config.resample_sfreq, npad='auto')
+        
         raw.save(raw_fname_out, overwrite=True)
         raws.append(raw)
 

@@ -17,7 +17,7 @@ import config
 def run_evoked(subject):
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    extension = '-epo'
+    extension = 'cleaned-epo'
     fname_in = op.join(meg_subject_dir,
                        config.base_fname.format(**locals()))
     extension = '-ave'
@@ -48,8 +48,8 @@ def run_evoked(subject):
         
         for condition in config.conditions:
             evokeds[condition].plot_joint(title = condition,
-                   ts_args=ts_args, topomap_args=topomap_args,
-                   times=[.2, .4])
+                   ts_args=ts_args, topomap_args=topomap_args)
+            # times=[.2, .4]
              
 
 parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)

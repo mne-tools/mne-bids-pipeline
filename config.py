@@ -17,12 +17,15 @@ from mne.datasets import sample
 # separate windows
 
 plot = True
+# execute %matplotlib qt 
+# in the command line to get the plots in extra windows
 
 ###############################################################################
 # DIRECTORIES
 # -----------
 # Let's set the `study path`` where the data is stored on your system
 # study_path = '../MNE-sample-data/'
+# on windows: study_path = '\Users\sophie\repos\ExampleData\'
 study_path = '/Users/sophie/repos/ExampleData/'
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
@@ -82,7 +85,7 @@ bads = dict(SB01=['MEG1723','MEG1722'],
             )
 
 #  if you have multiple runs, you need to define bad channels per run
-# bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
+# bads = dict(SB01=dict(run01=['MEG 2443', 'EEG 053'],
 #                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
@@ -108,12 +111,11 @@ rename_channels = None
 
 # ``l_freq``  : the low-frequency cut-off in the highpass filtering step.
 # Keep it None if no highpass filtering should be applied.
-l_freq = None
+l_freq = 1.
 
 # ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
 # Keep it None if no lowpass filtering should be applied.
-h_freq = None
-
+h_freq = 40.
 
 ###############################################################################
 # MAXFILTER PARAMETERS
@@ -143,7 +145,7 @@ mf_st_duration = None
 #
 # ``resample_sfreq``  : a float that specifies at which sampling frequency
 # the data should be resampled. If None then no resampling will be done.
-resample_sfreq = None
+resample_sfreq =  500. # None
 
 
 # ``decim`` : integer that says how much to decimate data at the epochs level.
@@ -174,15 +176,18 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 # --------
 #
 # ``tmin``: float that gives the start time before event of an epoch.
-tmin = -0.2
+tmin = -0.6
 
 #  ``tmax`` : float that gives the end time after event of an epochs.
-tmax = 1.
+tmax = 1.5
+
+trigger_offset = -0.0416
+# XXX forward/delay all triggers by this value
 
 # ``baseline`` : tuple that specifies how to baseline the epochs; if None,
 # no baseline is applied
 
-baseline = (None, 0.)
+baseline = (-.6, -.1) # (None, 0.)
 
 # stimulus channel, which contains the events
 stim_channel = 'STI101'  # 'STI014'# None
@@ -192,9 +197,12 @@ min_event_duration = 0.002
 
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
-event_id = {'Coherence1': 33, 'Coherence2': 35,
-            'Coherence3': 37, 'Coherence4': 39}
-conditions = ['Coherence1', 'Coherence2', 'Coherence3', 'Coherence4']
+# event_id = {'Onset': 4}
+# conditions = ['Onset']
+
+event_id = {'incoherent_1': 33, 'incoherent_2': 35,
+            'coherent_down': 37, 'coherent_up': 39}
+conditions = ['incoherent_1', 'incoherent_2', 'coherent_down', 'coherent_up']
 
 ###############################################################################
 # ICA PARAMETERS

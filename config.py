@@ -42,9 +42,9 @@ meg_dir = os.path.join(study_path, 'MEG')
 # This is the name of your experimnet
 study_name = 'Localizer'
 
-# To define the subjects, we use a list with all the subject names. Even if its
-# a single subject, it needs to be set up as a list with a single element,
-# as in the example
+# To define the list of participants, we use a list with all the anonymized participant names. Even if 
+# you plan on analyzing a single participant, it needs to be set up as a list with a single element,
+# as in the 'example'
 
 subjects_list = ['SB01'] # ,'SB02', 'SB03'
 # subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
@@ -52,18 +52,18 @@ subjects_list = ['SB01'] # ,'SB02', 'SB03'
 #                  'subject_11', 'subject_12', 'subject_14']
 
 # ``bad subjects`` that should not be excluded from the above
+# [Good Practice / Advice] keep track of the criteria leading you to exclude a participant (e.g. too many movements, 
+# missing blocks, aborted experiment, did not understand the instructions, etc, ...) 
 exclude_subjects = []  # ['subject_01']
 
-
 # Define the names of your ``runs``
-# The naming should be consistant over subjects.
-# put the number of runs you ideally expect to have per subject
-# the scripts will issue a warning if there are less
-# leave empty if there is just one file
+# [Good Practice / Advice] The naming should be consistent across participants.
+# List the number of runs you ideally expect to have per participant. The scripts will issue a warning 
+# if there are less runs than is expected. If there is only just one file, leave empty!
 runs = [''] # ['run01', 'run02']
 
-# does the data have EEG?
 
+# does the data have EEG?
 eeg = False # True
 
 # This generates the name for all files
@@ -75,24 +75,24 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # BAD CHANNELS
 # ------------
 #
-# ``bad channels``, to be removed before maxfilter is applied
-# you either get them from your recording notes, or from visualizing the data
-# Use the simple dict if you don't have runs, and the dict(dict) if you have runs
+# ``bad channels``, bad channels are noisy sensors that *must* to be listed *before* maxfilter is applied
+# [Good Practice / Advice] during the acquisition of your MEG / EEG data, systematically list and keep track of the noisy sensors.
+# Here, put the number of runs you ideally expect to have per participant.
+# Use the simple dict if you don't have runs or if the same sensors are noisy across all runs
 
 bads = dict(SB01=['MEG1723','MEG1722'],
             SB02=[],
             SB03=[],
             )
 
-#  if you have multiple runs, you need to define bad channels per run
+# Use the dict(dict) if you have many runs or if noisy sensors are changing across runs 
 # bads = dict(SB01=dict(run01=['MEG 2443', 'EEG 053'],
-#                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
 # --------------------------
 #
-# Here you name/ replace  extra channels that were recorded, for instance EOG, ECG
+# Here you name or replace  extra channels that were recorded, for instance EOG, ECG
 # ``set_channel_types`` defines types of channels
 # example :
 # set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog', 'EEG063': 'ecg', 'EEG064': 'misc'}
@@ -108,6 +108,22 @@ rename_channels = None
 # FREQUENCY FILTERING
 # -------------------
 #
+# [Good Practice / Advice]
+# It is typically better to set your filtering properties on the raw data so as to avoid
+# what we call border effects 
+#
+# If you use this pipeline for evoked responses, a default filtering would be 
+# a high-pass filter cut-off of l_freq = 1 Hz
+# a low-pass filter cut-off of h_freq = 40 Hz
+# so you would preserve only the power in the 1Hz to 40 Hz band
+#
+# If you use this pipeline for time-frequency analysis, a default filtering would be 
+# a high-pass filter cut-off of l_freq = 1 Hz
+# a low-pass filter cut-off of h_freq = 120 Hz
+# so you would preserve only the power in the 1Hz to 120 Hz band
+#
+# If you use are interested in the lowest frequencies, do not use a high-pass filter cut-off of l_freq = None
+# If you need more fancy analysis, you are already likely past this kinD of tips! :)
 
 # ``l_freq``  : the low-frequency cut-off in the highpass filtering step.
 # Keep it None if no highpass filtering should be applied.
@@ -121,27 +137,46 @@ h_freq = 40.
 # MAXFILTER PARAMETERS
 # -------------------
 #
-# Download the ``cross talk file`` and ``calibration file`` (these are machine specific)
-# path:
-# and place them in the study folder
-mf_ctc_fname = os.path.join(study_path, 'system_calibration_files', 'NeuroSpin_ct_sparse.fif')
-mf_cal_fname = os.path.join(study_path, 'system_calibration_files',  'NeuroSpin_sss_cal.dat')
 
-# ``mf_reference_run `` : defines the reference run used to adjust the head position for
-# all other runs
-mf_reference_run = 0  # take 1st run as reference for head position
+# Download the ``cross talk`` and ``calibration`` files. Warning: these are site and machine specific files
+# that provide information about the environmental noise.
+# For practical purposes, place them in your study folder.
+# At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
+# You can also download them from osf.io/m9nwz/ 'ct_sparse_nspn.fif' & 'sss_cal_nspn.dat')
+mf_ctc_fname = os.path.join(study_path, 'SSS', 'ct_sparse_nspn.fif')
+mf_cal_fname = os.path.join(study_path, 'SSS', 'sss_cal_nspn.dat')
+
+# [Good Practice / Advice]
+# Despite all possible care to avoid movements in the MEG, the participant will likely
+# slowly drift down from the Dewar or slightly shift the head around in the course of the 
+# recording session. Hence, to take this into account, we are realigning all data to a single
+# position. For this, you need to define a reference run (typically the one in the middle of 
+# the recording session). 
+mf_reference_run = 0  # here, take 1st run as reference for head position
 
 # Set the origin for the head position
 mf_head_origin = 'auto'
 
-# ``mf_st_duration `` : if None, no temporal-spatial filtering is applied during MaxFilter,
-# otherwise, put a float that speficifies the buffer duration in seconds,
+# [Good Practice / Advice]
+# There are two kinds of maxfiltering: sss and tsss 
+# [sss = signal space separation ; tsss = temporal signal space separation]
+# (Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
+# If you are interested in low frequency activity (<0.1Hz), avoid using tsss and set mf_st_duration = None
+# If you are interested in low frequency above 0.1 Hz, you can use the default mf_st_duration = 10 s
 # Elekta default = 10s, meaning it acts like a 0.1 Hz highpass filter
+# ``mf_st_duration `` : if None, no temporal-spatial filtering is applied during MaxFilter,
+# otherwise, put a float that speficifies the buffer duration in seconds
 mf_st_duration = None
 
 ###############################################################################
 # RESAMPLING
 # ----------
+# 
+# [Good Practice / Advice]
+# If you have acquired data with a very high sampling frequency (e.g. 2 kHz)
+# you will likely want to downsample to lighten up the size of the files you are working with (pragmatics)
+# If you are interested in typical analysis (up to 120 Hz) you can typically resample your data down to 500 Hz 
+# without preventing reliable time-frequency exploration of your data 
 #
 # ``resample_sfreq``  : a float that specifies at which sampling frequency
 # the data should be resampled. If None then no resampling will be done.
@@ -156,6 +191,10 @@ decim = 1
 ###############################################################################
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
+#
+# [Good Practice / Advice]
+# Have a look at your raw data and train yourself to detect a blink, a heart beat and an eye movement.
+# You can do a quick average of blink data and check what the amplitude looks like.
 #
 #  ``reject`` : the default rejection limits to make some epochs as bads.
 # This allows to remove strong transient artifacts.
@@ -181,12 +220,13 @@ tmin = -0.6
 #  ``tmax`` : float that gives the end time after event of an epochs.
 tmax = 1.5
 
+# float specifying the offset for the trigger and the stimulus (in seconds)
+# you need to measure this value for your specific experiment/setup
 trigger_offset = -0.0416
 # XXX forward/delay all triggers by this value
 
 # ``baseline`` : tuple that specifies how to baseline the epochs; if None,
 # no baseline is applied
-
 baseline = (-.6, -.1) # (None, 0.)
 
 # stimulus channel, which contains the events

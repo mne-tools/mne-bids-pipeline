@@ -57,7 +57,12 @@ def run_evoked(subject):
                                eog=False, stim=False, exclude='bads')
     all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
 
-    for ch_type in ['meg', 'eeg']:
+    if config.eeg:
+        ch_types = ['meg', 'eeg']
+    else:
+        ch_types = ['meg']
+    
+    for ch_type in ch_types:
         print(ch_type)
         picks = all_picks[ch_type]
 
@@ -97,27 +102,27 @@ def run_evoked(subject):
                                                  threshold=0.1)
             del ecg_epochs
 
-            if config.plot:
+            
 
-                report_name = op.join(meg_subject_dir,
-                                      '{0}_{1}_{2}-reject_ica.html'.format(subject, config.study_name,
-                                                                           ch_type))
-                report = Report(report_name, verbose=False)
+            report_name = op.join(meg_subject_dir,
+                                  '{0}_{1}_{2}-reject_ica.html'.format(subject, config.study_name,
+                                                                       ch_type))
+            report = Report(report_name, verbose=False)
 
-                # Plot r score
-                report.add_figs_to_section(ica.plot_scores(scores, exclude=ecg_inds),
-                                           captions=ch_type.upper() + ' - ECG - '
-                                           + 'R scores')
+            # Plot r score
+            report.add_figs_to_section(ica.plot_scores(scores, exclude=ecg_inds),
+                                       captions=ch_type.upper() + ' - ECG - '
+                                       + 'R scores')
 
-                # Plot source time course
-                report.add_figs_to_section(ica.plot_sources(ecg_average, exclude=ecg_inds),
-                                           captions=ch_type.upper() + ' - ECG - '
-                                           + 'Sources time course')
+            # Plot source time course
+            report.add_figs_to_section(ica.plot_sources(ecg_average, exclude=ecg_inds),
+                                       captions=ch_type.upper() + ' - ECG - '
+                                       + 'Sources time course')
 
-                # Plot source time course
-                report.add_figs_to_section(ica.plot_overlay(ecg_average, exclude=ecg_inds),
-                                           captions=ch_type.upper() + ' - ECG - '
-                                           + 'Corrections')
+            # Plot source time course
+            report.add_figs_to_section(ica.plot_overlay(ecg_average, exclude=ecg_inds),
+                                       captions=ch_type.upper() + ' - ECG - '
+                                       + 'Corrections')
 
         else:
             print('no ECG channel!')
@@ -126,7 +131,7 @@ def run_evoked(subject):
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
 
-        if pick_eog:
+        if pick_eog.any():
             print('using EOG channel')
             picks_eog = np.concatenate([picks, pick_eog])
             # Create eog epochs
@@ -138,23 +143,24 @@ def run_evoked(subject):
             eog_inds, scores = ica.find_bads_eog(eog_epochs)
             del eog_epochs
 
-            if config.plot:
-                # Plot r score
-                report.add_figs_to_section(ica.plot_scores(scores, exclude=eog_inds),
-                                           captions=ch_type.upper() + ' - EOG - '
-                                           + 'R scores')
+            
+            # Plot r score
+            report.add_figs_to_section(ica.plot_scores(scores, exclude=eog_inds),
+                                       captions=ch_type.upper() + ' - EOG - '
+                                       + 'R scores')
 
-                # Plot source time course
-                report.add_figs_to_section(ica.plot_sources(eog_average, exclude=eog_inds),
-                                           captions=ch_type.upper() + ' - EOG - '
-                                           + 'Sources time course')
+            # Plot source time course
+            report.add_figs_to_section(ica.plot_sources(eog_average, exclude=eog_inds),
+                                       captions=ch_type.upper() + ' - EOG - '
+                                       + 'Sources time course')
 
-                # Plot source time course
-                report.add_figs_to_section(ica.plot_overlay(eog_average, exclude=eog_inds),
-                                           captions=ch_type.upper() + ' - EOG - '
-                                           + 'Corrections')
+            # Plot source time course
+            report.add_figs_to_section(ica.plot_overlay(eog_average, exclude=eog_inds),
+                                       captions=ch_type.upper() + ' - EOG - '
+                                       + 'Corrections')
 
-                report.save(report_name, overwrite=True, open_browser=False)
+            report.save(report_name, overwrite=True, open_browser=False)
+                           
 
         else:
             print('no EOG channel!')
@@ -168,11 +174,13 @@ def run_evoked(subject):
 
         print('Saving epochs')
         epochs.save(fname_out)
-
-        if config.plot:
-            report.add_figs_to_section(ica.plot_overlay(raw.copy(), exclude=ica_reject),
+        
+        report.add_figs_to_section(ica.plot_overlay(raw.copy(), exclude=ica_reject),
                                        captions=ch_type.upper() +
                                        ' - ALL(epochs) - ' + 'Corrections')
+        
+        if config.plot:
+                epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r")
 
 
 parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)

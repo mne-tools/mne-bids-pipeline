@@ -29,7 +29,12 @@ def run_events(subject):
         eve_fname_out = op.splitext(raw_fname_in)[0] + '-eve.fif'
 
         raw = mne.io.read_raw_fif(raw_fname_in)
-        events = mne.find_events(raw, stim_channel=config.stim_channel)
+        
+        events = mne.find_events(raw, stim_channel=config.stim_channel, 
+                                 consecutive=True, 
+                                 min_duration=config.min_event_duration, 
+                                 shortest_event=1)
+        
 
         print("Input: ", raw_fname_in)
         print("Output: ", eve_fname_out)

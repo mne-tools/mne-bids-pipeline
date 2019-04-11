@@ -59,10 +59,13 @@ def run_epochs(subject):
 
     print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
-    raw.set_eeg_reference(projection=True)
+    
+    if config.eeg:
+        raw.set_eeg_reference(projection=True)
+    
     del raw_list
 
-    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=True,
+    picks = mne.pick_types(raw.info, meg=True, eeg=config.eeg, stim=True,
                            eog=True, exclude=())
 
     # Construct metadata from the epochs
@@ -86,7 +89,7 @@ def run_epochs(subject):
 
     if config.plot:
         epochs.plot()
-
+        epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r")
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)

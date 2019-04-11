@@ -16,14 +16,14 @@ from mne.datasets import sample
 # execute %matplotlib qt in your command line once to show the figures in
 # separate windows
 
-plot = False
+plot = True
 
 ###############################################################################
 # DIRECTORIES
 # -----------
 # Let's set the `study path`` where the data is stored on your system
 # study_path = '../MNE-sample-data/'
-study_path = sample.data_path()
+study_path = '/Users/sophie/repos/ExampleData/'
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
 subjects_dir = os.path.join(study_path, 'subjects')
@@ -37,13 +37,13 @@ meg_dir = os.path.join(study_path, 'MEG')
 # named my_study_path/MEG/my_subject/
 
 # This is the name of your experimnet
-study_name = 'audvis'
+study_name = 'Localizer'
 
 # To define the subjects, we use a list with all the subject names. Even if its
 # a single subject, it needs to be set up as a list with a single element,
 # as in the example
 
-subjects_list = ['sample']
+subjects_list = ['SB01'] # ,'SB02', 'SB03'
 # subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
 #                  'subject_06', 'subject_08', 'subject_09', 'subject_10',
 #                  'subject_11', 'subject_12', 'subject_14']
@@ -59,10 +59,13 @@ exclude_subjects = []  # ['subject_01']
 # leave empty if there is just one file
 runs = [''] # ['run01', 'run02']
 
+# does the data have EEG?
+
+eeg = False # True
+
 # This generates the name for all files
 # with the names specified above
 # normally you should not have to touch this
-
 base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 ###############################################################################
@@ -73,8 +76,12 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # you either get them from your recording notes, or from visualizing the data
 # Use the simple dict if you don't have runs, and the dict(dict) if you have runs
 
-bads = dict(sample=['MEG 2443', 'EEG 053'])
+bads = dict(SB01=['MEG1723','MEG1722'],
+            SB02=[],
+            SB03=[],
+            )
 
+#  if you have multiple runs, you need to define bad channels per run
 # bads = dict(sample=dict(run01=['MEG 2443', 'EEG 053'],
 #                         run02=['MEG 2443', 'EEG 053', 'EEG 013']))
 
@@ -115,8 +122,8 @@ h_freq = None
 # Download the ``cross talk file`` and ``calibration file`` (these are machine specific)
 # path:
 # and place them in the study folder
-mf_ctc_fname = os.path.join(study_path, 'SSS', 'ct_sparse_mgh.fif')
-mf_cal_fname = os.path.join(study_path, 'SSS', 'sss_cal_mgh.dat')
+mf_ctc_fname = os.path.join(study_path, 'system_calibration_files', 'NeuroSpin_ct_sparse.fif')
+mf_cal_fname = os.path.join(study_path, 'system_calibration_files',  'NeuroSpin_sss_cal.dat')
 
 # ``mf_reference_run `` : defines the reference run used to adjust the head position for
 # all other runs
@@ -152,12 +159,15 @@ decim = 1
 # This allows to remove strong transient artifacts.
 # If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
 # a value for the eog channel (see examples below).
+# Make sure to include values for eeg if you have eeg data
+
 # **Note**: these numbers tend to vary between subjects.
 # Examples:
 # reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+# reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # reject = None
 
-reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
+reject = {'grad': 4000e-13, 'mag': 4e-12}
 
 ###############################################################################
 # EPOCHING
@@ -167,7 +177,7 @@ reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 tmin = -0.2
 
 #  ``tmax`` : float that gives the end time after event of an epochs.
-tmax = 0.5
+tmax = 1.
 
 # ``baseline`` : tuple that specifies how to baseline the epochs; if None,
 # no baseline is applied
@@ -175,13 +185,16 @@ tmax = 0.5
 baseline = (None, 0.)
 
 # stimulus channel, which contains the events
-stim_channel = None  # 'STI014'# 'STI101'
+stim_channel = 'STI101'  # 'STI014'# None
+
+# minimal duration of the events you want to extract
+min_event_duration = 0.002
 
 #  `event_id`` : python dictionary that maps events (trigger/marker values)
 # to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
-event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
-            'Visual/Left': 3, 'Visual/Right': 4}
-conditions = ['Auditory', 'Visual', 'Right', 'Left']
+event_id = {'Coherence1': 33, 'Coherence2': 35,
+            'Coherence3': 37, 'Coherence4': 39}
+conditions = ['Coherence1', 'Coherence2', 'Coherence3', 'Coherence4']
 
 ###############################################################################
 # ICA PARAMETERS
@@ -189,7 +202,7 @@ conditions = ['Auditory', 'Visual', 'Right', 'Left']
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
 
-rejcomps_man = dict(sample=dict(meg=[],
+rejcomps_man = dict(SB01=dict(meg=[],
                                 eeg=[]))
 
 

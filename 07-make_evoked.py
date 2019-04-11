@@ -31,11 +31,26 @@ def run_evoked(subject):
     epochs = mne.read_epochs(fname_in, preload=True)
 
     evokeds = []
-    for condition in config.conditions:
-        evokeds.append(epochs[condition].average())
-
-    mne.evoked.write_evokeds(fname_out, evokeds)
-
+    
+#    # XXX if I use append, I cannot retrieve the data per condition for the plots
+#    # because it creates a list    
+#    for condition in config.conditions:
+#        evokeds.append(epochs[condition].average())
+#    mne.evoked.write_evokeds(fname_out, evokeds)
+    
+    evokeds = []
+    evokeds = dict((condition, epochs[condition].average()) for condition in config.conditions)
+   
+    if config.plot:
+        
+        ts_args = dict(gfp=True, time_unit='s')
+        topomap_args = dict(time_unit='s') # sensors=False, 
+        
+        for condition in config.conditions:
+            evokeds[condition].plot_joint(title = condition,
+                   ts_args=ts_args, topomap_args=topomap_args,
+                   times=[.2, .4])
+             
 
 parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

@@ -53,7 +53,7 @@ def run_filter(subject):
                  (raw_fname_in, subject))
             continue
 
-        raw = mne.io.read_raw_fif(raw_fname_in,
+        raw = mne.io.read_raw_fif(raw_fname_in,allow_maxshield=True,
                                   preload=True, verbose='error')
 
         # add bad channels

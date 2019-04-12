@@ -33,7 +33,6 @@ for subject in config.subjects_list:
     for idx, evoked in enumerate(evokeds):
         all_evokeds[idx].append(evoked)  # Insert to the container
 
-# XXX how to give it the condition names?
 for idx, evokeds in enumerate(all_evokeds):
     all_evokeds[idx] = mne.combine_evoked(evokeds, 'equal')  # Combine subjects
     

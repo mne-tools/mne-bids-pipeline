@@ -15,6 +15,7 @@ import mne
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
 from mne.report import Report
+import matplotlib.pyplot as plt
 
 import config
 
@@ -115,20 +116,18 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                                                 ch_type))
             report = Report(report_name, verbose=False)
 
-            for figure in ica.plot_properties(epochs_for_ica,
-                                              picks=list(range(0,
-                                                               ica.n_components_)),
+
+            for idx in range(0,ica.n_components_):
+            
+                figure = ica.plot_properties(epochs_for_ica,
+                                              picks=idx,
                                               psd_args={'fmax': 60},
-                                              show=False):
+                                              show=False)
 
                 report.add_figs_to_section(figure, section=subject,
                                            captions=(ch_type.upper() +
-                                                     ' - ICA Components'))
-
-                # XXX how to close each figure within the loop to avoid
-                # runtime error: > 20 figures opened
-                # plt.close(figure)
-                
+                                                     ' - ICA Components'))                
+ 
             report.save(report_name, overwrite=True, open_browser=False)
 
 

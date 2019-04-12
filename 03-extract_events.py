@@ -37,15 +37,14 @@ def run_events(subject):
                                  shortest_event=1)
         # XXX shortest event?
         
-        # XXX shift events by trigger
+        
         if config.trigger_offset:
             events = mne.event.shift_time_events(
-                    events,
-                    np.unique(events[:,2]),
-                    config.trigger_offset,
-                    raw.info['sfreq'],
-                    )
-
+                     events,
+                     np.unique(events[:,2]),
+                     config.trigger_offset,
+                     raw.info['sfreq'],
+                     )
 
         print("Input: ", raw_fname_in)
         print("Output: ", eve_fname_out)

@@ -29,14 +29,14 @@ def run_evoked(subject):
 
     print('  Creating evoked datasets')
     epochs = mne.read_epochs(fname_in, preload=True)
-
+   
+    # XXX if I use append, I cannot retrieve the data per condition for the plots
+    # because it creates a list   
+    # so I create two versions of the evokeds
     evokeds = []
-    
-#    # XXX if I use append, I cannot retrieve the data per condition for the plots
-#    # because it creates a list    
-#    for condition in config.conditions:
-#        evokeds.append(epochs[condition].average())
-#    mne.evoked.write_evokeds(fname_out, evokeds)
+    for condition in config.conditions:
+        evokeds.append(epochs[condition].average())
+    mne.evoked.write_evokeds(fname_out, evokeds)
     
     evokeds = []
     evokeds = dict((condition, epochs[condition].average()) for condition in config.conditions)

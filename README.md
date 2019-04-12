@@ -2,11 +2,13 @@
 
 # 0 Credits 
 
-This example pipeline for MEG/EEG data processing with MNE python was build jointly by the [Cognition and Brain Dynamics Team] (https://brainthemind.com/) and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
+This example pipeline for MEG/EEG data processing with MNE python was build jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/) and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
 based on scripts originally developed for this publication:
 
-Jas, M., Larson, E., Engemann, D. A., Leppäkangas, J., Taulu, S., Hämäläinen, M., & Gramfort, A. (2018). A reproducible MEG/EEG group study with the MNE software: recommendations, quality assessments, and good practices. Frontiers in neuroscience, 12. 
-
+	M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen
+	A. Gramfort (2018). A reproducible MEG/EEG group study with the MNE
+	software: recommendations, quality assessments, and good practices.
+	Frontiers in neuroscience, 12.
 
 # 1 Make sure MNE-python is installed
 
@@ -60,38 +62,25 @@ All specific settings to be used in your analysis are defined in [config.py](con
 See the comments for explanations and recommendations. 
 
 
-# 4 Preprocessing steps
+# 4 Processing steps
 
-[config.py](config.py) -> The only file you need to modify in principle. This file contain all your parameters. 
-
-[01-import_and_filter.py](01-import_and_filter.py) ->
-Read raw data and apply lowpass or/and highpass filtering.
-
-[02-apply_maxwell_filter.py](02-apply_maxwell_filter.py) ->
-Run maxfilter and do lowpass filter at 40 Hz.
-
-[03-extract_events.py](03-extract_events.py) ->
-Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101.
-
-[04-make_epochs.py](04-make_epochs.py) ->
-Extract epochs.
-
-[05a-run_ica.py](05a-run_ica.py) ->
-Run Independant Component Analysis (ICA) for artifact correction.
-
-[06a-apply_ica.py](06a-apply_ica.py) ->
-Blinks and ECG artifacts are automatically detected and the corresponding ICA components are removed from the data.
-
-[05b-run_ssp.py](05a-run_ica.py) ->
-As an alternative to ICA, you can use SSP projections to correct for eye blink and heart artifacts. 
-Use either 5a/6a, or 5b/6b. 
-
-[06b-apply_ssp.py](06a-apply_ica.py) ->
-Apply ssp projections and obtain the cleaned epochs. 
-
-[07-make_evoked.py](07-make_evoked.py) ->
-Extract evoked data for each condition.
-
-[08-group_average_sensors.py](08-group_average_sensors.py) ->
-Make a group average of the time domain data.
-
+| Script | Description |
+|:-----------|:----------------------------------------------------------|
+| [config.py](config.py) | The only file you need to modify in principle. This file contain all your parameters. |
+| [01-frequency_filtering.py](01-frequency_filtering.py) | Read raw data and apply lowpass or/and highpass filtering. |
+| [02-maxwell_filtering.py](02-maxwell_filtering_sss.py) | Run maxfilter and do lowpass filter at 40 Hz. |
+| [03-extract_events.py](03-extract_events.py) | Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101. |
+| [04-make_epochs.py](04-make_epochs.py) | Extract epochs. |
+| [05a-run_ica.py](05a-run_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |
+| [05b-run_ssp.py](05a-run_ssp.py) | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
+| [06a-apply_ica.py](06a-apply_ica.py) | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart artifacts. Use either 5a/6a, or 5b/6b. |
+| [06b-apply_ssp.py](06b-apply_ssp.py) | Apply SSP projections and obtain the cleaned epochs.  |
+| [07-make_evoked.py](07-make_evoked.py) | Extract evoked data for each condition. |
+| [08-group_average_sensors.py](08-group_average_sensors.py) | Make a group average of the time domain data. |
+| [09-sliding_estimator.py](09-sliding_estimator.py) | Running a time-by-time decoder with sliding window. |
+| [10-time_frequency.py](10-time_frequency.py) | Running a time-frequency analysis. |
+| [11-make_forward.py](11-make_forward.py) | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
+| [12-make_cov.py](12-make_cov.py) | Compute noise covariances for each subject. |
+| [13-make_inverse.py](13-make_inverse.py) | Compute inverse problem to obtain source estimates. |
+| [14-group_average_source.py](14-group_average_source.py) | Compute source estimates average over subjects. |
+| [99-make_reports.py](99-make_reports.py) | Compute HTML reports for each subject. |

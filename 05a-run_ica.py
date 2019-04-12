@@ -2,20 +2,19 @@
 ===========
 05. Run ICA
 ===========
-This fits ICA on epoched data filtered with 1 Hz highpass, 
-for this purpose only using fastICA. Separate ICAs are fitted and stored for 
-MEG and EEG data. 
-To actually remove designated ICA components from your data, you will have to 
-run 06a-apply_ica.py. 
+This fits ICA on epoched data filtered with 1 Hz highpass,
+for this purpose only using fastICA. Separate ICAs are fitted and stored for
+MEG and EEG data.
+To actually remove designated ICA components from your data, you will have to
+run 06a-apply_ica.py.
 """
 
 import os.path as op
 
 import mne
+from mne.report import Report
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
-from mne.report import Report
-import matplotlib.pyplot as plt
 
 import config
 
@@ -44,10 +43,9 @@ def run_ica(subject, tsss=config.mf_st_duration):
         events = mne.read_events(eve_fname)
         events_list.append(events)
 
-        # XXX mark bads from any run – is it a problem for ICA
-        # if we just exclude the bads shared by all runs ?
+        # mark bads from any run
         if run:
-            bads = set(chain(*config.bads[subject].values()))
+            bads = set(sum(config.bads[subject].values(), []))
         else:
             bads = config.bads[subject]
 
@@ -65,7 +63,8 @@ def run_ica(subject, tsss=config.mf_st_duration):
     # produce high-pass filtered version of the data for ICA
     epochs_for_ica = mne.Epochs(raw.copy().filter(l_freq=1., h_freq=None),
                                 events, config.event_id, config.tmin,
-                                config.tmax, proj=True, baseline=config.baseline,
+                                config.tmax, proj=True,
+                                baseline=config.baseline,
                                 preload=True, decim=config.decim,
                                 reject=config.reject)
 
@@ -84,12 +83,12 @@ def run_ica(subject, tsss=config.mf_st_duration):
     n_components_meg = 0.999
 
     n_components = {'meg': n_components_meg, 'eeg': 0.999}
-    
+
     if config.eeg:
         ch_types = ['meg', 'eeg']
     else:
         ch_types = ['meg']
-    
+
     for ch_type in ch_types:
         print('Running ICA for ' + ch_type)
 
@@ -100,35 +99,33 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
         ica.fit(epochs_for_ica, picks=picks, decim=decim)
 
-        print('  Fit %d components (explaining at least %0.1f%% of the variance)'
-              % (ica.n_components_, 100 * n_components[ch_type]))
+        print('  Fit %d components (explaining at least %0.1f%% of the'
+              ' variance)' % (ica.n_components_, 100 * n_components[ch_type]))
 
-        ica_name = op.join(meg_subject_dir,
-                           '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name,
-                                                        ch_type))
-        ica.save(ica_name)
+        ica_fname = \
+            '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name, ch_type)
+        ica_fname = op.join(meg_subject_dir, ica_fname)
+        ica.save(ica_fname)
 
         if config.plot:
             # plot ICA components to html report
-            from mne.report import Report
-            report_name = op.join(meg_subject_dir,
-                                  '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
-                                                                ch_type))
-            report = Report(report_name, verbose=False)
+            report_fname = \
+                '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
+                                              ch_type)
+            report_fname = op.join(meg_subject_dir, report_fname)
+            report = Report(report_fname, verbose=False)
 
-
-            for idx in range(0,ica.n_components_):
-            
+            for idx in range(0, ica.n_components_):
                 figure = ica.plot_properties(epochs_for_ica,
-                                              picks=idx,
-                                              psd_args={'fmax': 60},
-                                              show=False)
+                                             picks=idx,
+                                             psd_args={'fmax': 60},
+                                             show=False)
 
                 report.add_figs_to_section(figure, section=subject,
                                            captions=(ch_type.upper() +
-                                                     ' - ICA Components'))                
- 
-            report.save(report_name, overwrite=True, open_browser=False)
+                                                     ' - ICA Components'))
+
+            report.save(report_fname, overwrite=True, open_browser=False)
 
 
 parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)

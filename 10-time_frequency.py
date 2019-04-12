@@ -38,11 +38,11 @@ def run_time_frequency(subject):
 
         power.save(
             op.join(meg_subject_dir, '%s_%s_power_%s-tfr.h5'
-                    % (config.study_name, subject, 
+                    % (config.study_name, subject,
                        condition.replace(op.sep, ''))), overwrite=True)
         itc.save(
             op.join(meg_subject_dir, '%s_%s_itc_%s-tfr.h5'
-                    % (config.study_name, subject, 
+                    % (config.study_name, subject,
                        condition.replace(op.sep, ''))), overwrite=True)
 
 

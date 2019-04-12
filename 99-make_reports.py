@@ -67,6 +67,7 @@ def run_report(subject):
     rep.save(fname=op.join(config.meg_subject_dir, 'report_%s.html' % subject),
              open_browser=False, overwrite=True)
 
+
 parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)
 
@@ -75,7 +76,8 @@ parallel(run_func(subject) for subject in config.subjects_list)
 # rep = Report(info_fname=faces_fname, subject='fsaverage',
 #              subjects_dir=subjects_dir)
 # faces = mne.read_evokeds(faces_fname)[0]
-# rep.add_figs_to_section(faces.plot(spatial_colors=True, gfp=True, show=False),
+# rep.add_figs_to_section(faces.plot(spatial_colors=True, gfp=True,
+#                                    show=False),
 #                         'Average faces')
 
 # scrambled = mne.read_evokeds(op.join(meg_dir, 'eeg_scrambled-ave.fif'))[0]

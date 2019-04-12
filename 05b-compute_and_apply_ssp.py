@@ -25,22 +25,23 @@ def run_ssp(subject):
     run = config.runs[0]
     extension = run + '_sss_raw'
     raw_fname_in = op.join(meg_subject_dir,
-                       config.base_fname.format(**locals()))
-    
+                           config.base_fname.format(**locals()))
+
     extension = run + '_ssp-proj'
     proj_fname_out = op.join(meg_subject_dir,
-                       config.base_fname.format(**locals()))
-    
+                             config.base_fname.format(**locals()))
+
     print("Input: ", raw_fname_in)
     print("Output: ", proj_fname_out)
-    
+
     raw = mne.io.read_raw_fif(raw_fname_in)
     ecg_projs, ecg_events = \
-    compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0, average=True)
+        compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0, average=True)
     eog_projs, eog_events = \
-    compute_proj_eog(raw, n_grad=1, n_mag=1, n_eeg=1, average=True)
-    
-    mne.write_proj(proj_fname_out, eog_projs + ecg_projs)        
+        compute_proj_eog(raw, n_grad=1, n_mag=1, n_eeg=1, average=True)
+
+    mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
+
 
 # Memory footprint: around n_jobs * 4 GB
 parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)

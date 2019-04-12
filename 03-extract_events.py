@@ -3,11 +3,11 @@
 03. Extract events from the stimulus channel
 ============================================
 
-Here, all events present in the stimulus channel indicated in config.stim_channel
-are extracted. 
+Here, all events present in the stimulus channel indicated in
+config.stim_channel are extracted.
 The events are saved to the subject's MEG directory.
-This is done early in the pipeline to avoid distorting event-time, for instance
-by resampling.  
+This is done early in the pipeline to avoid distorting event-time,
+for instance by resampling.
 """
 
 import os.path as op
@@ -30,21 +30,17 @@ def run_events(subject):
         eve_fname_out = op.splitext(raw_fname_in)[0] + '-eve.fif'
 
         raw = mne.io.read_raw_fif(raw_fname_in)
-        
-        events = mne.find_events(raw, stim_channel=config.stim_channel, 
-                                 consecutive=True, 
-                                 min_duration=config.min_event_duration, 
-                                 shortest_event=1)
-        # XXX shortest event?
-        
-        
+
+        events = mne.find_events(raw, stim_channel=config.stim_channel,
+                                 consecutive=True,
+                                 min_duration=config.min_event_duration,
+                                 shortest_event=config.shortest_event)
+
         if config.trigger_offset:
-            events = mne.event.shift_time_events(
-                     events,
-                     np.unique(events[:,2]),
-                     config.trigger_offset,
-                     raw.info['sfreq'],
-                     )
+            events = mne.event.shift_time_events(events,
+                                                 np.unique(events[:, 2]),
+                                                 config.trigger_offset,
+                                                 raw.info['sfreq'])
 
         print("Input: ", raw_fname_in)
         print("Output: ", eve_fname_out)

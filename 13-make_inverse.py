@@ -19,23 +19,22 @@ import config
 def run_inverse(subject):
     print("processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    
+
     extension = '-ave'
     fname_ave = op.join(meg_subject_dir,
-                        config.base_fname.format(**locals())) 
-    
+                        config.base_fname.format(**locals()))
+
     extension = '%s-fwd' % (config.spacing)
     fname_fwd = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
-    
+
     extension = '-cov'
     fname_cov = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
-    
+
     extension = '%s-inv' % (config.spacing)
     fname_inv = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
-    
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -48,13 +47,13 @@ def run_inverse(subject):
     # Apply inverse
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
-    
+
     # XXX here we are still working on single subjects, no?
     for condition, evoked in zip(config.conditions, evokeds):
         stc = apply_inverse(evoked, inverse_operator, lambda2, "dSPM",
                             pick_ori=None)
         stc.save(op.join(meg_subject_dir, '%s_%s_mne_dSPM_inverse-%s'
-                         % (config.study_name, subject, 
+                         % (config.study_name, subject,
                             condition.replace(op.sep, ''))))
 
 

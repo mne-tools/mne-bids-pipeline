@@ -23,10 +23,15 @@ plot = False
 ###############################################################################
 # DIRECTORIES
 # -----------
-# Let's set the `study path`` where the data is stored on your system
+#
+# Let's set the `study path`` where the data is stored on your system.
+# For example:
 # study_path = '../MNE-sample-data/'
-# on windows: study_path = '\Users\sophie\repos\ExampleData\'
+# or
 # study_path = '/Users/sophie/repos/ExampleData/'
+# or for example on windows:
+# study_path = 'C:\Users\sophie\repos\ExampleData\'
+
 study_path = 'data/'
 
 # The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
@@ -47,18 +52,14 @@ study_name = 'Localizer'
 # participant names. Even if you plan on analyzing a single participant, it
 # needs to be set up as a list with a single element, as in the 'example'
 
-subjects_list = ['SB01']
-subjects_list = ['SB01', 'SB02']
+subjects_list = ['SB01','SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07',
+                 'SB08', 'SB09','SB10', 'SB11', 'SB12']
 
-# subjects_list = ['SB01','SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07',
-#                  'SB08', 'SB09','SB10', 'SB11', 'SB12']
-
-# ``bad subjects`` that should not be excluded from the above # XXX not?
+# Now you can specify subjects to exclude from the group study:
 # [Good Practice / Advice] keep track of the criteria leading you to exclude
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 exclude_subjects = []  # ['subject_01']
-# XXX this isn't applied right now
 
 # Define the names of your ``runs``
 # [Good Practice / Advice] The naming should be consistent across participants.
@@ -346,3 +347,7 @@ h_trans_bandwidth = 'auto'
 N_JOBS = 1
 
 random_state = 42
+
+shortest_event = 1
+
+allow_maxshield = True

@@ -257,11 +257,19 @@ event_id = {'incoherent_1': 33, 'incoherent_2': 35,
 conditions = ['incoherent_1', 'incoherent_2', 'coherent_down', 'coherent_up']
 
 ###############################################################################
-# ICA PARAMETERS
+# ARTIFACT REMOVAL
 # --------------
+# You can choose between ICA and SSP to remove eye and heart artifacts. 
+# SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp
+# ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica
+# if you choose ICA, run scripts 5a and 6a
+# if you choose SSP, run scripts 5b and 6b
+# if you running both, your cleaned epochs will be the ones cleaned with the 
+# methods you run last (they overwrite each other)
+
+# ICA settings
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
-
 rejcomps_man = dict(SB01=dict(meg=[],
                                 eeg=[]),
                     SB02=dict(meg=[],

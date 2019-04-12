@@ -291,6 +291,8 @@ rejcomps_man = defaultdict(default_reject_comps)
 # To populate this you can use:
 # rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
 
+# ``ica_ctps_ecg_threshold``:
+#     The threshold parameter passed to `find_bads_ecg` method.
 ica_ctps_ecg_threshold = 0.1
 
 ###############################################################################

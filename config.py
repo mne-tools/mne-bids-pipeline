@@ -83,8 +83,7 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # Use the simple dict if you don't have runs or if the same sensors are noisy across all runs
 
 bads = dict(SB01=['MEG1723','MEG1722'],
-            SB02=[],
-            SB03=['MEG1922','MEG1923','MEG0543'],
+            SB02=[],           
             SB04=['MEG0543','MEG2333'],
             SB05=[],
             SB06=['MEG2632','MEG2033'],
@@ -264,7 +263,28 @@ conditions = ['incoherent_1', 'incoherent_2', 'coherent_down', 'coherent_up']
 runica = True
 
 rejcomps_man = dict(SB01=dict(meg=[],
-                                eeg=[]))
+                                eeg=[]),
+                    SB02=dict(meg=[],
+                                eeg=[]),
+                    SB04=dict(meg=[],
+                                eeg=[]),
+                    SB05=dict(meg=[],
+                                eeg=[]),
+                    SB06=dict(meg=[],
+                                eeg=[]),
+                    SB07=dict(meg=[],
+                                eeg=[]),
+                    SB08=dict(meg=[],
+                                eeg=[]),
+                    SB09=dict(meg=[],
+                                eeg=[]),
+                    SB10=dict(meg=[],
+                                eeg=[]),
+                    SB11=dict(meg=[],
+                                eeg=[]),
+                    SB12=dict(meg=[],
+                                eeg=[]),
+                              )
 
 
 ###############################################################################
@@ -274,8 +294,8 @@ rejcomps_man = dict(SB01=dict(meg=[],
 # decoding_conditions should be a list of conditions to be classified.
 # For example 'Auditory' vs. 'Visual' as well as
 # 'Auditory/Left' vs 'Auditory/Right'
-decoding_conditions = [('Auditory/Left', 'Auditory/Right'),
-                       ('Auditory', 'Visual')]
+decoding_conditions = [('incoherent_1', 'incoherent_2'),
+                       ('coherent_up', 'coherent_down')]
 decoding_metric = 'roc_auc'
 decoding_n_splits = 5
 
@@ -283,7 +303,7 @@ decoding_n_splits = 5
 # TIME-FREQUENCY
 # --------------
 #
-time_frequency_conditions = ['Auditory/Left']
+time_frequency_conditions = ['incoherent_1', 'incoherent_2', 'coherent_down', 'coherent_up']
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS

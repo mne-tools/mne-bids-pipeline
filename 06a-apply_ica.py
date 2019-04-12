@@ -25,7 +25,7 @@ import numpy as np
 import config
 
 
-def run_evoked(subject):
+def apply_ica(subject):
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
@@ -35,7 +35,7 @@ def run_evoked(subject):
                        config.base_fname.format(**locals()))
     epochs = mne.read_epochs(fname_in, preload=True)
 
-    extension = 'cleaned-epo'
+    extension = '_cleaned-epo'
     fname_out = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
 
@@ -183,5 +183,5 @@ def run_evoked(subject):
                 epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r")
 
 
-parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)
+parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)

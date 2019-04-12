@@ -64,11 +64,6 @@ jobs:
               mkdir -p ~/mne_data
               make fetch
 
-        - run:
-            name: Verify data is there
-            command: |
-              ls -al ~/mne_data;
-
         # Run the scripts
         - run:
             name: make html

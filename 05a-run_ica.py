@@ -127,7 +127,8 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
                 # XXX how to close each figure within the loop to avoid
                 # runtime error: > 20 figures opened
-
+                # plt.close(figure)
+                
             report.save(report_name, overwrite=True, open_browser=False)
 
 

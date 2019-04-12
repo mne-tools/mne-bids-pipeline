@@ -46,15 +46,17 @@ study_name = 'Localizer'
 # you plan on analyzing a single participant, it needs to be set up as a list with a single element,
 # as in the 'example'
 
-subjects_list = ['SB01'] # ,'SB02', 'SB03'
-# subjects_list = ['subject_01', 'subject_02', 'subject_03', 'subject_05',
-#                  'subject_06', 'subject_08', 'subject_09', 'subject_10',
-#                  'subject_11', 'subject_12', 'subject_14']
+subjects_list = [ 'SB01','SB02', 'SB04', 'SB05','SB06']
+# SB 03 seems to be a run from the main experiment
 
-# ``bad subjects`` that should not be excluded from the above
+#subjects_list = ['SB01','SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07','SB08',
+#                 'SB09','SB10', 'SB11', 'SB12']
+
+# ``bad subjects`` that should not be excluded from the above # XXX not?
 # [Good Practice / Advice] keep track of the criteria leading you to exclude a participant (e.g. too many movements, 
 # missing blocks, aborted experiment, did not understand the instructions, etc, ...) 
 exclude_subjects = []  # ['subject_01']
+# XXX this isn't applied right now
 
 # Define the names of your ``runs``
 # [Good Practice / Advice] The naming should be consistent across participants.
@@ -82,11 +84,22 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 bads = dict(SB01=['MEG1723','MEG1722'],
             SB02=[],
-            SB03=[],
+            SB03=['MEG1922','MEG1923','MEG0543'],
+            SB04=['MEG0543','MEG2333'],
+            SB05=[],
+            SB06=['MEG2632','MEG2033'],
+            SB07=[],
+            SB08=[],
+            SB09=[],
+            SB10=[],
+            SB11=[],
+            SB12=[],
             )
 
 # Use the dict(dict) if you have many runs or if noisy sensors are changing across runs 
+# 
 # bads = dict(SB01=dict(run01=['MEG 2443', 'EEG 053'],
+#                       run02=['MEG 2443', 'EEG 053']))
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -143,8 +156,8 @@ h_freq = 40.
 # For practical purposes, place them in your study folder.
 # At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
 # You can also download them from osf.io/m9nwz/ 'ct_sparse_nspn.fif' & 'sss_cal_nspn.dat')
-mf_ctc_fname = os.path.join(study_path, 'SSS', 'ct_sparse_nspn.fif')
-mf_cal_fname = os.path.join(study_path, 'SSS', 'sss_cal_nspn.dat')
+mf_ctc_fname = os.path.join(study_path,'system_calibration_files', 'ct_sparse_nspn.fif')
+mf_cal_fname = os.path.join(study_path, 'system_calibration_files', 'sss_cal_nspn.dat')
 
 # [Good Practice / Advice]
 # Despite all possible care to avoid movements in the MEG, the participant will likely

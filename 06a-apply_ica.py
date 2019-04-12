@@ -140,7 +140,7 @@ def run_evoked(subject):
                                            tmax=0.5)
 
             eog_average = eog_epochs.average()
-            eog_inds, scores = ica.find_bads_eog(eog_epochs)
+            eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)
             del eog_epochs
 
             

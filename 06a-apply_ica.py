@@ -110,17 +110,17 @@ def apply_ica(subject):
             report = Report(report_name, verbose=False)
 
             # Plot r score
-            report.add_figs_to_section(ica.plot_scores(scores, exclude=ecg_inds),
+            report.add_figs_to_section(ica.plot_scores(scores, exclude=ecg_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - ECG - '
                                        + 'R scores')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_sources(ecg_average, exclude=ecg_inds),
+            report.add_figs_to_section(ica.plot_sources(ecg_average, exclude=ecg_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - ECG - '
                                        + 'Sources time course')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_overlay(ecg_average, exclude=ecg_inds),
+            report.add_figs_to_section(ica.plot_overlay(ecg_average, exclude=ecg_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - ECG - '
                                        + 'Corrections')
 
@@ -145,17 +145,17 @@ def apply_ica(subject):
 
             
             # Plot r score
-            report.add_figs_to_section(ica.plot_scores(scores, exclude=eog_inds),
+            report.add_figs_to_section(ica.plot_scores(scores, exclude=eog_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - EOG - '
                                        + 'R scores')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_sources(eog_average, exclude=eog_inds),
+            report.add_figs_to_section(ica.plot_sources(eog_average, exclude=eog_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - EOG - '
                                        + 'Sources time course')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_overlay(eog_average, exclude=eog_inds),
+            report.add_figs_to_section(ica.plot_overlay(eog_average, exclude=eog_inds, show=config.plot),
                                        captions=ch_type.upper() + ' - EOG - '
                                        + 'Corrections')
 
@@ -175,12 +175,12 @@ def apply_ica(subject):
         print('Saving epochs')
         epochs.save(fname_out)
         
-        report.add_figs_to_section(ica.plot_overlay(raw.copy(), exclude=ica_reject),
+        report.add_figs_to_section(ica.plot_overlay(raw.copy(), exclude=ica_reject, show=config.plot),
                                        captions=ch_type.upper() +
                                        ' - ALL(epochs) - ' + 'Corrections')
         
         if config.plot:
-                epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r")
+                epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r", show=config.plot)
 
 
 parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)

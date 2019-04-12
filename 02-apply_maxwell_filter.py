@@ -66,11 +66,8 @@ def run_maxwell_filter(subject):
         raw_sss.save(raw_fname_out, overwrite=True)
 
         if config.plot:
-
             # plot maxfiltered data
-            figure = raw_sss.plot(
-                n_channels=50, butterfly=True, group_by='position')
-            figure.show()
+            raw_sss.plot(n_channels=50, butterfly=True, group_by='position')
 
 
 parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)

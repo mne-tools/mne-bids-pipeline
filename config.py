@@ -15,8 +15,8 @@ import numpy as np
 # execute %matplotlib qt in your command line once to show the figures in
 # separate windows
 
-plot = True
 plot = False
+
 # execute %matplotlib qt
 # in the command line to get the plots in extra windows
 
@@ -280,7 +280,15 @@ conditions = ['incoherent', 'coherent']
 # ICA settings
 # ``runica`` : boolean that says if ICA should be used or not.
 runica = True
-rejcomps_man = defaultdict(lambda: dict(meg=[], eeg=[]))
+
+
+def default_reject_comps():
+    return dict(meg=[], eeg=[])
+
+rejcomps_man = defaultdict(default_reject_comps)
+
+# To populate this you can use:
+# rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
 
 ###############################################################################
 # DECODING

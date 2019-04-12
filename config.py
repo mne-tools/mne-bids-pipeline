@@ -11,114 +11,135 @@ import os
 from collections import defaultdict
 import numpy as np
 
-# let the scripts generate plots or not
-# execute %matplotlib qt in your command line once to show the figures in
-# separate windows
 
+# ``plot``  : boolean
+#   If True, the scripts will generate plots. 
+#   If running the scripts from a notebook or spyder
+#   run %matplotlib qt in the command line to get the plots in extra windows
 plot = False
 
-# execute %matplotlib qt
-# in the command line to get the plots in extra windows
 
 ###############################################################################
 # DIRECTORIES
 # -----------
-#
-# Let's set the `study path`` where the data is stored on your system.
-# For example:
-# study_path = '../MNE-sample-data/'
-# or
-# study_path = '/Users/sophie/repos/ExampleData/'
-# or for example on windows:
-# study_path = 'C:\Users\sophie\repos\ExampleData\'
 
+# ``study_path`` : str
+#   Set the `study path`` where the data is stored on your system.
+#   For example:
+#   study_path = '../MNE-sample-data/'
+#   or
+#   study_path = '/Users/sophie/repos/ExampleData/'
+#   or for example on windows:
 study_path = 'data/'
 
-# The ``subjects_dir`` and ``meg_dir`` for reading anatomical and MEG files.
+# ``subjects_dir`` : str
+#   The ``subjects_dir`` contains the MRI files for all subjects.
 subjects_dir = os.path.join(study_path, 'subjects')
+
+# ``meg_dir`` : str
+#   The ``meg_dir`` contains the MEG data in subfolders 
+#   named my_study_path/MEG/my_subject/ 
 meg_dir = os.path.join(study_path, 'MEG')
+
 
 ###############################################################################
 # SUBJECTS / RUNS
 # ---------------
 #
-# The MEG-data need to be stored in a folder
-# named my_study_path/MEG/my_subject/
 
-# This is the name of your experimnet
+# ``study_name`` : str
+#   This is the name of your experiment. 
 study_name = 'Localizer'
 
-# To define the list of participants, we use a list with all the anonymized
-# participant names. Even if you plan on analyzing a single participant, it
-# needs to be set up as a list with a single element, as in the 'example'
-
-subjects_list = ['SB01', 'SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07',
+# ``subjects_list`` : list of str
+#   To define the list of participants, we use a list with all the anonymized
+#   participant names. Even if you plan on analyzing a single participant, it
+#   needs to be set up as a list with a single element, as in the 'example'
+#   subjects_list = ['SB01']
+subjects_list = ['SB01', 'SB02', 'SB04', 'SB05', 'SB06', 'SB07',
                  'SB08', 'SB09', 'SB10', 'SB11', 'SB12']
 
-# Now you can specify subjects to exclude from the group study:
-# [Good Practice / Advice] keep track of the criteria leading you to exclude
-# a participant (e.g. too many movements, missing blocks, aborted experiment,
-# did not understand the instructions, etc, ...)
-exclude_subjects = []  # ['subject_01']
+# ``exclude_subjects`` : list of str
+#   Now you can specify subjects to exclude from the group study:
+#   [Good Practice / Advice] keep track of the criteria leading you to exclude
+#   a participant (e.g. too many movements, missing blocks, aborted experiment,
+#   did not understand the instructions, etc, ...)
+exclude_subjects = []
 
-# Define the names of your ``runs``
-# [Good Practice / Advice] The naming should be consistent across participants.
-# List the number of runs you ideally expect to have per participant. The
-# scripts will issue a warning if there are less runs than is expected. If
-# there is only just one file, leave empty!
+# ``runs`` : list of str
+#   Define the names of your ``runs``
+#   [Good Practice / Advice] The naming should be consistent across participants.
+#   List the number of runs you ideally expect to have per participant. The
+#   scripts will issue a warning if there are less runs than is expected. If
+#   there is only just one file, leave empty!
 runs = ['']  # ['run01', 'run02']
 
-# does the data have EEG?
+# ``eeg``  : boolean
+#   does the data have EEG?
 eeg = False  # True
 
-# This generates the name for all files
-# with the names specified above
-# normally you should not have to touch this
+# ``base_fname`` : str
+#   This automatically generates the name for all files
+#   with the variables specified above.
+#   Normally you should not have to touch this
 base_fname = '{subject}_' + study_name + '{extension}.fif'
+
 
 ###############################################################################
 # BAD CHANNELS
 # ------------
-#
-# ``bad channels``, bad channels are noisy sensors that *must* to be listed
-# *before* maxfilter is applied
-# [Good Practice / Advice] during the acquisition of your MEG / EEG data,
-# systematically list and keep track of the noisy sensors.
-# Here, put the number of runs you ideally expect to have per participant.
-# Use the simple dict if you don't have runs or if the same sensors are noisy
-# across all runs
+# needed for 01-import_and_filter.py
+
+# ``bad channels`` : dict of list
+#   bad channels are noisy sensors that *must* to be listed
+#   *before* maxfilter is applied
+
+#   [Good Practice / Advice] during the acquisition of your MEG / EEG data,
+#   systematically list and keep track of the noisy sensors.
+#   Here, put the number of runs you ideally expect to have per participant.
+#   Use the simple dict if you don't have runs or if the same sensors are noisy
+#   across all runs
 
 bads = defaultdict(list)
 bads['SB01'] = ['MEG1723', 'MEG1722']
 bads['SB04'] = ['MEG0543', 'MEG2333']
 bads['SB06'] = ['MEG2632', 'MEG2033']
 
-# Use the dict(dict) if you have many runs or if noisy sensors are changing
-# across runs. For example:
+#   Use the dict(dict) if you have many runs or if noisy sensors are changing
+#   across runs. For example:
 #
-# bads = dict(SB01=dict(run01=['MEG 2443', 'EEG 053'],
-#                       run02=['MEG 2443', 'EEG 053']))
+#   def default_bads():
+#       return dict(run01=[], run02=[])
+#   bads = defaultdict(default_bads)
+#   to populate this, do:
+#   bads['subject01'] = dict(run01=[12], run02=[7])
+
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
 # --------------------------
-#
-# Here you name or replace  extra channels that were recorded, for instance
-# EOG, ECG ``set_channel_types`` defines types of channels
-# example :
-# set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog', 'EEG063': 'ecg', 'EEG064': 'misc'}
+# needed for 01-import_and_filter.py
+
+# ``rename_channels`` : dict rename channels
+#   Here you name or replace extra channels that were recorded, for instance
+#   EOG, ECG.
+#   example :
+#   rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062', 'EEG063': 'ECG063'}
+rename_channels = None
+
+# ``set_channel_types``: dict
+#   Here you defines types of channels to pick later. 
+#   example :
+#   set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog', 
+#                        'EEG063': 'ecg', 'EEG064': 'misc'}
 set_channel_types = None
 
-# ``rename_channels`` rename channels
-#
-# example :
-# rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062', 'EEG063': 'ECG063'}
-rename_channels = None
 
 ###############################################################################
 # FREQUENCY FILTERING
 # -------------------
-#
+# done in 01-import_and_filter.py
+
 # [Good Practice / Advice]
 # It is typically better to set your filtering properties on the raw data so
 # as to avoid what we call border effects
@@ -138,12 +159,14 @@ rename_channels = None
 # If you need more fancy analysis, you are already likely past this kind
 # of tips! :)
 
+
+
 # ``l_freq``  : the low-frequency cut-off in the highpass filtering step.
-# Keep it None if no highpass filtering should be applied.
+#   Keep it None if no highpass filtering should be applied.
 l_freq = 1.
 
 # ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
-# Keep it None if no lowpass filtering should be applied.
+#   Keep it None if no lowpass filtering should be applied.
 h_freq = 40.
 
 ###############################################################################
@@ -168,7 +191,11 @@ mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_nspn.dat')
 # account, we are realigning all data to a single position. For this, you need
 # to define a reference run (typically the one in the middle of
 # the recording session).
-mf_reference_run = 0  # here, take 1st run as reference for head position
+
+# ``mf_reference_run``  : integer
+#   Which run to take as the reference for adjusting the head position of all 
+#   runs. 
+mf_reference_run = 0  
 
 # Set the origin for the head position
 mf_head_origin = 'auto'
@@ -354,4 +381,8 @@ random_state = 42
 
 shortest_event = 1
 
+# ``allow_maxshield``  : boolean
+#   To import data that was recorded with Maxshield on before running maxfilter 
+#   set this to True. 
 allow_maxshield = True
+

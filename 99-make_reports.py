@@ -26,7 +26,7 @@ def run_report(subject):
     fname_trans = op.join(meg_subject_dir,
                           config.base_fname_trans.format(**locals()))
     subjects_dir = config.subjects_dir
-    if op.exists(fname_trans):
+    if not op.exists(fname_trans):
         subject = None
         subjects_dir = None
 
@@ -42,7 +42,7 @@ def run_report(subject):
     for evoked in evokeds:
         fig = evoked.plot(spatial_colors=True, show=False, gfp=True)
         figs.append(fig)
-        captions.append(evoked.condition)
+        captions.append(evoked.comment)
 
     if op.exists(fname_trans):
         mne.viz.plot_trans(evoked.info, fname_trans, subject=subject,
@@ -55,7 +55,7 @@ def run_report(subject):
         rep.add_figs_to_section(figs, captions)
         for evoked in evokeds:
             fname = op.join(meg_subject_dir, 'mne_dSPM_inverse-%s'
-                            % evoked.condition)
+                            % evoked.comment)
             stc = mne.read_source_estimate(fname, subject)
             brain = stc.plot(views=['ven'], hemi='both')
 
@@ -64,7 +64,7 @@ def run_report(subject):
             fig = mlab.gcf()
             rep._add_figs_to_section(fig, evoked.condition)
 
-    rep.save(fname=op.join(config.meg_subject_dir, 'report_%s.html' % subject),
+    rep.save(fname=op.join(meg_subject_dir, 'report_%s.html' % subject),
              open_browser=False, overwrite=True)
 
 

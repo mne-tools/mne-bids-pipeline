@@ -52,8 +52,8 @@ study_name = 'Localizer'
 # participant names. Even if you plan on analyzing a single participant, it
 # needs to be set up as a list with a single element, as in the 'example'
 
-subjects_list = ['SB01','SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07',
-                 'SB08', 'SB09','SB10', 'SB11', 'SB12']
+subjects_list = ['SB01', 'SB02', 'SB03', 'SB04', 'SB05', 'SB06', 'SB07',
+                 'SB08', 'SB09', 'SB10', 'SB11', 'SB12']
 
 # Now you can specify subjects to exclude from the group study:
 # [Good Practice / Advice] keep track of the criteria leading you to exclude
@@ -334,16 +334,18 @@ if not os.path.isdir(subjects_dir):
 # ADVANCED
 # --------
 #
-# ``l_trans_bandwidth`` : float that specifies the transition bandwidth of the
-# highpass filter. By default it's `'auto'` and uses default mne parameters.
+# ``l_trans_bandwidth`` : float
+#     A float that specifies the transition bandwidth of the
+#     highpass filter. By default it's `'auto'` and uses default mne parameters.
 l_trans_bandwidth = 'auto'
 
-#  ``h_trans_bandwidth`` : float that specifies the transition bandwidth of the
-# lowpass filter. By default it's `'auto'` and uses default mne parameters.
+#  ``h_trans_bandwidth`` : float
+#     A float that specifies the transition bandwidth of the
+#     lowpass filter. By default it's `'auto'` and uses default mne parameters.
 h_trans_bandwidth = 'auto'
 
-#  ``N_JOBS`` : an integer that specifies how many subjects you want to run in
-#  parallel.
+#  ``N_JOBS`` :
+#    an integer that specifies how many subjects you want to run in parallel.
 N_JOBS = 1
 
 random_state = 42

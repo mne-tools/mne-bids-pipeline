@@ -5,10 +5,9 @@
 This example pipeline for MEG/EEG data processing with MNE python was build jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/) and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
 based on scripts originally developed for this publication:
 
-	M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen
-	A. Gramfort (2018). A reproducible MEG/EEG group study with the MNE
-	software: recommendations, quality assessments, and good practices.
-	Frontiers in neuroscience, 12.
+	M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen, A. Gramfort (2018).
+    A reproducible MEG/EEG group study with the MNE software: recommendations, quality assessments,
+    and good practices. Frontiers in neuroscience, 12.
 
 # 1 Make sure MNE-python is installed
 

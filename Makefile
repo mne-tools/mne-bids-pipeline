@@ -36,7 +36,7 @@ preprocess:
 	$(PYTHON) 03-extract_events.py
 	$(PYTHON) 04-make_epochs.py
 	$(PYTHON) 05a-run_ica.py
-	$(PYTHON) 05b-compute_and_apply_ssp.py
+	$(PYTHON) 05b-run_ssp.py
 	$(PYTHON) 06a-apply_ica.py
 	$(PYTHON) 07-make_evoked.py
 	$(PYTHON) 08-group_average_sensors.py

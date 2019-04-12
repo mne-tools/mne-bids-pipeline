@@ -42,9 +42,10 @@ jobs:
               export export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
+              sed -i '/pylsl/d' ./environment.yml
               conda env create -f environment.yml
               source activate mne
-              echo "source activate mne" >> $BASH_ENV;
+              python -c "import mne; mne.sys_info()"
 
         - save_cache:
             key: pip-cache
@@ -55,26 +56,22 @@ jobs:
         - run:
             name: Check installation
             command: |
+               source activate mne
+               pip install mne
                which python
                python -c "import mne; mne.sys_info()"
 
         - run:
             name: Get data
             command: |
-              mkdir -p ~/mne_data
               make fetch
-
-        - run:
-            name: Verify data is there
-            command: |
-              ls -al ~/mne_data;
 
         # Run the scripts
         - run:
             name: make html
             command: |
-              make preprocess
-
+               source activate mne
+               make preprocess
 
         # Save the outputs
         - store_artifacts:

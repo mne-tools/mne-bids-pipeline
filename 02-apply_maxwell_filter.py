@@ -2,6 +2,7 @@
 ===================================
 03. Maxwell filter using MNE-python
 ===================================
+
 The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration is not None)
 and movement compensation.
 

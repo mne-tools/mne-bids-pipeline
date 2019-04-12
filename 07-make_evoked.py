@@ -36,7 +36,6 @@ def run_evoked(subject):
     mne.evoked.write_evokeds(fname_out, evokeds)
 
     if config.plot:
-
         ts_args = dict(gfp=True, time_unit='s')
         topomap_args = dict(time_unit='s')
 

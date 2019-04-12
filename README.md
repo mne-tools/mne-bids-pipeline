@@ -55,6 +55,7 @@ file is meant to contain study specific parameters:
 
 #### ICA PARAMETERS
 - ``runica`` : boolean that says if ICA should be used or not.
+- ``ica_ctps_ecg_threshold``: the threshold parameter passed to `find_bads_ecg` method.
 
 #### DECODING 
 - `decoding_conditions`: list of tuples of strings that contain the conditions to compare. For example: `[('Auditory/Left', 'Auditory/Right'), ('Auditory', 'Visual')]`

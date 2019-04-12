@@ -50,7 +50,7 @@ def run_maxwell_filter(subject):
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 
-        raw = mne.io.read_raw_fif(raw_fname_in,allow_maxshield=True)
+        raw = mne.io.read_raw_fif(raw_fname_in, allow_maxshield=True)
 
         if config.mf_st_duration:
             print('    st_duration=%d' % (config.mf_st_duration,))

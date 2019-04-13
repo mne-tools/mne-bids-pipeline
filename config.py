@@ -282,30 +282,35 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 # EPOCHING
 # --------
 #
-# ``tmin``: float that gives the start time before event of an epoch.
+# ``tmin``: float
+#   A float in seconds that gives the start time before event of an epoch.
 
 tmin = -0.6
 
-#  ``tmax`` : float that gives the end time after event of an epochs.
+# ``tmax``: float
+#   A float in seconds that gives the end time before event of an epoch.
 
 tmax = 1.5
 
-# float specifying the offset for the trigger and the stimulus (in seconds)
-# you need to measure this value for your specific experiment/setup
+# ``trigger_time_shift`` : float | None
+#   If float it specifies the offset for the trigger and the stimulus
+#   (in seconds). You need to measure this value for your specific
+#   experiment/setup.
 
-trigger_offset = -0.0416
-# XXX forward/delay all triggers by this value
+trigger_time_shift = -0.0416
 
-# ``baseline`` : tuple that specifies how to baseline the epochs; if None,
-# no baseline is applied
+# ``baseline`` : tuple
+#   It specifies how to baseline the epochs; if None, no baseline is applied.
 
 baseline = (-.6, -.1)  # (None, 0.)
 
-# stimulus channel, which contains the events
+# ``stim_channel`` : str
+#   The name of the stimulus channel, which contains the events.
 
 stim_channel = 'STI101'  # 'STI014'# None
 
-# minimal duration of the events you want to extract
+# ``min_event_duration`` : float
+#   The minimal duration of the events you want to extract (in seconds).
 
 min_event_duration = 0.002
 
@@ -320,7 +325,8 @@ conditions = ['incoherent', 'coherent']
 
 ###############################################################################
 # ARTIFACT REMOVAL
-# --------------
+# ----------------
+#
 # You can choose between ICA and SSP to remove eye and heart artifacts.
 # SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp
 # ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica
@@ -329,7 +335,8 @@ conditions = ['incoherent', 'coherent']
 # if you running both, your cleaned epochs will be the ones cleaned with the
 # methods you run last (they overwrite each other)
 
-# ICA settings
+# ICA settings:
+#
 # ``runica`` : bool
 #    If True ICA should be used or not.
 

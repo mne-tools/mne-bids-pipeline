@@ -15,10 +15,12 @@ check:
 clean:
 	$(PYTHON) clean.py
 
-fetch:
+fetch_test: # make only one subject for testing
 	mkdir -p data/system_calibration_files/ && wget https://osf.io/prnzb/download -cO data/system_calibration_files/ct_sparse_nspn.fif
 	mkdir -p data/system_calibration_files/ && wget https://osf.io/hyg8k/download -cO data/system_calibration_files/sss_cal_nspn.dat
 	mkdir -p data/MEG/SB01/ && wget https://osf.io/k9bth/download -cO data/MEG/SB01/SB01_Localizer_raw.fif
+
+fetch: fetch_test
 	mkdir -p data/MEG/SB02/ && wget https://osf.io/4rbpd/download -cO data/MEG/SB02/SB02_Localizer_raw.fif
 	mkdir -p data/MEG/SB04/ && wget https://osf.io/3nxyv/download -cO data/MEG/SB04/SB04_Localizer_raw.fif
 	mkdir -p data/MEG/SB05/ && wget https://osf.io/57qwd/download -cO data/MEG/SB05/SB05_Localizer_raw.fif
@@ -43,6 +45,9 @@ preprocess:
 	$(PYTHON) 09-sliding_estimator.py
 	$(PYTHON) 10-time_frequency.py
 	# $(PYTHON) 99-make_reports.py
+
+
+test: fetch_test preprocess
 
 all:
 	$(MAKE) fetch

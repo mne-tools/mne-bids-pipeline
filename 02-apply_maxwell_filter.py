@@ -1,10 +1,10 @@
 """
 ===================================
-03. Maxwell filter using MNE-python
+03. Maxwell filter using MNE-Python
 ===================================
 
-The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration is not None)
-and movement compensation.
+The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
+is not None) and movement compensation.
 
 Using tSSS with a short duration can be used as an alternative to highpass
 filtering. For instance, a duration of 10 s acts like a 0.1 Hz highpass.

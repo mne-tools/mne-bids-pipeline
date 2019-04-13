@@ -10,7 +10,6 @@ jobs:
             name: Set BASH_ENV
             command: |
               echo "set -e" >> $BASH_ENV;
-              echo "export SUBJECTS_DIR=~/mne_data/MNE-sample-data/subjects" >> $BASH_ENV;
               echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
@@ -42,7 +41,7 @@ jobs:
               export export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
-              sed -i '/pylsl/d' ./environment.yml
+              # sed -i '/pylsl/d' ./environment.yml
               conda env create -f environment.yml
               source activate mne
               python -c "import mne; mne.sys_info()"
@@ -57,21 +56,15 @@ jobs:
             name: Check installation
             command: |
                source activate mne
-               pip install mne
                which python
                python -c "import mne; mne.sys_info()"
 
-        - run:
-            name: Get data
-            command: |
-              make fetch
-
         # Run the scripts
         - run:
-            name: make html
+            name: Get data and run test
             command: |
                source activate mne
-               make preprocess
+               make test
 
         # Save the outputs
         - store_artifacts:

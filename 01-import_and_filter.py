@@ -28,7 +28,7 @@ def run_filter(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    raws = []
+    n_raws = 0
     for run in config.runs:
 
         # read bad channels for run from config
@@ -78,10 +78,9 @@ def run_filter(subject):
             raw.resample(config.resample_sfreq, npad='auto')
 
         raw.save(raw_fname_out, overwrite=True)
-        raws.append(raw)
+        n_raws += 1
 
         if config.plot:
-
             # plot raw data
             raw.plot(n_channels=50, butterfly=True, group_by='position')
 
@@ -89,7 +88,7 @@ def run_filter(subject):
             raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
                          fmin=0., fmax=50., average=True)
 
-    if len(raws) == 0:
+    if n_raws == 0:
         raise ValueError('No input raw data found.')
 
 

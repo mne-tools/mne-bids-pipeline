@@ -20,7 +20,7 @@ import config
 
 
 def run_events(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     for run in config.runs:
@@ -36,10 +36,10 @@ def run_events(subject):
                                  min_duration=config.min_event_duration,
                                  shortest_event=config.shortest_event)
 
-        if config.trigger_offset:
+        if config.trigger_time_shift:
             events = mne.event.shift_time_events(events,
                                                  np.unique(events[:, 2]),
-                                                 config.trigger_offset,
+                                                 config.trigger_time_shift,
                                                  raw.info['sfreq'])
 
         print("Input: ", raw_fname_in)
@@ -49,7 +49,8 @@ def run_events(subject):
 
         if config.plot:
             # plot events
-            figure = mne.viz.plot_events(events)
+            figure = mne.viz.plot_events(events, sfreq=raw.info['sfreq'],
+                                         first_samp=raw.first_samp)
             figure.show()
 
 

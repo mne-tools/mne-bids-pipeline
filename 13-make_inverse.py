@@ -17,7 +17,7 @@ import config
 
 
 def run_inverse(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     extension = '-ave'

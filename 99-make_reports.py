@@ -17,7 +17,7 @@ import config
 
 
 def run_report(subject):
-    print("processing %s" % subject)
+    print("Processing %s" % subject)
 
     meg_subject_dir = op.join(config.meg_dir, subject)
     extension = '-ave'

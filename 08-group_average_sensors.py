@@ -17,10 +17,10 @@ all_evokeds = [list() for _ in range(len(config.conditions))]
 
 for subject in config.subjects_list:
     if subject in config.exclude_subjects:
-        print("ignoring subject: %s" % subject)
+        print("Ignoring subject: %s" % subject)
         continue
     else:
-        print("processing subject: %s" % subject)
+        print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
     extension = '-ave'
     fname_in = op.join(meg_subject_dir,

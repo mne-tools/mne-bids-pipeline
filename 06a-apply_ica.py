@@ -130,7 +130,9 @@ def apply_ica(subject):
                                        'Corrections')
 
         else:
-            print('no ECG channel!')
+            # XXX : to check when EEG only is processed
+            print('no ECG channel is present. Cannot automate ICAs component '
+                  'detection for EOG!')
 
         # EOG
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
@@ -168,25 +170,26 @@ def apply_ica(subject):
             report.save(report_fname, overwrite=True, open_browser=False)
 
         else:
-            print('no EOG channel!')
+            print('no EOG channel is present. Cannot automate ICAs component '
+                  'detection for EOG!')
 
         ica_reject = (list(ecg_inds) + list(eog_inds) +
                       list(config.rejcomps_man[subject][ch_type]))
 
         # now reject the components
-        print('Rejecting from ' + ch_type + ': ' + str(ica_reject))
+        print('Rejecting from %s: %s' % (ch_type, ica_reject))
         epochs = ica.apply(epochs, exclude=ica_reject)
 
-        print('Saving epochs')
+        print('Saving cleaned epochs')
         epochs.save(fname_out)
 
         fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
         report.add_figs_to_section(fig, captions=ch_type.upper() +
-                                   ' - ALL(epochs) - ' + 'Corrections')
+                                   ' - ALL(epochs) - Corrections')
 
         if config.plot:
-                epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
-                                  cmap="YlGnBu_r", show=config.plot)
+            epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
+                              cmap="YlGnBu_r", show=config.plot)
 
 
 parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)

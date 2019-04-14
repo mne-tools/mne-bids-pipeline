@@ -38,7 +38,7 @@ def apply_ssp(subject):
     proj_fname_in = op.join(meg_subject_dir,
                             config.base_fname.format(**locals()))
 
-    print("reading SSP projections from : ", proj_fname_in)
+    print("Reading SSP projections from : %s" % proj_fname_in)
 
     projs = mne.read_proj(proj_fname_in)
     epochs.add_proj(projs).apply_proj()

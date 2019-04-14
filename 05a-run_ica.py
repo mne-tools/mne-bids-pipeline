@@ -44,10 +44,9 @@ def run_ica(subject, tsss=config.mf_st_duration):
         events_list.append(events)
 
         # mark bads from any run
-        if run:
-            bads = set(sum(config.bads[subject].values(), []))
-        else:
-            bads = config.bads[subject]
+        bads = config.bads[subject]
+        if isinstance(bads, dict):
+            bads = set(sum(bads.values(), []))
 
         raw.info['bads'] = bads
         print("added bads: ", raw.info['bads'])
@@ -67,6 +66,8 @@ def run_ica(subject, tsss=config.mf_st_duration):
                                 baseline=config.baseline,
                                 preload=True, decim=config.decim,
                                 reject=config.reject)
+    # XXX : config.reject should not be the same for ICA as here
+    # you want to keep the EOG blinks in
 
     # run ICA on MEG and EEG
     picks_meg = mne.pick_types(epochs_for_ica.info, meg=True, eeg=False,

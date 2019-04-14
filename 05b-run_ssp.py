@@ -16,10 +16,10 @@ from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 
 
 def run_ssp(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    print("  Loading runs")
+    print("  Loading one run to compute SSPs")
 
     # compute SSP on first run of raw
     run = config.runs[0]
@@ -35,8 +35,11 @@ def run_ssp(subject):
     print("Output: ", proj_fname_out)
 
     raw = mne.io.read_raw_fif(raw_fname_in)
+    # XXX : n_xxx should be options in config
+    print("  Computing SSPs for ECG")
     ecg_projs, ecg_events = \
         compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0, average=True)
+    print("  Computing SSPs for EOG")
     eog_projs, eog_events = \
         compute_proj_eog(raw, n_grad=1, n_mag=1, n_eeg=1, average=True)
 

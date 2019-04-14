@@ -15,7 +15,7 @@ import config
 
 
 def morph_stc(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     morphed_stcs = []

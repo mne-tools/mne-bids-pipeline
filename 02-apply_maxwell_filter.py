@@ -26,7 +26,7 @@ import config
 
 
 def run_maxwell_filter(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 

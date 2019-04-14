@@ -67,6 +67,8 @@ def run_filter(subject):
             raw.rename_channels(config.rename_channels)
 
         # Band-pass the data channels (MEG and EEG)
+        print("Filtering data between %s and %s (Hz)" %
+              (config.l_freq, config.h_freq))
         raw.filter(
             config.l_freq, config.h_freq,
             l_trans_bandwidth=config.l_trans_bandwidth,
@@ -75,6 +77,7 @@ def run_filter(subject):
             fir_design='firwin')
 
         if config.resample_sfreq:
+            print("Resampling data to %.1f Hz" % config.resample_sfreq)
             raw.resample(config.resample_sfreq, npad='auto')
 
         raw.save(raw_fname_out, overwrite=True)

@@ -48,7 +48,6 @@ def run_inverse(subject):
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
 
-    # XXX here we are still working on single subjects, no?
     for condition, evoked in zip(config.conditions, evokeds):
         stc = apply_inverse(evoked, inverse_operator, lambda2, "dSPM",
                             pick_ori=None)

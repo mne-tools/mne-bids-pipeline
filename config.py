@@ -25,12 +25,13 @@ plot = False
 # -----------
 #
 # ``study_path`` : str
-#   Set the `study path`` where the data is stored on your system.
-#   For example:
-#   study_path = '../MNE-sample-data/'
-#   or
-#   study_path = '/Users/sophie/repos/ExampleData/'
-#   or for example on windows:
+#    Set the `study path`` where the data is stored on your system.
+#
+# Example
+# ~~~~~~~
+# >>> study_path = '../MNE-sample-data/'
+# or
+# >>> study_path = '/Users/sophie/repos/ExampleData/'
 
 study_path = 'data/'
 
@@ -69,30 +70,36 @@ subjects_list = ['SB01']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
-#   [Good Practice / Advice] keep track of the criteria leading you to exclude
-#   a participant (e.g. too many movements, missing blocks, aborted experiment,
-#   did not understand the instructions, etc, ...)
+#
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# Keep track of the criteria leading you to exclude
+# a participant (e.g. too many movements, missing blocks, aborted experiment,
+# did not understand the instructions, etc, ...)
 
 exclude_subjects = []
 
 # ``runs`` : list of str
 #   Define the names of your ``runs``
-#   [Good Practice / Advice] The naming should be consistent across
-#   participants. List the number of runs you ideally expect to have per
-#   participant. The scripts will issue a warning if there are less runs than
-#   is expected. If there is only just one file, leave empty!
+#
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# The naming should be consistent across participants. List the number of runs
+# you ideally expect to have per participant. The scripts will issue a warning
+# if there are less runs than is expected. If there is only just one file,
+# leave empty!
 
 runs = ['']  # ['run01', 'run02']
 
-# ``eeg``  : boolean
-#   does the data have EEG?
+# ``eeg``  : bool
+#    If true use the EEG channels
 
 eeg = False  # True
 
 # ``base_fname`` : str
-#   This automatically generates the name for all files
-#   with the variables specified above.
-#   Normally you should not have to touch this
+#    This automatically generates the name for all files
+#    with the variables specified above.
+#    Normally you should not have to touch this
 
 base_fname = '{subject}_' + study_name + '{extension}.fif'
 
@@ -102,29 +109,36 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # ------------
 # needed for 01-import_and_filter.py
 
-# ``bad channels`` : dict of list
-#   bad channels are noisy sensors that *must* to be listed
-#   *before* maxfilter is applied
-
-#   [Good Practice / Advice] during the acquisition of your MEG / EEG data,
-#   systematically list and keep track of the noisy sensors.
-#   Here, put the number of runs you ideally expect to have per participant.
-#   Use the simple dict if you don't have runs or if the same sensors are noisy
-#   across all runs
+# ``bads`` : dict of list | dict of dict
+#    Bad channels are noisy sensors that *must* to be listed
+#    *before* maxfilter is applied. You can use the dict of list structure
+#    of you have bad channels that are the same for all runs.
+#    Use the dict(dict) if you have many runs or if noisy sensors are changing
+#    across runs.
+#
+# Example
+# ~~~~~~~
+#
+# >>> def default_bads():
+# >>>     return dict(run01=[], run02=[])
+# >>>
+# >>> bads = defaultdict(default_bads)
+#
+#   and to populate this, do:
+#
+# >>> bads['subject01'] = dict(run01=[12], run02=[7])
+#
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# During the acquisition of your MEG / EEG data, systematically list and keep
+# track of the noisy sensors. Here, put the number of runs you ideally expect
+# to have per participant. Use the simple dict if you don't have runs or if
+# the same sensors are noisy across all runs.
 
 bads = defaultdict(list)
 bads['SB01'] = ['MEG1723', 'MEG1722']
 bads['SB04'] = ['MEG0543', 'MEG2333']
 bads['SB06'] = ['MEG2632', 'MEG2033']
-
-#   Use the dict(dict) if you have many runs or if noisy sensors are changing
-#   across runs. For example:
-#
-#   def default_bads():
-#       return dict(run01=[], run02=[])
-#   bads = defaultdict(default_bads)
-#   to populate this, do:
-#   bads['subject01'] = dict(run01=[12], run02=[7])
 
 
 ###############################################################################
@@ -133,18 +147,23 @@ bads['SB06'] = ['MEG2632', 'MEG2033']
 # needed for 01-import_and_filter.py
 
 # ``rename_channels`` : dict rename channels
-#   Here you name or replace extra channels that were recorded, for instance
-#   EOG, ECG.
-#   example :
-#   rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062', 'EEG063': 'ECG063'}
+#    Here you name or replace extra channels that were recorded, for instance
+#    EOG, ECG.
+#
+# Example
+# ~~~~~~~
+# >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
+#                        'EEG063': 'ECG063'}
 
 rename_channels = None
 
 # ``set_channel_types``: dict
 #   Here you defines types of channels to pick later.
-#   example :
-#   set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
-#                        'EEG063': 'ecg', 'EEG064': 'misc'}
+#
+# Example
+# ~~~~~~~
+# >>> set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
+#                          'EEG063': 'ecg', 'EEG064': 'misc'}
 
 set_channel_types = None
 
@@ -173,19 +192,19 @@ set_channel_types = None
 # of tips! :)
 
 
-# ``l_freq``  : the low-frequency cut-off in the highpass filtering step.
+# ``l_freq`` : the low-frequency cut-off in the highpass filtering step.
 #   Keep it None if no highpass filtering should be applied.
 
 l_freq = 1.
 
-# ``h_freq``  : the high-frequency cut-off in the lowpass filtering step.
+# ``h_freq`` : the high-frequency cut-off in the lowpass filtering step.
 #   Keep it None if no lowpass filtering should be applied.
 
 h_freq = 40.
 
 ###############################################################################
 # MAXFILTER PARAMETERS
-# -------------------
+# --------------------
 #
 
 # Download the ``cross talk`` and ``calibration`` files. Warning: these are
@@ -258,23 +277,31 @@ decim = 1
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 #
-# [Good Practice / Advice]
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
 # Have a look at your raw data and train yourself to detect a blink, a heart
 # beat and an eye movement.
 # You can do a quick average of blink data and check what the amplitude looks
 # like.
 #
-#  ``reject`` : the default rejection limits to make some epochs as bads.
-# This allows to remove strong transient artifacts.
-# If you want to reject and retrieve blinks later, e.g. with ICA, don't specify
-# a value for the eog channel (see examples below).
-# Make sure to include values for eeg if you have eeg data
-
-# **Note**: these numbers tend to vary between subjects.
-# Examples:
-# reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-# reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
-# reject = None
+#  ``reject`` : dict | None
+#    The rejection limits to make some epochs as bads.
+#    This allows to remove strong transient artifacts.
+#    If you want to reject and retrieve blinks later, e.g. with ICA,
+#    don't specify a value for the eog channel (see examples below).
+#    Make sure to include values for eeg if you have EEG data
+#
+# Note
+# ~~~~
+# These numbers tend to vary between subjects.. You might want to consider
+# using the autoreject method by Jas et al. 2018.
+# See https://autoreject.github.io
+#
+# Example
+# ~~~~~~~
+# >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+# >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
+# >>> reject = None
 
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 
@@ -283,41 +310,46 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 # --------
 #
 # ``tmin``: float
-#   A float in seconds that gives the start time before event of an epoch.
+#    A float in seconds that gives the start time before event of an epoch.
 
 tmin = -0.6
 
 # ``tmax``: float
-#   A float in seconds that gives the end time before event of an epoch.
+#    A float in seconds that gives the end time before event of an epoch.
 
 tmax = 1.5
 
 # ``trigger_time_shift`` : float | None
-#   If float it specifies the offset for the trigger and the stimulus
-#   (in seconds). You need to measure this value for your specific
-#   experiment/setup.
+#    If float it specifies the offset for the trigger and the stimulus
+#    (in seconds). You need to measure this value for your specific
+#    experiment/setup.
 
 trigger_time_shift = -0.0416
 
 # ``baseline`` : tuple
-#   It specifies how to baseline the epochs; if None, no baseline is applied.
+#    It specifies how to baseline the epochs; if None, no baseline is applied.
 
 baseline = (-.6, -.1)  # (None, 0.)
 
 # ``stim_channel`` : str
-#   The name of the stimulus channel, which contains the events.
+#    The name of the stimulus channel, which contains the events.
 
 stim_channel = 'STI101'  # 'STI014'# None
 
 # ``min_event_duration`` : float
-#   The minimal duration of the events you want to extract (in seconds).
+#    The minimal duration of the events you want to extract (in seconds).
 
 min_event_duration = 0.002
 
 #  `event_id`` : dict
-#    dictionary that maps events (trigger/marker values)
-#    to conditions. E.g. `event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
-#    or event_id = {'Onset': 4} with conditions = ['Onset']
+#    Dictionary that maps events (trigger/marker values)
+#    to conditions.
+#
+# Example
+# ~~~~~~~
+# >>> event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
+# or
+# >>> event_id = {'Onset': 4} with conditions = ['Onset']
 
 event_id = {'incoherent/1': 33, 'incoherent/2': 35,
             'coherent/down': 37, 'coherent/up': 39}
@@ -328,49 +360,74 @@ conditions = ['incoherent', 'coherent']
 # ----------------
 #
 # You can choose between ICA and SSP to remove eye and heart artifacts.
-# SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp
-# ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica
+# SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp # noqa
+# ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica # noqa
 # if you choose ICA, run scripts 5a and 6a
 # if you choose SSP, run scripts 5b and 6b
 # if you running both, your cleaned epochs will be the ones cleaned with the
 # methods you run last (they overwrite each other)
-
-# ICA settings:
+#
 #
 # ``runica`` : bool
 #    If True ICA should be used or not.
 
 runica = True
 
+# ``ica_decim`` : int
+#    The decimation parameter to compute ICA. If 5 it means
+#    that 1 every 5 sample is used by ICA solver. The higher the faster
+#    it is to run but the less data you have to compute a good ICA.
+
+ica_decim = 11
+
+
+# ``default_reject_comps`` : dict
+#    A dictionary that specifies the indices of the ICA components to reject
+#    for each subject. For example you can use:
+#    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
 
 def default_reject_comps():
     return dict(meg=[], eeg=[])
 
 rejcomps_man = defaultdict(default_reject_comps)
 
-# To populate this you can use:
-# rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
-
 # ``ica_ctps_ecg_threshold``: float
-#     The threshold parameter passed to `find_bads_ecg` method.
+#    The threshold parameter passed to `find_bads_ecg` method.
 
 ica_ctps_ecg_threshold = 0.1
 
 ###############################################################################
 # DECODING
-# --------------
+# --------
 #
-# decoding_conditions should be a list of conditions to be classified.
-# For example 'Auditory' vs. 'Visual' as well as
-# 'Auditory/Left' vs 'Auditory/Right'
+# ``decoding_conditions`` : list
+#    List of conditions to be classified.
+#
+# Example
+# ~~~~~~~
+#
+# >>> decoding_conditions = [('Auditory', 'Visual'), ('Left', 'Right')]
+
 decoding_conditions = [('incoherent', 'coherent')]
+
+# ``decoding_metric`` : str
+#    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'
+#    or any metric supported by scikit-learn.
+
 decoding_metric = 'roc_auc'
+
+# ``decoding_n_splits`` : int
+#    The number of folds (a.k.a. splits) to use in the cross-validation.
+
 decoding_n_splits = 5
 
 ###############################################################################
 # TIME-FREQUENCY
 # --------------
 #
+# ``time_frequency_conditions`` : list
+#    The conditions to compute time-frequency decomposition on.
+
 time_frequency_conditions = ['coherent']
 
 ###############################################################################
@@ -378,8 +435,50 @@ time_frequency_conditions = ['coherent']
 # -----------------------
 #
 
+# ``spacing`` : str
+#    The spacing to use. Can be ``'ico#'`` for a recursively subdivided
+#    icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
+#    ``'all'`` for all points, or an integer to use appoximate
+#    distance-based spacing (in mm).
+
 spacing = 'oct6'
+
+# ``mindist`` : float
+#    Exclude points closer than this distance (mm) to the bounding surface.
+
 mindist = 5
+
+# ``loose`` : float in [0, 1] | 'auto'
+#    Value that weights the source variances of the dipole components
+#    that are parallel (tangential) to the cortical surface. If loose
+#    is 0 then the solution is computed with fixed orientation,
+#    and fixed must be True or "auto".
+#    If loose is 1, it corresponds to free orientations.
+#    The default value ('auto') is set to 0.2 for surface-oriented source
+#    space and set to 1.0 for volumetric, discrete, or mixed source spaces,
+#    unless ``fixed is True`` in which case the value 0. is used.
+
+loose = 0.2
+
+# ``depth`` : None | float | dict
+#    If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+#    to use (must be between 0 and 1). None is equivalent to 0, meaning no
+#    depth weighting is performed. Can also be a `dict` containing additional
+#    keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+#    (see docstring for details and defaults).
+
+depth = 0.8
+
+# method : "MNE" | "dSPM" | "sLORETA" | "eLORETA"
+#    Use minimum norm, dSPM (default), sLORETA, or eLORETA.
+
+method = 'dSPM'
+
+# smooth : int | None
+#    Number of iterations for the smoothing of the surface data.
+#    If None, smooth is automatically defined to fill the surface
+#    with non-zero values. The default is spacing=None.
+
 smooth = 10
 
 # base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
@@ -398,16 +497,16 @@ if not os.path.isdir(subjects_dir):
 # --------
 #
 # ``l_trans_bandwidth`` : float | 'auto'
-#     A float that specifies the transition bandwidth of the
-#     highpass filter. By default it's `'auto'` and uses default mne
-#     parameters.
+#    A float that specifies the transition bandwidth of the
+#    highpass filter. By default it's `'auto'` and uses default mne
+#    parameters.
 
 l_trans_bandwidth = 'auto'
 
 #  ``h_trans_bandwidth`` : float | 'auto'
-#     A float that specifies the transition bandwidth of the
-#     lowpass filter. By default it's `'auto'` and uses default mne
-#     parameters.
+#    A float that specifies the transition bandwidth of the
+#    lowpass filter. By default it's `'auto'` and uses default mne
+#    parameters.
 
 h_trans_bandwidth = 'auto'
 
@@ -416,11 +515,21 @@ h_trans_bandwidth = 'auto'
 
 N_JOBS = 1
 
+# ``random_state`` : None | int | np.random.RandomState
+#    To specify the random generator state. This allows to have
+#    the results more reproducible between machines and systems.
+#    Some methods like ICA need random values for initialisation.
+
 random_state = 42
+
+# ``shortest_event`` : int
+#    Minimum number of samples an event must last. If the
+#    duration is less than this an exception will be raised.
 
 shortest_event = 1
 
 # ``allow_maxshield``  : bool
-#   To import data that was recorded with Maxshield on before running
-#   maxfilter set this to True.
+#    To import data that was recorded with Maxshield on before running
+#    maxfilter set this to True.
+
 allow_maxshield = True

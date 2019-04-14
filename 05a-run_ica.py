@@ -103,7 +103,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
         picks = all_picks[ch_type]
 
-        ica.fit(epochs_for_ica, picks=picks, decim=decim)
+        ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
 
         print('  Fit %d components (explaining at least %0.1f%% of the'
               ' variance)' % (ica.n_components_, 100 * n_components[ch_type]))

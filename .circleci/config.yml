@@ -41,7 +41,6 @@ jobs:
               export export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
-              # sed -i '/pylsl/d' ./environment.yml
               conda env create -f environment.yml
               source activate mne
               python -c "import mne; mne.sys_info()"

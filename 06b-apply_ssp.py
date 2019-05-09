@@ -47,5 +47,6 @@ def apply_ssp(subject):
     epochs.save(fname_out)
 
 
-parallel, run_func, _ = parallel_func(apply_ssp, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_ssp:
+    parallel, run_func, _ = parallel_func(apply_ssp, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

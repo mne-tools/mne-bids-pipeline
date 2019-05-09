@@ -24,7 +24,11 @@ def run_events(subject):
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     for run in config.runs:
-        extension = run + '_sss_raw'
+        if config.use_maxwell_filter:
+            extension = run + '_sss_raw'
+        else:
+            extension = run + '_filt_raw'
+
         raw_fname_in = op.join(meg_subject_dir,
                                config.base_fname.format(**locals()))
         eve_fname_out = op.splitext(raw_fname_in)[0] + '-eve.fif'

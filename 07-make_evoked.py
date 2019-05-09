@@ -17,7 +17,10 @@ import config
 def run_evoked(subject):
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    extension = '_cleaned-epo'
+    if config.use_ica or config.use_ssp:
+        extension = '_cleaned-epo'
+    else:
+        extension = '-epo'
     fname_in = op.join(meg_subject_dir,
                        config.base_fname.format(**locals()))
     extension = '-ave'

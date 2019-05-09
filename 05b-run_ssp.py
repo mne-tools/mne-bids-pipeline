@@ -3,7 +3,7 @@
 05. Run SSP
 ===========
 
-SSP
+Compute Signal Suspace Projections (SSP).
 """
 
 import os.path as op
@@ -23,7 +23,10 @@ def run_ssp(subject):
 
     # compute SSP on first run of raw
     run = config.runs[0]
-    extension = run + '_sss_raw'
+    if config.use_maxwell_filter:
+        extension = run + '_sss_raw'
+    else:
+        extension = run + '_filt_raw'
     raw_fname_in = op.join(meg_subject_dir,
                            config.base_fname.format(**locals()))
 
@@ -46,6 +49,6 @@ def run_ssp(subject):
     mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
 
 
-# Memory footprint: around n_jobs * 4 GB
-parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_ssp:
+    parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

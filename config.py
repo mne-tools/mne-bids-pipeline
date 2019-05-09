@@ -3,8 +3,7 @@
 Config file
 ===========
 
-Configuration parameters for the study. This should be in a folder called
-``library/`` inside the ``processing/`` directory.
+Configuration parameters for the study.
 """
 
 import os
@@ -91,10 +90,18 @@ exclude_subjects = []
 
 runs = ['']  # ['run01', 'run02']
 
-# ``eeg``  : bool
-#    If true use the EEG channels
+# ``ch_types``  : list of st
+#    The list of channel types to consider.
+#
+# Example
+# ~~~~~~~
+# >>> ch_types = ['meg', 'eeg']  # to use MEG and EEG channels
+# or
+# >>> ch_types = ['meg']  # to use only MEG
+# or
+# >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-eeg = False  # True
+ch_types = ['meg']
 
 # ``base_fname`` : str
 #    This automatically generates the name for all files
@@ -118,7 +125,6 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 #
 # Example
 # ~~~~~~~
-#
 # >>> def default_bads():
 # >>>     return dict(run01=[], run02=[])
 # >>>
@@ -152,13 +158,14 @@ bads['SB06'] = ['MEG2632', 'MEG2033']
 #
 # Example
 # ~~~~~~~
+# Here rename EEG061 to EOG061, EEG062 to EOG062, EEG063 to ECG063:
 # >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
 #                        'EEG063': 'ECG063'}
 
 rename_channels = None
 
 # ``set_channel_types``: dict
-#   Here you defines types of channels to pick later.
+#   Here you define types of channels to pick later.
 #
 # Example
 # ~~~~~~~
@@ -172,32 +179,37 @@ set_channel_types = None
 # -------------------
 # done in 01-import_and_filter.py
 
-# [Good Practice / Advice]
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
 # It is typically better to set your filtering properties on the raw data so
-# as to avoid what we call border effects
+# as to avoid what we call border (or edge) effects.
 #
-# If you use this pipeline for evoked responses, a default filtering would be
-# a high-pass filter cut-off of l_freq = 1 Hz
+# If you use this pipeline for evoked responses, you could consider
 # a low-pass filter cut-off of h_freq = 40 Hz
-# so you would preserve only the power in the 1Hz to 40 Hz band
+# and possibly a high-pass filter cut-off of l_freq = 1 Hz
+# so you would preserve only the power in the 1Hz to 40 Hz band.
+# Note that highpass filtering is not necessarily recommended as it can
+# distort waveforms of evoked components, or simply wash out any low
+# frequency that can may contain brain signal. It can also act as
+# a replacement for baseline correction in Epochs. See below.
 #
 # If you use this pipeline for time-frequency analysis, a default filtering
-# would be a high-pass filter cut-off of l_freq = 1 Hz
+# coult be a high-pass filter cut-off of l_freq = 1 Hz
 # a low-pass filter cut-off of h_freq = 120 Hz
-# so you would preserve only the power in the 1Hz to 120 Hz band
+# so you would preserve only the power in the 1Hz to 120 Hz band.
 #
-# If you use are interested in the lowest frequencies, do not use a high-pass
-# filter cut-off of l_freq = None
 # If you need more fancy analysis, you are already likely past this kind
 # of tips! :)
 
 
-# ``l_freq`` : the low-frequency cut-off in the highpass filtering step.
+# ``l_freq`` : float
+#   The low-frequency cut-off in the highpass filtering step.
 #   Keep it None if no highpass filtering should be applied.
 
 l_freq = 1.
 
-# ``h_freq`` : the high-frequency cut-off in the lowpass filtering step.
+# ``h_freq`` : float
+#   The high-frequency cut-off in the lowpass filtering step.
 #   Keep it None if no lowpass filtering should be applied.
 
 h_freq = 40.
@@ -206,55 +218,93 @@ h_freq = 40.
 # MAXFILTER PARAMETERS
 # --------------------
 #
+# ``use_maxwell_filter`` : bool
+#   Use or not maxwell filter to preprocess the data.
 
-# Download the ``cross talk`` and ``calibration`` files. Warning: these are
-# site and machine specific files that provide information about the
-# environmental noise.
-# For practical purposes, place them in your study folder.
+use_maxwell_filter = True
+
+# There are two kinds of maxfiltering: SSS and tSSS
+# [SSS = signal space separation ; tSSS = temporal signal space separation]
+# (Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
+#
+# ``mf_st_duration`` : float | None
+#    If not None, apply spatiotemporal SSS (tSSS) with specified buffer
+#    duration (in seconds). MaxFilter™'s default is 10.0 seconds in v2.2.
+#    Spatiotemporal SSS acts as implicitly as a high-pass filter where the
+#    cut-off frequency is 1/st_dur Hz. For this (and other) reasons, longer
+#    buffers are generally better as long as your system can handle the
+#    higher memory usage. To ensure that each window is processed
+#    identically, choose a buffer length that divides evenly into your data.
+#    Any data at the trailing edge that doesn't fit evenly into a whole
+#    buffer window will be lumped into the previous buffer.
+#
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# If you are interested in low frequency activity (<0.1Hz), avoid using tSSS
+# and set mf_st_duration to None
+#
+# If you are interested in low frequency above 0.1 Hz, you can use the
+# default mf_st_duration to 10 s meaning it acts like a 0.1 Hz highpass filter.
+#
+# Example
+# ~~~~~~~
+# >>> mf_st_duration = None
+# or
+# >>> mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
+
+mf_st_duration = None
+
+# ``mf_head_origin`` : array-like, shape (3,) | 'auto'
+#   Origin of internal and external multipolar moment space in meters.
+#   If 'auto', it will be estimated from headshape points.
+#   If automatic fitting fails (e.g., due to having too few digitization
+#   points), consider separately calling the fitting function with different
+#   options or specifying the origin manually.
+#
+# Example
+# ~~~~~~~
+# >>> mf_head_origin = 'auto'
+
+mf_head_origin = 'auto'
+
+# ``cross talk`` and ``calibration`` files should be downloaded and
+# and made available for running maxwell filtering.
+#
+# Warning
+# ~~~~~~~
+# These 2 files are site and machine specific files that provide information
+# about the environmental noise. For practical purposes, place them in your
+# study folder.
+#
 # At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
 
 cal_files_path = os.path.join(study_path, 'system_calibration_files')
 mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_nspn.fif')
 mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_nspn.dat')
 
-# [Good Practice / Advice]
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
 # around in the course of the recording session. Hence, to take this into
 # account, we are realigning all data to a single position. For this, you need
 # to define a reference run (typically the one in the middle of
 # the recording session).
-
-# ``mf_reference_run``  : integer
+#
+# ``mf_reference_run``  : int
 #   Which run to take as the reference for adjusting the head position of all
 #   runs.
+#
+# Example
+# ~~~~~~~
+# >>> mf_reference_run = 0  # to use the first run
 
 mf_reference_run = 0
-
-# Set the origin for the head position
-
-mf_head_origin = 'auto'
-
-# [Good Practice / Advice]
-# There are two kinds of maxfiltering: sss and tsss
-# [sss = signal space separation ; tsss = temporal signal space separation]
-# (Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
-# If you are interested in low frequency activity (<0.1Hz), avoid using tsss
-# and set mf_st_duration = None
-# If you are interested in low frequency above 0.1 Hz, you can use the
-# default mf_st_duration = 10 s
-# Elekta default = 10s, meaning it acts like a 0.1 Hz highpass filter
-# ``mf_st_duration `` : if None, no temporal-spatial filtering is applied
-# during MaxFilter, otherwise, put a float that speficifies the buffer
-# duration in seconds
-
-mf_st_duration = None
 
 ###############################################################################
 # RESAMPLING
 # ----------
 #
-# [Good Practice / Advice]
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
 # If you have acquired data with a very high sampling frequency (e.g. 2 kHz)
 # you will likely want to downsample to lighten up the size of the files you
 # are working with (pragmatics)
@@ -262,14 +312,33 @@ mf_st_duration = None
 # resample your data down to 500 Hz without preventing reliable time-frequency
 # exploration of your data
 #
-# ``resample_sfreq``  : a float that specifies at which sampling frequency
-# the data should be resampled. If None then no resampling will be done.
+# ``resample_sfreq``  : float
+#   Specifies at which sampling frequency the data should be resampled.
+#   If None then no resampling will be done.
+#
+# Example
+# ~~~~~~~
+# >>> resample_sfreq = None  # no resampling
+# or
+# >>> resample_sfreq = 500  # resample to 500Hz
 
 resample_sfreq = 500.  # None
 
-# ``decim`` : integer that says how much to decimate data at the epochs level.
-# It is typically an alternative to the `resample_sfreq` parameter that
-# can be used for resampling raw data. 1 means no decimation.
+# ``decim`` : int
+#   Says how much to decimate data at the epochs level.
+#   It is typically an alternative to the `resample_sfreq` parameter that
+#   can be used for resampling raw data. 1 means no decimation.
+#
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# Decimation requires to lowpass filtered the data to avoid aliasing.
+# Note that using decimation is much faster than resampling.
+#
+# Example
+# ~~~~~~~
+# >>> decim = 1  # no decimation
+# or
+# >>> decim = 4  # decimate by 4 ie devide sampling frequency by 4
 
 decim = 1
 
@@ -364,14 +433,18 @@ conditions = ['incoherent', 'coherent']
 # ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica # noqa
 # if you choose ICA, run scripts 5a and 6a
 # if you choose SSP, run scripts 5b and 6b
-# if you running both, your cleaned epochs will be the ones cleaned with the
-# methods you run last (they overwrite each other)
 #
+# Currently you cannot use both.
 #
-# ``runica`` : bool
+# ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
-runica = True
+use_ssp = False
+
+# ``use_ica`` : bool
+#    If True ICA should be used or not.
+
+use_ica = False
 
 # ``ica_decim`` : int
 #    The decimation parameter to compute ICA. If 5 it means
@@ -405,7 +478,8 @@ ica_ctps_ecg_threshold = 0.1
 #
 # Example
 # ~~~~~~~
-#
+# >>> decoding_conditions = []  # don't do decoding
+# or
 # >>> decoding_conditions = [('Auditory', 'Visual'), ('Left', 'Right')]
 
 decoding_conditions = [('incoherent', 'coherent')]
@@ -533,3 +607,16 @@ shortest_event = 1
 #    maxfilter set this to True.
 
 allow_maxshield = True
+
+###############################################################################
+# CHECKS
+# --------
+#
+# --- --- You should not touch the next lines --- ---
+
+if (use_maxwell_filter and
+        len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
+    raise ValueError('Cannot use maxwell filter without MEG channels.')
+
+if use_ssp and use_ica:
+    raise ValueError('Cannot use both SSP and ICA.')

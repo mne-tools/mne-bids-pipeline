@@ -52,6 +52,7 @@ def run_maxwell_filter(subject):
         print("Output: ", raw_fname_out)
 
         raw = mne.io.read_raw_fif(raw_fname_in, allow_maxshield=True)
+        raw.fix_mag_coil_types()
 
         if config.mf_st_duration:
             print('    st_duration=%d' % (config.mf_st_duration,))
@@ -71,5 +72,7 @@ def run_maxwell_filter(subject):
             raw_sss.plot(n_channels=50, butterfly=True, group_by='position')
 
 
-parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_maxwell_filter:
+    parallel, run_func, _ = \
+        parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

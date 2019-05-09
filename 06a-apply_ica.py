@@ -192,5 +192,6 @@ def apply_ica(subject):
                               cmap="YlGnBu_r", show=config.plot)
 
 
-parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_ica:
+    parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

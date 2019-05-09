@@ -79,7 +79,6 @@ def run_time_decoding(subject, condition1, condition2):
 # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
 # so we don't dispatch manually to multiple jobs.
 
-
 for subject in config.subjects_list:
     for conditions in config.decoding_conditions:
         run_time_decoding(subject, *conditions)

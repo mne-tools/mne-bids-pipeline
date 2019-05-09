@@ -34,7 +34,11 @@ def run_epochs(subject):
     print("  Loading raw data")
 
     for run in config.runs:
-        extension = run + '_sss_raw'
+        if config.use_maxwell_filter:
+            extension = run + '_sss_raw'
+        else:
+            extension = run + '_filt_raw'
+
         raw_fname_in = op.join(meg_subject_dir,
                                config.base_fname.format(**locals()))
         eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
@@ -60,12 +64,22 @@ def run_epochs(subject):
     print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
 
-    if config.eeg:
+    if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 
     del raw_list
 
-    picks = mne.pick_types(raw.info, meg=True, eeg=config.eeg, stim=True,
+    meg = False
+    if 'meg' in config.ch_types:
+        meg = True
+    elif 'grad' in config.ch_types:
+        meg = 'grad'
+    elif 'mag' in config.ch_types:
+        meg = 'mag'
+
+    eeg = 'eeg' in config.ch_types
+
+    picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
                            eog=True, exclude=())
 
     # Construct metadata from the epochs

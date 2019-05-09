@@ -29,7 +29,11 @@ def run_ica(subject, tsss=config.mf_st_duration):
     print("  Loading raw data")
 
     for run in config.runs:
-        extension = run + '_sss_raw'
+        if config.use_maxwell_filter:
+            extension = run + '_sss_raw'
+        else:
+            extension = run + '_filt_raw'
+
         raw_fname_in = op.join(meg_subject_dir,
                                config.base_fname.format(**locals()))
         eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
@@ -40,19 +44,11 @@ def run_ica(subject, tsss=config.mf_st_duration):
         events = mne.read_events(eve_fname)
         events_list.append(events)
 
-        # mark bads from any run
-        bads = config.bads[subject]
-        if isinstance(bads, dict):
-            bads = set(sum(bads.values(), []))
-
-        raw.info['bads'] = bads
-        print("added bads: ", raw.info['bads'])
-
         raw_list.append(raw)
 
     print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
-    if config.eeg:
+    if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
     del raw_list
 
@@ -90,10 +86,11 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
     n_components = {'meg': n_components_meg, 'eeg': 0.999}
 
-    if config.eeg:
-        ch_types = ['meg', 'eeg']
-    else:
-        ch_types = ['meg']
+    ch_types = []
+    if 'eeg' in config.ch_types:
+        ch_types.append('eeg')
+    if set(config.ch_types).intersection(('meg', 'grad', 'mag')):
+        ch_types.append('meg')
 
     for ch_type in ch_types:
         print('Running ICA for ' + ch_type)
@@ -134,5 +131,6 @@ def run_ica(subject, tsss=config.mf_st_duration):
             report.save(report_fname, overwrite=True, open_browser=False)
 
 
-parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_ica:
+    parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

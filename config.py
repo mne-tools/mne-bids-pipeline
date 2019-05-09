@@ -9,7 +9,7 @@ Configuration parameters for the study.
 import os
 from collections import defaultdict
 import numpy as np
-
+from mne.datasets import sample
 
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
@@ -31,7 +31,7 @@ plot = False
 # or
 # >>> study_path = '/Users/sophie/repos/ExampleData/'
 
-study_path = '../MNE-sample-data/'
+study_path = sample.data_path()
 
 # ``subjects_dir`` : str
 #   The ``subjects_dir`` contains the MRI files for all subjects.

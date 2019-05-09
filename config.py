@@ -52,6 +52,10 @@ meg_dir = os.path.join(study_path, 'MEG')
 #
 # ``study_name`` : str
 #   This is the name of your experiment.
+#
+# Example
+# ~~~~~~~
+# >>> study_name = 'MNE-sample'
 study_name = 'Localizer'
 
 # ``subjects_list`` : list of str
@@ -125,14 +129,14 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 #
 # Example
 # ~~~~~~~
+# >>> bads = defaultdict(list)
+# >>> bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
+# or
 # >>> def default_bads():
 # >>>     return dict(run01=[], run02=[])
 # >>>
 # >>> bads = defaultdict(default_bads)
-#
-#   and to populate this, do:
-#
-# >>> bads['subject01'] = dict(run01=[12], run02=[7])
+# >>> bads['subject01'] = dict(run01=['MEG1723', 'MEG1722'], run02=['MEG1723'])
 #
 # Good Practice / Advice
 # ~~~~~~~~~~~~~~~~~~~~~~

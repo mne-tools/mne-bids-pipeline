@@ -38,7 +38,7 @@ for idx, evokeds in enumerate(all_evokeds):
 
 
 extension = 'grand_average-ave'
-fname_out = op.join(meg_subject_dir,
+fname_out = op.join(config.meg_dir,
                     '{0}_{1}.fif'.format(config.study_name, extension))
 
 print("Saving grand averate: %s" % fname_out)

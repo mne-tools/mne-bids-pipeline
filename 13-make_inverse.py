@@ -24,7 +24,7 @@ def run_inverse(subject):
     fname_ave = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
 
-    extension = '%s-fwd' % (config.spacing)
+    extension = '_%s-fwd' % (config.spacing)
     fname_fwd = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
 
@@ -32,7 +32,7 @@ def run_inverse(subject):
     fname_cov = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
 
-    extension = '%s-inv' % (config.spacing)
+    extension = '_%s-inv' % (config.spacing)
     fname_inv = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
 

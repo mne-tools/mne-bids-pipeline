@@ -271,8 +271,22 @@ mf_st_duration = None
 
 mf_head_origin = 'auto'
 
-# ``cross talk`` and ``calibration`` files should be downloaded and
-# and made available for running maxwell filtering.
+# ``cross talk`` : str
+#   Path to the cross talk file
+#
+#
+# ``calibration`` : str
+#   Path to the calibration file.
+#
+#
+# These 2 files should be downloaded and made available for running
+# maxwell filtering.
+#
+# Example
+# ~~~~~~~
+# >>> cal_files_path = os.path.join(study_path, 'SSS')
+# >>> mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
+# >>> mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
 #
 # Warning
 # ~~~~~~~
@@ -384,11 +398,19 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 #
 # ``tmin``: float
 #    A float in seconds that gives the start time before event of an epoch.
+#
+# Example
+# ~~~~~~~
+# >>> tmin = -0.2  # take 200ms before event onset.
 
 tmin = -0.6
 
 # ``tmax``: float
 #    A float in seconds that gives the end time before event of an epoch.
+#
+# Example
+# ~~~~~~~
+# >>> tmax = 0.5  # take 500ms after event onset.
 
 tmax = 1.5
 
@@ -396,21 +418,37 @@ tmax = 1.5
 #    If float it specifies the offset for the trigger and the stimulus
 #    (in seconds). You need to measure this value for your specific
 #    experiment/setup.
+#
+# Example
+# ~~~~~~~
+# >>> trigger_time_shift = 0  # don't apply any offset
 
 trigger_time_shift = -0.0416
 
 # ``baseline`` : tuple
 #    It specifies how to baseline the epochs; if None, no baseline is applied.
+#
+# Example
+# ~~~~~~~
+# >>> baseline = (None, 0)  # baseline between tmin and 0
 
 baseline = (-.6, -.1)  # (None, 0.)
 
 # ``stim_channel`` : str
 #    The name of the stimulus channel, which contains the events.
+#
+# Example
+# ~~~~~~~
+# >>> stim_channel = 'STI 014'  # or 'STI101'
 
-stim_channel = 'STI101'  # 'STI014'# None
+stim_channel = 'STI101'
 
 # ``min_event_duration`` : float
 #    The minimal duration of the events you want to extract (in seconds).
+#
+# Example
+# ~~~~~~~
+# >>> min_event_duration = 0.002  # 2 miliseconds
 
 min_event_duration = 0.002
 
@@ -420,12 +458,23 @@ min_event_duration = 0.002
 #
 # Example
 # ~~~~~~~
-# >>> event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}`
+# >>> event_id = {'auditory/left': 1, 'auditory/right': 2}`
 # or
 # >>> event_id = {'Onset': 4} with conditions = ['Onset']
 
 event_id = {'incoherent/1': 33, 'incoherent/2': 35,
             'coherent/down': 37, 'coherent/up': 39}
+
+#  `conditions`` : dict
+#    List of condition names to consider. Must match the keys
+#    in event_id.
+#
+# Example
+# ~~~~~~~
+# >>> conditions = ['auditory', 'visual']
+# or
+# >>> conditions = ['left', 'right']
+
 conditions = ['incoherent', 'coherent']
 
 ###############################################################################
@@ -484,7 +533,7 @@ ica_ctps_ecg_threshold = 0.1
 # ~~~~~~~
 # >>> decoding_conditions = []  # don't do decoding
 # or
-# >>> decoding_conditions = [('Auditory', 'Visual'), ('Left', 'Right')]
+# >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
 
 decoding_conditions = [('incoherent', 'coherent')]
 
@@ -559,7 +608,16 @@ method = 'dSPM'
 
 smooth = 10
 
-# base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
+
+# ``base_fname_trans`` : str
+#   The path to the trans files obtained with coregistration.
+#
+# Example
+# ~~~~~~~
+# >>> base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
+# or
+# >>> base_fname_trans = '{subject}-trans.fif'
+
 base_fname_trans = '{subject}-trans.fif'
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]

@@ -21,7 +21,7 @@ def run_report(subject):
 
     meg_subject_dir = op.join(config.meg_dir, subject)
     extension = '-ave'
-    ave_fname = op.join(meg_subject_dir,
+    fname_ave = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
     fname_trans = op.join(meg_subject_dir,
                           config.base_fname_trans.format(**locals()))
@@ -30,11 +30,11 @@ def run_report(subject):
         subject = None
         subjects_dir = None
 
-    rep = mne.Report(info_fname=ave_fname, subject=subject,
+    rep = mne.Report(info_fname=fname_ave, subject=subject,
                      subjects_dir=subjects_dir)
     rep.parse_folder(meg_subject_dir)
 
-    evokeds = mne.read_evokeds(ave_fname)
+    evokeds = mne.read_evokeds(fname_ave)
 
     figs = list()
     captions = list()
@@ -45,9 +45,9 @@ def run_report(subject):
         captions.append(evoked.comment)
 
     if op.exists(fname_trans):
-        mne.viz.plot_trans(evoked.info, fname_trans, subject=subject,
-                           subjects_dir=config.subjects_dir, meg_sensors=True,
-                           eeg_sensors=True)
+        mne.viz.plot_alignment(evoked.info, fname_trans, subject=subject,
+                               subjects_dir=config.subjects_dir, meg=True,
+                               dig=True, eeg=True)
         fig = mlab.gcf()
         figs.append(fig)
         captions.append('Coregistration')
@@ -71,27 +71,27 @@ def run_report(subject):
 parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
 parallel(run_func(subject) for subject in config.subjects_list)
 
-# # Group report
-# faces_fname = op.join(meg_dir, 'eeg_faces_highpass-%sHz-ave.fif' % l_freq)
-# rep = Report(info_fname=faces_fname, subject='fsaverage',
-#              subjects_dir=subjects_dir)
-# faces = mne.read_evokeds(faces_fname)[0]
-# rep.add_figs_to_section(faces.plot(spatial_colors=True, gfp=True,
-#                                    show=False),
-#                         'Average faces')
+# Group report
+evoked_fname = op.join(config.meg_dir,
+                       '%s_grand_average-ave.fif' % config.study_name)
+rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
+                 subjects_dir=config.subjects_dir)
+evokeds = mne.read_evokeds(evoked_fname)
 
-# scrambled = mne.read_evokeds(op.join(meg_dir, 'eeg_scrambled-ave.fif'))[0]
-# rep.add_figs_to_section(scrambled.plot(spatial_colors=True, gfp=True,
-#                                        show=False), 'Average scrambled')
+for evoked, condition in zip(evokeds, config.conditions):
+    rep.add_figs_to_section(evoked.plot(spatial_colors=True, gfp=True,
+                                        show=False),
+                            'Average %s' % condition)
 
-# fname = op.join(meg_dir, 'contrast-average_highpass-%sHz' % l_freq)
-# stc = mne.read_source_estimate(fname, subject='fsaverage')
-# brain = stc.plot(views=['ven'], hemi='both', subject='fsaverage',
-#                  subjects_dir=subjects_dir)
-# brain.set_data_time_index(165)
+    stc_fname = op.join(config.meg_dir, 'average_dSPM-%s' % condition)
+    if op.exists(stc_fname + "-lh.stc"):
+        stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
+        brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
+                         subjects_dir=config.subjects_dir)
+        brain.set_data_time_index(165)
 
-# fig = mlab.gcf()
-# rep.add_figs_to_section(fig, 'Average faces - scrambled')
+        fig = mlab.gcf()
+        rep.add_figs_to_section(fig, 'Average %s' % condition)
 
-# rep.save(fname=op.join(meg_dir, 'report_average.html'),
-#          open_browser=False, overwrite=True)
+rep.save(fname=op.join(config.meg_dir, 'report_average.html'),
+         open_browser=False, overwrite=True)

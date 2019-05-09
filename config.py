@@ -18,7 +18,6 @@ import numpy as np
 
 plot = False
 
-
 ###############################################################################
 # DIRECTORIES
 # -----------
@@ -32,7 +31,7 @@ plot = False
 # or
 # >>> study_path = '/Users/sophie/repos/ExampleData/'
 
-study_path = 'data/'
+study_path = '../MNE-sample-data/'
 
 # ``subjects_dir`` : str
 #   The ``subjects_dir`` contains the MRI files for all subjects.
@@ -56,7 +55,8 @@ meg_dir = os.path.join(study_path, 'MEG')
 # Example
 # ~~~~~~~
 # >>> study_name = 'MNE-sample'
-study_name = 'Localizer'
+
+study_name = 'audvis'
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
@@ -64,12 +64,7 @@ study_name = 'Localizer'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-# To use all subjects use
-subjects_list = ['SB01', 'SB02', 'SB04', 'SB05', 'SB06', 'SB07',
-                 'SB08', 'SB09', 'SB10', 'SB11', 'SB12']
-# else for speed and fast test you can use:
-
-subjects_list = ['SB01']
+subjects_list = ['sample']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -105,7 +100,7 @@ runs = ['']  # ['run01', 'run02']
 # or
 # >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-ch_types = ['meg']
+ch_types = ['meg', 'eeg']
 
 # ``base_fname`` : str
 #    This automatically generates the name for all files
@@ -146,10 +141,7 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # the same sensors are noisy across all runs.
 
 bads = defaultdict(list)
-bads['SB01'] = ['MEG1723', 'MEG1722']
-bads['SB04'] = ['MEG0543', 'MEG2333']
-bads['SB06'] = ['MEG2632', 'MEG2033']
-
+bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -296,9 +288,9 @@ mf_head_origin = 'auto'
 #
 # At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
 
-cal_files_path = os.path.join(study_path, 'system_calibration_files')
-mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_nspn.fif')
-mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_nspn.dat')
+cal_files_path = os.path.join(study_path, 'SSS')
+mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
+mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
 
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
@@ -340,7 +332,7 @@ mf_reference_run = 0
 # or
 # >>> resample_sfreq = 500  # resample to 500Hz
 
-resample_sfreq = 500.  # None
+resample_sfreq = None
 
 # ``decim`` : int
 #   Says how much to decimate data at the epochs level.
@@ -403,7 +395,7 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 # ~~~~~~~
 # >>> tmin = -0.2  # take 200ms before event onset.
 
-tmin = -0.6
+tmin = -0.2
 
 # ``tmax``: float
 #    A float in seconds that gives the end time before event of an epoch.
@@ -412,7 +404,7 @@ tmin = -0.6
 # ~~~~~~~
 # >>> tmax = 0.5  # take 500ms after event onset.
 
-tmax = 1.5
+tmax = 0.5
 
 # ``trigger_time_shift`` : float | None
 #    If float it specifies the offset for the trigger and the stimulus
@@ -423,7 +415,7 @@ tmax = 1.5
 # ~~~~~~~
 # >>> trigger_time_shift = 0  # don't apply any offset
 
-trigger_time_shift = -0.0416
+trigger_time_shift = 0.
 
 # ``baseline`` : tuple
 #    It specifies how to baseline the epochs; if None, no baseline is applied.
@@ -432,7 +424,7 @@ trigger_time_shift = -0.0416
 # ~~~~~~~
 # >>> baseline = (None, 0)  # baseline between tmin and 0
 
-baseline = (-.6, -.1)  # (None, 0.)
+baseline = (None, 0)
 
 # ``stim_channel`` : str
 #    The name of the stimulus channel, which contains the events.
@@ -441,7 +433,7 @@ baseline = (-.6, -.1)  # (None, 0.)
 # ~~~~~~~
 # >>> stim_channel = 'STI 014'  # or 'STI101'
 
-stim_channel = 'STI101'
+stim_channel = 'STI 014'
 
 # ``min_event_duration`` : float
 #    The minimal duration of the events you want to extract (in seconds).
@@ -462,8 +454,7 @@ min_event_duration = 0.002
 # or
 # >>> event_id = {'Onset': 4} with conditions = ['Onset']
 
-event_id = {'incoherent/1': 33, 'incoherent/2': 35,
-            'coherent/down': 37, 'coherent/up': 39}
+event_id = {'auditory/left': 1, 'auditory/right': 2}
 
 #  `conditions`` : dict
 #    List of condition names to consider. Must match the keys
@@ -475,7 +466,7 @@ event_id = {'incoherent/1': 33, 'incoherent/2': 35,
 # or
 # >>> conditions = ['left', 'right']
 
-conditions = ['incoherent', 'coherent']
+conditions = ['left', 'right']
 
 ###############################################################################
 # ARTIFACT REMOVAL
@@ -492,7 +483,7 @@ conditions = ['incoherent', 'coherent']
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
-use_ssp = False
+use_ssp = True
 
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
@@ -535,7 +526,8 @@ ica_ctps_ecg_threshold = 0.1
 # or
 # >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
 
-decoding_conditions = [('incoherent', 'coherent')]
+decoding_conditions = [('left', 'right')]
+
 
 # ``decoding_metric`` : str
 #    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'
@@ -555,7 +547,7 @@ decoding_n_splits = 5
 # ``time_frequency_conditions`` : list
 #    The conditions to compute time-frequency decomposition on.
 
-time_frequency_conditions = ['coherent']
+time_frequency_conditions = ['auditory/left']
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS
@@ -618,7 +610,7 @@ smooth = 10
 # or
 # >>> base_fname_trans = '{subject}-trans.fif'
 
-base_fname_trans = '{subject}-trans.fif'
+base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 

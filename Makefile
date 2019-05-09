@@ -33,6 +33,7 @@ sensor:
 	$(PYTHON) 05a-run_ica.py
 	$(PYTHON) 05b-run_ssp.py
 	$(PYTHON) 06a-apply_ica.py
+	$(PYTHON) 06b-apply_ssp.py
 	$(PYTHON) 07-make_evoked.py
 	$(PYTHON) 08-group_average_sensors.py
 	$(PYTHON) 09-sliding_estimator.py

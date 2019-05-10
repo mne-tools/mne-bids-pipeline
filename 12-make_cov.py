@@ -19,7 +19,10 @@ import config
 def run_covariance(subject):
     print("Processing subject: %s%s")
     meg_subject_dir = op.join(config.meg_dir, subject)
-    extension = '-epo'
+    if config.use_ica or config.use_ssp:
+        extension = '_cleaned-epo'
+    else:
+        extension = '-epo'
     fname_epo = op.join(meg_subject_dir,
                         config.base_fname.format(**locals()))
     print("Input: ", fname_epo)

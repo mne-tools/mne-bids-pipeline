@@ -24,11 +24,11 @@ import config
 
 
 def run_filter(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
-    raws = []
+    n_raws = 0
     for run in config.runs:
 
         # read bad channels for run from config
@@ -54,6 +54,7 @@ def run_filter(subject):
             continue
 
         raw = mne.io.read_raw_fif(raw_fname_in,
+                                  allow_maxshield=config.allow_maxshield,
                                   preload=True, verbose='error')
 
         # add bad channels
@@ -66,6 +67,8 @@ def run_filter(subject):
             raw.rename_channels(config.rename_channels)
 
         # Band-pass the data channels (MEG and EEG)
+        print("Filtering data between %s and %s (Hz)" %
+              (config.l_freq, config.h_freq))
         raw.filter(
             config.l_freq, config.h_freq,
             l_trans_bandwidth=config.l_trans_bandwidth,
@@ -73,22 +76,22 @@ def run_filter(subject):
             filter_length='auto', phase='zero', fir_window='hamming',
             fir_design='firwin')
 
+        if config.resample_sfreq:
+            print("Resampling data to %.1f Hz" % config.resample_sfreq)
+            raw.resample(config.resample_sfreq, npad='auto')
+
         raw.save(raw_fname_out, overwrite=True)
-        raws.append(raw)
+        n_raws += 1
 
         if config.plot:
-
             # plot raw data
-            figure = raw.plot(n_channels=50, butterfly=True,
-                              group_by='position')
-            figure.show()
+            raw.plot(n_channels=50, butterfly=True, group_by='position')
 
             # plot power spectral densitiy
-            figure = raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                                  fmin=0., fmax=50., average=True)
-            figure.show()
+            raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
+                         fmin=0., fmax=50., average=True)
 
-    if len(raws) == 0:
+    if n_raws == 0:
         raise ValueError('No input raw data found.')
 
 

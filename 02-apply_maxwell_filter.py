@@ -1,9 +1,10 @@
 """
 ===================================
-03. Maxwell filter using MNE-python
+03. Maxwell filter using MNE-Python
 ===================================
-The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration is not None)
-and movement compensation.
+
+The data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
+is not None) and movement compensation.
 
 Using tSSS with a short duration can be used as an alternative to highpass
 filtering. For instance, a duration of 10 s acts like a 0.1 Hz highpass.
@@ -25,7 +26,7 @@ import config
 
 
 def run_maxwell_filter(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
 
     meg_subject_dir = op.join(config.meg_dir, subject)
 
@@ -50,7 +51,8 @@ def run_maxwell_filter(subject):
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 
-        raw = mne.io.read_raw_fif(raw_fname_in)
+        raw = mne.io.read_raw_fif(raw_fname_in, allow_maxshield=True)
+        raw.fix_mag_coil_types()
 
         if config.mf_st_duration:
             print('    st_duration=%d' % (config.mf_st_duration,))
@@ -66,12 +68,11 @@ def run_maxwell_filter(subject):
         raw_sss.save(raw_fname_out, overwrite=True)
 
         if config.plot:
-
             # plot maxfiltered data
-            figure = raw_sss.plot(
-                n_channels=50, butterfly=True, group_by='position')
-            figure.show()
+            raw_sss.plot(n_channels=50, butterfly=True, group_by='position')
 
 
-parallel, run_func, _ = parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+if config.use_maxwell_filter:
+    parallel, run_func, _ = \
+        parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
+    parallel(run_func(subject) for subject in config.subjects_list)

@@ -17,7 +17,10 @@ import config
 def run_evoked(subject):
     print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
-    extension = '-epo'
+    if config.use_ica or config.use_ssp:
+        extension = '_cleaned-epo'
+    else:
+        extension = '-epo'
     fname_in = op.join(meg_subject_dir,
                        config.base_fname.format(**locals()))
     extension = '-ave'
@@ -33,8 +36,15 @@ def run_evoked(subject):
     evokeds = []
     for condition in config.conditions:
         evokeds.append(epochs[condition].average())
-
     mne.evoked.write_evokeds(fname_out, evokeds)
+
+    if config.plot:
+        ts_args = dict(gfp=True, time_unit='s')
+        topomap_args = dict(time_unit='s')
+
+        for condition, evoked in zip(config.conditions, evokeds):
+            evoked.plot_joint(title=condition, ts_args=ts_args,
+                              topomap_args=topomap_args)
 
 
 parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)

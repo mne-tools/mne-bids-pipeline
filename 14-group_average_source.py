@@ -15,7 +15,7 @@ import config
 
 
 def morph_stc(subject):
-    print("processing subject: %s" % subject)
+    print("Processing subject: %s" % subject)
     meg_subject_dir = op.join(config.meg_dir, subject)
 
     morphed_stcs = []
@@ -29,8 +29,9 @@ def morph_stc(subject):
                                          subject_to='fsaverage',
                                          subjects_dir=config.subjects_dir)
         stc_fsaverage = morph.apply(stc)
-        stc_fsaverage.save(op.join(meg_subject_dir,
-                                   'mne_dSPM_inverse_fsaverage-%s' % condition))
+        stc_fsaverage.save(
+            op.join(meg_subject_dir,
+                    'mne_dSPM_inverse_fsaverage-%s' % condition))
         morphed_stcs.append(stc_fsaverage)
 
     return morphed_stcs
@@ -43,6 +44,7 @@ all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                     zip(all_morphed_stcs, config.subjects_list)
                     if subject not in config.exclude_subjects]
 mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
+
 for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
     this_stc /= len(all_morphed_stcs)
     this_stc.save(op.join(config.meg_dir, 'average_dSPM-%s' % condition))

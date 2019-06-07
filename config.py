@@ -498,15 +498,18 @@ use_ica = False
 ica_decim = 11
 
 
-# ``default_reject_comps`` : dict
+# ``default_reject_comps_factory`` : callable
+#    A factory function that returns a default rejection component dictionary:
 #    A dictionary that specifies the indices of the ICA components to reject
 #    for each subject. For example you can use:
 #    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
 
-def default_reject_comps():
+def default_reject_comps_factory():
+    """Return the default rejection component dictionary."""
     return dict(meg=[], eeg=[])
 
-rejcomps_man = defaultdict(default_reject_comps)
+
+rejcomps_man = defaultdict(default_reject_comps_factory)
 
 # ``ica_ctps_ecg_threshold``: float
 #    The threshold parameter passed to `find_bads_ecg` method.

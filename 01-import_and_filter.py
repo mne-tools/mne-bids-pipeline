@@ -35,9 +35,9 @@ def run_filter(subject):
 
         # read bad channels for run from config
         if run:
-            bads = bads[subject][run]  # noqa: F823
+            current_bads = bads[subject][run]
         else:
-            bads = bads[subject]
+            current_bads = bads[subject]
 
         extension = run + '_raw'
         raw_fname_in = op.join(meg_subject_dir,
@@ -60,7 +60,7 @@ def run_filter(subject):
                                   preload=True, verbose='error')
 
         # add bad channels
-        raw.info['bads'] = bads
+        raw.info['bads'] = current_bads
         print("added bads: ", raw.info['bads'])
 
         if set_channel_types is not None:

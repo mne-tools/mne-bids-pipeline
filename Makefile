@@ -1,7 +1,7 @@
 PYTHON = python
 
 help:
-	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "Please use \`make <target>\` where <target> is one of"
 	@echo "  fetch         to fetch the data"
 	@echo "  sensor        run sensor space processing"
 	@echo "  source        run source space processing"

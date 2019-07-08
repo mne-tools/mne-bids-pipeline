@@ -9,90 +9,90 @@ delay compensation.
 The transition bandwidth is automatically defined. See
 `Background information on filtering
 <http://mne-tools.github.io/dev/auto_tutorials/plot_background_filtering.html>`_
-for more. The filtered data are saved to separate files to the subject's'MEG'
+for more. The filtered data are saved to separate files to the subject's 'MEG'
 directory.
+
 If config.plot = True plots raw data and power spectral density.
 """  # noqa: E501
 
+import os
 import os.path as op
+import glob
 
-import mne
 from mne.parallel import parallel_func
-from warnings import warn
+from mne_bids import make_bids_basename, read_raw_bids
 
 import config
 
 
 def run_filter(subject):
-    print("Processing subject: %s" % subject)
+    """Filter data from a single subject."""
+    print('Processing subject: {}'.format(subject))
 
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    # Construct the search path for the data file
+    subject_path = op.join(subject, config.kind, config.ses)
+    data_dir = op.join(config.bids_root, subject_path)
 
-    n_raws = 0
-    for run in config.runs:
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=config.ses,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=config.run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
 
-        # read bad channels for run from config
-        if run:
-            bads = config.bads[subject][run]
-        else:
-            bads = config.bads[subject]
+    # Find the data file
+    search_str = op.join(data_dir, bids_basename) + '*'
+    fname_candidates = glob.glob(search_str)
 
-        extension = run + '_raw'
-        raw_fname_in = op.join(meg_subject_dir,
-                               config.base_fname.format(**locals()))
+    if len(fname_candidates) == 1:
+        bids_fname = fname_candidates[0]
+    elif len(fname_candidates) == 0:
+        raise ValueError('Could not find input data file: "{}"'.format)
+    elif len(fname_candidates) > 1:
+        raise ValueError('Expected to find a single input data file: "{}" but '
+                         'found:\n\n{}'.format(search_str, fname_candidates))
 
-        extension = run + '_filt_raw'
-        raw_fname_out = op.join(meg_subject_dir,
-                                config.base_fname.format(**locals()))
+    # Bad channels are automatically populated using channelts.tsv ... if
+    # it is available
+    raw = read_raw_bids(bids_fname, config.bids_root)
 
-        print("Input: ", raw_fname_in)
-        print("Output: ", raw_fname_out)
+    # XXX: add raw.set_channel_type with a dict obtained from channels.tsv
+    # e.g.: {'EEG061': 'eog'}
 
-        if not op.exists(raw_fname_in):
-            warn('Run %s not found for subject %s ' %
-                 (raw_fname_in, subject))
-            continue
+    # Band-pass the data channels (MEG and EEG)
+    print('Filtering data between {} and {} (Hz)'
+          .format(config.l_freq, config.h_freq))
 
-        raw = mne.io.read_raw_fif(raw_fname_in,
-                                  allow_maxshield=config.allow_maxshield,
-                                  preload=True, verbose='error')
+    raw.filter(config.l_freq, config.h_freq,
+               l_trans_bandwidth=config.l_trans_bandwidth,
+               h_trans_bandwidth=config.h_trans_bandwidth,
+               filter_length='auto', phase='zero', fir_window='hamming',
+               fir_design='firwin'
+               )
 
-        # add bad channels
-        raw.info['bads'] = bads
-        print("added bads: ", raw.info['bads'])
+    if config.resample_sfreq:
+        print('Resampling data to {:.1f} Hz'.format(config.resample_sfreq))
 
-        if config.set_channel_types is not None:
-            raw.set_channel_types(config.set_channel_types)
-        if config.rename_channels is not None:
-            raw.rename_channels(config.rename_channels)
+        raw.resample(config.resample_sfreq, npad='auto')
 
-        # Band-pass the data channels (MEG and EEG)
-        print("Filtering data between %s and %s (Hz)" %
-              (config.l_freq, config.h_freq))
-        raw.filter(
-            config.l_freq, config.h_freq,
-            l_trans_bandwidth=config.l_trans_bandwidth,
-            h_trans_bandwidth=config.h_trans_bandwidth,
-            filter_length='auto', phase='zero', fir_window='hamming',
-            fir_design='firwin')
+    # Prepare a name to save the data
+    fpath_out = op.join(data_dir, 'derivatives', subject_path)
+    if not op.exists(fpath_out):
+        os.makedirs(fpath_out)
+    fname_out = op.join(fpath_out, bids_basename + '_filt_raw.fif')
 
-        if config.resample_sfreq:
-            print("Resampling data to %.1f Hz" % config.resample_sfreq)
-            raw.resample(config.resample_sfreq, npad='auto')
+    raw.save(fname_out, overwrite=True)
 
-        raw.save(raw_fname_out, overwrite=True)
-        n_raws += 1
+    if config.plot:
+        # plot raw data
+        raw.plot(n_channels=50, butterfly=True, group_by='position')
 
-        if config.plot:
-            # plot raw data
-            raw.plot(n_channels=50, butterfly=True, group_by='position')
-
-            # plot power spectral densitiy
-            raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                         fmin=0., fmax=50., average=True)
-
-    if n_raws == 0:
-        raise ValueError('No input raw data found.')
+        # plot power spectral densitiy
+        raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
+                     fmin=0., fmax=50., average=True)
 
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)

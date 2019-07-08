@@ -3,13 +3,12 @@
 Config file
 ===========
 
-Configuration parameters for the study.
+Set the configuration parameters for the study.
 """
 
 import os
 from collections import defaultdict
 import numpy as np
-from mne.datasets import sample
 
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
@@ -18,36 +17,49 @@ from mne.datasets import sample
 
 plot = False
 
+
+# ``kind`` : str
+#   The kind of data to be analyzed, can be 'eeg', or 'meg'.
+
+kind = 'eeg'
+
+# BIDS params
+# see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
+ses = None
+task = 'matchingpennies'
+run = None
+acq = None
+proc = None
+rec = None
+space = None
+
+# ``datatype`` : str
+#   The file ending, can be '.fif', '.vhdr', '.ds', ...
+dataformat = '.vhdr'
+
 ###############################################################################
 # DIRECTORIES
 # -----------
 #
-# ``study_path`` : str
-#    Set the `study path`` where the data is stored on your system.
+# ``bids_root`` : str
+#    Path to the directory that contains the study data in BIDS format.
 #
 # Example
 # ~~~~~~~
-# >>> study_path = '../MNE-sample-data/'
-# or
-# >>> study_path = '/Users/sophie/repos/ExampleData/'
+# >>> bids_root = '/home/my_user/my_bids_data/'
 
-study_path = sample.data_path()
+bids_root = '/home/stefanappelhoff/Downloads/eeg_matchingpennies'
 
 # ``subjects_dir`` : str
-#   The ``subjects_dir`` contains the MRI files for all subjects.
+#   Path to the directory that contains the MRI data files and their
+#   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
+#   $SUBJECTS_DIR used by the Freesurfer software.
 
-subjects_dir = os.path.join(study_path, 'subjects')
-
-# ``meg_dir`` : str
-#   The ``meg_dir`` contains the MEG data in subfolders
-#   named my_study_path/MEG/my_subject/
-
-meg_dir = os.path.join(study_path, 'MEG')
-
+subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 
 ###############################################################################
-# SUBJECTS / RUNS
-# ---------------
+# SUBJECTS / SESSIONS / RUNS
+# --------------------------
 #
 # ``study_name`` : str
 #   This is the name of your experiment.
@@ -56,7 +68,7 @@ meg_dir = os.path.join(study_path, 'MEG')
 # ~~~~~~~
 # >>> study_name = 'MNE-sample'
 
-study_name = 'audvis'
+study_name = 'eeg_matchingpennies'
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
@@ -64,7 +76,7 @@ study_name = 'audvis'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-subjects_list = ['sample']
+subjects_list = ['05']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -77,7 +89,13 @@ subjects_list = ['sample']
 
 exclude_subjects = []
 
-# ``runs`` : list of str
+# ``sessions`` : list of str
+#   Define the names of your ``sessions``. If there are none, leave this a list
+#   with a single entry of None: [None]
+
+sessions = [None]
+
+# ``runs`` : str | None
 #   Define the names of your ``runs``
 #
 # Good Practice / Advice
@@ -87,7 +105,7 @@ exclude_subjects = []
 # if there are less runs than is expected. If there is only just one file,
 # leave empty!
 
-runs = ['']  # ['run01', 'run02']
+run = None
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
@@ -100,7 +118,7 @@ runs = ['']  # ['run01', 'run02']
 # or
 # >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-ch_types = ['meg', 'eeg']
+ch_types = ['eeg']
 
 # ``base_fname`` : str
 #    This automatically generates the name for all files
@@ -217,7 +235,7 @@ h_freq = 40.
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
 
-use_maxwell_filter = True
+use_maxwell_filter = False
 
 # There are two kinds of maxfiltering: SSS and tSSS
 # [SSS = signal space separation ; tSSS = temporal signal space separation]
@@ -288,9 +306,9 @@ mf_head_origin = 'auto'
 #
 # At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
 
-cal_files_path = os.path.join(study_path, 'SSS')
-mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
-mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
+# cal_files_path = os.path.join(study_path, 'SSS')
+# mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
+# mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
 
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
@@ -617,11 +635,11 @@ base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
-if not os.path.isdir(study_path):
-    os.mkdir(study_path)
+# if not os.path.isdir(study_path):
+#     os.mkdir(study_path)
 
-if not os.path.isdir(subjects_dir):
-    os.mkdir(subjects_dir)
+#if not os.path.isdir(subjects_dir):
+#    os.mkdir(subjects_dir)
 
 ###############################################################################
 # ADVANCED

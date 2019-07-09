@@ -30,7 +30,9 @@ def run_filter(subject):
     print('Processing subject: {}'.format(subject))
 
     # Construct the search path for the data file
-    subject_path = op.join(subject, config.kind, config.ses)
+    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    if config.ses:
+        subject_path = op.join(subject_path, 'ses-{}'.format(config.ses))
     data_dir = op.join(config.bids_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
@@ -44,19 +46,25 @@ def run_filter(subject):
                                        )
 
     # Find the data file
-    search_str = op.join(data_dir, bids_basename) + '*'
-    fname_candidates = glob.glob(search_str)
+    search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
+    fnames = glob.glob(search_str)
 
-    if len(fname_candidates) == 1:
-        bids_fname = fname_candidates[0]
-    elif len(fname_candidates) == 0:
+    if len(fnames) == 1:
+        bids_fpath = fnames[0]
+    elif len(fnames) == 0:
         raise ValueError('Could not find input data file: "{}"'.format)
-    elif len(fname_candidates) > 1:
-        raise ValueError('Expected to find a single input data file: "{}" but '
-                         'found:\n\n{}'.format(search_str, fname_candidates))
+    elif len(fnames) > 1:
+        # Try to Handle BrainVision
+        if len(fnames) == 3 and any([fp.endswith('.vhdr') for fp in fnames]):
+            bids_fpath = sorted(fnames)[1]
+        else:
+            raise ValueError('Expected to find a single input data file: "{}" '
+                             ' but found:\n\n{}'
+                             .format(search_str, fnames))
 
     # Bad channels are automatically populated using channelts.tsv ... if
     # it is available
+    _, bids_fname = op.split(bids_fpath)
     raw = read_raw_bids(bids_fname, config.bids_root)
 
     # XXX: add raw.set_channel_type with a dict obtained from channels.tsv

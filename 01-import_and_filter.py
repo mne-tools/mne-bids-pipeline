@@ -27,7 +27,8 @@ import config
 
 def run_filter(subject):
     """Filter data from a single subject."""
-    print('Processing subject: {}'.format(subject))
+    print('\nProcessing subject: {}\n{}'
+          .format(subject, '-'*(20+len(subject))))
 
     # Construct the search path for the data file
     subject_path = op.join('sub-{}'.format(subject), config.kind)

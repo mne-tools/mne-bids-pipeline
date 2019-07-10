@@ -76,7 +76,7 @@ study_name = 'eeg_matchingpennies'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-subjects_list = ['05']
+subjects_list = ['05', '06', '07']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:

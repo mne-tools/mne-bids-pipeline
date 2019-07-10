@@ -66,6 +66,7 @@ def run_filter(subject):
     # it is available
     _, bids_fname = op.split(bids_fpath)
     raw = read_raw_bids(bids_fname, config.bids_root)
+    raw.load_data()
 
     # XXX: add raw.set_channel_type with a dict obtained from channels.tsv
     # e.g.: {'EEG061': 'eog'}

@@ -15,7 +15,7 @@ import numpy as np
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-plot = False
+plot = True
 
 
 # ``kind`` : str

@@ -71,6 +71,7 @@ def run_filter(subject):
 
     # XXX: add raw.set_channel_type with a dict obtained from channels.tsv
     # e.g.: {'EEG061': 'eog'}
+    # see: https://github.com/mne-tools/mne-bids/issues/218
 
     # Band-pass the data channels (MEG and EEG)
     print('Filtering data between {} and {} (Hz)'
@@ -96,6 +97,7 @@ def run_filter(subject):
 
     raw.save(fname_out, overwrite=True)
 
+    # XXX: Need to make plotting work if no sensor positions are known
     if config.plot:
         # plot raw data
         raw.plot(n_channels=50, butterfly=True, group_by='position')

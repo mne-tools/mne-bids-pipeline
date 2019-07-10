@@ -88,7 +88,7 @@ def run_filter(subject):
         raw.resample(config.resample_sfreq, npad='auto')
 
     # Prepare a name to save the data
-    fpath_out = op.join(data_dir, 'derivatives', subject_path)
+    fpath_out = op.join(config.bids_root, 'derivatives', subject_path)
     if not op.exists(fpath_out):
         os.makedirs(fpath_out)
     fname_out = op.join(fpath_out, bids_basename + '_filt_raw.fif')

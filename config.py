@@ -8,6 +8,7 @@ Set the configuration parameters for the study.
 
 import os
 from collections import defaultdict
+from bids import BIDSLayout
 import numpy as np
 
 # ``plot``  : boolean
@@ -16,6 +17,7 @@ import numpy as np
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
 plot = True
+plot = False
 
 
 # ``kind`` : str
@@ -48,7 +50,7 @@ dataformat = '.vhdr'
 # ~~~~~~~
 # >>> bids_root = '/home/my_user/my_bids_data/'
 
-bids_root = '/home/stefanappelhoff/Downloads/eeg_matchingpennies'
+bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -76,7 +78,12 @@ study_name = 'eeg_matchingpennies'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-subjects_list = ['05', '06', '07']
+# subjects_list = ['05', '06', '07']
+
+layout = BIDSLayout(bids_root)
+subjects_list = layout.get(return_type='id', target='subject')
+
+# subjects_list = ['05']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -158,6 +165,7 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # to have per participant. Use the simple dict if you don't have runs or if
 # the same sensors are noisy across all runs.
 
+# XXX bads should in the BIDS files
 bads = defaultdict(list)
 bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 
@@ -176,6 +184,7 @@ bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 # >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
 #                        'EEG063': 'ECG063'}
 
+# XXX should be done automatically from BIDS ?
 rename_channels = None
 
 # ``set_channel_types``: dict
@@ -186,6 +195,7 @@ rename_channels = None
 # >>> set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
 #                          'EEG063': 'ecg', 'EEG064': 'misc'}
 
+# XXX should not be necessary
 set_channel_types = None
 
 ###############################################################################
@@ -400,7 +410,8 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
-reject = {'grad': 4000e-13, 'mag': 4e-12}
+# reject = {'grad': 4000e-13, 'mag': 4e-12}
+reject = {'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -451,7 +462,8 @@ baseline = (None, 0)
 # ~~~~~~~
 # >>> stim_channel = 'STI 014'  # or 'STI101'
 
-stim_channel = 'STI 014'
+# XXX not needed if bids events are present
+# stim_channel = 'STI 014'
 
 # ``min_event_duration`` : float
 #    The minimal duration of the events you want to extract (in seconds).
@@ -460,7 +472,8 @@ stim_channel = 'STI 014'
 # ~~~~~~~
 # >>> min_event_duration = 0.002  # 2 miliseconds
 
-min_event_duration = 0.002
+# XXX not needed if bids events are present
+# min_event_duration = 0.002
 
 #  `event_id`` : dict
 #    Dictionary that maps events (trigger/marker values)
@@ -472,7 +485,7 @@ min_event_duration = 0.002
 # or
 # >>> event_id = {'Onset': 4} with conditions = ['Onset']
 
-event_id = {'auditory/left': 1, 'auditory/right': 2}
+# event_id = {'auditory/left': 1, 'auditory/right': 2}
 
 #  `conditions`` : dict
 #    List of condition names to consider. Must match the keys
@@ -501,7 +514,7 @@ conditions = ['left', 'right']
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
-use_ssp = True
+use_ssp = False
 
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
@@ -568,7 +581,7 @@ decoding_n_splits = 5
 # ``time_frequency_conditions`` : list
 #    The conditions to compute time-frequency decomposition on.
 
-time_frequency_conditions = ['auditory/left']
+time_frequency_conditions = ['left', 'right']
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS

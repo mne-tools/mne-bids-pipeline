@@ -20,6 +20,7 @@ import os.path as op
 import glob
 
 from mne.parallel import parallel_func
+from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
 
 import config
@@ -28,7 +29,7 @@ import config
 def run_filter(subject):
     """Filter data from a single subject."""
     print('\nProcessing subject: {}\n{}'
-          .format(subject, '-'*(20+len(subject))))
+          .format(subject, '-' * (20 + len(subject))))
 
     # Construct the search path for the data file
     subject_path = op.join('sub-{}'.format(subject), config.kind)
@@ -48,20 +49,19 @@ def run_filter(subject):
 
     # Find the data file
     search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
-    fnames = glob.glob(search_str)
+    fnames = sorted(glob.glob(search_str))
+    fnames = [f for f in fnames
+              if op.splitext(f)[1] in mne_bids_readers]
 
     if len(fnames) == 1:
         bids_fpath = fnames[0]
     elif len(fnames) == 0:
-        raise ValueError('Could not find input data file: "{}"'.format)
+        raise ValueError('Could not find input data file matching: '
+                         '"{}"'.format(search_str))
     elif len(fnames) > 1:
-        # Try to Handle BrainVision
-        if len(fnames) == 3 and any([fp.endswith('.vhdr') for fp in fnames]):
-            bids_fpath = sorted(fnames)[1]
-        else:
-            raise ValueError('Expected to find a single input data file: "{}" '
-                             ' but found:\n\n{}'
-                             .format(search_str, fnames))
+        raise ValueError('Expected to find a single input data file: "{}" '
+                         ' but found:\n\n{}'
+                         .format(search_str, fnames))
 
     # Bad channels are automatically populated using channelts.tsv ... if
     # it is available
@@ -100,7 +100,7 @@ def run_filter(subject):
     # XXX: Need to make plotting work if no sensor positions are known
     if config.plot:
         # plot raw data
-        raw.plot(n_channels=50, butterfly=True, group_by='position')
+        raw.plot(n_channels=50, butterfly=True)
 
         # plot power spectral densitiy
         raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,

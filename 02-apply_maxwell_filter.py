@@ -21,6 +21,7 @@ import os.path as op
 
 import mne
 from mne.parallel import parallel_func
+from mne_bids import make_bids_basename
 
 import config
 
@@ -28,31 +29,36 @@ import config
 def run_maxwell_filter(subject):
     print("Processing subject: %s" % subject)
 
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    # runs = config.runs
+    runs = [None]  # tmp hack
+    subject_path = op.join('sub-{}'.format(subject), config.kind)
 
-    # To match their processing, transform to the head position of the
-    # defined run
-    extension = config.runs[config.mf_reference_run] + '_filt_raw'
-    raw_fname_in = op.join(meg_subject_dir,
-                           config.base_fname.format(**locals()))
-    info = mne.io.read_info(raw_fname_in)
-    destination = info['dev_head_t']
+    for run_idx, run in enumerate(runs):
 
-    for run in config.runs:
+        bids_basename = make_bids_basename(subject=subject,
+                                           session=config.ses,
+                                           task=config.task,
+                                           acquisition=config.acq,
+                                           run=config.run,
+                                           processing=config.proc,
+                                           recording=config.rec,
+                                           space=config.space
+                                           )
 
-        extension = run + '_filt_raw'
-        raw_fname_in = op.join(meg_subject_dir,
-                               config.base_fname.format(**locals()))
-
-        extension = run + '_sss_raw'
-        raw_fname_out = op.join(meg_subject_dir,
-                                config.base_fname.format(**locals()))
+        # Prepare a name to save the data
+        raw_fname_in = op.join(config.bids_root, 'derivatives', subject_path)
+        fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+        raw_fname_in = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        raw_fname_out = op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
 
         print("Input: ", raw_fname_in)
         print("Output: ", raw_fname_out)
 
         raw = mne.io.read_raw_fif(raw_fname_in, allow_maxshield=True)
         raw.fix_mag_coil_types()
+
+        if run_idx == 0:
+            destination = raw.info['dev_head_t']
 
         if config.mf_st_duration:
             print('    st_duration=%d' % (config.mf_st_duration,))
@@ -69,7 +75,7 @@ def run_maxwell_filter(subject):
 
         if config.plot:
             # plot maxfiltered data
-            raw_sss.plot(n_channels=50, butterfly=True, group_by='position')
+            raw_sss.plot(n_channels=50, butterfly=True)
 
 
 if config.use_maxwell_filter:

@@ -6,9 +6,12 @@ Config file
 Set the configuration parameters for the study.
 """
 
+import importlib
 import os
 from collections import defaultdict
+
 from bids import BIDSLayout
+
 import numpy as np
 
 # ``plot``  : boolean
@@ -702,6 +705,17 @@ shortest_event = 1
 #    maxfilter set this to True.
 
 allow_maxshield = True
+
+###############################################################################
+# Overwrite with custom config options
+
+if "MNE_BIDS_STUDY_CONFIG" in os.environ:
+    config_custom = \
+        importlib.import_module(os.environ['MNE_BIDS_STUDY_CONFIG'])
+    for val in dir(config_custom):
+        if not val.startswith('__'):
+            exec("%s = config_custom.%s" % (val, val))
+            print('Overwriting: %s' % val)
 
 ###############################################################################
 # CHECKS

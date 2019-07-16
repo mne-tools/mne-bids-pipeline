@@ -16,11 +16,16 @@ import config
 
 def morph_stc(subject):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    subject_path = op.join('sub-{}'.format(subject), config.kind)
+
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+
+    mne.utils.set_config('SUBJECTS_DIR', config.subjects_dir)
+    mne.datasets.fetch_fsaverage(subjects_dir=config.subjects_dir)
 
     morphed_stcs = []
     for condition in config.conditions:
-        fname_stc = op.join(meg_subject_dir, '%s_%s_mne_dSPM_inverse-%s'
+        fname_stc = op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
                             % (config.study_name, subject,
                                condition.replace(op.sep, '')))
         stc = mne.read_source_estimate(fname_stc)
@@ -30,7 +35,7 @@ def morph_stc(subject):
                                          subjects_dir=config.subjects_dir)
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(
-            op.join(meg_subject_dir,
+            op.join(fpath_deriv,
                     'mne_dSPM_inverse_fsaverage-%s' % condition))
         morphed_stcs.append(stc_fsaverage)
 
@@ -47,4 +52,5 @@ mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
 for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
     this_stc /= len(all_morphed_stcs)
-    this_stc.save(op.join(config.meg_dir, 'average_dSPM-%s' % condition))
+    this_stc.save(op.join(config.bids_root, 'derivatives',
+                          'average_dSPM-%s' % condition))

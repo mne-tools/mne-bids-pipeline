@@ -23,12 +23,14 @@ plot = False
 # ``kind`` : str
 #   The kind of data to be analyzed, can be 'eeg', or 'meg'.
 
-kind = 'eeg'
+# kind = 'eeg'
+kind = 'meg'
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 ses = None
-task = 'matchingpennies'
+# task = 'matchingpennies'
+task = 'somato'
 run = None
 acq = None
 proc = None
@@ -37,7 +39,7 @@ space = None
 
 # ``datatype`` : str
 #   The file ending, can be '.fif', '.vhdr', '.ds', ...
-dataformat = '.vhdr'
+# dataformat = '.vhdr'
 
 ###############################################################################
 # DIRECTORIES
@@ -50,7 +52,8 @@ dataformat = '.vhdr'
 # ~~~~~~~
 # >>> bids_root = '/home/my_user/my_bids_data/'
 
-bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
+# bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
+bids_root = '/Users/alex/Dropbox/somato_recon/BIDS_complete/MNE-somato-data'
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -125,7 +128,8 @@ run = None
 # or
 # >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-ch_types = ['eeg']
+# ch_types = ['eeg']
+ch_types = ['meg']
 
 # ``base_fname`` : str
 #    This automatically generates the name for all files
@@ -165,9 +169,9 @@ base_fname = '{subject}_' + study_name + '{extension}.fif'
 # to have per participant. Use the simple dict if you don't have runs or if
 # the same sensors are noisy across all runs.
 
-# XXX bads should in the BIDS files
-bads = defaultdict(list)
-bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
+# # XXX bads should in the BIDS files
+# bads = defaultdict(list)
+# bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -410,8 +414,8 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
-# reject = {'grad': 4000e-13, 'mag': 4e-12}
-reject = {'eeg': 150e-6}
+reject = {'grad': 4000e-13, 'mag': 4e-12}
+# reject = {'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -497,7 +501,8 @@ baseline = (None, 0)
 # or
 # >>> conditions = ['left', 'right']
 
-conditions = ['left', 'right']
+# conditions = ['left', 'right']
+conditions = ['somato_event1']
 
 ###############################################################################
 # ARTIFACT REMOVAL
@@ -514,7 +519,7 @@ conditions = ['left', 'right']
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
-use_ssp = False
+use_ssp = True
 
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
@@ -560,7 +565,8 @@ ica_ctps_ecg_threshold = 0.1
 # or
 # >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
 
-decoding_conditions = [('left', 'right')]
+decoding_conditions = []
+# decoding_conditions = [('left', 'right')]
 
 
 # ``decoding_metric`` : str
@@ -581,7 +587,8 @@ decoding_n_splits = 5
 # ``time_frequency_conditions`` : list
 #    The conditions to compute time-frequency decomposition on.
 
-time_frequency_conditions = ['left', 'right']
+# time_frequency_conditions = ['left', 'right']
+time_frequency_conditions = []
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS

@@ -46,8 +46,9 @@ ses = ses if ses else None
 # XXX: take only first task for now
 task = layout.get(return_type='id', target='task')[0]
 
+# XXX: take only first run for now
 run = layout.get(return_type='id', target='run')
-run = run if run else None
+run = run[0] if run else None
 
 acq = layout.get(return_type='id', target='acquisition')
 acq = acq if acq else None

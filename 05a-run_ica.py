@@ -16,38 +16,59 @@ from mne.report import Report
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
 
+from mne_bids import make_bids_basename
+
 import config
 
 
 def run_ica(subject, tsss=config.mf_st_duration):
     print("Processing subject: %s" % subject)
 
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    subject_path = op.join('sub-{}'.format(subject), config.kind)
+
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
 
     raw_list = list()
-    events_list = list()
     print("  Loading raw data")
 
-    for run in config.runs:
-        if config.use_maxwell_filter:
-            extension = run + '_sss_raw'
-        else:
-            extension = run + '_filt_raw'
+    # runs = config.runs
+    runs = [None]  # tmp hack
 
-        raw_fname_in = op.join(meg_subject_dir,
-                               config.base_fname.format(**locals()))
-        eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
+    for run in runs:
+        # load first run of raw data for ecg /eog epochs
+        print("  Loading one run from raw data")
+
+        bids_basename = make_bids_basename(subject=subject,
+                                           session=config.ses,
+                                           task=config.task,
+                                           acquisition=config.acq,
+                                           run=config.run,
+                                           processing=config.proc,
+                                           recording=config.rec,
+                                           space=config.space
+                                           )
+
+        if config.use_maxwell_filter:
+            raw_fname_in = \
+                op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+        else:
+            raw_fname_in = \
+                op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+
+        eve_fname = \
+            op.join(fpath_deriv, bids_basename + '-eve.fif')
+
         print("Input: ", raw_fname_in, eve_fname)
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
-        events = mne.read_events(eve_fname)
-        events_list.append(events)
-
         raw_list.append(raw)
 
     print('  Concatenating runs')
-    raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
+    raw = mne.concatenate_raws(raw_list)
+
+    events, event_id = mne.events_from_annotations(raw)
+
     if "eeg" in config.ch_types or config.kind == 'eeg':
         raw.set_eeg_reference(projection=True)
     del raw_list
@@ -64,7 +85,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
     print("  Running ICA...")
     epochs_for_ica = mne.Epochs(raw_ica,
-                                events, config.event_id, config.tmin,
+                                events, event_id, config.tmin,
                                 config.tmax, proj=True,
                                 baseline=config.baseline,
                                 preload=True, decim=config.decim,
@@ -105,17 +126,18 @@ def run_ica(subject, tsss=config.mf_st_duration):
         print('  Fit %d components (explaining at least %0.1f%% of the'
               ' variance)' % (ica.n_components_, 100 * n_components[ch_type]))
 
+        # Load ICA
         ica_fname = \
-            '{0}_{1}_{2}-ica.fif'.format(subject, config.study_name, ch_type)
-        ica_fname = op.join(meg_subject_dir, ica_fname)
+            op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % ch_type)
+
         ica.save(ica_fname)
 
         if config.plot:
             # plot ICA components to html report
             report_fname = \
-                '{0}_{1}_{2}-ica.html'.format(subject, config.study_name,
-                                              ch_type)
-            report_fname = op.join(meg_subject_dir, report_fname)
+                op.join(fpath_deriv,
+                        bids_basename + '_%s-ica.html' % ch_type)
+
             report = Report(report_fname, verbose=False)
 
             for idx in range(0, ica.n_components_):

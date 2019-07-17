@@ -708,11 +708,14 @@ allow_maxshield = True
 
 ###############################################################################
 # Overwrite with custom config options
+#
+# This works by setting an environment variable "MNE_BIDS_STUDY_CONFIG" to
+# a string of the format "config_<dataset_name>.py", where <dataset_name>
+# could be e.g., matchingpennies, or mne_sample_data
 
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    config_custom = \
-        importlib.import_module(os.environ['MNE_BIDS_STUDY_CONFIG'])
-    for val in dir(config_custom):
+    custom_cfg = importlib.import_module(os.environ['MNE_BIDS_STUDY_CONFIG'])
+    for val in dir(custom_cfg):
         if not val.startswith('__'):
             exec("%s = config_custom.%s" % (val, val))
             print('Overwriting: %s' % val)

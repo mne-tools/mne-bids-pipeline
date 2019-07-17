@@ -14,10 +14,42 @@ from bids import BIDSLayout
 
 import numpy as np
 
+
+
+###############################################################################
+# DIRECTORIES
+# -----------
+#
+# ``bids_root`` : str
+#    Path to the directory that contains the study data in BIDS format.
+#
+# Example
+# ~~~~~~~
+# >>> bids_root = '/home/my_user/my_bids_data/'
+
+if "MNE_BIDS_STUDY_CONFIG" in os.environ:
+    bids_root = '/home/stefanappelhoff/Downloads/eeg_matchingpennies'
+else:
+    # bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
+    bids_root = '/Users/alex/Dropbox/somato_recon/BIDS_complete/MNE-somato-data'  # noqa: E501
+
+# Make a pybids layout to easily get subjects, tasks, and other BIDS params
+layout = BIDSLayout(bids_root)
+
+
+# ``subjects_dir`` : str
+#   Path to the directory that contains the MRI data files and their
+#   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
+#   $SUBJECTS_DIR used by the Freesurfer software.
+
+subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+
+
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
+
 
 plot = True
 plot = False
@@ -31,52 +63,25 @@ kind = 'meg'
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
-ses = None
-# task = 'matchingpennies'
-task = 'somato'
-run = None
-acq = None
-proc = None
-rec = None
+ses = layout.get(return_type='id', target='session')
+ses = ses if ses else None
+
+# XXX: take only first task for now
+task = layout.get(return_type='id', target='task')[0]
+
+run = layout.get(return_type='id', target='run')
+run = run if run else None
+
+acq = layout.get(return_type='id', target='acquisition')
+acq = acq if acq else None
+
+proc = layout.get(return_type='id', target='proc')
+proc = proc if proc else None
+
+rec = layout.get(return_type='id', target='reconstruction')
+rec = rec if rec else None
+
 space = None
-
-# ``datatype`` : str
-#   The file ending, can be '.fif', '.vhdr', '.ds', ...
-# dataformat = '.vhdr'
-
-###############################################################################
-# DIRECTORIES
-# -----------
-#
-# ``bids_root`` : str
-#    Path to the directory that contains the study data in BIDS format.
-#
-# Example
-# ~~~~~~~
-# >>> bids_root = '/home/my_user/my_bids_data/'
-
-# bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
-bids_root = '/Users/alex/Dropbox/somato_recon/BIDS_complete/MNE-somato-data'
-
-# ``subjects_dir`` : str
-#   Path to the directory that contains the MRI data files and their
-#   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-#   $SUBJECTS_DIR used by the Freesurfer software.
-
-subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
-
-###############################################################################
-# SUBJECTS / SESSIONS / RUNS
-# --------------------------
-#
-# ``study_name`` : str
-#   This is the name of your experiment.
-#
-# Example
-# ~~~~~~~
-# >>> study_name = 'MNE-sample'
-
-study_name = 'eeg_matchingpennies'
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
@@ -86,7 +91,6 @@ study_name = 'eeg_matchingpennies'
 
 # subjects_list = ['05', '06', '07']
 
-layout = BIDSLayout(bids_root)
 subjects_list = layout.get(return_type='id', target='subject')
 
 # subjects_list = ['05']
@@ -102,24 +106,6 @@ subjects_list = layout.get(return_type='id', target='subject')
 
 exclude_subjects = []
 
-# ``sessions`` : list of str
-#   Define the names of your ``sessions``. If there are none, leave this a list
-#   with a single entry of None: [None]
-
-sessions = [None]
-
-# ``runs`` : str | None
-#   Define the names of your ``runs``
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# The naming should be consistent across participants. List the number of runs
-# you ideally expect to have per participant. The scripts will issue a warning
-# if there are less runs than is expected. If there is only just one file,
-# leave empty!
-
-run = None
-
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
 #
@@ -134,12 +120,7 @@ run = None
 # ch_types = ['eeg']
 ch_types = ['meg']
 
-# ``base_fname`` : str
-#    This automatically generates the name for all files
-#    with the variables specified above.
-#    Normally you should not have to touch this
 
-base_fname = '{subject}_' + study_name + '{extension}.fif'
 
 
 ###############################################################################
@@ -644,24 +625,12 @@ method = 'dSPM'
 
 smooth = 10
 
-
-# ``base_fname_trans`` : str
-#   The path to the trans files obtained with coregistration.
-#
-# Example
-# ~~~~~~~
-# >>> base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
-# or
-# >>> base_fname_trans = '{subject}-trans.fif'
-
-base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
-
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
 # if not os.path.isdir(study_path):
 #     os.mkdir(study_path)
 
-#if not os.path.isdir(subjects_dir):
+# if not os.path.isdir(subjects_dir):
 #    os.mkdir(subjects_dir)
 
 ###############################################################################
@@ -717,7 +686,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     custom_cfg = importlib.import_module(os.environ['MNE_BIDS_STUDY_CONFIG'])
     for val in dir(custom_cfg):
         if not val.startswith('__'):
-            exec("%s = config_custom.%s" % (val, val))
+            exec("%s = custom_cfg.%s" % (val, val))
             print('Overwriting: %s' % val)
 
 ###############################################################################

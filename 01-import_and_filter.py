@@ -66,15 +66,13 @@ def run_filter(subject):
                          ' but found:\n\n{}'
                          .format(search_str, fnames))
 
-    # Bad channels are automatically populated using channelts.tsv ... if
-    # it is available
+    # read_raw_bids automatically
+    # - populates bad channels using the BIDS channels.tsv
+    # - sets channels types according to BIDS channels.tsv `type` column
+    # - sets raw.annotations using the BIDS events.tsv
     _, bids_fname = op.split(bids_fpath)
     raw = read_raw_bids(bids_fname, config.bids_root)
     raw.load_data()
-
-    # XXX: add raw.set_channel_type with a dict obtained from channels.tsv
-    # e.g.: {'EEG061': 'eog'}
-    # see: https://github.com/mne-tools/mne-bids/issues/218
 
     # Band-pass the data channels (MEG and EEG)
     print('Filtering data between {} and {} (Hz)'
@@ -100,7 +98,6 @@ def run_filter(subject):
 
     raw.save(fname_out, overwrite=True)
 
-    # XXX: Need to make plotting work if no sensor positions are known
     if config.plot:
         # plot raw data
         raw.plot(n_channels=50, butterfly=True)

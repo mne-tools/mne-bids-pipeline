@@ -4,6 +4,10 @@ Config file
 ===========
 
 Set the configuration parameters for the study.
+
+You need to define an environment variable `BIDS_ROOT` to point to the root
+of your BIDS dataset to be analyzed.
+
 """
 
 import importlib
@@ -15,23 +19,11 @@ from bids import BIDSLayout
 import numpy as np
 
 
-
-###############################################################################
-# DIRECTORIES
-# -----------
-#
-# ``bids_root`` : str
-#    Path to the directory that contains the study data in BIDS format.
-#
-# Example
-# ~~~~~~~
-# >>> bids_root = '/home/my_user/my_bids_data/'
-
-if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    bids_root = '/home/stefanappelhoff/Downloads/eeg_matchingpennies'
-else:
-    # bids_root = '/Users/alex/work/data/osfstorage/eeg_matchingpennies'
-    bids_root = '/Users/alex/Dropbox/somato_recon/BIDS_complete/MNE-somato-data'  # noqa: E501
+# Get the bids_root from an environment variable, raise an error if not found
+bids_root = os.getenv('BIDS_ROOT', False)
+if not bids_root:
+    raise RuntimeError('You need to define an environment variable '
+                       '`BIDS_ROOT` pointing to the root of your BIDS dataset')
 
 # Make a pybids layout to easily get subjects, tasks, and other BIDS params
 layout = BIDSLayout(bids_root)

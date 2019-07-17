@@ -48,7 +48,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
 
     print('  Concatenating runs')
     raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
-    if "eeg" in config.ch_types:
+    if "eeg" in config.ch_types or config.kind == 'eeg':
         raw.set_eeg_reference(projection=True)
     del raw_list
 
@@ -87,7 +87,7 @@ def run_ica(subject, tsss=config.mf_st_duration):
     n_components = {'meg': n_components_meg, 'eeg': 0.999}
 
     ch_types = []
-    if 'eeg' in config.ch_types:
+    if 'eeg' in config.ch_types or config.kind == 'eeg':
         ch_types.append('eeg')
     if set(config.ch_types).intersection(('meg', 'grad', 'mag')):
         ch_types.append('meg')

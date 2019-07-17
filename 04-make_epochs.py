@@ -76,7 +76,7 @@ def run_epochs(subject):
     elif 'mag' in config.ch_types:
         meg = 'mag'
 
-    eeg = 'eeg' in config.ch_types
+    eeg = 'eeg' in config.ch_types or config.kind == 'eeg'
 
     picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
                            eog=True, exclude=())

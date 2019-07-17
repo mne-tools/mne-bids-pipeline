@@ -110,7 +110,8 @@ subjects_list = list(set(subjects_list) - set(exclude_subjects))
 # or
 # >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-# ch_types = ['eeg']
+# Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
+# specified here or not
 ch_types = ['meg']
 
 

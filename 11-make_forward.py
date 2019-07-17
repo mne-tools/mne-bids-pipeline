@@ -73,7 +73,7 @@ def run_forward(subject):
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if 'eeg' in config.ch_types:
+    if 'eeg' in config.ch_types or config.kind == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
                                    subjects_dir=config.subjects_dir)

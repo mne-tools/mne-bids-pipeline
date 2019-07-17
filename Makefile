@@ -6,7 +6,7 @@ help:
 	@echo "  sensor        run sensor space processing"
 	@echo "  source        run source space processing"
 	@echo "  profile       to profile memory consumption"
-	@echo "  all           fetch data and run full pipeline
+	@echo "  all           fetch data and run full pipeline"
 
 fetch_test: # make only one subject for testing
 	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"

@@ -95,7 +95,9 @@ subjects_list = layout.get(return_type='id', target='subject')
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = []
+exclude_subjects = ['06', '07', '08', '09', '10', '11']
+subjects_list = list(set(subjects_list) - set(exclude_subjects))
+
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.

@@ -114,42 +114,6 @@ subjects_list = list(set(subjects_list) - set(exclude_subjects))
 ch_types = ['meg']
 
 
-
-
-###############################################################################
-# BAD CHANNELS
-# ------------
-# needed for 01-import_and_filter.py
-
-# ``bads`` : dict of list | dict of dict
-#    Bad channels are noisy sensors that *must* to be listed
-#    *before* maxfilter is applied. You can use the dict of list structure
-#    of you have bad channels that are the same for all runs.
-#    Use the dict(dict) if you have many runs or if noisy sensors are changing
-#    across runs.
-#
-# Example
-# ~~~~~~~
-# >>> bads = defaultdict(list)
-# >>> bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
-# or
-# >>> def default_bads():
-# >>>     return dict(run01=[], run02=[])
-# >>>
-# >>> bads = defaultdict(default_bads)
-# >>> bads['subject01'] = dict(run01=['MEG1723', 'MEG1722'], run02=['MEG1723'])
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# During the acquisition of your MEG / EEG data, systematically list and keep
-# track of the noisy sensors. Here, put the number of runs you ideally expect
-# to have per participant. Use the simple dict if you don't have runs or if
-# the same sensors are noisy across all runs.
-
-# # XXX bads should in the BIDS files
-# bads = defaultdict(list)
-# bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
-
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
 # --------------------------

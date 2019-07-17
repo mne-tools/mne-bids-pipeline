@@ -31,10 +31,13 @@ def run_filter(subject):
     print('\nProcessing subject: {}\n{}'
           .format(subject, '-' * (20 + len(subject))))
 
-    # Construct the search path for the data file
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `ses` is optional
     if config.ses:
         subject_path = op.join(subject_path, 'ses-{}'.format(config.ses))
+    # `kind` is mandatory, e.g., "eeg", "meg", "anat"
+    subject_path = op.join(subject_path, config.kind)
     data_dir = op.join(config.bids_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,

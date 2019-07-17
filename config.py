@@ -1,21 +1,14 @@
-"""
-===========
-Config file
-===========
-
-Set the configuration parameters for the study.
+"""Set the configuration parameters for the study.
 
 You need to define an environment variable `BIDS_ROOT` to point to the root
 of your BIDS dataset to be analyzed.
 
 """
-
 import importlib
 import os
 from collections import defaultdict
 
 from bids import BIDSLayout
-
 import numpy as np
 
 
@@ -27,7 +20,6 @@ if not bids_root:
 
 # Make a pybids layout to easily get subjects, tasks, and other BIDS params
 layout = BIDSLayout(bids_root)
-
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -42,16 +34,9 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-
 plot = True
 plot = False
 
-
-# ``kind`` : str
-#   The kind of data to be analyzed, can be 'eeg', or 'meg'.
-
-# kind = 'eeg'
-kind = 'meg'
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
@@ -74,6 +59,20 @@ rec = layout.get(return_type='id', target='reconstruction')
 rec = rec if rec else None
 
 space = None
+
+kinds = layout.get(return_type='id', target='datatype')
+if 'eeg' in kinds and 'meg' in kinds:
+    raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
+                       'environment variable `BIDS_KIND` and set it to the '
+                       'kind you want to analyze.')
+    kind = kinds[0]
+elif 'eeg' in kinds:
+    kind = 'eeg'
+elif 'meg' in kinds:
+    kind = 'meg'
+else:
+    raise ValueError('The study template is intended for EEG or MEG data, but'
+                     'your dataset does not contain data of either type.')
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized

@@ -39,7 +39,7 @@ def run_report(subject):
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
     fname_trans = \
-        op.join(fpath_deriv, bids_basename + '-trans.fif')
+        op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
     subjects_dir = config.subjects_dir
     if not op.exists(fname_trans):
         subject = None
@@ -62,26 +62,23 @@ def run_report(subject):
 
     rep.add_figs_to_section(figs, captions)
 
-    figs = list()
     if op.exists(fname_trans):
         mne.viz.plot_alignment(evoked.info, fname_trans, subject=subject,
                                subjects_dir=config.subjects_dir, meg=True,
                                dig=True, eeg=True)
         fig = mlab.gcf()
-        figs.append(fig)
-        captions.append('Coregistration')
+        rep.add_figs_to_section(fig, 'Coregistration')
 
-        rep.add_figs_to_section(figs, captions)
         for evoked in evokeds:
             fname = op.join(fpath_deriv, 'mne_dSPM_inverse-%s'
                             % evoked.comment)
             stc = mne.read_source_estimate(fname, subject)
-            brain = stc.plot(views=['ven'], hemi='both')
+            brain = stc.plot(views=['lat'], hemi='both')
 
             brain.set_data_time_index(112)
 
             fig = mlab.gcf()
-            rep._add_figs_to_section(fig, evoked.condition)
+            rep.add_figs_to_section(fig, evoked.condition)
 
     rep.save(fname=op.join(fpath_deriv, 'report.html'),
              open_browser=False, overwrite=True)

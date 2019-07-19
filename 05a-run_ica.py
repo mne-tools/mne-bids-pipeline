@@ -124,8 +124,10 @@ def run_ica(subject, session=None):
                   n_components=n_components[ch_type])
 
         picks = all_picks[ch_type]
-
-        ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
+        if picks.size == 0:
+            ica.fit(epochs_for_ica, decim=config.ica_decim)
+        else:
+            ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
 
         print('  Fit %d components (explaining at least %0.1f%% of the'
               ' variance)' % (ica.n_components_, 100 * n_components[ch_type]))

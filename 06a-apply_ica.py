@@ -91,6 +91,7 @@ def apply_ica(subject, run, session):
     all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
 
     for ch_type in config.ch_types:
+        report = None
         print(ch_type)
         picks = all_picks[ch_type]
 
@@ -106,6 +107,7 @@ def apply_ica(subject, run, session):
 
         # ECG
         # either needs an ecg channel, or avg of the mags (i.e. MEG data)
+        ecg_inds = list()
         if pick_ecg or ch_type == 'meg':
 
             picks_ecg = np.concatenate([picks, pick_ecg])
@@ -158,12 +160,12 @@ def apply_ica(subject, run, session):
         else:
             # XXX : to check when EEG only is processed
             print('no ECG channel is present. Cannot automate ICAs component '
-                  'detection for EOG!')
+                  'detection for ECG!')
 
         # EOG
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
-
+        eog_inds = list()
         if pick_eog.any():
             print('using EOG channel')
             picks_eog = np.concatenate([picks, pick_eog])
@@ -209,9 +211,10 @@ def apply_ica(subject, run, session):
         print('Saving cleaned epochs')
         epochs.save(fname_out)
 
-        fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
-        report.add_figs_to_section(fig, captions=ch_type.upper() +
-                                   ' - ALL(epochs) - Corrections')
+        if report is not None:
+            fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
+            report.add_figs_to_section(fig, captions=ch_type.upper() +
+                                       ' - ALL(epochs) - Corrections')
 
         if config.plot:
             epochs.plot_image(combine='gfp', group_by='type', sigma=2.,

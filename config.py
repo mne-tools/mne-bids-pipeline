@@ -114,7 +114,8 @@ subjects_list = list(set(subjects_list) - set(exclude_subjects))
 # Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
 # specified here or not
 ch_types = ['meg']
-
+if kind == 'eeg':
+    ch_types = ['eeg']
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -357,8 +358,10 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
+
 reject = {'grad': 4000e-13, 'mag': 4e-12}
-# reject = {'eeg': 150e-6}
+if kind == 'eeg':
+    reject = {'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -468,6 +471,10 @@ use_ssp = True
 #    If True ICA should be used or not.
 
 use_ica = False
+
+if kind == 'eeg':
+    use_ssp = False
+    use_ica = True
 
 # ``ica_decim`` : int
 #    The decimation parameter to compute ICA. If 5 it means

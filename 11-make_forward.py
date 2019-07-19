@@ -8,6 +8,8 @@ Calculate forward solution for MEG channels.
 
 import glob
 import os.path as op
+import itertools
+
 import mne
 
 from mne.parallel import parallel_func
@@ -17,17 +19,22 @@ from mne_bids.read import reader as mne_bids_readers
 import config
 
 
-def run_forward(subject):
+def run_forward(subject, session=None):
     print("Processing subject: %s" % subject)
 
-    # compute SSP on first run of raw
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -48,6 +55,17 @@ def run_forward(subject):
     print("Output: ", fname_fwd)
 
     # Find the raw data file
+    # XXX : maybe simplify
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=config.runs[0],
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     data_dir = op.join(config.bids_root, subject_path)
     search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
     fnames = sorted(glob.glob(search_str))
@@ -88,4 +106,5 @@ def run_forward(subject):
 
 
 parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

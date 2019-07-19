@@ -40,15 +40,15 @@ plot = False
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
-ses = layout.get(return_type='id', target='session')
-ses = ses if ses else None
+sessions = layout.get(return_type='id', target='session')
+sessions = sessions if sessions else [None]
 
 # XXX: take only first task for now
 task = layout.get(return_type='id', target='task')[0]
 
 # XXX: take only first run for now
-run = layout.get(return_type='id', target='run')
-run = run[0] if run else None
+runs = layout.get(return_type='id', target='run')
+runs = runs if runs else [None]
 
 acq = layout.get(return_type='id', target='acquisition')
 acq = acq if acq else None

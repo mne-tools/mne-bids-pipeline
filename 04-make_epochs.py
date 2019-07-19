@@ -11,6 +11,8 @@ To save space, the epoch data can be decimated.
 """
 
 import os.path as op
+import itertools
+
 import mne
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
@@ -24,22 +26,27 @@ N_JOBS = max(config.N_JOBS // 4, 1)
 
 ###############################################################################
 # Now we define a function to extract epochs for one subject
-def run_epochs(subject):
+def run_epochs(subject, session=None):
     print("Processing subject: %s" % subject)
 
     raw_list = list()
     print("  Loading raw data")
 
-    runs = [None]  # tmp hack
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    for run_idx, run in enumerate(runs):
+    subject_path = op.join(subject_path, config.kind)
+
+    for run_idx, run in enumerate(config.runs):
 
         bids_basename = make_bids_basename(subject=subject,
-                                           session=config.ses,
+                                           session=session,
                                            task=config.task,
                                            acquisition=config.acq,
-                                           run=config.run,
+                                           run=run,
                                            processing=config.proc,
                                            recording=config.rec,
                                            space=config.space
@@ -94,6 +101,16 @@ def run_epochs(subject):
                         reject=config.reject)
 
     print('  Writing epochs to disk')
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     epochs_fname = \
         op.join(fpath_deriv, bids_basename + '-epo.fif')
     epochs.save(epochs_fname)
@@ -106,4 +123,5 @@ def run_epochs(subject):
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

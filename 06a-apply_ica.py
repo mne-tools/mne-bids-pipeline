@@ -14,6 +14,7 @@ order might differ).
 """
 
 import os.path as op
+import itertools
 
 import mne
 from mne.parallel import parallel_func
@@ -27,16 +28,21 @@ import numpy as np
 import config
 
 
-def apply_ica(subject):
+def apply_ica(subject, run, session):
     print("Processing subject: %s" % subject)
-    # compute SSP on first run of raw
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -57,6 +63,17 @@ def apply_ica(subject):
 
     # load first run of raw data for ecg /eog epochs
     print("  Loading one run from raw data")
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=config.runs[0],
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     if config.use_maxwell_filter:
         raw_fname_in = \
             op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
@@ -203,4 +220,5 @@ def apply_ica(subject):
 
 if config.use_ica:
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
-    parallel(run_func(subject) for subject in config.subjects_list)
+    parallel(run_func(subject, run, session) for subject, run, session in
+             itertools.product(config.subjects_list, config.runs, config.sessions))

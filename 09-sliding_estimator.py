@@ -34,18 +34,23 @@ import config
 # Then we write a function to do time decoding on one subject
 
 
-def run_time_decoding(subject, condition1, condition2):
+def run_time_decoding(subject, condition1, condition2, session=None):
     print("Processing subject: %s (%s vs %s)"
           % (subject, condition1, condition2))
 
-    # compute SSP on first run of raw
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -91,5 +96,6 @@ def run_time_decoding(subject, condition1, condition2):
 # so we don't dispatch manually to multiple jobs.
 
 for subject in config.subjects_list:
-    for conditions in config.decoding_conditions:
-        run_time_decoding(subject, *conditions)
+    for session in config.sessions:
+        for conditions in config.decoding_conditions:
+            run_time_decoding(subject, *conditions, session=session)

@@ -7,6 +7,8 @@ Compute Signal Suspace Projections (SSP).
 """
 
 import os.path as op
+import itertools
+
 
 import mne
 from mne.parallel import parallel_func
@@ -16,17 +18,24 @@ import config
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 
 
-def run_ssp(subject):
+def run_ssp(subject, session=None):
     print("Processing subject: %s" % subject)
 
     print("  Loading one run to compute SSPs")
 
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
+
     # compute SSP on first run of raw
-    run = None
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    run = config.runs[0]
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
                                        run=run,
@@ -63,4 +72,5 @@ def run_ssp(subject):
 
 if config.use_ssp:
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-    parallel(run_func(subject) for subject in config.subjects_list)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))

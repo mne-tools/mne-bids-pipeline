@@ -17,6 +17,9 @@ import config
 # Container for all conditions:
 all_evokeds = defaultdict(list)
 
+# XXX to fix
+session = config.sessions[0]
+
 for subject in config.subjects_list:
     if subject in config.exclude_subjects:
         print("Ignoring subject: %s" % subject)
@@ -24,14 +27,19 @@ for subject in config.subjects_list:
     else:
         print("Processing subject: %s" % subject)
 
-    # compute SSP on first run of raw
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space

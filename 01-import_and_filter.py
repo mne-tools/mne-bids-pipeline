@@ -18,6 +18,7 @@ If config.plot = True plots raw data and power spectral density.
 import os
 import os.path as op
 import glob
+import itertools
 
 from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
@@ -26,25 +27,25 @@ from mne_bids import make_bids_basename, read_raw_bids
 import config
 
 
-def run_filter(subject):
+def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
     print('\nProcessing subject: {}\n{}'
           .format(subject, '-' * (20 + len(subject))))
 
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
-    # `ses` is optional
-    if config.ses:
-        subject_path = op.join(subject_path, 'ses-{}'.format(config.ses))
-    # `kind` is mandatory, e.g., "eeg", "meg", "anat"
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
     subject_path = op.join(subject_path, config.kind)
     data_dir = op.join(config.bids_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=run,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -108,4 +109,5 @@ def run_filter(subject):
 
 
 parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, run, session) for subject, run, session in
+         itertools.product(config.subjects_list, config.runs, config.sessions))

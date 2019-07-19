@@ -7,6 +7,7 @@ Covariance matrices are computed and saved.
 """
 
 import os.path as op
+import itertools
 
 import mne
 from mne.parallel import parallel_func
@@ -17,15 +18,21 @@ from sklearn.model_selection import KFold
 import config
 
 
-def run_covariance(subject):
+def run_covariance(subject, session=None):
     print("Processing subject: %s%s")
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     bids_basename = make_bids_basename(subject=subject,
-                                       session=config.ses,
+                                       session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.run,
+                                       run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -55,4 +62,5 @@ def run_covariance(subject):
 
 
 parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

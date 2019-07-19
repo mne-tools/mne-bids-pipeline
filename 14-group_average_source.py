@@ -7,6 +7,7 @@ Source estimates are morphed to the ``fsaverage`` brain.
 """
 
 import os.path as op
+import itertools
 
 import mne
 from mne.parallel import parallel_func
@@ -14,9 +15,15 @@ from mne.parallel import parallel_func
 import config
 
 
-def morph_stc(subject):
+def morph_stc(subject, session=None):
     print("Processing subject: %s" % subject)
-    subject_path = op.join('sub-{}'.format(subject), config.kind)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
 
     fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
 
@@ -43,8 +50,10 @@ def morph_stc(subject):
 
 
 parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
-all_morphed_stcs = parallel(run_func(subject)
-                            for subject in config.subjects_list)
+all_morphed_stcs = parallel(run_func(subject, session)
+                            for subject, session in
+                            itertools.product(config.subjects_list,
+                                              config.sessions))
 all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                     zip(all_morphed_stcs, config.subjects_list)
                     if subject not in config.exclude_subjects]

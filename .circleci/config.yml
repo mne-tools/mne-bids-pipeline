@@ -22,7 +22,7 @@ jobs:
         # Load our data
         - restore_cache:
             keys:
-              - data-cache-0
+              - data-cache-0-{{ checksum ".circleci/config.yml" }}
 
         # Load the python environment in a separate restore_cache call
         # Note: This cannot be integrated with restore_cache above, because
@@ -44,7 +44,7 @@ jobs:
               sudo apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 qt5-default
 
         - run:
-            name: Get Anaconda running
+            name: Get Anaconda running and make MNE environment
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
               chmod +x ~/miniconda.sh;
@@ -52,14 +52,19 @@ jobs:
               export export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               conda env create -f environment.yml
+
+        - run:
+            name: Install datalad to conveniently pull testing datasets
+            command: |
               source activate mne
-              pip install --upgrade mne
-              python -c "import mne; mne.sys_info()"
+              conda install -c conda-forge git-annex
+              pip install --upgrade datalad
+              datalad --version
 
         # Save Python environment with a key based on the environment.yml that
         # was downloaded from MNE-Python. If it changes, change the cache
         - save_cache:
-            key: pip-cache-0-{{ checksum "environment.yml"}}
+            key: pip-cache-0-{{ checksum "environment.yml" }}
             paths:
               - ~/.cache/pip
 
@@ -88,9 +93,9 @@ jobs:
 
         # Store the cache
         - save_cache:
-            key: data-cache-0
+            key: data-cache-0-{{ checksum ".circleci/config.yml" }}
             paths:
-              - ~/mne_data/MNE-sample-data
+              - ~/mne_data
               - ~/data
 
 

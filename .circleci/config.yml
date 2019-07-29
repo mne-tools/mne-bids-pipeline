@@ -22,7 +22,7 @@ jobs:
         # Load our data
         - restore_cache:
             keys:
-              - data-cache-0-{{ checksum "test/download_test_data.py" }}
+              - data-cache-0-{{ checksum "tests/download_test_data.py" }}
 
         # Load the python environment in a separate restore_cache call
         # Note: This cannot be integrated with restore_cache above, because
@@ -48,7 +48,7 @@ jobs:
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
               chmod +x ~/miniconda.sh;
-              ~/miniconda.sh -b -p ~/miniconda;
+              ~/miniconda.sh -b -p -f ~/miniconda;
               export export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               conda env create -f environment.yml
@@ -99,7 +99,7 @@ jobs:
 
         # Store the cache
         - save_cache:
-            key: data-cache-0-{{ checksum "test/download_test_data.py" }}
+            key: data-cache-0-{{ checksum "tests/download_test_data.py" }}
             paths:
               - ~/mne_data
               - ~/data

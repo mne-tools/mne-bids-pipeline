@@ -22,7 +22,7 @@ jobs:
         # Load our data
         - restore_cache:
             keys:
-              - data-cache-0-{{ checksum ".circleci/config.yml" }}
+              - data-cache-0-{{ checksum "test/download_test_data.py" }}
 
         # Load the python environment in a separate restore_cache call
         # Note: This cannot be integrated with restore_cache above, because
@@ -61,6 +61,12 @@ jobs:
               pip install --upgrade datalad
               datalad --version
 
+        - run:
+            name: Get testing datasets
+            command: |
+              source activate mne
+              python tests/download_test_data.py
+
         # Save Python environment with a key based on the environment.yml that
         # was downloaded from MNE-Python. If it changes, change the cache
         - save_cache:
@@ -93,7 +99,7 @@ jobs:
 
         # Store the cache
         - save_cache:
-            key: data-cache-0-{{ checksum ".circleci/config.yml" }}
+            key: data-cache-0-{{ checksum "test/download_test_data.py" }}
             paths:
               - ~/mne_data
               - ~/data

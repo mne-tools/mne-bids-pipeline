@@ -13,6 +13,11 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
+        - run:
+            name: Get MNE-Python environment.yml file
+            command: |
+              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
+
         # Load our data
         - restore_cache:
             keys:
@@ -46,10 +51,12 @@ jobs:
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
         - run:
-            name: Get MNE-Python environment
+            name: Make MNE conda environment and install BIDS packages
             command: |
-              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
+              conda update -n base -c defaults conda
               conda env create -f environment.yml --name mne
+              pip install --upgrade mne_bids
+              pip install --upgrade pybids
 
         - run:
             name: Install datalad to conveniently pull testing datasets
@@ -58,6 +65,8 @@ jobs:
               conda install -c conda-forge git-annex
               pip install --upgrade datalad
               datalad --version
+              git config --global user.email "user@mne.com"
+              git config --global user.name "mne user"
 
         - run:
             name: Get testing datasets

@@ -1,4 +1,5 @@
 """Download test data."""
+import os
 import os.path as op
 
 import datalad.api as dl
@@ -17,6 +18,9 @@ def _provide_testing_data():
 if __name__ == '__main__':
     # Save everything in ~/data
     data_dir = op.join(op.expanduser('~'), 'data')
+    if not op.exists(data_dir):
+        os.makedirs(data_dir)
+
     urls = _provide_testing_data
 
     for url in urls:

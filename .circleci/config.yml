@@ -48,8 +48,8 @@ jobs:
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
               chmod +x ~/miniconda.sh;
-              ~/miniconda.sh -b -p -f ~/miniconda;
-              export export PATH=~/miniconda/bin:$PATH;
+              ~/miniconda.sh -b -f -p ~/miniconda;
+              export PATH=~/miniconda/bin:$PATH;
               conda update --yes --quiet conda;
               conda env create -f environment.yml
 

@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    build_docs:
+    run_tests:
       docker:
         - image: circleci/python:3.6.8-stretch
       steps:
@@ -117,4 +117,4 @@ workflows:
 
   default:
     jobs:
-      - build_docs
+      - run_tests

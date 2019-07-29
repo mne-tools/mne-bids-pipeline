@@ -13,12 +13,6 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
-        # Get environment.yml file to install MNE-Python
-        - run:
-            name: Get MNE-Python environment
-            command: |
-              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
-
         # Load our data
         - restore_cache:
             keys:
@@ -44,14 +38,18 @@ jobs:
               sudo apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 qt5-default
 
         - run:
-            name: Get Anaconda running and make MNE environment
+            name: Get conda running
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
               chmod +x ~/miniconda.sh;
-              ~/miniconda.sh
-              conda init
-              conda update --yes --quiet conda;
-              conda env create -f environment.yml
+              ~/miniconda.sh -b -p ~/miniconda;
+              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+
+        - run:
+            name: Get MNE-Python environment
+            command: |
+              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
+              conda env create -f environment.yml --name mne
 
         - run:
             name: Install datalad to conveniently pull testing datasets

@@ -8,7 +8,7 @@ help:
 	@echo "  profile       to profile memory consumption"
 	@echo "  all           fetch data and run full pipeline"
 
-fetch_test: # make only one subject for testing
+fetch_test:
 	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"
 
 fetch: fetch_test

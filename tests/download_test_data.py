@@ -8,6 +8,7 @@ import datalad.api as dl
 def _provide_testing_data():
     """Return dict of dataset, and the corresponding URLs."""
     urls_dict = {
+        'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
         'ds001971': 'https://github.com/OpenNeuroDatasets/ds001971',
     }
@@ -17,8 +18,9 @@ def _provide_testing_data():
 def _provide_get_dict():
     """Return dict of dataset, and which data to get from it."""
     get_dict = {
-        'ds001810': 'sub-01/ses-anodalpre',
-        'ds001971': 'sub-001'
+        'ds000117': ['sub-01'],
+        'ds001810': ['sub-01/ses-anodalpre'],
+        'ds001971': ['sub-001'],
     }
     return get_dict
 
@@ -38,10 +40,10 @@ if __name__ == '__main__':
         dspath = op.join(data_dir, dsname)
 
         # install the dataset
-        print('datalad installing {}'.format(dsname))
+        print('datalad installing "{}"'.format(dsname))
         dataset = dl.install(path=dspath, source=url)
 
         # get the first subject
-        to_get = get_dict[dsname]
-        print('datalad get data {} for {}'.format(to_get, dsname))
-        dataset.get(to_get)
+        for to_get in get_dict[dsname]:
+            print('datalad get data "{}" for "{}"'.format(to_get, dsname))
+            dataset.get(to_get)

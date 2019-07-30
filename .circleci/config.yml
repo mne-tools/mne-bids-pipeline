@@ -99,6 +99,15 @@ jobs:
                mne --version
                python -c "import mne; mne.sys_info()"
 
+        # Run tests
+        - run:
+            name: test ds000117
+            command: |
+               source activate mne
+               export MNE_BIDS_STUDY_CONFIG=config_ds000117
+               export BIDS_ROOT=~/data/ds000117
+               make sensor
+
 
 workflows:
   version: 2

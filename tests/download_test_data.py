@@ -17,7 +17,7 @@ def _provide_testing_data(dataset):
     if dataset is None:
         return urls_dict
     else:
-        return dict(dataset=urls_dict[dataset])
+        return {dataset: urls_dict[dataset]}
 
 
 def _provide_get_dict(dataset):
@@ -34,7 +34,7 @@ def _provide_get_dict(dataset):
     if dataset is None:
         return get_dict
     else:
-        return dict(dataset=get_dict[dataset])
+        return {dataset: get_dict[dataset]}
 
 
 # Download the testing data
@@ -58,7 +58,6 @@ if __name__ == '__main__':
     for dsname, url in urls_dict.items():
         print('\n----------------------')
         dspath = op.join(data_dir, dsname)
-
         # install the dataset
         print('datalad installing "{}"'.format(dsname))
         dataset = dl.install(path=dspath, source=url)

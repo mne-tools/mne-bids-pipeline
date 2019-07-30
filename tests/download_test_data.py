@@ -1,6 +1,5 @@
 """Download test data."""
 import os
-import sys
 import os.path as op
 
 import datalad.api as dl
@@ -41,8 +40,7 @@ def _provide_get_dict(dataset):
 # Download the testing data
 if __name__ == '__main__':
 
-    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET",
-                           prog_prefix='mne_study_template')
+    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
     parser.add_option('-d', '--dataset', dest='dataset',
                       help='Name of the dataset', metavar='INPUT',
                       default=None)

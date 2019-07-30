@@ -13,11 +13,6 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
-        - run:
-            name: Get MNE-Python environment.yml file
-            command: |
-              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
-
         # Load our data
         - restore_cache:
             keys:
@@ -31,18 +26,6 @@ jobs:
               - pip-cache-0-{{ checksum "environment.yml" }}
 
         - run:
-            name: Spin up Xvfb
-            command: |
-              /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
-
-        # https://github.com/ContinuumIO/anaconda-issues/issues/9190#issuecomment-386508136
-        # https://github.com/golemfactory/golem/issues/1019
-        - run:
-            name: Fix libgcc_s.so.1 pthread_cancel bug
-            command: |
-              sudo apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 qt5-default
-
-        - run:
             name: Get conda running
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
@@ -54,7 +37,7 @@ jobs:
             name: Make MNE conda environment and install BIDS packages
             command: |
               conda update -n base -c defaults conda
-              conda env create -f environment.yml --name mne
+              pip install --upgrade mne
               pip install --upgrade mne_bids
               pip install --upgrade pybids
 
@@ -70,7 +53,6 @@ jobs:
         - run:
             name: Get testing datasets
             command: |
-              source activate mne
               make fetch
 
         # Store the data cache

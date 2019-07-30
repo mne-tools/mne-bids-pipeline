@@ -44,7 +44,6 @@ jobs:
         - run:
             name: Install datalad to conveniently pull testing datasets
             command: |
-              source activate mne
               conda install -c conda-forge git-annex
               pip install --upgrade datalad
               git config --global user.email "user@mne.com"
@@ -73,7 +72,6 @@ jobs:
         - run:
             name: Check installation
             command: |
-               source activate mne
                which python
                git-annex version
                datalad --version
@@ -85,7 +83,6 @@ jobs:
         - run:
             name: test ds000117
             command: |
-               source activate mne
                export MNE_BIDS_STUDY_CONFIG=config_ds000117
                export BIDS_ROOT=~/data/ds000117
                make sensor

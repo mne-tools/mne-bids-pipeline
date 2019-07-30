@@ -10,18 +10,19 @@ export MNE_BIDS_STUDY_CONFIG=config_ds000117
 export BIDS_ROOT=~/data/ds000117
 
 """
+import os.path as op
 from bids import BIDSLayout
 
 study_name = 'ds000117'
-task = 'VisualFaces'
+task = 'facerecognition'
 kind = 'meg'
 ch_types = ['meg']
-runs = ['06']
-sessions = ['01']
+runs = ['01']
+sessions = ['meg']
 plot = False
 acq = None
-bids_root = '~/data/ds000117'
-subjects_dir = bids_root + '/derivatives/freesurfer/subjects'
+bids_root = op.join(op.expanduser('~'), 'data', 'ds000117')
+subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 layout = BIDSLayout(bids_root)
 # subjects_list = layout.get(return_type='id', target='subject')
 subjects_list = ['01']

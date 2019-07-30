@@ -6,7 +6,6 @@ of your BIDS dataset to be analyzed.
 """
 import importlib
 import os
-import os.path as op
 from collections import defaultdict
 
 from bids import BIDSLayout
@@ -647,12 +646,14 @@ allow_maxshield = True
 #
 # For testing a specific dataset, make a `config_<dataset_name>.py` file in
 # `/tests/configs` and set an environment variable `MNE_BIDS_STUDY_CONFIG` to
-# point to the config name (not including /tests/config).
-# For example `export MNE_BIDS_STUDY_CONFIG=config_matchingpennies.py`
+# point to the config name (not including /tests/config, and not including .py)
+# For example `export MNE_BIDS_STUDY_CONFIG=config_matchingpennies`
 
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    custom_cfg = importlib.import_module(os.environ['MNE_BIDS_STUDY_CONFIG'])
-    custom_cfg = op.join('tests', 'configs', custom_cfg)
+    cfg_name = os.environ['MNE_BIDS_STUDY_CONFIG']
+    cfg_path = 'tests.configs.{}'.format(cfg_name)
+    custom_cfg = importlib.import_module(cfg_path)
+
     for val in dir(custom_cfg):
         if not val.startswith('__'):
             exec("%s = custom_cfg.%s" % (val, val))

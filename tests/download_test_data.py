@@ -21,7 +21,7 @@ def _provide_get_dict():
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501
-                     'sub-01_ses-meg_headshape.pos'
+                     'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos'
                      ],
         'ds001810': ['sub-01/ses-anodalpre'],
         'ds001971': ['sub-001'],

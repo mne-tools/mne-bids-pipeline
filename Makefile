@@ -8,7 +8,7 @@ help:
 	@echo "  all           fetch data and run full pipeline"
 
 fetch:
-	$(PYTHON) ./tests/download_test_data.py
+	$(PYTHON) ./tests/download_test_data.py --dataset=${DATASET}
 
 sensor:
 	$(PYTHON) 01-import_and_filter.py

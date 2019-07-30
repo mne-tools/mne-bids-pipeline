@@ -73,6 +73,14 @@ jobs:
             command: |
               source activate mne
               python tests/download_test_data.py
+              make fetch_test
+
+        # Store the data cache
+        - save_cache:
+            key: data-cache-0-{{ checksum "tests/download_test_data.py" }}
+            paths:
+              - ~/mne_data
+              - ~/data
 
         # Save Python environment with a key based on the environment.yml that
         # was downloaded from MNE-Python. If it changes, change the cache
@@ -88,28 +96,6 @@ jobs:
                source activate mne
                which python
                python -c "import mne; mne.sys_info()"
-
-        # Run the scripts
-        - run:
-            name: Get data and run test
-            command: |
-               source activate mne
-               make test
-
-        # Save the outputs
-        - store_artifacts:
-            path: doc/_build/html/
-            destination: dev
-        - store_artifacts:
-            path: doc/_build/html_stable/
-            destination: stable
-
-        # Store the cache
-        - save_cache:
-            key: data-cache-0-{{ checksum "tests/download_test_data.py" }}
-            paths:
-              - ~/mne_data
-              - ~/data
 
 
 workflows:

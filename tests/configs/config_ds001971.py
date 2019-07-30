@@ -24,3 +24,5 @@ use_ica = False
 
 
 subjects_list = ['001']
+
+runs = ['01']

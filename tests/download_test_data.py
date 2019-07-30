@@ -34,10 +34,14 @@ if __name__ == '__main__':
     get_dict = _provide_get_dict()
 
     for dsname, url in urls_dict.items():
+        print('\n----------------------')
         dspath = op.join(data_dir, dsname)
 
         # install the dataset
+        print('datalad installing {}'.format(dsname))
         dataset = dl.install(path=dspath, source=url)
 
         # get the first subject
-        dataset.get(get_dict[dsname])
+        to_get = get_dict[dsname]
+        print('datalad get data {} for {}'.format(to_get, dsname))
+        dataset.get(to_get)

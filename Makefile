@@ -2,16 +2,13 @@ PYTHON = python
 
 help:
 	@echo "Please use \`make <target>\` where <target> is one of"
-	@echo "  fetch         to fetch the data"
+	@echo "  fetch         to fetch all testing datasets"
 	@echo "  sensor        run sensor space processing"
 	@echo "  source        run source space processing"
-	@echo "  profile       to profile memory consumption"
 	@echo "  all           fetch data and run full pipeline"
 
-fetch_test:
-	$(PYTHON) -c "import mne; mne.datasets.sample.data_path(update_path=True)"
-
-fetch: fetch_test
+fetch:
+	$(PYTHON) ./tests/download_test_data.py
 
 sensor:
 	$(PYTHON) 01-import_and_filter.py
@@ -36,6 +33,6 @@ source:
 report:
 	$(PYTHON) 99-make_reports.py
 
-test: fetch_test sensor source
+test: fetch sensor source
 
 all: fetch sensor source report

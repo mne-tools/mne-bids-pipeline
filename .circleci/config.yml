@@ -64,7 +64,6 @@ jobs:
               source activate mne
               conda install -c conda-forge git-annex
               pip install --upgrade datalad
-              datalad --version
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 
@@ -72,8 +71,7 @@ jobs:
             name: Get testing datasets
             command: |
               source activate mne
-              python tests/download_test_data.py
-              make fetch_test
+              make fetch
 
         # Store the data cache
         - save_cache:
@@ -95,6 +93,10 @@ jobs:
             command: |
                source activate mne
                which python
+               git-annex version
+               datalad --version
+               mne_bids --version
+               mne --version
                python -c "import mne; mne.sys_info()"
 
 

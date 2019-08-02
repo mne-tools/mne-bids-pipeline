@@ -10,6 +10,7 @@ from mne.commands.utils import get_optparser
 def _provide_testing_data(dataset):
     """Return dict of dataset, and the corresponding URLs."""
     urls_dict = {
+        'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
         'ds001971': 'https://github.com/OpenNeuroDatasets/ds001971',
@@ -23,6 +24,7 @@ def _provide_testing_data(dataset):
 def _provide_get_dict(dataset):
     """Return dict of dataset, and which data to get from it."""
     get_dict = {
+        'ds000248': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501

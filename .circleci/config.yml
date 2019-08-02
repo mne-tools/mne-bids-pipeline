@@ -83,11 +83,9 @@ jobs:
 
         # Run tests
         - run:
-            name: test ds000117
+            name: test ds000248
             command: |
-               export MNE_BIDS_STUDY_CONFIG=config_ds000117
-               export BIDS_ROOT=~/data/ds000117
-               make sensor
+               BIDS_ROOT=~/data/ds000248 make sensor
 
 
 workflows:

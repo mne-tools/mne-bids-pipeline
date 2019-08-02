@@ -23,7 +23,7 @@ jobs:
         # only the first matching key will be restored
         - restore_cache:
             keys:
-              - pip-cache-0-{{ checksum "environment.yml" }}
+              - pip-cache-0
 
         - run:
             name: Get conda running
@@ -34,7 +34,7 @@ jobs:
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
         - run:
-            name: Make MNE conda environment and install BIDS packages
+            name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
               pip install --upgrade mne
@@ -61,10 +61,9 @@ jobs:
               - ~/mne_data
               - ~/data
 
-        # Save Python environment with a key based on the environment.yml that
-        # was downloaded from MNE-Python. If it changes, change the cache
+        # Save Python cache
         - save_cache:
-            key: pip-cache-0-{{ checksum "environment.yml" }}
+            key: pip-cache-0
             paths:
               - ~/.cache/pip
 

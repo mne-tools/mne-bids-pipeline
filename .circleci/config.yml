@@ -39,7 +39,7 @@ jobs:
               conda update -n base -c defaults conda
               pip install --upgrade mne
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
-              cd mne_bids
+              cd mne-bids
               pip install -e .
               cd ..
               pip install --upgrade pybids

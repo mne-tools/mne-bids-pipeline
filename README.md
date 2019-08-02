@@ -16,9 +16,10 @@ Once this is done, you should be able to run this in a terminal:
 
 `$ python -c "import mne; mne.sys_info()"`
 
-You can then install the following additional packages via `pip`:
+You can then install the following additional packages via `pip`. Note that
+the URL points to the bleeding edge version of `mne_bids`:
 
-`$ pip install mne_bids pybids datalad`
+`$ pip install pybids datalad https://github.com/mne-tools/mne-bids/zipball/master`
 
 To get the test data, you need to install `git-annex` on your system. If you
 installed MNE-Python via `conda`, you can simply call:

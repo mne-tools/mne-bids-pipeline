@@ -38,7 +38,7 @@ jobs:
             command: |
               conda update -n base -c defaults conda
               pip install --upgrade mne
-              pip install --upgrade mne_bids
+              pip install https://github.com/mne-tools/mne-bids/zipball/master
               pip install --upgrade pybids
 
         - run:

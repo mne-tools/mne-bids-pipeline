@@ -53,6 +53,17 @@ def run_ssp(subject, session=None):
         raw_fname_in = \
             op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
+    # when saving proj, use bids_basename=None
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     proj_fname_out = op.join(fpath_deriv, bids_basename + '_ssp-proj.fif')
 
     print("Input: ", raw_fname_in)

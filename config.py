@@ -447,7 +447,7 @@ baseline = (None, 0)
 # >>> conditions = ['left', 'right']
 
 # conditions = ['left', 'right']
-conditions = ['somato_event1']
+conditions = None
 
 ###############################################################################
 # ARTIFACT REMOVAL

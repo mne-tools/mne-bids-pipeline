@@ -69,7 +69,6 @@ def run_epochs(subject, session=None):
     raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
-
     if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 

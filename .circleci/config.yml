@@ -85,7 +85,7 @@ jobs:
         - run:
             name: test ds000248
             command: |
-               BIDS_ROOT=~/data/ds000248 make sensor
+               BIDS_ROOT=~/data/ds000248 MNE_BIDS_STUDY_CONFIG=config_ds000248 make sensor
 
 
 workflows:

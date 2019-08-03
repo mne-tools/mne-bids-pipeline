@@ -50,8 +50,7 @@ task = layout.get(return_type='id', target='task')[0]
 runs = layout.get(return_type='id', target='run')
 runs = runs if runs else [None]
 
-acq = layout.get(return_type='id', target='acquisition')
-acq = acq if acq else None
+acq = None
 
 proc = layout.get(return_type='id', target='proc')
 proc = proc if proc else None

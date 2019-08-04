@@ -2,7 +2,7 @@ PYTHON = python
 
 help:
 	@echo "Please use \`make <target>\` where <target> is one of"
-	@echo "  fetch         to fetch all testing datasets"
+	@echo "  fetch         fetch all testing datasets"
 	@echo "  sensor        run sensor space processing"
 	@echo "  source        run source space processing"
 	@echo "  all           fetch data and run full pipeline"

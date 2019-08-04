@@ -1,4 +1,3 @@
-
 # Installation
 
 First, you need to make sure you have MNE-Python installed and working on your

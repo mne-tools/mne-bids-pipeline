@@ -13,6 +13,10 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
+        - restore_cache:
+            keys:
+              - pip-cache-0
+
         - run:
             name: Get conda running
             command: |
@@ -47,13 +51,6 @@ jobs:
             command: |
               make fetch
 
-        # Store the data cache
-        - save_cache:
-            key: data-cache-0-{{ checksum "tests/download_test_data.py" }}
-            paths:
-              - ~/mne_data
-              - ~/data
-
         # Save Python cache
         - save_cache:
             key: pip-cache-0
@@ -75,7 +72,9 @@ jobs:
         - run:
             name: test ds000248
             command: |
-               BIDS_ROOT=~/data/ds000248 MNE_BIDS_STUDY_CONFIG=config_ds000248 make sensor
+               BIDS_ROOT=~/data/ds000248
+               MNE_BIDS_STUDY_CONFIG=config_ds000248
+               make sensor
 
 
 workflows:

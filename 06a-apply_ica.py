@@ -14,6 +14,7 @@ order might differ).
 """
 
 import os.path as op
+import itertools
 
 import mne
 from mne.parallel import parallel_func
@@ -21,33 +22,65 @@ from mne.preprocessing import read_ica
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.report import Report
 
+from mne_bids import make_bids_basename
+
 import numpy as np
 import config
 
 
-def apply_ica(subject):
+def apply_ica(subject, run, session):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fname_in = \
+        op.join(fpath_deriv, bids_basename + '-epo.fif')
+
+    fname_out = \
+        op.join(fpath_deriv, bids_basename + '_cleaned-epo.fif')
 
     # load epochs to reject ICA components
-    extension = '-epo'
-    fname_in = op.join(meg_subject_dir,
-                       config.base_fname.format(**locals()))
     epochs = mne.read_epochs(fname_in, preload=True)
-
-    extension = '_cleaned-epo'
-    fname_out = op.join(meg_subject_dir,
-                        config.base_fname.format(**locals()))
 
     print("Input: ", fname_in)
     print("Output: ", fname_out)
 
     # load first run of raw data for ecg /eog epochs
-    raw_list = list()
     print("  Loading one run from raw data")
-    extension = config.runs[0] + '_sss_raw'
-    raw_fname_in = op.join(meg_subject_dir,
-                           config.base_fname.format(**locals()))
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=config.runs[0],
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    if config.use_maxwell_filter:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+    else:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+
     raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
     # run ICA on MEG and EEG
@@ -57,20 +90,15 @@ def apply_ica(subject):
                                eog=False, stim=False, exclude='bads')
     all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
 
-    if config.eeg:
-        ch_types = ['meg', 'eeg']
-    else:
-        ch_types = ['meg']
-
-    for ch_type in ch_types:
+    for ch_type in config.ch_types:
+        report = None
         print(ch_type)
         picks = all_picks[ch_type]
 
         # Load ICA
-        fname_ica = op.join(meg_subject_dir,
-                            '{0}_{1}_{2}-ica.fif'.format(subject,
-                                                         config.study_name,
-                                                         ch_type))
+        fname_ica = \
+            op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % ch_type)
+
         print('Reading ICA: ' + fname_ica)
         ica = read_ica(fname=fname_ica)
 
@@ -79,6 +107,7 @@ def apply_ica(subject):
 
         # ECG
         # either needs an ecg channel, or avg of the mags (i.e. MEG data)
+        ecg_inds = list()
         if pick_ecg or ch_type == 'meg':
 
             picks_ecg = np.concatenate([picks, pick_ecg])
@@ -102,10 +131,9 @@ def apply_ica(subject):
             del ecg_epochs
 
             report_fname = \
-                '{0}_{1}_{2}-reject_ica.html'.format(subject,
-                                                     config.study_name,
-                                                     ch_type)
-            report_fname = op.join(meg_subject_dir, report_fname)
+                op.join(fpath_deriv,
+                        bids_basename + '_%s-reject_ica.html' % ch_type)
+
             report = Report(report_fname, verbose=False)
 
             # Plot r score
@@ -132,12 +160,12 @@ def apply_ica(subject):
         else:
             # XXX : to check when EEG only is processed
             print('no ECG channel is present. Cannot automate ICAs component '
-                  'detection for EOG!')
+                  'detection for ECG!')
 
         # EOG
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
-
+        eog_inds = list()
         if pick_eog.any():
             print('using EOG channel')
             picks_eog = np.concatenate([picks, pick_eog])
@@ -183,9 +211,10 @@ def apply_ica(subject):
         print('Saving cleaned epochs')
         epochs.save(fname_out)
 
-        fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
-        report.add_figs_to_section(fig, captions=ch_type.upper() +
-                                   ' - ALL(epochs) - Corrections')
+        if report is not None:
+            fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
+            report.add_figs_to_section(fig, captions=ch_type.upper() +
+                                       ' - ALL(epochs) - Corrections')
 
         if config.plot:
             epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
@@ -194,4 +223,5 @@ def apply_ica(subject):
 
 if config.use_ica:
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
-    parallel(run_func(subject) for subject in config.subjects_list)
+    parallel(run_func(subject, run, session) for subject, run, session in
+             itertools.product(config.subjects_list, config.runs, config.sessions))

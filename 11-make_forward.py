@@ -6,30 +6,83 @@
 Calculate forward solution for MEG channels.
 """
 
+import glob
 import os.path as op
+import itertools
+
 import mne
 
 from mne.parallel import parallel_func
+from mne_bids import make_bids_basename, get_head_mri_trans
+from mne_bids.read import reader as mne_bids_readers
 
 import config
 
 
-def run_forward(subject):
+def run_forward(subject, session=None):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
 
-    extension = '-ave'
-    fname_evoked = op.join(meg_subject_dir,
-                           config.base_fname.format(**locals()))
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fname_evoked = \
+        op.join(fpath_deriv, bids_basename + '-ave.fif')
+
     print("Input: ", fname_evoked)
 
-    extension = '_%s-fwd' % (config.spacing)
-    fname_fwd = op.join(meg_subject_dir,
-                        config.base_fname.format(**locals()))
+    fname_trans = \
+        op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
+
+    fname_fwd = \
+        op.join(fpath_deriv, bids_basename + '-fwd.fif')
+
     print("Output: ", fname_fwd)
 
-    fname_trans = op.join(meg_subject_dir,
-                          config.base_fname_trans.format(**locals()))
+    # Find the raw data file
+    # XXX : maybe simplify
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=config.runs[0],
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    data_dir = op.join(config.bids_root, subject_path)
+    search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
+    fnames = sorted(glob.glob(search_str))
+    fnames = [f for f in fnames
+              if op.splitext(f)[1] in mne_bids_readers]
+
+    if len(fnames) >= 1:
+        bids_fname = fnames[0]
+    elif len(fnames) == 0:
+        raise ValueError('Could not find input data file matching: '
+                         '"{}"'.format(search_str))
+
+    bids_fname = op.basename(bids_fname)
+    trans = get_head_mri_trans(bids_fname=bids_fname,
+                               bids_root=config.bids_root)
+
+    mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,
                                  subjects_dir=config.subjects_dir,
@@ -38,17 +91,20 @@ def run_forward(subject):
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if 'eeg' in config.ch_types:
-        fname_bem = op.join(config.subjects_dir, subject, 'bem',
-                            '%s-5120-5120-5120-bem-sol.fif' % subject)
+    if 'eeg' in config.ch_types or config.kind == 'eeg':
+        model = mne.make_bem_model(subject, ico=4,
+                                   conductivity=(0.3, 0.006, 0.3),
+                                   subjects_dir=config.subjects_dir)
     else:
-        fname_bem = op.join(config.subjects_dir, subject, 'bem',
-                            '%s-5120-bem-sol.fif' % subject)
+        model = mne.make_bem_model(subject, ico=4, conductivity=(0.3,),
+                                   subjects_dir=config.subjects_dir)
 
-    fwd = mne.make_forward_solution(evoked.info, fname_trans, src, fname_bem,
+    bem = mne.make_bem_solution(model)
+    fwd = mne.make_forward_solution(evoked.info, trans, src, bem,
                                     mindist=config.mindist)
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
 
 
 parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

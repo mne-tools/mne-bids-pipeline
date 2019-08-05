@@ -1,62 +1,78 @@
-"""
-===========
-Config file
-===========
+"""Set the configuration parameters for the study.
 
-Configuration parameters for the study.
-"""
+You need to define an environment variable `BIDS_ROOT` to point to the root
+of your BIDS dataset to be analyzed.
 
+"""
+import importlib
 import os
 from collections import defaultdict
+
+from bids import BIDSLayout
 import numpy as np
-from mne.datasets import sample
+
+
+# Get the bids_root from an environment variable, raise an error if not found
+bids_root = os.getenv('BIDS_ROOT', False)
+if not bids_root:
+    raise RuntimeError('You need to define an environment variable '
+                       '`BIDS_ROOT` pointing to the root of your BIDS dataset')
+
+# Make a pybids layout to easily get subjects, tasks, and other BIDS params
+layout = BIDSLayout(bids_root)
+
+# ``subjects_dir`` : str
+#   Path to the directory that contains the MRI data files and their
+#   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
+#   $SUBJECTS_DIR used by the Freesurfer software.
+
+subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+
 
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
+plot = True
 plot = False
 
-###############################################################################
-# DIRECTORIES
-# -----------
-#
-# ``study_path`` : str
-#    Set the `study path`` where the data is stored on your system.
-#
-# Example
-# ~~~~~~~
-# >>> study_path = '../MNE-sample-data/'
-# or
-# >>> study_path = '/Users/sophie/repos/ExampleData/'
 
-study_path = sample.data_path()
+# BIDS params
+# see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
+sessions = layout.get(return_type='id', target='session')
+sessions = sessions if sessions else [None]
 
-# ``subjects_dir`` : str
-#   The ``subjects_dir`` contains the MRI files for all subjects.
+# XXX: take only first task for now
+task = layout.get(return_type='id', target='task')[0]
 
-subjects_dir = os.path.join(study_path, 'subjects')
+# XXX: take only first run for now
+runs = layout.get(return_type='id', target='run')
+runs = runs if runs else [None]
 
-# ``meg_dir`` : str
-#   The ``meg_dir`` contains the MEG data in subfolders
-#   named my_study_path/MEG/my_subject/
+acq = None
 
-meg_dir = os.path.join(study_path, 'MEG')
+proc = layout.get(return_type='id', target='proc')
+proc = proc if proc else None
 
+rec = layout.get(return_type='id', target='reconstruction')
+rec = rec if rec else None
 
-###############################################################################
-# SUBJECTS / RUNS
-# ---------------
-#
-# ``study_name`` : str
-#   This is the name of your experiment.
-#
-# Example
-# ~~~~~~~
-# >>> study_name = 'MNE-sample'
+space = None
 
-study_name = 'audvis'
+kinds = layout.get(return_type='id', target='datatype')
+if 'eeg' in kinds and 'meg' in kinds:
+    raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
+                       'environment variable `BIDS_KIND` and set it to the '
+                       'kind you want to analyze.')
+    kind = kinds[0]
+elif 'eeg' in kinds:
+    kind = 'eeg'
+elif 'meg' in kinds:
+    kind = 'meg'
+else:
+    raise ValueError('The study template is intended for EEG or MEG data, but'
+                     'your dataset does not contain data of either type.')
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
@@ -64,7 +80,11 @@ study_name = 'audvis'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-subjects_list = ['sample']
+# subjects_list = ['05', '06', '07']
+
+subjects_list = layout.get(return_type='id', target='subject')
+
+# subjects_list = ['05']
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -75,19 +95,9 @@ subjects_list = ['sample']
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = []
+exclude_subjects = ['06', '07', '08', '09', '10', '11']
+subjects_list = list(set(subjects_list) - set(exclude_subjects))
 
-# ``runs`` : list of str
-#   Define the names of your ``runs``
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# The naming should be consistent across participants. List the number of runs
-# you ideally expect to have per participant. The scripts will issue a warning
-# if there are less runs than is expected. If there is only just one file,
-# leave empty!
-
-runs = ['']  # ['run01', 'run02']
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
@@ -100,48 +110,11 @@ runs = ['']  # ['run01', 'run02']
 # or
 # >>> ch_types = ['grad']  # to use only gradiometer MEG channels
 
-ch_types = ['meg', 'eeg']
-
-# ``base_fname`` : str
-#    This automatically generates the name for all files
-#    with the variables specified above.
-#    Normally you should not have to touch this
-
-base_fname = '{subject}_' + study_name + '{extension}.fif'
-
-
-###############################################################################
-# BAD CHANNELS
-# ------------
-# needed for 01-import_and_filter.py
-
-# ``bads`` : dict of list | dict of dict
-#    Bad channels are noisy sensors that *must* to be listed
-#    *before* maxfilter is applied. You can use the dict of list structure
-#    of you have bad channels that are the same for all runs.
-#    Use the dict(dict) if you have many runs or if noisy sensors are changing
-#    across runs.
-#
-# Example
-# ~~~~~~~
-# >>> bads = defaultdict(list)
-# >>> bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
-# or
-# >>> def default_bads():
-# >>>     return dict(run01=[], run02=[])
-# >>>
-# >>> bads = defaultdict(default_bads)
-# >>> bads['subject01'] = dict(run01=['MEG1723', 'MEG1722'], run02=['MEG1723'])
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# During the acquisition of your MEG / EEG data, systematically list and keep
-# track of the noisy sensors. Here, put the number of runs you ideally expect
-# to have per participant. Use the simple dict if you don't have runs or if
-# the same sensors are noisy across all runs.
-
-bads = defaultdict(list)
-bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
+# Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
+# specified here or not
+ch_types = ['meg']
+if kind == 'eeg':
+    ch_types = ['eeg']
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -158,6 +131,7 @@ bads['sample'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 # >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
 #                        'EEG063': 'ECG063'}
 
+# XXX should be done automatically from BIDS ?
 rename_channels = None
 
 # ``set_channel_types``: dict
@@ -168,6 +142,7 @@ rename_channels = None
 # >>> set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
 #                          'EEG063': 'ecg', 'EEG064': 'misc'}
 
+# XXX should not be necessary
 set_channel_types = None
 
 ###############################################################################
@@ -217,7 +192,7 @@ h_freq = 40.
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
 
-use_maxwell_filter = True
+use_maxwell_filter = False
 
 # There are two kinds of maxfiltering: SSS and tSSS
 # [SSS = signal space separation ; tSSS = temporal signal space separation]
@@ -288,9 +263,9 @@ mf_head_origin = 'auto'
 #
 # At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
 
-cal_files_path = os.path.join(study_path, 'SSS')
-mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
-mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
+# cal_files_path = os.path.join(study_path, 'SSS')
+# mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
+# mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
 
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
@@ -382,7 +357,10 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
+
 reject = {'grad': 4000e-13, 'mag': 4e-12}
+if kind == 'eeg':
+    reject = {'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -433,7 +411,8 @@ baseline = (None, 0)
 # ~~~~~~~
 # >>> stim_channel = 'STI 014'  # or 'STI101'
 
-stim_channel = 'STI 014'
+# XXX not needed if bids events are present
+# stim_channel = 'STI 014'
 
 # ``min_event_duration`` : float
 #    The minimal duration of the events you want to extract (in seconds).
@@ -442,7 +421,8 @@ stim_channel = 'STI 014'
 # ~~~~~~~
 # >>> min_event_duration = 0.002  # 2 miliseconds
 
-min_event_duration = 0.002
+# XXX not needed if bids events are present
+# min_event_duration = 0.002
 
 #  `event_id`` : dict
 #    Dictionary that maps events (trigger/marker values)
@@ -454,7 +434,7 @@ min_event_duration = 0.002
 # or
 # >>> event_id = {'Onset': 4} with conditions = ['Onset']
 
-event_id = {'auditory/left': 1, 'auditory/right': 2}
+# event_id = {'auditory/left': 1, 'auditory/right': 2}
 
 #  `conditions`` : dict
 #    List of condition names to consider. Must match the keys
@@ -466,7 +446,8 @@ event_id = {'auditory/left': 1, 'auditory/right': 2}
 # or
 # >>> conditions = ['left', 'right']
 
-conditions = ['left', 'right']
+# conditions = ['left', 'right']
+conditions = None
 
 ###############################################################################
 # ARTIFACT REMOVAL
@@ -489,6 +470,10 @@ use_ssp = True
 #    If True ICA should be used or not.
 
 use_ica = False
+
+if kind == 'eeg':
+    use_ssp = False
+    use_ica = True
 
 # ``ica_decim`` : int
 #    The decimation parameter to compute ICA. If 5 it means
@@ -529,7 +514,8 @@ ica_ctps_ecg_threshold = 0.1
 # or
 # >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
 
-decoding_conditions = [('left', 'right')]
+decoding_conditions = []
+# decoding_conditions = [('left', 'right')]
 
 
 # ``decoding_metric`` : str
@@ -550,7 +536,8 @@ decoding_n_splits = 5
 # ``time_frequency_conditions`` : list
 #    The conditions to compute time-frequency decomposition on.
 
-time_frequency_conditions = ['auditory/left']
+# time_frequency_conditions = ['left', 'right']
+time_frequency_conditions = []
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS
@@ -603,25 +590,13 @@ method = 'dSPM'
 
 smooth = 10
 
-
-# ``base_fname_trans`` : str
-#   The path to the trans files obtained with coregistration.
-#
-# Example
-# ~~~~~~~
-# >>> base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
-# or
-# >>> base_fname_trans = '{subject}-trans.fif'
-
-base_fname_trans = '{subject}_' + study_name + '_raw-trans.fif'
-
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
-if not os.path.isdir(study_path):
-    os.mkdir(study_path)
+# if not os.path.isdir(study_path):
+#     os.mkdir(study_path)
 
-if not os.path.isdir(subjects_dir):
-    os.mkdir(subjects_dir)
+# if not os.path.isdir(subjects_dir):
+#    os.mkdir(subjects_dir)
 
 ###############################################################################
 # ADVANCED
@@ -664,6 +639,24 @@ shortest_event = 1
 #    maxfilter set this to True.
 
 allow_maxshield = True
+
+###############################################################################
+# Overwrite with custom config options
+#
+# For testing a specific dataset, make a `config_<dataset_name>.py` file in
+# `/tests/configs` and set an environment variable `MNE_BIDS_STUDY_CONFIG` to
+# point to the config name (not including /tests/config, and not including .py)
+# For example `export MNE_BIDS_STUDY_CONFIG=config_matchingpennies`
+
+if "MNE_BIDS_STUDY_CONFIG" in os.environ:
+    cfg_name = os.environ['MNE_BIDS_STUDY_CONFIG']
+    cfg_path = 'tests.configs.{}'.format(cfg_name)
+    custom_cfg = importlib.import_module(cfg_path)
+
+    for val in dir(custom_cfg):
+        if not val.startswith('__'):
+            exec("%s = custom_cfg.%s" % (val, val))
+            print('Overwriting: %s' % val)
 
 ###############################################################################
 # CHECKS

@@ -1,64 +1,56 @@
 [![CircleCI](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline.svg?style=svg)](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline)
 
-# 0 Credits
+# MNE-study-template
 
-This example pipeline for MEG/EEG data processing with MNE python was build jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/) and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
-based on scripts originally developed for this publication:
+This repository contains an exemplary pipeline for processing MEG/EEG data
+using [MNE-Python](mne.tools) and the [Brain Imaging Data Structure (BIDS)](https://bids.neuroimaging.io/).
 
-	M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen, A. Gramfort (2018).
-    A reproducible MEG/EEG group study with the MNE software: recommendations, quality assessments,
-    and good practices. Frontiers in neuroscience, 12.
+The study template expects input data to adhere to BIDS. You can check whether
+your data complies with the BIDS standard using the [BIDS validator]().
 
-# 1 Make sure MNE-python is installed
+# Installation
 
-First, you need to make sure you have mne-python installed and working on your system. See [installation instructions](http://martinos.org/mne/stable/install_mne_python.html). Once is done, you should be able to run this in a terminal:
+First, you need to make sure you have MNE-Python installed and working on your
+system. See the [installation instructions](http://martinos.org/mne/stable/install_mne_python.html).
+Once this is done, you should be able to run this in a terminal:
 
-	$ python -c "import mne; mne.sys_info()"
+`$ python -c "import mne; mne.sys_info()"`
 
-Get the scripts through git:
+You can then install the following additional packages via `pip`. Note that
+the URL points to the bleeding edge version of `mne_bids`:
 
-	$ git clone https://github.com/mne-tools/mne-study-template.git
+`$ pip install https://github.com/mne-tools/mne-bids/zipball/master`
 
-If you do not know how to use git, download the scripts [here](https://github.com/mne-tools/mne-study-template/archive/master.zip).
+# Usage
 
-For source analysis you'll also need freesurfer, follow the instructions on [their website](https://surfer.nmr.mgh.harvard.edu/).
+## General
 
+Generally, there is a single `config.py` file, which contains all parameters
+for the analysis of the data. Many parameters are automatically inferred from
+the BIDS structure of the data.
 
-# 2 Set your data to a proper place
+All other scripts should not be edited.
 
-In our example, we will use `.fif` raw data from the "Localizer" study. You can
-find the data on the Open Science Framework: https://osf.io/m9nwz/
+## Makefile
 
-Let's create a folder called "ExampleData" wherever you want on your computer.
+To ease interaction with the study template, there is a `Makefile`. Simply
+type `make` from the root of your study template to see a summary of what
+you can do, or inspect the file directly.
 
-In the ExampleData folder, you need to create three subfolders:  "MEG", "system_calibration_files" and "subjects" as follow:
+For Windows users, it might be necessary to install [GNU make](https://chocolatey.org/packages/make).
 
-![xx](https://image.noelshack.com/fichiers/2019/15/4/1554998135-path.png)
+## Running on your own data
 
+1. Make sure your data is formatted in BIDS
+1. Set an environment variable `BIDS_ROOT` to point to your dataset
+1. (optional) Set an environment variable `MNE_BIDS_STUDY_CONFIG` to point to
+   a custom `config_<dataset_name>.py` file that you created to overwrite
+	 the standard parameters in the main `config.py` file.
+1. Use the `Makefile` to run your analyses
 
-- The "MEG" folder will contain a folder for each participant
-- The "system_calibration_files" folder will contain the calibration files
-  (download them from OSF)
-- The "subjects" folder will contain participant MRI files.
+# Processing steps
 
-Here is an example of what the MEG folder should contain:
-
-![xx](https://image.noelshack.com/fichiers/2019/15/4/1554998137-path1.png)
-
-Then you put the raw data for each subject in their own folder. The raw data file name should respect this format: `subjectID_StudyName_raw.fif`
-
-or, if your data has multiple runs: `subjectID_StudyNamerun01_raw.fif`
-
-
-![xx](https://image.noelshack.com/fichiers/2019/15/4/1554998137-path2.png)
-
-# 3 Adapt config.py
-
-All specific settings to be used in your analysis are defined in [config.py](config.py).
-See the comments for explanations and recommendations.
-
-
-# 4 Processing steps
+The following table provides a concise summary of each step in the pipeline.
 
 | Script | Description |
 |:-----------|:----------------------------------------------------------|
@@ -80,3 +72,30 @@ See the comments for explanations and recommendations.
 | [13-make_inverse.py](13-make_inverse.py) | Compute inverse problem to obtain source estimates. |
 | [14-group_average_source.py](14-group_average_source.py) | Compute source estimates average over subjects. |
 | [99-make_reports.py](99-make_reports.py) | Compute HTML reports for each subject. |
+
+
+# Acknowledgments
+
+The original pipeline for MEG/EEG data processing with MNE python was build
+jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/)
+and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
+based on scripts originally developed for this publication:
+
+> M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen,
+> A. Gramfort (2018). A reproducible MEG/EEG group study with the MNE software:
+> recommendations, quality assessments, and good practices. Frontiers in
+> neuroscience, 12. https://doi.org/10.3389/fnins.2018.00530
+
+The current iteration is based on BIDS and relies on the extensions to BIDS
+for EEG and MEG. See the following two references:
+
+> Pernet, C. R., Appelhoff, S., Gorgolewski, K. J., Flandin, G.,
+> Phillips, C., Delorme, A., Oostenveld, R. (2019). EEG-BIDS, an extension
+> to the brain imaging data structure for electroencephalography. Scientific
+> Data, 6, 103. https://doi.org/10.1038/s41597-019-0104-8
+
+> Niso, G., Gorgolewski, K. J., Bock, E., Brooks, T. L., Flandin, G., Gramfort, A.,
+> Henson, R. N., Jas, M., Litvak, V., Moreau, J., Oostenveld, R., Schoffelen, J.,
+> Tadel, F., Wexler, J., Baillet, S. (2018). MEG-BIDS, the brain imaging data
+> structure extended to magnetoencephalography. Scientific Data, 5, 180110.
+> https://doi.org/10.1038/sdata.2018.110

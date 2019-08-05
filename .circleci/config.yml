@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    build_docs:
+    run_tests:
       docker:
         - image: circleci/python:3.6.8-stretch
       steps:
@@ -13,53 +13,47 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
-        # Get environment.yml file to install MNE-Python
-        - run:
-            name: Get MNE-Python environment
-            command: |
-              curl -O https://raw.githubusercontent.com/mne-tools/mne-python/master/environment.yml
-
-        # Load our data
         - restore_cache:
             keys:
-              - data-cache-0
-
-        # Load the python environment in a separate restore_cache call
-        # Note: This cannot be integrated with restore_cache above, because
-        # only the first matching key will be restored
-        - restore_cache:
-            keys:
-              - pip-cache-0-{{ checksum "environment.yml" }}
+              - pip-cache-0
 
         - run:
-            name: Spin up Xvfb
-            command: |
-              /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
-
-        # https://github.com/ContinuumIO/anaconda-issues/issues/9190#issuecomment-386508136
-        # https://github.com/golemfactory/golem/issues/1019
-        - run:
-            name: Fix libgcc_s.so.1 pthread_cancel bug
-            command: |
-              sudo apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6 qt5-default
-
-        - run:
-            name: Get Anaconda running
+            name: Get conda running
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
               chmod +x ~/miniconda.sh;
               ~/miniconda.sh -b -p ~/miniconda;
-              export export PATH=~/miniconda/bin:$PATH;
-              conda update --yes --quiet conda;
-              conda env create -f environment.yml
-              source activate mne
-              pip install --upgrade mne
-              python -c "import mne; mne.sys_info()"
+              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
-        # Save Python environment with a key based on the environment.yml that
-        # was downloaded from MNE-Python. If it changes, change the cache
+        - run:
+            name: Install dependencies in conda base environment
+            command: |
+              conda update -n base -c defaults conda
+              pip install numpy scipy matplotlib
+              pip install -U scikit-learn
+              pip install --upgrade mne
+              git clone https://github.com/mne-tools/mne-bids.git --depth 1
+              cd mne-bids
+              pip install -e .
+              cd ..
+              pip install --upgrade pybids
+
+        - run:
+            name: Install datalad to conveniently pull testing datasets
+            command: |
+              conda install -c conda-forge git-annex
+              pip install --upgrade datalad
+              git config --global user.email "user@mne.com"
+              git config --global user.name "mne user"
+
+        - run:
+            name: Get testing datasets
+            command: |
+              make fetch
+
+        # Save Python cache
         - save_cache:
-            key: pip-cache-0-{{ checksum "environment.yml"}}
+            key: pip-cache-0
             paths:
               - ~/.cache/pip
 
@@ -67,31 +61,20 @@ jobs:
         - run:
             name: Check installation
             command: |
-               source activate mne
                which python
+               git-annex version
+               datalad --version
+               mne_bids --version
+               mne --version
                python -c "import mne; mne.sys_info()"
 
-        # Run the scripts
+        # Run tests
         - run:
-            name: Get data and run test
+            name: test ds000248
             command: |
-               source activate mne
-               make test
-
-        # Save the outputs
-        - store_artifacts:
-            path: doc/_build/html/
-            destination: dev
-        - store_artifacts:
-            path: doc/_build/html_stable/
-            destination: stable
-
-        # Store the cache
-        - save_cache:
-            key: data-cache-0
-            paths:
-              - ~/mne_data/MNE-sample-data
-              - ~/data
+               export BIDS_ROOT=~/data/ds000248
+               export MNE_BIDS_STUDY_CONFIG=config_ds000248
+               make sensor
 
 
 workflows:
@@ -99,4 +82,4 @@ workflows:
 
   default:
     jobs:
-      - build_docs
+      - run_tests

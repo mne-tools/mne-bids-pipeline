@@ -10,10 +10,14 @@ is used to save time.
 """
 
 import os.path as op
+import itertools
+
 import numpy as np
 
 import mne
 from mne.parallel import parallel_func
+
+from mne_bids import make_bids_basename
 
 import config
 
@@ -21,16 +25,36 @@ freqs = np.arange(10, 40)
 n_cycles = freqs / 3.
 
 
-def run_time_frequency(subject):
-    print("processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
+def run_time_frequency(subject, session=None):
+    print("Processing subject: %s" % subject)
+
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     if config.use_ica or config.use_ssp:
         extension = '_cleaned-epo'
     else:
         extension = '-epo'
 
-    fname_in = op.join(meg_subject_dir,
-                       config.base_fname.format(**locals()))
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fname_in = \
+        op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
+
     print("Input: ", fname_in)
 
     epochs = mne.read_epochs(fname_in)
@@ -40,15 +64,18 @@ def run_time_frequency(subject):
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
-        power.save(
-            op.join(meg_subject_dir, '%s_%s_power_%s-tfr.h5'
-                    % (config.study_name, subject,
-                       condition.replace(op.sep, ''))), overwrite=True)
-        itc.save(
-            op.join(meg_subject_dir, '%s_%s_itc_%s-tfr.h5'
-                    % (config.study_name, subject,
-                       condition.replace(op.sep, ''))), overwrite=True)
+        power_fname_out = \
+            op.join(fpath_deriv, bids_basename + '_power_%s-tfr.h5'
+                    % (condition.replace(op.sep, '')))
+
+        itc_fname_out = \
+            op.join(fpath_deriv, bids_basename + '_itc_%s-tfr.h5'
+                    % (condition.replace(op.sep, '')))
+
+        power.save(power_fname_out, overwrite=True)
+        itc.save(itc_fname_out, overwrite=True)
 
 
 parallel, run_func, _ = parallel_func(run_time_frequency, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

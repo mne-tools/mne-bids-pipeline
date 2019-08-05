@@ -11,52 +11,71 @@ for instance by resampling.
 """
 
 import os.path as op
+import itertools
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 import mne
-import numpy as np
 from mne.parallel import parallel_func
+from mne_bids import make_bids_basename
 
 import config
 
 
-def run_events(subject):
+def run_events(subject, run=None, session=None):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
 
-    for run in config.runs:
-        if config.use_maxwell_filter:
-            extension = run + '_sss_raw'
-        else:
-            extension = run + '_filt_raw'
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-        raw_fname_in = op.join(meg_subject_dir,
-                               config.base_fname.format(**locals()))
-        eve_fname_out = op.splitext(raw_fname_in)[0] + '-eve.fif'
+    subject_path = op.join(subject_path, config.kind)
 
-        raw = mne.io.read_raw_fif(raw_fname_in)
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
 
-        events = mne.find_events(raw, stim_channel=config.stim_channel,
-                                 consecutive=True,
-                                 min_duration=config.min_event_duration,
-                                 shortest_event=config.shortest_event)
+    # Prepare a name to save the data
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    if config.use_maxwell_filter:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+    else:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
-        if config.trigger_time_shift:
-            events = mne.event.shift_time_events(events,
-                                                 np.unique(events[:, 2]),
-                                                 config.trigger_time_shift,
-                                                 raw.info['sfreq'])
+    eve_fname_out = op.join(fpath_deriv, bids_basename + '-eve.fif')
 
-        print("Input: ", raw_fname_in)
-        print("Output: ", eve_fname_out)
+    raw = mne.io.read_raw_fif(raw_fname_in)
+    events, event_id = mne.events_from_annotations(raw)
 
-        mne.write_events(eve_fname_out, events)
+    if config.trigger_time_shift:
+        events = mne.event.shift_time_events(events,
+                                             np.unique(events[:, 2]),
+                                             config.trigger_time_shift,
+                                             raw.info['sfreq'])
 
-        if config.plot:
-            # plot events
-            figure = mne.viz.plot_events(events, sfreq=raw.info['sfreq'],
-                                         first_samp=raw.first_samp)
-            figure.show()
+    print("Input: ", raw_fname_in)
+    print("Output: ", eve_fname_out)
+
+    mne.write_events(eve_fname_out, events)
+
+    if config.plot:
+        # plot events
+        mne.viz.plot_events(events, sfreq=raw.info['sfreq'],
+                            first_samp=raw.first_samp)
+        plt.show()
 
 
 parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, run, session) for subject, run, session in
+         itertools.product(config.subjects_list, config.runs, config.sessions))

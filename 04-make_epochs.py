@@ -11,9 +11,11 @@ To save space, the epoch data can be decimated.
 """
 
 import os.path as op
-from itertools import chain
+import itertools
+
 import mne
 from mne.parallel import parallel_func
+from mne_bids import make_bids_basename
 
 import config
 
@@ -24,46 +26,49 @@ N_JOBS = max(config.N_JOBS // 4, 1)
 
 ###############################################################################
 # Now we define a function to extract epochs for one subject
-def run_epochs(subject):
+def run_epochs(subject, session=None):
     print("Processing subject: %s" % subject)
 
-    meg_subject_dir = op.join(config.meg_dir, subject)
-
     raw_list = list()
-    events_list = list()
     print("  Loading raw data")
 
-    for run in config.runs:
-        if config.use_maxwell_filter:
-            extension = run + '_sss_raw'
-        else:
-            extension = run + '_filt_raw'
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-        raw_fname_in = op.join(meg_subject_dir,
-                               config.base_fname.format(**locals()))
-        eve_fname = op.splitext(raw_fname_in)[0] + '-eve.fif'
-        print("Input: ", raw_fname_in, eve_fname)
+    subject_path = op.join(subject_path, config.kind)
+
+    for run_idx, run in enumerate(config.runs):
+
+        bids_basename = make_bids_basename(subject=subject,
+                                           session=session,
+                                           task=config.task,
+                                           acquisition=config.acq,
+                                           run=run,
+                                           processing=config.proc,
+                                           recording=config.rec,
+                                           space=config.space
+                                           )
+        # Prepare a name to save the data
+        fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+        if config.use_maxwell_filter:
+            raw_fname_in = \
+                op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+        else:
+            raw_fname_in = \
+                op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+
+        print("Input: ", raw_fname_in)
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-
-        events = mne.read_events(eve_fname)
-        events_list.append(events)
-
-        # XXX mark bads from any run – is it a problem for ICA
-        # if we just exclude the bads shared by all runs ?
-        if run:
-            bads = set(chain(*config.bads[subject].values()))
-        else:
-            bads = config.bads[subject]
-
-        raw.info['bads'] = bads
-        print("added bads: ", raw.info['bads'])
-
         raw_list.append(raw)
 
     print('  Concatenating runs')
-    raw, events = mne.concatenate_raws(raw_list, events_list=events_list)
+    raw = mne.concatenate_raws(raw_list)
 
+    events, event_id = mne.events_from_annotations(raw)
     if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 
@@ -77,7 +82,7 @@ def run_epochs(subject):
     elif 'mag' in config.ch_types:
         meg = 'mag'
 
-    eeg = 'eeg' in config.ch_types
+    eeg = 'eeg' in config.ch_types or config.kind == 'eeg'
 
     picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
                            eog=True, exclude=())
@@ -89,16 +94,24 @@ def run_epochs(subject):
 
     # Epoch the data
     print('  Epoching')
-    epochs = mne.Epochs(raw, events, config.event_id, config.tmin, config.tmax,
+    epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.reject)
 
     print('  Writing epochs to disk')
-    extension = '-epo'
-    epochs_fname = op.join(meg_subject_dir,
-                           config.base_fname.format(**locals()))
-    print("Output: ", epochs_fname)
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    epochs_fname = \
+        op.join(fpath_deriv, bids_basename + '-epo.fif')
     epochs.save(epochs_fname)
 
     if config.plot:
@@ -109,4 +122,5 @@ def run_epochs(subject):
 
 # Here we use fewer N_JOBS to prevent potential memory problems
 parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
-parallel(run_func(subject) for subject in config.subjects_list)
+parallel(run_func(subject, session) for subject, session in
+         itertools.product(config.subjects_list, config.sessions))

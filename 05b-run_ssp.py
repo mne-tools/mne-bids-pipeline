@@ -7,32 +7,64 @@ Compute Signal Suspace Projections (SSP).
 """
 
 import os.path as op
+import itertools
+
 
 import mne
 from mne.parallel import parallel_func
+from mne_bids import make_bids_basename
 
 import config
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 
 
-def run_ssp(subject):
+def run_ssp(subject, session=None):
     print("Processing subject: %s" % subject)
-    meg_subject_dir = op.join(config.meg_dir, subject)
 
     print("  Loading one run to compute SSPs")
 
+    # Construct the search path for the data file. `sub` is mandatory
+    subject_path = op.join('sub-{}'.format(subject))
+    # `session` is optional
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.kind)
+
     # compute SSP on first run of raw
     run = config.runs[0]
-    if config.use_maxwell_filter:
-        extension = run + '_sss_raw'
-    else:
-        extension = run + '_filt_raw'
-    raw_fname_in = op.join(meg_subject_dir,
-                           config.base_fname.format(**locals()))
 
-    extension = run + '_ssp-proj'
-    proj_fname_out = op.join(meg_subject_dir,
-                             config.base_fname.format(**locals()))
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    # Prepare a name to save the data
+    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    if config.use_maxwell_filter:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+    else:
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+
+    # when saving proj, use bids_basename=None
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
+    proj_fname_out = op.join(fpath_deriv, bids_basename + '_ssp-proj.fif')
 
     print("Input: ", raw_fname_in)
     print("Output: ", proj_fname_out)
@@ -51,4 +83,5 @@ def run_ssp(subject):
 
 if config.use_ssp:
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-    parallel(run_func(subject) for subject in config.subjects_list)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))

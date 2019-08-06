@@ -7,7 +7,7 @@ below.
 Download ds001810 from OpenNeuro: https://github.com/OpenNeuroDatasets/ds001810
 
 export MNE_BIDS_STUDY_CONFIG=config_ds001810
-export BIDS_ROOT=~/data/ds001810
+export BIDS_ROOT=~/mne_data/ds001810
 
 """
 

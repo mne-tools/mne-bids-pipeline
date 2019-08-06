@@ -7,7 +7,7 @@ below.
 Download ds000117 from OpenNeuro: https://github.com/OpenNeuroDatasets/ds000117
 
 export MNE_BIDS_STUDY_CONFIG=config_ds000117
-export BIDS_ROOT=~/data/ds000117
+export BIDS_ROOT=~/mne_data/ds000117
 
 """
 import os.path as op

@@ -3,7 +3,7 @@ import os
 import os.path as op
 
 import datalad.api as dl
-
+import mne
 from mne.commands.utils import get_optparser
 
 
@@ -56,10 +56,12 @@ if __name__ == '__main__':
     opt, args = parser.parse_args()
     dataset = opt.dataset if opt.dataset != '' else None
 
-    # Save everything in ~/data
-    data_dir = op.join(op.expanduser('~'), 'data')
-    if not op.exists(data_dir):
-        os.makedirs(data_dir)
+    # Save everything 'MNE_DATA' dir ... defaults to ~/mne_data
+    data_dir = mne.get_config(key='MNE_DATA', default=False)
+    if not data_dir:
+        data_dir = op.join(op.expanduser('~'), 'mne_data')
+        mne.set_config('MNE_DATA', data_dir)
+        os.makedirs(data_dir, exist_ok=True)
 
     urls_dict = _provide_testing_data(dataset)
     get_dict = _provide_get_dict(dataset)

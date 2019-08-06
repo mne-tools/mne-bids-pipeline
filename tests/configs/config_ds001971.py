@@ -7,7 +7,7 @@ below.
 Download ds001971 from OpenNeuro: https://github.com/OpenNeuroDatasets/ds001971
 
 export MNE_BIDS_STUDY_CONFIG=config_ds001971
-export BIDS_ROOT=~/data/ds001971
+export BIDS_ROOT=~/mne_data/ds001971
 
 """
 

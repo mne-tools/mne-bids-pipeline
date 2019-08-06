@@ -12,7 +12,7 @@ jobs:
               echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
-
+              echo "export DATA_DIR=~/mne_data" >> $BASH_ENV;
         - restore_cache:
             keys:
               - pip-cache-0
@@ -46,11 +46,6 @@ jobs:
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 
-        - run:
-            name: Get testing datasets
-            command: |
-              make fetch
-
         # Save Python cache
         - save_cache:
             key: pip-cache-0
@@ -72,7 +67,9 @@ jobs:
         - run:
             name: test ds000248
             command: |
-               export BIDS_ROOT=~/data/ds000248
+               export DATASET=ds000248
+               make fetch
+               export BIDS_ROOT=$DATA_DIR/ds000248
                export MNE_BIDS_STUDY_CONFIG=config_ds000248
                make sensor
 

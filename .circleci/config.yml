@@ -63,6 +63,16 @@ jobs:
                python -c "import mne; mne.sys_info()"
 
         # Run tests
+
+        - run:
+            name: test ds000246
+            command: |
+               export DATASET=ds000246
+               make fetch
+               export BIDS_ROOT=$DATA_DIR/ds000246
+               export MNE_BIDS_STUDY_CONFIG=config_ds000246
+               make sensor
+
         - run:
             name: test ds000248
             command: |

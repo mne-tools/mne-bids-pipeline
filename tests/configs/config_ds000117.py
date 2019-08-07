@@ -11,7 +11,6 @@ export BIDS_ROOT=~/mne_data/ds000117
 
 """
 import os.path as op
-from bids import BIDSLayout
 
 study_name = 'ds000117'
 task = 'facerecognition'
@@ -23,8 +22,6 @@ plot = False
 acq = None
 bids_root = op.join(op.expanduser('~'), 'data', 'ds000117')
 subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
-layout = BIDSLayout(bids_root)
-# subjects_list = layout.get(return_type='id', target='subject')
 subjects_list = ['01']
 
 use_maxwell_filter = True

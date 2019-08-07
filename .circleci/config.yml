@@ -36,7 +36,6 @@ jobs:
               cd mne-bids
               pip install -e .
               cd ..
-              pip install --upgrade pybids
 
         - run:
             name: Install datalad to conveniently pull testing datasets

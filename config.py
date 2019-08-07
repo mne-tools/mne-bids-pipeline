@@ -8,8 +8,8 @@ import importlib
 import os
 from collections import defaultdict
 
-from bids import BIDSLayout
 import numpy as np
+from mne_bids import get_values_from_key, get_datatypes
 
 
 # Get the bids_root from an environment variable, raise an error if not found
@@ -18,8 +18,6 @@ if not bids_root:
     raise RuntimeError('You need to define an environment variable '
                        '`BIDS_ROOT` pointing to the root of your BIDS dataset')
 
-# Make a pybids layout to easily get subjects, tasks, and other BIDS params
-layout = BIDSLayout(bids_root)
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -40,27 +38,25 @@ plot = False
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
-sessions = layout.get(return_type='id', target='session')
+
+sessions = get_values_from_key(bids_root, key='ses')
 sessions = sessions if sessions else [None]
 
 # XXX: take only first task for now
-task = layout.get(return_type='id', target='task')[0]
+task = get_values_from_key(bids_root, key='task')[0]
 
-# XXX: take only first run for now
-runs = layout.get(return_type='id', target='run')
+runs = get_values_from_key(bids_root, key='run')
 runs = runs if runs else [None]
 
 acq = None
 
-proc = layout.get(return_type='id', target='proc')
-proc = proc if proc else None
+proc = None
 
-rec = layout.get(return_type='id', target='reconstruction')
-rec = rec if rec else None
+rec = None
 
 space = None
 
-kinds = layout.get(return_type='id', target='datatype')
+kinds = get_datatypes(bids_root)
 if 'eeg' in kinds and 'meg' in kinds:
     raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
                        'environment variable `BIDS_KIND` and set it to the '
@@ -82,7 +78,7 @@ else:
 
 # subjects_list = ['05', '06', '07']
 
-subjects_list = layout.get(return_type='id', target='subject')
+subjects_list = get_values_from_key(bids_root, key='sub')
 
 # subjects_list = ['05']
 

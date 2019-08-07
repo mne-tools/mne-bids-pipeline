@@ -16,12 +16,10 @@ study_name = 'ds001810'
 task = 'attentionalblink'
 plot = False
 reject = {'eeg': 150e-6}
-conditions = ['left', 'right']
-decoding_conditions = [('left', 'right')]
+conditions = ['61510', '61511']
+decoding_conditions = [('61510', '61511')]
 use_ssp = False
 use_ica = False
 
-
 subjects_list = ['01']
-
 sessions = ['anodalpre']

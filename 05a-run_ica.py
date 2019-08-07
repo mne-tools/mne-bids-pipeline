@@ -11,6 +11,9 @@ run 06a-apply_ica.py.
 
 import os.path as op
 import itertools
+import warnings
+
+import numpy as np
 
 import mne
 from mne.report import Report
@@ -73,6 +76,11 @@ def run_ica(subject, session=None):
     raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
+
+    if len(np.unique(events[:, 0])) != len(events):
+        warnings.warn('Events are unique. Uniqifying them')
+        _, idx = np.unique(events[:, 0], return_index=True)
+        events = events[idx]
 
     if "eeg" in config.ch_types or config.kind == 'eeg':
         raw.set_eeg_reference(projection=True)

@@ -14,7 +14,6 @@ export BIDS_ROOT=~/mne_data/ds001810
 
 study_name = 'ds001810'
 task = 'attentionalblink'
-kind = 'eeg'
 plot = False
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']

@@ -653,10 +653,12 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = 'tests.configs.{}'.format(cfg_name)
     custom_cfg = importlib.import_module(cfg_path)
 
+    new = None
     for val in dir(custom_cfg):
         if not val.startswith('__'):
+            exec("new = custom_cfg.%s" % val)
+            print('Overwriting: %s -> %s' % (val, new))
             exec("%s = custom_cfg.%s" % (val, val))
-            print('Overwriting: %s' % val)
 
 ###############################################################################
 # CHECKS

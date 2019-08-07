@@ -10,8 +10,10 @@ Finally the epochs are saved to disk.
 To save space, the epoch data can be decimated.
 """
 
+import numpy as np
 import os.path as op
 import itertools
+import warnings
 
 import mne
 from mne.parallel import parallel_func
@@ -70,6 +72,12 @@ def run_epochs(subject, session=None):
     raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
+
+    if len(np.unique(events[:, 0])) != len(events):
+        warnings.warn('Events are unique. Uniqifying them')
+        _, idx = np.unique(events[:, 0], return_index=True)
+        events = events[idx]
+
     if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 

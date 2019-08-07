@@ -91,6 +91,7 @@ jobs:
                export MNE_BIDS_STUDY_CONFIG=config_ds001810
                make sensor
 
+        - run:
             name: test ds001971
             command: |
                export DATASET=ds001971

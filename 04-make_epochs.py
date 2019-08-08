@@ -74,7 +74,7 @@ def run_epochs(subject, session=None):
     events, event_id = mne.events_from_annotations(raw)
 
     if len(np.unique(events[:, 0])) != len(events):
-        warnings.warn('Events are unique. Uniqifying them')
+        warnings.warn('Events are not unique. Uniqifying them')
         _, idx = np.unique(events[:, 0], return_index=True)
         events = events[idx]
 

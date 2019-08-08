@@ -39,7 +39,8 @@ def run_report(subject, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          'mne-study-template', subject_path)
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
     fname_trans = \
@@ -93,7 +94,7 @@ parallel(run_func(subject, session) for subject, session in
          itertools.product(config.subjects_list, config.sessions))
 
 # Group report
-evoked_fname = op.join(config.bids_root, 'derivatives',
+evoked_fname = op.join(config.bids_root, 'derivatives', 'mne-study-template',
                        '%s_grand_average-ave.fif' % config.study_name)
 rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                  subjects_dir=config.subjects_dir)
@@ -104,7 +105,7 @@ for evoked, condition in zip(evokeds, config.conditions):
                                         show=False),
                             'Average %s' % condition)
 
-    stc_fname = op.join(config.bids_root, 'derivatives',
+    stc_fname = op.join(config.bids_root, 'derivatives', 'mne-study-template',
                         'average_dSPM-%s' % condition)
     if op.exists(stc_fname + "-lh.stc"):
         stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
@@ -115,5 +116,6 @@ for evoked, condition in zip(evokeds, config.conditions):
         fig = mlab.gcf()
         rep.add_figs_to_section(fig, 'Average %s' % condition)
 
-rep.save(fname=op.join(config.bids_root, 'derivatives', 'report_average.html'),
+rep.save(fname=op.join(config.bids_root, 'derivatives', 'mne-study-template',
+                       'report_average.html'),
          open_browser=False, overwrite=True)

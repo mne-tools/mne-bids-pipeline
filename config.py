@@ -11,6 +11,9 @@ from collections import defaultdict
 import numpy as np
 from mne_bids.utils import get_values_for_key, get_kinds
 
+# The version of the pipeline and the URL where to obtain the code
+VERSION = '0.1.dev0'
+CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 # Get the bids_root from an environment variable, raise an error if not found
 bids_root = os.getenv('BIDS_ROOT', False)

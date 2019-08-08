@@ -56,7 +56,8 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          'mne-study-template', subject_path)
     fname_in = \
         op.join(fpath_deriv, bids_basename + '-epo.fif')
 
@@ -86,15 +87,15 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     # let's save the scores now
     a_vs_b = '%s_vs_%s' % (condition1, condition2)
     a_vs_b = a_vs_b.replace(op.sep, '')
-    fname_td = op.join(config.bids_root, 'derivatives',
+    fname_td = op.join(config.bids_root, 'derivatives', 'mne-study-template',
                        '%s_%s_%s_%s.mat' %
                        (subject, config.study_name, a_vs_b,
                         config.decoding_metric))
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
+
 # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
 # so we don't dispatch manually to multiple jobs.
-
 for subject in config.subjects_list:
     for session in config.sessions:
         for conditions in config.decoding_conditions:

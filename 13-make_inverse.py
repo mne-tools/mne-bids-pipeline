@@ -39,7 +39,8 @@ def run_inverse(subject, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          'mne-study-template', subject_path)
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
 

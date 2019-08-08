@@ -6,6 +6,8 @@ import datalad.api as dl
 import mne
 from mne.commands.utils import get_optparser
 
+DEFAULT_DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
+
 
 def _provide_testing_data(dataset):
     """Return dict of dataset, and the corresponding URLs."""
@@ -62,9 +64,9 @@ if __name__ == '__main__':
     # Save everything 'MNE_DATA' dir ... defaults to ~/mne_data
     data_dir = mne.get_config(key='MNE_DATA', default=False)
     if not data_dir:
-        data_dir = op.join(op.expanduser('~'), 'mne_data')
-        mne.set_config('MNE_DATA', data_dir)
-        os.makedirs(data_dir, exist_ok=True)
+        mne.set_config('MNE_DATA', DEFAULT_DATA_DIR)
+        os.makedirs(DEFAULT_DATA_DIR, exist_ok=True)
+        data_dir = DEFAULT_DATA_DIR
 
     urls_dict = _provide_testing_data(dataset)
     get_dict = _provide_get_dict(dataset)

@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
-from mne_bids import get_values_from_key, get_datatypes
+from mne_bids import get_values_from_key, get_kinds
 
 
 # Get the bids_root from an environment variable, raise an error if not found
@@ -56,7 +56,7 @@ rec = None
 
 space = None
 
-kinds = get_datatypes(bids_root)
+kinds = get_kinds(bids_root)
 if 'eeg' in kinds and 'meg' in kinds:
     raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
                        'environment variable `BIDS_KIND` and set it to the '

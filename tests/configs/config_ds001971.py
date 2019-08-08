@@ -14,9 +14,9 @@ export BIDS_ROOT=~/mne_data/ds001971
 
 study_name = 'ds001971'
 task = 'AudioCueWalkingStudy'
-sessions = [None]
 reject = {'eeg': 350e-6}
-conditions = ['UncuedWalking', 'PreferredCadence', 'AdvanceTempo', 'DelayTempo']
+conditions = ['UncuedWalking', 'PreferredCadence', 'AdvanceTempo',
+              'DelayTempo']
 decoding_conditions = [['AdvanceTempo', 'DelayTempo']]
 use_ssp = False
 

@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
-from mne_bids import get_values_from_key, get_kinds
+from mne_bids.utils import get_values_from_key, get_kinds
 
 
 # Get the bids_root from an environment variable, raise an error if not found

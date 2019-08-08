@@ -81,6 +81,15 @@ jobs:
                export MNE_BIDS_STUDY_CONFIG=config_ds001810
                make sensor
 
+        - run:
+            name: test matchingpennies
+            command: |
+               export DATASET=eeg_matchingpennies
+               make fetch
+               export BIDS_ROOT=$DATA_DIR/eeg_matchingpennies
+               export MNE_BIDS_STUDY_CONFIG=config_matchingpennies
+               make sensor
+
 workflows:
   version: 2
 

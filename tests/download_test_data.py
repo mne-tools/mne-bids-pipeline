@@ -9,7 +9,7 @@ from mne.commands.utils import get_optparser
 DEFAULT_DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
 
 
-def _provide_testing_data(dataset):
+def _provide_testing_data(dataset=None):
     """Return dict of dataset, and the corresponding URLs."""
     urls_dict = {
         'eeg_matchingpennies': (
@@ -25,7 +25,7 @@ def _provide_testing_data(dataset):
         return {dataset: urls_dict[dataset]}
 
 
-def _provide_get_dict(dataset):
+def _provide_get_dict(dataset=None):
     """Return dict of dataset, and which data to get from it."""
     get_dict = {
         'eeg_matchingpennies': ['sub-05'],

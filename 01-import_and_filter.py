@@ -35,7 +35,7 @@ from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
 from mne_bids.config import BIDS_VERSION
-from mne_bids.tsv_handler import _write_json
+from mne_bids.utils import _write_json
 
 import config
 from tests.download_test_data import _provide_testing_data

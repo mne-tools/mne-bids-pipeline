@@ -9,6 +9,7 @@ Download the eeg_matchingpennies dataset from OSF: https://osf.io/cj2dr/
 """
 
 study_name = 'eeg_matchingpennies'
+subjects_list = ['05']
 task = 'matchingpennies'
 kind = 'eeg'
 plot = False

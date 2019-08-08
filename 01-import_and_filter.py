@@ -121,7 +121,7 @@ def run_filter(subject, run=None, session=None):
             'CodeURL': config.CODE_URL,
             }
         ds_json['SourceDatasets'] = {
-            'URL': _provide_testing_data.get(config.bids_root, 'n/a'),
+            'URL': _provide_testing_data().get(config.bids_root, 'n/a'),
             }
 
         fname = op.join(fpath_out, 'dataset_description.json')

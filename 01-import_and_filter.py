@@ -13,6 +13,17 @@ for more. The filtered data are saved to separate files to the subject's 'MEG'
 directory.
 
 If config.plot = True plots raw data and power spectral density.
+
+Notes
+-----
+This is the first step of the pipeline, so it will also write a
+`dataset_description.json` file to the root of the pipeline derivatives, which
+are stored in bids_root/derivatives/mne-study-template. The
+`dataset_description.json` file is formatted according to the WIP specification
+for common BIDS derivatives, see this PR:
+
+https://github.com/bids-standard/bids-specification/pull/265
+
 """  # noqa: E501
 
 import os
@@ -23,8 +34,11 @@ import itertools
 from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
+import mne_bids.__version__ as BIDS_VERSION
+from mne_bids.tsv_handler import _write_json
 
 import config
+from tests.download_test_data import _provide_testing_data
 
 
 def run_filter(subject, run=None, session=None):
@@ -91,12 +105,30 @@ def run_filter(subject, run=None, session=None):
 
         raw.resample(config.resample_sfreq, npad='auto')
 
-    # Prepare a name to save the data
-    fpath_out = op.join(config.bids_root, 'derivatives', subject_path)
+    # Prepare the pipeline directory in /derivatives
+    fpath_out = op.join(config.bids_root, 'derivatives',
+                        'mne-study-template', subject_path)
     if not op.exists(fpath_out):
         os.makedirs(fpath_out)
-    fname_out = op.join(fpath_out, bids_basename + '_filt_raw.fif')
 
+        # Write a dataset_description.json for the pipeline
+        ds_json = dict()
+        ds_json['Name'] = 'mne-study-template outputs'
+        ds_json['BIDSVersion'] = BIDS_VERSION
+        ds_json['PipelineDescription'] = {
+            'Name': 'mne-study-template',
+            'Version': config.VERSION,
+            'CodeURL': config.CODE_URL,
+            }
+        ds_json['SourceDatasets'] = {
+            'URL': _provide_testing_data.get(config.bids_root, 'n/a'),
+            }
+
+        fname = op.join(fpath_out, 'dataset_description.json')
+        _write_json(fname, ds_json, overwrite=True, verbose=True)
+
+    # Prepare a name to save the data
+    fname_out = op.join(fpath_out, bids_basename + '_filt_raw.fif')
     raw.save(fname_out, overwrite=True)
 
     if config.plot:

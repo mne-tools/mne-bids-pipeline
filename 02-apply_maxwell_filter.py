@@ -51,8 +51,8 @@ def run_maxwell_filter(subject, session=None):
                                            )
 
         # Prepare a name to save the data
-        raw_fname_in = op.join(config.bids_root, 'derivatives', subject_path)
-        fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+        fpath_deriv = op.join(config.bids_root, 'derivatives',
+                              'mne-study-template', subject_path)
         raw_fname_in = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
         raw_fname_out = op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
 

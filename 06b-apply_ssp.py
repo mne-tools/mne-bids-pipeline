@@ -41,7 +41,8 @@ def apply_ssp(subject, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          'mne-study-template', subject_path)
     fname_in = \
         op.join(fpath_deriv, bids_basename + '-epo.fif')
 

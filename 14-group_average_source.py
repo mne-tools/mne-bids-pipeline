@@ -25,7 +25,8 @@ def morph_stc(subject, session=None):
 
     subject_path = op.join(subject_path, config.kind)
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives', subject_path)
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          'mne-study-template', subject_path)
 
     mne.utils.set_config('SUBJECTS_DIR', config.subjects_dir)
     mne.datasets.fetch_fsaverage(subjects_dir=config.subjects_dir)
@@ -62,4 +63,5 @@ mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
     this_stc /= len(all_morphed_stcs)
     this_stc.save(op.join(config.bids_root, 'derivatives',
+                          'mne-study-template',
                           'average_dSPM-%s' % condition))

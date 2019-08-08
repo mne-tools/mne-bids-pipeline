@@ -34,7 +34,7 @@ import itertools
 from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
-import mne_bids.__version__ as BIDS_VERSION
+from mne_bids.config import BIDS_VERSION
 from mne_bids.tsv_handler import _write_json
 
 import config

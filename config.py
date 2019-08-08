@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
-from mne_bids.utils import get_values_from_key, get_kinds
+from mne_bids.utils import get_values_for_key, get_kinds
 
 
 # Get the bids_root from an environment variable, raise an error if not found
@@ -39,13 +39,13 @@ plot = False
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 
-sessions = get_values_from_key(bids_root, key='ses')
+sessions = get_values_for_key(bids_root, key='ses')
 sessions = sessions if sessions else [None]
 
 # XXX: take only first task for now
-task = get_values_from_key(bids_root, key='task')[0]
+task = get_values_for_key(bids_root, key='task')[0]
 
-runs = get_values_from_key(bids_root, key='run')
+runs = get_values_for_key(bids_root, key='run')
 runs = runs if runs else [None]
 
 acq = None
@@ -78,7 +78,7 @@ else:
 
 # subjects_list = ['05', '06', '07']
 
-subjects_list = get_values_from_key(bids_root, key='sub')
+subjects_list = get_values_for_key(bids_root, key='sub')
 
 # subjects_list = ['05']
 

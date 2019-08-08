@@ -15,6 +15,7 @@ def _provide_testing_data(dataset=None):
         'eeg_matchingpennies': (
             'https://github.com/sappelhoff/eeg_matchingpennies'),
         'somato': ('https://github.com/sappelhoff/MNE-somato-data'),
+        'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
@@ -33,6 +34,10 @@ def _provide_get_dict(dataset=None):
         'somato': ['sub-01',
                    'derivatives/freesurfer/subjects',
                    ],
+        'ds000246': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
+                     'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
+                     'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'
+                     ],
         'ds000248': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501

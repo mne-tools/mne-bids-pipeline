@@ -1,6 +1,7 @@
 """Download test data."""
 import os
 import os.path as op
+import tarfile
 
 import datalad.api as dl
 import mne
@@ -14,6 +15,7 @@ def _provide_testing_data(dataset=None):
     urls_dict = {
         'eeg_matchingpennies': (
             'https://github.com/sappelhoff/eeg_matchingpennies'),
+        'somato': ('https://github.com/sappelhoff/mne-somato-data'),
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
@@ -29,6 +31,12 @@ def _provide_get_dict(dataset=None):
     """Return dict of dataset, and which data to get from it."""
     get_dict = {
         'eeg_matchingpennies': ['sub-05'],
+        # XXX: Once https://github.com/templateflow/datalad-osf/issues/1 works
+        # again, the somato git-annex data should be overhauled to not contain
+        # compressed files (rather the full file tree)
+        'somato': ['sub-01',
+                   'derivatives/freesurfer.tar.gz',
+                   ],
         'ds000248': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
@@ -84,3 +92,10 @@ if __name__ == '__main__':
         for to_get in get_dict[dsname]:
             print('datalad get data "{}" for "{}"'.format(to_get, dsname))
             dataset.get(to_get, jobs=n_jobs)
+
+            # XXX: Hack to unpack somato data, until we can make a proper
+            # git-annex repo out of it
+            if to_get.endswith('.tar.gz'):
+                tar = tarfile.open(op.join(data_dir, dsname, to_get), "r:gz")
+                tar.extractall()
+                tar.close()

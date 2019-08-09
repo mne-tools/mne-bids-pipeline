@@ -106,8 +106,8 @@ def run_filter(subject, run=None, session=None):
         raw.resample(config.resample_sfreq, npad='auto')
 
     # Prepare the pipeline directory in /derivatives
-    fpath_out = op.join(config.bids_root, 'derivatives',
-                        'mne-study-template', subject_path)
+    deriv_path = op.join(config.bids_root, 'derivatives', 'mne-study-template')
+    fpath_out = op.join(deriv_path, subject_path)
     if not op.exists(fpath_out):
         os.makedirs(fpath_out)
 
@@ -121,10 +121,10 @@ def run_filter(subject, run=None, session=None):
             'CodeURL': config.CODE_URL,
             }
         ds_json['SourceDatasets'] = {
-            'URL': _provide_testing_data().get(config.bids_root, 'n/a'),
+            'URL': 'n/a',
             }
 
-        fname = op.join(fpath_out, 'dataset_description.json')
+        fname = op.join(deriv_path, 'dataset_description.json')
         _write_json(fname, ds_json, overwrite=True, verbose=True)
 
     # Prepare a name to save the data

@@ -90,6 +90,16 @@ jobs:
                export MNE_BIDS_STUDY_CONFIG=config_matchingpennies
                make sensor
 
+        - run:
+            name: test somato data
+            command: |
+               export DATASET=somato
+               make fetch
+               export BIDS_ROOT=$DATA_DIR/MNE-somato-data
+               export MNE_BIDS_STUDY_CONFIG=config_somato
+               make sensor
+               make source
+
 workflows:
   version: 2
 

@@ -67,7 +67,7 @@ for idx, evokeds in all_evokeds.items():
 
 
 extension = 'grand_average-ave'
-fname_out = op.join(config.bids_root, 'derivatives',
+fname_out = op.join(config.bids_root, 'derivatives', 'mne-study-template',
                     '{0}_{1}.fif'.format(config.study_name, extension))
 
 print("Saving grand averate: %s" % fname_out)

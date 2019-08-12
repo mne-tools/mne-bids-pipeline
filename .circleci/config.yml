@@ -29,7 +29,7 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
-              pip install numpy scipy matplotlib
+              pip install numpy scipy matplotlib nibabel
               pip install -U scikit-learn
               pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
@@ -89,6 +89,16 @@ jobs:
                export BIDS_ROOT=$DATA_DIR/eeg_matchingpennies
                export MNE_BIDS_STUDY_CONFIG=config_matchingpennies
                make sensor
+
+        - run:
+            name: test somato data
+            command: |
+               export DATASET=somato
+               make fetch
+               export BIDS_ROOT=$DATA_DIR/somato
+               export MNE_BIDS_STUDY_CONFIG=config_somato
+               make sensor
+               make source
 
 workflows:
   version: 2

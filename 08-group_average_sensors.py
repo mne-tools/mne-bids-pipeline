@@ -51,7 +51,7 @@ for subject in config.subjects_list:
         extension = '-epo'
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
 
     fname_in = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
@@ -67,7 +67,7 @@ for idx, evokeds in all_evokeds.items():
 
 
 extension = 'grand_average-ave'
-fname_out = op.join(config.bids_root, 'derivatives',
+fname_out = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
                     '{0}_{1}.fif'.format(config.study_name, extension))
 
 print("Saving grand averate: %s" % fname_out)

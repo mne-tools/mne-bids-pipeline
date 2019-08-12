@@ -57,7 +57,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                        )
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
     fname_in = \
         op.join(fpath_deriv, bids_basename + '-epo.fif')
 
@@ -87,7 +87,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     # let's save the scores now
     a_vs_b = '%s_vs_%s' % (condition1, condition2)
     a_vs_b = a_vs_b.replace(op.sep, '')
-    fname_td = op.join(config.bids_root, 'derivatives', 'mne-study-template',
+    fname_td = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
                        '%s_%s_%s_%s.mat' %
                        (subject, config.study_name, a_vs_b,
                         config.decoding_metric))

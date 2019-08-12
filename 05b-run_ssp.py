@@ -46,7 +46,7 @@ def run_ssp(subject, session=None):
 
     # Prepare a name to save the data
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
     if config.use_maxwell_filter:
         raw_fname_in = \
             op.join(fpath_deriv, bids_basename + '_sss_raw.fif')

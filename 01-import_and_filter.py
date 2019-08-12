@@ -18,9 +18,9 @@ Notes
 -----
 This is the first step of the pipeline, so it will also write a
 `dataset_description.json` file to the root of the pipeline derivatives, which
-are stored in bids_root/derivatives/mne-study-template. The
-`dataset_description.json` file is formatted according to the WIP specification
-for common BIDS derivatives, see this PR:
+are stored in bids_root/derivatives/PIPELINE_NAME. PIPELINE_NAME is defined in
+the config.py file. The `dataset_description.json` file is formatted according
+to the WIP specification for common BIDS derivatives, see this PR:
 
 https://github.com/bids-standard/bids-specification/pull/265
 
@@ -38,7 +38,6 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
-from tests.download_test_data import _provide_testing_data
 
 
 def run_filter(subject, run=None, session=None):
@@ -106,25 +105,25 @@ def run_filter(subject, run=None, session=None):
         raw.resample(config.resample_sfreq, npad='auto')
 
     # Prepare the pipeline directory in /derivatives
-    fpath_out = op.join(config.bids_root, 'derivatives',
-                        'mne-study-template', subject_path)
+    deriv_path = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME)
+    fpath_out = op.join(deriv_path, subject_path)
     if not op.exists(fpath_out):
         os.makedirs(fpath_out)
 
         # Write a dataset_description.json for the pipeline
         ds_json = dict()
-        ds_json['Name'] = 'mne-study-template outputs'
+        ds_json['Name'] = config.PIPELINE_NAME + ' outputs'
         ds_json['BIDSVersion'] = BIDS_VERSION
         ds_json['PipelineDescription'] = {
-            'Name': 'mne-study-template',
+            'Name': config.PIPELINE_NAME,
             'Version': config.VERSION,
             'CodeURL': config.CODE_URL,
             }
         ds_json['SourceDatasets'] = {
-            'URL': _provide_testing_data().get(config.bids_root, 'n/a'),
+            'URL': 'n/a',
             }
 
-        fname = op.join(fpath_out, 'dataset_description.json')
+        fname = op.join(deriv_path, 'dataset_description.json')
         _write_json(fname, ds_json, overwrite=True, verbose=True)
 
     # Prepare a name to save the data

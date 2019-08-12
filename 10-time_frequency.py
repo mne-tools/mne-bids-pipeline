@@ -52,7 +52,7 @@ def run_time_frequency(subject, session=None):
         extension = '-epo'
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
     fname_in = \
         op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
 

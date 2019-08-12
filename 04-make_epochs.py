@@ -52,8 +52,8 @@ def run_epochs(subject, session=None):
                                            space=config.space
                                            )
         # Prepare a name to save the data
-        fpath_deriv = op.join(config.bids_root, 'derivatives',  
-                              'mne-study-template', subject_path)
+        fpath_deriv = op.join(config.bids_root, 'derivatives',
+                              config.PIPELINE_NAME, subject_path)
         if config.use_maxwell_filter:
             raw_fname_in = \
                 op.join(fpath_deriv, bids_basename + '_sss_raw.fif')

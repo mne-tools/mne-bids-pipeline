@@ -95,7 +95,7 @@ jobs:
             command: |
                export DATASET=somato
                make fetch
-               export BIDS_ROOT=$DATA_DIR/MNE-somato-data
+               export BIDS_ROOT=$DATA_DIR/somato
                export MNE_BIDS_STUDY_CONFIG=config_somato
                make sensor
                make source

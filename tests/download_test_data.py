@@ -31,7 +31,7 @@ def _provide_get_dict(dataset=None):
     get_dict = {
         'eeg_matchingpennies': ['sub-05'],
         'somato': ['sub-01',
-                   'derivatives/freesurfer/subjects/01',
+                   'derivatives/freesurfer/subjects',
                    ],
         'ds000248': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501

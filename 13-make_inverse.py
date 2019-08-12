@@ -40,7 +40,7 @@ def run_inverse(subject, session=None):
                                        )
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
 

@@ -34,7 +34,7 @@ def run_ica(subject, session=None):
     subject_path = op.join(subject_path, config.kind)
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
 
     raw_list = list()
     print("  Loading raw data")

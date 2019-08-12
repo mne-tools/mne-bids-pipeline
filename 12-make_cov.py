@@ -44,7 +44,7 @@ def run_covariance(subject, session=None):
         extension = '-epo'
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          'mne-study-template', subject_path)
+                          config.PIPELINE_NAME, subject_path)
     fname_epo = \
         op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
 

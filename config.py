@@ -11,7 +11,8 @@ from collections import defaultdict
 import numpy as np
 from mne_bids.utils import get_values_for_key, get_kinds
 
-# The version of the pipeline and the URL where to obtain the code
+# Name, version, and hosting location of the pipeline
+PIPELINE_NAME = 'mne-study-template'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 

@@ -1,7 +1,6 @@
 """Download test data."""
 import os
 import os.path as op
-import tarfile
 
 import datalad.api as dl
 import mne
@@ -32,7 +31,7 @@ def _provide_get_dict(dataset=None):
     get_dict = {
         'eeg_matchingpennies': ['sub-05'],
         'somato': ['sub-01',
-                   'derivatives/freesurfer',
+                   'derivatives/freesurfer/subjects/01',
                    ],
         'ds000248': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
@@ -84,7 +83,8 @@ if __name__ == '__main__':
         dataset = dl.install(path=dspath, source=url)
 
         # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
-        n_jobs = 1
+        # if datalad fails, use "get" twice, or set `n_jobs=1`
+        n_jobs = 'auto'
         # get the first subject
         for to_get in get_dict[dsname]:
             print('datalad get data "{}" for "{}"'.format(to_get, dsname))

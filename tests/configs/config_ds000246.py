@@ -4,3 +4,4 @@ subjects_list = ['0001']
 reject = {'mag': 4e-12}
 conditions = ['standard', 'deviant', 'button']
 decoding_conditions = [('standard', 'deviant')]
+crop = (100, 200)

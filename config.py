@@ -39,7 +39,9 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 plot = True
 plot = False
 
-# specify as tuple (tmin, tmax) or as None
+# ``crop``: tuple or None
+# If tuple, (tmin, tmax) to crop the raw data
+# If None (default), do not crop.
 crop = None
 
 # BIDS params

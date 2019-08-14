@@ -86,6 +86,10 @@ def run_filter(subject, run=None, session=None):
     # - sets raw.annotations using the BIDS events.tsv
     _, bids_fname = op.split(bids_fpath)
     raw = read_raw_bids(bids_fname, config.bids_root)
+
+    if config.crop is not None:
+        raw.crop(*config.crop)
+
     raw.load_data()
 
     # Band-pass the data channels (MEG and EEG)

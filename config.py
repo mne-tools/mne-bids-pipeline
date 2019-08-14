@@ -39,6 +39,8 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 plot = True
 plot = False
 
+# specify as tuple (tmin, tmax) or as None
+crop = None
 
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html

@@ -65,9 +65,29 @@ jobs:
 
         # Run tests
         - run:
-            name: run test suite
+            name: test ds000246
             command: |
-               python tests/run_tests.py
+               python tests/run_tests.py ds000246
+
+        - run:
+            name: test ds000248
+            command: |
+               python tests/run_tests.py ds000248
+
+        - run:
+            name: test ds001810
+            command: |
+               python tests/run_tests.py ds001810
+
+        - run:
+            name: test eeg_matchingpennies
+            command: |
+               python tests/run_tests.py eeg_matchingpennies
+
+        - run:
+            name: test somato
+            command: |
+               python tests/run_tests.py somato
 
 workflows:
   version: 2

@@ -52,6 +52,22 @@ def _provide_get_dict(dataset=None):
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv',  # noqa: E501
+
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_events.tsv',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_eeg.set',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_eeg.fdt',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_eeg.json',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-01_channels.tsv',  # noqa: E501
+
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_events.tsv',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_eeg.set',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_eeg.fdt',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_eeg.json',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_electrodes.tsv',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_coordsystem.json',  # noqa: E501
+                     'sub-002/eeg/sub-002_task-AudioCueWalkingStudy_run-02_channels.tsv',  # noqa: E501                     ],
                      ],
     }
     if dataset is None:

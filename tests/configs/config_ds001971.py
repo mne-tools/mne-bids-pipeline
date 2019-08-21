@@ -20,5 +20,5 @@ conditions = ['UncuedWalking', 'PreferredCadence', 'AdvanceTempo',
 decoding_conditions = [['AdvanceTempo', 'DelayTempo']]
 use_ssp = False
 
-subjects_list = ['001']
-runs = ['01']
+subjects_list = ['001', '002']
+runs = ['01', '02']

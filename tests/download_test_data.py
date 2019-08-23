@@ -60,16 +60,8 @@ def _provide_get_dict(dataset=None):
         return {dataset: get_dict[dataset]}
 
 
-# Download the testing data
-if __name__ == '__main__':
-
-    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
-    parser.add_option('-d', '--dataset', dest='dataset',
-                      help='Name of the dataset', metavar='INPUT',
-                      default=None)
-    opt, args = parser.parse_args()
-    dataset = opt.dataset if opt.dataset != '' else None
-
+def main(dataset):
+    """Download the testing data."""
     # Save everything 'MNE_DATA' dir ... defaults to ~/mne_data
     data_dir = mne.get_config(key='MNE_DATA', default=False)
     if not data_dir:
@@ -94,3 +86,14 @@ if __name__ == '__main__':
         for to_get in get_dict[dsname]:
             print('datalad get data "{}" for "{}"'.format(to_get, dsname))
             dataset.get(to_get, jobs=n_jobs)
+
+
+if __name__ == '__main__':
+    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
+    parser.add_option('-d', '--dataset', dest='dataset',
+                      help='Name of the dataset', metavar='INPUT',
+                      default=None)
+    opt, args = parser.parse_args()
+    dataset = opt.dataset if opt.dataset != '' else None
+
+    main(dataset)

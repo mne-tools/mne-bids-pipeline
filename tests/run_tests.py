@@ -13,47 +13,47 @@ def fetch(dataset):
 
 def sensor():
     """Run sensor pipeline."""
-    mod = importlib.import_module('../01-import_and_filter.py')
+    mod = importlib.import_module('..01-import_and_filter.py', __name__)
     mod.main()
-    mod = importlib.import_module('../02-apply_maxwell_filter.py')
+    mod = importlib.import_module('..02-apply_maxwell_filter.py', __name__)
     mod.main()
-    mod = importlib.import_module('../03-extract_events.py')
+    mod = importlib.import_module('..03-extract_events.py', __name__)
     mod.main()
-    mod = importlib.import_module('../04-make_epochs.py')
+    mod = importlib.import_module('..04-make_epochs.py', __name__)
     mod.main()
-    mod = importlib.import_module('../05a-run_ica.py')
+    mod = importlib.import_module('..05a-run_ica.py', __name__)
     mod.main()
-    mod = importlib.import_module('../05b-run_ssp.py')
+    mod = importlib.import_module('..05b-run_ssp.py', __name__)
     mod.main()
-    mod = importlib.import_module('../06a-apply_ica.py')
+    mod = importlib.import_module('..06a-apply_ica.py', __name__)
     mod.main()
-    mod = importlib.import_module('../06b-apply_ssp.py')
+    mod = importlib.import_module('..06b-apply_ssp.py', __name__)
     mod.main()
-    mod = importlib.import_module('../07-make_evoked.py')
+    mod = importlib.import_module('..07-make_evoked.py', __name__)
     mod.main()
-    mod = importlib.import_module('../08-group_average_sensors.py')
+    mod = importlib.import_module('..08-group_average_sensors.py', __name__)
     mod.main()
-    mod = importlib.import_module('../09-sliding_estimator.py')
+    mod = importlib.import_module('..09-sliding_estimator.py', __name__)
     mod.main()
-    mod = importlib.import_module('../10-time_frequency.py')
+    mod = importlib.import_module('..10-time_frequency.py', __name__)
     mod.main()
 
 
 def source():
     """Run source pipeline."""
-    mod = importlib.import_module('../11-make_forward.py')
+    mod = importlib.import_module('..11-make_forward.py', __name__)
     mod.main()
-    mod = importlib.import_module('../12-make_cov.py')
+    mod = importlib.import_module('..12-make_cov.py', __name__)
     mod.main()
-    mod = importlib.import_module('../13-make_inverse.py')
+    mod = importlib.import_module('..13-make_inverse.py', __name__)
     mod.main()
-    mod = importlib.import_module('../14-group_average_source.py')
+    mod = importlib.import_module('..14-group_average_source.py', __name__)
     mod.main()
 
 
 def report():
     """Run report pipeline."""
-    mod = importlib.import_module('../99-make_reports')
+    mod = importlib.import_module('..99-make_reports', __name__)
     mod.main()
 
 

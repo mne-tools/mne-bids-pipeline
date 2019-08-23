@@ -1,8 +1,12 @@
 """Download test data and run a test suite."""
+import sys
 import os
 import os.path as op
 import argparse
 import importlib
+
+# Add the pipelines dir to the PATH
+sys.path.append(op.join(op.dirname(__file__), '..'))
 
 
 def fetch(dataset):
@@ -13,47 +17,47 @@ def fetch(dataset):
 
 def sensor():
     """Run sensor pipeline."""
-    mod = importlib.import_module('..01-import_and_filter.py', __name__)
+    mod = importlib.import_module('01-import_and_filter.py')
     mod.main()
-    mod = importlib.import_module('..02-apply_maxwell_filter.py', __name__)
+    mod = importlib.import_module('02-apply_maxwell_filter.py')
     mod.main()
-    mod = importlib.import_module('..03-extract_events.py', __name__)
+    mod = importlib.import_module('03-extract_events.py')
     mod.main()
-    mod = importlib.import_module('..04-make_epochs.py', __name__)
+    mod = importlib.import_module('04-make_epochs.py')
     mod.main()
-    mod = importlib.import_module('..05a-run_ica.py', __name__)
+    mod = importlib.import_module('05a-run_ica.py')
     mod.main()
-    mod = importlib.import_module('..05b-run_ssp.py', __name__)
+    mod = importlib.import_module('05b-run_ssp.py')
     mod.main()
-    mod = importlib.import_module('..06a-apply_ica.py', __name__)
+    mod = importlib.import_module('06a-apply_ica.py')
     mod.main()
-    mod = importlib.import_module('..06b-apply_ssp.py', __name__)
+    mod = importlib.import_module('06b-apply_ssp.py')
     mod.main()
-    mod = importlib.import_module('..07-make_evoked.py', __name__)
+    mod = importlib.import_module('07-make_evoked.py')
     mod.main()
-    mod = importlib.import_module('..08-group_average_sensors.py', __name__)
+    mod = importlib.import_module('08-group_average_sensors.py')
     mod.main()
-    mod = importlib.import_module('..09-sliding_estimator.py', __name__)
+    mod = importlib.import_module('09-sliding_estimator.py')
     mod.main()
-    mod = importlib.import_module('..10-time_frequency.py', __name__)
+    mod = importlib.import_module('10-time_frequency.py')
     mod.main()
 
 
 def source():
     """Run source pipeline."""
-    mod = importlib.import_module('..11-make_forward.py', __name__)
+    mod = importlib.import_module('11-make_forward.py')
     mod.main()
-    mod = importlib.import_module('..12-make_cov.py', __name__)
+    mod = importlib.import_module('12-make_cov.py')
     mod.main()
-    mod = importlib.import_module('..13-make_inverse.py', __name__)
+    mod = importlib.import_module('13-make_inverse.py')
     mod.main()
-    mod = importlib.import_module('..14-group_average_source.py', __name__)
+    mod = importlib.import_module('14-group_average_source.py')
     mod.main()
 
 
 def report():
     """Run report pipeline."""
-    mod = importlib.import_module('..99-make_reports', __name__)
+    mod = importlib.import_module('99-make_reports')
     mod.main()
 
 
@@ -93,7 +97,7 @@ def run_tests(test_suite):
         # Fetch the data
         fetch(dataset)
 
-        # run GNU Make
+        # run the pipelines
         for pipeline in test_tuple[1::]:
             pipeline()
 

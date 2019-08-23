@@ -62,6 +62,12 @@ def run_covariance(subject, session=None):
     cov.save(fname_cov)
 
 
-parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Run cov."""
+    parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    main()

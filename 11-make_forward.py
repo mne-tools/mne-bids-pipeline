@@ -106,6 +106,12 @@ def run_forward(subject, session=None):
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
 
 
-parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Run forward."""
+    parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    main()

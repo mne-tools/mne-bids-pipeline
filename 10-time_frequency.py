@@ -77,6 +77,13 @@ def run_time_frequency(subject, session=None):
         itc.save(itc_fname_out, overwrite=True)
 
 
-parallel, run_func, _ = parallel_func(run_time_frequency, n_jobs=config.N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Run tf."""
+    parallel, run_func, _ = parallel_func(run_time_frequency,
+                                          n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    main()

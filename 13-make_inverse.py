@@ -73,6 +73,12 @@ def run_inverse(subject, session=None):
                             condition.replace(op.sep, ''))))
 
 
-parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Run inv."""
+    parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    main()

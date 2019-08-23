@@ -94,9 +94,15 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 
-# Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-# so we don't dispatch manually to multiple jobs.
-for subject in config.subjects_list:
-    for session in config.sessions:
-        for conditions in config.decoding_conditions:
-            run_time_decoding(subject, *conditions, session=session)
+def main():
+    """Run sliding estimator."""
+    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
+    # so we don't dispatch manually to multiple jobs.
+    for subject in config.subjects_list:
+        for session in config.sessions:
+            for conditions in config.decoding_conditions:
+                run_time_decoding(subject, *conditions, session=session)
+
+
+if __name__ == '__main__':
+    main()

@@ -24,6 +24,7 @@ import config
 
 
 def run_events(subject, run=None, session=None):
+    """Extract events and save as fif."""
     print("Processing subject: %s" % subject)
 
     # Construct the search path for the data file. `sub` is mandatory
@@ -77,6 +78,13 @@ def run_events(subject, run=None, session=None):
         plt.show()
 
 
-parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
-parallel(run_func(subject, run, session) for subject, run, session in
-         itertools.product(config.subjects_list, config.runs, config.sessions))
+def main():
+    """Run events."""
+    parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, run, session) for subject, run, session in
+             itertools.product(config.subjects_list, config.runs,
+                               config.sessions))
+
+
+if __name__ == '__main__':
+    main()

@@ -143,6 +143,13 @@ def run_filter(subject, run=None, session=None):
                      fmin=0., fmax=50., average=True)
 
 
-parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
-parallel(run_func(subject, run, session) for subject, run, session in
-         itertools.product(config.subjects_list, config.runs, config.sessions))
+def main():
+    """Run filter."""
+    parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, run, session) for subject, run, session in
+             itertools.product(config.subjects_list, config.runs,
+                               config.sessions))
+
+
+if __name__ == '__main__':
+    main()

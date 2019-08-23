@@ -50,18 +50,24 @@ def morph_stc(subject, session=None):
     return morphed_stcs
 
 
-parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
-all_morphed_stcs = parallel(run_func(subject, session)
-                            for subject, session in
-                            itertools.product(config.subjects_list,
-                                              config.sessions))
-all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
-                    zip(all_morphed_stcs, config.subjects_list)
-                    if subject not in config.exclude_subjects]
-mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
+def main():
+    """Run grp ave."""
+    parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
+    all_morphed_stcs = parallel(run_func(subject, session)
+                                for subject, session in
+                                itertools.product(config.subjects_list,
+                                                  config.sessions))
+    all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
+                        zip(all_morphed_stcs, config.subjects_list)
+                        if subject not in config.exclude_subjects]
+    mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
-for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
-    this_stc /= len(all_morphed_stcs)
-    this_stc.save(op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME,
-                          'average_dSPM-%s' % condition))
+    for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
+        this_stc /= len(all_morphed_stcs)
+        this_stc.save(op.join(config.bids_root, 'derivatives',
+                              config.PIPELINE_NAME,
+                              'average_dSPM-%s' % condition))
+
+
+if __name__ == '__main__':
+    main()

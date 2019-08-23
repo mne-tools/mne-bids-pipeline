@@ -89,33 +89,41 @@ def run_report(subject, session=None):
              open_browser=False, overwrite=True)
 
 
-parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Make reports."""
+    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
 
-# Group report
-evoked_fname = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                       '%s_grand_average-ave.fif' % config.study_name)
-rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                 subjects_dir=config.subjects_dir)
-evokeds = mne.read_evokeds(evoked_fname)
+    # Group report
+    evoked_fname = op.join(config.bids_root, 'derivatives',
+                           config.PIPELINE_NAME,
+                           '%s_grand_average-ave.fif' % config.study_name)
+    rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
+                     subjects_dir=config.subjects_dir)
+    evokeds = mne.read_evokeds(evoked_fname)
 
-for evoked, condition in zip(evokeds, config.conditions):
-    rep.add_figs_to_section(evoked.plot(spatial_colors=True, gfp=True,
-                                        show=False),
-                            'Average %s' % condition)
+    for evoked, condition in zip(evokeds, config.conditions):
+        rep.add_figs_to_section(evoked.plot(spatial_colors=True, gfp=True,
+                                            show=False),
+                                'Average %s' % condition)
 
-    stc_fname = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                        'average_dSPM-%s' % condition)
-    if op.exists(stc_fname + "-lh.stc"):
-        stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
-        brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
-                         subjects_dir=config.subjects_dir)
-        brain.set_data_time_index(165)
+        stc_fname = op.join(config.bids_root, 'derivatives',
+                            config.PIPELINE_NAME,
+                            'average_dSPM-%s' % condition)
+        if op.exists(stc_fname + "-lh.stc"):
+            stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
+            brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
+                             subjects_dir=config.subjects_dir)
+            brain.set_data_time_index(165)
 
-        fig = mlab.gcf()
-        rep.add_figs_to_section(fig, 'Average %s' % condition)
+            fig = mlab.gcf()
+            rep.add_figs_to_section(fig, 'Average %s' % condition)
 
-rep.save(fname=op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                       'report_average.html'),
-         open_browser=False, overwrite=True)
+    rep.save(fname=op.join(config.bids_root, 'derivatives',
+                           config.PIPELINE_NAME, 'report_average.html'),
+             open_browser=False, overwrite=True)
+
+
+if __name__ == '__main__':
+    main()

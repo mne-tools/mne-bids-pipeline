@@ -25,8 +25,8 @@ N_JOBS = max(config.N_JOBS // 4, 1)
 
 
 ###############################################################################
-# Now we define a function to extract epochs for one subject
 def run_epochs(subject, session=None):
+    """Extract epochs for one subject."""
     print("Processing subject: %s" % subject)
 
     raw_list = list()
@@ -121,7 +121,13 @@ def run_epochs(subject, session=None):
                           cmap="YlGnBu_r")
 
 
-# Here we use fewer N_JOBS to prevent potential memory problems
-parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
-parallel(run_func(subject, session) for subject, session in
-         itertools.product(config.subjects_list, config.sessions))
+def main():
+    """Run epochs."""
+    # Here we use fewer N_JOBS to prevent potential memory problems
+    parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    main()

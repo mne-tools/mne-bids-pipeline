@@ -222,7 +222,14 @@ def apply_ica(subject, run, session):
                               cmap="YlGnBu_r", show=config.plot)
 
 
-if config.use_ica:
+def main():
+    """Apply ICA."""
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.runs, config.sessions))
+             itertools.product(config.subjects_list, config.runs,
+                               config.sessions))
+
+
+if __name__ == '__main__':
+    if config.use_ica:
+        main()

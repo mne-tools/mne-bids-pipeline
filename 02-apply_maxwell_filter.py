@@ -83,8 +83,14 @@ def run_maxwell_filter(subject, session=None):
             raw_sss.plot(n_channels=50, butterfly=True)
 
 
-if config.use_maxwell_filter:
-    parallel, run_func, _ = \
-        parallel_func(run_maxwell_filter, n_jobs=config.N_JOBS)
+def main():
+    """Run maxwell_filter."""
+    parallel, run_func, _ = parallel_func(run_maxwell_filter,
+                                          n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    if config.use_maxwell_filter:
+        main()

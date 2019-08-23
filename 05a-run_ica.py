@@ -23,6 +23,7 @@ import config
 
 
 def run_ica(subject, session=None):
+    """Run ICA."""
     print("Processing subject: %s" % subject)
 
     # Construct the search path for the data file. `sub` is mandatory
@@ -160,7 +161,13 @@ def run_ica(subject, session=None):
             report.save(report_fname, overwrite=True, open_browser=False)
 
 
-if config.use_ica:
+def main():
+    """Run ICA."""
     parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    if config.use_ica:
+        main()

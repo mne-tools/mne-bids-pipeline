@@ -66,7 +66,13 @@ def apply_ssp(subject, session=None):
     epochs.save(fname_out, overwrite=True)
 
 
-if config.use_ssp:
+def main():
+    """Apply ssp."""
     parallel, run_func, _ = parallel_func(apply_ssp, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.subjects_list, config.sessions))
+
+
+if __name__ == '__main__':
+    if config.use_ssp:
+        main()

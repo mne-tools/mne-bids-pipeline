@@ -74,7 +74,8 @@ print("Saving grand averate: %s" % fname_out)
 mne.evoked.write_evokeds(fname_out, list(all_evokeds.values()))
 
 
-if config.plot:
+def main():
+    """Plot evokeds."""
     for evoked in enumerate(all_evokeds):
         evoked.plot()
 
@@ -83,4 +84,9 @@ if config.plot:
 
     # for idx, evokeds in enumerate(all_evokeds):
     #     all_evokeds[idx].plot_joint(title=config.conditions[idx],
-    #                                 ts_args=ts_args, topomap_args=topomap_args)
+    #                                 ts_args=ts_args, topomap_args=topomap_args)  # noqa: E501
+
+
+if __name__ == '__main__':
+    if config.plot:
+        main()

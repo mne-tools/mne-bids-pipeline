@@ -85,6 +85,8 @@ def run_maxwell_filter(subject, session=None):
 
 def main():
     """Run maxwell_filter."""
+    if not config.use_maxwell_filter:
+        return
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                           n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
@@ -92,5 +94,4 @@ def main():
 
 
 if __name__ == '__main__':
-    if config.use_maxwell_filter:
-        main()
+    main()

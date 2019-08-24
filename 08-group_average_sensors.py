@@ -76,6 +76,8 @@ mne.evoked.write_evokeds(fname_out, list(all_evokeds.values()))
 
 def main():
     """Plot evokeds."""
+    if not config.plot:
+        return
     for evoked in enumerate(all_evokeds):
         evoked.plot()
 
@@ -88,5 +90,4 @@ def main():
 
 
 if __name__ == '__main__':
-    if config.plot:
-        main()
+    main()

@@ -104,26 +104,32 @@ def run_tests(test_suite):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('dataset', help=('dataset to test. A key in the '
-                                         'TEST_SUITE dictionary. or ALL, '
-                                         'to test all datasets.'))
-    args = parser.parse_args()
+    # Check if we have a DATASET env var, else: inquire for one
+    dataset = os.environ.get('DATASET')
+    if dataset is None:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('dataset', help=('dataset to test. A key in the '
+                                             'TEST_SUITE dictionary. or ALL, '
+                                             'to test all datasets.'))
+        args = parser.parse_args()
+        dataset = args.dataset
 
-    if args.dataset == 'ALL':
+    # Triage the dataset and raise informative error if it does not exist
+    if dataset == 'ALL':
         test_suite = TEST_SUITE
     else:
-        test_suite = {args.dataset: TEST_SUITE.get(args.dataset, 'n/a')}
+        test_suite = {dataset: TEST_SUITE.get(dataset, 'n/a')}
 
     if 'n/a' in test_suite.values():
-        parser.print_help()
+        if os.environ.get('DATASET') is None:
+            parser.print_help()
         print('\n\n')
         raise KeyError('"{}" is not a valid dataset key in the TEST_SUITE '
                        'dictionary in the run_tests.py module. Use one of {}.'
                        .format(args.dataset, ', '.join(TEST_SUITE.keys())))
-    else:
-        # Run the tests
-        print('Running the following tests:\n')
-        for dataset, test_tuple in test_suite.items():
-            print(dataset, test_tuple)
-        run_tests(test_suite)
+
+    # Run the tests
+    print('Running the following tests: {}'
+          .format(', '.join(test_suite.keys())))
+
+    run_tests(test_suite)

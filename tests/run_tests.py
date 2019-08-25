@@ -119,8 +119,8 @@ if __name__ == '__main__':
         parser.print_help()
         print('\n\n')
         raise KeyError('"{}" is not a valid dataset key in the TEST_SUITE '
-                       'dictionary in the run_tests.py module.'
-                       .format(args.dataset))
+                       'dictionary in the run_tests.py module. Use one of {}.'
+                       .format(args.dataset, ', '.join(TEST_SUITE.keys())))
     else:
         # Run the tests
         print('Running the following tests:\n')

@@ -9,7 +9,7 @@ import importlib
 sys.path.append(op.join(op.dirname(__file__), '..'))
 
 
-def fetch(dataset):
+def fetch(dataset=None):
     """Fetch the data."""
     from download_test_data import main
     main(dataset)

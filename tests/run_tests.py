@@ -68,7 +68,7 @@ TEST_SUITE = {
     'ds000246': ('config_ds000246', sensor),
     'ds000248': ('config_ds000248', sensor),
     'ds001810': ('config_ds001810', sensor),
-    'eeg_matchingpennies': ('config_matchingpennies', sensor),
+    'eeg_matchingpennies': ('config_eeg_matchingpennies', sensor),
     'somato': ('config_somato', sensor, source),
 }
 

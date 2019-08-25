@@ -650,7 +650,7 @@ allow_maxshield = True
 # For testing a specific dataset, make a `config_<dataset_name>.py` file in
 # `/tests/configs` and set an environment variable `MNE_BIDS_STUDY_CONFIG` to
 # point to the config name (not including /tests/config, and not including .py)
-# For example `export MNE_BIDS_STUDY_CONFIG=config_matchingpennies`
+# For example `export MNE_BIDS_STUDY_CONFIG=config_eeg_matchingpennies`
 
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_name = os.environ['MNE_BIDS_STUDY_CONFIG']

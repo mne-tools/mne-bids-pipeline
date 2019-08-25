@@ -1,7 +1,7 @@
 """Configuration file for the eeg_matchingpennies dataset.
 
 Set the `MNE_BIDS_STUDY_CONFIG` environment variable to
-"config_matchingpennies" to overwrite `config.py` with the values specified
+"config_eeg_matchingpennies" to overwrite `config.py` with the values specified
 below.
 
 Download the eeg_matchingpennies dataset from OSF: https://osf.io/cj2dr/

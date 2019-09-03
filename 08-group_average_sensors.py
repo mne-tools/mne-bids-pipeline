@@ -63,7 +63,7 @@ for subject in config.subjects_list:
         all_evokeds[idx].append(evoked)  # Insert to the container
 
 for idx, evokeds in all_evokeds.items():
-    all_evokeds[idx] = mne.combine_evoked(evokeds, 'equal')  # Combine subjects
+    all_evokeds[idx] = mne.grand_average(evokeds)  # Combine subjects
 
 
 extension = 'grand_average-ave'

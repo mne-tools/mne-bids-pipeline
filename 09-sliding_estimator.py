@@ -3,7 +3,7 @@
 Sliding estimator
 =================
 
-A sliding estimator fits a logistic legression model for every time point.
+A sliding estimator fits a logistic regression model for every time point.
 In this example, we contrast the condition 'famous' against 'scrambled'
 using this approach. The end result is an averaging effect across sensors.
 The contrast across different sensors are combined into a single plot.

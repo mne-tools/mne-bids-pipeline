@@ -85,7 +85,8 @@ def run_filter(subject, run=None, session=None):
     # - sets channels types according to BIDS channels.tsv `type` column
     # - sets raw.annotations using the BIDS events.tsv
     _, bids_fname = op.split(bids_fpath)
-    raw = read_raw_bids(bids_fname, config.bids_root)
+    raw = read_raw_bids(bids_fname, config.bids_root, 
+                        allow_maxshield=config.allow_maxshield)
 
     if config.crop is not None:
         raw.crop(*config.crop)

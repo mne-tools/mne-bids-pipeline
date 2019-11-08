@@ -59,7 +59,7 @@ def run_events(subject, run=None, session=None):
 
     raw = mne.io.read_raw_fif(raw_fname_in)
     events, event_id = mne.events_from_annotations(raw)
-
+    
     if config.trigger_time_shift:
         events = mne.event.shift_time_events(events,
                                              np.unique(events[:, 2]),

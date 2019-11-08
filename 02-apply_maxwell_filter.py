@@ -26,7 +26,6 @@ from mne_bids import make_bids_basename
 
 import config
 
-
 def run_maxwell_filter(subject, session=None):
     print("Processing subject: %s" % subject)
 

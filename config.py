@@ -101,9 +101,12 @@ subjects_list = get_entity_vals(bids_root, entity_key='sub')
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = ['emptyroom','04','05','06', '07', '08', '09', '10', '11','12']
-subjects_list = list(set(subjects_list) - set(exclude_subjects))
+exclude_subjects = ['emptyroom','SB01','SB06'] # 'SB01','SB03','SB04','SB05','SB06', 'SB07', 'SB08', 'SB09', 'SB10', 'SB11','SB12'
+# SB06: Maxfilter error: projections cannot be applied
+# SB01: Events are not correct
 
+subjects_list = list(set(subjects_list) - set(exclude_subjects))
+subjects_list.sort()
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
@@ -343,7 +346,9 @@ decim = 1
 # Have a look at your raw data and train yourself to detect a blink, a heart
 # beat and an eye movement.
 # You can do a quick average of blink data and check what the amplitude looks
-# like.
+# like. Make sure to check that the number of epochs rejected, to low rejection
+# thresholds can lead to unnessecary loss of data that could be saved by subsequently 
+# applied corrections (ssp/ ica).
 #
 #  ``reject`` : dict | None
 #    The rejection limits to make some epochs as bads.
@@ -630,7 +635,7 @@ h_trans_bandwidth = 'auto'
 #  ``N_JOBS`` : int
 #    An integer that specifies how many subjects you want to run in parallel.
 
-N_JOBS = 1
+N_JOBS = 4
 
 # ``random_state`` : None | int | np.random.RandomState
 #    To specify the random generator state. This allows to have

@@ -39,7 +39,7 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
 plot = True
-plot = False
+# plot = False
 
 # ``crop``: tuple or None
 # If tuple, (tmin, tmax) to crop the raw data

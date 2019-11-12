@@ -176,7 +176,7 @@ def apply_ica(subject, run, session):
                                            tmax=0.5)
 
             eog_average = eog_epochs.average()
-            eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)
+            eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=config.ica_ctps_eog_threshold)
             del eog_epochs
 
             params = dict(exclude=eog_inds, show=config.plot)

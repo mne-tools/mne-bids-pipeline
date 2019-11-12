@@ -28,7 +28,7 @@ import re
 import config
 
 bids_root = '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/BIDS/'
-subjects_dir = '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MRI/'
+subjects_dir = '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MRI/derivatives/fsreconall/'
 trans_dir =  '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MEG/trans/'
 
 base_path = '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MEG/'
@@ -38,6 +38,7 @@ subjects = ['SB01', 'SB02','SB03','SB04','SB05','SB06','SB07','SB08','SB09','SB1
 tasks = ['Localizer','empty'] # ,'empty'
 
 do_anonymize = True
+plot = True
 
 for ss, subject in enumerate(subjects):
     t1w = subjects_dir + "/%s/mri/T1.mgz" % subject
@@ -96,8 +97,54 @@ for ss, subject in enumerate(subjects):
                            event_id = config.event_id,
                            overwrite=True)
         
-#        if task != 'empty':               
-#            # Take care of anatomy
-#            write_anat(bids_root, subject, t1w, acquisition="t1w",
-#                       trans=trans, raw=raw, overwrite=True)        
+        if task != 'empty':               
+            # Take care of anatomy
+            anat_dir = write_anat(bids_root, subject, t1w, acquisition="t1w",
+                       trans=trans, raw=raw, overwrite=True)        
+            
+            
+            #%% plot to check landmarks
+            if plot :
+               
+                import numpy as np
+                import matplotlib.pyplot as plt
+    
+                from nilearn.plotting import plot_anat
+                from mne.source_space import head_to_mri
+                from mne_bids import get_head_mri_trans
+    
+                # Get Landmarks from MEG file, 0, 1, and 2 correspond to LPA, NAS, RPA
+                # and the 'r' key will provide us with the xyz coordinates
+                pos = np.asarray((raw.info['dig'][0]['r'],
+                                  raw.info['dig'][1]['r'],
+                                  raw.info['dig'][2]['r']))
+                
+                bids_fname = bids_basename + '_meg.fif'
+                estim_trans = get_head_mri_trans(bids_fname=bids_fname,  # name of the MEG file
+                                     bids_root=bids_root  # root of our BIDS dir
+                                     )
+    
+    
+                
+                # We use a function from MNE-Python to convert MEG coordinates to MRI space
+                # for the conversion we use our estimated transformation matrix and the
+                # MEG coordinates extracted from the raw file. `subjects` and `subjects_dir`
+                # are used internally, to point to the T1-weighted MRI file: `t1_mgh_fname`
+                mri_pos = head_to_mri(pos=pos,
+                                      subject=subject,
+                                      mri_head_t=estim_trans,
+                                      subjects_dir=subjects_dir
+                                      )
+                
+                # Our MRI written to BIDS, we got `anat_dir` from our `write_anat` function
+                t1_nii_fname = op.join(anat_dir, 'sub-' + subject + '_acq-t1w_T1w.nii.gz')
+                # sub-SB01_acq-t1w_T1w
+                
+                # Plot it
+                fig, axs = plt.subplots(3, 1)
+                for point_idx, label in enumerate(('LPA', 'NAS', 'RPA')):
+                    plot_anat(t1_nii_fname, axes=axs[point_idx],
+                              cut_coords=mri_pos[point_idx, :],
+                              title=label)
+                plt.show()
 

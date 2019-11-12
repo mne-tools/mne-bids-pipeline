@@ -68,11 +68,11 @@ def run_inverse(subject, session=None):
     for condition, evoked in zip(config.conditions, evokeds):
         stc = apply_inverse(evoked, inverse_operator, lambda2, "dSPM",
                             pick_ori=None)
-        stc.save(op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
-                         % (config.study_name, subject,
+        stc.save(op.join(fpath_deriv, '%s_mne_dSPM_inverse-%s'
+                         % (bids_basename,
                             condition.replace(op.sep, ''))))
-
-
+       
+        
 def main():
     """Run inv."""
     parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)

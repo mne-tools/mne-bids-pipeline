@@ -33,7 +33,7 @@ trans_dir =  '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MEG/
 
 base_path = '/neurospin/meg/meg_tmp/Dynacomp_Ciuciu_2011/2019_MEG_Pipeline/MEG/'
 subjects = ['SB01', 'SB02','SB03','SB04','SB05','SB06','SB07','SB08','SB09','SB10','SB11','SB12']
-# subjects = ['SB02']
+
 
 tasks = ['Localizer','empty'] # ,'empty'
 

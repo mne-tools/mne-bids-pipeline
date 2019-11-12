@@ -68,7 +68,7 @@ for idx, evokeds in all_evokeds.items():
 
 extension = 'grand_average-ave'
 fname_out = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                    '{0}_{1}.fif'.format(config.study_name, extension))
+                    '{0}_{1}.fif'.format(config.task, extension))
 
 print("Saving grand averate: %s" % fname_out)
 mne.evoked.write_evokeds(fname_out, list(all_evokeds.values()))
@@ -78,16 +78,13 @@ def main():
     """Plot evokeds."""
     if not config.plot:
         return
-    for evoked in enumerate(all_evokeds):
-        evoked.plot()
-
-    # ts_args = dict(gfp=True, time_unit='s')
-    # topomap_args = dict(time_unit='s')
-
-    # for idx, evokeds in enumerate(all_evokeds):
-    #     all_evokeds[idx].plot_joint(title=config.conditions[idx],
-    #                                 ts_args=ts_args, topomap_args=topomap_args)  # noqa: E501
-
-
+    
+    ts_args = dict(gfp=True, time_unit='s')
+    topomap_args = dict(time_unit='s')
+    
+    for idx, evokeds in enumerate(all_evokeds):
+        all_evokeds[idx].plot_joint(title=config.conditions[idx],
+                                    ts_args=ts_args, topomap_args=topomap_args)  # noqa: E501
+   
 if __name__ == '__main__':
     main()

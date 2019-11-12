@@ -101,9 +101,10 @@ subjects_list = get_entity_vals(bids_root, entity_key='sub')
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = ['emptyroom','SB01','SB06'] # 'SB01','SB03','SB04','SB05','SB06', 'SB07', 'SB08', 'SB09', 'SB10', 'SB11','SB12'
+exclude_subjects = ['emptyroom','SB06','SB01'] # 'SB01','SB03','SB04','SB05','SB06', 'SB07', 'SB08', 'SB09', 'SB10', 'SB11','SB12'
 # SB06: Maxfilter error: projections cannot be applied
 # SB01: Events are not correct
+
 
 subjects_list = list(set(subjects_list) - set(exclude_subjects))
 subjects_list.sort()

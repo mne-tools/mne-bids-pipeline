@@ -85,6 +85,7 @@ def main():
     for idx, evokeds in enumerate(all_evokeds):
         all_evokeds[idx].plot_joint(title=config.conditions[idx],
                                     ts_args=ts_args, topomap_args=topomap_args)  # noqa: E501
+        # XXX error in plotting, and plots were generated twice
    
 if __name__ == '__main__':
     main()

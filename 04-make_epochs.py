@@ -24,8 +24,6 @@ import config
 N_JOBS = max(config.N_JOBS // 4, 1)
 
 
-config.subjects_list = ['SB04']
-
 ###############################################################################
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""

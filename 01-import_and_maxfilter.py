@@ -48,7 +48,7 @@ def run_maxwell_filter(subject, session=None):
     subject_path = op.join(subject_path, config.kind)
     data_dir = op.join(config.bids_root, subject_path)
 
-    for run_idx, run in enumerate(config.runs): # XXX does this work without runs?
+    for run_idx, run in enumerate(config.runs):
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
@@ -75,8 +75,7 @@ def run_maxwell_filter(subject, session=None):
                          ' but found:\n\n{}'
                          .format(search_str, fnames))
 
-        if run_idx==0:
-            
+        if run_idx==0: # XXX does this when no runs are specified?            
             # Prepare the pipeline directory in /derivatives
             deriv_path = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME)
             fpath_out = op.join(deriv_path, subject_path)

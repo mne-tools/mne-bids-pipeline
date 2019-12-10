@@ -107,16 +107,15 @@ def run_maxwell_filter(subject, session=None):
 
         if config.crop is not None:
             raw.crop(*config.crop)
-
+            
         raw.load_data()
         raw.fix_mag_coil_types()
-        
-        if raw.info['bads'] is None: # XXX is this None of no bads were set?
-                print('\n Warning: Found no bad channels. \n ')
-
+               
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')
-            if raw.info['bads'] is None:    
+            
+            # Warn if no bad channels are set before Maxfilter
+            if raw.info['bads'] is None: # XXX is this None of no bads were set?
                 print('\n Warning: Found no bad channels. \n ')
 
             if run_idx == 0:

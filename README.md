@@ -23,6 +23,11 @@ the URL points to the bleeding edge version of `mne_bids`:
 
 # Usage
 
+## Sample Data
+You can run the template on the mne sample subject, which you need to convert to BIDS [as described here.](https://mne.tools/mne-bids/auto_examples/convert_mne_sample.html)
+
+Another option is to fetch the data, see the [section on Contributing.] (https://github.com/mne-tools/mne-study-template/blob/master/CONTRIBUTING.md)
+
 ## General
 
 Generally, there is a single `config.py` file, which contains all parameters
@@ -55,8 +60,8 @@ The following table provides a concise summary of each step in the pipeline.
 | Script | Description |
 |:-----------|:----------------------------------------------------------|
 | [config.py](config.py) | The only file you need to modify in principle. This file contain all your parameters. |
-| [01-import_and_filter.py](01-import_and_filter.py) | Read raw data and apply lowpass or/and highpass filtering. |
-| [02-apply_maxwell_filter.py](02-apply_maxwell_filter.py) | Run maxfilter and do lowpass filter at 40 Hz. |
+| [01-import_and_maxfilter.py](01-import_and_maxfilter.py) | Import raw data and apply Maxwell filter. |
+| [02-frequency_filter.py](02-frequency_filter.py) | Apply low- and high-pass filters. |
 | [03-extract_events.py](03-extract_events.py) | Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101. |
 | [04-make_epochs.py](04-make_epochs.py) | Extract epochs. |
 | [05a-run_ica.py](05a-run_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |

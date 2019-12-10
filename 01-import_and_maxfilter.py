@@ -110,9 +110,14 @@ def run_maxwell_filter(subject, session=None):
 
         raw.load_data()
         raw.fix_mag_coil_types()
+        
+        if raw.info['bads'] is None: # XXX is this None of no bads were set?
+                print('\n Warning: Found no bad channels. \n ')
 
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')
+            if raw.info['bads'] is None:    
+                print('\n Warning: Found no bad channels. \n ')
 
             if run_idx == 0:
                 destination = raw.info['dev_head_t']

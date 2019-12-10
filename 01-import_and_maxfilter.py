@@ -4,7 +4,6 @@
 ===================================
 
 The data are imported from the BIDS folder. 
-The script also sets up the derivative structure. 
 
 If you chose to run Maxwell filter (config.use_maxwell_filter = True), 
 the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
@@ -19,6 +18,16 @@ It is critical to mark bad channels before Maxwell filtering.
 
 The function loads machine-specific calibration files from the paths set for
 config.mf_ctc_fname  and config.mf_cal_fname.
+
+Notes
+-----
+This is the first step of the pipeline, so it will also write a
+`dataset_description.json` file to the root of the pipeline derivatives, which
+are stored in bids_root/derivatives/PIPELINE_NAME. PIPELINE_NAME is defined in
+the config.py file. The `dataset_description.json` file is formatted according
+to the WIP specification for common BIDS derivatives, see this PR:
+
+https://github.com/bids-standard/bids-specification/pull/265
 """  # noqa: E501
 
 import os

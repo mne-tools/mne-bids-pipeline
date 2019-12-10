@@ -1,7 +1,7 @@
 """
-===========================
-01. Filter using MNE-python
-===========================
+===========================================
+02. Apply frequency filter using MNE-python
+===========================================
 
 The data are bandpass filtered to the frequencies defined in config.py
 (config.h_freq - config.l_freq Hz) using linear-phase fir filter with
@@ -13,16 +13,6 @@ for more. The filtered data are saved to separate files to the subject's 'MEG'
 directory.
 
 If config.plot = True plots raw data and power spectral density.
-
-Notes
------
-This is the first step of the pipeline, so it will also write a
-`dataset_description.json` file to the root of the pipeline derivatives, which
-are stored in bids_root/derivatives/PIPELINE_NAME. PIPELINE_NAME is defined in
-the config.py file. The `dataset_description.json` file is formatted according
-to the WIP specification for common BIDS derivatives, see this PR:
-
-https://github.com/bids-standard/bids-specification/pull/265
 
 """  # noqa: E501
 

@@ -54,11 +54,8 @@ def run_epochs(subject, session=None):
         # Prepare a name to save the data
         fpath_deriv = op.join(config.bids_root, 'derivatives',
                               config.PIPELINE_NAME, subject_path)
-        if config.use_maxwell_filter:
-            raw_fname_in = \
-                op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
-        else:
-            raw_fname_in = \
+
+        raw_fname_in = \
                 op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
         print("Input: ", raw_fname_in)

@@ -17,8 +17,7 @@ VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 # Get the bids_root from an environment variable, raise an error if not found
-bids_root = '/Users/sophie/Nextcloud/WORK_Methods/MNE Pipeline/MNE-sample-data-bids'
-# os.getenv('BIDS_ROOT', False)
+bids_root = os.getenv('BIDS_ROOT', False)
 if not bids_root:
     raise RuntimeError('You need to define an environment variable '
                        '`BIDS_ROOT` pointing to the root of your BIDS dataset')
@@ -38,7 +37,7 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
 plot = True
-# plot = False
+plot = False
 
 # ``crop``: tuple or None
 # If tuple, (tmin, tmax) to crop the raw data
@@ -49,8 +48,9 @@ crop = None
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 
 sessions = get_entity_vals(bids_root, entity_key='ses')
+# XXX manually exclude the sessions from emptyroom
 exclude_sessions = ['20021206']
-sessions = list(set(sessions) - set(exclude_sessions))#XXX manually exclude the sessions from emptyroom
+sessions = list(set(sessions) - set(exclude_sessions))
 sessions = sessions if sessions else [None]
 
 # XXX: take only first task for now

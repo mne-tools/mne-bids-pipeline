@@ -48,7 +48,7 @@ def run_maxwell_filter(subject, session=None):
     subject_path = op.join(subject_path, config.kind)
     data_dir = op.join(config.bids_root, subject_path)
 
-    for run_idx, run in enumerate(config.runs):
+    for run_idx, run in enumerate(config.runs): # XXX does this work without runs?
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,

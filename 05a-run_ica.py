@@ -54,11 +54,7 @@ def run_ica(subject, session=None):
                                            space=config.space
                                            )
 
-        if config.use_maxwell_filter:
-            raw_fname_in = \
-                op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
-        else:
-            raw_fname_in = \
+       raw_fname_in = \
                 op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
         eve_fname = \

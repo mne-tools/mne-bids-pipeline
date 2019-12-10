@@ -167,7 +167,7 @@ set_channel_types = None
 # Bad channels need to be set through BIDS channels.tsv 
 # before applying Maxwell filter. 
 
-use_maxwell_filter = False
+use_maxwell_filter = True
 
 # There are two kinds of maxfiltering: SSS and tSSS
 # [SSS = signal space separation ; tSSS = temporal signal space separation]

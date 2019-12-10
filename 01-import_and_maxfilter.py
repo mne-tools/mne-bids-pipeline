@@ -84,7 +84,7 @@ def run_maxwell_filter(subject, session=None):
                          ' but found:\n\n{}'
                          .format(search_str, fnames))
 
-        if run_idx==0: # XXX does this when no runs are specified?            
+        if run_idx==0: # XXX does this work when no runs are specified?            
             # Prepare the pipeline directory in /derivatives
             deriv_path = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME)
             fpath_out = op.join(deriv_path, subject_path)

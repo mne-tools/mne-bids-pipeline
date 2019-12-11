@@ -34,7 +34,6 @@ import os
 import os.path as op
 import glob
 import itertools
-
 import mne
 from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
@@ -43,6 +42,7 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
+
 
 # XXX currently only tested with use_maxwell_filter = False
 def run_maxwell_filter(subject, session=None):
@@ -78,13 +78,13 @@ def run_maxwell_filter(subject, session=None):
             bids_fpath = fnames[0]
         elif len(fnames) == 0:
             raise ValueError('Could not find input data file matching: '
-                         '"{}"'.format(search_str))
+                             '"{}"'.format(search_str))
         elif len(fnames) > 1:
             raise ValueError('Expected to find a single input data file: "{}" '
-                         ' but found:\n\n{}'
-                         .format(search_str, fnames))
+                             ' but found:\n\n{}'
+                             .format(search_str, fnames))
 
-        if run_idx==0: # XXX does this work when no runs are specified?            
+        if run_idx == 0:  # XXX does this work when no runs are specified?
             # Prepare the pipeline directory in /derivatives
             deriv_path = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME)
             fpath_out = op.join(deriv_path, subject_path)
@@ -99,10 +99,10 @@ def run_maxwell_filter(subject, session=None):
                 'Name': config.PIPELINE_NAME,
                 'Version': config.VERSION,
                 'CodeURL': config.CODE_URL,
-                }
+            }
             ds_json['SourceDatasets'] = {
                 'URL': 'n/a',
-                }
+            }
 
             fname = op.join(deriv_path, 'dataset_description.json')
             _write_json(fname, ds_json, overwrite=True, verbose=True)
@@ -114,17 +114,22 @@ def run_maxwell_filter(subject, session=None):
         _, bids_fname = op.split(bids_fpath)
         raw = read_raw_bids(bids_fname, config.bids_root)
 
+        # XXX hack to deal with dates that fif files cannot handle
+        if config.daysback is not None:
+            raw.anonymize(daysback=config.daysback)
+
         if config.crop is not None:
             raw.crop(*config.crop)
-            
+
         raw.load_data()
-        raw.fix_mag_coil_types()
-               
+        if hasattr(raw, 'fix_mag_coil_types'):
+            raw.fix_mag_coil_types()
+
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')
-            
+
             # Warn if no bad channels are set before Maxfilter
-            if raw.info['bads'] is None: # XXX is this None of no bads were set?
+            if raw.info['bads'] is None:  # XXX is this None of no bads were set?
                 print('\n Warning: Found no bad channels. \n ')
 
             if run_idx == 0:
@@ -135,7 +140,7 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(
                 raw,
-                calibration=config.mf_cal_fname,#XXX what to do with these files for sample?
+                calibration=config.mf_cal_fname,  # XXX what to do with these files for sample?
                 cross_talk=config.mf_ctc_fname,
                 st_duration=config.mf_st_duration,
                 origin=config.mf_head_origin,
@@ -155,11 +160,10 @@ def run_maxwell_filter(subject, session=None):
             # Prepare a name to save the data
             raw_fname_out = op.join(fpath_out, bids_basename + '_nosss_raw.fif')
             raw.save(raw_fname_out, overwrite=True)
-            
+
             if config.plot:
                 # plot raw data
                 raw.plot(n_channels=50, butterfly=True)
-
 
 
 def main():

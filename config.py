@@ -30,6 +30,11 @@ if not bids_root:
 
 subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 
+# ``daysback``  : int
+#   If not None apply a time shift to dates to adjust for limitateions
+#   of fif files
+
+daysback = None
 
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
@@ -156,7 +161,7 @@ set_channel_types = None
 # MAXFILTER PARAMETERS
 # --------------------
 # done in 01-import_and_maxfilter.py
-# 
+#
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
 #
@@ -164,10 +169,10 @@ set_channel_types = None
 # ~~~~~~~
 # If the data were recorded with internal active compensation (MaxShield),
 # they need to be run through Maxwell filter to avoid distortions.
-# Bad channels need to be set through BIDS channels.tsv 
-# before applying Maxwell filter. 
+# Bad channels need to be set through BIDS channels.tsv
+# before applying Maxwell filter.
 
-use_maxwell_filter = True
+use_maxwell_filter = False
 
 # There are two kinds of maxfiltering: SSS and tSSS
 # [SSS = signal space separation ; tSSS = temporal signal space separation]

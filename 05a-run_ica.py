@@ -54,8 +54,8 @@ def run_ica(subject, session=None):
                                            space=config.space
                                            )
 
-       raw_fname_in = \
-                op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        raw_fname_in = \
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
         eve_fname = \
             op.join(fpath_deriv, bids_basename + '-eve.fif')

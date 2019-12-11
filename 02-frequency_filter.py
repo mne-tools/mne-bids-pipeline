@@ -18,7 +18,6 @@ If config.plot = True plots raw data and power spectral density.
 
 import os.path as op
 import itertools
-import glob
 
 import mne
 from mne.parallel import parallel_func
@@ -39,7 +38,6 @@ def run_filter(subject, run=None, session=None):
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
     subject_path = op.join(subject_path, config.kind)
-    data_dir = op.join(config.bids_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -50,23 +48,23 @@ def run_filter(subject, run=None, session=None):
                                        recording=config.rec,
                                        space=config.space
                                        )
-    
+
     # Prepare a name to save the data
     fpath_deriv = op.join(config.bids_root, 'derivatives',
-                              config.PIPELINE_NAME, subject_path)
+                          config.PIPELINE_NAME, subject_path)
     if config.use_maxwell_filter:
         raw_fname_in = op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
     else:
         raw_fname_in = op.join(fpath_deriv, bids_basename + '_nosss_raw.fif')
-        
+
     raw_fname_out = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
     print("Input: ", raw_fname_in)
     print("Output: ", raw_fname_out)
-    
+
     raw = mne.io.read_raw_fif(raw_fname_in)
     raw.load_data()
-    
+
     # Band-pass the data channels (MEG and EEG)
     print('Filtering data between {} and {} (Hz)'
           .format(config.l_freq, config.h_freq))
@@ -82,9 +80,9 @@ def run_filter(subject, run=None, session=None):
         print('Resampling data to {:.1f} Hz'.format(config.resample_sfreq))
 
         raw.resample(config.resample_sfreq, npad='auto')
-    
+
     raw.save(raw_fname_out, overwrite=True)
-    
+
     if config.plot:
         # plot raw data
         raw.plot(n_channels=50, butterfly=True)

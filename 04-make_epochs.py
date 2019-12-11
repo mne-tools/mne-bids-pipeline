@@ -110,7 +110,7 @@ def run_epochs(subject, session=None):
 
     epochs_fname = \
         op.join(fpath_deriv, bids_basename + '-epo.fif')
-    epochs.save(epochs_fname)
+    epochs.save(epochs_fname, overwrite=True)
 
     if config.plot:
         epochs.plot()

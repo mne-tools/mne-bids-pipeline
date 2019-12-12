@@ -1,7 +1,7 @@
 """
-===================================
-01. Maxwell filter using MNE-Python
-===================================
+========================
+01. Apply Maxwell filter
+========================
 
 The data are imported from the BIDS folder. 
 

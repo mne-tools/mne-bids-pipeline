@@ -1,7 +1,7 @@
 """
-===========================================
-02. Apply frequency filter using MNE-python
-===========================================
+==========================
+02. Apply frequency filter
+==========================
 
 The data are bandpass filtered to the frequencies defined in config.py
 (config.h_freq - config.l_freq Hz) using linear-phase fir filter with

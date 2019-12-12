@@ -30,6 +30,11 @@ if not bids_root:
 
 subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 
+# ``daysback``  : int
+#   If not None apply a time shift to dates to adjust for limitateions
+#   of fif files
+
+daysback = None
 
 # ``plot``  : boolean
 #   If True, the scripts will generate plots.
@@ -99,7 +104,7 @@ subjects_list = get_entity_vals(bids_root, entity_key='sub')
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = ['06', '07', '08', '09', '10', '11']
+exclude_subjects = ['emptyroom']
 subjects_list = list(set(subjects_list) - set(exclude_subjects))
 
 
@@ -123,7 +128,7 @@ if kind == 'eeg':
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
 # --------------------------
-# needed for 01-import_and_filter.py
+# needed for 01-import_and_maxfilter.py
 
 # ``rename_channels`` : dict rename channels
 #    Here you name or replace extra channels that were recorded, for instance
@@ -150,51 +155,19 @@ rename_channels = None
 set_channel_types = None
 
 ###############################################################################
-# FREQUENCY FILTERING
-# -------------------
-# done in 01-import_and_filter.py
-
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# It is typically better to set your filtering properties on the raw data so
-# as to avoid what we call border (or edge) effects.
-#
-# If you use this pipeline for evoked responses, you could consider
-# a low-pass filter cut-off of h_freq = 40 Hz
-# and possibly a high-pass filter cut-off of l_freq = 1 Hz
-# so you would preserve only the power in the 1Hz to 40 Hz band.
-# Note that highpass filtering is not necessarily recommended as it can
-# distort waveforms of evoked components, or simply wash out any low
-# frequency that can may contain brain signal. It can also act as
-# a replacement for baseline correction in Epochs. See below.
-#
-# If you use this pipeline for time-frequency analysis, a default filtering
-# coult be a high-pass filter cut-off of l_freq = 1 Hz
-# a low-pass filter cut-off of h_freq = 120 Hz
-# so you would preserve only the power in the 1Hz to 120 Hz band.
-#
-# If you need more fancy analysis, you are already likely past this kind
-# of tips! :)
-
-
-# ``l_freq`` : float
-#   The low-frequency cut-off in the highpass filtering step.
-#   Keep it None if no highpass filtering should be applied.
-
-l_freq = 1.
-
-# ``h_freq`` : float
-#   The high-frequency cut-off in the lowpass filtering step.
-#   Keep it None if no lowpass filtering should be applied.
-
-h_freq = 40.
-
-###############################################################################
 # MAXFILTER PARAMETERS
 # --------------------
+# done in 01-import_and_maxfilter.py
 #
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
+#
+# Warning
+# ~~~~~~~
+# If the data were recorded with internal active compensation (MaxShield),
+# they need to be run through Maxwell filter to avoid distortions.
+# Bad channels need to be set through BIDS channels.tsv
+# before applying Maxwell filter.
 
 use_maxwell_filter = False
 
@@ -287,6 +260,46 @@ mf_head_origin = 'auto'
 # >>> mf_reference_run = 0  # to use the first run
 
 mf_reference_run = 0
+
+###############################################################################
+# FREQUENCY FILTERING
+# -------------------
+# done in 02-frequency_filter.py
+
+# Good Practice / Advice
+# ~~~~~~~~~~~~~~~~~~~~~~
+# It is typically better to set your filtering properties on the raw data so
+# as to avoid what we call border (or edge) effects.
+#
+# If you use this pipeline for evoked responses, you could consider
+# a low-pass filter cut-off of h_freq = 40 Hz
+# and possibly a high-pass filter cut-off of l_freq = 1 Hz
+# so you would preserve only the power in the 1Hz to 40 Hz band.
+# Note that highpass filtering is not necessarily recommended as it can
+# distort waveforms of evoked components, or simply wash out any low
+# frequency that can may contain brain signal. It can also act as
+# a replacement for baseline correction in Epochs. See below.
+#
+# If you use this pipeline for time-frequency analysis, a default filtering
+# coult be a high-pass filter cut-off of l_freq = 1 Hz
+# a low-pass filter cut-off of h_freq = 120 Hz
+# so you would preserve only the power in the 1Hz to 120 Hz band.
+#
+# If you need more fancy analysis, you are already likely past this kind
+# of tips! :)
+
+
+# ``l_freq`` : float
+#   The low-frequency cut-off in the highpass filtering step.
+#   Keep it None if no highpass filtering should be applied.
+
+l_freq = 1.
+
+# ``h_freq`` : float
+#   The high-frequency cut-off in the lowpass filtering step.
+#   Keep it None if no lowpass filtering should be applied.
+
+h_freq = 40.
 
 ###############################################################################
 # RESAMPLING
@@ -606,14 +619,14 @@ fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 # ADVANCED
 # --------
 #
-# ``l_trans_bandwidth`` : float | 'auto'
+# ``l_trans_bandwidth`` : float | 'auto'
 #    A float that specifies the transition bandwidth of the
 #    highpass filter. By default it's `'auto'` and uses default mne
 #    parameters.
 
 l_trans_bandwidth = 'auto'
 
-#  ``h_trans_bandwidth`` : float | 'auto'
+#  ``h_trans_bandwidth`` : float | 'auto'
 #    A float that specifies the transition bandwidth of the
 #    lowpass filter. By default it's `'auto'` and uses default mne
 #    parameters.

@@ -11,8 +11,8 @@ fetch:
 	$(PYTHON) ./tests/download_test_data.py --dataset=${DATASET}
 
 sensor:
-	$(PYTHON) 01-import_and_filter.py
-	$(PYTHON) 02-apply_maxwell_filter.py
+	$(PYTHON) 01-import_and_maxfilter.py
+	$(PYTHON) 02-frequency_filter.py
 	$(PYTHON) 03-extract_events.py
 	$(PYTHON) 04-make_epochs.py
 	$(PYTHON) 05a-run_ica.py

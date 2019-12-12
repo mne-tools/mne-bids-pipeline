@@ -32,6 +32,4 @@ reject = {'grad': 4000e-13, 'mag': 4e-12}
 conditions = ['face', 'scrambled']
 decoding_conditions = [('face', 'scrambled')]
 use_ssp = False
-# use_ssp = True
-use_ica = True
 use_ica = False

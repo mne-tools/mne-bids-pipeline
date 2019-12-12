@@ -17,9 +17,9 @@ def fetch(dataset=None):
 
 def sensor():
     """Run sensor pipeline."""
-    mod = importlib.import_module('01-import_and_filter')
+    mod = importlib.import_module('01-import_and_maxfilter')
     mod.main()
-    mod = importlib.import_module('02-apply_maxwell_filter')
+    mod = importlib.import_module('02-frequency_filter')
     mod.main()
     mod = importlib.import_module('03-extract_events')
     mod.main()

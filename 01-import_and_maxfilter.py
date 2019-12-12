@@ -86,7 +86,8 @@ def run_maxwell_filter(subject, session=None):
 
         if run_idx == 0:  # XXX does this work when no runs are specified?
             # Prepare the pipeline directory in /derivatives
-            deriv_path = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME)
+            deriv_path = op.join(config.bids_root, 'derivatives',
+                                 config.PIPELINE_NAME)
             fpath_out = op.join(deriv_path, subject_path)
             if not op.exists(fpath_out):
                 os.makedirs(fpath_out)
@@ -129,7 +130,7 @@ def run_maxwell_filter(subject, session=None):
             print('Applying maxwell filter.')
 
             # Warn if no bad channels are set before Maxfilter
-            if raw.info['bads'] is None:  # XXX is this None of no bads were set?
+            if raw.info['bads'] is None or len(raw.info['bads']) == 0:
                 print('\n Warning: Found no bad channels. \n ')
 
             if run_idx == 0:
@@ -140,7 +141,7 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(
                 raw,
-                calibration=config.mf_cal_fname,  # XXX what to do with these files for sample?
+                calibration=config.mf_cal_fname,
                 cross_talk=config.mf_ctc_fname,
                 st_duration=config.mf_st_duration,
                 origin=config.mf_head_origin,
@@ -158,7 +159,8 @@ def run_maxwell_filter(subject, session=None):
             print('Not applying maxwell filter.\n'
                   'If you wish to apply it set config.use_maxwell_filter=True')
             # Prepare a name to save the data
-            raw_fname_out = op.join(fpath_out, bids_basename + '_nosss_raw.fif')
+            raw_fname_out = op.join(fpath_out, bids_basename +
+                                    '_nosss_raw.fif')
             raw.save(raw_fname_out, overwrite=True)
 
             if config.plot:

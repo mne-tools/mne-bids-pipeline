@@ -53,9 +53,6 @@ crop = None
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 
 sessions = get_entity_vals(bids_root, entity_key='ses')
-# XXX manually exclude the sessions from emptyroom
-exclude_sessions = ['20021206']
-sessions = list(set(sessions) - set(exclude_sessions))
 sessions = sessions if sessions else [None]
 
 # XXX: take only first task for now

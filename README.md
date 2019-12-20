@@ -26,7 +26,7 @@ the URL points to the bleeding edge version of `mne_bids`:
 ## Sample Data
 You can run the template on the mne sample subject, which you need to convert to BIDS [as described here.](https://mne.tools/mne-bids/auto_examples/convert_mne_sample.html)
 
-Another option is to fetch the data, see the [section on Contributing.] (https://github.com/mne-tools/mne-study-template/blob/master/CONTRIBUTING.md)
+Another option is to fetch the data, see the [section on Contributing.](https://github.com/mne-tools/mne-study-template/blob/master/CONTRIBUTING.md)
 
 ## General
 

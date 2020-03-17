@@ -17,7 +17,7 @@ jobs:
         - restore_cache:
             keys:
               - pip-cache-0
-              - data-cache-0
+              - data-cache-1
 
         - run:
             name: Get conda running
@@ -126,21 +126,21 @@ jobs:
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
-        - run:
-            name: test somato
-            command: |
-               export DS=somato
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
+        # - run:
+        #     name: test somato
+        #     command: |
+        #        export DS=somato
+        #        python tests/run_tests.py ${DS}
+        #        mkdir ~/reports/${DS}
+        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - store_artifacts:
             path: /home/circleci/reports
             destination: reports
 
         - save_cache:
-            key: data-cache-0
+            key: data-cache-1
             paths:
               - ~/mne_data/
 

@@ -17,6 +17,7 @@ jobs:
         - restore_cache:
             keys:
               - pip-cache-0
+              - data-cache-0
 
         - run:
             name: Get conda running
@@ -51,6 +52,11 @@ jobs:
             key: pip-cache-0
             paths:
               - ~/.cache/pip
+
+        - save_cache:
+            key: data-cache-0
+            paths:
+              - ~/mne_data/
 
         # Look at what we have and fail early if there is some library conflict
         - run:

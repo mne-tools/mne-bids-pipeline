@@ -7,7 +7,6 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
-from mayavi import mlab
 import os.path as op
 import itertools
 
@@ -68,10 +67,10 @@ def run_report(subject, session=None):
     rep.add_figs_to_section(figs, captions)
 
     if op.exists(fname_trans):
-        mne.viz.plot_alignment(evoked.info, fname_trans, subject=subject,
-                               subjects_dir=config.subjects_dir, meg=True,
-                               dig=True, eeg=True)
-        fig = mlab.gcf()
+        fig = mne.viz.plot_alignment(evoked.info, fname_trans,
+                                     subject=subject,
+                                     subjects_dir=config.subjects_dir,
+                                     meg=True, dig=True, eeg=True)
         rep.add_figs_to_section(fig, 'Coregistration')
 
         for evoked in evokeds:
@@ -81,8 +80,8 @@ def run_report(subject, session=None):
             brain = stc.plot(views=['lat'], hemi='both')
 
             brain.set_data_time_index(112)
+            fig = brain._figures[0]
 
-            fig = mlab.gcf()
             rep.add_figs_to_section(fig, evoked.condition)
 
     rep.save(fname=op.join(fpath_deriv, 'report.html'),
@@ -116,8 +115,8 @@ def main():
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
                              subjects_dir=config.subjects_dir)
             brain.set_data_time_index(165)
+            fig = brain._figures[0]
 
-            fig = mlab.gcf()
             rep.add_figs_to_section(fig, 'Average %s' % condition)
 
     rep.save(fname=op.join(config.bids_root, 'derivatives',

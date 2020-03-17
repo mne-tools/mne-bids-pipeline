@@ -17,7 +17,7 @@ jobs:
         - restore_cache:
             keys:
               - pip-cache-0
-              - data-cache-0
+              - data-cache-1
 
         - run:
             name: Get conda running
@@ -40,6 +40,25 @@ jobs:
               cd ..
 
         - run:
+            name: Spin up Xvfb
+            command: |
+              /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
+
+        # https://github.com/ContinuumIO/anaconda-issues/issues/9190#issuecomment-386508136
+        # https://github.com/golemfactory/golem/issues/1019
+        - run:
+            name: Install PyQt5 dependencies
+            command: |
+              sudo apt-get install libxkbcommon-x11-0
+
+        - run:
+            name: Install 3D dependencies
+            command: |
+              pip install --user --upgrade --progress-bar off vtk
+              pip install --user --upgrade --progress-bar off mayavi
+              pip install --user --upgrade --progress-bar off PySurfer[save_movie]
+
+        - run:
             name: Install datalad to conveniently pull testing datasets
             command: |
               conda install -c conda-forge git-annex
@@ -53,11 +72,6 @@ jobs:
             paths:
               - ~/.cache/pip
 
-        - save_cache:
-            key: data-cache-0
-            paths:
-              - ~/mne_data/
-
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation
@@ -69,31 +83,66 @@ jobs:
                mne --version
                python -c "import mne; mne.sys_info()"
 
+        # Setup for report
+        - run:
+            name: Setup report
+            command: |
+               mkdir ~/reports
+
         # Run tests
         - run:
             name: test ds000246
             command: |
-               python tests/run_tests.py ds000246
+               export DS=ds000246
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - run:
             name: test ds000248
             command: |
-               python tests/run_tests.py ds000248
+               export DS=ds000248
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - run:
             name: test ds001810
             command: |
-               python tests/run_tests.py ds001810
+               export DS=ds001810
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/*/report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - run:
             name: test eeg_matchingpennies
             command: |
-               python tests/run_tests.py eeg_matchingpennies
+               export DS=eeg_matchingpennies
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - run:
             name: test somato
             command: |
-               python tests/run_tests.py somato
+               export DS=somato
+               python tests/run_tests.py ${DS}
+               # mkdir ~/reports/${DS}
+               # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+               # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
+
+        - store_artifacts:
+            path: /home/circleci/reports
+            destination: reports
+
+        - save_cache:
+            key: data-cache-1
+            paths:
+              - ~/mne_data/
 
 workflows:
   version: 2

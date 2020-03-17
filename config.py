@@ -534,6 +534,21 @@ ica_ctps_ecg_threshold = 0.1
 decoding_conditions = []
 # decoding_conditions = [('left', 'right')]
 
+###############################################################################
+# GROUP AVERAGE SENSORS
+# ---------------------
+#
+# ``interpolate_bads_grand_average`` : bool
+#    Interpolate bad sensors in each dataset before calculating the grand
+#    average. This parameter is passed to the `mne.grand_average` function via
+#    the keyword argument `interpolate_bads`. It requires to have channel
+#    locations set.
+#
+# Example
+# ~~~~~~~
+# >>> interpolate_bads_grand_average = True
+
+interpolate_bads_grand_average = True
 
 # ``decoding_metric`` : str
 #    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'

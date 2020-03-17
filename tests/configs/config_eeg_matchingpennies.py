@@ -18,3 +18,5 @@ conditions = ['left', 'right']
 decoding_conditions = [('left', 'right')]
 use_ssp = False
 use_ica = False
+
+interpolate_bads_grand_average = False

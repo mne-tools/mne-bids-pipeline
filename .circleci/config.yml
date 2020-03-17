@@ -126,14 +126,14 @@ jobs:
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
-        # - run:
-        #     name: test somato
-        #     command: |
-        #        export DS=somato
-        #        python tests/run_tests.py ${DS}
-        #        mkdir ~/reports/${DS}
-        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
-        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
+        - run:
+            name: test somato
+            command: |
+               export DS=somato
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
 
         - store_artifacts:
             path: /home/circleci/reports

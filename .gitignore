@@ -4,3 +4,4 @@
 *.pdf
 .DS_Store
 data
+.vscode

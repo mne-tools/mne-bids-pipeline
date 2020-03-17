@@ -539,8 +539,10 @@ decoding_conditions = []
 # ---------------------
 #
 # ``interpolate_bads_grand_average`` : bool
-#    Interpolate or not missing sensors in `mne.grand_average`. It requires
-#    to have channel locations.
+#    Interpolate bad sensors in each dataset before calculating the grand
+#    average. This parameter is passed to the `mne.grand_average` function via
+#    the keyword argument `interpolate_bads`. It requires to have channel
+#    locations set.
 #
 # Example
 # ~~~~~~~

@@ -23,3 +23,5 @@ use_ica = False
 
 subjects_list = ['01']
 sessions = ['anodalpre']
+
+interpolate_bads_grand_average = False

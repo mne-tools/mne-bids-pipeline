@@ -53,11 +53,6 @@ jobs:
             paths:
               - ~/.cache/pip
 
-        - save_cache:
-            key: data-cache-0
-            paths:
-              - ~/mne_data/
-
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation
@@ -94,6 +89,11 @@ jobs:
             name: test somato
             command: |
                python tests/run_tests.py somato
+
+        - save_cache:
+            key: data-cache-0
+            paths:
+              - ~/mne_data/
 
 workflows:
   version: 2

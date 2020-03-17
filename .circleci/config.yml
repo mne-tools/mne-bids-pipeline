@@ -15,11 +15,8 @@ jobs:
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
         - restore_cache:
-            key:
+            keys:
               - pip-cache-0
-
-        - restore_cache:
-            key:
               - data-cache-1
 
         - run:

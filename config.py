@@ -534,6 +534,19 @@ ica_ctps_ecg_threshold = 0.1
 decoding_conditions = []
 # decoding_conditions = [('left', 'right')]
 
+###############################################################################
+# GROUP AVERAGE SENSORS
+# ---------------------
+#
+# ``interpolate_bads_grand_average`` : bool
+#    Interpolate or not missing sensors in `mne.grand_average`. It requires
+#    to have channel locations.
+#
+# Example
+# ~~~~~~~
+# >>> interpolate_bads_grand_average = True
+
+interpolate_bads_grand_average = True
 
 # ``decoding_metric`` : str
 #    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'

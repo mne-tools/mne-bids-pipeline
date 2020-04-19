@@ -114,8 +114,8 @@ def run_epochs(subject, session=None):
 
     if config.plot:
         epochs.plot()
-        epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
-                          cmap="YlGnBu_r")
+        epochs.plot_image(combine='gfp', picks=config.ch_types, sigma=2.,
+                          cmap='YlGnBu_r')
 
 
 def main():

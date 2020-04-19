@@ -163,7 +163,7 @@ set_channel_types = None
 # ``mf_cal_fname`` above.
 #
 # "Bad", i.e. flat and overly noisy channels, can be automatically detected
-# using a procedure inspired by the commercial MaxFilter by Electa. First,
+# using a procedure inspired by the commercial MaxFilter by Elekta. First,
 # a copy of the data is low-pass filtered at 40 Hz. Then, channels with
 # unusually low variability are flagged as "flat", while channels with
 # excessively high variability are flagged as "noisy". Flat and noisy channels

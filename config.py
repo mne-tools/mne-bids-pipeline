@@ -173,14 +173,14 @@ set_channel_types = None
 # will be merged with the list of bad channels already present in the dataset,
 # if any.
 #
-# ``find_flat_channels`` : bool
+# ``find_flat_channels_meg`` : bool
 #   Auto-detect "flat" channels and mark them as bad.
 #
-# ``find_noisy_channels`` : bool
+# ``find_noisy_channels_meg`` : bool
 #   Auto-detect "noisy" channels and mark them as bad.
 
-find_flat_channels = False
-find_noisy_channels = False
+find_flat_channels_meg = False
+find_noisy_channels_meg = False
 
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
@@ -190,8 +190,8 @@ find_noisy_channels = False
 # If the data were recorded with internal active compensation (MaxShield),
 # they need to be run through Maxwell filter to avoid distortions.
 # Bad channels need to be set through BIDS channels.tsv and / or via the
-# ``find_flat_channels`` and ``find_noisy_channels`` options above before
-# applying Maxwell filter.
+# ``find_flat_channels_meg`` and ``find_noisy_channels_meg`` options above
+# before applying Maxwell filter.
 
 use_maxwell_filter = False
 

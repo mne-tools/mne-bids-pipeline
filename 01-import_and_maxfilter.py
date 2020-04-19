@@ -127,12 +127,12 @@ def run_maxwell_filter(subject, session=None):
         if hasattr(raw, 'fix_mag_coil_types'):
             raw.fix_mag_coil_types()
 
-        if config.find_flat_channels or config.find_noisy_channels:
-            if (config.find_flat_channels and
-                    not config.find_noisy_channels):
+        if config.find_flat_channels_meg or config.find_noisy_channels_meg:
+            if (config.find_flat_channels_meg and
+                    not config.find_noisy_channels_meg):
                 msg = 'Finding flat channels.'
-            elif (config.find_noisy_channels and
-                  not config.find_flat_channels):
+            elif (config.find_noisy_channels_meg and
+                  not config.find_flat_channels_meg):
                 msg = 'Finding noisy channels using Maxwell filtering.'
             else:
                 msg = ('Finding flat channels, and noisy channels using '
@@ -151,17 +151,17 @@ def run_maxwell_filter(subject, session=None):
             del raw_lp_filtered_for_maxwell
 
             bads = raw.info['bads'].copy()
-            if config.find_flat_channels:
+            if config.find_flat_channels_meg:
                 print(f'Found {len(auto_flat_chs)} flat channels.')
                 bads.extend(auto_flat_chs)
-            if config.find_noisy_channels:
+            if config.find_noisy_channels_meg:
                 print(f'Found {len(auto_noisy_chs)} noisy channels.')
                 bads.extend(auto_noisy_chs)
 
             bads = sorted(set(bads))
             raw.info['bads'] = bads
             print(f'Marked {len(raw.info["bads"])} channels as bad.')
-            del bads, msg
+            del bads, auto_flat, auto_noisy, msg
 
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')

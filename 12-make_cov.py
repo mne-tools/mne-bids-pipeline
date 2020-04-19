@@ -57,8 +57,9 @@ def run_covariance(subject, session=None):
     epochs = mne.read_epochs(fname_epo, preload=True)
 
     print('  Computing regularized covariance')
-    cv = KFold(3, random_state=config.random_state)  # make cv deterministic
-    cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv)
+    cv = KFold(3, random_state=config.random_state, shuffle=True)
+    cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv,
+                                 rank='info')
     cov.save(fname_cov)
 
 

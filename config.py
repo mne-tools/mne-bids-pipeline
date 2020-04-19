@@ -159,6 +159,9 @@ set_channel_types = None
 # ---------------------------------------
 # done in 01-import_and_maxfilter.py
 #
+# Note: For any of this to work, you must set ``mf_ctc_fname`` and
+# ``mf_cal_fname`` above.`
+#
 # "Bad", i.e. flat and overly noisy channels, can be automatically detected
 # using a procedure inspired by the commercial MaxFilter by Electa. First,
 # a copy of the data is low-pass filtered at 40 Hz. Then, channels with
@@ -176,8 +179,8 @@ set_channel_types = None
 # ``find_noisy_channels`` : bool
 #   Auto-detect "noisy" channels and mark them as bad.
 
-find_flat_channels = True
-find_noisy_channels = True
+find_flat_channels = False
+find_noisy_channels = False
 
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.

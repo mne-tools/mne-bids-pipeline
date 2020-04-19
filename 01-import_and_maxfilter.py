@@ -161,7 +161,7 @@ def run_maxwell_filter(subject, session=None):
             bads = sorted(set(bads))
             raw.info['bads'] = bads
             print(f'Marked {len(raw.info["bads"])} channels as bad.')
-            del bads, auto_flat, auto_noisy, msg
+            del bads, auto_flat_chs, auto_noisy_chs, msg
 
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')

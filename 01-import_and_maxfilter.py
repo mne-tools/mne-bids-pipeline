@@ -3,9 +3,9 @@
 01. Apply Maxwell filter
 ========================
 
-The data are imported from the BIDS folder. 
+The data are imported from the BIDS folder.
 
-If you chose to run Maxwell filter (config.use_maxwell_filter = True), 
+If you chose to run Maxwell filter (config.use_maxwell_filter = True),
 the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
 is not None) and movement compensation.
 
@@ -35,6 +35,7 @@ import os.path as op
 import glob
 import itertools
 import mne
+from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
 from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
@@ -126,11 +127,47 @@ def run_maxwell_filter(subject, session=None):
         if hasattr(raw, 'fix_mag_coil_types'):
             raw.fix_mag_coil_types()
 
+        if config.find_flat_channels_meg or config.find_noisy_channels_meg:
+            if (config.find_flat_channels_meg and
+                    not config.find_noisy_channels_meg):
+                msg = 'Finding flat channels.'
+            elif (config.find_noisy_channels_meg and
+                  not config.find_flat_channels_meg):
+                msg = 'Finding noisy channels using Maxwell filtering.'
+            else:
+                msg = ('Finding flat channels, and noisy channels using '
+                       'Maxwell filtering.')
+
+            print(msg)
+            raw_lp_filtered_for_maxwell = (raw.copy()
+                                           .filter(l_freq=None,
+                                                   h_freq=40,
+                                                   verbose=True))
+            auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
+                raw=raw_lp_filtered_for_maxwell,
+                calibration=config.mf_cal_fname,
+                cross_talk=config.mf_ctc_fname,
+                verbose=True)
+            del raw_lp_filtered_for_maxwell
+
+            bads = raw.info['bads'].copy()
+            if config.find_flat_channels_meg:
+                print(f'Found {len(auto_flat_chs)} flat channels.')
+                bads.extend(auto_flat_chs)
+            if config.find_noisy_channels_meg:
+                print(f'Found {len(auto_noisy_chs)} noisy channels.')
+                bads.extend(auto_noisy_chs)
+
+            bads = sorted(set(bads))
+            raw.info['bads'] = bads
+            print(f'Marked {len(raw.info["bads"])} channels as bad.')
+            del bads, auto_flat_chs, auto_noisy_chs, msg
+
         if config.use_maxwell_filter:
             print('Applying maxwell filter.')
 
             # Warn if no bad channels are set before Maxfilter
-            if raw.info['bads'] is None or len(raw.info['bads']) == 0:
+            if not raw.info['bads']:
                 print('\n Warning: Found no bad channels. \n ')
 
             if run_idx == 0:

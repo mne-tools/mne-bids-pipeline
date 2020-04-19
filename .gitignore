@@ -5,3 +5,4 @@
 .DS_Store
 data
 .vscode
+*.code-workspace

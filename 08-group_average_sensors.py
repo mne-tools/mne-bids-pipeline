@@ -80,7 +80,8 @@ def main():
     """Plot evokeds."""
     if not config.plot:
         return
-    for evoked in enumerate(all_evokeds):
+
+    for evoked in all_evokeds.values():
         evoked.plot()
 
     # ts_args = dict(gfp=True, time_unit='s')

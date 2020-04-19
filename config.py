@@ -41,7 +41,7 @@ daysback = None
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-plot = True
+# plot = True
 plot = False
 
 # ``crop``: tuple or None
@@ -155,10 +155,30 @@ rename_channels = None
 set_channel_types = None
 
 ###############################################################################
-# MAXFILTER PARAMETERS
-# --------------------
+# MAXFILTER AND MAXWELL FILTER PARAMETERS
+# ---------------------------------------
 # done in 01-import_and_maxfilter.py
 #
+# "Bad", i.e. flat and overly noisy channels, can be automatically detected
+# using a procedure inspired by the commercial MaxFilter by Electa. First,
+# a copy of the data is low-pass filtered at 40 Hz. Then, channels with
+# unusually low variability are flagged as "flat", while channels with
+# excessively high variability are flagged as "noisy". Flat and noisy channels
+# are marked as "bad" and excluded from subsequent analysis. See
+# :func:`mne.preprocssessing.find_bad_channels_maxwell` for more information
+# on this procedure. The list of bad channels detected through this procedure
+# will be merged with the list of bad channels already present in the dataset,
+# if any.
+#
+# ``find_flat_channels`` : bool
+#   Auto-detect "flat" channels and mark them as bad.
+#
+# ``find_noisy_channels`` : bool
+#   Auto-detect "noisy" channels and mark them as bad.
+
+find_flat_channels = True
+find_noisy_channels = True
+
 # ``use_maxwell_filter`` : bool
 #   Use or not maxwell filter to preprocess the data.
 #
@@ -166,8 +186,9 @@ set_channel_types = None
 # ~~~~~~~
 # If the data were recorded with internal active compensation (MaxShield),
 # they need to be run through Maxwell filter to avoid distortions.
-# Bad channels need to be set through BIDS channels.tsv
-# before applying Maxwell filter.
+# Bad channels need to be set through BIDS channels.tsv and / or via the
+# ``find_flat_channels`` and ``find_noisy_channels`` options above before
+# applying Maxwell filter.
 
 use_maxwell_filter = False
 

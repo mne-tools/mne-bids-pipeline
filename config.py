@@ -160,7 +160,7 @@ set_channel_types = None
 # done in 01-import_and_maxfilter.py
 #
 # Note: For any of this to work, you must set ``mf_ctc_fname`` and
-# ``mf_cal_fname`` above.`
+# ``mf_cal_fname`` above.
 #
 # "Bad", i.e. flat and overly noisy channels, can be automatically detected
 # using a procedure inspired by the commercial MaxFilter by Electa. First,

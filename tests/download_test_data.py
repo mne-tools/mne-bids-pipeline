@@ -17,7 +17,6 @@ def _provide_testing_data(dataset=None):
         'somato': ('https://github.com/sappelhoff/MNE-somato-data'),
         'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
-        'ds000248_autobads': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
         'ds001971': 'https://github.com/OpenNeuroDatasets/ds001971',
@@ -55,7 +54,6 @@ def _provide_get_dict(dataset=None):
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv',  # noqa: E501
                      ],
     }
-    get_dict['ds000248_autobads'] = get_dict['ds000248']
     if dataset is None:
         return get_dict
     else:

@@ -155,8 +155,8 @@ rename_channels = None
 set_channel_types = None
 
 ###############################################################################
-# MAXFILTER AND MAXWELL FILTER PARAMETERS
-# ---------------------------------------
+# MAXWELL FILTER PARAMETERS
+# -------------------------
 # done in 01-import_and_maxfilter.py
 #
 # Note: For any of this to work, you must set ``mf_ctc_fname`` and

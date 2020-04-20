@@ -20,6 +20,12 @@ jobs:
               - data-cache-1
 
         - run:
+            name: test modules
+            command: |
+               pip install pytest
+               pytest
+
+        - run:
             name: Get conda running
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
@@ -134,12 +140,6 @@ jobs:
                # mkdir ~/reports/${DS}
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
-
-        - run:
-            name: test modules
-            command: |
-               pip install pytest
-               pytest
 
         - store_artifacts:
             path: /home/circleci/reports

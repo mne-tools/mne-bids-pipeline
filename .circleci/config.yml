@@ -94,7 +94,7 @@ jobs:
             name: test modules
             command: |
                pip install pytest
-               pytest
+               pytest tests/
 
         - run:
             name: test ds000246

@@ -20,12 +20,6 @@ jobs:
               - data-cache-1
 
         - run:
-            name: test modules
-            command: |
-               pip install pytest
-               pytest
-
-        - run:
             name: Get conda running
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
@@ -96,6 +90,12 @@ jobs:
                mkdir ~/reports
 
         # Run tests
+        - run:
+            name: test modules
+            command: |
+               pip install pytest
+               pytest
+
         - run:
             name: test ds000246
             command: |

@@ -14,7 +14,6 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 from sklearn.model_selection import KFold
-import numpy as np
 
 import config
 
@@ -58,18 +57,6 @@ def run_covariance(subject, session=None):
     epochs = mne.read_epochs(fname_epo, preload=True)
 
     print('  Computing regularized covariance')
-    if isinstance(config.random_state, np.random.RandomState):
-        msg = (f'Using custom random number generator in cross-validation '
-               f'scheme: {config.random_state}')
-    elif config.random_state is not None:
-        msg = (f'Cross-validation random number generator will be seeded with '
-               f'the user-defined value: {config.random_state}')
-    else:
-        msg = 'Using random number generator with default settings'
-
-    print(msg)
-    del msg
-
     cv = KFold(3, random_state=config.random_state, shuffle=True)
     cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv,
                                  rank='info')

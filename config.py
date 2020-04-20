@@ -680,10 +680,7 @@ N_JOBS = 1
 # ``random_state`` : None | int | np.random.RandomState
 #    To specify the random generator state. This allows to have
 #    the results more reproducible between machines and systems.
-#    Some methods like ICA or the cross-validation scheme used in noise
-#    covariance estimation need random values for initialisation. Set to
-#    ``None`` if you do not wish to initialize the random number generator
-#    with a specific state.
+#    Some methods like ICA need random values for initialisation.
 
 random_state = 42
 

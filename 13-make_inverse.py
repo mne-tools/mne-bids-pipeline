@@ -16,6 +16,7 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import make_bids_basename
 
 import config
+from pathtools import sanitize_filename
 
 
 def run_inverse(subject, session=None):
@@ -70,7 +71,7 @@ def run_inverse(subject, session=None):
                             pick_ori=None)
         stc.save(op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
                          % (config.study_name, subject,
-                            condition.replace(op.sep, ''))))
+                            sanitize_filename(condition))))
 
 
 def main():

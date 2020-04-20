@@ -20,6 +20,8 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from pathtools import sanitize_filename
+
 
 freqs = np.arange(10, 40)
 n_cycles = freqs / 3.
@@ -67,11 +69,11 @@ def run_time_frequency(subject, session=None):
 
         power_fname_out = \
             op.join(fpath_deriv, bids_basename + '_power_%s-tfr.h5'
-                    % (condition.replace(op.sep, '')))
+                    % sanitize_filename(condition))
 
         itc_fname_out = \
             op.join(fpath_deriv, bids_basename + '_itc_%s-tfr.h5'
-                    % (condition.replace(op.sep, '')))
+                    % sanitize_filename(condition))
 
         power.save(power_fname_out, overwrite=True)
         itc.save(itc_fname_out, overwrite=True)

@@ -94,7 +94,7 @@ jobs:
             name: test ds000246
             command: |
                export DS=ds000246
-               python tests/run_tests.py ${DS}
+               python tests/run_pipeline_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
@@ -103,7 +103,7 @@ jobs:
             name: test ds000248
             command: |
                export DS=ds000248
-               python tests/run_tests.py ${DS}
+               python tests/run_pipeline_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
@@ -112,7 +112,7 @@ jobs:
             name: test ds001810
             command: |
                export DS=ds001810
-               python tests/run_tests.py ${DS}
+               python tests/run_pipeline_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
@@ -121,7 +121,7 @@ jobs:
             name: test eeg_matchingpennies
             command: |
                export DS=eeg_matchingpennies
-               python tests/run_tests.py ${DS}
+               python tests/run_pipeline_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
@@ -130,10 +130,16 @@ jobs:
             name: test somato
             command: |
                export DS=somato
-               python tests/run_tests.py ${DS}
+               python tests/run_pipeline_tests.py ${DS}
                # mkdir ~/reports/${DS}
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report.html ~/reports/${DS}/
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average.html ~/reports/${DS}/
+
+        - run:
+            name: test modules
+            command: |
+               pip install pytest
+               pytest
 
         - store_artifacts:
             path: /home/circleci/reports

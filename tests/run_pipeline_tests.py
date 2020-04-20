@@ -73,7 +73,7 @@ TEST_SUITE = {
 }
 
 
-def run_tests(test_suite):
+def run_pipeline_tests(test_suite):
     """Run a suite of tests.
 
     Parameters
@@ -132,4 +132,4 @@ if __name__ == '__main__':
     print('Running the following tests: {}'
           .format(', '.join(test_suite.keys())))
 
-    run_tests(test_suite)
+    run_pipeline_tests(test_suite)

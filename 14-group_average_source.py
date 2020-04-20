@@ -13,6 +13,7 @@ import mne
 from mne.parallel import parallel_func
 
 import config
+from pathtools import sanitize_filename
 
 
 def morph_stc(subject, session=None):
@@ -35,7 +36,7 @@ def morph_stc(subject, session=None):
     for condition in config.conditions:
         fname_stc = op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
                             % (config.study_name, subject,
-                               condition.replace(op.sep, '')))
+                               sanitize_filename(condition)))
         stc = mne.read_source_estimate(fname_stc)
 
         morph = mne.compute_source_morph(stc, subject_from=subject,

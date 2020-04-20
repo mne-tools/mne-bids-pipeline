@@ -57,7 +57,10 @@ def run_covariance(subject, session=None):
     epochs = mne.read_epochs(fname_epo, preload=True)
 
     print('  Computing regularized covariance')
-    cv = KFold(3, random_state=config.random_state, shuffle=True)
+    # Do not shuffle the data before splitting into train and test samples.
+    # Perform a block cross-validation instead to maintain autocorrelated
+    # noise.
+    cv = KFold(3, shuffle=False)
     cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv,
                                  rank='info')
     cov.save(fname_cov)

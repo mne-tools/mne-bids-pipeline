@@ -6,7 +6,7 @@ def sanitize_filename(fname):
 
     Allowed characters in a file name are: ``A-Z``, ``a-z``, ``0-9``, ``-``,
     ``_``, and ``.``. All non-allowed characters (including spaces) are
-    replaced with an underscore.
+    removed.
 
     Parameters
     ----------

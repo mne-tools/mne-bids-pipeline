@@ -18,9 +18,9 @@ CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 
 # ``bids_root`` : str or None
-#   Speficy the BIDS root directory. Pass an empty string or `None` to use the
-#   value specified in the ``BIDS_ROOT`` environment variable instead. Raises
-#   an exception if the BIDS root has not been specified.
+#   Speficy the BIDS root directory. Pass an empty string or ```None`` to use
+#   the value specified in the ``BIDS_ROOT`` environment variable instead.
+#   Raises an exception if the BIDS root has not been specified.
 #
 # Example
 # ~~~~~~~

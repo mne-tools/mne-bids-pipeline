@@ -12,6 +12,8 @@ import itertools
 import mne
 from mne.parallel import parallel_func
 
+from mne_bids import make_bids_basename
+
 import config
 
 
@@ -28,25 +30,42 @@ def morph_stc(subject, session=None):
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME, subject_path)
 
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space
+                                       )
+
     mne.utils.set_config('SUBJECTS_DIR', config.subjects_dir)
     mne.datasets.fetch_fsaverage(subjects_dir=config.subjects_dir)
 
     morphed_stcs = []
     for condition in config.conditions:
-        fname_stc = op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
-                            % (config.study_name, subject,
-                               condition.replace(op.sep, '')))
-        stc = mne.read_source_estimate(fname_stc)
+        method = 'dSPM'
+        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        inverse_str = 'inverse-%s' % method
+        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+        morph_str = 'morph-fsaverage'
+        fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
+                                                   inverse_str, hemi_str]))
+        fname_stc_fsaverage = op.join(fpath_deriv,
+                                      '_'.join([bids_basename, cond_str,
+                                                inverse_str, morph_str,
+                                                hemi_str]))
 
+        stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(stc, subject_from=subject,
                                          subject_to='fsaverage',
                                          subjects_dir=config.subjects_dir)
         stc_fsaverage = morph.apply(stc)
-        stc_fsaverage.save(
-            op.join(fpath_deriv,
-                    'mne_dSPM_inverse_fsaverage-%s'
-                    % condition.replace(op.sep, '')))
+        stc_fsaverage.save(fname_stc_fsaverage)
         morphed_stcs.append(stc_fsaverage)
+
+        del fname_stc, fname_stc_fsaverage
 
     return morphed_stcs
 
@@ -63,12 +82,30 @@ def main():
                         if subject not in config.exclude_subjects]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          config.PIPELINE_NAME)
+
+    bids_basename = make_bids_basename(task=config.task,
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
-        this_stc.save(op.join(config.bids_root, 'derivatives',
-                              config.PIPELINE_NAME,
-                              'average_dSPM-%s'
-                              % condition.replace(op.sep, '')))
+
+        method = 'dSPM'
+        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        inverse_str = 'inverse-%s' % method
+        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+        morph_str = 'morph-fsaverage'
+
+        fname_stc_avg = op.join(fpath_deriv, '_'.join(['average',
+                                                       bids_basename, cond_str,
+                                                       inverse_str, morph_str,
+                                                       hemi_str]))
+        this_stc.save(fname_stc_avg)
 
 
 if __name__ == '__main__':

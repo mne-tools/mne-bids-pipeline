@@ -75,7 +75,7 @@ def run_report(subject, session=None):
 
         for evoked in evokeds:
             fname = op.join(fpath_deriv, 'mne_dSPM_inverse-%s'
-                            % evoked.comment)
+                            % evoked.comment.replace(op.sep, ''))
             stc = mne.read_source_estimate(fname, subject)
             brain = stc.plot(views=['lat'], hemi='both')
 
@@ -109,7 +109,7 @@ def main():
 
         stc_fname = op.join(config.bids_root, 'derivatives',
                             config.PIPELINE_NAME,
-                            'average_dSPM-%s' % condition)
+                            'average_dSPM-%s' % condition.replace(op.sep, ''))
         if op.exists(stc_fname + "-lh.stc"):
             stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',

@@ -101,11 +101,13 @@ def run_report(subject, session=None):
     rep.add_figs_to_section(figs, captions)
 
     if op.exists(fname_trans):
-        fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                     subject=subject,
-                                     subjects_dir=config.get_subjects_dir(),
-                                     meg=True, dig=True, eeg=True)
-        rep.add_figs_to_section(fig, 'Coregistration')
+        # We can only plot the coregistration if we have a valid 3d backend.
+        if mne.viz.get_3d_backend() is not None:
+            fig = mne.viz.plot_alignment(evoked.info, fname_trans,
+                                         subject=subject,
+                                         subjects_dir=config.subjects_dir,
+                                         meg=True, dig=True, eeg=True)
+            rep.add_figs_to_section(fig, 'Coregistration')
 
         for evoked in evokeds:
             method = config.inverse_method
@@ -118,10 +120,27 @@ def run_report(subject, session=None):
             if op.exists(fname_stc + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
                 _, peak_time = stc.get_peak()
-                brain = stc.plot(views=['lat'], hemi='both',
-                                 initial_time=peak_time)
-                fig = brain._figures[0]
-                rep.add_figs_to_section(fig, evoked.condition)
+
+                # Plot using 3d backend if available, and use Matplotlib
+                # otherwise.
+                if mne.viz.get_3d_backend() is not None:
+                    brain = stc.plot(views=['lat'], hemi='both',
+                                     initial_time=peak_time,  backend='mayavi')
+                    rep.add_figs_to_section(brain._figures[0],
+                                            evoked.comment)
+                else:
+                    import matplotlib.pyplot as plt
+                    fig_lh = plt.figure()
+                    fig_rh = plt.figure()
+
+                    brain_lh = stc.plot(views='lat', hemi='lh',
+                                        initial_time=peak_time,
+                                        backend='matplotlib', figure=fig_lh)
+                    brain_rh = stc.plot(views='lat', hemi='rh',
+                                        initial_time=peak_time,
+                                        backend='matplotlib', figure=fig_rh)
+                    rep.add_figs_to_section([brain_lh, brain_rh],
+                                            [evoked.comment, evoked.comment])
 
                 del peak_time
 
@@ -180,9 +199,27 @@ def main():
         if op.exists(fname_stc_avg + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
             _, peak_time = stc.get_peak()
-            brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
-                             subjects_dir=config.get_subjects_dir(),
-                             initial_time=peak_time)
+
+            # Plot using 3d backend if available, and use Matplotlib
+            # otherwise.
+            if mne.viz.get_3d_backend() is not None:
+                brain = stc.plot(views=['lat'], hemi='both',
+                                 initial_time=peak_time,  backend='mayavi')
+                rep.add_figs_to_section(brain._figures[0],
+                                        evoked.comment)
+            else:
+                import matplotlib.pyplot as plt
+                fig_lh = plt.figure()
+                fig_rh = plt.figure()
+
+                brain_lh = stc.plot(views='lat', hemi='lh',
+                                    initial_time=peak_time,
+                                    backend='matplotlib', figure=fig_lh)
+                brain_rh = stc.plot(views='lat', hemi='rh',
+                                    initial_time=peak_time,
+                                    backend='matplotlib', figure=fig_rh)
+                rep.add_figs_to_section([brain_lh, brain_rh],
+                                        [evoked.comment, evoked.comment])
 
             fig = brain._figures[0]
             rep.add_figs_to_section(fig, 'Average %s' % condition)

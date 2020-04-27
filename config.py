@@ -16,6 +16,18 @@ PIPELINE_NAME = 'mne-study-template'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
+
+# ``study_name`` : str
+#   Specify the name of your study. It will be used to populate filenames for
+#   saving the analysis results.
+#
+# Example
+# ~~~~~~~
+# >>> study_name = 'my-study'
+
+study_name = ''
+
+
 # Get the bids_root from an environment variable, raise an error if not found
 bids_root = os.getenv('BIDS_ROOT', False)
 if not bids_root:

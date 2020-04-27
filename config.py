@@ -16,12 +16,19 @@ PIPELINE_NAME = 'mne-study-template'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
-# Speficy the BIDS root directory. Pass an empty string or `None` to use the
-# value specified in the ``BIDS_ROOT`` environment variable instead. Raises
-# an exception if the BIDS root has not been specified.
+
+# ``bids_root`` : str or None
+#   Speficy the BIDS root directory. Pass an empty string or `None` to use the
+#   value specified in the ``BIDS_ROOT`` environment variable instead. Raises
+#   an exception if the BIDS root has not been specified.
 #
-# bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
-bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+# Example
+# ~~~~~~~
+# >>> bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
+# or
+# >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+
+bids_root = None
 
 if not bids_root:
     # Extract value from environment variable.

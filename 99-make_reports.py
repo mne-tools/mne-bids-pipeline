@@ -66,7 +66,8 @@ def run_report(subject, session=None):
 
     rep.add_figs_to_section(figs, captions)
 
-    if op.exists(fname_trans):
+    if (op.exists(fname_trans) and
+            mne.viz.backends.renderer.backend is not None):
         fig = mne.viz.plot_alignment(evoked.info, fname_trans,
                                      subject=subject,
                                      subjects_dir=config.subjects_dir,
@@ -110,7 +111,8 @@ def main():
         stc_fname = op.join(config.bids_root, 'derivatives',
                             config.PIPELINE_NAME,
                             'average_dSPM-%s' % condition)
-        if op.exists(stc_fname + "-lh.stc"):
+        if (op.exists(stc_fname + "-lh.stc") and
+                mne.viz.backends.renderer.backend is not None):
             stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
                              subjects_dir=config.subjects_dir)

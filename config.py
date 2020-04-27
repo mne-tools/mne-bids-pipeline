@@ -482,24 +482,45 @@ baseline = (None, 0)
 # XXX not needed if bids events are present
 # min_event_duration = 0.002
 
-#  `event_id`` : dict
+#  ``event_id`` : dict
 #    Dictionary that maps events (trigger/marker values)
-#    to conditions.
+#    to conditions. The ``/``` character can be used to group conditions.
+#    See the "Subselecting epochs" tutorial for more information:
+#    https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
+
 #
 # Example
 # ~~~~~~~
+# Do not allow for easy grouping of conditions: left and right auditory
+# stimulation are treated entirely independently:
+# >>> event_id = {'auditory_left': 1, 'auditory_right': 2}`
+#
+# Allow for grouping of all ``auditory`` conditions, regardless of
+# stimulation side:
 # >>> event_id = {'auditory/left': 1, 'auditory/right': 2}`
-# or
-# >>> event_id = {'Onset': 4} with conditions = ['Onset']
+#
+# Allow for grouping into ``auditory``, ``visual``, ``left``, and ``right``:
+# >>> event_id = {'auditory/left': 1, 'auditory/right': 2,
+#                 'visual/left': 3, 'visual/right': 4}`
 
 # event_id = {'auditory/left': 1, 'auditory/right': 2}
 
 #  `conditions`` : dict
-#    List of condition names to consider. Must match the keys
-#    in event_id.
+#    List of condition names to consider. This can either be the keys of
+#    ``event_id``, or – if event names were specified with ``/`` for
+#    grouping – the name of the *grouped* condition (i.e., the
+#    condition name before or after that ``/`` that is shared between the
+#    respective conditions you wish to group). See the "Subselecting epochs"
+#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
 #
 # Example
 # ~~~~~~~
+# >>> conditions = ['auditory/left', 'visual/left']
+# or
+# >>> conditions = ['auditory/left', 'auditory/right']
+# or
+# >>> conditions = ['auditory']
+# or
 # >>> conditions = ['auditory', 'visual']
 # or
 # >>> conditions = ['left', 'right']

@@ -44,7 +44,8 @@ def morph_stc(subject, session=None):
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(
             op.join(fpath_deriv,
-                    'mne_dSPM_inverse_fsaverage-%s' % condition))
+                    'mne_dSPM_inverse_fsaverage-%s'
+                    % condition.replace(op.sep, '')))
         morphed_stcs.append(stc_fsaverage)
 
     return morphed_stcs
@@ -66,7 +67,8 @@ def main():
         this_stc /= len(all_morphed_stcs)
         this_stc.save(op.join(config.bids_root, 'derivatives',
                               config.PIPELINE_NAME,
-                              'average_dSPM-%s' % condition))
+                              'average_dSPM-%s'
+                              % condition.replace(op.sep, '')))
 
 
 if __name__ == '__main__':

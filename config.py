@@ -17,6 +17,16 @@ VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 
+# ``study_name`` : str
+#   Specify the name of your study. It will be used to populate filenames for
+#   saving the analysis results.
+#
+# Example
+# ~~~~~~~
+# >>> study_name = 'my-study'
+
+study_name = ''
+
 # ``bids_root`` : str or None
 #   Speficy the BIDS root directory. Pass an empty string or ```None`` to use
 #   the value specified in the ``BIDS_ROOT`` environment variable instead.

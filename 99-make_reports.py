@@ -77,12 +77,13 @@ def run_report(subject, session=None):
             fname = op.join(fpath_deriv, 'mne_dSPM_inverse-%s'
                             % evoked.comment.replace(op.sep, ''))
             stc = mne.read_source_estimate(fname, subject)
-            brain = stc.plot(views=['lat'], hemi='both')
+            _, peak_time = stc.get_peak()
+            brain = stc.plot(views=['lat'], hemi='both',
+                             initial_time=peak_time)
 
-            brain.set_data_time_index(112)
             fig = brain._figures[0]
-
             rep.add_figs_to_section(fig, evoked.condition)
+            del peak_time
 
     rep.save(fname=op.join(fpath_deriv, 'report.html'),
              open_browser=False, overwrite=True)
@@ -112,12 +113,14 @@ def main():
                             'average_dSPM-%s' % condition.replace(op.sep, ''))
         if op.exists(stc_fname + "-lh.stc"):
             stc = mne.read_source_estimate(stc_fname, subject='fsaverage')
+            _, peak_time = stc.get_peak()
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
-                             subjects_dir=config.subjects_dir)
-            brain.set_data_time_index(165)
-            fig = brain._figures[0]
+                             subjects_dir=config.subjects_dir,
+                             initial_time=peak_time)
 
+            fig = brain._figures[0]
             rep.add_figs_to_section(fig, 'Average %s' % condition)
+            del peak_time
 
     rep.save(fname=op.join(config.bids_root, 'derivatives',
                            config.PIPELINE_NAME, 'report_average.html'),

@@ -16,11 +16,28 @@ PIPELINE_NAME = 'mne-study-template'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
-# Get the bids_root from an environment variable, raise an error if not found
-bids_root = os.getenv('BIDS_ROOT', False)
+
+# ``bids_root`` : str or None
+#   Speficy the BIDS root directory. Pass an empty string or ```None`` to use
+#   the value specified in the ``BIDS_ROOT`` environment variable instead.
+#   Raises an exception if the BIDS root has not been specified.
+#
+# Example
+# ~~~~~~~
+# >>> bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
+# or
+# >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+
+bids_root = None
+
 if not bids_root:
-    raise RuntimeError('You need to define an environment variable '
-                       '`BIDS_ROOT` pointing to the root of your BIDS dataset')
+    # Extract value from environment variable.
+    bids_root = os.getenv('BIDS_ROOT', False)
+    if not bids_root:
+        msg = ('You need to specify `bids_root` in config.py or define an '
+               'environment variable `BIDS_ROOT` pointing to the root of your '
+               'BIDS dataset')
+        raise ValueError(msg)
 
 
 # ``subjects_dir`` : str

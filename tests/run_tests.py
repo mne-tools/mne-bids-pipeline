@@ -6,7 +6,8 @@ import argparse
 import importlib
 
 # Add the pipelines dir to the PATH
-sys.path.append(op.join(op.dirname(__file__), '..'))
+pipeline_dir = os.path.abspath(op.join(op.dirname(__file__), '..'))
+sys.path.append(pipeline_dir)
 
 
 def fetch(dataset=None):
@@ -92,7 +93,12 @@ def run_tests(test_suite):
         # export the environment variables
         os.environ['DATASET'] = dataset
         os.environ['BIDS_ROOT'] = op.join(DATA_DIR, dataset)
-        os.environ['MNE_BIDS_STUDY_CONFIG'] = test_tuple[0]
+
+        config_name = test_tuple[0]
+        config_path = os.path.join(pipeline_dir, 'tests', 'configs',
+                                   config_name + '.py')
+        os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
+        del config_name, config_path
 
         # Fetch the data
         fetch(dataset)

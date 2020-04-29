@@ -505,14 +505,14 @@ baseline = (None, 0)
 
 # event_id = {'auditory/left': 1, 'auditory/right': 2}
 
-#  `conditions`` : dict
-#    List of condition names to consider. This can either be the keys of
+#  `conditions`` : list
+#    The condition names to consider. This can either be the keys of
 #    ``event_id``, or – if event names were specified with ``/`` for
 #    grouping – the name of the *grouped* condition (i.e., the
 #    condition name before or after that ``/`` that is shared between the
 #    respective conditions you wish to group). See the "Subselecting epochs"
 #    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-#
+# 
 # Example
 # ~~~~~~~
 # >>> conditions = ['auditory/left', 'visual/left']
@@ -525,8 +525,7 @@ baseline = (None, 0)
 # or
 # >>> conditions = ['left', 'right']
 
-# conditions = ['left', 'right']
-conditions = [None]
+conditions = ['left', 'right']
 
 ###############################################################################
 # ARTIFACT REMOVAL

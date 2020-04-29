@@ -487,7 +487,6 @@ baseline = (None, 0)
 #    to conditions. The ``/``` character can be used to group conditions.
 #    See the "Subselecting epochs" tutorial for more information:
 #    https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-
 #
 # Example
 # ~~~~~~~

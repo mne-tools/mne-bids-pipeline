@@ -66,11 +66,19 @@ def run_inverse(subject, session=None):
     lambda2 = 1.0 / snr ** 2
 
     for condition, evoked in zip(config.conditions, evokeds):
-        stc = apply_inverse(evoked, inverse_operator, lambda2, "dSPM",
-                            pick_ori=None)
-        stc.save(op.join(fpath_deriv, '%s_%s_mne_dSPM_inverse-%s'
-                         % (config.study_name, subject,
-                            condition.replace(op.sep, ''))))
+        method = 'dSPM'
+        pick_ori = None
+
+        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        inverse_str = 'inverse-%s' % method
+        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+        fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
+                                                   inverse_str, hemi_str]))
+
+        stc = apply_inverse(evoked=evoked,
+                            inverse_operator=inverse_operator,
+                            lambda2=lambda2, method=method, pick_ori=pick_ori)
+        stc.save(fname_stc)
 
 
 def main():

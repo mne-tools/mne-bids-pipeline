@@ -740,7 +740,7 @@ shortest_event = 1
 #    To import data that was recorded with Maxshield on before running
 #    maxfilter set this to True.
 
-allow_maxshield = True
+allow_maxshield = False
 
 ###############################################################################
 # Overwrite with custom config options

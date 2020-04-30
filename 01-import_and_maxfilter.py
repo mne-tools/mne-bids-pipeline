@@ -114,7 +114,13 @@ def run_maxwell_filter(subject, session=None):
         # - sets channels types according to BIDS channels.tsv `type` column
         # - sets raw.annotations using the BIDS events.tsv
         _, bids_fname = op.split(bids_fpath)
-        raw = read_raw_bids(bids_fname, config.bids_root)
+
+        extra_params = dict()
+        if config.allow_maxshield:
+            extra_params['allow_maxshield'] = config.allow_maxshield
+
+        raw = read_raw_bids(bids_fname, config.bids_root,
+                            extra_params=extra_params)
 
         # XXX hack to deal with dates that fif files cannot handle
         if config.daysback is not None:

@@ -17,6 +17,36 @@ VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 
+# Retrieve custom configuration options
+# -------------------------------------
+#
+# For testing a specific dataset, create a Python file with a name of your
+# liking (e.g., ``mydataset-template-config.py``), and set an environment
+# variable ``MNE_BIDS_STUDY_CONFIG`` to that file.
+#
+# Example
+# ~~~~~~~
+# ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
+
+if "MNE_BIDS_STUDY_CONFIG" in os.environ:
+    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
+
+    if os.path.exists(cfg_path):
+        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
+    else:
+        msg = ('The custom configuration file specified in the '
+               'MNE_BIDS_STUDY_CONFIG environment variable could not be '
+               'found: {cfg_path}'.format(cfg_path=cfg_path))
+        raise ValueError(msg)
+
+    # Import configuration from an arbitrary path without having to fiddle
+    # with `sys.path`.
+    spec = importlib.util.spec_from_file_location(name='custom_config',
+                                                  location=cfg_path)
+    custom_cfg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(custom_cfg)
+    del spec, cfg_path
+
 # ``study_name`` : str
 #   Specify the name of your study. It will be used to populate filenames for
 #   saving the analysis results.
@@ -38,17 +68,19 @@ study_name = ''
 # or
 # >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
 
-bids_root = None
+bids_root = None  # XXX
 
+# Extract value from environment variable.
+bids_root = os.getenv('BIDS_ROOT', False)
 if not bids_root:
-    # Extract value from environment variable.
-    bids_root = os.getenv('BIDS_ROOT', False)
-    if not bids_root:
-        msg = ('You need to specify `bids_root` in config.py or define an '
-               'environment variable `BIDS_ROOT` pointing to the root of your '
-               'BIDS dataset')
+    # Read from custom configuration.
+    try:
+        bids_root = custom_cfg.bids_root
+    except AttributeError:
+        msg = ('You need to specify `bids_root` in your configuration, or '
+               'define an environment variable `BIDS_ROOT` pointing to the '
+               'root folder of your BIDS dataset')
         raise ValueError(msg)
-
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -744,41 +776,18 @@ allow_maxshield = False
 
 ###############################################################################
 # Overwrite with custom config options
-#
-# For testing a specific dataset, make a `config_<dataset_name>.py` file in
-# `/tests/configs` and set an environment variable `MNE_BIDS_STUDY_CONFIG` to
-# point to the config name (not including /tests/config, and not including .py)
-# For example `export MNE_BIDS_STUDY_CONFIG=config_eeg_matchingpennies`
+# ------------------------------------
 
-if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
-
-    if os.path.exists(cfg_path):
-        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
-    else:
-        msg = ('The custom configuration file specified in the '
-               'MNE_BIDS_STUDY_CONFIG environment variable could not be '
-               'found: {cfg_path}'.format(cfg_path=cfg_path))
-        raise ValueError(msg)
-
-    # Import configuration from an arbitrary path without having to fiddle
-    # with `sys.path`.
-    spec = importlib.util.spec_from_file_location(name='custom_config',
-                                                  location=cfg_path)
-    custom_cfg = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(custom_cfg)
-    del spec
-
-    new = None
-    for val in dir(custom_cfg):
-        if not val.startswith('__'):
-            exec("new = custom_cfg.%s" % val)
-            print('Overwriting: %s -> %s' % (val, new))
-            exec("%s = custom_cfg.%s" % (val, val))
+new = None
+for val in dir(custom_cfg):
+    if not val.startswith('__'):
+        exec("new = custom_cfg.%s" % val)
+        print('Overwriting: %s -> %s' % (val, new))
+        exec("%s = custom_cfg.%s" % (val, val))
 
 ###############################################################################
 # CHECKS
-# --------
+# ------
 #
 # --- --- You should not touch the next lines --- ---
 

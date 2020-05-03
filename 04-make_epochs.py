@@ -95,7 +95,7 @@ def run_epochs(subject, session=None):
     epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
-                        reject=config.reject)
+                        reject=config.get_reject())
 
     print('  Writing epochs to disk')
     bids_basename = make_bids_basename(subject=subject,

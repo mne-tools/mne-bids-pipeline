@@ -854,3 +854,20 @@ def get_kind():
         return 'eeg'
     else:
         return 'meg'
+
+
+def get_reject():
+    reject_ = reject.copy()  # Avoid clash with global variable.
+    kind = get_kind()
+
+    if kind == 'eeg':
+        ch_types_to_remove = ('mag', 'grad')
+    else:
+        ch_types_to_remove = ('eeg',)
+
+    for ch_type in ch_types_to_remove:
+        try:
+            del reject_[ch_type]
+        except KeyError:
+            pass
+    return reject_

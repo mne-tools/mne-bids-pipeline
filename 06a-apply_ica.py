@@ -93,7 +93,6 @@ def apply_ica(subject, run, session):
 
     for ch_type in config.ch_types:
         report = None
-        print(ch_type)
         picks = all_picks[ch_type]
 
         # Load ICA

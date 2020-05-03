@@ -77,7 +77,7 @@ def run_ica(subject, session=None):
 
     # don't reject based on EOG to keep blink artifacts
     # in the ICA computation.
-    reject_ica = config.reject
+    reject_ica = config.get_reject()
     if reject_ica and 'eog' in reject_ica:
         reject_ica = dict(reject_ica)
         del reject_ica['eog']

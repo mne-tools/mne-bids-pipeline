@@ -9,43 +9,13 @@ import os
 from collections import defaultdict
 
 import numpy as np
-from mne_bids.utils import get_entity_vals, get_kinds
+from mne_bids.utils import get_entity_vals
 
 # Name, version, and hosting location of the pipeline
 PIPELINE_NAME = 'mne-study-template'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
-
-# Retrieve custom configuration options
-# -------------------------------------
-#
-# For testing a specific dataset, create a Python file with a name of your
-# liking (e.g., ``mydataset-template-config.py``), and set an environment
-# variable ``MNE_BIDS_STUDY_CONFIG`` to that file.
-#
-# Example
-# ~~~~~~~
-# ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
-
-if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
-
-    if os.path.exists(cfg_path):
-        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
-    else:
-        msg = ('The custom configuration file specified in the '
-               'MNE_BIDS_STUDY_CONFIG environment variable could not be '
-               'found: {cfg_path}'.format(cfg_path=cfg_path))
-        raise ValueError(msg)
-
-    # Import configuration from an arbitrary path without having to fiddle
-    # with `sys.path`.
-    spec = importlib.util.spec_from_file_location(name='custom_config',
-                                                  location=cfg_path)
-    custom_cfg = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(custom_cfg)
-    del spec, cfg_path
 
 # ``study_name`` : str
 #   Specify the name of your study. It will be used to populate filenames for
@@ -68,19 +38,7 @@ study_name = ''
 # or
 # >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
 
-bids_root = None  # XXX
-
-# Extract value from environment variable.
-bids_root = os.getenv('BIDS_ROOT', False)
-if not bids_root:
-    # Read from custom configuration.
-    try:
-        bids_root = custom_cfg.bids_root
-    except AttributeError:
-        msg = ('You need to specify `bids_root` in your configuration, or '
-               'define an environment variable `BIDS_ROOT` pointing to the '
-               'root folder of your BIDS dataset')
-        raise ValueError(msg)
+bids_root = None
 
 # ``subjects_dir`` : str
 #   Path to the directory that contains the MRI data files and their
@@ -95,15 +53,14 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 
 daysback = None
 
-# ``plot``  : boolean
+# ``plot`` : boolean
 #   If True, the scripts will generate plots.
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-# plot = True
-plot = False
+plot = True
 
-# ``crop``: tuple or None
+# ``crop`` : tuple or None
 # If tuple, (tmin, tmax) to crop the raw data
 # If None (default), do not crop.
 crop = None
@@ -111,14 +68,17 @@ crop = None
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 
-sessions = get_entity_vals(bids_root, entity_key='ses')
-sessions = sessions if sessions else [None]
+# ``sessions`` : iterable or 'all'
+#   The sessions to process.
+sessions = 'all'
 
-# XXX: take only first task for now
-task = get_entity_vals(bids_root, entity_key='task')[0]
+# ``task`` : str
+#   The task to process.
+task = ''
 
-runs = get_entity_vals(bids_root, entity_key='run')
-runs = runs if runs else [None]
+# ``runs`` : iterable or 'all'
+#   The runs to process.
+runs = 'all'
 
 acq = None
 
@@ -128,19 +88,7 @@ rec = None
 
 space = None
 
-kinds = get_kinds(bids_root)
-if 'eeg' in kinds and 'meg' in kinds:
-    raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
-                       'environment variable `BIDS_KIND` and set it to the '
-                       'kind you want to analyze.')
-    kind = kinds[0]
-elif 'eeg' in kinds:
-    kind = 'eeg'
-elif 'meg' in kinds:
-    kind = 'meg'
-else:
-    raise ValueError('The study template is intended for EEG or MEG data, but'
-                     'your dataset does not contain data of either type.')
+kind = 'meg'
 
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
@@ -553,7 +501,7 @@ baseline = (None, 0)
 #    condition name before or after that ``/`` that is shared between the
 #    respective conditions you wish to group). See the "Subselecting epochs"
 #    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-# 
+#
 # Example
 # ~~~~~~~
 # >>> conditions = ['auditory/left', 'visual/left']
@@ -775,15 +723,57 @@ shortest_event = 1
 allow_maxshield = False
 
 ###############################################################################
-# Overwrite with custom config options
-# ------------------------------------
+# Retrieve custom configuration options
+# -------------------------------------
+#
+# For testing a specific dataset, create a Python file with a name of your
+# liking (e.g., ``mydataset-template-config.py``), and set an environment
+# variable ``MNE_BIDS_STUDY_CONFIG`` to that file.
+#
+# Example
+# ~~~~~~~
+# ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
 
-new = None
-for val in dir(custom_cfg):
-    if not val.startswith('__'):
-        exec("new = custom_cfg.%s" % val)
-        print('Overwriting: %s -> %s' % (val, new))
-        exec("%s = custom_cfg.%s" % (val, val))
+if "MNE_BIDS_STUDY_CONFIG" in os.environ:
+    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
+
+    if os.path.exists(cfg_path):
+        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
+    else:
+        msg = ('The custom configuration file specified in the '
+               'MNE_BIDS_STUDY_CONFIG environment variable could not be '
+               'found: {cfg_path}'.format(cfg_path=cfg_path))
+        raise ValueError(msg)
+
+    # Import configuration from an arbitrary path without having to fiddle
+    # with `sys.path`.
+    spec = importlib.util.spec_from_file_location(name='custom_config',
+                                                  location=cfg_path)
+    custom_cfg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(custom_cfg)
+    del spec, cfg_path
+
+    new = None
+    for val in dir(custom_cfg):
+        if not val.startswith('__'):
+            exec("new = custom_cfg.%s" % val)
+            print('Overwriting: %s -> %s' % (val, new))
+            exec("%s = custom_cfg.%s" % (val, val))
+
+
+# BIDS_ROOT environment variable takes precedence over any configuration file
+# values.
+if os.getenv('BIDS_ROOT') is not None:
+    bids_root = os.getenv('BIDS_ROOT')
+
+# If we don't have a bids_root until now, raise an exeception as we cannot
+# proceed.
+if not bids_root:
+    msg = ('You need to specify `bids_root` in your configuration, or '
+           'define an environment variable `BIDS_ROOT` pointing to the '
+           'root folder of your BIDS dataset')
+    raise ValueError(msg)
+
 
 ###############################################################################
 # CHECKS
@@ -797,3 +787,21 @@ if (use_maxwell_filter and
 
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
+
+
+###############################################################################
+# Helper functions
+# ----------------
+
+def get_sessions():
+    if sessions == 'all':
+        return get_entity_vals(bids_root, entity_key='ses')
+    else:
+        return sessions
+
+
+def get_runs():
+    if runs == 'all':
+        return get_entity_vals(bids_root, entity_key='run')
+    else:
+        return runs

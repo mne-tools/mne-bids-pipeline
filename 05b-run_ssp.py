@@ -32,7 +32,7 @@ def run_ssp(subject, session=None):
     subject_path = op.join(subject_path, config.kind)
 
     # compute SSP on first run of raw
-    run = config.runs[0]
+    run = config.get_runs()[0]
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -85,7 +85,7 @@ def main():
         return
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

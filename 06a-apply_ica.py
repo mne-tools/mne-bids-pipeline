@@ -69,7 +69,7 @@ def apply_ica(subject, run, session):
                                        session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.runs[0],
+                                       run=config.get_runs()[0],
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -228,8 +228,8 @@ def main():
         return
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.runs,
-                               config.sessions))
+             itertools.product(config.subjects_list, config.get_runs(),
+                               config.get_sessions()))
 
 
 if __name__ == '__main__':

@@ -58,7 +58,7 @@ def run_maxwell_filter(subject, session=None):
     subject_path = op.join(subject_path, config.kind)
     data_dir = op.join(config.bids_root, subject_path)
 
-    for run_idx, run in enumerate(config.runs):
+    for run_idx, run in enumerate(config.get_runs()):
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
@@ -216,7 +216,7 @@ def main():
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                           n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

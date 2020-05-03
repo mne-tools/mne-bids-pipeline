@@ -82,7 +82,7 @@ def main():
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

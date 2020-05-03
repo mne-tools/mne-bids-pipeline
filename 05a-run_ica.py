@@ -40,7 +40,7 @@ def run_ica(subject, session=None):
     raw_list = list()
     print("  Loading raw data")
 
-    for run in config.runs:
+    for run in config.get_runs():
         # load first run of raw data for ecg /eog epochs
         print("  Loading one run from raw data")
 
@@ -163,7 +163,7 @@ def main():
         return
     parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

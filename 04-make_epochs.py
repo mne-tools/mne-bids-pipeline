@@ -40,7 +40,7 @@ def run_epochs(subject, session=None):
 
     subject_path = op.join(subject_path, config.kind)
 
-    for run_idx, run in enumerate(config.runs):
+    for run_idx, run in enumerate(config.get_runs()):
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
@@ -56,7 +56,7 @@ def run_epochs(subject, session=None):
                               config.PIPELINE_NAME, subject_path)
 
         raw_fname_in = \
-                op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
         print("Input: ", raw_fname_in)
 
@@ -123,7 +123,7 @@ def main():
     # Here we use fewer N_JOBS to prevent potential memory problems
     parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

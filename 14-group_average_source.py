@@ -76,7 +76,7 @@ def main():
     all_morphed_stcs = parallel(run_func(subject, session)
                                 for subject, session in
                                 itertools.product(config.subjects_list,
-                                                  config.sessions))
+                                                  config.get_sessions()))
     all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                         zip(all_morphed_stcs, config.subjects_list)
                         if subject not in config.exclude_subjects]

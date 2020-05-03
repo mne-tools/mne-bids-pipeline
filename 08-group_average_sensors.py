@@ -18,7 +18,10 @@ import config
 all_evokeds = defaultdict(list)
 
 # XXX to fix
-session = config.sessions[0]
+if config.get_sessions():
+    session = config.get_sessions()[0]
+else:
+    session = None
 
 for subject in config.subjects_list:
     if subject in config.exclude_subjects:

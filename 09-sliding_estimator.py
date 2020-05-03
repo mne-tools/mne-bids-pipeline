@@ -99,7 +99,7 @@ def main():
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
     for subject in config.subjects_list:
-        for session in config.sessions:
+        for session in config.get_sessions():
             for conditions in config.decoding_conditions:
                 run_time_decoding(subject, *conditions, session=session)
 

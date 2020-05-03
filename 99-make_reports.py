@@ -88,7 +88,7 @@ def run_report(subject, session=None):
                                  initial_time=peak_time)
                 fig = brain._figures[0]
                 rep.add_figs_to_section(fig, evoked.condition)
-                
+
                 del peak_time
 
     task_str = 'task-%s' % config.task
@@ -100,7 +100,7 @@ def main():
     """Make reports."""
     parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
     # Group report
     evoked_fname = op.join(config.bids_root, 'derivatives',

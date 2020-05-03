@@ -61,7 +61,7 @@ def run_forward(subject, session=None):
                                        session=session,
                                        task=config.task,
                                        acquisition=config.acq,
-                                       run=config.runs[0],
+                                       run=config.get_runs()[0],
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -110,7 +110,7 @@ def main():
     """Run forward."""
     parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.subjects_list, config.get_sessions()))
 
 
 if __name__ == '__main__':

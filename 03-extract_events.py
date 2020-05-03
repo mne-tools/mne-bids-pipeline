@@ -50,7 +50,7 @@ def run_events(subject, run=None, session=None):
                           config.PIPELINE_NAME, subject_path)
 
     raw_fname_in = \
-            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
     eve_fname_out = op.join(fpath_deriv, bids_basename + '-eve.fif')
 
@@ -79,8 +79,8 @@ def main():
     """Run events."""
     parallel, run_func, _ = parallel_func(run_events, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.runs,
-                               config.sessions))
+             itertools.product(config.subjects_list, config.get_runs(),
+                               config.get_sessions()))
 
 
 if __name__ == '__main__':

@@ -792,7 +792,7 @@ if use_ssp and use_ica:
 # ----------------
 
 def get_sessions():
-    sessions_ = copy.deepcopy(sessions)
+    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
     if sessions_ == 'all':
         sessions_ = get_entity_vals(bids_root, entity_key='ses')
@@ -804,7 +804,7 @@ def get_sessions():
 
 
 def get_runs():
-    runs_ = copy.deepcopy(runs)
+    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 
     if runs_ == 'all':
         runs_ = get_entity_vals(bids_root, entity_key='run')

@@ -45,7 +45,7 @@ bids_root = None
 #   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
 #   $SUBJECTS_DIR used by the Freesurfer software.
 
-subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+subjects_dir = None
 
 # ``daysback``  : int
 #   If not None apply a time shift to dates to adjust for limitateions
@@ -96,11 +96,7 @@ kind = 'meg'
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-# subjects_list = ['05', '06', '07']
-
-subjects_list = get_entity_vals(bids_root, entity_key='sub')
-
-# subjects_list = ['05']
+subjects_list = 'all'
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -112,8 +108,6 @@ subjects_list = get_entity_vals(bids_root, entity_key='sub')
 # did not understand the instructions, etc, ...)
 
 exclude_subjects = ['emptyroom']
-subjects_list = list(set(subjects_list) - set(exclude_subjects))
-
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
@@ -274,6 +268,9 @@ mf_head_origin = 'auto'
 # cal_files_path = os.path.join(study_path, 'SSS')
 # mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
 # mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
+
+mf_ctc_fname = ''
+mf_cal_fname = ''
 
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
@@ -805,3 +802,12 @@ def get_runs():
         return get_entity_vals(bids_root, entity_key='run')
     else:
         return runs
+
+
+def get_subjects():
+    if subjects_list == 'all':
+        s = get_entity_vals(bids_root, entity_key='sub')
+    else:
+        s = subjects_list
+
+    return list(set(s) - set(exclude_subjects))

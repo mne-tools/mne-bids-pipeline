@@ -75,11 +75,10 @@ def main():
     parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
     all_morphed_stcs = parallel(run_func(subject, session)
                                 for subject, session in
-                                itertools.product(config.subjects_list,
+                                itertools.product(config.get_subjects(),
                                                   config.get_sessions()))
     all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
-                        zip(all_morphed_stcs, config.subjects_list)
-                        if subject not in config.exclude_subjects]
+                        zip(all_morphed_stcs, config.get_subjects())]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',

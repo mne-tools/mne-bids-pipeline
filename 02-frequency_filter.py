@@ -96,7 +96,7 @@ def main():
     """Run filter."""
     parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.get_runs(),
+             itertools.product(config.get_subjects(), config.get_runs(),
                                config.get_sessions()))
 
 

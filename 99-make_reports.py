@@ -100,7 +100,7 @@ def main():
     """Make reports."""
     parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.get_sessions()))
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
     # Group report
     evoked_fname = op.join(config.bids_root, 'derivatives',

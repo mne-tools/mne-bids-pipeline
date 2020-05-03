@@ -23,12 +23,8 @@ if config.get_sessions():
 else:
     session = None
 
-for subject in config.subjects_list:
-    if subject in config.exclude_subjects:
-        print("Ignoring subject: %s" % subject)
-        continue
-    else:
-        print("Processing subject: %s" % subject)
+for subject in config.get_subjects():
+    print("Processing subject: %s" % subject)
 
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))

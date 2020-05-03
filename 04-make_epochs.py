@@ -123,7 +123,7 @@ def main():
     # Here we use fewer N_JOBS to prevent potential memory problems
     parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.get_sessions()))
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
 
 if __name__ == '__main__':

@@ -792,29 +792,27 @@ if use_ssp and use_ica:
 # ----------------
 
 def get_sessions():
-    global sessions
-    sessions = copy.deepcopy(sessions)
+    sessions_ = copy.deepcopy(sessions)
 
-    if sessions == 'all':
-        sessions = get_entity_vals(bids_root, entity_key='ses')
+    if sessions_ == 'all':
+        sessions_ = get_entity_vals(bids_root, entity_key='ses')
 
-    if not sessions:
+    if not sessions_:
         return [None]
     else:
-        return sessions
+        return sessions_
 
 
 def get_runs():
-    global runs
-    runs = copy.deepcopy(runs)
+    runs_ = copy.deepcopy(runs)
 
-    if runs == 'all':
-        runs = get_entity_vals(bids_root, entity_key='run')
+    if runs_ == 'all':
+        runs_ = get_entity_vals(bids_root, entity_key='run')
 
-    if not runs:
+    if not runs_:
         return [None]
     else:
-        return runs
+        return runs_
 
 
 def get_subjects():

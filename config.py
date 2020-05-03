@@ -815,6 +815,6 @@ def get_subjects():
 
 def get_task():
     if not task:
-        return None
+        return get_entity_vals(bids_root, entity_key='task')[0]
     else:
         return task

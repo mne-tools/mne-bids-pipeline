@@ -7,6 +7,7 @@ of your BIDS dataset to be analyzed.
 import importlib
 import os
 from collections import defaultdict
+import copy
 
 import numpy as np
 from mne_bids.utils import get_entity_vals
@@ -58,7 +59,7 @@ daysback = None
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-plot = True
+plot = False
 
 # ``crop`` : tuple or None
 # If tuple, (tmin, tmax) to crop the raw data
@@ -791,15 +792,27 @@ if use_ssp and use_ica:
 # ----------------
 
 def get_sessions():
+    global sessions
+    sessions = copy.deepcopy(sessions)
+
     if sessions == 'all':
-        return get_entity_vals(bids_root, entity_key='ses')
+        sessions = get_entity_vals(bids_root, entity_key='ses')
+
+    if not sessions:
+        return [None]
     else:
         return sessions
 
 
 def get_runs():
+    global runs
+    runs = copy.deepcopy(runs)
+
     if runs == 'all':
-        return get_entity_vals(bids_root, entity_key='run')
+        runs = get_entity_vals(bids_root, entity_key='run')
+
+    if not runs:
+        return [None]
     else:
         return runs
 

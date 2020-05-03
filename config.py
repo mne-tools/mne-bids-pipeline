@@ -490,7 +490,7 @@ baseline = (None, 0)
 # >>> min_event_duration = 0.002  # 2 miliseconds
 
 # XXX not needed if bids events are present
-# min_event_duration = 0.002
+min_event_duration = 0.002
 
 #  ``event_id`` : dict
 #    Dictionary that maps events (trigger/marker values)

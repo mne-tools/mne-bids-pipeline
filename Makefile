@@ -13,7 +13,7 @@ fetch:
 sensor:
 	$(PYTHON) 01-import_and_maxfilter.py
 	$(PYTHON) 02-frequency_filter.py
-	$(PYTHON) 03-extract_events.py
+	$(PYTHON) 03-make_epochs.py
 	$(PYTHON) 04a-run_ica.py
 	$(PYTHON) 04b-run_ssp.py
 	$(PYTHON) 05a-apply_ica.py

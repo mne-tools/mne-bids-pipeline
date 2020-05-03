@@ -40,7 +40,7 @@ def apply_ica(subject, run, session):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -67,7 +67,7 @@ def apply_ica(subject, run, session):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=config.get_runs()[0],
                                        processing=config.proc,

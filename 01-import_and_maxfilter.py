@@ -62,7 +62,7 @@ def run_maxwell_filter(subject, session=None):
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
-                                           task=config.task,
+                                           task=config.get_task(),
                                            acquisition=config.acq,
                                            run=run,
                                            processing=config.proc,

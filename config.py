@@ -811,3 +811,10 @@ def get_subjects():
         s = subjects_list
 
     return list(set(s) - set(exclude_subjects))
+
+
+def get_task():
+    if not task:
+        return None
+    else:
+        return task

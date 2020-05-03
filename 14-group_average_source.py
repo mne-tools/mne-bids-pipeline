@@ -32,7 +32,7 @@ def morph_stc(subject, session=None):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -84,7 +84,7 @@ def main():
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME)
 
-    bids_basename = make_bids_basename(task=config.task,
+    bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,

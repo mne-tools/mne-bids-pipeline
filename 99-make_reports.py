@@ -30,7 +30,7 @@ def run_report(subject, session=None):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -91,8 +91,12 @@ def run_report(subject, session=None):
 
                 del peak_time
 
-    task_str = 'task-%s' % config.task
-    fname_report = op.join(fpath_deriv, 'report_%s.html' % task_str)
+    if config.get_task():
+        task_str = '_task-%s' % config.get_task()
+    else:
+        task_str = ''
+
+    fname_report = op.join(fpath_deriv, 'report%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -113,7 +117,7 @@ def main():
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME)
 
-    bids_basename = make_bids_basename(task=config.task,
+    bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -148,8 +152,12 @@ def main():
 
             del peak_time
 
-    task_str = 'task-%s' % config.task
-    fname_report = op.join(fpath_deriv, 'report_average_%s.html' % task_str)
+    if config.get_task():
+        task_str = '_task-%s' % config.get_task()
+    else:
+        task_str = ''
+
+    fname_report = op.join(fpath_deriv, 'report_average%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 

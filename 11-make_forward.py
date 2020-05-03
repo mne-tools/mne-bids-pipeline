@@ -28,7 +28,7 @@ def run_forward(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -68,7 +68,8 @@ def run_forward(subject, session=None):
                                        )
 
     data_dir = op.join(config.bids_root, subject_path)
-    search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
+    search_str = (op.join(data_dir, bids_basename) + '_' +
+                  config.get_kind() + '*')
     fnames = sorted(glob.glob(search_str))
     fnames = [f for f in fnames
               if op.splitext(f)[1] in mne_bids_readers]
@@ -92,7 +93,7 @@ def run_forward(subject, session=None):
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if 'eeg' in config.ch_types or config.kind == 'eeg':
+    if config.get_kind() == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
                                    subjects_dir=config.subjects_dir)

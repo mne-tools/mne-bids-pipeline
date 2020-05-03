@@ -37,7 +37,7 @@ def run_filter(subject, run=None, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,

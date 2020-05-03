@@ -10,6 +10,7 @@ from collections import defaultdict
 import copy
 
 import numpy as np
+import mne
 from mne_bids.utils import get_entity_vals
 
 # Name, version, and hosting location of the pipeline
@@ -89,8 +90,6 @@ rec = None
 
 space = None
 
-kind = 'meg'
-
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
 #   participant names. Even if you plan on analyzing a single participant, it
@@ -123,9 +122,7 @@ exclude_subjects = ['emptyroom']
 
 # Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
 # specified here or not
-ch_types = ['meg']
-if kind == 'eeg':
-    ch_types = ['eeg']
+ch_types = []
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -403,10 +400,7 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
-
-reject = {'grad': 4000e-13, 'mag': 4e-12}
-if kind == 'eeg':
-    reject = {'eeg': 150e-6}
+reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -535,10 +529,6 @@ use_ssp = True
 #    If True ICA should be used or not.
 
 use_ica = False
-
-if kind == 'eeg':
-    use_ssp = False
-    use_ica = True
 
 # ``ica_decim`` : int
 #    The decimation parameter to compute ICA. If 5 it means
@@ -786,6 +776,32 @@ if (use_maxwell_filter and
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
 
+if not ch_types:
+    msg = 'Please specify ch_types in your configuration.'
+    raise ValueError(msg)
+
+if ch_types == ['eeg']:
+    pass
+elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
+    msg = ('EEG data can only be analyzed separately from other channel '
+           'types. Please adjust `ch_types` in your configuration.')
+    raise ValueError(msg)
+elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+    msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
+           'configuration.')
+    raise ValueError(msg)
+
+if 'eeg' in ch_types:
+    if use_ssp:
+        msg = ('You requested SSP for EEG data via use_ssp=True. However, '
+               'this does not work. Please ICA instead by setting '
+               'use_ssp=False and use_ica=True.')
+        raise ValueError(msg)
+    if not use_ica:
+        msg = ('You did not request ICA artifact correction for your data. '
+               'To turn it on, set use_ica=True.')
+        mne.utils.warn(msg)
+
 
 ###############################################################################
 # Helper functions
@@ -829,3 +845,12 @@ def get_task():
         return get_entity_vals(bids_root, entity_key='task')[0]
     else:
         return task
+
+
+def get_kind():
+    # Content of ch_types should be sanitized already, so we don't need any
+    # extra sanity checks here.
+    if ch_types == ['eeg']:
+        return 'eeg'
+    else:
+        return 'meg'

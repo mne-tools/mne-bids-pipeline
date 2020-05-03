@@ -25,7 +25,7 @@ def morph_stc(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME, subject_path)

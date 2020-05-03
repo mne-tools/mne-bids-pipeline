@@ -32,7 +32,7 @@ def run_ica(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME, subject_path)
@@ -71,7 +71,7 @@ def run_ica(subject, session=None):
 
     events, event_id = mne.events_from_annotations(raw)
 
-    if "eeg" in config.ch_types or config.kind == 'eeg':
+    if config.get_kind() == 'eeg':
         raw.set_eeg_reference(projection=True)
     del raw_list
 
@@ -109,52 +109,45 @@ def run_ica(subject, session=None):
 
     n_components = {'meg': n_components_meg, 'eeg': 0.999}
 
-    ch_types = []
-    if 'eeg' in config.ch_types or config.kind == 'eeg':
-        ch_types.append('eeg')
-    if set(config.ch_types).intersection(('meg', 'grad', 'mag')):
-        ch_types.append('meg')
+    kind = config.get_kind()
+    print('Running ICA for ' + kind)
+    ica = ICA(method='fastica', random_state=config.random_state,
+              n_components=n_components[kind])
 
-    for ch_type in ch_types:
-        print('Running ICA for ' + ch_type)
+    picks = all_picks[kind]
+    if picks.size == 0:
+        ica.fit(epochs_for_ica, decim=config.ica_decim)
+    else:
+        ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
 
-        ica = ICA(method='fastica', random_state=config.random_state,
-                  n_components=n_components[ch_type])
+    print('  Fit %d components (explaining at least %0.1f%% of the'
+          ' variance)' % (ica.n_components_, 100 * n_components[kind]))
 
-        picks = all_picks[ch_type]
-        if picks.size == 0:
-            ica.fit(epochs_for_ica, decim=config.ica_decim)
-        else:
-            ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
+    # Load ICA
+    ica_fname = \
+        op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % kind)
 
-        print('  Fit %d components (explaining at least %0.1f%% of the'
-              ' variance)' % (ica.n_components_, 100 * n_components[ch_type]))
+    ica.save(ica_fname)
 
-        # Load ICA
-        ica_fname = \
-            op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % ch_type)
+    if config.plot:
+        # plot ICA components to html report
+        report_fname = \
+            op.join(fpath_deriv,
+                    bids_basename + '_%s-ica.html' % kind)
 
-        ica.save(ica_fname)
+        report = Report(report_fname, verbose=False)
 
-        if config.plot:
-            # plot ICA components to html report
-            report_fname = \
-                op.join(fpath_deriv,
-                        bids_basename + '_%s-ica.html' % ch_type)
+        for idx in range(0, ica.n_components_):
+            figure = ica.plot_properties(epochs_for_ica,
+                                         picks=idx,
+                                         psd_args={'fmax': 60},
+                                         show=False)
 
-            report = Report(report_fname, verbose=False)
+            report.add_figs_to_section(figure, section=subject,
+                                       captions=(kind.upper() +
+                                                 ' - ICA Components'))
 
-            for idx in range(0, ica.n_components_):
-                figure = ica.plot_properties(epochs_for_ica,
-                                             picks=idx,
-                                             psd_args={'fmax': 60},
-                                             show=False)
-
-                report.add_figs_to_section(figure, section=subject,
-                                           captions=(ch_type.upper() +
-                                                     ' - ICA Components'))
-
-            report.save(report_fname, overwrite=True, open_browser=False)
+        report.save(report_fname, overwrite=True, open_browser=False)
 
 
 def main():

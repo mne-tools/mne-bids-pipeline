@@ -38,7 +38,7 @@ def run_epochs(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     for run_idx, run in enumerate(config.get_runs()):
 
@@ -80,7 +80,7 @@ def run_epochs(subject, session=None):
     elif 'mag' in config.ch_types:
         meg = 'mag'
 
-    eeg = 'eeg' in config.ch_types or config.kind == 'eeg'
+    eeg = config.get_kind() == 'eeg'
 
     picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
                            eog=True, exclude=())

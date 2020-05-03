@@ -16,6 +16,7 @@ study_name = 'ds001971'
 task = 'AudioCueWalkingStudy'
 kind = 'eeg'
 plot = False
+ch_types = ['eeg']
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
 decoding_conditions = [('left', 'right')]

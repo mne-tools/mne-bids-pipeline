@@ -17,6 +17,31 @@ from mne_bids import make_bids_basename
 import config
 
 
+def plot_events(subject, session, fpath_deriv):
+    raws_filt = []
+    for run in config.get_runs():
+        bids_basename = make_bids_basename(subject=subject,
+                                           session=session,
+                                           task=config.get_task(),
+                                           acquisition=config.acq,
+                                           run=run,
+                                           processing=config.proc,
+                                           recording=config.rec,
+                                           space=config.space)
+        fname = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        raw_filt = mne.io.read_raw_fif(fname)
+        raws_filt.append(raw_filt)
+        del fname
+
+    # Concatenate the filtered raws and extract the events.
+    raw_filt_concat = mne.concatenate_raws(raws_filt)
+    events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
+    fig = mne.viz.plot_events(events=events, event_id=event_id,
+                              first_samp=raw_filt_concat.first_samp,
+                              show=False)
+    return fig
+
+
 def run_report(subject, session=None):
     print("Processing subject: %s" % subject)
 
@@ -40,8 +65,6 @@ def run_report(subject, session=None):
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME, subject_path)
-    fname_raw_filt_concat = \
-        op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
     fname_trans = \
@@ -56,13 +79,10 @@ def run_report(subject, session=None):
     rep.parse_folder(fpath_deriv, verbose=True)
 
     # Visualize events.
-    raw_filt_concat = mne.io.read_raw_fif(
-        fname=fname_raw_filt_concat, allow_maxshield=config.allow_maxshield)
-    events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
-    fig = mne.viz.plot_events(events=events, event_id=event_id,
-                              first_samp=raw_filt_concat.first_samp,
-                              show=False)
-    rep.add_figs_to_section([fig], ['Events in filtered continuous data'])
+    events_fig = plot_events(subject=subject, session=session,
+                             fpath_deriv=fpath_deriv)
+    rep.add_figs_to_section([events_fig],
+                            ['Events in filtered continuous data'])
 
     # Visualize evoked responses.
     evokeds = mne.read_evokeds(fname_ave)

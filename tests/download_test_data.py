@@ -82,7 +82,7 @@ def main(dataset):
         # get the first subject
         for to_get in get_dict[dsname]:
             print('datalad get data "{}" for "{}"'.format(to_get, dsname))
-            dataset.get(to_get, jobs='auto')
+            dataset.get(to_get, jobs=8)
 
 
 if __name__ == '__main__':

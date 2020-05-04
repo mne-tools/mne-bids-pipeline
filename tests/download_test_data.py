@@ -91,7 +91,7 @@ def main(dataset):
                 member.name = member.name.replace('MNE-somato-data/', '')
 
             # Do not extract fsaverage files, as they will be downloaded during
-            # ground-average source analysis via `mne.datasets.fetch_fsaverage`
+            # grand-average source analysis via `mne.datasets.fetch_fsaverage`
             members = [m for m in members if not
                        m.name.startswith('derivatives/freesurfer/subjects/'
                                          'fsaverage')]

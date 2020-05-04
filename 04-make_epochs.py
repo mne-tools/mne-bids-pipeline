@@ -38,13 +38,13 @@ def run_epochs(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
-    for run_idx, run in enumerate(config.runs):
+    for run_idx, run in enumerate(config.get_runs()):
 
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
-                                           task=config.task,
+                                           task=config.get_task(),
                                            acquisition=config.acq,
                                            run=run,
                                            processing=config.proc,
@@ -56,7 +56,7 @@ def run_epochs(subject, session=None):
                               config.PIPELINE_NAME, subject_path)
 
         raw_fname_in = \
-                op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
         print("Input: ", raw_fname_in)
 
@@ -80,7 +80,7 @@ def run_epochs(subject, session=None):
     elif 'mag' in config.ch_types:
         meg = 'mag'
 
-    eeg = 'eeg' in config.ch_types or config.kind == 'eeg'
+    eeg = config.get_kind() == 'eeg'
 
     picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
                            eog=True, exclude=())
@@ -95,12 +95,12 @@ def run_epochs(subject, session=None):
     epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
-                        reject=config.reject)
+                        reject=config.get_reject())
 
     print('  Writing epochs to disk')
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -123,7 +123,7 @@ def main():
     # Here we use fewer N_JOBS to prevent potential memory problems
     parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
 
 if __name__ == '__main__':

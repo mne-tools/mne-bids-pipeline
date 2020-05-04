@@ -18,14 +18,13 @@ import config
 all_evokeds = defaultdict(list)
 
 # XXX to fix
-session = config.sessions[0]
+if config.get_sessions():
+    session = config.get_sessions()[0]
+else:
+    session = None
 
-for subject in config.subjects_list:
-    if subject in config.exclude_subjects:
-        print("Ignoring subject: %s" % subject)
-        continue
-    else:
-        print("Processing subject: %s" % subject)
+for subject in config.get_subjects():
+    print("Processing subject: %s" % subject)
 
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -33,11 +32,11 @@ for subject in config.subjects_list:
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,

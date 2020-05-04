@@ -14,7 +14,6 @@ import os.path as op
 
 study_name = 'ds000117'
 task = 'facerecognition'
-kind = 'meg'
 ch_types = ['meg']
 runs = ['01']
 sessions = ['meg']

@@ -2,6 +2,7 @@ study_name = 'ds000248'
 subjects_list = ['01']
 conditions = ['Left', 'Right']
 
+ch_types = ['meg']
 mf_ctc_fname = None
 mf_cal_fname = None
 find_flat_channels_meg = True

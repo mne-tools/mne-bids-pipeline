@@ -37,11 +37,11 @@ def run_filter(subject, run=None, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=run,
                                        processing=config.proc,
@@ -96,8 +96,8 @@ def main():
     """Run filter."""
     parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.runs,
-                               config.sessions))
+             itertools.product(config.get_subjects(), config.get_runs(),
+                               config.get_sessions()))
 
 
 if __name__ == '__main__':

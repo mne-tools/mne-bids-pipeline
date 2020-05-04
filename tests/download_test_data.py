@@ -82,7 +82,7 @@ def main(dataset):
         # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
         # if datalad fails, use "get" twice, or set `n_jobs=1`
         if dsname == 'somato':
-            n_jobs = 32
+            n_jobs = 16
         else:
             n_jobs = 1
 

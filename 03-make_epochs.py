@@ -40,8 +40,7 @@ def run_epochs(subject, session=None):
 
     subject_path = op.join(subject_path, config.get_kind())
 
-    for run_idx, run in enumerate(config.get_runs()):
-
+    for run in config.get_runs():
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
                                            task=config.get_task(),

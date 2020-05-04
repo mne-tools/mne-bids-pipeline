@@ -445,48 +445,6 @@ trigger_time_shift = 0.
 
 baseline = (None, 0)
 
-# ``stim_channel`` : str
-#    The name of the stimulus channel, which contains the events.
-#
-# Example
-# ~~~~~~~
-# >>> stim_channel = 'STI 014'  # or 'STI101'
-
-# XXX not needed if bids events are present
-# stim_channel = 'STI 014'
-
-# ``min_event_duration`` : float
-#    The minimal duration of the events you want to extract (in seconds).
-#
-# Example
-# ~~~~~~~
-# >>> min_event_duration = 0.002  # 2 miliseconds
-
-# XXX not needed if bids events are present
-min_event_duration = 0.002
-
-#  ``event_id`` : dict
-#    Dictionary that maps events (trigger/marker values)
-#    to conditions. The ``/`` character can be used to group conditions.
-#    See the "Subselecting epochs" tutorial for more information:
-#    https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-#
-# Example
-# ~~~~~~~
-# Do not allow for easy grouping of conditions: left and right auditory
-# stimulation are treated entirely independently:
-# >>> event_id = {'auditory_left': 1, 'auditory_right': 2}`
-#
-# Allow for grouping of all ``auditory`` conditions, regardless of
-# stimulation side:
-# >>> event_id = {'auditory/left': 1, 'auditory/right': 2}`
-#
-# Allow for grouping into ``auditory``, ``visual``, ``left``, and ``right``:
-# >>> event_id = {'auditory/left': 1, 'auditory/right': 2,
-#                 'visual/left': 3, 'visual/right': 4}`
-
-# event_id = {'auditory/left': 1, 'auditory/right': 2}
-
 #  `conditions`` : list
 #    The condition names to consider. This can either be the keys of
 #    ``event_id``, or – if event names were specified with ``/`` for

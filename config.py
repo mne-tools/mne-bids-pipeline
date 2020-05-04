@@ -747,8 +747,8 @@ elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
 if 'eeg' in ch_types:
     if use_ssp:
         msg = ('You requested SSP for EEG data via use_ssp=True. However, '
-               'this is not presently supported. Please use ICA instead by setting '
-               'use_ssp=False and use_ica=True.')
+               'this is not presently supported. Please use ICA instead by '
+               'setting use_ssp=False and use_ica=True.')
         raise ValueError(msg)
     if not use_ica:
         msg = ('You did not request ICA artifact correction for your data. '

@@ -44,11 +44,11 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -98,8 +98,8 @@ def main():
     """Run sliding estimator."""
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
-    for subject in config.subjects_list:
-        for session in config.sessions:
+    for subject in config.get_subjects():
+        for session in config.get_sessions():
             for conditions in config.decoding_conditions:
                 run_time_decoding(subject, *conditions, session=session)
 

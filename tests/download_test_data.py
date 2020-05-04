@@ -2,6 +2,8 @@
 import os
 import os.path as op
 
+import wget
+import tarfile
 import datalad.api as dl
 import mne
 from mne.commands.utils import get_optparser
@@ -12,9 +14,9 @@ DEFAULT_DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
 def _provide_testing_data(dataset=None):
     """Return dict of dataset, and the corresponding URLs."""
     urls_dict = {
-        'eeg_matchingpennies': (
-            'https://github.com/sappelhoff/eeg_matchingpennies'),
-        'somato': ('https://github.com/sappelhoff/MNE-somato-data'),
+        'eeg_matchingpennies':
+            'https://github.com/sappelhoff/eeg_matchingpennies',
+        'somato': 'https://osf.io/tp4sg/download',
         'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
@@ -75,17 +77,38 @@ def main(dataset):
     for dsname, url in urls_dict.items():
         print('\n----------------------')
         dspath = op.join(data_dir, dsname)
-        # install the dataset
-        print('datalad installing "{}"'.format(dsname))
-        dataset = dl.install(path=dspath, source=url)
 
-        # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
-        # if datalad fails, use "get" twice, or set `n_jobs=1`
-        n_jobs = 1
-        # get the first subject
-        for to_get in get_dict[dsname]:
-            print('datalad get data "{}" for "{}"'.format(to_get, dsname))
-            dataset.get(to_get, jobs=n_jobs)
+        # install the dataset
+        if dsname == 'somato':
+            print('Retrieving {dsname} dataset from OSF'.format(dsname=dsname))
+            fname = wget.download(url=url)
+            archive = tarfile.open(fname)
+            members = archive.getmembers()
+            for member in members:
+                # Drop the `MNE-somato-data/` root directory from the path,
+                # so we can extract to `dspath`
+                # (instead of `dspath/MNE-somato-data/`)
+                member.name = member.name.replace('MNE-somato-data/', '')
+
+            # Do not extract fsaverage files, as they will be downloaded during
+            # ground-average source analysis via `mne.datasets.fetch_fsaverage`
+            members = [m for m in members if not
+                       m.name.startswith('derivatives/freesurfer/subjects/'
+                                         'fsaverage')]
+            archive.extractall(path=dspath, members=members)
+            os.remove(fname)
+        else:
+            print('datalad installing "{}"'.format(dsname))
+            dataset = dl.install(path=dspath, source=url)
+
+            # XXX: git-annex bug:
+            # https://github.com/datalad/datalad/issues/3583
+            # if datalad fails, use "get" twice, or set `n_jobs=1`
+            n_jobs = 1
+            # get the first subject
+            for to_get in get_dict[dsname]:
+                print('datalad get data "{}" for "{}"'.format(to_get, dsname))
+                dataset.get(to_get, jobs=n_jobs)
 
 
 if __name__ == '__main__':

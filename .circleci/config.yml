@@ -66,6 +66,11 @@ jobs:
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 
+        - run:
+            name: Install Python `wget` to retrieve somato dataset from OSF
+            command: |
+              pip install wget
+
         # Save Python cache
         - save_cache:
             key: pip-cache-0

@@ -795,7 +795,7 @@ if 'eeg' in ch_types:
     if not use_ica:
         msg = ('You did not request ICA artifact correction for your data. '
                'To turn it on, set use_ica=True.')
-        mne.utils.warn(msg)
+        mne.utils.logger.info(msg)
 
 
 ###############################################################################

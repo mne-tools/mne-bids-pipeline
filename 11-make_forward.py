@@ -87,7 +87,7 @@ def run_forward(subject, session=None):
     mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,
-                                 subjects_dir=config.subjects_dir,
+                                 subjects_dir=config.get_subjects_dir(),
                                  add_dist=False)
 
     evoked = mne.read_evokeds(fname_evoked, condition=0)
@@ -96,10 +96,10 @@ def run_forward(subject, session=None):
     if config.get_kind() == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
-                                   subjects_dir=config.subjects_dir)
+                                   subjects_dir=config.get_subjects_dir())
     else:
         model = mne.make_bem_model(subject, ico=4, conductivity=(0.3,),
-                                   subjects_dir=config.subjects_dir)
+                                   subjects_dir=config.get_subjects_dir())
 
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(evoked.info, trans, src, bem,

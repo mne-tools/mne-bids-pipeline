@@ -44,7 +44,7 @@ def run_report(subject, session=None):
         op.join(fpath_deriv, bids_basename + '-ave.fif')
     fname_trans = \
         op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
-    subjects_dir = config.subjects_dir
+    subjects_dir = config.get_subjects_dir()
     if not op.exists(fname_trans):
         subject = None
         subjects_dir = None
@@ -69,7 +69,7 @@ def run_report(subject, session=None):
     if op.exists(fname_trans):
         fig = mne.viz.plot_alignment(evoked.info, fname_trans,
                                      subject=subject,
-                                     subjects_dir=config.subjects_dir,
+                                     subjects_dir=config.get_subjects_dir(),
                                      meg=True, dig=True, eeg=True)
         rep.add_figs_to_section(fig, 'Coregistration')
 
@@ -111,7 +111,7 @@ def main():
                            config.PIPELINE_NAME,
                            '%s_grand_average-ave.fif' % config.study_name)
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.subjects_dir)
+                     subjects_dir=config.get_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
@@ -144,7 +144,7 @@ def main():
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
             _, peak_time = stc.get_peak()
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
-                             subjects_dir=config.subjects_dir,
+                             subjects_dir=config.get_subjects_dir(),
                              initial_time=peak_time)
 
             fig = brain._figures[0]

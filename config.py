@@ -42,10 +42,11 @@ study_name = ''
 
 bids_root = None
 
-# ``subjects_dir`` : str
+# ``subjects_dir`` : str or None
 #   Path to the directory that contains the MRI data files and their
 #   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-#   $SUBJECTS_DIR used by the Freesurfer software.
+#   $SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
+#   ``'bids_root/derivatives/freesurfer/subjects'``.
 
 subjects_dir = None
 
@@ -662,12 +663,6 @@ smooth = 10
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
-# if not os.path.isdir(study_path):
-#     os.mkdir(study_path)
-
-# if not os.path.isdir(subjects_dir):
-#    os.mkdir(subjects_dir)
-
 ###############################################################################
 # ADVANCED
 # --------
@@ -871,3 +866,10 @@ def get_reject():
         except KeyError:
             pass
     return reject_
+
+
+def get_subjects_dir():
+    if not subjects_dir:
+        return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+    else:
+        return subjects_dir

@@ -40,8 +40,8 @@ def morph_stc(subject, session=None):
                                        space=config.space
                                        )
 
-    mne.utils.set_config('SUBJECTS_DIR', config.subjects_dir)
-    mne.datasets.fetch_fsaverage(subjects_dir=config.subjects_dir)
+    mne.utils.set_config('SUBJECTS_DIR', config.get_subjects_dir())
+    mne.datasets.fetch_fsaverage(subjects_dir=config.get_subjects_dir())
 
     morphed_stcs = []
     for condition in config.conditions:
@@ -58,9 +58,9 @@ def morph_stc(subject, session=None):
                                                 hemi_str]))
 
         stc = mne.read_source_estimate(fname_stc)
-        morph = mne.compute_source_morph(stc, subject_from=subject,
-                                         subject_to='fsaverage',
-                                         subjects_dir=config.subjects_dir)
+        morph = mne.compute_source_morph(
+            stc, subject_from=subject, subject_to='fsaverage',
+            subjects_dir=config.get_subjects_dir())
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
         morphed_stcs.append(stc_fsaverage)

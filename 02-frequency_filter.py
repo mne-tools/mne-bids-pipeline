@@ -92,12 +92,53 @@ def run_filter(subject, run=None, session=None):
                      fmin=0., fmax=50., average=True)
 
 
+def concatenate_filtered_raws(subject, session):
+    subject_path = op.join('sub-{}'.format(subject))
+    if session is not None:
+        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+
+    subject_path = op.join(subject_path, config.get_kind())
+    fpath_deriv = op.join(config.bids_root, 'derivatives',
+                          config.PIPELINE_NAME, subject_path)
+
+    raws_filt = []
+    for run in config.get_runs():
+        bids_basename = make_bids_basename(subject=subject,
+                                           session=session,
+                                           task=config.get_task(),
+                                           acquisition=config.acq,
+                                           run=run,
+                                           processing=config.proc,
+                                           recording=config.rec,
+                                           space=config.space)
+        fname = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        raw_filt = mne.io.read_raw_fif(fname)
+        raws_filt.append(raw_filt)
+        del fname
+
+    # Concatenate the filtered raws and write them to disk.
+    raw_filt_concat = mne.concatenate_raws(raws_filt)
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+    fname = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+    raw_filt_concat.save(fname)
+
+
 def main():
     """Run filter."""
     parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
              itertools.product(config.get_subjects(), config.get_runs(),
                                config.get_sessions()))
+
+    # Do not parallelize concatenation to avoid memory issues.
+    for subject, session in zip(config.get_subjects(), config.get_sessions()):
+        concatenate_filtered_raws(subject=subject, session=session)
 
 
 if __name__ == '__main__':

@@ -126,7 +126,7 @@ def concatenate_filtered_raws(subject, session):
                                        recording=config.rec,
                                        space=config.space)
     fname = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
-    raw_filt_concat.save(fname)
+    raw_filt_concat.save(fname, overwrite=True)
 
 
 def main():

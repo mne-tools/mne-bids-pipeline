@@ -40,7 +40,7 @@ def run_report(subject, session=None):
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME, subject_path)
-    fname_raw_filt = \
+    fname_raw_filt_concat = \
         op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
     fname_ave = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
@@ -56,12 +56,12 @@ def run_report(subject, session=None):
     rep.parse_folder(fpath_deriv, verbose=True)
 
     # Visualize events.
-    raw_filt = mne.io.read_raw_fif(fname=fname_raw_filt,
-                                   allow_maxshield=config.allow_maxshield)
-    events = mne.find_events(raw=raw_filt,
-                             min_duration=config.min_event_duration)
-    fig = mne.viz.plot_events(events=events, first_samp=raw_filt.first_samp,
-                              event_id=config.event_id, show=False)
+    raw_filt_concat = mne.io.read_raw_fif(
+        fname=fname_raw_filt_concat, allow_maxshield=config.allow_maxshield)
+    events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
+    fig = mne.viz.plot_events(events=events, event_id=event_id,
+                              first_samp=raw_filt_concat.first_samp,
+                              show=False)
     rep.add_figs_to_section([fig], ['Events in filtered continuous data'])
 
     # Visualize evoked responses.

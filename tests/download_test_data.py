@@ -90,11 +90,11 @@ def main(dataset):
                 # (instead of `dspath/MNE-somato-data/`)
                 member.name = member.name.replace('MNE-somato-data/', '')
 
-            # Do not extract fsaverage files, as they will be downloaded during
-            # grand-average source analysis via `mne.datasets.fetch_fsaverage`
+            # Do not extract derivatives files. Required fsaverage data will
+            # be downloaded during grand-average source analysis via
+            # `mne.datasets.fetch_fsaverage`
             members = [m for m in members if not
-                       m.name.startswith('derivatives/freesurfer/subjects/'
-                                         'fsaverage')]
+                       m.name.startswith('derivatives/')]
             archive.extractall(path=dspath, members=members)
             os.remove(fname)
         else:

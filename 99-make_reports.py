@@ -38,6 +38,7 @@ def plot_events(subject, session, fpath_deriv):
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     fig = mne.viz.plot_events(events=events, event_id=event_id,
                               first_samp=raw_filt_concat.first_samp,
+                              sfreq=raw_filt_concat.info['sfreq'],
                               show=False)
     return fig
 
@@ -70,12 +71,12 @@ def run_report(subject, session=None):
     fname_trans = \
         op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
     subjects_dir = config.get_subjects_dir()
-    if not op.exists(fname_trans):
-        subject = None
-        subjects_dir = None
+    if op.exists(fname_trans):
+        rep = mne.Report(info_fname=fname_ave, subject=subject,
+                         subjects_dir=subjects_dir)
+    else:
+        rep = mne.Report(info_fname=fname_ave)
 
-    rep = mne.Report(info_fname=fname_ave, subject=subject,
-                     subjects_dir=subjects_dir)
     rep.parse_folder(fpath_deriv, verbose=True)
 
     # Visualize events.

@@ -79,10 +79,13 @@ def main(dataset):
         print('datalad installing "{}"'.format(dsname))
         dataset = dl.install(path=dspath, source=url)
 
+        # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
+        # if datalad fails, use "get" twice, or set `n_jobs=1`
+        n_jobs = 1
         # get the first subject
         for to_get in get_dict[dsname]:
             print('datalad get data "{}" for "{}"'.format(to_get, dsname))
-            dataset.get(to_get, jobs=8)
+            dataset.get(to_get, jobs=n_jobs)
 
 
 if __name__ == '__main__':

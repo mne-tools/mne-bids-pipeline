@@ -26,11 +26,11 @@ def run_report(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -46,7 +46,7 @@ def run_report(subject, session=None):
         op.join(fpath_deriv, bids_basename + '-ave.fif')
     fname_trans = \
         op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
-    subjects_dir = config.subjects_dir
+    subjects_dir = config.get_subjects_dir()
     if not op.exists(fname_trans):
         subject = None
         subjects_dir = None
@@ -80,7 +80,7 @@ def run_report(subject, session=None):
     if op.exists(fname_trans):
         fig = mne.viz.plot_alignment(evoked.info, fname_trans,
                                      subject=subject,
-                                     subjects_dir=config.subjects_dir,
+                                     subjects_dir=config.get_subjects_dir(),
                                      meg=True, dig=True, eeg=True)
         rep.add_figs_to_section(fig, 'Coregistration')
 
@@ -99,11 +99,15 @@ def run_report(subject, session=None):
                                  initial_time=peak_time)
                 fig = brain._figures[0]
                 rep.add_figs_to_section(fig, evoked.condition)
-                
+
                 del peak_time
 
-    task_str = 'task-%s' % config.task
-    fname_report = op.join(fpath_deriv, 'report_%s.html' % task_str)
+    if config.get_task():
+        task_str = '_task-%s' % config.get_task()
+    else:
+        task_str = ''
+
+    fname_report = op.join(fpath_deriv, 'report%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -111,20 +115,20 @@ def main():
     """Make reports."""
     parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
     # Group report
     evoked_fname = op.join(config.bids_root, 'derivatives',
                            config.PIPELINE_NAME,
                            '%s_grand_average-ave.fif' % config.study_name)
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.subjects_dir)
+                     subjects_dir=config.get_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
     fpath_deriv = op.join(config.bids_root, 'derivatives',
                           config.PIPELINE_NAME)
 
-    bids_basename = make_bids_basename(task=config.task,
+    bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -151,7 +155,7 @@ def main():
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
             _, peak_time = stc.get_peak()
             brain = stc.plot(views=['lat'], hemi='both', subject='fsaverage',
-                             subjects_dir=config.subjects_dir,
+                             subjects_dir=config.get_subjects_dir(),
                              initial_time=peak_time)
 
             fig = brain._figures[0]
@@ -159,8 +163,12 @@ def main():
 
             del peak_time
 
-    task_str = 'task-%s' % config.task
-    fname_report = op.join(fpath_deriv, 'report_average_%s.html' % task_str)
+    if config.get_task():
+        task_str = '_task-%s' % config.get_task()
+    else:
+        task_str = ''
+
+    fname_report = op.join(fpath_deriv, 'report_average%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 

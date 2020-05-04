@@ -28,11 +28,11 @@ def run_forward(subject, session=None):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -59,16 +59,17 @@ def run_forward(subject, session=None):
     # XXX : maybe simplify
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
-                                       run=config.runs[0],
+                                       run=config.get_runs()[0],
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
                                        )
 
     data_dir = op.join(config.bids_root, subject_path)
-    search_str = op.join(data_dir, bids_basename) + '_' + config.kind + '*'
+    search_str = (op.join(data_dir, bids_basename) + '_' +
+                  config.get_kind() + '*')
     fnames = sorted(glob.glob(search_str))
     fnames = [f for f in fnames
               if op.splitext(f)[1] in mne_bids_readers]
@@ -86,19 +87,19 @@ def run_forward(subject, session=None):
     mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,
-                                 subjects_dir=config.subjects_dir,
+                                 subjects_dir=config.get_subjects_dir(),
                                  add_dist=False)
 
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if 'eeg' in config.ch_types or config.kind == 'eeg':
+    if config.get_kind() == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
-                                   subjects_dir=config.subjects_dir)
+                                   subjects_dir=config.get_subjects_dir())
     else:
         model = mne.make_bem_model(subject, ico=4, conductivity=(0.3,),
-                                   subjects_dir=config.subjects_dir)
+                                   subjects_dir=config.get_subjects_dir())
 
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(evoked.info, trans, src, bem,
@@ -110,7 +111,7 @@ def main():
     """Run forward."""
     parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.subjects_list, config.sessions))
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
 
 if __name__ == '__main__':

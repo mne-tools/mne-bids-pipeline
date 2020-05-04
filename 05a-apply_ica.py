@@ -36,11 +36,11 @@ def apply_ica(subject, run, session):
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.kind)
+    subject_path = op.join(subject_path, config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
@@ -67,9 +67,9 @@ def apply_ica(subject, run, session):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.task,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
-                                       run=config.runs[0],
+                                       run=config.get_runs()[0],
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space
@@ -93,7 +93,6 @@ def apply_ica(subject, run, session):
 
     for ch_type in config.ch_types:
         report = None
-        print(ch_type)
         picks = all_picks[ch_type]
 
         # Load ICA
@@ -228,8 +227,8 @@ def main():
         return
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.subjects_list, config.runs,
-                               config.sessions))
+             itertools.product(config.get_subjects(), config.get_runs(),
+                               config.get_sessions()))
 
 
 if __name__ == '__main__':

@@ -7,9 +7,11 @@ of your BIDS dataset to be analyzed.
 import importlib
 import os
 from collections import defaultdict
+import copy
 
 import numpy as np
-from mne_bids.utils import get_entity_vals, get_kinds
+import mne
+from mne_bids.utils import get_entity_vals
 
 # Name, version, and hosting location of the pipeline
 PIPELINE_NAME = 'mne-study-template'
@@ -40,22 +42,13 @@ study_name = ''
 
 bids_root = None
 
-if not bids_root:
-    # Extract value from environment variable.
-    bids_root = os.getenv('BIDS_ROOT', False)
-    if not bids_root:
-        msg = ('You need to specify `bids_root` in config.py or define an '
-               'environment variable `BIDS_ROOT` pointing to the root of your '
-               'BIDS dataset')
-        raise ValueError(msg)
-
-
-# ``subjects_dir`` : str
+# ``subjects_dir`` : str or None
 #   Path to the directory that contains the MRI data files and their
 #   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-#   $SUBJECTS_DIR used by the Freesurfer software.
+#   $SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
+#   ``'bids_root/derivatives/freesurfer/subjects'``.
 
-subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+subjects_dir = None
 
 # ``daysback``  : int
 #   If not None apply a time shift to dates to adjust for limitateions
@@ -63,15 +56,14 @@ subjects_dir = os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 
 daysback = None
 
-# ``plot``  : boolean
+# ``plot`` : boolean
 #   If True, the scripts will generate plots.
 #   If running the scripts from a notebook or spyder
 #   run %matplotlib qt in the command line to get the plots in extra windows
 
-# plot = True
 plot = False
 
-# ``crop``: tuple or None
+# ``crop`` : tuple or None
 # If tuple, (tmin, tmax) to crop the raw data
 # If None (default), do not crop.
 crop = None
@@ -79,14 +71,17 @@ crop = None
 # BIDS params
 # see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
 
-sessions = get_entity_vals(bids_root, entity_key='ses')
-sessions = sessions if sessions else [None]
+# ``sessions`` : iterable or 'all'
+#   The sessions to process.
+sessions = 'all'
 
-# XXX: take only first task for now
-task = get_entity_vals(bids_root, entity_key='task')[0]
+# ``task`` : str
+#   The task to process.
+task = ''
 
-runs = get_entity_vals(bids_root, entity_key='run')
-runs = runs if runs else [None]
+# ``runs`` : iterable or 'all'
+#   The runs to process.
+runs = 'all'
 
 acq = None
 
@@ -96,31 +91,13 @@ rec = None
 
 space = None
 
-kinds = get_kinds(bids_root)
-if 'eeg' in kinds and 'meg' in kinds:
-    raise RuntimeError('Found data of kind EEG and MEG. Please specify an '
-                       'environment variable `BIDS_KIND` and set it to the '
-                       'kind you want to analyze.')
-    kind = kinds[0]
-elif 'eeg' in kinds:
-    kind = 'eeg'
-elif 'meg' in kinds:
-    kind = 'meg'
-else:
-    raise ValueError('The study template is intended for EEG or MEG data, but'
-                     'your dataset does not contain data of either type.')
-
 # ``subjects_list`` : list of str
 #   To define the list of participants, we use a list with all the anonymized
 #   participant names. Even if you plan on analyzing a single participant, it
 #   needs to be set up as a list with a single element, as in the 'example'
 #   subjects_list = ['SB01']
 
-# subjects_list = ['05', '06', '07']
-
-subjects_list = get_entity_vals(bids_root, entity_key='sub')
-
-# subjects_list = ['05']
+subjects_list = 'all'
 
 # ``exclude_subjects`` : list of str
 #   Now you can specify subjects to exclude from the group study:
@@ -132,8 +109,6 @@ subjects_list = get_entity_vals(bids_root, entity_key='sub')
 # did not understand the instructions, etc, ...)
 
 exclude_subjects = ['emptyroom']
-subjects_list = list(set(subjects_list) - set(exclude_subjects))
-
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
@@ -148,9 +123,7 @@ subjects_list = list(set(subjects_list) - set(exclude_subjects))
 
 # Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
 # specified here or not
-ch_types = ['meg']
-if kind == 'eeg':
-    ch_types = ['eeg']
+ch_types = []
 
 ###############################################################################
 # DEFINE ADDITIONAL CHANNELS
@@ -295,6 +268,9 @@ mf_head_origin = 'auto'
 # mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
 # mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
 
+mf_ctc_fname = ''
+mf_cal_fname = ''
+
 # Despite all possible care to avoid movements in the MEG, the participant
 # will likely slowly drift down from the Dewar or slightly shift the head
 # around in the course of the recording session. Hence, to take this into
@@ -425,10 +401,7 @@ decim = 1
 # >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
 # >>> reject = None
 
-
-reject = {'grad': 4000e-13, 'mag': 4e-12}
-if kind == 'eeg':
-    reject = {'eeg': 150e-6}
+reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 
 ###############################################################################
 # EPOCHING
@@ -521,7 +494,7 @@ min_event_duration = 0.002
 #    condition name before or after that ``/`` that is shared between the
 #    respective conditions you wish to group). See the "Subselecting epochs"
 #    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-# 
+#
 # Example
 # ~~~~~~~
 # >>> conditions = ['auditory/left', 'visual/left']
@@ -557,10 +530,6 @@ use_ssp = True
 #    If True ICA should be used or not.
 
 use_ica = False
-
-if kind == 'eeg':
-    use_ssp = False
-    use_ica = True
 
 # ``ica_decim`` : int
 #    The decimation parameter to compute ICA. If 5 it means
@@ -694,12 +663,6 @@ smooth = 10
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
-# if not os.path.isdir(study_path):
-#     os.mkdir(study_path)
-
-# if not os.path.isdir(subjects_dir):
-#    os.mkdir(subjects_dir)
-
 ###############################################################################
 # ADVANCED
 # --------
@@ -743,12 +706,16 @@ shortest_event = 1
 allow_maxshield = False
 
 ###############################################################################
-# Overwrite with custom config options
+# Retrieve custom configuration options
+# -------------------------------------
 #
-# For testing a specific dataset, make a `config_<dataset_name>.py` file in
-# `/tests/configs` and set an environment variable `MNE_BIDS_STUDY_CONFIG` to
-# point to the config name (not including /tests/config, and not including .py)
-# For example `export MNE_BIDS_STUDY_CONFIG=config_eeg_matchingpennies`
+# For testing a specific dataset, create a Python file with a name of your
+# liking (e.g., ``mydataset-template-config.py``), and set an environment
+# variable ``MNE_BIDS_STUDY_CONFIG`` to that file.
+#
+# Example
+# ~~~~~~~
+# ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
 
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
@@ -767,7 +734,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
                                                   location=cfg_path)
     custom_cfg = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(custom_cfg)
-    del spec
+    del spec, cfg_path
 
     new = None
     for val in dir(custom_cfg):
@@ -776,9 +743,24 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
             print('Overwriting: %s -> %s' % (val, new))
             exec("%s = custom_cfg.%s" % (val, val))
 
+
+# BIDS_ROOT environment variable takes precedence over any configuration file
+# values.
+if os.getenv('BIDS_ROOT') is not None:
+    bids_root = os.getenv('BIDS_ROOT')
+
+# If we don't have a bids_root until now, raise an exeception as we cannot
+# proceed.
+if not bids_root:
+    msg = ('You need to specify `bids_root` in your configuration, or '
+           'define an environment variable `BIDS_ROOT` pointing to the '
+           'root folder of your BIDS dataset')
+    raise ValueError(msg)
+
+
 ###############################################################################
 # CHECKS
-# --------
+# ------
 #
 # --- --- You should not touch the next lines --- ---
 
@@ -788,3 +770,106 @@ if (use_maxwell_filter and
 
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
+
+if not ch_types:
+    msg = 'Please specify ch_types in your configuration.'
+    raise ValueError(msg)
+
+if ch_types == ['eeg']:
+    pass
+elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
+    msg = ('EEG data can only be analyzed separately from other channel '
+           'types. Please adjust `ch_types` in your configuration.')
+    raise ValueError(msg)
+elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+    msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
+           'configuration.')
+    raise ValueError(msg)
+
+if 'eeg' in ch_types:
+    if use_ssp:
+        msg = ('You requested SSP for EEG data via use_ssp=True. However, '
+               'this is not presently supported. Please use ICA instead by setting '
+               'use_ssp=False and use_ica=True.')
+        raise ValueError(msg)
+    if not use_ica:
+        msg = ('You did not request ICA artifact correction for your data. '
+               'To turn it on, set use_ica=True.')
+        mne.utils.logger.info(msg)
+
+
+###############################################################################
+# Helper functions
+# ----------------
+
+def get_sessions():
+    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
+
+    if sessions_ == 'all':
+        sessions_ = get_entity_vals(bids_root, entity_key='ses')
+
+    if not sessions_:
+        return [None]
+    else:
+        return sessions_
+
+
+def get_runs():
+    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
+
+    if runs_ == 'all':
+        runs_ = get_entity_vals(bids_root, entity_key='run')
+
+    if not runs_:
+        return [None]
+    else:
+        return runs_
+
+
+def get_subjects():
+    if subjects_list == 'all':
+        s = get_entity_vals(bids_root, entity_key='sub')
+    else:
+        s = subjects_list
+
+    return list(set(s) - set(exclude_subjects))
+
+
+def get_task():
+    if not task:
+        return get_entity_vals(bids_root, entity_key='task')[0]
+    else:
+        return task
+
+
+def get_kind():
+    # Content of ch_types should be sanitized already, so we don't need any
+    # extra sanity checks here.
+    if ch_types == ['eeg']:
+        return 'eeg'
+    else:
+        return 'meg'
+
+
+def get_reject():
+    reject_ = reject.copy()  # Avoid clash with global variable.
+    kind = get_kind()
+
+    if kind == 'eeg':
+        ch_types_to_remove = ('mag', 'grad')
+    else:
+        ch_types_to_remove = ('eeg',)
+
+    for ch_type in ch_types_to_remove:
+        try:
+            del reject_[ch_type]
+        except KeyError:
+            pass
+    return reject_
+
+
+def get_subjects_dir():
+    if not subjects_dir:
+        return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+    else:
+        return subjects_dir

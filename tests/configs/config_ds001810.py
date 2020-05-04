@@ -15,6 +15,7 @@ export BIDS_ROOT=~/mne_data/ds001810
 study_name = 'ds001810'
 task = 'attentionalblink'
 plot = False
+ch_types = ['eeg']
 reject = {'eeg': 150e-6}
 conditions = ['61510', '61511']
 decoding_conditions = [('61510', '61511')]

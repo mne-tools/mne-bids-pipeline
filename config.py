@@ -500,24 +500,47 @@ conditions = ['left', 'right']
 # if you choose SSP, run scripts 5b and 6b
 #
 # Currently you cannot use both.
+
+# SSP
+# ~~~
 #
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
 use_ssp = True
 
+# ICA
+# ~~~
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
 
 use_ica = False
 
-# ``ica_decim`` : int
+# ``ica_algorithm`` : 'picard' | 'fastica' | 'extended_infomax'
+#   The ICA algorithm to use.
+
+ica_algorithm = 'picard'
+
+# ``ica_max_iterations`` : int
+#   Maximum number of iterations to decompose the data into independent
+#   components. A low number means to finish earlier, but a the cost that the
+#   algorithm may not always have finished converging. That means to ensure
+#   convergence, pick a high number here (e.g. 3000); the algorithm will
+#   terminate as soon as it determines that is has successfully converged, and
+#   not necessarily exhaust the maximum number of iterations. Note that the
+#   default of 200 seems to be sufficient for Picard in many datasets, because
+#   it converges quicker than the other algorithms; but e.g. for FastICA, this
+#   limit may be too low to achieve convergence.
+
+ica_max_iterations = 200
+
+# ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means
 #    that 1 every 5 sample is used by ICA solver. The higher the faster
-#    it is to run but the less data you have to compute a good ICA.
+#    it is to run but the less data you have to compute a good ICA. Set to
+#    ``1`` ``None`` to not perform an decimation.
 
-ica_decim = 11
-
+ica_decim = 1
 
 # ``default_reject_comps_factory`` : callable
 #    A factory function that returns a default rejection component dictionary:

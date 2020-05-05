@@ -3,7 +3,7 @@
 13. Inverse solution
 ====================
 
-Compute and apply a dSPM inverse solution for each evoked data set.
+Compute and apply an inverse solution for each evoked data set.
 """
 
 import os.path as op
@@ -66,7 +66,7 @@ def run_inverse(subject, session=None):
     lambda2 = 1.0 / snr ** 2
 
     for condition, evoked in zip(config.conditions, evokeds):
-        method = 'dSPM'
+        method = config.inverse_method
         pick_ori = None
 
         cond_str = 'cond-%s' % condition.replace(op.sep, '')

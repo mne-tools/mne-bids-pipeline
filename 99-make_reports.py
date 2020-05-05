@@ -106,7 +106,7 @@ def run_report(subject, session=None):
         rep.add_figs_to_section(fig, 'Coregistration')
 
         for evoked in evokeds:
-            method = 'dSPM'
+            method = config.inverse_method
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
@@ -161,7 +161,7 @@ def main():
                                             show=False),
                                 'Average %s' % condition)
 
-        method = 'dSPM'
+        method = config.inverse_method
         cond_str = 'cond-%s' % condition.replace(op.sep, '')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.

@@ -45,7 +45,7 @@ def morph_stc(subject, session=None):
 
     morphed_stcs = []
     for condition in config.conditions:
-        method = 'dSPM'
+        method = config.inverse_method
         cond_str = 'cond-%s' % condition.replace(op.sep, '')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
@@ -94,7 +94,7 @@ def main():
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
 
-        method = 'dSPM'
+        method = config.inverse_method
         cond_str = 'cond-%s' % condition.replace(op.sep, '')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.

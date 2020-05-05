@@ -626,10 +626,10 @@ loose = 0.2
 
 depth = 0.8
 
-# method : "MNE" | "dSPM" | "sLORETA" | "eLORETA"
+# inverse_method : "MNE" | "dSPM" | "sLORETA" | "eLORETA"
 #    Use minimum norm, dSPM (default), sLORETA, or eLORETA.
 
-method = 'dSPM'
+inverse_method = 'dSPM'
 
 # smooth : int | None
 #    Number of iterations for the smoothing of the surface data.

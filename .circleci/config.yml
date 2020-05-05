@@ -108,7 +108,7 @@ jobs:
     <<: *docker
 
     steps:
-      - <<: *checkout_code_and_setup_ci
+      - *checkout_code_and_setup_ci
       - run:
           name: test ds000246
           command: |
@@ -118,13 +118,13 @@ jobs:
               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
-      # <<: *store_artifacts_and_save_cache
+      - *store_artifacts_and_save_cache
   
   ds000248:
     <<: *docker
 
     steps:
-      - <<: *checkout_code_and_setup_ci
+      - *checkout_code_and_setup_ci
       - run:
           name: test ds000248
           command: |
@@ -134,7 +134,7 @@ jobs:
               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
-      # <<: *store_artifacts_and_save_cache
+      - *store_artifacts_and_save_cache
 
   ds001810:
     <<: *docker
@@ -150,13 +150,13 @@ jobs:
               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/*/report_*.html ~/reports/${DS}/
               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
-      # <<: *store_artifacts_and_save_cache
+      - *store_artifacts_and_save_cache
 
   eeg_matchingpennies:
     <<: *docker
 
     steps:
-      - <<: *checkout_code_and_setup_ci
+      - *checkout_code_and_setup_ci
       - run:
           name: test eeg_matchingpennies
           command: |
@@ -166,13 +166,13 @@ jobs:
               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
-      # <<: *store_artifacts_and_save_cache
+      - *store_artifacts_and_save_cache
 
   somato:
     <<: *docker
 
     steps:
-      - <<: *checkout_code_and_setup_ci
+      - *checkout_code_and_setup_ci
       - run:
           name: test somato
           command: |
@@ -182,7 +182,7 @@ jobs:
               # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
               # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
-      # <<: *store_artifacts_and_save_cache
+      - *store_artifacts_and_save_cache
 
 workflows:
   version: 2

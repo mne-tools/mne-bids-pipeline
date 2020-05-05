@@ -13,22 +13,21 @@ fetch:
 sensor:
 	$(PYTHON) 01-import_and_maxfilter.py
 	$(PYTHON) 02-frequency_filter.py
-	$(PYTHON) 03-extract_events.py
-	$(PYTHON) 04-make_epochs.py
-	$(PYTHON) 05a-run_ica.py
-	$(PYTHON) 05b-run_ssp.py
-	$(PYTHON) 06a-apply_ica.py
-	$(PYTHON) 06b-apply_ssp.py
-	$(PYTHON) 07-make_evoked.py
-	$(PYTHON) 08-group_average_sensors.py
-	$(PYTHON) 09-sliding_estimator.py
-	$(PYTHON) 10-time_frequency.py
+	$(PYTHON) 03-make_epochs.py
+	$(PYTHON) 04a-run_ica.py
+	$(PYTHON) 04b-run_ssp.py
+	$(PYTHON) 05a-apply_ica.py
+	$(PYTHON) 05b-apply_ssp.py
+	$(PYTHON) 06-make_evoked.py
+	$(PYTHON) 07-group_average_sensors.py
+	$(PYTHON) 08-sliding_estimator.py
+	$(PYTHON) 09-time_frequency.py
 
 source:
-	$(PYTHON) 11-make_forward.py
-	$(PYTHON) 12-make_cov.py
-	$(PYTHON) 13-make_inverse.py
-	$(PYTHON) 14-group_average_source.py
+	$(PYTHON) 10-make_forward.py
+	$(PYTHON) 11-make_cov.py
+	$(PYTHON) 12-make_inverse.py
+	$(PYTHON) 13-group_average_source.py
 
 report:
 	$(PYTHON) 99-make_reports.py

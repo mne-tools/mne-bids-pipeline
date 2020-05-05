@@ -57,13 +57,7 @@ def run_ica(subject, session=None):
         raw_fname_in = \
             op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
-        eve_fname = \
-            op.join(fpath_deriv, bids_basename + '-eve.fif')
-
-        print("Input: ", raw_fname_in, eve_fname)
-
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-
         raw_list.append(raw)
 
     print('  Concatenating runs')

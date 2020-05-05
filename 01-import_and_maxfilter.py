@@ -123,6 +123,27 @@ def run_maxwell_filter(subject, session=None):
         raw = read_raw_bids(bids_fname, config.bids_root,
                             extra_params=extra_params)
 
+        # Rename events.
+        if config.rename_events:
+            # Check if the user requested to rename events that don't exist.
+            # We don't want this to go unnoticed.
+            event_names_set = set(raw.annotations.description)
+            rename_events_set = set(config.rename_events.keys())
+            events_not_in_raw = rename_events_set - event_names_set
+            if events_not_in_raw:
+                msg = (f'You requested to rename the following events, but '
+                       f'they are not present in the BIDS input data:\n'
+                       f'{", ".join(sorted(list(events_not_in_raw)))}')
+                raise ValueError(msg)
+
+            # Do the actual event renaming.
+            mne.utils.logger.info('Renaming events …')
+            description = raw.annotations.description
+            for old_event_name, new_event_name in config.rename_events.items():
+                msg = f'… {old_event_name} -> {new_event_name}'
+                mne.utils.logger.info(msg)
+                description[description == old_event_name] = new_event_name
+
         # XXX hack to deal with dates that fif files cannot handle
         if config.daysback is not None:
             raw.anonymize(daysback=config.daysback)

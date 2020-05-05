@@ -47,7 +47,33 @@ def plot_events(subject, session, deriv_path):
     return fig
 
 
-@failsafe_run(on_error=on_error)
+def plot_er_psd(subject, session):
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+
+    raw_er_filtered_fname = op.join(deriv_path,
+                                    f'{bids_basename}_emptyroom_filt_raw.fif')
+
+    extra_params = dict()
+    if not config.use_maxwell_filter and config.allow_maxshield:
+        extra_params['allow_maxshield'] = config.allow_maxshield
+
+    raw_er_filtered = mne.io.read_raw_fif(raw_er_filtered_fname, preload=True,
+                                          **extra_params)
+    fig = raw_er_filtered.plot_psd(show=False)
+    return fig
+
+
 def run_report(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
@@ -106,10 +132,14 @@ def run_report(subject, session=None):
         else:
             msg = ('Cannot render sensor alignment (coregistration) because '
                    'no usable 3d backend was found.')
-            logger.warn(gen_log_message(message=msg, step='99',
+            logger.warn(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
         for evoked in evokeds:
+            msg = 'Rendering inverse solution for {evoked.comment} …'
+            logger.info(gen_log_message(message=msg, step=99,
+                                        subject=subject, session=session))
+
             method = config.inverse_method
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
@@ -149,6 +179,13 @@ def run_report(subject, session=None):
 
                 del peak_time
 
+    if config.noise_cov == 'emptyroom':
+        fig_er_psd = plot_er_psd(subject=subject, session=session)
+        rep.add_figs_to_section(figs=fig_er_psd,
+                                captions='Empty-Room Power Spectral Density '
+                                         '(after filtering)',
+                                section='Empty-Room')
+
     if config.get_task():
         task_str = '_task-%s' % config.get_task()
     else:
@@ -158,6 +195,7 @@ def run_report(subject, session=None):
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Make reports."""
     msg = 'Running Step 99: Create reports'
@@ -209,8 +247,8 @@ def main():
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
                                  initial_time=peak_time,  backend='mayavi')
-                rep.add_figs_to_section(brain._figures[0],
-                                        evoked.comment)
+                figs = [brain._figures[0]]
+                captions = [evoked.comment]
             else:
                 import matplotlib.pyplot as plt
                 fig_lh = plt.figure()
@@ -222,11 +260,11 @@ def main():
                 brain_rh = stc.plot(views='lat', hemi='rh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_rh)
-                rep.add_figs_to_section([brain_lh, brain_rh],
-                                        [evoked.comment, evoked.comment])
+                figs = [brain_lh, brain_rh]
+                captions = [f'{evoked.comment} - left',
+                            f'{evoked.comment} - right']
 
-            fig = brain._figures[0]
-            rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
+            rep.add_figs_to_section(figs=figs, captions=captions,
                                     section='Sources')
 
             del peak_time

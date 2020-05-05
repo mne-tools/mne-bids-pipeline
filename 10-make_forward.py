@@ -52,8 +52,7 @@ def run_forward(subject, session=None):
                                        run=config.get_runs()[0],
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
     trans = get_head_mri_trans(bids_basename=bids_basename,
                                bids_root=config.bids_root)
@@ -67,7 +66,7 @@ def run_forward(subject, session=None):
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if config.get_kind() == 'eeg':
+    if 'eeg' in config.ch_types:
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
                                    subjects_dir=config.get_fs_subjects_dir())

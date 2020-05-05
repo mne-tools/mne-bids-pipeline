@@ -123,6 +123,7 @@ subjects_list = 'all'
 # Keep track of the criteria leading you to exclude
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
+# The ``emptyroom`` subject will be excluded automatically.
 
 exclude_subjects = []
 
@@ -671,6 +672,38 @@ depth = 0.8
 
 inverse_method = 'dSPM'
 
+# noise_cov : (None, 0) | ‘emptyroom’
+#   Specify how to estimate the noise covariance matrix, which is used in
+#   inverse modeling.
+#
+#   If a tuple, it takes the form ``(tmin, tmax)`` with the time specified in
+#   seconds. If the first value of the tuple is ``None``, the considered
+#   period starts at the beginning of the epoch. If the second value of the
+#   tuple is ``None``, the considered period ends at the end of the epoch.
+#   The default, ``(None, 0)``, includes the entire period before the event,
+#   which is typically the pre-stimulus period.
+#
+#   If ``emptyroom``, the noise covariance matrix will be estimated from an
+#   empty-room MEG recording. The empty-room recording will be automatically
+#   selected based on recording date and time.
+#
+#   Please note that when processing data that contains EEG channels, the noise
+#   covariance can ONLY be estimated from the pre-stimulus period.
+#
+# Example
+# ~~~~~~~
+# Use the period from start of the epoch until 100 ms before the experimental
+# event:
+# >>> noise_cov = (None, -0.1)
+#
+# Use the time period from the experimental event until the end of the epoch:
+# >>> noise_cov = (0, None)
+#
+# Use an empty-room recording:
+# >>> noise_cov = 'emptyroom'
+
+noise_cov = (None, 0)
+
 # smooth : int | None
 #    Number of iterations for the smoothing of the surface data.
 #    If None, smooth is automatically defined to fill the surface
@@ -860,6 +893,18 @@ if on_error not in ('continue', 'abort'):
            f"{on_error}.")
     logger.info(msg)
 
+if isinstance(noise_cov, str) and noise_cov != 'emptyroom':
+    msg = (f"noise_cov must be a tuple or 'emptyroom', but received "
+           f"{noise_cov}")
+    raise ValueError(msg)
+
+if noise_cov == 'emptyroom' and 'eeg' in ch_types:
+    msg = ('You requested to process data that contains EEG channels. In this '
+           'case, noise covariance can only be estimated from the '
+           'experimental data, e.g., the pre-stimulus period. Please set '
+           'noise_cov to (tmin, tmax)')
+    raise ValueError(msg)
+
 
 ###############################################################################
 # Helper functions
@@ -895,12 +940,20 @@ def get_subjects():
     else:
         s = subjects_list
 
-    return list(set(s) - set(exclude_subjects))
+    subjects = set(s) - set(exclude_subjects)
+    # Drop empty-room subject.
+    subjects = subjects - set(['emptyroom'])
+
+    return list(subjects)
 
 
 def get_task():
     if not task:
-        return get_entity_vals(bids_root, entity_key='task')[0]
+        tasks = get_entity_vals(bids_root, entity_key='task')
+        if not tasks:
+            return None
+        else:
+            return tasks[0]
     else:
         return task
 

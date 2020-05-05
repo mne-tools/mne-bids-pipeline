@@ -1,5 +1,7 @@
 study_name = 'ds000248'
 subjects_list = ['01']
+rename_events = {'Smiley': 'Emoji',
+                 'Button': 'Switch'}
 conditions = ['Left', 'Right']
 
 ch_types = ['meg']

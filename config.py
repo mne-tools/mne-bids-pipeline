@@ -403,6 +403,25 @@ decim = 1
 
 reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 
+
+###############################################################################
+# RENAME EXPERIMENTAL EVENTS
+# --------------------------
+#
+# ``rename_events`` : dict
+#   A dictionary specifying which events in the BIDS dataset to rename upon
+#   loading, and before processing begins.
+#
+#   Pass an empty dictionary to not perform any renaming.
+#
+# Example
+# ~~~~~~~
+# Rename ``audio_left`` in the BIDS dataset to ``audio/left`` in the pipeline:
+# >>> rename_events = {'audio_left': 'audio/left'}
+
+rename_events = dict()
+
+
 ###############################################################################
 # EPOCHING
 # --------

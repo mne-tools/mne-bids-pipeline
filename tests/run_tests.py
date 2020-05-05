@@ -106,7 +106,7 @@ def run_tests(test_suite):
         os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
         del config_name, config_path
 
-        # Fetch the data and remove potentially leftoft derivatives e.g. from
+        # Fetch the data and remove potentially leftover derivatives e.g. from
         # previously aborted tests.
         fetch(dataset)
         clean_derivatives(os.environ['BIDS_ROOT'])

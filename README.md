@@ -62,20 +62,19 @@ The following table provides a concise summary of each step in the pipeline.
 | [config.py](config.py) | The only file you need to modify in principle. This file contain all your parameters. |
 | [01-import_and_maxfilter.py](01-import_and_maxfilter.py) | Import raw data and apply Maxwell filter. |
 | [02-frequency_filter.py](02-frequency_filter.py) | Apply low- and high-pass filters. |
-| [03-extract_events.py](03-extract_events.py) | Extract events or annotations or markers from the data and save it to disk. Uses events from stimulus channel STI101. |
-| [04-make_epochs.py](04-make_epochs.py) | Extract epochs. |
-| [05a-run_ica.py](05a-run_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |
-| [05b-run_ssp.py](05a-run_ssp.py) | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
-| [06a-apply_ica.py](06a-apply_ica.py) | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart artifacts. Use either 5a/6a, or 5b/6b. |
-| [06b-apply_ssp.py](06b-apply_ssp.py) | Apply SSP projections and obtain the cleaned epochs.  |
-| [07-make_evoked.py](07-make_evoked.py) | Extract evoked data for each condition. |
-| [08-group_average_sensors.py](08-group_average_sensors.py) | Make a group average of the time domain data. |
-| [09-sliding_estimator.py](09-sliding_estimator.py) | Running a time-by-time decoder with sliding window. |
-| [10-time_frequency.py](10-time_frequency.py) | Running a time-frequency analysis. |
-| [11-make_forward.py](11-make_forward.py) | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
-| [12-make_cov.py](12-make_cov.py) | Compute noise covariances for each subject. |
-| [13-make_inverse.py](13-make_inverse.py) | Compute inverse problem to obtain source estimates. |
-| [14-group_average_source.py](14-group_average_source.py) | Compute source estimates average over subjects. |
+| [03-make_epochs.py](04-make_epochs.py) | Extract epochs. |
+| [04a-run_ica.py](04a-run_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |
+| [04b-run_ssp.py](04a-run_ssp.py) | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
+| [05a-apply_ica.py](05a-apply_ica.py) | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart artifacts. Use either 5a/6a, or 5b/6b. |
+| [05b-apply_ssp.py](05b-apply_ssp.py) | Apply SSP projections and obtain the cleaned epochs.  |
+| [06-make_evoked.py](06-make_evoked.py) | Extract evoked data for each condition. |
+| [07-group_average_sensors.py](07-group_average_sensors.py) | Make a group average of the time domain data. |
+| [08-sliding_estimator.py](08-sliding_estimator.py) | Running a time-by-time decoder with sliding window. |
+| [09-time_frequency.py](09-time_frequency.py) | Running a time-frequency analysis. |
+| [10-make_forward.py](10-make_forward.py) | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
+| [11-make_cov.py](11-make_cov.py) | Compute noise covariances for each subject. |
+| [12-make_inverse.py](12-make_inverse.py) | Compute inverse problem to obtain source estimates. |
+| [13-group_average_source.py](13-group_average_source.py) | Compute source estimates average over subjects. |
 | [99-make_reports.py](99-make_reports.py) | Compute HTML reports for each subject. |
 
 

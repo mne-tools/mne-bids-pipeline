@@ -2,6 +2,7 @@
 import sys
 import os
 import os.path as op
+import shutil
 import argparse
 import importlib
 
@@ -14,6 +15,13 @@ def fetch(dataset=None):
     """Fetch the data."""
     from download_test_data import main
     main(dataset)
+
+
+def clean_derivatives(bids_root):
+    derivatives_path = op.join(bids_root, 'derivatives', 'mne-study-template')
+    if op.exists(derivatives_path):
+        print('Cleaning derivatives directory …')
+        shutil.rmtree(derivatives_path)
 
 
 def sensor():
@@ -98,16 +106,21 @@ def run_tests(test_suite):
         os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
         del config_name, config_path
 
-        # Fetch the data
+        # Fetch the data and remove potentially leftoft derivatives e.g. from
+        # previously aborted tests.
         fetch(dataset)
+        clean_derivatives(os.environ['BIDS_ROOT'])
 
         # run the pipelines
         for pipeline in test_tuple[1::]:
             pipeline()
+        
+        # Delete derivatives after testing is finished. 
+        clean_derivatives(os.environ['BIDS_ROOT'])
+
 
 
 if __name__ == '__main__':
-
     # Check if we have a DATASET env var, else: inquire for one
     dataset = os.environ.get('DATASET')
     if dataset is None:

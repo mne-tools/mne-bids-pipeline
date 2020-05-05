@@ -140,7 +140,7 @@ jobs:
     <<: *docker
 
     steps:
-      - <<: *checkout_code_and_setup_ci
+      - *checkout_code_and_setup_ci
       - run:
           name: test ds001810
           command: |

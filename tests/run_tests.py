@@ -17,13 +17,6 @@ def fetch(dataset=None):
     main(dataset)
 
 
-def clean_derivatives(bids_root):
-    derivatives_path = op.join(bids_root, 'derivatives', 'mne-study-template')
-    if op.exists(derivatives_path):
-        print('Cleaning derivatives directory …')
-        shutil.rmtree(derivatives_path)
-
-
 def sensor():
     """Run sensor pipeline."""
     mod = importlib.import_module('01-import_and_maxfilter')
@@ -106,19 +99,12 @@ def run_tests(test_suite):
         os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
         del config_name, config_path
 
-        # Fetch the data and remove potentially leftover derivatives e.g. from
-        # previously aborted tests.
+        # Fetch the data.
         fetch(dataset)
-        clean_derivatives(os.environ['BIDS_ROOT'])
 
         # run the pipelines
         for pipeline in test_tuple[1::]:
             pipeline()
-
-        # Delete derivatives after testing is finished. Skip this step on
-        # circle, as we intend to retain the generated reports.
-        if os.environ['CI'] != 'true':
-            clean_derivatives(os.environ['BIDS_ROOT'])
 
 
 if __name__ == '__main__':

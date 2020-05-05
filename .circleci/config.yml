@@ -93,7 +93,7 @@ references:
         command: |
           mkdir ~/reports
 
-  store_artifacts_and_save_cache: &store_artifacts_and_save_cache:
+  store_artifacts_and_save_cache: &store_artifacts_and_save_cache
     - store_artifacts:
       path: /home/circleci/reports
       destination: reports

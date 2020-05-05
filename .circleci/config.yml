@@ -101,6 +101,7 @@ jobs:
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test ds000248
@@ -110,6 +111,7 @@ jobs:
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test ds001810
@@ -119,6 +121,7 @@ jobs:
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/*/report_*.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test eeg_matchingpennies
@@ -128,6 +131,7 @@ jobs:
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test somato
@@ -137,6 +141,7 @@ jobs:
                # mkdir ~/reports/${DS}
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
                # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - store_artifacts:
             path: /home/circleci/reports

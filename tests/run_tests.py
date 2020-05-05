@@ -114,10 +114,11 @@ def run_tests(test_suite):
         # run the pipelines
         for pipeline in test_tuple[1::]:
             pipeline()
-        
-        # Delete derivatives after testing is finished. 
-        clean_derivatives(os.environ['BIDS_ROOT'])
 
+        # Delete derivatives after testing is finished. Skip this step on
+        # circle, as we intend to retain the generated reports.
+        if os.environ['CI'] != 'true':
+            clean_derivatives(os.environ['BIDS_ROOT'])
 
 
 if __name__ == '__main__':

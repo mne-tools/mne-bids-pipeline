@@ -2,6 +2,7 @@
 import sys
 import os
 import os.path as op
+import shutil
 import argparse
 import importlib
 
@@ -98,7 +99,7 @@ def run_tests(test_suite):
         os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
         del config_name, config_path
 
-        # Fetch the data
+        # Fetch the data.
         fetch(dataset)
 
         # run the pipelines
@@ -107,7 +108,6 @@ def run_tests(test_suite):
 
 
 if __name__ == '__main__':
-
     # Check if we have a DATASET env var, else: inquire for one
     dataset = os.environ.get('DATASET')
     if dataset is None:

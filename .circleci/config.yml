@@ -1,12 +1,13 @@
+---
 version: 2
 
 aliases:
-  - &docker
+  docker: &docker
     - image: circleci/python:3.6.8-stretch
-  
-  - &checkout_code_and_setup_ci
+
+  checkout_code_and_setup_ci: &checkout_code_and_setup_ci
     - checkout
-    
+
     - run:
       name: Set BASH_ENV
       command: |
@@ -93,7 +94,7 @@ aliases:
         command: |
           mkdir ~/reports
 
-  - &store_artifacts_and_save_cache
+  store_artifacts_and_save_cache: &store_artifacts_and_save_cache
     - store_artifacts:
       path: /home/circleci/reports
       destination: reports
@@ -119,7 +120,7 @@ jobs:
               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
       - *store_artifacts_and_save_cache
-  
+
   ds000248:
     <<: *docker
 

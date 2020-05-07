@@ -34,6 +34,8 @@ import os
 import os.path as op
 import glob
 import itertools
+import logging
+
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
@@ -43,12 +45,13 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 # XXX currently only tested with use_maxwell_filter = False
 def run_maxwell_filter(subject, session=None):
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -108,7 +111,7 @@ def run_maxwell_filter(subject, session=None):
             }
 
             fname = op.join(deriv_path, 'dataset_description.json')
-            _write_json(fname, ds_json, overwrite=True, verbose=True)
+            _write_json(fname, ds_json, overwrite=True)
 
         # read_raw_bids automatically
         # - populates bad channels using the BIDS channels.tsv
@@ -137,11 +140,14 @@ def run_maxwell_filter(subject, session=None):
                 raise ValueError(msg)
 
             # Do the actual event renaming.
-            mne.utils.logger.info('Renaming events …')
+            msg = 'Renaming events …'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
             description = raw.annotations.description
             for old_event_name, new_event_name in config.rename_events.items():
                 msg = f'… {old_event_name} -> {new_event_name}'
-                mne.utils.logger.info(msg)
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
                 description[description == old_event_name] = new_event_name
 
         # XXX hack to deal with dates that fif files cannot handle
@@ -166,43 +172,54 @@ def run_maxwell_filter(subject, session=None):
                 msg = ('Finding flat channels, and noisy channels using '
                        'Maxwell filtering.')
 
-            print(msg)
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
             raw_lp_filtered_for_maxwell = (raw.copy()
                                            .filter(l_freq=None,
-                                                   h_freq=40,
-                                                   verbose=True))
+                                                   h_freq=40))
             auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
                 raw=raw_lp_filtered_for_maxwell,
                 calibration=config.mf_cal_fname,
-                cross_talk=config.mf_ctc_fname,
-                verbose=True)
+                cross_talk=config.mf_ctc_fname)
             del raw_lp_filtered_for_maxwell
 
             bads = raw.info['bads'].copy()
             if config.find_flat_channels_meg:
-                print(f'Found {len(auto_flat_chs)} flat channels.')
+                msg = f'Found {len(auto_flat_chs)} flat channels.'
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
                 bads.extend(auto_flat_chs)
             if config.find_noisy_channels_meg:
-                print(f'Found {len(auto_noisy_chs)} noisy channels.')
+                msg = f'Found {len(auto_noisy_chs)} noisy channels.'
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
                 bads.extend(auto_noisy_chs)
 
             bads = sorted(set(bads))
             raw.info['bads'] = bads
-            print(f'Marked {len(raw.info["bads"])} channels as bad.')
+            msg = f'Marked {len(raw.info["bads"])} channels as bad.'
+            logger.info(gen_log_message(message=msg, step=1,
+                                        subject=subject, session=session))
             del bads, auto_flat_chs, auto_noisy_chs, msg
 
         if config.use_maxwell_filter:
-            print('Applying maxwell filter.')
+            msg = 'Applying maxwell filter.'
+            logger.info(gen_log_message(message=msg, step=1,
+                                        subject=subject, session=session))
 
             # Warn if no bad channels are set before Maxfilter
             if not raw.info['bads']:
-                print('\n Warning: Found no bad channels. \n ')
+                msg = '\nFound no bad channels. \n '
+                logger.warn(gen_log_message(message=msg, subject=subject,
+                                            step=1, session=session))
 
             if run_idx == 0:
                 destination = raw.info['dev_head_t']
 
             if config.mf_st_duration:
-                print('    st_duration=%d' % (config.mf_st_duration,))
+                msg = '    st_duration=%d' % (config.mf_st_duration)
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
 
             raw_sss = mne.preprocessing.maxwell_filter(
                 raw,
@@ -221,8 +238,10 @@ def run_maxwell_filter(subject, session=None):
                 raw_sss.plot(n_channels=50, butterfly=True)
 
         else:
-            print('Not applying maxwell filter.\n'
-                  'If you wish to apply it set config.use_maxwell_filter=True')
+            msg = ('Not applying maxwell filter.\nIf you wish to apply it, '
+                   'set use_maxwell_filter=True in your configuration')
+            logger.info(gen_log_message(message=msg, step=1,
+                                        subject=subject, session=session))
             # Prepare a name to save the data
             raw_fname_out = op.join(fpath_out, bids_basename +
                                     '_nosss_raw.fif')
@@ -235,10 +254,16 @@ def run_maxwell_filter(subject, session=None):
 
 def main():
     """Run maxwell_filter."""
+    msg = 'Running Step 1: Data import and Maxwell filtering'
+    logger.info(gen_log_message(step=1, message=msg))
+
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                           n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 1: Data import and Maxwell filtering'
+    logger.info(gen_log_message(step=1, message=msg))
 
 
 if __name__ == '__main__':

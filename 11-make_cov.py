@@ -8,6 +8,7 @@ Covariance matrices are computed and saved.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
@@ -16,10 +17,12 @@ from mne_bids import make_bids_basename
 from sklearn.model_selection import KFold
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_covariance(subject, session=None):
-    print("Processing subject: %s%s")
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -51,12 +54,16 @@ def run_covariance(subject, session=None):
     fname_cov = \
         op.join(fpath_deriv, bids_basename + '-cov.fif')
 
-    print("Input: ", fname_epo)
-    print("Output: ", fname_cov)
+    msg = f'Input: {fname_epo}, Output: {fname_cov}'
+    logger.info(gen_log_message(message=msg, step=11, subject=subject,
+                                session=session))
 
     epochs = mne.read_epochs(fname_epo, preload=True)
 
-    print('  Computing regularized covariance')
+    msg = 'Computing regularized covariance'
+    logger.info(gen_log_message(message=msg, step=11, subject=subject,
+                                session=session))
+
     # Do not shuffle the data before splitting into train and test samples.
     # Perform a block cross-validation instead to maintain autocorrelated
     # noise.
@@ -68,9 +75,15 @@ def run_covariance(subject, session=None):
 
 def main():
     """Run cov."""
+    msg = 'Running Step 11: Estimate noise covariance'
+    logger.info(gen_log_message(step=11, message=msg))
+
     parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Running Step 11: Estimate noise covariance'
+    logger.info(gen_log_message(step=11, message=msg))
 
 
 if __name__ == '__main__':

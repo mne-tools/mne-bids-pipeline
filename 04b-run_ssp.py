@@ -8,21 +8,20 @@ Compute Signal Suspace Projections (SSP).
 
 import os.path as op
 import itertools
-
+import logging
 
 import mne
+from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
-from mne.preprocessing import compute_proj_ecg, compute_proj_eog
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_ssp(subject, session=None):
-    print("Processing subject: %s" % subject)
-
-    print("  Loading one run to compute SSPs")
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -64,15 +63,20 @@ def run_ssp(subject, session=None):
 
     proj_fname_out = op.join(fpath_deriv, bids_basename + '_ssp-proj.fif')
 
-    print("Input: ", raw_fname_in)
-    print("Output: ", proj_fname_out)
+    msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
 
     raw = mne.io.read_raw_fif(raw_fname_in)
     # XXX : n_xxx should be options in config
-    print("  Computing SSPs for ECG")
+    msg = 'Computing SSPs for ECG'
+    logger.debug(gen_log_message(message=msg, step=4, subject=subject,
+                                 session=session))
     ecg_projs, ecg_events = \
         compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0, average=True)
-    print("  Computing SSPs for EOG")
+    msg = 'Computing SSPs for EOG'
+    logger.debug(gen_log_message(message=msg, step=4, subject=subject,
+                                 session=session))
     eog_projs, eog_events = \
         compute_proj_eog(raw, n_grad=1, n_mag=1, n_eeg=1, average=True)
 
@@ -83,9 +87,16 @@ def main():
     """Run SSP."""
     if not config.use_ssp:
         return
+
+    msg = 'Running Step 4: SSP'
+    logger.info(gen_log_message(step=4, message=msg))
+
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 4: SSP'
+    logger.info(gen_log_message(step=4, message=msg))
 
 
 if __name__ == '__main__':

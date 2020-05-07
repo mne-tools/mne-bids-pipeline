@@ -8,6 +8,7 @@ The evoked data sets are created by averaging different conditions.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
@@ -15,11 +16,12 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_evoked(subject, session=None):
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -51,10 +53,10 @@ def run_evoked(subject, session=None):
     fname_out = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
 
-    print("Input: ", fname_in)
-    print("Output: ", fname_out)
+    msg = f'Input: {fname_in}, Output: {fname_out}'
+    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                session=session))
 
-    print('  Creating evoked datasets')
     epochs = mne.read_epochs(fname_in, preload=True)
 
     evokeds = []
@@ -66,7 +68,7 @@ def run_evoked(subject, session=None):
         for evoked in evokeds:
             evoked.plot()
 
-        # What's next heeds channel locations
+        # What's next needs channel locations
         # ts_args = dict(gfp=True, time_unit='s')
         # topomap_args = dict(time_unit='s')
 
@@ -77,9 +79,15 @@ def run_evoked(subject, session=None):
 
 def main():
     """Run evoked."""
+    msg = 'Running Step 6: Create evoked data'
+    logger.info(gen_log_message(step=6, message=msg))
+
     parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 6: Create evoked data'
+    logger.info(gen_log_message(step=6, message=msg))
 
 
 if __name__ == '__main__':

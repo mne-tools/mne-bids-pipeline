@@ -8,6 +8,8 @@ import importlib
 import os
 from collections import defaultdict
 import copy
+import coloredlogs
+import logging
 
 import numpy as np
 import mne
@@ -682,6 +684,30 @@ shortest_event = 1
 
 allow_maxshield = False
 
+log_level = 'info'
+mne_log_level = 'error'
+
+
+###############################################################################
+#                                                                             #
+#                      CUSTOM CONFIGURATION ENDS HERE                         #
+#                                                                             #
+###############################################################################
+
+
+###############################################################################
+# Logger
+# ------
+
+logger = logging.getLogger('mne-study-template')
+
+log_fmt = '%(asctime)s %(message)s'
+log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
+coloredlogs.install(level=log_level, logger=logger, fmt=log_fmt,
+                    date_fmt=log_date_fmt)
+
+mne.set_log_level(verbose=mne_log_level.upper())
+
 ###############################################################################
 # Retrieve custom configuration options
 # -------------------------------------
@@ -698,7 +724,8 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
 
     if os.path.exists(cfg_path):
-        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
+        msg = 'Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.'
+        logger.info(msg)
     else:
         msg = ('The custom configuration file specified in the '
                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
@@ -717,7 +744,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     for val in dir(custom_cfg):
         if not val.startswith('__'):
             exec("new = custom_cfg.%s" % val)
-            print('Overwriting: %s -> %s' % (val, new))
+            logger.debug('Overwriting: %s -> %s' % (val, new))
             exec("%s = custom_cfg.%s" % (val, val))
 
 
@@ -738,8 +765,6 @@ if not bids_root:
 ###############################################################################
 # CHECKS
 # ------
-#
-# --- --- You should not touch the next lines --- ---
 
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
@@ -772,7 +797,7 @@ if 'eeg' in ch_types:
     if not use_ica:
         msg = ('You did not request ICA artifact correction for your data. '
                'To turn it on, set use_ica=True.')
-        mne.utils.logger.info(msg)
+        logger.info(msg)
 
 
 ###############################################################################
@@ -850,3 +875,22 @@ def get_subjects_dir():
         return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
     else:
         return subjects_dir
+
+
+def gen_log_message(message, step=None, subject=None, session=None, run=None):
+    if subject is not None:
+        subject = f'sub-{subject}'
+    if session is not None:
+        session = f'ses-{session}'
+    if run is not None:
+        run = f'run-{run}'
+
+    prefix = ', '.join([item for item in [subject, session, run]
+                        if item is not None])
+    if prefix:
+        prefix = f'[{prefix}]'
+
+    if step is not None:
+        prefix = f'[Step-{step:02}]{prefix}'
+
+    return prefix + ' ' + message

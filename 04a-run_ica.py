@@ -11,6 +11,7 @@ run 06a-apply_ica.py.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.report import Report
@@ -20,11 +21,13 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_ica(subject, session=None):
     """Run ICA."""
-    print("Processing subject: %s" % subject)
 
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -38,12 +41,11 @@ def run_ica(subject, session=None):
                           config.PIPELINE_NAME, subject_path)
 
     raw_list = list()
-    print("  Loading raw data")
+    msg = 'Loading filtered raw data'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
 
     for run in config.get_runs():
-        # load first run of raw data for ecg /eog epochs
-        print("  Loading one run from raw data")
-
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
                                            task=config.get_task(),
@@ -60,7 +62,9 @@ def run_ica(subject, session=None):
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
         raw_list.append(raw)
 
-    print('  Concatenating runs')
+    msg = 'Concatenating runs'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
     raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
@@ -78,8 +82,6 @@ def run_ica(subject, session=None):
 
     # produce high-pass filtered version of the data for ICA
     raw_ica = raw.copy().filter(l_freq=1., h_freq=None)
-
-    print("  Running ICA...")
     epochs_for_ica = mne.Epochs(raw_ica,
                                 events, event_id, config.tmin,
                                 config.tmax, proj=True,
@@ -104,7 +106,9 @@ def run_ica(subject, session=None):
     n_components = {'meg': n_components_meg, 'eeg': 0.999}
 
     kind = config.get_kind()
-    print('Running ICA for ' + kind)
+    msg = f'Running ICA for {kind}'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
     ica = ICA(method='fastica', random_state=config.random_state,
               n_components=n_components[kind])
 
@@ -114,8 +118,10 @@ def run_ica(subject, session=None):
     else:
         ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
 
-    print('  Fit %d components (explaining at least %0.1f%% of the'
-          ' variance)' % (ica.n_components_, 100 * n_components[kind]))
+    msg = (f'Fit {ica.n_components_} components (explaining at least '
+           f'{100*n_components[kind]:.1f}% of the variance)')
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
 
     # Load ICA
     ica_fname = \
@@ -148,9 +154,16 @@ def main():
     """Run ICA."""
     if not config.use_ica:
         return
+
+    msg = 'Running Step 4: Compute ICA'
+    logger.info(gen_log_message(step=4, message=msg))
+
     parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 4: Compute ICA'
+    logger.info(gen_log_message(step=4, message=msg))
 
 
 if __name__ == '__main__':

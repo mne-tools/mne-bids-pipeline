@@ -18,19 +18,20 @@ If config.plot = True plots raw data and power spectral density.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
-    print('\nProcessing subject: {}\n{}'
-          .format(subject, '-' * (20 + len(subject))))
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -59,15 +60,17 @@ def run_filter(subject, run=None, session=None):
 
     raw_fname_out = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
-    print("Input: ", raw_fname_in)
-    print("Output: ", raw_fname_out)
+    msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
+    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                session=session, run=run,))
 
     raw = mne.io.read_raw_fif(raw_fname_in)
     raw.load_data()
 
     # Band-pass the data channels (MEG and EEG)
-    print('Filtering data between {} and {} (Hz)'
-          .format(config.l_freq, config.h_freq))
+    msg = f'Filtering data between {config.l_freq} and {config.h_freq} (Hz)'
+    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                session=session, run=run,))
 
     raw.filter(config.l_freq, config.h_freq,
                l_trans_bandwidth=config.l_trans_bandwidth,
@@ -77,8 +80,9 @@ def run_filter(subject, run=None, session=None):
                )
 
     if config.resample_sfreq:
-        print('Resampling data to {:.1f} Hz'.format(config.resample_sfreq))
-
+        msg = f'Resampling data to {config.resample_sfreq:.1f} Hz'
+        logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                    session=session, run=run,))
         raw.resample(config.resample_sfreq, npad='auto')
 
     raw.save(raw_fname_out, overwrite=True)
@@ -94,10 +98,16 @@ def run_filter(subject, run=None, session=None):
 
 def main():
     """Run filter."""
+    msg = 'Running Step 2: Frequency filtering'
+    logger.info(gen_log_message(step=2, message=msg))
+
     parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
              itertools.product(config.get_subjects(), config.get_runs(),
                                config.get_sessions()))
+
+    msg = 'Completed 2: Frequency filtering'
+    logger.info(gen_log_message(step=2, message=msg))
 
 
 if __name__ == '__main__':

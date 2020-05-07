@@ -12,26 +12,23 @@ To save space, the epoch data can be decimated.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
 
-
-# make less parallel runs to limit memory usage
-N_JOBS = max(config.N_JOBS // 4, 1)
+logger = logging.getLogger('mne-study-template')
 
 
 ###############################################################################
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
-    print("Processing subject: %s" % subject)
 
     raw_list = list()
-    print("  Loading raw data")
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -57,12 +54,16 @@ def run_epochs(subject, session=None):
         raw_fname_in = \
             op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
 
-        print("Input: ", raw_fname_in)
+        msg = f'Loading filtered raw data from {raw_fname_in}'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
         raw_list.append(raw)
 
-    print('  Concatenating runs')
+    msg = 'Concatenating runs'
+    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                session=session))
     raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
@@ -90,13 +91,17 @@ def run_epochs(subject, session=None):
     # https://martinos.org/mne/dev/auto_tutorials/plot_metadata_epochs.html
 
     # Epoch the data
-    print('  Epoching')
+    msg = 'Epoching'
+    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                session=session))
     epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
                         proj=True, picks=picks, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.get_reject())
 
-    print('  Writing epochs to disk')
+    msg = 'Writing epochs to disk'
+    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                session=session))
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
                                        task=config.get_task(),
@@ -119,10 +124,17 @@ def run_epochs(subject, session=None):
 
 def main():
     """Run epochs."""
+    msg = 'Running Step 3: Epoching'
+    logger.info(gen_log_message(step=3, message=msg))
+
     # Here we use fewer N_JOBS to prevent potential memory problems
-    parallel, run_func, _ = parallel_func(run_epochs, n_jobs=N_JOBS)
+    parallel, run_func, _ = parallel_func(run_epochs,
+                                          n_jobs=max(config.N_JOBS // 4, 1))
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 3: Epoching'
+    logger.info(gen_log_message(step=3, message=msg))
 
 
 if __name__ == '__main__':

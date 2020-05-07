@@ -14,6 +14,7 @@ The contrast across different sensors are combined into a single plot.
 # Let us first import the libraries
 
 import os.path as op
+import logging
 
 import numpy as np
 from scipy.io import savemat
@@ -29,14 +30,18 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
+
 
 ###############################################################################
 # Then we write a function to do time decoding on one subject
 
-
 def run_time_decoding(subject, condition1, condition2, session=None):
-    print("Processing subject: %s (%s vs %s)"
-          % (subject, condition1, condition2))
+    msg = f'Contrasting conditions: {condition1} – {condition2}'
+    logger.info(gen_log_message(message=msg, step=8, subject=subject,
+                                session=session))
 
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -96,12 +101,18 @@ def run_time_decoding(subject, condition1, condition2, session=None):
 
 def main():
     """Run sliding estimator."""
+    msg = 'Running Step 8: Sliding estimator'
+    logger.info(gen_log_message(step=8, message=msg))
+
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
     for subject in config.get_subjects():
         for session in config.get_sessions():
             for conditions in config.decoding_conditions:
                 run_time_decoding(subject, *conditions, session=session)
+
+    msg = 'Running Step 8: Sliding estimator'
+    logger.info(gen_log_message(step=8, message=msg))
 
 
 if __name__ == '__main__':

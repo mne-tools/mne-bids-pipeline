@@ -8,6 +8,7 @@ Compute and apply an inverse solution for each evoked data set.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
@@ -16,11 +17,12 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_inverse(subject, session=None):
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -83,9 +85,15 @@ def run_inverse(subject, session=None):
 
 def main():
     """Run inv."""
+    msg = 'Running Step 12: Compute and apply inverse solution'
+    logger.info(gen_log_message(step=12, message=msg))
+
     parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Completed Step 12: Compute and apply inverse solution'
+    logger.info(gen_log_message(step=12, message=msg))
 
 
 if __name__ == '__main__':

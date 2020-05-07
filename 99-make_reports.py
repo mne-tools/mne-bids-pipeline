@@ -9,12 +9,16 @@ plots.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def plot_events(subject, session, fpath_deriv):
@@ -44,8 +48,6 @@ def plot_events(subject, session, fpath_deriv):
 
 
 def run_report(subject, session=None):
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -134,6 +136,9 @@ def run_report(subject, session=None):
 
 def main():
     """Make reports."""
+    msg = 'Running Step 99: Create reports'
+    logger.info(gen_log_message(step=99, message=msg))
+
     parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
@@ -191,6 +196,9 @@ def main():
 
     fname_report = op.join(fpath_deriv, 'report_average%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
+
+    msg = 'Completed Step 99: Create reports'
+    logger.info(gen_log_message(step=99, message=msg))
 
 
 if __name__ == '__main__':

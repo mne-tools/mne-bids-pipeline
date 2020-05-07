@@ -8,6 +8,7 @@ Source estimates are morphed to the ``fsaverage`` brain.
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
@@ -15,10 +16,12 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def morph_stc(subject, session=None):
-    print("Processing subject: %s" % subject)
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -72,6 +75,9 @@ def morph_stc(subject, session=None):
 
 def main():
     """Run grp ave."""
+    msg = 'Running Step 13: Grand-average source estimates'
+    logger.info(gen_log_message(step=13, message=msg))
+
     parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
     all_morphed_stcs = parallel(run_func(subject, session)
                                 for subject, session in
@@ -105,6 +111,9 @@ def main():
                                                        inverse_str, morph_str,
                                                        hemi_str]))
         this_stc.save(fname_stc_avg)
+
+    msg = 'Running Step 13: Grand-average source estimates'
+    logger.info(gen_log_message(step=13, message=msg))
 
 
 if __name__ == '__main__':

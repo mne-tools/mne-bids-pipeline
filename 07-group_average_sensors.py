@@ -8,11 +8,19 @@ The M/EEG-channel data are averaged for group averages.
 
 import os.path as op
 from collections import defaultdict
+import logging
 
 import mne
 from mne_bids import make_bids_basename
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
+
+
+msg = 'Running Step 7: Grand-average sensor data'
+logger.info(gen_log_message(step=7, message=msg))
 
 # Container for all conditions:
 all_evokeds = defaultdict(list)
@@ -24,8 +32,6 @@ else:
     session = None
 
 for subject in config.get_subjects():
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -55,7 +61,9 @@ for subject in config.get_subjects():
     fname_in = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
 
-    print("Input: ", fname_in)
+    msg = f'Input: {fname_in}'
+    logger.info(gen_log_message(message=msg, step=7, subject=subject,
+                                session=session))
 
     evokeds = mne.read_evokeds(fname_in)
     for idx, evoked in enumerate(evokeds):
@@ -66,12 +74,13 @@ for idx, evokeds in all_evokeds.items():
         evokeds, interpolate_bads=config.interpolate_bads_grand_average
     )  # Combine subjects
 
-
 extension = 'grand_average-ave'
 fname_out = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
                     '{0}_{1}.fif'.format(config.study_name, extension))
 
-print("Saving grand averate: %s" % fname_out)
+msg = f'Saving grand-averaged sensor data: {fname_out}'
+logger.info(gen_log_message(message=msg, step=7, subject=subject,
+                            session=session))
 mne.evoked.write_evokeds(fname_out, list(all_evokeds.values()))
 
 
@@ -93,3 +102,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+msg = 'Completed Step 7: Grand-average sensor data'
+logger.info(gen_log_message(step=7, message=msg))

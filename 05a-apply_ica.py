@@ -15,6 +15,7 @@ order might differ).
 
 import os.path as op
 import itertools
+import logging
 
 import mne
 from mne.parallel import parallel_func
@@ -26,10 +27,12 @@ from mne_bids import make_bids_basename
 
 import numpy as np
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def apply_ica(subject, run, session):
-    print("Processing subject: %s" % subject)
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -59,11 +62,14 @@ def apply_ica(subject, run, session):
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_in, preload=True)
 
-    print("Input: ", fname_in)
-    print("Output: ", fname_out)
+    msg = f'Input: {fname_in}, Output: {fname_out}'
+    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                session=session))
 
-    # load first run of raw data for ecg /eog epochs
-    print("  Loading one run from raw data")
+    # load first run of raw data for ecg / eog epochs
+    msg = 'Loading first run from raw data'
+    logger.debug(gen_log_message(message=msg, step=5, subject=subject,
+                                 session=session))
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -99,7 +105,9 @@ def apply_ica(subject, run, session):
         fname_ica = \
             op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % ch_type)
 
-        print('Reading ICA: ' + fname_ica)
+        msg = f'Reading ICA: {fname_ica}'
+        logger.debug(gen_log_message(message=msg, step=5, subject=subject,
+                                     session=session))
         ica = read_ica(fname=fname_ica)
 
         pick_ecg = mne.pick_types(raw.info, meg=False, eeg=False,
@@ -159,15 +167,20 @@ def apply_ica(subject, run, session):
 
         else:
             # XXX : to check when EEG only is processed
-            print('no ECG channel is present. Cannot automate ICAs component '
-                  'detection for ECG!')
+            msg = ('No ECG channel is present. Cannot automate IC detection '
+                   'for ECG')
+            logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                        session=session))
 
         # EOG
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
         eog_inds = list()
         if pick_eog.any():
-            print('using EOG channel')
+            msg = 'Using EOG channel'
+            logger.debug(gen_log_message(message=msg, step=5, subject=subject,
+                                         session=session))
+
             picks_eog = np.concatenate([picks, pick_eog])
             # Create eog epochs
             eog_epochs = create_eog_epochs(raw, picks=picks_eog, reject=None,
@@ -198,17 +211,23 @@ def apply_ica(subject, run, session):
             report.save(report_fname, overwrite=True, open_browser=False)
 
         else:
-            print('no EOG channel is present. Cannot automate ICAs component '
-                  'detection for EOG!')
+            msg = ('No EOG channel is present. Cannot automate IC detection '
+                   'for EOG')
+            logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                        session=session))
 
         ica_reject = (list(ecg_inds) + list(eog_inds) +
                       list(config.rejcomps_man[subject][ch_type]))
 
         # now reject the components
-        print('Rejecting from %s: %s' % (ch_type, ica_reject))
+        msg = f'Rejecting from {ch_type}: {ica_reject}'
+        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                    session=session))
         epochs = ica.apply(epochs, exclude=ica_reject)
 
-        print('Saving cleaned epochs')
+        msg = 'Saving cleaned epochs'
+        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                    session=session))
         epochs.save(fname_out)
 
         if report is not None:
@@ -225,10 +244,17 @@ def main():
     """Apply ICA."""
     if not config.use_ica:
         return
+
+    msg = 'Running Step 4: Apply ICA'
+    logger.info(gen_log_message(step=5, message=msg))
+
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, run, session) for subject, run, session in
              itertools.product(config.get_subjects(), config.get_runs(),
                                config.get_sessions()))
+
+    msg = 'Completed Step 4: Apply ICA'
+    logger.info(gen_log_message(step=5, message=msg))
 
 
 if __name__ == '__main__':

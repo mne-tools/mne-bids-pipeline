@@ -9,6 +9,7 @@ Calculate forward solution for MEG channels.
 import glob
 import os.path as op
 import itertools
+import logging
 
 import mne
 
@@ -17,11 +18,12 @@ from mne_bids import make_bids_basename, get_head_mri_trans
 from mne_bids.read import reader as mne_bids_readers
 
 import config
+from config import gen_log_message
+
+logger = logging.getLogger('mne-study-template')
 
 
 def run_forward(subject, session=None):
-    print("Processing subject: %s" % subject)
-
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
@@ -45,16 +47,15 @@ def run_forward(subject, session=None):
     fname_evoked = \
         op.join(fpath_deriv, bids_basename + '-ave.fif')
 
-    print("Input: ", fname_evoked)
-
     fname_trans = \
         op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
 
     fname_fwd = \
         op.join(fpath_deriv, bids_basename + '-fwd.fif')
 
-    print("Output: ", fname_fwd)
-
+    msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
+    logger.info(gen_log_message(message=msg, step=10, subject=subject,
+                                session=session))
     # Find the raw data file
     # XXX : maybe simplify
     bids_basename = make_bids_basename(subject=subject,
@@ -109,9 +110,15 @@ def run_forward(subject, session=None):
 
 def main():
     """Run forward."""
+    msg = 'Running Step 10: Create forward solution'
+    logger.info(gen_log_message(step=10, message=msg))
+
     parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
+
+    msg = 'Running Step 10: Create forward solution'
+    logger.info(gen_log_message(step=10, message=msg))
 
 
 if __name__ == '__main__':

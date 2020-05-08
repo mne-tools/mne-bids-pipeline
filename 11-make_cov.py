@@ -17,11 +17,12 @@ from mne_bids import make_bids_basename
 from sklearn.model_selection import KFold
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
 
+@failsafe_run(on_error=on_error)
 def run_covariance(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -82,7 +83,7 @@ def main():
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Running Step 11: Estimate noise covariance'
+    msg = 'Completed Step 11: Estimate noise covariance'
     logger.info(gen_log_message(step=11, message=msg))
 
 

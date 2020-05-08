@@ -5,6 +5,7 @@ of your BIDS dataset to be analyzed.
 
 """
 import importlib
+import functools
 import os
 from collections import defaultdict
 import copy
@@ -687,6 +688,12 @@ allow_maxshield = False
 log_level = 'info'
 mne_log_level = 'error'
 
+# ``on_abort`` : 'continue' | 'abort'
+#    Whether to abort processing as soon as an error occurs, or whether to
+#    continue with all other processing steps for as long as possible.
+
+on_error = 'abort'
+
 
 ###############################################################################
 #                                                                             #
@@ -799,6 +806,11 @@ if 'eeg' in ch_types:
                'To turn it on, set use_ica=True.')
         logger.info(msg)
 
+if on_error not in ('continue', 'abort'):
+    msg = (f"on_error must be one of 'continue' or 'abort', but received "
+           f"{on_error}")
+    logger.info(msg)
+
 
 ###############################################################################
 # Helper functions
@@ -894,3 +906,23 @@ def gen_log_message(message, step=None, subject=None, session=None, run=None):
         prefix = f'[Step-{step:02}]{prefix}'
 
     return prefix + ' ' + message
+
+
+def failsafe_run(on_error):
+    def failsafe_run_decorator(func):
+        @functools.wraps(func)  # Preserve "identity" of original function
+        def wrapper(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                message = 'A critical error occurred.'
+                message = gen_log_message(message=message)
+
+                if on_error == 'abort':
+                    logger.critical(message)
+                    raise(e)
+                else:
+                    message = f'{message} The error message was:\n{str(e)}'
+                    logger.critical(message)
+        return wrapper
+    return failsafe_run_decorator

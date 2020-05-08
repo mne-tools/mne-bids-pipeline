@@ -16,7 +16,7 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
@@ -73,6 +73,7 @@ def morph_stc(subject, session=None):
     return morphed_stcs
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Run grp ave."""
     msg = 'Running Step 13: Grand-average source estimates'
@@ -112,7 +113,7 @@ def main():
                                                        hemi_str]))
         this_stc.save(fname_stc_avg)
 
-    msg = 'Running Step 13: Grand-average source estimates'
+    msg = 'Completed Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
 
 

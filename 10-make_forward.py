@@ -18,11 +18,12 @@ from mne_bids import make_bids_basename, get_head_mri_trans
 from mne_bids.read import reader as mne_bids_readers
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
 
+@failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -117,7 +118,7 @@ def main():
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Running Step 10: Create forward solution'
+    msg = 'Completed Step 10: Create forward solution'
     logger.info(gen_log_message(step=10, message=msg))
 
 

@@ -21,7 +21,7 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
@@ -30,6 +30,7 @@ freqs = np.arange(10, 40)
 n_cycles = freqs / 3.
 
 
+@failsafe_run(on_error=on_error)
 def run_time_frequency(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))

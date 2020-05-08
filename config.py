@@ -21,36 +21,6 @@ VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 
-# Retrieve custom configuration options
-# -------------------------------------
-#
-# For testing a specific dataset, create a Python file with a name of your
-# liking (e.g., ``mydataset-template-config.py```), and set an environment
-# variable ``MNE_BIDS_STUDY_CONFIG`` to that file.
-#
-# Example
-# ~~~~~~~
-# ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
-
-if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
-
-    if os.path.exists(cfg_path):
-        print('Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.')
-    else:
-        msg = ('The custom configuration file specified in the '
-               'MNE_BIDS_STUDY_CONFIG environment variable could not be '
-               'found: {cfg_path}'.format(cfg_path=cfg_path))
-        raise ValueError(msg)
-
-    # Import configuration from an arbitrary path without having to fiddle
-    # with `sys.path`.
-    spec = importlib.util.spec_from_file_location(name='custom_config',
-                                                  location=cfg_path)
-    custom_cfg = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(custom_cfg)
-    del spec, cfg_path
-
 # ``study_name`` : str
 #   Specify the name of your study. It will be used to populate filenames for
 #   saving the analysis results.
@@ -72,7 +42,7 @@ study_name = ''
 # or
 # >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
 
-bids_root = None  # XXX
+bids_root = None
 
 # ``subjects_dir`` : str or None
 #   Path to the directory that contains the MRI data files and their

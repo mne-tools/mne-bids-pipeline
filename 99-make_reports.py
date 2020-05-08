@@ -86,8 +86,9 @@ def run_report(subject, session=None):
     # Visualize events.
     events_fig = plot_events(subject=subject, session=session,
                              fpath_deriv=fpath_deriv)
-    rep.add_figs_to_section([events_fig],
-                            ['Events in filtered continuous data'])
+    rep.add_figs_to_section(figs=events_fig,
+                            comments='Events in filtered continuous data',
+                            section='Events')
 
     # Visualize evoked responses.
     evokeds = mne.read_evokeds(fname_ave)
@@ -100,7 +101,7 @@ def run_report(subject, session=None):
         figs.append(fig)
         captions.append(evoked.comment)
 
-    rep.add_figs_to_section(figs, captions)
+    rep.add_figs_to_section(figs=figs, comments=captions, section='Evoked')
 
     if op.exists(fname_trans):
         # We can only plot the coregistration if we have a valid 3d backend.
@@ -188,9 +189,9 @@ def main():
                                        space=config.space)
 
     for evoked, condition in zip(evokeds, config.conditions):
-        rep.add_figs_to_section(evoked.plot(spatial_colors=True, gfp=True,
-                                            show=False),
-                                'Average %s' % condition)
+        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
+        rep.add_figs_to_section(figs=fig, comments=f'Average {condition}',
+                                section='Evoked')
 
         method = config.inverse_method
         cond_str = 'cond-%s' % condition.replace(op.sep, '')
@@ -229,7 +230,8 @@ def main():
                                         [evoked.comment, evoked.comment])
 
             fig = brain._figures[0]
-            rep.add_figs_to_section(fig, 'Average %s' % condition)
+            rep.add_figs_to_section(figs=fig, comments=f'Average {condition}',
+                                    section='Sources')
 
             del peak_time
 

@@ -21,7 +21,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-@failsafe_run(on_error=on_error)
 def morph_stc(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -74,6 +73,7 @@ def morph_stc(subject, session=None):
     return morphed_stcs
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Run grp ave."""
     msg = 'Running Step 13: Grand-average source estimates'

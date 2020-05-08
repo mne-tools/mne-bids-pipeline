@@ -21,7 +21,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-@failsafe_run(on_error=on_error)
 def plot_events(subject, session, fpath_deriv):
     raws_filt = []
     for run in config.get_runs():

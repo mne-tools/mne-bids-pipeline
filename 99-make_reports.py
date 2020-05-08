@@ -108,6 +108,11 @@ def run_report(subject, session=None):
                                          subjects_dir=config.subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(fig, 'Coregistration')
+        else:
+            msg = ('Cannot render sensor alignment (coregistration) because '
+                   'no usable 3d backend was found.')
+            logger.warn(gen_log_message(message=msg, step='99',
+                                        subject=subject, session=session))
 
         for evoked in evokeds:
             method = config.inverse_method

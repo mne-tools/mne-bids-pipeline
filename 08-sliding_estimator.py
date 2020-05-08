@@ -112,7 +112,7 @@ def main():
             for conditions in config.decoding_conditions:
                 run_time_decoding(subject, *conditions, session=session)
 
-    msg = 'Running Step 8: Sliding estimator'
+    msg = 'Completed Step 8: Sliding estimator'
     logger.info(gen_log_message(step=8, message=msg))
 
 

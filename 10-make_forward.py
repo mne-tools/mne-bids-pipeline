@@ -118,7 +118,7 @@ def main():
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Running Step 10: Create forward solution'
+    msg = 'Completed Step 10: Create forward solution'
     logger.info(gen_log_message(step=10, message=msg))
 
 

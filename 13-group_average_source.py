@@ -113,7 +113,7 @@ def main():
                                                        hemi_str]))
         this_stc.save(fname_stc_avg)
 
-    msg = 'Running Step 13: Grand-average source estimates'
+    msg = 'Completed Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
 
 

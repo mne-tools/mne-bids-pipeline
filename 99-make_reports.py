@@ -87,7 +87,7 @@ def run_report(subject, session=None):
     events_fig = plot_events(subject=subject, session=session,
                              fpath_deriv=fpath_deriv)
     rep.add_figs_to_section(figs=events_fig,
-                            comments='Events in filtered continuous data',
+                            captions='Events in filtered continuous data',
                             section='Events')
 
     # Visualize evoked responses.
@@ -101,7 +101,7 @@ def run_report(subject, session=None):
         figs.append(fig)
         captions.append(evoked.comment)
 
-    rep.add_figs_to_section(figs=figs, comments=captions, section='Evoked')
+    rep.add_figs_to_section(figs=figs, captions=captions, section='Evoked')
 
     if op.exists(fname_trans):
         # We can only plot the coregistration if we have a valid 3d backend.
@@ -110,7 +110,8 @@ def run_report(subject, session=None):
                                          subject=subject,
                                          subjects_dir=config.subjects_dir,
                                          meg=True, dig=True, eeg=True)
-            rep.add_figs_to_section(fig, 'Coregistration')
+            rep.add_figs_to_section(figs=fig, captions='Coregistration',
+                                    section='Coregistration')
         else:
             msg = ('Cannot render sensor alignment (coregistration) because '
                    'no usable 3d backend was found.')
@@ -134,8 +135,10 @@ def run_report(subject, session=None):
                 if mne.viz.get_3d_backend() is not None:
                     brain = stc.plot(views=['lat'], hemi='both',
                                      initial_time=peak_time,  backend='mayavi')
-                    rep.add_figs_to_section(brain._figures[0],
-                                            evoked.comment)
+                    fig = brain._figures[0]
+                    rep.add_figs_to_section(figs=fig,
+                                            captions=evoked.condition,
+                                            section='Sources')
                 else:
                     import matplotlib.pyplot as plt
                     fig_lh = plt.figure()
@@ -147,8 +150,11 @@ def run_report(subject, session=None):
                     brain_rh = stc.plot(views='lat', hemi='rh',
                                         initial_time=peak_time,
                                         backend='matplotlib', figure=fig_rh)
-                    rep.add_figs_to_section([brain_lh, brain_rh],
-                                            [evoked.comment, evoked.comment])
+                    rep.add_figs_to_section(
+                        figs=[brain_lh, brain_rh],
+                        captions=[f'{evoked.comment} - left hemisphere',
+                                  f'{evoked.comment]} - right hemisphere',
+                        section='Sources')
 
                 del peak_time
 
@@ -190,7 +196,7 @@ def main():
 
     for evoked, condition in zip(evokeds, config.conditions):
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-        rep.add_figs_to_section(figs=fig, comments=f'Average {condition}',
+        rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
                                 section='Evoked')
 
         method = config.inverse_method
@@ -230,7 +236,7 @@ def main():
                                         [evoked.comment, evoked.comment])
 
             fig = brain._figures[0]
-            rep.add_figs_to_section(figs=fig, comments=f'Average {condition}',
+            rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
                                     section='Sources')
 
             del peak_time

@@ -152,7 +152,7 @@ def run_report(subject, session=None):
                     rep.add_figs_to_section(
                         figs=[brain_lh, brain_rh],
                         captions=[f'{evoked.comment} - left hemisphere',
-                                  f'{evoked.comment]} - right hemisphere',
+                                  f'{evoked.comment} - right hemisphere'],
                         section='Sources')
 
                 del peak_time

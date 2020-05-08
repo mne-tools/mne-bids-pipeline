@@ -30,7 +30,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
@@ -38,6 +38,7 @@ logger = logging.getLogger('mne-study-template')
 ###############################################################################
 # Then we write a function to do time decoding on one subject
 
+@failsafe_run(on_error=on_error)
 def run_time_decoding(subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(gen_log_message(message=msg, step=8, subject=subject,

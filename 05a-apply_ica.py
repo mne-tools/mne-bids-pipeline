@@ -27,11 +27,12 @@ from mne_bids import make_bids_basename
 
 import numpy as np
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
 
 
+@failsafe_run(on_error=on_error)
 def apply_ica(subject, run, session):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))

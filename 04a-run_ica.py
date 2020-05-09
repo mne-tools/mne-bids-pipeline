@@ -110,8 +110,17 @@ def run_ica(subject, session=None):
     msg = f'Running ICA for {kind}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    ica = ICA(method='fastica', random_state=config.random_state,
-              n_components=n_components[kind])
+
+    if config.ica_algorithm == 'picard':
+        fit_params = dict(fastica_it=5)
+    elif config.ica_algorithm == 'extended_infomax':
+        fit_params = dict(extended=True)
+    elif config.ica_algorithm == 'fastica':
+        fit_params = None
+
+    ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
+              n_components=n_components[kind], fit_params=fit_params,
+              max_iter=config.ica_max_iterations)
 
     picks = all_picks[kind]
     if picks.size == 0:

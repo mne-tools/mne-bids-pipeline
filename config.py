@@ -500,23 +500,47 @@ conditions = ['left', 'right']
 # if you choose SSP, run scripts 5b and 6b
 #
 # Currently you cannot use both.
+
+# SSP
+# ~~~
 #
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
 use_ssp = True
 
+# ICA
+# ~~~
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
 
 use_ica = False
 
-# ``ica_decim`` : int
+# ``ica_algorithm`` : 'picard' | 'fastica' | 'extended_infomax'
+#   The ICA algorithm to use.
+
+ica_algorithm = 'picard'
+
+# ``ica_max_iterations`` : int
+#   Maximum number of iterations to decompose the data into independent
+#   components. A low number means to finish earlier, but the consequence is that the
+#   algorithm may not have finished converging. To ensure
+#   convergence, pick a high number here (e.g. 3000); yet the algorithm will
+#   terminate as soon as it determines that is has successfully converged, and
+#   not necessarily exhaust the maximum number of iterations. Note that the
+#   default of 200 seems to be sufficient for Picard in many datasets, because
+#   it converges quicker than the other algorithms; but e.g. for FastICA, this
+#   limit may be too low to achieve convergence.
+
+ica_max_iterations = 200
+
+# ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means
 #    that 1 every 5 sample is used by ICA solver. The higher the faster
-#    it is to run but the less data you have to compute a good ICA.
+#    it is to run but the less data you have to compute a good ICA. Set to
+#    ``1`` ``None`` to not perform an decimation.
 
-ica_decim = 11
+ica_decim = None
 
 
 # ``default_reject_comps_factory`` : callable
@@ -780,6 +804,12 @@ if (use_maxwell_filter and
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
 
+if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
+    msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
+           f"are: 'picard', 'fastica', and 'extended_infomax', but received "
+           f"{ica_algorithm}.")
+    raise ValueError(msg)
+
 if not ch_types:
     msg = 'Please specify ch_types in your configuration.'
     raise ValueError(msg)
@@ -808,7 +838,7 @@ if 'eeg' in ch_types:
 
 if on_error not in ('continue', 'abort'):
     msg = (f"on_error must be one of 'continue' or 'abort', but received "
-           f"{on_error}")
+           f"{on_error}.")
     logger.info(msg)
 
 

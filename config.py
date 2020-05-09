@@ -806,7 +806,7 @@ if use_ssp and use_ica:
 
 if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
     msg = ("Invalid ICA algorithm requested. Valid values for ica_algorithm "
-           "are: 'picard', 'fastica', and 'extended_infomax'")
+           "are: 'picard', 'fastica', and 'extended_infomax'.")
     raise ValueError(msg)
 
 if not ch_types:
@@ -837,7 +837,7 @@ if 'eeg' in ch_types:
 
 if on_error not in ('continue', 'abort'):
     msg = (f"on_error must be one of 'continue' or 'abort', but received "
-           f"{on_error}")
+           f"{on_error}.")
     logger.info(msg)
 
 

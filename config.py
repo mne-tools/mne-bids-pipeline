@@ -809,7 +809,7 @@ if 'eeg' in ch_types:
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue' or 'abort' or 'debug', but "
-            "received {on_error}")
+           f"received {on_error}")
     logger.info(msg)
 
 

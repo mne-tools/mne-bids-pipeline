@@ -11,6 +11,7 @@ from collections import defaultdict
 import copy
 import coloredlogs
 import logging
+import pdb, traceback, sys
 
 import numpy as np
 import mne
@@ -806,9 +807,9 @@ if 'eeg' in ch_types:
                'To turn it on, set use_ica=True.')
         logger.info(msg)
 
-if on_error not in ('continue', 'abort'):
-    msg = (f"on_error must be one of 'continue' or 'abort', but received "
-           f"{on_error}")
+if on_error not in ('continue', 'abort', 'debug'):
+    msg = (f"on_error must be one of 'continue' or 'abort' or 'debug', but "
+            "received {on_error}")
     logger.info(msg)
 
 
@@ -921,6 +922,11 @@ def failsafe_run(on_error):
                 if on_error == 'abort':
                     logger.critical(message)
                     raise(e)
+                elif on_error == 'debug':
+                    logger.critical(message)
+                    extype, value, tb = sys.exc_info()
+                    traceback.print_exc()
+                    pdb.post_mortem(tb)
                 else:
                     message = f'{message} The error message was:\n{str(e)}'
                     logger.critical(message)

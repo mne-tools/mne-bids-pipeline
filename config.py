@@ -523,7 +523,7 @@ ica_algorithm = 'picard'
 
 # ``ica_max_iterations`` : int
 #   Maximum number of iterations to decompose the data into independent
-#   components. A low number means to finish earlier, but a the cost that the
+#   components. A low number means to finish earlier, but the consequence is that the
 #   algorithm may not always have finished converging. That means to ensure
 #   convergence, pick a high number here (e.g. 3000); the algorithm will
 #   terminate as soon as it determines that is has successfully converged, and

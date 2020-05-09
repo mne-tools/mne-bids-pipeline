@@ -525,7 +525,7 @@ ica_algorithm = 'picard'
 #   Maximum number of iterations to decompose the data into independent
 #   components. A low number means to finish earlier, but the consequence is that the
 #   algorithm may not have finished converging. To ensure
-#   convergence, pick a high number here (e.g. 3000); the algorithm will
+#   convergence, pick a high number here (e.g. 3000); yet the algorithm will
 #   terminate as soon as it determines that is has successfully converged, and
 #   not necessarily exhaust the maximum number of iterations. Note that the
 #   default of 200 seems to be sufficient for Picard in many datasets, because

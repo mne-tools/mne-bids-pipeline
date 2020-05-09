@@ -540,7 +540,8 @@ ica_max_iterations = 200
 #    it is to run but the less data you have to compute a good ICA. Set to
 #    ``1`` ``None`` to not perform an decimation.
 
-ica_decim = 1
+ica_decim = None
+
 
 # ``default_reject_comps_factory`` : callable
 #    A factory function that returns a default rejection component dictionary:
@@ -802,6 +803,11 @@ if (use_maxwell_filter and
 
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
+
+if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
+    msg = ("Invalid ICA algorithm requested. Valid values for ica_algorithm "
+           "are: 'picard', 'fastica', and 'extended_infomax'")
+    raise ValueError(msg)
 
 if not ch_types:
     msg = 'Please specify ch_types in your configuration.'

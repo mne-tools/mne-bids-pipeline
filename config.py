@@ -805,8 +805,9 @@ if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
 
 if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
-    msg = ("Invalid ICA algorithm requested. Valid values for ica_algorithm "
-           "are: 'picard', 'fastica', and 'extended_infomax'.")
+    msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
+           f"are: 'picard', 'fastica', and 'extended_infomax', but received "
+           f"{ica_algorithm}.")
     raise ValueError(msg)
 
 if not ch_types:

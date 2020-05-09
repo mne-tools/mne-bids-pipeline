@@ -115,7 +115,7 @@ def run_ica(subject, session=None):
         fit_params = dict(fastica_it=5)
     elif config.ica_algorithm == 'extended_infomax':
         fit_params = dict(extended=True)
-    else:
+    elif config.ica_algorithm == 'fastica':
         fit_params = None
 
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,

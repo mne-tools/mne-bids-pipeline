@@ -755,7 +755,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
 
     if os.path.exists(cfg_path):
-        msg = 'Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.'
+        msg = f'Using custom configuration: {cfg_path}'
         logger.info(msg)
     else:
         msg = ('The custom configuration file specified in the '

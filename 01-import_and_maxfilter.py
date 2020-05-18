@@ -227,7 +227,8 @@ def run_maxwell_filter(subject, session=None):
                 destination=destination)
 
             # Prepare a name to save the data
-            raw_fname_out = op.join(deriv_path, bids_basename + '_sss_raw.fif')
+            raw_fname_out = op.join(config.deriv_root, subject_path,
+                                    bids_basename + '_sss_raw.fif')
             raw_sss.save(raw_fname_out, overwrite=True)
 
             if config.plot:
@@ -240,8 +241,8 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
             # Prepare a name to save the data
-            raw_fname_out = op.join(deriv_path, bids_basename +
-                                    '_nosss_raw.fif')
+            raw_fname_out = op.join(config.deriv_root, subject_path,
+                                    bids_basename + '_nosss_raw.fif')
             raw.save(raw_fname_out, overwrite=True)
 
             if config.plot:

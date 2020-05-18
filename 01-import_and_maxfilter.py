@@ -91,10 +91,9 @@ def run_maxwell_filter(subject, session=None):
 
         if run_idx == 0:  # XXX does this work when no runs are specified?
             # Prepare the pipeline directory in /derivatives
-            deriv_root = config.deriv_root
-            fpath_out = op.join(deriv_root, subject_path)
-            if not op.exists(fpath_out):
-                os.makedirs(fpath_out)
+            deriv_path = op.join(config.deriv_root, subject_path)
+            if not op.exists(deriv_path):
+                os.makedirs(deriv_path)
 
             # Write a dataset_description.json for the pipeline
             ds_json = dict()
@@ -109,7 +108,7 @@ def run_maxwell_filter(subject, session=None):
                 'URL': 'n/a',
             }
 
-            fname = op.join(deriv_root, 'dataset_description.json')
+            fname = op.join(deriv_path, 'dataset_description.json')
             _write_json(fname, ds_json, overwrite=True)
 
         # read_raw_bids automatically
@@ -229,7 +228,7 @@ def run_maxwell_filter(subject, session=None):
                 destination=destination)
 
             # Prepare a name to save the data
-            raw_fname_out = op.join(fpath_out, bids_basename + '_sss_raw.fif')
+            raw_fname_out = op.join(deriv_path, bids_basename + '_sss_raw.fif')
             raw_sss.save(raw_fname_out, overwrite=True)
 
             if config.plot:
@@ -242,7 +241,7 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
             # Prepare a name to save the data
-            raw_fname_out = op.join(fpath_out, bids_basename +
+            raw_fname_out = op.join(deriv_path, bids_basename +
                                     '_nosss_raw.fif')
             raw.save(raw_fname_out, overwrite=True)
 

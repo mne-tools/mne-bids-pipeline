@@ -52,13 +52,10 @@ def apply_ica(subject, run, session):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '-epo.fif')
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
 
-    fname_out = \
-        op.join(fpath_deriv, bids_basename + '_cleaned-epo.fif')
+    fname_out = op.join(deriv_path, bids_basename + '_cleaned-epo.fif')
 
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_in, preload=True)
@@ -83,11 +80,10 @@ def apply_ica(subject, run, session):
                                        )
 
     if config.use_maxwell_filter:
-        raw_fname_in = \
-            op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+        raw_fname_in = op.join(deriv_path, bids_basename + '_sss_raw.fif')
     else:
         raw_fname_in = \
-            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+            op.join(deriv_path, bids_basename + '_filt_raw.fif')
 
     raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
@@ -103,8 +99,7 @@ def apply_ica(subject, run, session):
         picks = all_picks[ch_type]
 
         # Load ICA
-        fname_ica = \
-            op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % ch_type)
+        fname_ica = op.join(deriv_path, f'bids_basename_{ch_type}-ica.fif')
 
         msg = f'Reading ICA: {fname_ica}'
         logger.debug(gen_log_message(message=msg, step=5, subject=subject,
@@ -140,8 +135,8 @@ def apply_ica(subject, run, session):
             del ecg_epochs
 
             report_fname = \
-                op.join(fpath_deriv,
-                        bids_basename + '_%s-reject_ica.html' % ch_type)
+                op.join(deriv_path,
+                        bids_basename + f'_{ch_type}-reject_ica.html')
 
             report = Report(report_fname, verbose=False)
 

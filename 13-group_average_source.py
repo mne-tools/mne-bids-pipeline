@@ -29,9 +29,7 @@ def morph_stc(subject, session=None):
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
     subject_path = op.join(subject_path, config.get_kind())
-
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
+    deriv_path = op.join(config.deriv_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -53,9 +51,9 @@ def morph_stc(subject, session=None):
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
-        fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
-                                                   inverse_str, hemi_str]))
-        fname_stc_fsaverage = op.join(fpath_deriv,
+        fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
+                                                  inverse_str, hemi_str]))
+        fname_stc_fsaverage = op.join(deriv_path,
                                       '_'.join([bids_basename, cond_str,
                                                 inverse_str, morph_str,
                                                 hemi_str]))
@@ -88,8 +86,7 @@ def main():
                         zip(all_morphed_stcs, config.get_subjects())]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME)
+    deriv_path = config.deriv_root
 
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
@@ -107,10 +104,10 @@ def main():
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
 
-        fname_stc_avg = op.join(fpath_deriv, '_'.join(['average',
-                                                       bids_basename, cond_str,
-                                                       inverse_str, morph_str,
-                                                       hemi_str]))
+        fname_stc_avg = op.join(deriv_path, '_'.join(['average',
+                                                      bids_basename, cond_str,
+                                                      inverse_str, morph_str,
+                                                      hemi_str]))
         this_stc.save(fname_stc_avg)
 
     msg = 'Completed Step 13: Grand-average source estimates'

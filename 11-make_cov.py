@@ -47,13 +47,10 @@ def run_covariance(subject, session=None):
     else:
         extension = '-epo'
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_epo = \
-        op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_epo = op.join(deriv_path, bids_basename + '%s.fif' % extension)
 
-    fname_cov = \
-        op.join(fpath_deriv, bids_basename + '-cov.fif')
+    fname_cov = op.join(deriv_path, bids_basename + '-cov.fif')
 
     msg = f'Input: {fname_epo}, Output: {fname_cov}'
     logger.info(gen_log_message(message=msg, step=11, subject=subject,

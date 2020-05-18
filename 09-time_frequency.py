@@ -55,10 +55,8 @@ def run_time_frequency(subject, session=None):
     else:
         extension = '-epo'
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_in = op.join(deriv_path, bids_basename + '%s.fif' % extension)
 
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=9, subject=subject,
@@ -72,11 +70,11 @@ def run_time_frequency(subject, session=None):
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
         power_fname_out = \
-            op.join(fpath_deriv, bids_basename + '_power_%s-tfr.h5'
+            op.join(deriv_path, bids_basename + '_power_%s-tfr.h5'
                     % (condition.replace(op.sep, '')))
 
         itc_fname_out = \
-            op.join(fpath_deriv, bids_basename + '_itc_%s-tfr.h5'
+            op.join(deriv_path, bids_basename + '_itc_%s-tfr.h5'
                     % (condition.replace(op.sep, '')))
 
         power.save(power_fname_out, overwrite=True)

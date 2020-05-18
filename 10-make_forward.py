@@ -43,16 +43,12 @@ def run_forward(subject, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_evoked = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_evoked = op.join(deriv_path, bids_basename + '-ave.fif')
 
-    fname_trans = \
-        op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
+    fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
 
-    fname_fwd = \
-        op.join(fpath_deriv, bids_basename + '-fwd.fif')
+    fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,

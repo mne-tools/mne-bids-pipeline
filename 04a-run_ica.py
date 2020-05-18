@@ -37,10 +37,7 @@ def run_ica(subject, session=None):
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
     subject_path = op.join(subject_path, config.get_kind())
-
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-
+    deriv_path = op.join(config.deriv_root, subject_path)
     raw_list = list()
     msg = 'Loading filtered raw data'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -58,7 +55,7 @@ def run_ica(subject, session=None):
                                            )
 
         raw_fname_in = \
-            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+            op.join(deriv_path, bids_basename + '_filt_raw.fif')
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
         raw_list.append(raw)
@@ -135,15 +132,14 @@ def run_ica(subject, session=None):
 
     # Load ICA
     ica_fname = \
-        op.join(fpath_deriv, bids_basename + '_%s-ica.fif' % kind)
+        op.join(deriv_path, bids_basename + '_%s-ica.fif' % kind)
 
     ica.save(ica_fname)
 
     if config.plot:
         # plot ICA components to html report
         report_fname = \
-            op.join(fpath_deriv,
-                    bids_basename + '_%s-ica.html' % kind)
+            op.join(deriv_path, f'bids_basename_{kind}-ica.html')
 
         report = Report(report_fname, verbose=False)
 

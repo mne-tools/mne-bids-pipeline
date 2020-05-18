@@ -55,12 +55,9 @@ for subject in config.get_subjects():
     else:
         extension = '-epo'
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
+    deriv_path = op.join(config.deriv_root, subject_path)
 
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
-
+    fname_in = op.join(deriv_path, bids_basename + '-ave.fif')
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=7, subject=subject,
                                 session=session))

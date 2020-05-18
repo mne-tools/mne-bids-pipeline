@@ -49,11 +49,10 @@ def run_epochs(subject, session=None):
                                            space=config.space
                                            )
         # Prepare a name to save the data
-        fpath_deriv = op.join(config.bids_root, 'derivatives',
-                              config.PIPELINE_NAME, subject_path)
+        deriv_path = op.join(config.deriv_root, subject_path)
 
         raw_fname_in = \
-            op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+            op.join(deriv_path, bids_basename + '_filt_raw.fif')
 
         msg = f'Loading filtered raw data from {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
@@ -114,7 +113,7 @@ def run_epochs(subject, session=None):
                                        )
 
     epochs_fname = \
-        op.join(fpath_deriv, bids_basename + '-epo.fif')
+        op.join(deriv_path, bids_basename + '-epo.fif')
     epochs.save(epochs_fname, overwrite=True)
 
     if config.plot:

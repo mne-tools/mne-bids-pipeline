@@ -91,9 +91,8 @@ def run_maxwell_filter(subject, session=None):
 
         if run_idx == 0:  # XXX does this work when no runs are specified?
             # Prepare the pipeline directory in /derivatives
-            deriv_path = op.join(config.deriv_root, subject_path)
-            if not op.exists(deriv_path):
-                os.makedirs(deriv_path)
+            if not op.exists(config.deriv_root):
+                os.makedirs(config.deriv_root)
 
             # Write a dataset_description.json for the pipeline
             ds_json = dict()

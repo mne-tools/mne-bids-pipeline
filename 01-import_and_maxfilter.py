@@ -91,8 +91,8 @@ def run_maxwell_filter(subject, session=None):
 
         if run_idx == 0:  # XXX does this work when no runs are specified?
             # Prepare the pipeline directory in /derivatives
-            deriv_path = config.deriv_root
-            fpath_out = op.join(deriv_path, subject_path)
+            deriv_root = config.deriv_root
+            fpath_out = op.join(deriv_root, subject_path)
             if not op.exists(fpath_out):
                 os.makedirs(fpath_out)
 
@@ -109,7 +109,7 @@ def run_maxwell_filter(subject, session=None):
                 'URL': 'n/a',
             }
 
-            fname = op.join(deriv_path, 'dataset_description.json')
+            fname = op.join(deriv_root, 'dataset_description.json')
             _write_json(fname, ds_json, overwrite=True)
 
         # read_raw_bids automatically

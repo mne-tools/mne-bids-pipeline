@@ -21,7 +21,7 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-def plot_events(subject, session, fpath_deriv):
+def plot_events(subject, session, deriv_path):
     raws_filt = []
     for run in config.get_runs():
         bids_basename = make_bids_basename(subject=subject,
@@ -32,7 +32,7 @@ def plot_events(subject, session, fpath_deriv):
                                            processing=config.proc,
                                            recording=config.rec,
                                            space=config.space)
-        fname = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+        fname = op.join(deriv_path, bids_basename + '_filt_raw.fif')
         raw_filt = mne.io.read_raw_fif(fname)
         raws_filt.append(raw_filt)
         del fname
@@ -67,12 +67,9 @@ def run_report(subject, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_ave = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
-    fname_trans = \
-        op.join(fpath_deriv, 'sub-{}'.format(subject) + '-trans.fif')
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
+    fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
     subjects_dir = config.get_subjects_dir()
     if op.exists(fname_trans):
         rep = mne.Report(info_fname=fname_ave, subject=subject,
@@ -80,11 +77,11 @@ def run_report(subject, session=None):
     else:
         rep = mne.Report(info_fname=fname_ave)
 
-    rep.parse_folder(fpath_deriv, verbose=True)
+    rep.parse_folder(deriv_path, verbose=True)
 
     # Visualize events.
     events_fig = plot_events(subject=subject, session=session,
-                             fpath_deriv=fpath_deriv)
+                             deriv_path=deriv_path)
     rep.add_figs_to_section(figs=events_fig,
                             captions='Events in filtered continuous data',
                             section='Events')
@@ -122,8 +119,8 @@ def run_report(subject, session=None):
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-            fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
-                                                       inverse_str, hemi_str]))
+            fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
+                                                      inverse_str, hemi_str]))
 
             if op.exists(fname_stc + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -162,7 +159,7 @@ def run_report(subject, session=None):
     else:
         task_str = ''
 
-    fname_report = op.join(fpath_deriv, 'report%s.html' % task_str)
+    fname_report = op.join(deriv_path, 'report%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -183,8 +180,7 @@ def main():
                      subjects_dir=config.get_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME)
+    deriv_path = config.deriv_root
 
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
@@ -204,10 +200,10 @@ def main():
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
 
-        fname_stc_avg = op.join(fpath_deriv, '_'.join(['average',
-                                                       bids_basename, cond_str,
-                                                       inverse_str, morph_str,
-                                                       hemi_str]))
+        fname_stc_avg = op.join(deriv_path, '_'.join(['average',
+                                                      bids_basename, cond_str,
+                                                      inverse_str, morph_str,
+                                                      hemi_str]))
 
         if op.exists(fname_stc_avg + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
@@ -245,7 +241,7 @@ def main():
     else:
         task_str = ''
 
-    fname_report = op.join(fpath_deriv, 'report_average%s.html' % task_str)
+    fname_report = op.join(deriv_path, 'report_average%s.html' % task_str)
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'

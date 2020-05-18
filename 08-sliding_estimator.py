@@ -62,10 +62,8 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                        space=config.space
                                        )
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '-epo.fif')
+    deriv_path = op.join(config.deriv_root, subject_path)
+    fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
 
     epochs = mne.read_epochs(fname_in)
 

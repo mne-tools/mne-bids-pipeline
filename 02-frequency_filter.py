@@ -52,14 +52,13 @@ def run_filter(subject, run=None, session=None):
                                        )
 
     # Prepare a name to save the data
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
+    deriv_path = op.join(config.deriv_root, subject_path)
     if config.use_maxwell_filter:
-        raw_fname_in = op.join(fpath_deriv, bids_basename + '_sss_raw.fif')
+        raw_fname_in = op.join(deriv_path, bids_basename + '_sss_raw.fif')
     else:
-        raw_fname_in = op.join(fpath_deriv, bids_basename + '_nosss_raw.fif')
+        raw_fname_in = op.join(deriv_path, bids_basename + '_nosss_raw.fif')
 
-    raw_fname_out = op.join(fpath_deriv, bids_basename + '_filt_raw.fif')
+    raw_fname_out = op.join(deriv_path, bids_basename + '_filt_raw.fif')
 
     msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,

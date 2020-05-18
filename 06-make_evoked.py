@@ -46,13 +46,12 @@ def run_evoked(subject, session=None):
     else:
         extension = '-epo'
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
+    deriv_path = op.join(config.deriv_root, subject_path)
     fname_in = \
-        op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
+        op.join(deriv_path, bids_basename + '%s.fif' % extension)
 
     fname_out = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
+        op.join(deriv_path, bids_basename + '-ave.fif')
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

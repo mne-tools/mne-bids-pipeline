@@ -5,8 +5,6 @@
 
 Calculate forward solution for MEG channels.
 """
-
-import glob
 import os.path as op
 import itertools
 import logging
@@ -15,7 +13,6 @@ import mne
 
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename, get_head_mri_trans
-from mne_bids.read import reader as mne_bids_readers
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -65,21 +62,7 @@ def run_forward(subject, session=None):
                                        space=config.space
                                        )
 
-    data_dir = op.join(config.bids_root, subject_path)
-    search_str = (op.join(data_dir, bids_basename) + '_' +
-                  config.get_kind() + '*')
-    fnames = sorted(glob.glob(search_str))
-    fnames = [f for f in fnames
-              if op.splitext(f)[1] in mne_bids_readers]
-
-    if len(fnames) >= 1:
-        bids_fname = fnames[0]
-    elif len(fnames) == 0:
-        raise ValueError('Could not find input data file matching: '
-                         '"{}"'.format(search_str))
-
-    bids_fname = op.basename(bids_fname)
-    trans = get_head_mri_trans(bids_fname=bids_fname,
+    trans = get_head_mri_trans(bids_basename=bids_basename,
                                bids_root=config.bids_root)
 
     mne.write_trans(fname_trans, trans)

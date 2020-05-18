@@ -116,13 +116,12 @@ def run_maxwell_filter(subject, session=None):
         # - populates bad channels using the BIDS channels.tsv
         # - sets channels types according to BIDS channels.tsv `type` column
         # - sets raw.annotations using the BIDS events.tsv
-        _, bids_fname = op.split(bids_fpath)
-
         extra_params = dict()
         if config.allow_maxshield:
             extra_params['allow_maxshield'] = config.allow_maxshield
 
-        raw = read_raw_bids(bids_fname, config.bids_root,
+        raw = read_raw_bids(bids_basename=bids_basename,
+                            bids_root=config.bids_root,
                             extra_params=extra_params)
 
         # Rename events.

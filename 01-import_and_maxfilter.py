@@ -108,7 +108,7 @@ def run_maxwell_filter(subject, session=None):
                 'URL': 'n/a',
             }
 
-            fname = op.join(deriv_path, 'dataset_description.json')
+            fname = op.join(config.deriv_root, 'dataset_description.json')
             _write_json(fname, ds_json, overwrite=True)
 
         # read_raw_bids automatically

@@ -51,6 +51,30 @@ logger = logging.getLogger('mne-study-template')
 
 
 @failsafe_run(on_error=on_error)
+def init_dataset():
+    """Prepare the pipeline directory in /derivatives.
+    """
+    if not op.exists(config.deriv_root):
+        os.makedirs(config.deriv_root)
+
+    # Write a dataset_description.json for the pipeline
+    ds_json = dict()
+    ds_json['Name'] = config.PIPELINE_NAME + ' outputs'
+    ds_json['BIDSVersion'] = BIDS_VERSION
+    ds_json['PipelineDescription'] = {
+        'Name': config.PIPELINE_NAME,
+        'Version': config.VERSION,
+        'CodeURL': config.CODE_URL,
+    }
+    ds_json['SourceDatasets'] = {
+        'URL': 'n/a',
+    }
+
+    fname = op.join(config.deriv_root, 'dataset_description.json')
+    _write_json(fname, ds_json, overwrite=True)
+
+
+@failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -62,7 +86,6 @@ def run_maxwell_filter(subject, session=None):
     data_dir = op.join(config.bids_root, subject_path)
 
     for run_idx, run in enumerate(config.get_runs()):
-
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
                                            task=config.get_task(),
@@ -88,27 +111,6 @@ def run_maxwell_filter(subject, session=None):
             raise ValueError('Expected to find a single input data file: "{}" '
                              ' but found:\n\n{}'
                              .format(search_str, fnames))
-
-        if run_idx == 0:  # XXX does this work when no runs are specified?
-            # Prepare the pipeline directory in /derivatives
-            if not op.exists(config.deriv_root):
-                os.makedirs(config.deriv_root)
-
-            # Write a dataset_description.json for the pipeline
-            ds_json = dict()
-            ds_json['Name'] = config.PIPELINE_NAME + ' outputs'
-            ds_json['BIDSVersion'] = BIDS_VERSION
-            ds_json['PipelineDescription'] = {
-                'Name': config.PIPELINE_NAME,
-                'Version': config.VERSION,
-                'CodeURL': config.CODE_URL,
-            }
-            ds_json['SourceDatasets'] = {
-                'URL': 'n/a',
-            }
-
-            fname = op.join(config.deriv_root, 'dataset_description.json')
-            _write_json(fname, ds_json, overwrite=True)
 
         # read_raw_bids automatically
         # - populates bad channels using the BIDS channels.tsv
@@ -252,6 +254,10 @@ def run_maxwell_filter(subject, session=None):
 
 def main():
     """Run maxwell_filter."""
+    msg = "Initializing dataset."
+    logger.info(gen_log_message(step=1, message=msg))
+    init_dataset()
+
     msg = 'Running Step 1: Data import and Maxwell filtering'
     logger.info(gen_log_message(step=1, message=msg))
 

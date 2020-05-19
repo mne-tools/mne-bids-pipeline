@@ -140,6 +140,34 @@ def find_bad_channels(raw, subject, session):
 
 
 @failsafe_run(on_error=on_error)
+def apply_maxwell_filter(raw, subject, session, dev_head_t):
+    msg = 'Applying Maxwell filter.'
+    logger.info(gen_log_message(message=msg, step=1,
+                                subject=subject, session=session))
+
+    # Warn if no bad channels are set before Maxfilter
+    if not raw.info['bads']:
+        msg = '\nFound no bad channels. \n '
+        logger.warn(gen_log_message(message=msg, subject=subject,
+                                    step=1, session=session))
+
+    if config.mf_st_duration:
+        msg = '    st_duration=%d' % (config.mf_st_duration)
+        logger.info(gen_log_message(message=msg, step=1,
+                                    subject=subject, session=session))
+
+    raw_sss = mne.preprocessing.maxwell_filter(
+        raw,
+        calibration=config.mf_cal_fname,
+        cross_talk=config.mf_ctc_fname,
+        st_duration=config.mf_st_duration,
+        origin=config.mf_head_origin,
+        destination=dev_head_t)
+
+    return raw_sss
+
+
+@failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
@@ -155,8 +183,7 @@ def run_maxwell_filter(subject, session=None):
                                            run=run,
                                            processing=config.proc,
                                            recording=config.rec,
-                                           space=config.space
-                                           )
+                                           space=config.space)
 
         # read_raw_bids automatically
         # - populates bad channels using the BIDS channels.tsv
@@ -168,7 +195,8 @@ def run_maxwell_filter(subject, session=None):
 
         raw = read_raw_bids(bids_basename=bids_basename,
                             bids_root=config.bids_root,
-                            extra_params=extra_params)
+                            extra_params=extra_params,
+                            kind=config.get_kind())
 
         # Rename events.
         if config.rename_events:
@@ -182,6 +210,7 @@ def run_maxwell_filter(subject, session=None):
             raw.crop(*config.crop)
 
         raw.load_data()
+
         if hasattr(raw, 'fix_mag_coil_types'):
             raw.fix_mag_coil_types()
 
@@ -189,54 +218,27 @@ def run_maxwell_filter(subject, session=None):
             find_bad_channels(raw=raw, subject=subject, session=session)
 
         if config.use_maxwell_filter:
-            msg = 'Applying maxwell filter.'
-            logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session))
+            if run_idx == 0:  # Re-use in all subsequent runs.
+                dev_head_t = raw.info['dev_head_t']
 
-            # Warn if no bad channels are set before Maxfilter
-            if not raw.info['bads']:
-                msg = '\nFound no bad channels. \n '
-                logger.warn(gen_log_message(message=msg, subject=subject,
-                                            step=1, session=session))
-
-            if run_idx == 0:
-                destination = raw.info['dev_head_t']
-
-            if config.mf_st_duration:
-                msg = '    st_duration=%d' % (config.mf_st_duration)
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
-
-            raw_sss = mne.preprocessing.maxwell_filter(
-                raw,
-                calibration=config.mf_cal_fname,
-                cross_talk=config.mf_ctc_fname,
-                st_duration=config.mf_st_duration,
-                origin=config.mf_head_origin,
-                destination=destination)
-
-            # Prepare a name to save the data
+            raw_sss = apply_maxwell_filter(raw=raw, subject=subject,
+                                           session=session,
+                                           dev_head_t=dev_head_t)
+            raw_out = raw_sss
             raw_fname_out = op.join(config.deriv_root, subject_path,
                                     bids_basename + '_sss_raw.fif')
-            raw_sss.save(raw_fname_out, overwrite=True)
-
-            if config.plot:
-                # plot maxfiltered data
-                raw_sss.plot(n_channels=50, butterfly=True)
-
         else:
-            msg = ('Not applying maxwell filter.\nIf you wish to apply it, '
-                   'set use_maxwell_filter=True in your configuration')
+            msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
+                   'set use_maxwell_filter=True in your configuration.')
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
-            # Prepare a name to save the data
+            raw_out = raw
             raw_fname_out = op.join(config.deriv_root, subject_path,
                                     bids_basename + '_nosss_raw.fif')
-            raw.save(raw_fname_out, overwrite=True)
 
-            if config.plot:
-                # plot raw data
-                raw.plot(n_channels=50, butterfly=True)
+        raw_out.save(raw_fname_out, overwrite=True)
+        if config.plot:
+            raw_out.plot(n_channels=50, butterfly=True)
 
 
 def main():

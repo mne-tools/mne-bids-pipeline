@@ -92,8 +92,7 @@ def run_filter(subject, run=None, session=None):
         raw.plot(n_channels=50, butterfly=True)
 
         # plot power spectral densitiy
-        raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                     fmin=0., fmax=50., average=True)
+        raw.plot_psd(average=True, area_mode='range')
 
 
 def main():

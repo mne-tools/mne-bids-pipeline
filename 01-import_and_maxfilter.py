@@ -96,8 +96,6 @@ def rename_events(raw, subject, session):
                                     subject=subject, session=session))
         description[description == old_event_name] = new_event_name
 
-    return raw
-
 
 @failsafe_run(on_error=on_error)
 def find_bad_channels(raw, subject, session):
@@ -140,8 +138,6 @@ def find_bad_channels(raw, subject, session):
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
 
-    return raw
-
 
 @failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
@@ -176,7 +172,7 @@ def run_maxwell_filter(subject, session=None):
 
         # Rename events.
         if config.rename_events:
-            raw = rename_events(raw=raw, subject=subject, session=session)
+            rename_events(raw=raw, subject=subject, session=session)
 
         # XXX hack to deal with dates that fif files cannot handle
         if config.daysback is not None:
@@ -190,7 +186,7 @@ def run_maxwell_filter(subject, session=None):
             raw.fix_mag_coil_types()
 
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
-            raw = find_bad_channels(raw=raw, subject=subject, session=session)
+            find_bad_channels(raw=raw, subject=subject, session=session)
 
         if config.use_maxwell_filter:
             msg = 'Applying maxwell filter.'

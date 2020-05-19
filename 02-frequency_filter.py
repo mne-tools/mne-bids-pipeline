@@ -68,7 +68,7 @@ def run_filter(subject, run=None, session=None):
     raw.load_data()
 
     # Band-pass the data channels (MEG and EEG)
-    msg = f'Filtering data between {config.l_freq} and {config.h_freq} (Hz)'
+    msg = f'Filtering data between {config.l_freq} and {config.h_freq} Hz'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run,))
 
@@ -91,9 +91,11 @@ def run_filter(subject, run=None, session=None):
         # plot raw data
         raw.plot(n_channels=50, butterfly=True)
 
-        # plot power spectral densitiy
-        raw.plot_psd(area_mode='range', tmin=10.0, tmax=100.0,
-                     fmin=0., fmax=50., average=True)
+        # plot power spectral density of the measurement data – skip the
+        # time period before data acquisition.
+        raw.plot_psd(tmin=raw.first_time,
+                     n_fft=len(raw.times[raw.first_samp:]),
+                     average=True, area_mode='range')
 
 
 def main():

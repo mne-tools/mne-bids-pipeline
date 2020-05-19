@@ -94,7 +94,7 @@ def run_filter(subject, run=None, session=None):
         # plot power spectral density of the measurement data – skip the
         # time period before data acquisition.
         raw.plot_psd(tmin=raw.first_time,
-                     n_fft=len(raw.times[raw.first_samp:]),
+                     n_fft=len(raw.times[raw.first_samp:]) + 1,
                      average=True, area_mode='range')
 
 

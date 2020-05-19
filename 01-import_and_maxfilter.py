@@ -32,14 +32,12 @@ https://github.com/bids-standard/bids-specification/pull/265
 
 import os
 import os.path as op
-import glob
 import itertools
 import logging
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
-from mne_bids.read import reader as mne_bids_readers
 from mne_bids import make_bids_basename, read_raw_bids
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
@@ -75,15 +73,83 @@ def init_dataset():
 
 
 @failsafe_run(on_error=on_error)
+def rename_events(raw, subject, session):
+    # Check if the user requested to rename events that don't exist.
+    # We don't want this to go unnoticed.
+    event_names_set = set(raw.annotations.description)
+    rename_events_set = set(config.rename_events.keys())
+    events_not_in_raw = rename_events_set - event_names_set
+    if events_not_in_raw:
+        msg = (f'You requested to rename the following events, but '
+               f'they are not present in the BIDS input data:\n'
+               f'{", ".join(sorted(list(events_not_in_raw)))}')
+        raise ValueError(msg)
+
+    # Do the actual event renaming.
+    msg = 'Renaming events …'
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session))
+    description = raw.annotations.description
+    for old_event_name, new_event_name in config.rename_events.items():
+        msg = f'… {old_event_name} -> {new_event_name}'
+        logger.info(gen_log_message(message=msg, step=1,
+                                    subject=subject, session=session))
+        description[description == old_event_name] = new_event_name
+
+    return raw
+
+
+@failsafe_run(on_error=on_error)
+def find_bad_channels(raw, subject, session):
+    if (config.find_flat_channels_meg and
+            not config.find_noisy_channels_meg):
+        msg = 'Finding flat channels.'
+    elif (config.find_noisy_channels_meg and
+            not config.find_flat_channels_meg):
+        msg = 'Finding noisy channels using Maxwell filtering.'
+    else:
+        msg = ('Finding flat channels, and noisy channels using '
+               'Maxwell filtering.')
+
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session))
+    raw_lp_filtered_for_maxwell = (raw.copy()
+                                   .filter(l_freq=None,
+                                           h_freq=40))
+    auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
+        raw=raw_lp_filtered_for_maxwell,
+        calibration=config.mf_cal_fname,
+        cross_talk=config.mf_ctc_fname)
+    del raw_lp_filtered_for_maxwell
+
+    bads = raw.info['bads'].copy()
+    if config.find_flat_channels_meg:
+        msg = f'Found {len(auto_flat_chs)} flat channels.'
+        logger.info(gen_log_message(message=msg, step=1,
+                                    subject=subject, session=session))
+        bads.extend(auto_flat_chs)
+    if config.find_noisy_channels_meg:
+        msg = f'Found {len(auto_noisy_chs)} noisy channels.'
+        logger.info(gen_log_message(message=msg, step=1,
+                                    subject=subject, session=session))
+        bads.extend(auto_noisy_chs)
+
+    bads = sorted(set(bads))
+    raw.info['bads'] = bads
+    msg = f'Marked {len(raw.info["bads"])} channels as bad.'
+    logger.info(gen_log_message(message=msg, step=1,
+                                subject=subject, session=session))
+
+    return raw
+
+
+@failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
     subject_path = op.join('sub-{}'.format(subject))
     # `session` is optional
     if session is not None:
         subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
-    data_dir = op.join(config.bids_root, subject_path)
 
     for run_idx, run in enumerate(config.get_runs()):
         bids_basename = make_bids_basename(subject=subject,
@@ -95,22 +161,6 @@ def run_maxwell_filter(subject, session=None):
                                            recording=config.rec,
                                            space=config.space
                                            )
-        # Find the data file
-        search_str = op.join(data_dir,
-                             bids_basename) + '_' + config.get_kind() + '*'
-        fnames = sorted(glob.glob(search_str))
-        fnames = [f for f in fnames
-                  if op.splitext(f)[1] in mne_bids_readers]
-
-        if len(fnames) == 1:
-            bids_fpath = fnames[0]
-        elif len(fnames) == 0:
-            raise ValueError('Could not find input data file matching: '
-                             '"{}"'.format(search_str))
-        elif len(fnames) > 1:
-            raise ValueError('Expected to find a single input data file: "{}" '
-                             ' but found:\n\n{}'
-                             .format(search_str, fnames))
 
         # read_raw_bids automatically
         # - populates bad channels using the BIDS channels.tsv
@@ -126,27 +176,7 @@ def run_maxwell_filter(subject, session=None):
 
         # Rename events.
         if config.rename_events:
-            # Check if the user requested to rename events that don't exist.
-            # We don't want this to go unnoticed.
-            event_names_set = set(raw.annotations.description)
-            rename_events_set = set(config.rename_events.keys())
-            events_not_in_raw = rename_events_set - event_names_set
-            if events_not_in_raw:
-                msg = (f'You requested to rename the following events, but '
-                       f'they are not present in the BIDS input data:\n'
-                       f'{", ".join(sorted(list(events_not_in_raw)))}')
-                raise ValueError(msg)
-
-            # Do the actual event renaming.
-            msg = 'Renaming events …'
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
-            description = raw.annotations.description
-            for old_event_name, new_event_name in config.rename_events.items():
-                msg = f'… {old_event_name} -> {new_event_name}'
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
-                description[description == old_event_name] = new_event_name
+            raw = rename_events(raw=raw, subject=subject, session=session)
 
         # XXX hack to deal with dates that fif files cannot handle
         if config.daysback is not None:
@@ -160,45 +190,7 @@ def run_maxwell_filter(subject, session=None):
             raw.fix_mag_coil_types()
 
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
-            if (config.find_flat_channels_meg and
-                    not config.find_noisy_channels_meg):
-                msg = 'Finding flat channels.'
-            elif (config.find_noisy_channels_meg and
-                  not config.find_flat_channels_meg):
-                msg = 'Finding noisy channels using Maxwell filtering.'
-            else:
-                msg = ('Finding flat channels, and noisy channels using '
-                       'Maxwell filtering.')
-
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
-            raw_lp_filtered_for_maxwell = (raw.copy()
-                                           .filter(l_freq=None,
-                                                   h_freq=40))
-            auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
-                raw=raw_lp_filtered_for_maxwell,
-                calibration=config.mf_cal_fname,
-                cross_talk=config.mf_ctc_fname)
-            del raw_lp_filtered_for_maxwell
-
-            bads = raw.info['bads'].copy()
-            if config.find_flat_channels_meg:
-                msg = f'Found {len(auto_flat_chs)} flat channels.'
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
-                bads.extend(auto_flat_chs)
-            if config.find_noisy_channels_meg:
-                msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
-                bads.extend(auto_noisy_chs)
-
-            bads = sorted(set(bads))
-            raw.info['bads'] = bads
-            msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-            logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session))
-            del bads, auto_flat_chs, auto_noisy_chs, msg
+            raw = find_bad_channels(raw=raw, subject=subject, session=session)
 
         if config.use_maxwell_filter:
             msg = 'Applying maxwell filter.'

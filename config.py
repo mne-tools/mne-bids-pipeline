@@ -94,16 +94,28 @@ rec = None
 
 space = None
 
-# ``subjects_list`` : list of str
-#   To define the list of participants, we use a list with all the anonymized
-#   participant names. Even if you plan on analyzing a single participant, it
-#   needs to be set up as a list with a single element, as in the 'example'
-#   subjects_list = ['SB01']
+# ``subjects_list`` : 'all' | list of str
+#   Subjects to analyze. If ``'all``, include all subjects. To only
+#   include a subset of subjects, pass a list of their identifiers. Even
+#   if you plan on analyzing only a single subject, pass their identifier
+#   as a list.
+#
+#   Please note that if you intend to EXCLUDE only a few subjects, you
+#   should consider setting ``subjects_list = 'all'`` and adding the
+#   identifiers of the excluded subjects to ``exclude_subjects`` (see next
+#   section).
+#
+# Example
+# ~~~~~~~
+# >>> subjects_list = 'all'  # Include all subjects.
+# >>> subjects_list = ['05']  # Only include subject 05.
+# >>> subjects_list = ['01', '02']  # Only include subjects 01 and 02.
 
 subjects_list = 'all'
 
 # ``exclude_subjects`` : list of str
-#   Now you can specify subjects to exclude from the group study:
+#   Specify subjects to exclude from analysis. The MEG empty-room mock-subject
+#   is automatically excluded from regular analysis.
 #
 # Good Practice / Advice
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +123,7 @@ subjects_list = 'all'
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
 
-exclude_subjects = ['emptyroom']
+exclude_subjects = []
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.

@@ -236,6 +236,10 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = op.join(config.deriv_root, subject_path,
                                     bids_basename + '_nosss_raw.fif')
 
+        subject_dirname = os.path.dirname(raw_fname_out)
+        if not os.path.exists(subject_dirname):
+            os.mkdir(subject_dirname)
+
         raw_out.save(raw_fname_out, overwrite=True)
         if config.plot:
             raw_out.plot(n_channels=50, butterfly=True)

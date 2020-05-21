@@ -961,7 +961,7 @@ def failsafe_run(on_error):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
             try:
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             except Exception as e:
                 message = 'A critical error occurred.'
                 message = gen_log_message(message=message)

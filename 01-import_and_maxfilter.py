@@ -52,8 +52,7 @@ logger = logging.getLogger('mne-study-template')
 def init_dataset():
     """Prepare the pipeline directory in /derivatives.
     """
-    if not op.exists(config.deriv_root):
-        os.makedirs(config.deriv_root)
+    os.makedirs(config.deriv_root, exist_ok=True)
 
     # Write a dataset_description.json for the pipeline
     ds_json = dict()
@@ -236,9 +235,7 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = op.join(config.deriv_root, subject_path,
                                     bids_basename + '_nosss_raw.fif')
 
-        subject_dirname = os.path.dirname(raw_fname_out)
-        if not os.path.exists(subject_dirname):
-            os.mkdir(subject_dirname)
+        os.makedirs(os.path.dirname(raw_fname_out), exist_ok=True)
 
         raw_out.save(raw_fname_out, overwrite=True)
         if config.plot:

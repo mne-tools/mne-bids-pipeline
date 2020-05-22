@@ -168,13 +168,11 @@ def apply_maxwell_filter(raw, subject, session, dev_head_t):
 
 @failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    kind = config.get_kind()
+    subject_path = config.get_subject_path(subject=subject, session=session,
+                                           kind=kind)
+    deriv_path = op.join(config.deriv_root, subject_path)
+    os.makedirs(deriv_path, exist_ok=True)
 
     for run_idx, run in enumerate(config.get_runs()):
         bids_basename = make_bids_basename(subject=subject,
@@ -226,15 +224,14 @@ def run_maxwell_filter(subject, session=None):
                                            session=session,
                                            dev_head_t=dev_head_t)
             raw_out = raw_sss
-            raw_fname_out = op.join(config.deriv_root, subject_path,
-                                    bids_basename + '_sss_raw.fif')
+            raw_fname_out = op.join(deriv_path, bids_basename + '_sss_raw.fif')
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
             raw_out = raw
-            raw_fname_out = op.join(config.deriv_root, subject_path,
+            raw_fname_out = op.join(deriv_path,
                                     bids_basename + '_nosss_raw.fif')
 
         os.makedirs(os.path.dirname(raw_fname_out), exist_ok=True)

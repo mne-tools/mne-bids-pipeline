@@ -33,12 +33,10 @@ n_cycles = freqs / 3.
 @failsafe_run(on_error=on_error)
 def run_time_frequency(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    kind = config.get_kind()
+    subject_path = config.get_subject_path(subject=subject, session=session,
+                                           kind=kind)
+    deriv_path = op.join(config.deriv_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -55,7 +53,6 @@ def run_time_frequency(subject, session=None):
     else:
         extension = '-epo'
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_in = op.join(deriv_path, bids_basename + '%s.fif' % extension)
 
     msg = f'Input: {fname_in}'

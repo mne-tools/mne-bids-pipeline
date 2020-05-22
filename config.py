@@ -937,6 +937,14 @@ def get_subjects_dir():
         return subjects_dir
 
 
+def get_subject_path(subject, session, kind):
+    subject_path = f'sub-{subject}'
+    if session is not None:
+        subject_path = os.path.join(subject_path, f'ses-{session}')
+    subject_path = os.path.join(subject_path, kind)
+    return subject_path
+
+
 def gen_log_message(message, step=None, subject=None, session=None, run=None):
     if subject is not None:
         subject = f'sub-{subject}'

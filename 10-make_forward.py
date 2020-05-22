@@ -5,6 +5,7 @@
 
 Calculate forward solution for MEG channels.
 """
+
 import os.path as op
 import itertools
 import logging
@@ -23,12 +24,10 @@ logger = logging.getLogger('mne-study-template')
 @failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    kind = config.get_kind()
+    subject_path = config.get_subject_path(subject=subject, session=session,
+                                           kind=kind)
+    deriv_path = op.join(config.deriv_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -37,14 +36,10 @@ def run_forward(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_evoked = op.join(deriv_path, bids_basename + '-ave.fif')
-
     fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
-
     fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'

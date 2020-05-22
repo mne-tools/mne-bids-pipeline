@@ -23,12 +23,9 @@ logger = logging.getLogger('mne-study-template')
 
 def morph_stc(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    kind = config.get_kind()
+    subject_path = config.get_subject_path(subject=subject, session=session,
+                                           kind=kind)
     deriv_path = op.join(config.deriv_root, subject_path)
 
     bids_basename = make_bids_basename(subject=subject,

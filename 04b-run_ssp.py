@@ -24,12 +24,10 @@ logger = logging.getLogger('mne-study-template')
 @failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
     # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    kind = config.get_kind()
+    subject_path = config.get_subject_path(subject=subject, session=session,
+                                           kind=kind)
+    deriv_path = op.join(config.deriv_root, subject_path)
 
     # compute SSP on first run of raw
     run = config.get_runs()[0]
@@ -45,7 +43,6 @@ def run_ssp(subject, session=None):
                                        )
 
     # Prepare a name to save the data
-    deriv_path = op.join(config.deriv_root, subject_path)
     raw_fname_in = op.join(deriv_path, bids_basename + '_filt_raw.fif')
 
     # when saving proj, use bids_basename=None

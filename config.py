@@ -930,7 +930,7 @@ def get_reject():
     return reject_
 
 
-def get_subjects_dir():
+def get_fs_subjects_dir():
     if not subjects_dir:
         return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
     else:

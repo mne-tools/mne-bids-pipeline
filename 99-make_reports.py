@@ -65,7 +65,7 @@ def run_report(subject, session=None):
 
     fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
     fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
-    subjects_dir = config.get_subjects_dir()
+    subjects_dir = config.get_fs_subjects_dir()
     if op.exists(fname_trans):
         rep = mne.Report(info_fname=fname_ave, subject=subject,
                          subjects_dir=subjects_dir)
@@ -172,7 +172,7 @@ def main():
                            config.PIPELINE_NAME,
                            '%s_grand_average-ave.fif' % config.study_name)
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.get_subjects_dir())
+                     subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
     deriv_path = config.deriv_root

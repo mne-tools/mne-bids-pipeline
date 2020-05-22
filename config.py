@@ -945,6 +945,13 @@ def get_subject_path(subject, session, kind):
     return subject_path
 
 
+def get_subject_deriv_path(subject, session, kind):
+    subject_path = get_subject_path(subject=subject, session=session,
+                                    kind=kind)
+    deriv_path = os.path.join(deriv_root, subject_path)
+    return deriv_path
+
+
 def gen_log_message(message, step=None, subject=None, session=None, run=None):
     if subject is not None:
         subject = f'sub-{subject}'

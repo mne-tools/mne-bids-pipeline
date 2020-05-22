@@ -27,11 +27,9 @@ def apply_ssp(subject, session=None):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
 
-    # Construct the search path for the data file. `sub` is mandatory
-    kind = config.get_kind()
-    subject_path = config.get_subject_path(subject=subject, session=session,
-                                           kind=kind)
-    deriv_path = op.join(config.deriv_root, subject_path)
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,

@@ -23,11 +23,9 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    kind = config.get_kind()
-    subject_path = config.get_subject_path(subject=subject, session=session,
-                                           kind=kind)
-    deriv_path = op.join(config.deriv_root, subject_path)
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     # compute SSP on first run of raw
     run = config.get_runs()[0]

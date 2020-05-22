@@ -30,11 +30,9 @@ def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
     raw_list = list()
 
-    # Construct the search path for the data file. `sub` is mandatory
-    kind = config.get_kind()
-    subject_path = config.get_subject_path(subject=subject, session=session,
-                                           kind=kind)
-    deriv_path = op.join(config.deriv_root, subject_path)
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     for run in config.get_runs():
         bids_basename = make_bids_basename(subject=subject,

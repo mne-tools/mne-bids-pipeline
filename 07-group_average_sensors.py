@@ -32,11 +32,9 @@ else:
     session = None
 
 for subject in config.get_subjects():
-    # Construct the search path for the data file. `sub` is mandatory
-    kind = config.get_kind()
-    subject_path = config.get_subject_path(subject=subject, session=session,
-                                           kind=kind)
-    deriv_path = op.join(config.deriv_root, subject_path)
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,

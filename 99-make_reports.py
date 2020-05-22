@@ -49,13 +49,9 @@ def plot_events(subject, session, deriv_path):
 
 @failsafe_run(on_error=on_error)
 def run_report(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -67,10 +63,9 @@ def run_report(subject, session=None):
                                        space=config.space
                                        )
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
     fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
-    subjects_dir = config.get_subjects_dir()
+    subjects_dir = config.get_fs_subjects_dir()
     if op.exists(fname_trans):
         rep = mne.Report(info_fname=fname_ave, subject=subject,
                          subjects_dir=subjects_dir)
@@ -177,7 +172,7 @@ def main():
                            config.PIPELINE_NAME,
                            '%s_grand_average-ave.fif' % config.study_name)
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.get_subjects_dir())
+                     subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
     deriv_path = config.deriv_root

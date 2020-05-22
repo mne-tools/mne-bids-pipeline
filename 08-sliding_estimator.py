@@ -44,13 +44,9 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     logger.info(gen_log_message(message=msg, step=8, subject=subject,
                                 session=session))
 
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -59,12 +55,9 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
-
     epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels

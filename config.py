@@ -930,11 +930,26 @@ def get_reject():
     return reject_
 
 
-def get_subjects_dir():
+def get_fs_subjects_dir():
     if not subjects_dir:
         return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
     else:
         return subjects_dir
+
+
+def get_subject_path(subject, session, kind):
+    subject_path = f'sub-{subject}'
+    if session is not None:
+        subject_path = os.path.join(subject_path, f'ses-{session}')
+    subject_path = os.path.join(subject_path, kind)
+    return subject_path
+
+
+def get_subject_deriv_path(subject, session, kind):
+    subject_path = get_subject_path(subject=subject, session=session,
+                                    kind=kind)
+    deriv_path = os.path.join(deriv_root, subject_path)
+    return deriv_path
 
 
 def gen_log_message(message, step=None, subject=None, session=None, run=None):

@@ -23,13 +23,9 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_evoked(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -46,12 +42,9 @@ def run_evoked(subject, session=None):
     else:
         extension = '-epo'
 
-    deriv_path = op.join(config.deriv_root, subject_path)
-    fname_in = \
-        op.join(deriv_path, bids_basename + '%s.fif' % extension)
+    fname_in = op.join(deriv_path, bids_basename + '%s.fif' % extension)
 
-    fname_out = \
-        op.join(deriv_path, bids_basename + '-ave.fif')
+    fname_out = op.join(deriv_path, bids_basename + '-ave.fif')
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

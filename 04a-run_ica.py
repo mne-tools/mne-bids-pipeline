@@ -30,14 +30,10 @@ logger = logging.getLogger('mne-study-template')
 def run_ica(subject, session=None):
     """Run ICA."""
 
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
-    subject_path = op.join(subject_path, config.get_kind())
-    deriv_path = op.join(config.deriv_root, subject_path)
     raw_list = list()
     msg = 'Loading filtered raw data'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

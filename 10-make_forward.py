@@ -5,6 +5,7 @@
 
 Calculate forward solution for MEG channels.
 """
+
 import os.path as op
 import itertools
 import logging
@@ -22,13 +23,9 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -37,14 +34,10 @@ def run_forward(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_evoked = op.join(deriv_path, bids_basename + '-ave.fif')
-
     fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
-
     fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
@@ -68,7 +61,7 @@ def run_forward(subject, session=None):
     mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,
-                                 subjects_dir=config.get_subjects_dir(),
+                                 subjects_dir=config.get_fs_subjects_dir(),
                                  add_dist=False)
 
     evoked = mne.read_evokeds(fname_evoked, condition=0)
@@ -77,10 +70,10 @@ def run_forward(subject, session=None):
     if config.get_kind() == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
-                                   subjects_dir=config.get_subjects_dir())
+                                   subjects_dir=config.get_fs_subjects_dir())
     else:
         model = mne.make_bem_model(subject, ico=4, conductivity=(0.3,),
-                                   subjects_dir=config.get_subjects_dir())
+                                   subjects_dir=config.get_fs_subjects_dir())
 
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(evoked.info, trans, src, bem,

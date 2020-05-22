@@ -33,13 +33,9 @@ logger = logging.getLogger('mne-study-template')
 @failsafe_run(on_error=on_error)
 def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -52,7 +48,6 @@ def run_filter(subject, run=None, session=None):
                                        )
 
     # Prepare a name to save the data
-    deriv_path = op.join(config.deriv_root, subject_path)
     if config.use_maxwell_filter:
         raw_fname_in = op.join(deriv_path, bids_basename + '_sss_raw.fif')
     else:

@@ -22,14 +22,9 @@ logger = logging.getLogger('mne-study-template')
 
 
 def morph_stc(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
-    deriv_path = op.join(config.deriv_root, subject_path)
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -41,8 +36,8 @@ def morph_stc(subject, session=None):
                                        space=config.space
                                        )
 
-    mne.utils.set_config('SUBJECTS_DIR', config.get_subjects_dir())
-    mne.datasets.fetch_fsaverage(subjects_dir=config.get_subjects_dir())
+    mne.utils.set_config('SUBJECTS_DIR', config.get_fs_subjects_dir())
+    mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
     morphed_stcs = []
     for condition in config.conditions:
@@ -61,7 +56,7 @@ def morph_stc(subject, session=None):
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
             stc, subject_from=subject, subject_to='fsaverage',
-            subjects_dir=config.get_subjects_dir())
+            subjects_dir=config.get_fs_subjects_dir())
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
         morphed_stcs.append(stc_fsaverage)

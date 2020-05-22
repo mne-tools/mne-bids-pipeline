@@ -28,15 +28,11 @@ logger = logging.getLogger('mne-study-template')
 @failsafe_run(on_error=on_error)
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
-
     raw_list = list()
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     for run in config.get_runs():
         bids_basename = make_bids_basename(subject=subject,
@@ -49,8 +45,6 @@ def run_epochs(subject, session=None):
                                            space=config.space
                                            )
         # Prepare a name to save the data
-        deriv_path = op.join(config.deriv_root, subject_path)
-
         raw_fname_in = \
             op.join(deriv_path, bids_basename + '_filt_raw.fif')
 

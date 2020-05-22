@@ -34,13 +34,9 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def apply_ica(subject, run, session):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -49,10 +45,8 @@ def apply_ica(subject, run, session):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    deriv_path = op.join(config.deriv_root, subject_path)
     fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
 
     fname_out = op.join(deriv_path, bids_basename + '_cleaned-epo.fif')

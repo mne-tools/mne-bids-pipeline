@@ -32,13 +32,9 @@ else:
     session = None
 
 for subject in config.get_subjects():
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -54,8 +50,6 @@ for subject in config.get_subjects():
         extension = '_cleaned-epo'
     else:
         extension = '-epo'
-
-    deriv_path = op.join(config.deriv_root, subject_path)
 
     fname_in = op.join(deriv_path, bids_basename + '-ave.fif')
     msg = f'Input: {fname_in}'

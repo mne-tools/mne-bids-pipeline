@@ -33,6 +33,8 @@ logger = logging.getLogger('mne-study-template')
 @failsafe_run(on_error=on_error)
 def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
+
+    # Construct the search path for the data file. `sub` is mandatory
     kind = config.get_kind()
     subject_path = config.get_subject_path(subject=subject, session=session,
                                            kind=kind)

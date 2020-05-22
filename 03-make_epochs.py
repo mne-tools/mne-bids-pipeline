@@ -9,6 +9,7 @@ easily (see config.event_id). Automatic rejection is applied to the epochs.
 Finally the epochs are saved to disk.
 To save space, the epoch data can be decimated.
 """
+
 import os.path as op
 import itertools
 import logging
@@ -29,6 +30,7 @@ def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
     raw_list = list()
 
+    # Construct the search path for the data file. `sub` is mandatory
     kind = config.get_kind()
     subject_path = config.get_subject_path(subject=subject, session=session,
                                            kind=kind)

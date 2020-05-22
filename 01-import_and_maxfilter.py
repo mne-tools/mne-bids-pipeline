@@ -168,6 +168,7 @@ def apply_maxwell_filter(raw, subject, session, dev_head_t):
 
 @failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
+    # Construct the search path for the data file. `sub` is mandatory
     kind = config.get_kind()
     subject_path = config.get_subject_path(subject=subject, session=session,
                                            kind=kind)

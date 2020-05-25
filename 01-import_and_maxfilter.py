@@ -151,7 +151,7 @@ def find_bad_channels(raw, subject, session, task, run):
                                        recording=config.rec,
                                        space=config.space)
 
-    bads_tsv_fname = op.join(deriv_path, f'{bids_basename}_bad_chans.tsv')
+    bads_tsv_fname = op.join(deriv_path, f'{bids_basename}_bad_channels.tsv')
     bads_for_tsv = []
     reasons = []
 

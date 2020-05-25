@@ -35,6 +35,8 @@ import os.path as op
 import itertools
 import logging
 
+import pandas as pd
+
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
@@ -48,7 +50,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-@failsafe_run(on_error=on_error)
 def init_dataset():
     """Prepare the pipeline directory in /derivatives.
     """
@@ -71,7 +72,6 @@ def init_dataset():
     _write_json(fname, ds_json, overwrite=True)
 
 
-@failsafe_run(on_error=on_error)
 def rename_events(raw, subject, session):
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
@@ -96,8 +96,7 @@ def rename_events(raw, subject, session):
         description[description == old_event_name] = new_event_name
 
 
-@failsafe_run(on_error=on_error)
-def find_bad_channels(raw, subject, session):
+def find_bad_channels(raw, subject, session, task, run):
     if (config.find_flat_channels_meg and
             not config.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
@@ -119,7 +118,8 @@ def find_bad_channels(raw, subject, session):
         cross_talk=config.mf_ctc_fname)
     del raw_lp_filtered_for_maxwell
 
-    bads = raw.info['bads'].copy()
+    preexisting_bads = raw.info['bads'].copy()
+    bads = preexisting_bads.copy()
     if config.find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
         logger.info(gen_log_message(message=msg, step=1,
@@ -137,8 +137,45 @@ def find_bad_channels(raw, subject, session):
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
 
+    # Write the bad channels to disk.
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
 
-@failsafe_run(on_error=on_error)
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+
+    bads_tsv_fname = op.join(deriv_path, f'{bids_basename}_bad_chans.tsv')
+    bads_for_tsv = []
+    reasons = []
+
+    if config.find_flat_channels_meg:
+        bads_for_tsv.extend(auto_flat_chs)
+        reasons.extend(['auto-flat'] * len(auto_flat_chs))
+        preexisting_bads = set(preexisting_bads) - set(auto_flat_chs)
+
+    if config.find_noisy_channels_meg:
+        bads_for_tsv.extend(auto_noisy_chs)
+        reasons.extend(['auto-noisy'] * len(auto_noisy_chs))
+        preexisting_bads = set(preexisting_bads) - set(auto_noisy_chs)
+
+    preexisting_bads = list(preexisting_bads)
+    if preexisting_bads:
+        bads_for_tsv.extend(preexisting_bads)
+        reasons.extend(['pre-existing (before mne-study-template was run)'] *
+                       len(preexisting_bads))
+
+    tsv_data = pd.DataFrame(dict(Channel=bads_for_tsv, Reason=reasons))
+    tsv_data = tsv_data.sort_values(by='Channel')
+    tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
+
+
 def apply_maxwell_filter(raw, subject, session, dev_head_t):
     msg = 'Applying Maxwell filter.'
     logger.info(gen_log_message(message=msg, step=1,
@@ -166,7 +203,6 @@ def apply_maxwell_filter(raw, subject, session, dev_head_t):
     return raw_sss
 
 
-@failsafe_run(on_error=on_error)
 def run_maxwell_filter(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
@@ -213,7 +249,8 @@ def run_maxwell_filter(subject, session=None):
             raw.fix_mag_coil_types()
 
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
-            find_bad_channels(raw=raw, subject=subject, session=session)
+            find_bad_channels(raw=raw, subject=subject, session=session,
+                              task=config.get_task(), run=run)
 
         if config.use_maxwell_filter:
             if run_idx == 0:  # Re-use in all subsequent runs.
@@ -240,6 +277,7 @@ def run_maxwell_filter(subject, session=None):
             raw_out.plot(n_channels=50, butterfly=True)
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
     msg = "Initializing dataset."

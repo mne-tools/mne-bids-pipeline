@@ -172,7 +172,7 @@ def find_bad_channels(raw, subject, session, task, run):
                        len(preexisting_bads))
 
     tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
-    tsv_data = tsv_data.sort_values(by='Channel')
+    tsv_data = tsv_data.sort_values(by='name')
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 

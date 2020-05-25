@@ -171,7 +171,7 @@ def find_bad_channels(raw, subject, session, task, run):
         reasons.extend(['pre-existing (before mne-study-template was run)'] *
                        len(preexisting_bads))
 
-    tsv_data = pd.DataFrame(dict(Channel=bads_for_tsv, Reason=reasons))
+    tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
     tsv_data = tsv_data.sort_values(by='Channel')
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 

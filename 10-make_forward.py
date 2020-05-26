@@ -23,9 +23,10 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -38,7 +39,7 @@ def run_forward(subject, session=None):
 
     fname_evoked = op.join(deriv_path, bids_basename + '-ave.fif')
     fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
-    fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
+    fname_fwd = op.join(deriv_path, f'{bids_basename}_{kind}-fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
@@ -67,7 +68,7 @@ def run_forward(subject, session=None):
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
-    if config.get_kind() == 'eeg':
+    if kind == 'eeg':
         model = mne.make_bem_model(subject, ico=4,
                                    conductivity=(0.3, 0.006, 0.3),
                                    subjects_dir=config.get_fs_subjects_dir())

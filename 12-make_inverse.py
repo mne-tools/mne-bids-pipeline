@@ -24,9 +24,10 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_inverse(subject, session=None):
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -38,9 +39,9 @@ def run_inverse(subject, session=None):
                                        space=config.space)
 
     fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
-    fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
-    fname_cov = op.join(deriv_path, bids_basename + '-cov.fif')
-    fname_inv = op.join(deriv_path, bids_basename + '-inv.fif')
+    fname_fwd = op.join(deriv_path, f'{bids_basename}_{kind}-fwd.fif')
+    fname_cov = op.join(deriv_path, f'{bids_basename}_{kind}-cov.fif')
+    fname_inv = op.join(deriv_path, f'{bids_basename}_{kind}-inv.fif')
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -62,7 +63,8 @@ def run_inverse(subject, session=None):
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
-                                                  inverse_str, hemi_str]))
+                                                  inverse_str, kind,
+                                                  hemi_str]))
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

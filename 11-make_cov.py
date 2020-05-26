@@ -24,9 +24,10 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_covariance(subject, session=None):
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -44,7 +45,7 @@ def run_covariance(subject, session=None):
         extension = '-epo'
 
     fname_epo = op.join(deriv_path, bids_basename + '%s.fif' % extension)
-    fname_cov = op.join(deriv_path, bids_basename + '-cov.fif')
+    fname_cov = op.join(deriv_path, f'{bids_basename}_{kind}-cov.fif')
 
     msg = f'Input: {fname_epo}, Output: {fname_cov}'
     logger.info(gen_log_message(message=msg, step=11, subject=subject,

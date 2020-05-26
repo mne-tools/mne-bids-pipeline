@@ -49,9 +49,10 @@ def plot_events(subject, session, deriv_path):
 
 @failsafe_run(on_error=on_error)
 def run_report(subject, session=None):
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
@@ -106,7 +107,7 @@ def run_report(subject, session=None):
         else:
             msg = ('Cannot render sensor alignment (coregistration) because '
                    'no usable 3d backend was found.')
-            logger.warn(gen_log_message(message=msg, step='99',
+            logger.warn(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
         for evoked in evokeds:
@@ -115,7 +116,8 @@ def run_report(subject, session=None):
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
             fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
-                                                      inverse_str, hemi_str]))
+                                                      inverse_str, kind,
+                                                      hemi_str]))
 
             if op.exists(fname_stc + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -175,8 +177,8 @@ def main():
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
 
+    kind = config.get_kind()
     deriv_path = config.deriv_root
-
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
@@ -198,7 +200,7 @@ def main():
         fname_stc_avg = op.join(deriv_path, '_'.join(['average',
                                                       bids_basename, cond_str,
                                                       inverse_str, morph_str,
-                                                      hemi_str]))
+                                                      kind, hemi_str]))
 
         if op.exists(fname_stc_avg + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
@@ -209,8 +211,8 @@ def main():
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
                                  initial_time=peak_time,  backend='mayavi')
-                rep.add_figs_to_section(brain._figures[0],
-                                        evoked.comment)
+                figs = [brain._figures]
+                captions = ['evoked.comment']
             else:
                 import matplotlib.pyplot as plt
                 fig_lh = plt.figure()
@@ -222,11 +224,11 @@ def main():
                 brain_rh = stc.plot(views='lat', hemi='rh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_rh)
-                rep.add_figs_to_section([brain_lh, brain_rh],
-                                        [evoked.comment, evoked.comment])
+                figs = [brain_lh, brain_rh]
+                captions = [f'{evoked.comment} - left',
+                            f'{evoked.comment} - right']
 
-            fig = brain._figures[0]
-            rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
+            rep.add_figs_to_section(figs=figs, captions=captions,
                                     section='Sources')
 
             del peak_time

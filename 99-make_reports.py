@@ -211,7 +211,7 @@ def main():
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
                                  initial_time=peak_time,  backend='mayavi')
-                figs = [brain._figures]
+                figs = [brain._figures[0]]
                 captions = ['evoked.comment']
             else:
                 import matplotlib.pyplot as plt

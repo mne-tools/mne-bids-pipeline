@@ -135,25 +135,22 @@ def apply_ica(subject, run, session):
             report = Report(report_fname, verbose=False)
 
             # Plot r score
-            report.add_figs_to_section(ica.plot_scores(scores,
-                                                       exclude=ecg_inds,
-                                                       show=config.plot),
-                                       captions=ch_type.upper() + ' - ECG - ' +
-                                       'R scores')
+            report.add_figs_to_section(
+                ica.plot_scores(scores, exclude=ecg_inds,
+                                show=config.interactive),
+                captions=ch_type.upper() + ' - ECG - R scores')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_sources(ecg_average,
-                                                        exclude=ecg_inds,
-                                                        show=config.plot),
-                                       captions=ch_type.upper() + ' - ECG - ' +
-                                       'Sources time course')
+            report.add_figs_to_section(
+                ica.plot_sources(ecg_average, exclude=ecg_inds,
+                                 show=config.interactive),
+                captions=ch_type.upper() + ' - ECG - Sources time course')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_overlay(ecg_average,
-                                                        exclude=ecg_inds,
-                                                        show=config.plot),
-                                       captions=ch_type.upper() + ' - ECG - ' +
-                                       'Corrections')
+            report.add_figs_to_section(
+                ica.plot_overlay(ecg_average, exclude=ecg_inds,
+                                 show=config.interactive),
+                captions=ch_type.upper() + ' - ECG - Corrections')
 
         else:
             # XXX : to check when EEG only is processed
@@ -181,7 +178,7 @@ def apply_ica(subject, run, session):
             eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)
             del eog_epochs
 
-            params = dict(exclude=eog_inds, show=config.plot)
+            params = dict(exclude=eog_inds, show=config.interactive)
 
             # Plot r score
             report.add_figs_to_section(ica.plot_scores(scores, **params),
@@ -221,13 +218,14 @@ def apply_ica(subject, run, session):
         epochs.save(fname_out)
 
         if report is not None:
-            fig = ica.plot_overlay(raw, exclude=ica_reject, show=config.plot)
+            fig = ica.plot_overlay(raw, exclude=ica_reject,
+                                   show=config.interactive)
             report.add_figs_to_section(fig, captions=ch_type.upper() +
                                        ' - ALL(epochs) - Corrections')
 
-        if config.plot:
+        if config.interactive:
             epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
-                              cmap="YlGnBu_r", show=config.plot)
+                              cmap="YlGnBu_r", show=config.interactive)
 
 
 def main():

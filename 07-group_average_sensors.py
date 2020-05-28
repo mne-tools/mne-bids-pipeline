@@ -77,7 +77,7 @@ mne.evoked.write_evokeds(fname_out, list(all_evokeds.values()))
 
 def main():
     """Plot evokeds."""
-    if not config.plot:
+    if not config.interactive:
         return
 
     for evoked in all_evokeds.values():

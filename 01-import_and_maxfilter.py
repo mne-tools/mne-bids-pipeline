@@ -274,7 +274,10 @@ def run_maxwell_filter(subject, session=None):
 
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
-            raw_out.plot(n_channels=50, butterfly=True)
+            (raw_out
+             .copy()
+             .pick_types(meg=True)
+             .plot(n_channels=50))
 
 
 @failsafe_run(on_error=on_error)

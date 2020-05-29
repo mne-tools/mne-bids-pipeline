@@ -35,14 +35,15 @@ import os.path as op
 import itertools
 import logging
 
+import numpy as np
 import pandas as pd
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename, read_raw_bids
+from mne_bids import make_bids_basename, read_raw_bids, get_matched_empty_room
 from mne_bids.config import BIDS_VERSION
-from mne_bids.utils import _write_json
+from mne_bids.utils import _write_json, _parse_bids_filename
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -176,31 +177,44 @@ def find_bad_channels(raw, subject, session, task, run):
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 
-def apply_maxwell_filter(raw, subject, session, dev_head_t):
-    msg = 'Applying Maxwell filter.'
-    logger.info(gen_log_message(message=msg, step=1,
-                                subject=subject, session=session))
+def load_data(bids_basename):
+    # read_raw_bids automatically
+    # - populates bad channels using the BIDS channels.tsv
+    # - sets channels types according to BIDS channels.tsv `type` column
+    # - sets raw.annotations using the BIDS events.tsv
 
-    # Warn if no bad channels are set before Maxfilter
-    if not raw.info['bads']:
-        msg = '\nFound no bad channels. \n '
-        logger.warn(gen_log_message(message=msg, subject=subject,
-                                    step=1, session=session))
+    params = _parse_bids_filename(bids_basename, verbose=False)
+    subject = params['sub']
+    session = params['ses']
 
-    if config.mf_st_duration:
-        msg = '    st_duration=%d' % (config.mf_st_duration)
-        logger.info(gen_log_message(message=msg, step=1,
-                                    subject=subject, session=session))
+    extra_params = dict()
+    if config.allow_maxshield:
+        extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw_sss = mne.preprocessing.maxwell_filter(
-        raw,
-        calibration=config.mf_cal_fname,
-        cross_talk=config.mf_ctc_fname,
-        st_duration=config.mf_st_duration,
-        origin=config.mf_head_origin,
-        destination=dev_head_t)
+    raw = read_raw_bids(bids_basename=bids_basename,
+                        bids_root=config.bids_root,
+                        extra_params=extra_params,
+                        kind=config.get_kind())
 
-    return raw_sss
+    # XXX hack to deal with dates that fif files cannot handle
+    if config.daysback is not None:
+        raw.anonymize(daysback=config.daysback)
+
+    if subject != 'emptyroom':
+        # Crop the data.
+        if config.crop is not None:
+            raw.crop(*config.crop)
+
+        # Rename events.
+        if config.rename_events:
+            rename_events(raw=raw, subject=subject, session=session)
+
+    raw.load_data()
+
+    if hasattr(raw, 'fix_mag_coil_types'):
+        raw.fix_mag_coil_types()
+
+    return raw
 
 
 def run_maxwell_filter(subject, session=None):
@@ -219,62 +233,113 @@ def run_maxwell_filter(subject, session=None):
                                            recording=config.rec,
                                            space=config.space)
 
-        # read_raw_bids automatically
-        # - populates bad channels using the BIDS channels.tsv
-        # - sets channels types according to BIDS channels.tsv `type` column
-        # - sets raw.annotations using the BIDS events.tsv
-        extra_params = dict()
-        if config.allow_maxshield:
-            extra_params['allow_maxshield'] = config.allow_maxshield
+        raw = load_data(bids_basename)
+        if run_idx == 0:
+            dev_head_t = raw.info['dev_head_t']  # Re-use in all runs.
 
-        raw = read_raw_bids(bids_basename=bids_basename,
-                            bids_root=config.bids_root,
-                            extra_params=extra_params,
-                            kind=config.get_kind())
-
-        # Rename events.
-        if config.rename_events:
-            rename_events(raw=raw, subject=subject, session=session)
-
-        # XXX hack to deal with dates that fif files cannot handle
-        if config.daysback is not None:
-            raw.anonymize(daysback=config.daysback)
-
-        if config.crop is not None:
-            raw.crop(*config.crop)
-
-        raw.load_data()
-
-        if hasattr(raw, 'fix_mag_coil_types'):
-            raw.fix_mag_coil_types()
-
+        # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
             find_bad_channels(raw=raw, subject=subject, session=session,
                               task=config.get_task(), run=run)
 
+        # Maxwell-filter experimental data.
         if config.use_maxwell_filter:
-            if run_idx == 0:  # Re-use in all subsequent runs.
-                dev_head_t = raw.info['dev_head_t']
+            msg = 'Applying Maxwell filter to experimental data.'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
 
-            raw_sss = apply_maxwell_filter(raw=raw, subject=subject,
-                                           session=session,
-                                           dev_head_t=dev_head_t)
+            # Warn if no bad channels are set before Maxwell filter
+            if not raw.info['bads']:
+                msg = '\nFound no bad channels. \n '
+                logger.warn(gen_log_message(message=msg, subject=subject,
+                                            step=1, session=session))
+
+            if config.mf_st_duration:
+                msg = '    st_duration=%d' % (config.mf_st_duration)
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
+
+            # Keyword arguments shared between Maxwell filtering of the
+            # experimental and the empty-room data.
+            common_mf_kws = dict(calibration=config.mf_cal_fname,
+                                 cross_talk=config.mf_ctc_fname,
+                                 st_duration=config.mf_st_duration,
+                                 origin=config.mf_head_origin,
+                                 coord_frame='head',
+                                 destination=dev_head_t)
+
+            raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss
-            raw_fname_out = op.join(deriv_path, bids_basename + '_sss_raw.fif')
+            raw_fname_out = op.join(deriv_path, f'{bids_basename}_sss_raw.fif')
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
-            logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session))
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
             raw_out = raw
             raw_fname_out = op.join(deriv_path,
-                                    bids_basename + '_nosss_raw.fif')
-
-        os.makedirs(os.path.dirname(raw_fname_out), exist_ok=True)
-
+                                    f'{bids_basename}_nosss_raw.fif')
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
+
+        # Empty-room processing.
+        #
+        # We pick the empty-room recording closest in time to the first run
+        # of the experimental session.
+        if run_idx == 0 and config.noise_cov == 'emptyroom':
+            msg = 'Processing empty-room recording …'
+            logger.info(gen_log_message(step=1, subject=subject,
+                                        session=session, message=msg))
+
+            bids_basename_er_in = get_matched_empty_room(
+                bids_basename=bids_basename,
+                bids_root=config.bids_root)
+            raw_er = load_data(bids_basename_er_in)
+            raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
+                                   ch.startswith('MEG')]
+
+            # Maxwell-filter empty-room data.
+            if config.use_maxwell_filter:
+                msg = 'Applying Maxwell filter to empty-room recording'
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject, session=session))
+
+                # We want to ensure we use the same coordinate frame origin in
+                # empty-room and experimental data processing. To do this, we
+                # inject the sensor locations and the head <> device transform
+                # into the empty-room recording's info, and leave all other
+                # parameters the same as for the experimental data. This is not
+                # very clean, as we normally should not alter info manually,
+                # except for info['bads']. Will need improvement upstream in
+                # MNE-Python.
+                raw_er.info['dig'] = raw.info['dig']
+                raw_er.info['dev_head_t'] = dev_head_t
+                raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
+                                                              **common_mf_kws)
+
+                # Perform a sanity check: empty-room rank should match the
+                # experimental data rank after Maxwell filtering.
+                rank_exp = mne.compute_rank(raw, rank='info')['meg']
+                rank_er = mne.compute_rank(raw_er, rank='info')['meg']
+                if not np.isclose(rank_exp, rank_er):
+                    msg = (f'Experimental data rank {rank_exp:.1f} does not '
+                           f'match empty-room data rank {rank_er:.1f} after '
+                           f'Maxwell filtering. This indicates that the data '
+                           f'were processed  differenlty.')
+                    raise RuntimeError(msg)
+
+                raw_er_out = raw_er_sss
+                raw_er_fname_out = op.join(
+                    deriv_path,
+                    f'{bids_basename}_emptyroom_sss_raw.fif')
+            else:
+                raw_er_out = raw_er
+                raw_er_fname_out = op.join(
+                    deriv_path,
+                    f'{bids_basename}_emptyroom_nosss_raw.fif')
+
+            raw_er_out.save(raw_er_fname_out, overwrite=True)
 
 
 @failsafe_run(on_error=on_error)

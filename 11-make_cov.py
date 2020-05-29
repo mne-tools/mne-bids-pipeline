@@ -22,8 +22,7 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-@failsafe_run(on_error=on_error)
-def run_covariance(subject, session=None):
+def compute_cov_from_epochs(subject, session, tmin, tmax):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
@@ -35,34 +34,78 @@ def run_covariance(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
     if config.use_ica or config.use_ssp:
         extension = '_cleaned-epo'
     else:
         extension = '-epo'
 
-    fname_epo = op.join(deriv_path, bids_basename + '%s.fif' % extension)
-    fname_cov = op.join(deriv_path, bids_basename + '-cov.fif')
+    epo_fname = op.join(deriv_path, bids_basename + '%s.fif' % extension)
+    cov_fname = op.join(deriv_path, bids_basename + '-cov.fif')
 
-    msg = f'Input: {fname_epo}, Output: {fname_cov}'
+    msg = (f"Computing regularized covariance based on epochs' baseline "
+           f"periods. Input: {epo_fname}, Output: {cov_fname}")
     logger.info(gen_log_message(message=msg, step=11, subject=subject,
                                 session=session))
 
-    epochs = mne.read_epochs(fname_epo, preload=True)
-
-    msg = 'Computing regularized covariance'
-    logger.info(gen_log_message(message=msg, step=11, subject=subject,
-                                session=session))
+    epochs = mne.read_epochs(epo_fname, preload=True)
 
     # Do not shuffle the data before splitting into train and test samples.
     # Perform a block cross-validation instead to maintain autocorrelated
     # noise.
     cv = KFold(3, shuffle=False)
-    cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', cv=cv,
-                                 rank='info')
-    cov.save(fname_cov)
+    cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
+                                 cv=cv, rank='info')
+    cov.save(cov_fname)
+
+
+def compute_cov_from_empty_room(subject, session):
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=None,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+
+    raw_er_fname = op.join(deriv_path,
+                           bids_basename + '_emptyroom_filt_raw.fif')
+    cov_fname = op.join(deriv_path, bids_basename + '-cov.fif')
+
+    extra_params = dict()
+    if not config.use_maxwell_filter and config.allow_maxshield:
+        extra_params['allow_maxshield'] = config.allow_maxshield
+
+    msg = (f'Computing regularized covariance based on empty-room recording. '
+           f'Input: {raw_er_fname}, Output: {cov_fname}')
+    logger.info(gen_log_message(message=msg, step=11, subject=subject,
+                                session=session))
+
+    raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True, **extra_params)
+
+    # Do not shuffle the data before splitting into train and test samples.
+    # Perform a block cross-validation instead to maintain autocorrelated
+    # noise.
+    cv = KFold(3, shuffle=False)
+    cov = mne.compute_raw_covariance(raw_er, method='shrunk', cv=cv,
+                                     rank='info')
+    cov.save(cov_fname)
+
+
+@failsafe_run(on_error=on_error)
+def run_covariance(subject, session=None):
+    if config.noise_cov == 'emptyroom' and 'eeg' not in config.ch_types:
+        compute_cov_from_empty_room(subject=subject, session=session)
+    else:
+        tmin, tmax = config.noise_cov
+        compute_cov_from_epochs(subject=subject, session=session, tmin=tmin,
+                                tmax=tmax)
 
 
 def main():

@@ -132,7 +132,7 @@ def run_ica(subject, session=None):
 
     ica.save(ica_fname)
 
-    if config.plot:
+    if config.interactive:
         # plot ICA components to html report
         report_fname = \
             op.join(deriv_path, f'bids_basename_{kind}-ica.html')

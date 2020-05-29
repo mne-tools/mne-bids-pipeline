@@ -14,7 +14,7 @@ export BIDS_ROOT=~/mne_data/ds001971
 
 study_name = 'ds001971'
 task = 'AudioCueWalkingStudy'
-plot = False
+interactive = False
 ch_types = ['eeg']
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']

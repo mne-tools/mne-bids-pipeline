@@ -12,7 +12,7 @@ The transition bandwidth is automatically defined. See
 for more. The filtered data are saved to separate files to the subject's 'MEG'
 directory.
 
-If config.plot = True plots raw data and power spectral density.
+If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501
 
@@ -82,7 +82,7 @@ def run_filter(subject, run=None, session=None):
 
     raw.save(raw_fname_out, overwrite=True)
 
-    if config.plot:
+    if config.interactive:
         # plot raw data
         raw.plot(n_channels=50, butterfly=True)
 

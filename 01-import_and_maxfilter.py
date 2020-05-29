@@ -273,7 +273,7 @@ def run_maxwell_filter(subject, session=None):
         os.makedirs(os.path.dirname(raw_fname_out), exist_ok=True)
 
         raw_out.save(raw_fname_out, overwrite=True)
-        if config.plot:
+        if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
 
 

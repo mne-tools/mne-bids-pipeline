@@ -59,12 +59,13 @@ subjects_dir = None
 
 daysback = None
 
-# ``plot`` : boolean
-#   If True, the scripts will generate plots.
-#   If running the scripts from a notebook or spyder
-#   run %matplotlib qt in the command line to get the plots in extra windows
+# ``interactive`` : boolean
+#   If True, the scripts will provide some interactive elements, such as
+#   figures. If running the scripts from a notebook or Spyder,
+#   run %matplotlib qt in the command line to open the figures in a separate
+#   window.
 
-plot = False
+interactive = False
 
 # ``crop`` : tuple or None
 # If tuple, (tmin, tmax) to crop the raw data

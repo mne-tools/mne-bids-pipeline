@@ -57,7 +57,7 @@ def run_evoked(subject, session=None):
         evokeds.append(epochs[condition].average())
     mne.evoked.write_evokeds(fname_out, evokeds)
 
-    if config.plot:
+    if config.interactive:
         for evoked in evokeds:
             evoked.plot()
 

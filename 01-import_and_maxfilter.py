@@ -97,6 +97,48 @@ def rename_events(raw, subject, session):
         description[description == old_event_name] = new_event_name
 
 
+def plot_auto_scores(auto_scores):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    if config.ch_types == ['meg']:
+        ch_types = ['grad', 'mag']
+    else:
+        ch_types = config.ch_types
+
+    for ch_type in ch_types:
+        # Only select the data for mag or grad channels.
+        ch_subset = auto_scores['ch_types'] == ch_type
+        ch_names = auto_scores['ch_names'][ch_subset]
+        scores = auto_scores['scores_noisy'][ch_subset]
+        limits = auto_scores['limits_noisy'][ch_subset]
+        # Number of time windows
+        segments = range(1, len(auto_scores['bin_edges']))
+
+        data_to_plot = pd.DataFrame(data=scores,
+                                    columns=pd.Index(segments, name='Segment'),
+                                    index=pd.Index(ch_names, name='Channel'))
+
+        # Plot the "raw" scores.
+        fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+        fig.suptitle(f'Automated noisy channel detection: {ch_type}',
+                     fontsize=16, fontweight='bold')
+        sns.heatmap(data=data_to_plot, cmap='Reds',
+                    cbar_kws=dict(label='Score'),
+                    ax=ax[0])
+        ax[0].set_title('All Scores', fontweight='bold')
+
+        # Focus on scores that exceeded the limits.
+        sns.heatmap(data=data_to_plot,
+                    vmin=limits.min(), cmap='Reds',
+                    cbar_kws=dict(label='Score'), ax=ax[1])
+        ax[1].set_title('Scores > Limit', fontweight='bold')
+
+        # Figure title should not overlap with subplots.
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.show()
+
+
 def find_bad_channels(raw, subject, session, task, run):
     if (config.find_flat_channels_meg and
             not config.find_noisy_channels_meg):
@@ -113,14 +155,16 @@ def find_bad_channels(raw, subject, session, task, run):
     raw_lp_filtered_for_maxwell = (raw.copy()
                                    .filter(l_freq=None,
                                            h_freq=40))
-    auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
+    auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw_lp_filtered_for_maxwell,
         calibration=config.mf_cal_fname,
-        cross_talk=config.mf_ctc_fname)
+        cross_talk=config.mf_ctc_fname,
+        return_scores=True)
     del raw_lp_filtered_for_maxwell
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()
+
     if config.find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
         logger.info(gen_log_message(message=msg, step=1,
@@ -137,6 +181,9 @@ def find_bad_channels(raw, subject, session, task, run):
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
+
+    if config.find_noisy_channels_meg and config.interactive:
+        plot_auto_scores(auto_scores)
 
     # Write the bad channels to disk.
     deriv_path = config.get_subject_deriv_path(subject=subject,

@@ -113,8 +113,7 @@ def run_report(subject, session=None):
     captions = list()
 
     for evoked in evokeds:
-        # fig = evoked.plot(spatial_colors=True, show=False, gfp=True)
-        fig = evoked.plot(show=False, gfp=True)
+        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
         figs.append(fig)
         captions.append(evoked.comment)
 

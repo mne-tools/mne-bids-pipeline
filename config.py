@@ -472,12 +472,29 @@ tmax = 0.5
 
 trigger_time_shift = 0.
 
-# ``baseline`` : tuple
-#    It specifies how to baseline the epochs; if None, no baseline is applied.
+# ``baseline`` : tuple | dict of tuples | None
+#    It specifies how to baseline-correct the epochs; if None, no baseline is
+#    applied.
+#
+#    When a tuple is passed, its first element corresponds to the beginning,
+#    and its second element to the end of the baseline period (both endpoints
+#    included). If the first element of a tuple is ``None``, it is interpreted
+#    as the very first time point of the epoch. If the second element of a
+#    tuple is ``None``, it will refer to the last time point of the epoch.
+#
+#    You may also pass a dictionary if you wish to specify different baseline
+#    periods depending on your experimental conditions. The dictionary then
+#    has the condition names as keys, and baseline tuples (as described abovee)
+#    as values. The conditions specified here must match exactly those listed
+#    as ``conditions`` above. Please see the examples for clarification.
 #
 # Example
 # ~~~~~~~
 # >>> baseline = (None, 0)  # baseline between tmin and 0
+#
+# >>> conditions = ['auditory', 'visual']
+# >>> baseline = {'auditory': (None, 0),
+#                 'visual':   (-0.2, -0.1)}
 
 baseline = (None, 0)
 
@@ -904,6 +921,26 @@ if noise_cov == 'emptyroom' and 'eeg' in ch_types:
            'experimental data, e.g., the pre-stimulus period. Please set '
            'noise_cov to (tmin, tmax)')
     raise ValueError(msg)
+
+if isinstance(baseline, dict):
+    baseline_conditions = baseline.keys()
+    diff_bl_cond = list(set(baseline_conditions) - set(conditions))
+    diff_cond_bl = list(set(conditions) - set(baseline_conditions))
+
+    if diff_bl_cond:
+        msg = (f'You specified the baseline period of an unknown condition. '
+               f'The keys of the "baseline" dictionary must match exactly the '
+               f'conditon names specified in "conditions". The mismatch was '
+               f'caused by the following condition(s): {diff_bl_cond}')
+        raise ValueError(msg)
+
+    if diff_cond_bl:
+        msg = (f'You didn\'t specify a baseline period for one or more of '
+               f'your conditions. '
+               f'The keys of the "baseline" dictionary must match exactly the '
+               f'conditon names specified in "conditions". The mismatch was '
+               f'caused by the following condition(s): {diff_cond_bl}')
+        raise ValueError(msg)
 
 
 ###############################################################################

@@ -88,10 +88,23 @@ def run_epochs(subject, session=None):
     msg = 'Epoching'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
-                        proj=True, picks=picks, baseline=config.baseline,
-                        preload=False, decim=config.decim,
-                        reject=config.get_reject())
+
+    # We construct separate Epochs objects for each condition. When done, we
+    # concatnate them.
+    epochs = list()
+    for condition in config.conditions:
+        if isinstance(config.baseline, str):
+            baseline = config.baseline
+        else:  # Should be a dictionary.
+            baseline = config.baseline[condition]
+
+        e = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
+                       proj=True, picks=picks, baseline=baseline,
+                       preload=False, decim=config.decim,
+                       reject=config.get_reject())
+        epochs.append(e)
+
+    epochs = mne.concatenate_epochs(epochs)
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

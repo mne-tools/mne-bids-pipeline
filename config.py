@@ -443,6 +443,27 @@ rename_events = dict()
 # EPOCHING
 # --------
 #
+#  `conditions`` : list
+#    The condition names to consider. This can either be name of the
+#    experimental condition as specified in the BIDS ``events.tsv`` file; or
+#    the name of condition *grouped*, if the condition names contain the
+#    (MNE-specific) group separator, ``/``. See the "Subselecting epochs"
+#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
+#
+# Example
+# ~~~~~~~
+# >>> conditions = ['auditory/left', 'visual/left']
+# or
+# >>> conditions = ['auditory/left', 'auditory/right']
+# or
+# >>> conditions = ['auditory']  # All "auditory" conditions (left AND right)
+# or
+# >>> conditions = ['auditory', 'visual']
+# or
+# >>> conditions = ['left', 'right']
+
+conditions = ['left', 'right']
+
 # ``tmin``: float
 #    A float in seconds that gives the start time before event of an epoch.
 #
@@ -498,27 +519,6 @@ trigger_time_shift = 0.
 
 baseline = (None, 0)
 
-#  `conditions`` : list
-#    The condition names to consider. This can either be the keys of
-#    ``event_id``, or – if event names were specified with ``/`` for
-#    grouping – the name of the *grouped* condition (i.e., the
-#    condition name before or after that ``/`` that is shared between the
-#    respective conditions you wish to group). See the "Subselecting epochs"
-#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-#
-# Example
-# ~~~~~~~
-# >>> conditions = ['auditory/left', 'visual/left']
-# or
-# >>> conditions = ['auditory/left', 'auditory/right']
-# or
-# >>> conditions = ['auditory']
-# or
-# >>> conditions = ['auditory', 'visual']
-# or
-# >>> conditions = ['left', 'right']
-
-conditions = ['left', 'right']
 
 ###############################################################################
 # ARTIFACT REMOVAL

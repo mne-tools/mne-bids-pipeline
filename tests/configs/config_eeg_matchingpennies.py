@@ -15,6 +15,8 @@ ch_types = ['eeg']
 interactive = False
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
+baseline = dict(left=(-0.2, 0),
+                right=(-0.15, 0))
 decoding_conditions = [('left', 'right')]
 use_ssp = False
 use_ica = False

@@ -18,6 +18,7 @@ interactive = False
 ch_types = ['eeg']
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
+baseline = (None, 0)
 decoding_conditions = [('left', 'right')]
 use_ssp = False
 use_ica = False

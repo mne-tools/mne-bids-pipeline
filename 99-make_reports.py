@@ -124,7 +124,7 @@ def run_report(subject, session=None):
         if mne.viz.get_3d_backend() is not None:
             fig = mne.viz.plot_alignment(evoked.info, fname_trans,
                                          subject=subject,
-                                         subjects_dir=config.subjects_dir,
+                                         subjects_dir=subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(figs=fig, captions='Coregistration',
                                     section='Coregistration')
@@ -164,12 +164,17 @@ def run_report(subject, session=None):
                     fig_lh = plt.figure()
                     fig_rh = plt.figure()
 
-                    brain_lh = stc.plot(views='lat', hemi='lh',
-                                        initial_time=peak_time,
-                                        backend='matplotlib', figure=fig_lh)
-                    brain_rh = stc.plot(views='lat', hemi='rh',
-                                        initial_time=peak_time,
-                                        backend='matplotlib', figure=fig_rh)
+                    brain_lh = stc.plot(
+                        views='lat', hemi='lh',
+                        initial_time=peak_time,
+                        backend='matplotlib',
+                        subjects_dir=subjects_dir,
+                        figure=fig_lh)
+                    brain_rh = stc.plot(
+                        views='lat', hemi='rh',
+                        initial_time=peak_time,
+                        subjects_dir=subjects_dir,
+                        backend='matplotlib', figure=fig_rh)
                     rep.add_figs_to_section(
                         figs=[brain_lh, brain_rh],
                         captions=[f'{evoked.comment} - left hemisphere',

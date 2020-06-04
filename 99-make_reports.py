@@ -164,17 +164,16 @@ def run_report(subject, session=None):
                     fig_lh = plt.figure()
                     fig_rh = plt.figure()
 
-                    brain_lh = stc.plot(
-                        views='lat', hemi='lh',
-                        initial_time=peak_time,
-                        backend='matplotlib',
-                        subjects_dir=subjects_dir,
-                        figure=fig_lh)
-                    brain_rh = stc.plot(
-                        views='lat', hemi='rh',
-                        initial_time=peak_time,
-                        subjects_dir=subjects_dir,
-                        backend='matplotlib', figure=fig_rh)
+                    brain_lh = stc.plot(views='lat', hemi='lh',
+                                        initial_time=peak_time,
+                                        backend='matplotlib',
+                                        subjects_dir=subjects_dir,
+                                        figure=fig_lh)
+                    brain_rh = stc.plot(views='lat', hemi='rh',
+                                        initial_time=peak_time,
+                                        subjects_dir=subjects_dir,
+                                        backend='matplotlib',
+                                        figure=fig_rh)
                     rep.add_figs_to_section(
                         figs=[brain_lh, brain_rh],
                         captions=[f'{evoked.comment} - left hemisphere',
@@ -218,6 +217,7 @@ def main():
     evokeds = mne.read_evokeds(evoked_fname)
 
     deriv_path = config.deriv_root
+    subjects_dir = config.get_fs_subjects_dir()
 
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
@@ -225,7 +225,6 @@ def main():
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space)
-
     for evoked, condition in zip(evokeds, config.conditions):
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
@@ -250,7 +249,8 @@ def main():
             # otherwise.
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
-                                 initial_time=peak_time,  backend='mayavi')
+                                 initial_time=peak_time,  backend='mayavi',
+                                 subjects_dir=subjects_dir)
                 figs = [brain._figures[0]]
                 captions = [evoked.comment]
             else:
@@ -260,10 +260,12 @@ def main():
 
                 brain_lh = stc.plot(views='lat', hemi='lh',
                                     initial_time=peak_time,
-                                    backend='matplotlib', figure=fig_lh)
+                                    backend='matplotlib', figure=fig_lh,
+                                    subjects_dir=subjects_dir)
                 brain_rh = stc.plot(views='lat', hemi='rh',
                                     initial_time=peak_time,
-                                    backend='matplotlib', figure=fig_rh)
+                                    backend='matplotlib', figure=fig_rh,
+                                    subjects_dir=subjects_dir)
                 figs = [brain_lh, brain_rh]
                 captions = [f'{evoked.comment} - left',
                             f'{evoked.comment} - right']

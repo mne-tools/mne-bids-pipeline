@@ -494,8 +494,8 @@ tmax = 0.5
 trigger_time_shift = 0.
 
 # ``baseline`` : tuple | dict of tuples | None
-#    It specifies how to baseline-correct the epochs; if None, no baseline is
-#    applied.
+#    It specifies how to baseline-correct the epochs; if ``None``, no baseline
+#    correction is applied.
 #
 #    When a tuple is passed, its first element corresponds to the beginning,
 #    and its second element to the end of the baseline period (both endpoints

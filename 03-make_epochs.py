@@ -93,10 +93,10 @@ def run_epochs(subject, session=None):
     # concatnate them.
     epochs = list()
     for condition in config.conditions:
-        if isinstance(config.baseline, str):
-            baseline = config.baseline
-        else:  # Should be a dictionary.
+        if isinstance(config.baseline, dict):
             baseline = config.baseline[condition]
+        else:
+            baseline = config.baseline
 
         e = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
                        proj=True, picks=picks, baseline=baseline,

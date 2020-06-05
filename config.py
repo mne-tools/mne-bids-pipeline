@@ -482,17 +482,6 @@ tmin = -0.2
 
 tmax = 0.5
 
-# ``trigger_time_shift`` : float | None
-#    If float it specifies the offset for the trigger and the stimulus
-#    (in seconds). You need to measure this value for your specific
-#    experiment/setup.
-#
-# Example
-# ~~~~~~~
-# >>> trigger_time_shift = 0  # don't apply any offset
-
-trigger_time_shift = 0.
-
 # ``baseline`` : tuple
 #    It specifies how to baseline the epochs; if None, no baseline is applied.
 #

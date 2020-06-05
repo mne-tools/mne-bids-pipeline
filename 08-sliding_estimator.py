@@ -35,10 +35,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-###############################################################################
-# Then we write a function to do time decoding on one subject
-
-@failsafe_run(on_error=on_error)
 def run_time_decoding(subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(gen_log_message(message=msg, step=8, subject=subject,
@@ -91,8 +87,14 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Run sliding estimator."""
+    if not config.decode:
+        msg = 'No contrasts specified; not performing decoding.'
+        logger.info(gen_log_message(step=8, message=msg))
+        return
+
     msg = 'Running Step 8: Sliding estimator'
     logger.info(gen_log_message(step=8, message=msg))
 
@@ -100,8 +102,10 @@ def main():
     # so we don't dispatch manually to multiple jobs.
     for subject in config.get_subjects():
         for session in config.get_sessions():
-            for conditions in config.decoding_conditions:
-                run_time_decoding(subject, *conditions, session=session)
+            for contrast in config.contrasts:
+                cond_1, cond_2 = contrast
+                run_time_decoding(subject=subject, condition1=cond_1,
+                                  condition2=cond_2, session=session)
 
     msg = 'Completed Step 8: Sliding estimator'
     logger.info(gen_log_message(step=8, message=msg))

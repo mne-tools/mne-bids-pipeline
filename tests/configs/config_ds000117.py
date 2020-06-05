@@ -29,6 +29,7 @@ mf_cal_fname = None
 
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 conditions = ['face', 'scrambled']
-decoding_conditions = [('face', 'scrambled')]
+contrasts = [('face', 'scrambled')]
+decode = True
 use_ssp = False
 use_ica = False

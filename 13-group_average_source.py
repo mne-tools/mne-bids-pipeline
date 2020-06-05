@@ -36,9 +36,6 @@ def morph_stc(subject, session=None):
                                        space=config.space
                                        )
 
-    mne.utils.set_config('SUBJECTS_DIR', config.get_fs_subjects_dir())
-    mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
-
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method
@@ -71,6 +68,8 @@ def main():
     """Run grp ave."""
     msg = 'Running Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
+
+    mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
     parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
     all_morphed_stcs = parallel(run_func(subject, session)

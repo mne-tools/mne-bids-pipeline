@@ -90,13 +90,18 @@ def run_time_decoding(subject, condition1, condition2, session=None):
 @failsafe_run(on_error=on_error)
 def main():
     """Run sliding estimator."""
-    if not config.decode:
+    msg = 'Running Step 8: Sliding estimator'
+    logger.info(gen_log_message(step=8, message=msg))
+
+    if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(gen_log_message(step=8, message=msg))
         return
 
-    msg = 'Running Step 8: Sliding estimator'
-    logger.info(gen_log_message(step=8, message=msg))
+    if not config.decode:
+        msg = 'No decoding requested by user.'
+        logger.info(gen_log_message(step=8, message=msg))
+        return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.

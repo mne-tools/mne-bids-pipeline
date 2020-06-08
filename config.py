@@ -492,6 +492,29 @@ tmax = 0.5
 baseline = (None, 0)
 
 
+#  ``contrasts`` : list of tuples
+#    The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
+#    in the list corresponds to one contrast. The condition names must be
+#    specified in ``conditions`` above. Pass an empty list to avoid calculation
+#    of contrasts.
+#
+# Example
+# ~~~~~~~
+# Contrast the "left" and the "right" conditions by calculating "left - right"
+# at every time point of the evoked responses:
+# >>> conditions = ['left', 'right']
+# >>> contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
+#
+# Contrast the "left" and the "right" conditions within the "auditory" and
+# the "visual" modality, and "auditory" vs "visual" regardless of side:
+# >>> conditions = ['auditory/left', 'auditory/right',
+#                   'visual/left', 'visual/right']
+# >>> contrasts = [('auditory/left', 'auditory/right'),
+#                  ('visual/left', 'visual/right'),
+#                  ('auditory', 'visual')]
+
+contrasts = []
+
 ###############################################################################
 # ARTIFACT REMOVAL
 # ----------------
@@ -568,17 +591,11 @@ ica_ctps_ecg_threshold = 0.1
 # DECODING
 # --------
 #
-# ``decoding_conditions`` : list
-#    List of conditions to be classified.
-#
-# Example
-# ~~~~~~~
-# >>> decoding_conditions = []  # don't do decoding
-# or
-# >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
+# ``decode`` : bool
+#    Whether to perform decoding (MVPA) on the contrasts specified above as
+#    "contrasts". MVPA will be performed on the level of individual epochs.
 
-decoding_conditions = []
-# decoding_conditions = [('left', 'right')]
+decode = True
 
 ###############################################################################
 # GROUP AVERAGE SENSORS

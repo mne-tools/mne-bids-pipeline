@@ -107,18 +107,30 @@ def run_report(subject, session=None):
                             captions='Events in filtered continuous data',
                             section='Events')
 
-    # Visualize evoked responses.
+    conditions = config.conditions.copy()
+    conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
-    figs = list()
-    captions = list()
 
-    for evoked in evokeds:
+    ###########################################################################
+    #
+    # Visualize evoked responses.
+    #
+    for condition, evoked in zip(conditions, evokeds):
+        if condition in config.conditions:
+            caption = f'Condition: {condition}'
+            section = 'Evoked'
+        else:  # It's a contrast of two conditions.
+            caption = f'Contrast: {condition[0]} – {condition[1]}'
+            section = 'Contrast'
+
         fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
-        figs.append(fig)
-        captions.append(evoked.comment)
+        rep.add_figs_to_section(figs=fig, captions=caption,
+                                comments=evoked.comment, section=section)
 
-    rep.add_figs_to_section(figs=figs, captions=captions, section='Evoked')
-
+    ###########################################################################
+    #
+    # Visualize the coregistration & inverse solutions.
+    #
     if op.exists(fname_trans):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
@@ -139,6 +151,12 @@ def run_report(subject, session=None):
             logger.info(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
+            if condition in config.conditions:
+                caption = f'Condition: {condition}'
+            else:  # It's a contrast of two conditions.
+                # XXX Will change once we process contrasts here too
+                continue
+
             method = config.inverse_method
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
@@ -155,10 +173,9 @@ def run_report(subject, session=None):
                 if mne.viz.get_3d_backend() is not None:
                     brain = stc.plot(views=['lat'], hemi='both',
                                      initial_time=peak_time,  backend='mayavi')
-                    fig = brain._figures[0]
-                    rep.add_figs_to_section(figs=fig,
-                                            captions=evoked.condition,
-                                            section='Sources')
+                    figs = brain._figures[0]
+                    comments = evoked.comment
+                    captions = caption
                 else:
                     import matplotlib.pyplot as plt
                     fig_lh = plt.figure()
@@ -174,12 +191,16 @@ def run_report(subject, session=None):
                                         subjects_dir=subjects_dir,
                                         backend='matplotlib',
                                         figure=fig_rh)
-                    rep.add_figs_to_section(
-                        figs=[brain_lh, brain_rh],
-                        captions=[f'{evoked.comment} - left hemisphere',
-                                  f'{evoked.comment} - right hemisphere'],
-                        section='Sources')
+                    figs = [brain_lh, brain_rh]
+                    comments = [f'{evoked.comment} - left hemisphere',
+                                f'{evoked.comment} - right hemisphere']
+                    captions = [f'{caption} - left',
+                                f'{caption} - right']
 
+                rep.add_figs_to_section(figs=figs,
+                                        captions=captions,
+                                        comments=comments,
+                                        section='Sources')
                 del peak_time
 
     if config.noise_cov == 'emptyroom':
@@ -215,27 +236,54 @@ def main():
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
-
     deriv_path = config.deriv_root
     subjects_dir = config.get_fs_subjects_dir()
-
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space)
-    for evoked, condition in zip(evokeds, config.conditions):
+
+    method = config.inverse_method
+    inverse_str = 'inverse-%s' % method
+    hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+    morph_str = 'morph-fsaverage'
+
+    conditions = config.conditions.copy()
+    conditions.extend(config.contrasts)
+
+    ###########################################################################
+    #
+    # Visualize evoked responses.
+    #
+    for condition, evoked in zip(conditions, evokeds):
+        if condition in config.conditions:
+            caption = f'Average: {condition}'
+            section = 'Evoked'
+        else:  # It's a contrast of two conditions.
+            caption = f'Average Contrast: {condition[0]} – {condition[1]}'
+            section = 'Contrast'
+
+        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-        rep.add_figs_to_section(figs=fig, captions=f'Average {condition}',
-                                section='Evoked')
+        rep.add_figs_to_section(figs=fig, captions=caption,
+                                comments=evoked.comment, section=section)
 
-        method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
-        inverse_str = 'inverse-%s' % method
-        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph-fsaverage'
+    ###########################################################################
+    #
+    # Visualize inverse solutions.
+    #
 
+    for condition, evoked in zip(conditions, evokeds):
+        if condition in config.conditions:
+            caption = f'Average: {condition}'
+            cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        else:  # It's a contrast of two conditions.
+            # XXX Will change once we process contrasts here too
+            continue
+
+        section = 'Source'
         fname_stc_avg = op.join(deriv_path, '_'.join(['average',
                                                       bids_basename, cond_str,
                                                       inverse_str, morph_str,
@@ -251,8 +299,8 @@ def main():
                 brain = stc.plot(views=['lat'], hemi='both',
                                  initial_time=peak_time,  backend='mayavi',
                                  subjects_dir=subjects_dir)
-                figs = [brain._figures[0]]
-                captions = [evoked.comment]
+                figs = brain._figures[0]
+                captions = caption
             else:
                 import matplotlib.pyplot as plt
                 fig_lh = plt.figure()
@@ -267,8 +315,8 @@ def main():
                                     backend='matplotlib', figure=fig_rh,
                                     subjects_dir=subjects_dir)
                 figs = [brain_lh, brain_rh]
-                captions = [f'{evoked.comment} - left',
-                            f'{evoked.comment} - right']
+                captions = [f'{caption} - left',
+                            f'{caption} - right']
 
             rep.add_figs_to_section(figs=figs, captions=captions,
                                     section='Sources')

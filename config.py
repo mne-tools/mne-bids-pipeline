@@ -495,7 +495,8 @@ baseline = (None, 0)
 #  ``contrasts`` : list of tuples
 #    The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
 #    in the list corresponds to one contrast. The condition names must be
-#    specified in ``conditions`` above.
+#    specified in ``conditions`` above. Pass an empty list to avoid calculation
+#    of contrasts.
 #
 # Example
 # ~~~~~~~
@@ -512,7 +513,7 @@ baseline = (None, 0)
 #                  ('visual/left', 'visual/right'),
 #                  ('auditory', 'visual')]
 
-contrasts = [('left', 'right')]
+contrasts = []
 
 ###############################################################################
 # ARTIFACT REMOVAL

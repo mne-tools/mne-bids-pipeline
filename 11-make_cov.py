@@ -50,13 +50,8 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                                 session=session))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
-
-    # Do not shuffle the data before splitting into train and test samples.
-    # Perform a block cross-validation instead to maintain autocorrelated
-    # noise.
-    cv = KFold(3, shuffle=False)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
-                                 cv=cv, rank='info')
+                                 rank='info')
     cov.save(cov_fname)
 
 
@@ -88,13 +83,7 @@ def compute_cov_from_empty_room(subject, session):
                                 session=session))
 
     raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True, **extra_params)
-
-    # Do not shuffle the data before splitting into train and test samples.
-    # Perform a block cross-validation instead to maintain autocorrelated
-    # noise.
-    cv = KFold(3, shuffle=False)
-    cov = mne.compute_raw_covariance(raw_er, method='shrunk', cv=cv,
-                                     rank='info')
+    cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
     cov.save(cov_fname)
 
 

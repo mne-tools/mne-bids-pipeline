@@ -77,9 +77,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                       LogisticRegression(solver='liblinear',
                                          random_state=config.random_state)),
         scoring=config.decoding_metric, n_jobs=config.N_JOBS)
-    cv = StratifiedKFold(random_state=config.random_state,
-                         n_splits=config.decoding_n_splits)
-    scores = cross_val_multiscore(se, X=X, y=y, cv=cv)
+    scores = cross_val_multiscore(se, X=X, y=y, cv=config.decoding_n_splits)
 
     # let's save the scores now
     a_vs_b = '%s_vs_%s' % (condition1, condition2)

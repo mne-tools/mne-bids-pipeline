@@ -62,12 +62,14 @@ def run_evoked(subject, session=None):
         msg = 'Contrasting evoked responses …'
         logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                     session=session))
-    for contrast in config.contrasts:
-        cond_1, cond_2 = contrast
-        evoked_1 = epochs[cond_1].average()
-        evoked_2 = epochs[cond_2].average()
-        evoked_diff = mne.combine_evoked([evoked_1, evoked_2], weights=[1, -1])
-        evokeds.append(evoked_diff)
+
+        for contrast in config.contrasts:
+            cond_1, cond_2 = contrast
+            evoked_1 = epochs[cond_1].average()
+            evoked_2 = epochs[cond_2].average()
+            evoked_diff = mne.combine_evoked([evoked_1, evoked_2],
+                                             weights=[1, -1])
+            evokeds.append(evoked_diff)
 
     mne.evoked.write_evokeds(fname_out, evokeds)
 

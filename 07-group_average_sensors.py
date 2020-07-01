@@ -43,15 +43,10 @@ for subject in config.get_subjects():
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    if config.use_ica or config.use_ssp:
-        extension = '_cleaned-epo'
-    else:
-        extension = '-epo'
-
-    fname_in = op.join(deriv_path, bids_basename + '-ave.fif')
+    fname_in = op.join(deriv_path,
+                       bids_basename.update(suffix='ave.fif'))
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=7, subject=subject,
                                 session=session))

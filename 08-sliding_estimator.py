@@ -53,7 +53,8 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                        recording=config.rec,
                                        space=config.space)
 
-    fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
+    fname_in = op.join(deriv_path,
+                       bids_basename.update(suffix='epo.fif'))
     epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels

@@ -37,12 +37,14 @@ def run_evoked(subject, session=None):
                                        space=config.space)
 
     if config.use_ica or config.use_ssp:
-        extension = '_cleaned-epo'
+        suffix = 'cleaned-epo.fif'
     else:
-        extension = '-epo'
+        suffix = 'epo.fif'
 
-    fname_in = op.join(deriv_path, bids_basename + '%s.fif' % extension)
-    fname_out = op.join(deriv_path, bids_basename + '-ave.fif')
+    fname_in = op.join(deriv_path,
+                       bids_basename.update(suffix=suffix))
+    fname_out = op.join(deriv_path,
+                        bids_basename.update(suffix='ave.fif'))
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,

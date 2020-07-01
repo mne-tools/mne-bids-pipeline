@@ -40,8 +40,10 @@ def apply_ssp(subject, session=None):
                                        recording=config.rec,
                                        space=config.space)
 
-    fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
-    fname_out = op.join(deriv_path, bids_basename + '_cleaned-epo.fif')
+    fname_in = op.join(deriv_path,
+                       bids_basename.update(suffix='epo.fif'))
+    fname_out = op.join(deriv_path,
+                        bids_basename.update(suffix='cleaned-epo.fif'))
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
@@ -49,7 +51,8 @@ def apply_ssp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
 
-    proj_fname_in = op.join(deriv_path, bids_basename + '_ssp-proj.fif')
+    proj_fname_in = op.join(deriv_path,
+                            bids_basename.update(suffix='ssp-proj.fif'))
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

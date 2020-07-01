@@ -33,8 +33,7 @@ def morph_stc(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
     morphed_stcs = []
     for condition in config.conditions:
@@ -43,10 +42,10 @@ def morph_stc(subject, session=None):
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
-        fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
+        fname_stc = op.join(deriv_path, '_'.join([str(bids_basename), cond_str,
                                                   inverse_str, hemi_str]))
         fname_stc_fsaverage = op.join(deriv_path,
-                                      '_'.join([bids_basename, cond_str,
+                                      '_'.join([str(bids_basename), cond_str,
                                                 inverse_str, morph_str,
                                                 hemi_str]))
 
@@ -99,7 +98,8 @@ def main():
         morph_str = 'morph-fsaverage'
 
         fname_stc_avg = op.join(deriv_path, '_'.join(['average',
-                                                      bids_basename, cond_str,
+                                                      str(bids_basename),
+                                                      cond_str,
                                                       inverse_str, morph_str,
                                                       hemi_str]))
         this_stc.save(fname_stc_avg)

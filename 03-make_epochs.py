@@ -42,11 +42,10 @@ def run_epochs(subject, session=None):
                                            run=run,
                                            processing=config.proc,
                                            recording=config.rec,
-                                           space=config.space
-                                           )
+                                           space=config.space)
         # Prepare a name to save the data
-        raw_fname_in = \
-            op.join(deriv_path, bids_basename + '_filt_raw.fif')
+        raw_fname_in = op.join(deriv_path,
+                               bids_basename.update(suffix='filt_raw.fif'))
 
         msg = f'Loading filtered raw data from {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
@@ -103,11 +102,10 @@ def run_epochs(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    epochs_fname = \
-        op.join(deriv_path, bids_basename + '-epo.fif')
+    epochs_fname = op.join(deriv_path,
+                           bids_basename.update(suffix='epo.fif'))
     epochs.save(epochs_fname, overwrite=True)
 
     if config.interactive:

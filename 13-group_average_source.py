@@ -33,7 +33,8 @@ def morph_stc(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     morphed_stcs = []
     for condition in config.conditions:
@@ -42,12 +43,10 @@ def morph_stc(subject, session=None):
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
-        fname_stc = op.join(deriv_path, '_'.join([str(bids_basename), cond_str,
-                                                  inverse_str, hemi_str]))
-        fname_stc_fsaverage = op.join(deriv_path,
-                                      '_'.join([str(bids_basename), cond_str,
-                                                inverse_str, morph_str,
-                                                hemi_str]))
+        fname_stc = '_'.join([str(bids_basename), cond_str,
+                              inverse_str, hemi_str])
+        fname_stc_fsaverage = '_'.join([str(bids_basename), cond_str,
+                                        inverse_str, morph_str, hemi_str])
 
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
@@ -80,7 +79,6 @@ def main():
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
     deriv_path = config.deriv_root
-
     bids_basename = make_bids_basename(task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,

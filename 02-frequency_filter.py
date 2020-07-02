@@ -40,32 +40,31 @@ def run_filter(subject, run=None, session=None):
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    shared_basename_kws = dict(subject=subject,
-                               session=session,
-                               task=config.get_task(),
-                               acquisition=config.acq,
-                               processing=config.proc,
-                               recording=config.rec,
-                               space=config.space)
+    bids_basename = make_bids_basename(subject=subject,
+                                       run=run,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
 
-    bids_basename = make_bids_basename(run=run, **shared_basename_kws)
-    bids_er_out_basename = make_bids_basename(**shared_basename_kws)
+    bids_er_out_basename = bids_basename.copy().update(run=None)
 
     # Prepare a name to save the data
     if config.use_maxwell_filter:
-        raw_fname_in = op.join(deriv_path, f'{bids_basename}_sss_raw.fif')
-        raw_er_fname_in = op.join(deriv_path,
-                                  f'{bids_basename}_emptyroom_sss_raw.fif')
+        raw_fname_in = bids_basename.copy().update(suffix='sss_raw.fif')
+        raw_er_fname_in = (bids_basename.copy()
+                           .update(suffix='emptyroom_sss_raw.fif'))
     else:
-        raw_fname_in = op.join(deriv_path, f'{bids_basename}_nosss_raw.fif')
-        raw_er_fname_in = op.join(
-            deriv_path,
-            f'{bids_basename}_emptyroom_nosss_raw.fif')
+        raw_fname_in = bids_basename.copy().update(suffix='nosss_raw.fif')
+        raw_er_fname_in = (bids_basename.copy()
+                           .update(suffix='emptyroom_nosss_raw.fif'))
 
-    raw_fname_out = op.join(deriv_path, f'{bids_basename}_filt_raw.fif')
-    raw_er_fname_out = op.join(
-        deriv_path,
-        f'{bids_er_out_basename}_emptyroom_filt_raw.fif')
+    raw_fname_out = bids_basename.copy().update(suffix='filt_raw.fif')
+    raw_er_fname_out = (bids_er_out_basename.copy()
+                        .update(suffix='emptyroom_filt_raw.fif'))
 
     msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,

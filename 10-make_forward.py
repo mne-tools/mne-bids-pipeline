@@ -34,21 +34,20 @@ def run_forward(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
-    fname_evoked = op.join(deriv_path,
-                           bids_basename.update(suffix='ave.fif'))
+    fname_evoked = bids_basename.copy().update(suffix='ave.fif')
     fname_trans = op.join(deriv_path, f'sub-{subject}-trans.fif')
-    fname_fwd = op.join(deriv_path,
-                        bids_basename.update(suffix='fwd.fif'))
+    fname_fwd = bids_basename.copy().update(suffix='fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
     # Find the raw data file
     trans = get_head_mri_trans(
-        bids_basename=bids_basename.update(run=config.get_runs()[0],
-                                           suffix=None),
+        bids_basename=(bids_basename.copy()
+                       .update(run=config.get_runs()[0], prefix=None)),
         bids_root=config.bids_root)
 
     mne.write_trans(fname_trans, trans)

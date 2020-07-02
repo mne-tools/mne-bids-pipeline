@@ -36,17 +36,17 @@ for subject in config.get_subjects():
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
+    fname_in = make_bids_basename(subject=subject,
+                                  session=session,
+                                  task=config.get_task(),
+                                  acquisition=config.acq,
+                                  run=None,
+                                  processing=config.proc,
+                                  recording=config.rec,
+                                  space=config.space,
+                                  prefix=deriv_path,
+                                  suffix='ave.fif')
 
-    fname_in = op.join(deriv_path,
-                       bids_basename.update(suffix='ave.fif'))
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=7, subject=subject,
                                 session=session))

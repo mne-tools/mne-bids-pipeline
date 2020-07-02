@@ -39,7 +39,8 @@ def run_ica(subject, session=None):
                                        acquisition=config.acq,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     raw_list = list()
     msg = 'Loading filtered raw data'
@@ -47,9 +48,8 @@ def run_ica(subject, session=None):
                                 session=session))
 
     for run in config.get_runs():
-        raw_fname_in = op.join(deriv_path,
-                               bids_basename.update(run=run,
-                                                    suffix='filt_raw.fif'))
+        raw_fname_in = (bids_basename.copy()
+                        .update(run=run, suffix='filt_raw.fif'))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
         raw_list.append(raw)
 
@@ -124,16 +124,13 @@ def run_ica(subject, session=None):
                                 session=session))
 
     # Save ICA
-    ica_fname = op.join(deriv_path,
-                        bids_basename.update(run=None,
-                                             suffix=f'{kind}-ica.fif'))
+    ica_fname = bids_basename.copy().update(run=None, suffix=f'{kind}-ica.fif')
     ica.save(ica_fname)
 
     if config.interactive:
         # plot ICA components to html report
-        report_fname = op.join(deriv_path,
-                               bids_basename.update(run=None,
-                                                    suffix=f'{kind}-ica.html'))
+        report_fname = (bids_basename.copy()
+                        .update(run=None, suffix=f'{kind}-ica.html'))
         report = Report(report_fname, verbose=False)
 
         for idx in range(0, ica.n_components_):

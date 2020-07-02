@@ -34,17 +34,16 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     if config.use_ica or config.use_ssp:
         suffix = 'cleaned-epo.fif'
     else:
         suffix = 'epo.fif'
 
-    epo_fname = op.join(deriv_path,
-                        bids_basename.update(suffix=suffix))
-    cov_fname = op.join(deriv_path,
-                        bids_basename.update(suffix='cov.fif'))
+    epo_fname = bids_basename.copy().update(suffix=suffix)
+    cov_fname = bids_basename.copy().update(suffix='cov.fif')
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname}, Output: {cov_fname}")
@@ -69,13 +68,11 @@ def compute_cov_from_empty_room(subject, session):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
-    raw_er_fname = op.join(
-        deriv_path,
-        bids_basename.update(suffix='emptyroom_filt_raw.fif'))
-    cov_fname = op.join(deriv_path,
-                        bids_basename.update(suffix='cov.fif'))
+    raw_er_fname = bids_basename.copy().update(suffix='emptyroom_filt_raw.fif')
+    cov_fname = bids_basename.copy().update(suffix='cov.fif')
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:

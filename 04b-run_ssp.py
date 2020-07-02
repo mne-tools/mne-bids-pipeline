@@ -36,16 +36,15 @@ def run_ssp(subject, session=None):
                                        run=run,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     # Prepare a name to save the data
-    raw_fname_in = op.join(deriv_path,
-                           bids_basename.update(suffix='filt_raw.fif'))
+    raw_fname_in = bids_basename.copy().update(suffix='filt_raw.fif')
 
     # when saving proj, use run=None
-    proj_fname_out = op.join(deriv_path,
-                             bids_basename.update(run=None,
-                                                  suffix='ssp-proj.fif'))
+    proj_fname_out = (bids_basename.copy()
+                      .update(run=None, suffix='ssp-proj.fif'))
 
     msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

@@ -143,16 +143,16 @@ def find_bad_channels(raw, subject, session, task, run):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=run,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
-
-    bads_tsv_fname = op.join(deriv_path, f'{bids_basename}_bad_channels.tsv')
+    bads_tsv_fname = make_bids_basename(subject=subject,
+                                        session=session,
+                                        task=config.get_task(),
+                                        acquisition=config.acq,
+                                        run=run,
+                                        processing=config.proc,
+                                        recording=config.rec,
+                                        space=config.space,
+                                        prefix=deriv_path,
+                                        suffix='bad_channels.tsv')
     bads_for_tsv = []
     reasons = []
 
@@ -270,15 +270,15 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss
-            raw_fname_out = op.join(deriv_path, f'{bids_basename}_sss_raw.fif')
+            raw_fname_out = bids_basename.copy().update(suffix='sss_raw.fif')
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session))
             raw_out = raw
-            raw_fname_out = op.join(deriv_path,
-                                    f'{bids_basename}_nosss_raw.fif')
+            raw_fname_out = (bids_basename.copy()
+                             .update(suffix='nosss_raw.fif'))
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
@@ -330,14 +330,12 @@ def run_maxwell_filter(subject, session=None):
                     raise RuntimeError(msg)
 
                 raw_er_out = raw_er_sss
-                raw_er_fname_out = op.join(
-                    deriv_path,
-                    f'{bids_basename}_emptyroom_sss_raw.fif')
+                raw_er_fname_out = (bids_basename.copy()
+                                    .update(suffix='emptyroom_sss_raw.fif'))
             else:
                 raw_er_out = raw_er
-                raw_er_fname_out = op.join(
-                    deriv_path,
-                    f'{bids_basename}_emptyroom_nosss_raw.fif')
+                raw_er_fname_out = (bids_basename.copy()
+                                    .update(suffix='emptyroom_nosss_raw.fif'))
 
             raw_er_out.save(raw_er_fname_out, overwrite=True)
 

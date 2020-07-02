@@ -102,3 +102,14 @@ if __name__ == '__main__':
     dataset = opt.dataset if opt.dataset != '' else None
 
     main(dataset)
+
+    # tmp patch until fsaverage symlink is uploaded back to the datalad dataset
+    data_dir = mne.get_config(key='MNE_DATA', default=False)
+    somatopath = op.join(data_dir, 'somato')
+    if op.exists(somatopath):
+        fsaverage_path = op.join(somatopath, 'derivatives', 'freesurfer', 'subjects', 'fsaverage')
+        if not op.exists(fsaverage_path):
+            src = fsaverage_path
+            dest = '/usr/local/freesurfer/subjects/fsaverage'
+            os.symlink(src, dest)
+    

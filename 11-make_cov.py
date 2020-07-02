@@ -39,7 +39,7 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
     if config.use_ica or config.use_ssp:
         suffix = 'cleaned-epo.fif'
     else:
-        suffix = '-epo.fif'
+        suffix = 'epo.fif'
 
     epo_fname = op.join(deriv_path,
                         bids_basename.update(suffix=suffix))

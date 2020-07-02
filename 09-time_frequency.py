@@ -47,7 +47,7 @@ def run_time_frequency(subject, session=None):
     if config.use_ica or config.use_ssp:
         suffix = 'cleaned-epo.fif'
     else:
-        suffix = '-epo.fif'
+        suffix = 'epo.fif'
 
     fname_in = op.join(deriv_path,
                        bids_basename.update(suffix=suffix))

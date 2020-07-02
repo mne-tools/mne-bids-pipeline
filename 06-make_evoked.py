@@ -73,7 +73,7 @@ def run_evoked(subject, session=None):
                                              weights=[1, -1])
             evokeds.append(evoked_diff)
 
-    mne.evoked.write_evokeds(fname_out, evokeds)
+    mne.write_evokeds(fname_out, evokeds)
 
     if config.interactive:
         for evoked in evokeds:

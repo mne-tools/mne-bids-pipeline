@@ -282,7 +282,6 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = (bids_basename.copy()
                              .update(prefix=deriv_path,
                                      suffix='nosss_raw.fif'))
-        print(raw_fname_out)
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
@@ -335,11 +334,13 @@ def run_maxwell_filter(subject, session=None):
 
                 raw_er_out = raw_er_sss
                 raw_er_fname_out = (bids_basename.copy()
-                                    .update(suffix='emptyroom_sss_raw.fif'))
+                                    .update(prefix=deriv_path,
+                                            suffix='emptyroom_sss_raw.fif'))
             else:
                 raw_er_out = raw_er
                 raw_er_fname_out = (bids_basename.copy()
-                                    .update(suffix='emptyroom_nosss_raw.fif'))
+                                    .update(prefix=deriv_path,
+                                            suffix='emptyroom_nosss_raw.fif'))
 
             raw_er_out.save(raw_er_fname_out, overwrite=True)
 

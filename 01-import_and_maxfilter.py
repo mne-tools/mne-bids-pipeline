@@ -270,7 +270,9 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss
-            raw_fname_out = bids_basename.copy().update(suffix='sss_raw.fif')
+            raw_fname_out = (bids_basename.copy()
+                             .update(prefix=deriv_path,
+                                     suffix='sss_raw.fif'))
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
@@ -278,7 +280,9 @@ def run_maxwell_filter(subject, session=None):
                                         session=session))
             raw_out = raw
             raw_fname_out = (bids_basename.copy()
-                             .update(suffix='nosss_raw.fif'))
+                             .update(prefix=deriv_path,
+                                     suffix='nosss_raw.fif'))
+        print(raw_fname_out)
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)

@@ -14,7 +14,7 @@ def _provide_testing_data(dataset=None):
     urls_dict = {
         'eeg_matchingpennies': (
             'https://github.com/sappelhoff/eeg_matchingpennies'),
-        'somato': ('https://github.com/sappelhoff/MNE-somato-data'),
+        'somato':   'https://github.com/OpenNeuroDatasets/ds002993',
         'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',

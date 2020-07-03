@@ -44,16 +44,17 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
+    fname_in = make_bids_basename(subject=subject,
+                                  session=session,
+                                  task=config.get_task(),
+                                  acquisition=config.acq,
+                                  run=None,
+                                  processing=config.proc,
+                                  recording=config.rec,
+                                  space=config.space,
+                                  prefix=deriv_path,
+                                  suffix='epo.fif')
 
-    fname_in = op.join(deriv_path, bids_basename + '-epo.fif')
     epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels

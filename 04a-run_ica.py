@@ -33,6 +33,14 @@ def run_ica(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     raw_list = list()
     msg = 'Loading filtered raw data'
@@ -40,19 +48,8 @@ def run_ica(subject, session=None):
                                 session=session))
 
     for run in config.get_runs():
-        bids_basename = make_bids_basename(subject=subject,
-                                           session=session,
-                                           task=config.get_task(),
-                                           acquisition=config.acq,
-                                           run=run,
-                                           processing=config.proc,
-                                           recording=config.rec,
-                                           space=config.space
-                                           )
-
-        raw_fname_in = \
-            op.join(deriv_path, bids_basename + '_filt_raw.fif')
-
+        raw_fname_in = (bids_basename.copy()
+                        .update(run=run, suffix='filt_raw.fif'))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
         raw_list.append(raw)
 
@@ -126,17 +123,14 @@ def run_ica(subject, session=None):
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
-    # Load ICA
-    ica_fname = \
-        op.join(deriv_path, bids_basename + '_%s-ica.fif' % kind)
-
+    # Save ICA
+    ica_fname = bids_basename.copy().update(run=None, suffix=f'{kind}-ica.fif')
     ica.save(ica_fname)
 
     if config.interactive:
         # plot ICA components to html report
-        report_fname = \
-            op.join(deriv_path, f'bids_basename_{kind}-ica.html')
-
+        report_fname = (bids_basename.copy()
+                        .update(run=None, suffix=f'{kind}-ica.html'))
         report = Report(report_fname, verbose=False)
 
         for idx in range(0, ica.n_components_):

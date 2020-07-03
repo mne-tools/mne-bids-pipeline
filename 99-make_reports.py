@@ -32,7 +32,8 @@ def plot_events(subject, session, deriv_path):
                                            processing=config.proc,
                                            recording=config.rec,
                                            space=config.space)
-        fname = op.join(deriv_path, bids_basename + '_filt_raw.fif')
+        fname = op.join(deriv_path,
+                        bids_basename.update(suffix='filt_raw.fif'))
         raw_filt = mne.io.read_raw_fif(fname)
         raws_filt.append(raw_filt)
         del fname
@@ -61,8 +62,9 @@ def plot_er_psd(subject, session):
                                        recording=config.rec,
                                        space=config.space)
 
-    raw_er_filtered_fname = op.join(deriv_path,
-                                    f'{bids_basename}_emptyroom_filt_raw.fif')
+    raw_er_filtered_fname = op.join(
+        deriv_path,
+        bids_basename.update(suffix='emptyroom_filt_raw.fif'))
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
@@ -86,11 +88,10 @@ def run_report(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space
-                                       )
+                                       space=config.space)
 
-    fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
-    fname_trans = op.join(deriv_path, 'sub-{}'.format(subject) + '-trans.fif')
+    fname_ave = op.join(deriv_path, bids_basename.update(suffix='ave.fif'))
+    fname_trans = op.join(deriv_path, f'sub-{subject}-trans.fif')
     subjects_dir = config.get_fs_subjects_dir()
     if op.exists(fname_trans):
         rep = mne.Report(info_fname=fname_ave, subject=subject,
@@ -161,8 +162,9 @@ def run_report(subject, session=None):
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-            fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
-                                                      inverse_str, hemi_str]))
+            fname_stc = op.join(deriv_path, '_'.join([str(bids_basename),
+                                                      cond_str, inverse_str,
+                                                      hemi_str]))
 
             if op.exists(fname_stc + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -285,9 +287,9 @@ def main():
 
         section = 'Source'
         fname_stc_avg = op.join(deriv_path, '_'.join(['average',
-                                                      bids_basename, cond_str,
-                                                      inverse_str, morph_str,
-                                                      hemi_str]))
+                                                      str(bids_basename),
+                                                      cond_str, inverse_str,
+                                                      morph_str, hemi_str]))
 
         if op.exists(fname_stc_avg + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')

@@ -33,20 +33,19 @@ def run_epochs(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     for run in config.get_runs():
-        bids_basename = make_bids_basename(subject=subject,
-                                           session=session,
-                                           task=config.get_task(),
-                                           acquisition=config.acq,
-                                           run=run,
-                                           processing=config.proc,
-                                           recording=config.rec,
-                                           space=config.space
-                                           )
         # Prepare a name to save the data
-        raw_fname_in = \
-            op.join(deriv_path, bids_basename + '_filt_raw.fif')
+        raw_fname_in = (bids_basename.copy()
+                        .update(run=run, suffix='filt_raw.fif'))
 
         msg = f'Loading filtered raw data from {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
@@ -96,18 +95,7 @@ def run_epochs(subject, session=None):
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
-    epochs_fname = \
-        op.join(deriv_path, bids_basename + '-epo.fif')
+    epochs_fname = bids_basename.copy().update(suffix='epo.fif')
     epochs.save(epochs_fname, overwrite=True)
 
     if config.interactive:

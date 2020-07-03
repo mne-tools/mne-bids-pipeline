@@ -35,12 +35,13 @@ def run_inverse(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
-    fname_ave = op.join(deriv_path, bids_basename + '-ave.fif')
-    fname_fwd = op.join(deriv_path, bids_basename + '-fwd.fif')
-    fname_cov = op.join(deriv_path, bids_basename + '-cov.fif')
-    fname_inv = op.join(deriv_path, bids_basename + '-inv.fif')
+    fname_ave = bids_basename.copy().update(suffix='ave.fif')
+    fname_fwd = bids_basename.copy().update(suffix='fwd.fif')
+    fname_cov = bids_basename.copy().update(suffix='cov.fif')
+    fname_inv = bids_basename.copy().update(suffix='inv.fif')
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -61,8 +62,8 @@ def run_inverse(subject, session=None):
         cond_str = 'cond-%s' % condition.replace(op.sep, '')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        fname_stc = op.join(deriv_path, '_'.join([bids_basename, cond_str,
-                                                  inverse_str, hemi_str]))
+        fname_stc = '_'.join([str(bids_basename.update(suffix=None)),
+                              cond_str, inverse_str, hemi_str])
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

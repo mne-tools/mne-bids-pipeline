@@ -13,6 +13,7 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
+              shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
 
         - restore_cache:
             keys:

@@ -149,7 +149,7 @@ def run_report(subject, session=None):
                                         subject=subject, session=session))
 
         for evoked in evokeds:
-            msg = 'Rendering inverse solution for {evoked.comment} …'
+            msg = f'Rendering inverse solution for {evoked.comment} …'
             logger.info(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 

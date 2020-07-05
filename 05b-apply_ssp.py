@@ -42,7 +42,7 @@ def apply_ssp(subject, session=None):
                                        prefix=deriv_path)
 
     fname_in = bids_basename.copy().update(suffix='epo.fif')
-    fname_out = bids_basename.copy().update(suffix='cleaned-epo.fif')
+    fname_out = bids_basename.copy().update(suffix='cleaned_epo.fif')
 
     epochs = mne.read_epochs(fname_in, preload=True)
 

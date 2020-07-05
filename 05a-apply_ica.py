@@ -49,7 +49,7 @@ def apply_ica(subject, run, session):
                                        prefix=deriv_path)
 
     fname_in = bids_basename.copy().update(suffix='epo.fif')
-    fname_out = bids_basename.copy().update(suffix='cleaned-epo.fif')
+    fname_out = bids_basename.copy().update(suffix='cleaned_epo.fif')
 
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_in, preload=True)

@@ -13,7 +13,6 @@ jobs:
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
-              shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
 
         - restore_cache:
             keys:
@@ -100,6 +99,7 @@ jobs:
                export DS=ds000246
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
+               shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
@@ -109,6 +109,7 @@ jobs:
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
+               shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
@@ -118,6 +119,7 @@ jobs:
                export DS=ds001810
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
+               shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
@@ -127,6 +129,7 @@ jobs:
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
+               shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
@@ -135,7 +138,8 @@ jobs:
             command: |
                export DS=somato
                python tests/run_tests.py ${DS}
-               # mkdir ~/reports/${DS}
+               mkdir ~/reports/${DS}
+               shopt -s globstar  # Enable recursive globbing via **, e.g. */**/*.foo
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 

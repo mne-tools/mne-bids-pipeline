@@ -6,6 +6,7 @@
 The M/EEG-channel data are averaged for group averages.
 """
 
+import os
 import os.path as op
 from collections import defaultdict
 import logging
@@ -60,9 +61,23 @@ for idx, evokeds in all_evokeds.items():
         evokeds, interpolate_bads=config.interpolate_bads_grand_average
     )  # Combine subjects
 
-extension = 'grand_average-ave'
-fname_out = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                    '{0}_{1}.fif'.format(config.study_name, extension))
+subject = 'average'
+deriv_path = config.get_subject_deriv_path(subject=subject,
+                                           session=session,
+                                           kind=config.get_kind())
+if not op.exists(deriv_path):
+    os.makedirs(deriv_path)
+
+fname_out = make_bids_basename(subject=subject,
+                               session=session,
+                               task=config.get_task(),
+                               acquisition=config.acq,
+                               run=None,
+                               processing=config.proc,
+                               recording=config.rec,
+                               space=config.space,
+                               prefix=deriv_path,
+                               suffix='ave.fif')
 
 msg = f'Saving grand-averaged sensor data: {fname_out}'
 logger.info(gen_log_message(message=msg, step=7, subject=subject,

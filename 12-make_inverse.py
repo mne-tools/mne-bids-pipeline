@@ -59,11 +59,11 @@ def run_inverse(subject, session=None):
         method = config.inverse_method
         pick_ori = None
 
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        fname_stc = '_'.join([str(bids_basename.update(suffix=None)),
-                              cond_str, inverse_str, hemi_str])
+        fname_stc = (bids_basename.copy()
+                     .update(suffix=f'{cond_str}_{inverse_str}_{hemi_str}'))
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

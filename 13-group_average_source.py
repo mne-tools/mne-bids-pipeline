@@ -39,14 +39,16 @@ def morph_stc(subject, session=None):
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
-        fname_stc = '_'.join([str(bids_basename), cond_str,
-                              inverse_str, hemi_str])
-        fname_stc_fsaverage = '_'.join([str(bids_basename), cond_str,
-                                        inverse_str, morph_str, hemi_str])
+
+        fname_stc = (bids_basename.copy()
+                     .update(suffix=f'{cond_str}_{inverse_str}_{hemi_str}'))
+        fname_stc_fsaverage = (bids_basename.copy()
+                               .update(suffix=f'{cond_str}_{inverse_str}_'
+                                              f'{morph_str}_{hemi_str}'))
 
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
@@ -78,28 +80,32 @@ def main():
                         zip(all_morphed_stcs, config.get_subjects())]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
-    deriv_path = config.deriv_root
-    bids_basename = make_bids_basename(task=config.get_task(),
+    subject = 'average'
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=None,
+                                               kind=config.get_kind())
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
+        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
         inverse_str = 'inverse-%s' % method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph-fsaverage'
 
-        fname_stc_avg = op.join(deriv_path, '_'.join(['average',
-                                                      str(bids_basename),
-                                                      cond_str,
-                                                      inverse_str, morph_str,
-                                                      hemi_str]))
+        fname_stc_avg = (bids_basename.copy()
+                         .update(suffix=f'{cond_str}_{inverse_str}_'
+                                        f'{morph_str}_{hemi_str}'))
         this_stc.save(fname_stc_avg)
 
     msg = 'Completed Step 13: Grand-average source estimates'

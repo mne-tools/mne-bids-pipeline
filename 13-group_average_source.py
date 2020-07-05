@@ -81,11 +81,18 @@ def main():
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
     subject = 'average'
+    # XXX to fix
+    if config.get_sessions():
+        session = config.get_sessions()[0]
+    else:
+        session = None
+
     deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=None,
+                                               session=session,
                                                kind=config.get_kind())
 
     bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,

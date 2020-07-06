@@ -35,7 +35,7 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
-              pip install numpy scipy pandas matplotlib nibabel coloredlogs python-picard
+              pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard
               pip install -U scikit-learn
               pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1

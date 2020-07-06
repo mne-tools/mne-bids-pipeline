@@ -37,6 +37,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import json_tricks
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
@@ -110,17 +111,34 @@ def find_bad_channels(raw, subject, session, task, run):
 
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
+
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
+
     raw_lp_filtered_for_maxwell = (raw.copy()
                                    .filter(l_freq=None,
                                            h_freq=40))
-    auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
+    auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw_lp_filtered_for_maxwell,
         calibration=config.mf_cal_fname,
-        cross_talk=config.mf_ctc_fname)
+        cross_talk=config.mf_ctc_fname,
+        return_scores=True)
     del raw_lp_filtered_for_maxwell
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()
+
     if config.find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
         logger.info(gen_log_message(message=msg, step=1,
@@ -138,21 +156,19 @@ def find_bad_channels(raw, subject, session, task, run):
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
 
-    # Write the bad channels to disk.
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
+    if config.find_noisy_channels_meg:
+        auto_scores_fname = bids_basename.copy().update(suffix='scores.json')
+        with open(auto_scores_fname, 'w') as f:
+            json_tricks.dump(auto_scores, fp=f, allow_nan=True,
+                             sort_keys=False)
 
-    bads_tsv_fname = make_bids_basename(subject=subject,
-                                        session=session,
-                                        task=config.get_task(),
-                                        acquisition=config.acq,
-                                        run=run,
-                                        processing=config.proc,
-                                        recording=config.rec,
-                                        space=config.space,
-                                        prefix=deriv_path,
-                                        suffix='bad_channels.tsv')
+        if config.interactive:
+            import matplotlib.pyplot as plt
+            config.plot_auto_scores(auto_scores)
+            plt.show()
+
+    # Write the bad channels to disk.
+    bads_tsv_fname = bids_basename.copy().update(suffix='bad_channels.tsv')
     bads_for_tsv = []
     reasons = []
 

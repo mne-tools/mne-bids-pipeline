@@ -159,7 +159,7 @@ def find_bad_channels(raw, subject, session, task, run):
     if config.find_noisy_channels_meg:
         auto_scores_fname = bids_basename.copy().update(suffix='scores.json')
         with open(auto_scores_fname, 'w') as f:
-            json_tricks.dump(auto_scores, fp=f,allow_nan=True,
+            json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
 
         if config.interactive:

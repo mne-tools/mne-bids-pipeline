@@ -38,7 +38,7 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                                        prefix=deriv_path)
 
     if config.use_ica or config.use_ssp:
-        suffix = 'cleaned-epo.fif'
+        suffix = 'cleaned_epo.fif'
     else:
         suffix = 'epo.fif'
 

@@ -88,10 +88,11 @@ def run_report(subject, session=None):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
+                                       space=config.space,
+                                       prefix=deriv_path)
 
-    fname_ave = op.join(deriv_path, bids_basename.update(suffix='ave.fif'))
-    fname_trans = op.join(deriv_path, f'sub-{subject}-trans.fif')
+    fname_ave = bids_basename.copy().update(suffix='ave.fif')
+    fname_trans = bids_basename.copy().update(suffix='trans.fif')
     subjects_dir = config.get_fs_subjects_dir()
     if op.exists(fname_trans):
         rep = mne.Report(info_fname=fname_ave, subject=subject,
@@ -148,7 +149,7 @@ def run_report(subject, session=None):
                                         subject=subject, session=session))
 
         for evoked in evokeds:
-            msg = 'Rendering inverse solution for {evoked.comment} …'
+            msg = f'Rendering inverse solution for {evoked.comment} …'
             logger.info(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
@@ -162,11 +163,12 @@ def run_report(subject, session=None):
             cond_str = 'cond-%s' % evoked.comment.replace(op.sep, '')
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-            fname_stc = op.join(deriv_path, '_'.join([str(bids_basename),
-                                                      cond_str, inverse_str,
-                                                      hemi_str]))
 
-            if op.exists(fname_stc + "-lh.stc"):
+            fname_stc = (bids_basename.copy()
+                         .update(suffix=f'{cond_str}_{inverse_str}_'
+                                        f'{hemi_str}'))
+
+            if op.exists(str(fname_stc) + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
                 _, peak_time = stc.get_peak()
 
@@ -212,12 +214,7 @@ def run_report(subject, session=None):
                                          '(after filtering)',
                                 section='Empty-Room')
 
-    if config.get_task():
-        task_str = '_task-%s' % config.get_task()
-    else:
-        task_str = ''
-
-    fname_report = op.join(deriv_path, 'report%s.html' % task_str)
+    fname_report = bids_basename.copy().update(suffix='report.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -232,20 +229,32 @@ def main():
              itertools.product(config.get_subjects(), config.get_sessions()))
 
     # Group report
-    evoked_fname = op.join(config.bids_root, 'derivatives',
-                           config.PIPELINE_NAME,
-                           '%s_grand_average-ave.fif' % config.study_name)
+    subject = 'average'
+    # XXX to fix
+    if config.get_sessions():
+        session = config.get_sessions()[0]
+    else:
+        session = None
+
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+    evoked_fname = make_bids_basename(subject=subject,
+                                      session=session,
+                                      task=config.get_task(),
+                                      acquisition=config.acq,
+                                      run=None,
+                                      processing=config.proc,
+                                      recording=config.rec,
+                                      space=config.space,
+                                      prefix=deriv_path,
+                                      suffix='ave.fif')
+
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
     deriv_path = config.deriv_root
     subjects_dir = config.get_fs_subjects_dir()
-    bids_basename = make_bids_basename(task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
 
     method = config.inverse_method
     inverse_str = 'inverse-%s' % method
@@ -280,18 +289,19 @@ def main():
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'
-            cond_str = 'cond-%s' % condition.replace(op.sep, '')
+            cond_str = 'cond-%s' % (condition
+                                    .replace(op.sep, '')
+                                    .replace('_', '-'))
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue
 
         section = 'Source'
-        fname_stc_avg = op.join(deriv_path, '_'.join(['average',
-                                                      str(bids_basename),
-                                                      cond_str, inverse_str,
-                                                      morph_str, hemi_str]))
+        fname_stc_avg = (evoked_fname.copy()
+                         .update(suffix=f'{cond_str}_{inverse_str}_'
+                                        f'{morph_str}_{hemi_str}'))
 
-        if op.exists(fname_stc_avg + "-lh.stc"):
+        if op.exists(str(fname_stc_avg) + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
             _, peak_time = stc.get_peak()
 
@@ -325,12 +335,9 @@ def main():
 
             del peak_time
 
-    if config.get_task():
-        task_str = '_task-%s' % config.get_task()
-    else:
-        task_str = ''
-
-    fname_report = op.join(deriv_path, 'report_average%s.html' % task_str)
+    fname_report = (evoked_fname.copy()
+                    .update(task=config.get_task(),
+                            suffix='report.html'))
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'

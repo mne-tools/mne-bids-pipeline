@@ -46,7 +46,7 @@ def run_time_frequency(subject, session=None):
                                        prefix=deriv_path)
 
     if config.use_ica or config.use_ssp:
-        suffix = 'cleaned-epo.fif'
+        suffix = 'cleaned_epo.fif'
     else:
         suffix = 'epo.fif'
 

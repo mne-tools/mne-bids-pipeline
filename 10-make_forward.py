@@ -38,7 +38,7 @@ def run_forward(subject, session=None):
                                        prefix=deriv_path)
 
     fname_evoked = bids_basename.copy().update(suffix='ave.fif')
-    fname_trans = op.join(deriv_path, f'sub-{subject}-trans.fif')
+    fname_trans = bids_basename.copy().update(suffix='trans.fif')
     fname_fwd = bids_basename.copy().update(suffix='fwd.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'

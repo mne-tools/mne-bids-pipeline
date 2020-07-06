@@ -1,6 +1,7 @@
 version: 2
 jobs:
     run_tests:
+      resource_class: large
       docker:
         - image: circleci/python:3.6.8-stretch
       steps:

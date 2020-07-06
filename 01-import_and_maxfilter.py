@@ -37,6 +37,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import json_tricks
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
@@ -97,48 +98,6 @@ def rename_events(raw, subject, session):
         description[description == old_event_name] = new_event_name
 
 
-def plot_auto_scores(auto_scores):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    if config.ch_types == ['meg']:
-        ch_types = ['grad', 'mag']
-    else:
-        ch_types = config.ch_types
-
-    for ch_type in ch_types:
-        # Only select the data for mag or grad channels.
-        ch_subset = auto_scores['ch_types'] == ch_type
-        ch_names = auto_scores['ch_names'][ch_subset]
-        scores = auto_scores['scores_noisy'][ch_subset]
-        limits = auto_scores['limits_noisy'][ch_subset]
-        # Number of time windows
-        segments = range(1, len(auto_scores['bin_edges']))
-
-        data_to_plot = pd.DataFrame(data=scores,
-                                    columns=pd.Index(segments, name='Segment'),
-                                    index=pd.Index(ch_names, name='Channel'))
-
-        # Plot the "raw" scores.
-        fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-        fig.suptitle(f'Automated noisy channel detection: {ch_type}',
-                     fontsize=16, fontweight='bold')
-        sns.heatmap(data=data_to_plot, cmap='Reds',
-                    cbar_kws=dict(label='Score'),
-                    ax=ax[0])
-        ax[0].set_title('All Scores', fontweight='bold')
-
-        # Focus on scores that exceeded the limits.
-        sns.heatmap(data=data_to_plot,
-                    vmin=limits.min(), cmap='Reds',
-                    cbar_kws=dict(label='Score'), ax=ax[1])
-        ax[1].set_title('Scores > Limit', fontweight='bold')
-
-        # Figure title should not overlap with subplots.
-        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.show()
-
-
 def find_bad_channels(raw, subject, session, task, run):
     if (config.find_flat_channels_meg and
             not config.find_noisy_channels_meg):
@@ -152,6 +111,21 @@ def find_bad_channels(raw, subject, session, task, run):
 
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
+
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
+
     raw_lp_filtered_for_maxwell = (raw.copy()
                                    .filter(l_freq=None,
                                            h_freq=40))
@@ -182,24 +156,19 @@ def find_bad_channels(raw, subject, session, task, run):
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
 
-    if config.find_noisy_channels_meg and config.interactive:
-        plot_auto_scores(auto_scores)
+    if config.find_noisy_channels_meg:
+        auto_scores_fname = bids_basename.copy().update(suffix='scores.json')
+        with open(auto_scores_fname, 'w') as f:
+            json_tricks.dump(auto_scores, fp=f,allow_nan=True,
+                             sort_keys=False)
+
+        if config.interactive:
+            import matplotlib.pyplot as plt
+            config.plot_auto_scores(auto_scores)
+            plt.show()
 
     # Write the bad channels to disk.
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
-    bads_tsv_fname = make_bids_basename(subject=subject,
-                                        session=session,
-                                        task=config.get_task(),
-                                        acquisition=config.acq,
-                                        run=run,
-                                        processing=config.proc,
-                                        recording=config.rec,
-                                        space=config.space,
-                                        prefix=deriv_path,
-                                        suffix='bad_channels.tsv')
+    bads_tsv_fname = bids_basename.copy().update(suffix='bad_channels.tsv')
     bads_for_tsv = []
     reasons = []
 

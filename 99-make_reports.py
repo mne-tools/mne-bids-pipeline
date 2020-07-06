@@ -76,6 +76,42 @@ def plot_er_psd(subject, session):
     return fig
 
 
+def plot_auto_scores(subject, session):
+    """Plot automated bad channel detection scores.
+    """
+    import json_tricks
+
+    deriv_path = config.get_subject_deriv_path(subject=subject,
+                                               session=session,
+                                               kind=config.get_kind())
+
+    fname_scores = make_bids_basename(subject=subject,
+                                      session=session,
+                                      task=config.get_task(),
+                                      acquisition=config.acq,
+                                      run=None,
+                                      processing=config.proc,
+                                      recording=config.rec,
+                                      space=config.space,
+                                      prefix=deriv_path,
+                                      suffix='scores.json')
+
+    all_figs = []
+    all_captions = []
+    for run in config.get_runs():
+        with open(fname_scores.update(run=run), 'r') as f:
+            auto_scores = json_tricks.load(f)
+
+        figs = config.plot_auto_scores(auto_scores)
+        all_figs.extend(figs)
+
+        # Could be more than 1 fig, e.g. "grad" and "mag"
+        captions = [f'Run {run}'] * len(figs)
+        all_captions.extend(captions)
+
+    return all_figs, all_captions
+
+
 def run_report(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
@@ -101,6 +137,13 @@ def run_report(subject, session=None):
         rep = mne.Report(info_fname=fname_ave)
 
     rep.parse_folder(deriv_path, verbose=True)
+
+    # Visualize automated noisy channel detection.
+    if config.find_noisy_channels_meg:
+        figs, captions = plot_auto_scores(subject=subject, session=session)
+        rep.add_figs_to_section(figs=figs,
+                                captions=captions,
+                                section='Data Quality')
 
     # Visualize events.
     events_fig = plot_events(subject=subject, session=session,

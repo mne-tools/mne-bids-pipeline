@@ -57,7 +57,11 @@ def run_epochs(subject, session=None):
     msg = 'Concatenating runs'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    raw = mne.concatenate_raws(raw_list)
+
+    if len(raw_list) == 1:  # avoid extra memory usage
+        raw = raw_list[0]
+    else:
+        raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
     if "eeg" in config.ch_types:

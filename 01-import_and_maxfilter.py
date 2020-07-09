@@ -126,15 +126,11 @@ def find_bad_channels(raw, subject, session, task, run):
                                        space=config.space,
                                        prefix=deriv_path)
 
-    raw_lp_filtered_for_maxwell = (raw.copy()
-                                   .filter(l_freq=None,
-                                           h_freq=40))
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
-        raw=raw_lp_filtered_for_maxwell,
+        raw=raw,
         calibration=config.mf_cal_fname,
         cross_talk=config.mf_ctc_fname,
         return_scores=True)
-    del raw_lp_filtered_for_maxwell
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()

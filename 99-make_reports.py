@@ -188,8 +188,8 @@ def run_report(subject, session=None):
         else:
             msg = ('Cannot render sensor alignment (coregistration) because '
                    'no usable 3d backend was found.')
-            logger.warn(gen_log_message(message=msg, step=99,
-                                        subject=subject, session=session))
+            logger.warning(gen_log_message(message=msg, step=99,
+                                           subject=subject, session=session))
 
         for evoked in evokeds:
             msg = f'Rendering inverse solution for {evoked.comment} …'

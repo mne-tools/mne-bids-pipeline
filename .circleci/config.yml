@@ -37,8 +37,7 @@ jobs:
               conda update -n base -c defaults conda
               pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard
               pip install -U scikit-learn
-              # pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
-              pip install -U https://github.com/larsoner/mne-python/archive/psd.zip  # XXX
+              pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
               cd mne-bids
               pip install -e .

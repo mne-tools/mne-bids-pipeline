@@ -263,8 +263,8 @@ def run_maxwell_filter(subject, session=None):
             # Warn if no bad channels are set before Maxwell filter
             if not raw.info['bads']:
                 msg = '\nFound no bad channels. \n '
-                logger.warn(gen_log_message(message=msg, subject=subject,
-                                            step=1, session=session))
+                logger.warning(gen_log_message(message=msg, subject=subject,
+                                               step=1, session=session))
 
             if config.mf_st_duration:
                 msg = '    st_duration=%d' % (config.mf_st_duration)

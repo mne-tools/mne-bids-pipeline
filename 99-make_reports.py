@@ -130,12 +130,13 @@ def run_report(subject, session=None):
     fname_ave = bids_basename.copy().update(suffix='ave.fif')
     fname_trans = bids_basename.copy().update(suffix='trans.fif')
     subjects_dir = config.get_fs_subjects_dir()
-    if op.exists(fname_trans):
-        rep = mne.Report(info_fname=fname_ave, subject=subject,
-                         subjects_dir=subjects_dir)
-    else:
-        rep = mne.Report(info_fname=fname_ave)
+    params = dict(info_fname=fname_ave, raw_psd=True)
 
+    if op.exists(fname_trans):
+        params['subject'] = subject
+        params['subjects_dir'] = subjects_dir
+
+    rep = mne.Report(**params)
     rep.parse_folder(deriv_path, verbose=True)
 
     # Visualize automated noisy channel detection.

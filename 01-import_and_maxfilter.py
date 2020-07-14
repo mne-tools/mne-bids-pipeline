@@ -294,6 +294,7 @@ def run_maxwell_filter(subject, session=None):
                              .update(prefix=deriv_path,
                                      suffix='nosss_raw.fif'))
 
+        # Select only the channel types we wish to analyze.
         picks = config.get_picks(raw_out.info)
         raw_out.pick(picks)
         raw_out.save(raw_fname_out, overwrite=True)
@@ -356,7 +357,9 @@ def run_maxwell_filter(subject, session=None):
                                     .update(prefix=deriv_path,
                                             suffix='emptyroom_nosss_raw.fif'))
 
-            raw_er_out.pick(picks)  # Same picks as for experimental data above
+            # Select only the channel types we wish to analyze
+            # (same as for experimental data above).
+            raw_er_out.pick(picks)
             raw_er_out.save(raw_er_fname_out, overwrite=True)
 
 

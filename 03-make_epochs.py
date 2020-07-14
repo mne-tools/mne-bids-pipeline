@@ -69,19 +69,6 @@ def run_epochs(subject, session=None):
 
     del raw_list
 
-    meg = False
-    if 'meg' in config.ch_types:
-        meg = True
-    elif 'grad' in config.ch_types:
-        meg = 'grad'
-    elif 'mag' in config.ch_types:
-        meg = 'mag'
-
-    eeg = config.get_kind() == 'eeg'
-
-    picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=True,
-                           eog=True, exclude=())
-
     # Construct metadata from the epochs
     # Add here if you need to attach a pandas dataframe as metadata
     # to your epochs object:
@@ -92,7 +79,7 @@ def run_epochs(subject, session=None):
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
     epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
-                        proj=True, picks=picks, baseline=config.baseline,
+                        proj=True, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.get_reject())
 
@@ -104,8 +91,7 @@ def run_epochs(subject, session=None):
 
     if config.interactive:
         epochs.plot()
-        epochs.plot_image(combine='gfp', picks=config.ch_types, sigma=2.,
-                          cmap='YlGnBu_r')
+        epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
 
 
 def main():

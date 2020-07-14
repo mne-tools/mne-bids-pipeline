@@ -208,6 +208,22 @@ def load_data(bids_basename):
                         extra_params=extra_params,
                         kind=config.get_kind())
 
+    # Select only the channel types we wish to analyze.
+    if config.get_kind() == 'meg' and ('mag' in config.ch_types or
+                                       'grad' in config.ch_types):
+        picks = raw.copy().pick_types(eog=True, ecg=True).ch_names
+
+        if 'mag' in config.ch_types:
+            picks += raw.copy().pick_types(meg='mag').ch_names
+        if 'grad' in config.ch_types:
+            picks += raw.copy().pick_types(meg='grad').ch_names
+    elif config.get_kind() == 'meg':
+        picks = raw.copy().pick_types(meg=True, eog=True, ecg=True).ch_names
+    else:
+        picks = raw.copy().pick_types(eeg=True, eog=True, ecg=True).ch_names
+
+    raw.pick_channels(picks)
+
     # XXX hack to deal with dates that fif files cannot handle
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -222,7 +238,6 @@ def load_data(bids_basename):
             rename_events(raw=raw, subject=subject, session=session)
 
     raw.load_data()
-
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 

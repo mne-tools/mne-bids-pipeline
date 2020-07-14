@@ -1107,3 +1107,21 @@ def plot_auto_scores(auto_scores):
         figs.append(fig)
 
     return figs
+
+
+def get_picks(info):
+    """Retun the indices of the channels we wish to analyze.
+    """
+    if get_kind() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
+        picks = mne.pick_types(info, eog=True, ecg=True)
+
+        if 'mag' in ch_types:
+            picks += mne.pick_types(info, meg='mag')
+        if 'grad' in ch_types:
+            picks += mne.pick_types(info, meg='grad')
+    elif get_kind() == 'meg':
+        picks = mne.pick_types(info, meg=True, eog=True, ecg=True)
+    else:
+        picks = mne.pick_types(info, eeg=True, eog=True, ecg=True)
+
+    return picks

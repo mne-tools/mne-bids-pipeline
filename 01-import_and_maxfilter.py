@@ -208,22 +208,6 @@ def load_data(bids_basename):
                         extra_params=extra_params,
                         kind=config.get_kind())
 
-    # Select only the channel types we wish to analyze.
-    if config.get_kind() == 'meg' and ('mag' in config.ch_types or
-                                       'grad' in config.ch_types):
-        picks = mne.pick_types(raw.info, eog=True, ecg=True)
-
-        if 'mag' in config.ch_types:
-            picks += mne.pick_types(raw.info, meg='mag')
-        if 'grad' in config.ch_types:
-            picks += mne.pick_types(raw.info, meg='grad')
-    elif config.get_kind() == 'meg':
-        picks = mne.pick_types(raw.info, meg=True, eog=True, ecg=True)
-    else:
-        picks = mne.pick_types(raw.info, eeg=True, eog=True, ecg=True)
-
-    raw.pick(picks)
-
     # XXX hack to deal with dates that fif files cannot handle
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -309,6 +293,9 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = (bids_basename.copy()
                              .update(prefix=deriv_path,
                                      suffix='nosss_raw.fif'))
+
+        picks = config.get_picks(raw_out.info)
+        raw_out.pick(picks)
         raw_out.save(raw_fname_out, overwrite=True)
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
@@ -369,6 +356,7 @@ def run_maxwell_filter(subject, session=None):
                                     .update(prefix=deriv_path,
                                             suffix='emptyroom_nosss_raw.fif'))
 
+            raw_er_out.pick(picks)  # Same picks as for experimental data above
             raw_er_out.save(raw_er_fname_out, overwrite=True)
 
 

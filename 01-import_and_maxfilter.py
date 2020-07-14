@@ -211,18 +211,18 @@ def load_data(bids_basename):
     # Select only the channel types we wish to analyze.
     if config.get_kind() == 'meg' and ('mag' in config.ch_types or
                                        'grad' in config.ch_types):
-        picks = raw.copy().pick_types(eog=True, ecg=True).ch_names
+        picks = mne.pick_types(raw.info, eog=True, ecg=True)
 
         if 'mag' in config.ch_types:
-            picks += raw.copy().pick_types(meg='mag').ch_names
+            picks += mne.pick_types(raw.info, meg='mag')
         if 'grad' in config.ch_types:
-            picks += raw.copy().pick_types(meg='grad').ch_names
+            picks += mne.pick_types(raw.info, meg='grad')
     elif config.get_kind() == 'meg':
-        picks = raw.copy().pick_types(meg=True, eog=True, ecg=True).ch_names
+        picks = mne.pick_types(raw.info, meg=True, eog=True, ecg=True)
     else:
-        picks = raw.copy().pick_types(eeg=True, eog=True, ecg=True).ch_names
+        picks = mne.pick_types(raw.info, eeg=True, eog=True, ecg=True)
 
-    raw.pick_channels(picks)
+    raw.pick(picks)
 
     # XXX hack to deal with dates that fif files cannot handle
     if config.daysback is not None:

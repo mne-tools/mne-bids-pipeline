@@ -1110,7 +1110,7 @@ def plot_auto_scores(auto_scores):
 
 
 def get_picks(info):
-    """Retun the names of the channels we wish to analyze.
+    """Return the names of the channels we wish to analyze.
     """
     if get_kind() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True)

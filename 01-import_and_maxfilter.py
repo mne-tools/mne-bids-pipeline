@@ -297,8 +297,8 @@ def run_maxwell_filter(subject, session=None):
 
         # Save only the channel types we wish to analyze.
         # We do not rum `raw_out.pick()` here because it uses too much memory.
-        picks = config.get_picks(raw_out.info)
-        raw_out.save(raw_fname_out, picks=picks, overwrite=True)
+        chs_to_include = config.get_picks(raw_out.info)
+        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
         del raw_out
         if config.interactive:
             # Load the data we have just written, because it contains only
@@ -364,7 +364,8 @@ def run_maxwell_filter(subject, session=None):
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).
-            raw_er_out.save(raw_er_fname_out, picks=picks, overwrite=True)
+            raw_er_out.save(raw_er_fname_out, picks=chs_to_include,
+                            overwrite=True)
             del raw_er_out
 
 

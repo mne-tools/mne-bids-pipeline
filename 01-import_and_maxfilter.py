@@ -301,6 +301,8 @@ def run_maxwell_filter(subject, session=None):
         if config.interactive:
             raw_out.plot(n_channels=50, butterfly=True)
 
+        del raw_out
+
         # Empty-room processing.
         #
         # We pick the empty-room recording closest in time to the first run

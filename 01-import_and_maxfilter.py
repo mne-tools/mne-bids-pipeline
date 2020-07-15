@@ -208,7 +208,6 @@ def load_data(bids_basename):
                         extra_params=extra_params,
                         kind=config.get_kind())
 
-    # XXX hack to deal with dates that fif files cannot handle
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
 

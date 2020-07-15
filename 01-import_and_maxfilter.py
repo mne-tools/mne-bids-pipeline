@@ -228,7 +228,6 @@ def load_data(bids_basename):
     return raw
 
 
-# @profile
 def run_maxwell_filter(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,

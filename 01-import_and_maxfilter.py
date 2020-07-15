@@ -363,6 +363,7 @@ def run_maxwell_filter(subject, session=None):
             # (same as for experimental data above).
             raw_er_out.pick(picks)
             raw_er_out.save(raw_er_fname_out, overwrite=True)
+            del raw_er_out
 
 
 @failsafe_run(on_error=on_error)

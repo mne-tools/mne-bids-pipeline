@@ -80,13 +80,6 @@ def run_ica(subject, session=None):
                                 preload=True, decim=config.decim,
                                 reject=reject_ica)
 
-    # run ICA on MEG and EEG
-    picks_meg = mne.pick_types(epochs_for_ica.info, meg=True, eeg=False,
-                               eog=False, stim=False, exclude='bads')
-    picks_eeg = mne.pick_types(epochs_for_ica.info, meg=False, eeg=True,
-                               eog=False, stim=False, exclude='bads')
-    all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
-
     # get number of components for ICA
     # compute_rank requires 0.18
     # n_components_meg = (mne.compute_rank(epochs_for_ica.copy()
@@ -112,11 +105,7 @@ def run_ica(subject, session=None):
               n_components=n_components[kind], fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 
-    picks = all_picks[kind]
-    if picks.size == 0:
-        ica.fit(epochs_for_ica, decim=config.ica_decim)
-    else:
-        ica.fit(epochs_for_ica, picks=picks, decim=config.ica_decim)
+    ica.fit(epochs_for_ica, decim=config.ica_decim)
 
     msg = (f'Fit {ica.n_components_} components (explaining at least '
            f'{100*n_components[kind]:.1f}% of the variance)')

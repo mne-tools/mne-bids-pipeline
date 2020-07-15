@@ -13,7 +13,6 @@ order might differ).
 
 """
 
-import os.path as op
 import itertools
 import logging
 
@@ -25,7 +24,6 @@ from mne.report import Report
 
 from mne_bids import make_bids_basename
 
-import numpy as np
 import config
 from config import gen_log_message, on_error, failsafe_run
 
@@ -84,16 +82,8 @@ def apply_ica(subject, run, session):
 
     raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
-    # run ICA on MEG and EEG
-    picks_meg = mne.pick_types(raw.info, meg=True, eeg=False,
-                               eog=False, stim=False, exclude='bads')
-    picks_eeg = mne.pick_types(raw.info, meg=False, eeg=True,
-                               eog=False, stim=False, exclude='bads')
-    all_picks = {'meg': picks_meg, 'eeg': picks_eeg}
-
     for ch_type in config.ch_types:
         report = None
-        picks = all_picks[ch_type]
 
         # Load ICA
         fname_ica = (bids_basename.copy()
@@ -104,26 +94,22 @@ def apply_ica(subject, run, session):
                                      session=session))
         ica = read_ica(fname=fname_ica)
 
-        pick_ecg = mne.pick_types(raw.info, meg=False, eeg=False,
-                                  ecg=True, eog=False)
-
         # ECG
         # either needs an ecg channel, or avg of the mags (i.e. MEG data)
         ecg_inds = list()
-        if pick_ecg or ch_type == 'meg':
-
-            picks_ecg = np.concatenate([picks, pick_ecg])
-
+        if 'ecg' in raw.get_channel_types() or ch_type in ('meg', 'mag'):
             # Create ecg epochs
             if ch_type == 'meg':
                 reject = {'mag': config.reject['mag'],
                           'grad': config.reject['grad']}
+            elif ch_type == 'mag':
+                reject = {'mag': config.reject['mag']}
             elif ch_type == 'eeg':
                 reject = {'eeg': config.reject['eeg']}
 
-            ecg_epochs = create_ecg_epochs(raw, picks=picks_ecg, reject=reject,
-                                           baseline=(None, 0), tmin=-0.5,
-                                           tmax=0.5)
+            ecg_epochs = create_ecg_epochs(raw, reject=reject,
+                                           baseline=(None, 0),
+                                           tmin=-0.5, tmax=0.5)
 
             ecg_average = ecg_epochs.average()
 
@@ -172,11 +158,10 @@ def apply_ica(subject, run, session):
             logger.debug(gen_log_message(message=msg, step=5, subject=subject,
                                          session=session))
 
-            picks_eog = np.concatenate([picks, pick_eog])
             # Create eog epochs
-            eog_epochs = create_eog_epochs(raw, picks=picks_eog, reject=None,
-                                           baseline=(None, 0), tmin=-0.5,
-                                           tmax=0.5)
+            eog_epochs = create_eog_epochs(raw, reject=None,
+                                           baseline=(None, 0),
+                                           tmin=-0.5, tmax=0.5)
 
             eog_average = eog_epochs.average()
             eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)

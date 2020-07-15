@@ -222,7 +222,6 @@ def load_data(bids_basename):
             rename_events(raw=raw, subject=subject, session=session)
 
     raw.load_data()
-
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
@@ -294,9 +293,17 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = (bids_basename.copy()
                              .update(prefix=deriv_path,
                                      suffix='nosss_raw.fif'))
-        raw_out.save(raw_fname_out, overwrite=True)
+
+        # Save only the channel types we wish to analyze.
+        # We do not rum `raw_out.pick()` here because it uses too much memory.
+        chs_to_include = config.get_picks(raw_out.info)
+        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
+        del raw_out
         if config.interactive:
-            raw_out.plot(n_channels=50, butterfly=True)
+            # Load the data we have just written, because it contains only
+            # the relevant channels.
+            raw = mne.io.read_raw_fif(raw_fname_out, allow_maxshield=True)
+            raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
         #
@@ -354,7 +361,11 @@ def run_maxwell_filter(subject, session=None):
                                     .update(prefix=deriv_path,
                                             suffix='emptyroom_nosss_raw.fif'))
 
-            raw_er_out.save(raw_er_fname_out, overwrite=True)
+            # Save only the channel types we wish to analyze
+            # (same as for experimental data above).
+            raw_er_out.save(raw_er_fname_out, picks=chs_to_include,
+                            overwrite=True)
+            del raw_er_out
 
 
 @failsafe_run(on_error=on_error)

@@ -228,6 +228,7 @@ def load_data(bids_basename):
     return raw
 
 
+# @profile
 def run_maxwell_filter(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
@@ -294,14 +295,16 @@ def run_maxwell_filter(subject, session=None):
                              .update(prefix=deriv_path,
                                      suffix='nosss_raw.fif'))
 
-        # Select only the channel types we wish to analyze.
+        # Save only the channel types we wish to analyze.
+        # We do not rum `raw_out.pick()` here because it uses too much memory.
         picks = config.get_picks(raw_out.info)
-        raw_out.pick(picks)
-        raw_out.save(raw_fname_out, overwrite=True)
-        if config.interactive:
-            raw_out.plot(n_channels=50, butterfly=True)
-
+        raw_out.save(raw_fname_out, picks=picks, overwrite=True)
         del raw_out
+        if config.interactive:
+            # Load the data we have just written, because it contains only
+            # the relevant channels.
+            raw = mne.io.read_raw_fif(raw_fname_out, allow_maxshield=True)
+            raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
         #
@@ -359,10 +362,9 @@ def run_maxwell_filter(subject, session=None):
                                     .update(prefix=deriv_path,
                                             suffix='emptyroom_nosss_raw.fif'))
 
-            # Select only the channel types we wish to analyze
+            # Save only the channel types we wish to analyze
             # (same as for experimental data above).
-            raw_er_out.pick(picks)
-            raw_er_out.save(raw_er_fname_out, overwrite=True)
+            raw_er_out.save(raw_er_fname_out, picks=picks, overwrite=True)
             del raw_er_out
 
 

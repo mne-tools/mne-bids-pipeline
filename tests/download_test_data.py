@@ -16,7 +16,8 @@ def _provide_testing_data(dataset=None):
             'https://github.com/sappelhoff/eeg_matchingpennies'),
         # Anonymized "somato" dataset.
         'ds003104': 'https://github.com/OpenNeuroDatasets/ds003104',
-        'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
+        # Re-anonymized "ds000246" dataset.
+        'ds003129': 'https://github.com/OpenNeuroDatasets/ds003129',
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
@@ -34,7 +35,7 @@ def _provide_get_dict(dataset=None):
         'eeg_matchingpennies': ['sub-05'],
         'ds003104': ['sub-01',
                      'derivatives/freesurfer/subjects'],
-        'ds000246': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
+        'ds003129': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
                      'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
                      'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'],
         'ds000248': ['sub-01', 'sub-emptyroom',

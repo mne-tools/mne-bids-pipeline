@@ -64,7 +64,7 @@ def report():
 DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
 
 TEST_SUITE = {
-    'ds000246': ('config_ds000246', sensor, report),
+    'ds003129': ('config_ds003129', sensor, report),
     'ds000248': ('config_ds000248', sensor, source, report),
     'ds001810': ('config_ds001810', sensor, report),
     'eeg_matchingpennies': ('config_eeg_matchingpennies', sensor, report),

@@ -53,12 +53,6 @@ bids_root = None
 
 subjects_dir = None
 
-# ``daysback``  : int
-#   If not None apply a time shift to dates to adjust for limitateions
-#   of fif files
-
-daysback = None
-
 # ``interactive`` : boolean
 #   If True, the scripts will provide some interactive elements, such as
 #   figures. If running the scripts from a notebook or Spyder,

@@ -224,6 +224,15 @@ def load_data(bids_basename):
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
+    montage_name = config.eeg_template_montage
+    if config.get_kind() == 'eeg' and montage_name:
+        msg = (f'Setting EEG channel locatiions to template montage: '
+               f'{montage_name}.')
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session))
+        montage = mne.channels.make_standard_montage(montage_name)
+        raw.set_montage(montage, on_missing='warn')
+
     return raw
 
 

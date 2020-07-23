@@ -153,7 +153,7 @@ ch_types = []
 # the cap manufacturers in their respective manual.
 #
 # Please be aware that the actual cap placement most likely deviated somewhat
-# from template, and, therefore, source reconstruction may be impaired.
+# from the template, and, therefore, source reconstruction may be impaired.
 #
 # ``eeg_template_montage`` : None | str
 #   If ``None``, do not apply a template montage. If a string, must be the

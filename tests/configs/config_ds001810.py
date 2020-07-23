@@ -16,6 +16,7 @@ study_name = 'ds001810'
 task = 'attentionalblink'
 interactive = False
 ch_types = ['eeg']
+eeg_template_montage = 'biosemi64'
 reject = {'eeg': 150e-6}
 conditions = ['61510', '61511']
 contrasts = [('61510', '61511')]

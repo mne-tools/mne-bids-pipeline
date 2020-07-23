@@ -143,6 +143,34 @@ exclude_subjects = []
 ch_types = []
 
 ###############################################################################
+# Apply EEG template montage?
+# ---------------------------
+#
+# In situations where you wish to process EEG data and no individual
+# digitization points (measured channel locations) are available, you can apply
+# a "template" montage. This means we will assume the EEG cap was placed
+# either according to an international system like 10/20, or as suggested by
+# the cap manufacturers in their respective manual.
+#
+# Please be aware that the actual cap placement most likely deviated somewhat
+# from template, and, therefore, source reconstruction may be impaired.
+#
+# ``eeg_template_montage`` : None | str
+#   If ``None``, do not apply a template montage. If a string, must be the
+#   name of a built-in template montage in MNE-Python.
+#   You can find an overview of supported template montages at
+#   https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
+#
+# Example
+# ~~~~~~~
+# Do not apply template montage:
+# >>> eeg_template_montage = None
+# Apply 64-channel Biosemi 10/20 template montage:
+# >>> eeg_template_montage = 'biosemi64'
+eeg_template_montage = None
+
+
+###############################################################################
 # DEFINE ADDITIONAL CHANNELS
 # --------------------------
 # needed for 01-import_and_maxfilter.py

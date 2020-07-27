@@ -68,7 +68,6 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     n_cond2 = len(epochs[condition2])
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
-    # Use AUC because chance level is same regardless of the class balance
     se = SlidingEstimator(
         make_pipeline(StandardScaler(),
                       LogisticRegression(solver='liblinear',
@@ -77,12 +76,9 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     scores = cross_val_multiscore(se, X=X, y=y, cv=config.decoding_n_splits)
 
     # let's save the scores now
-    a_vs_b = '%s_vs_%s' % (condition1, condition2)
-    a_vs_b = a_vs_b.replace(op.sep, '')
-    fname_td = op.join(config.bids_root, 'derivatives', config.PIPELINE_NAME,
-                       '%s_%s_%s_%s.mat' %
-                       (subject, config.study_name, a_vs_b,
-                        config.decoding_metric))
+    a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '').replace('_', '-')
+    fname_td = (fname_in.copy()
+                .update(suffix=f'contr-{a_vs_b}_{config.decoding_metric}.mat'))
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 

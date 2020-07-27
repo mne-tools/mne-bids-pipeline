@@ -23,17 +23,18 @@ logger = logging.getLogger('mne-study-template')
 
 def plot_events(subject, session, deriv_path):
     raws_filt = []
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path,
+                                       suffix='filt_raw.fif')
+
     for run in config.get_runs():
-        bids_basename = make_bids_basename(subject=subject,
-                                           session=session,
-                                           task=config.get_task(),
-                                           acquisition=config.acq,
-                                           run=run,
-                                           processing=config.proc,
-                                           recording=config.rec,
-                                           space=config.space)
-        fname = op.join(deriv_path,
-                        bids_basename.update(suffix='filt_raw.fif'))
+        fname = bids_basename.copy().update(run=run)
         raw_filt = mne.io.read_raw_fif(fname)
         raws_filt.append(raw_filt)
         del fname
@@ -60,17 +61,15 @@ def plot_er_psd(subject, session):
                                        run=None,
                                        processing=config.proc,
                                        recording=config.rec,
-                                       space=config.space)
-
-    raw_er_filtered_fname = op.join(
-        deriv_path,
-        bids_basename.update(suffix='emptyroom_filt_raw.fif'))
+                                       space=config.space,
+                                       prefix=deriv_path,
+                                       suffix='emptyroom_filt_raw.fif')
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw_er_filtered = mne.io.read_raw_fif(raw_er_filtered_fname, preload=True,
+    raw_er_filtered = mne.io.read_raw_fif(bids_basename, preload=True,
                                           **extra_params)
     fig = raw_er_filtered.plot_psd(show=False)
     return fig

@@ -63,14 +63,11 @@ def run_time_frequency(subject, session=None):
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
+        condition_str = condition.replace(op.sep, '').replace('_', '-')
         power_fname_out = (bids_basename.copy()
-                           .update(suffix=f'power_'
-                                          f'{condition.replace(op.sep, "")}-'
-                                          f'tfr.h5'))
+                           .update(suffix=f'power_{condition_str}_tfr.h5'))
         itc_fname_out = (bids_basename.copy()
-                         .update(suffix=f'itc_'
-                                        f'{condition.replace(op.sep, "")}-'
-                                        f'tfr.h5'))
+                         .update(suffix=f'itc_{condition_str}_tfr.h5'))
 
         power.save(power_fname_out, overwrite=True)
         itc.save(itc_fname_out, overwrite=True)

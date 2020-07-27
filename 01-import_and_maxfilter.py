@@ -70,7 +70,8 @@ def init_dataset():
         'URL': 'n/a',
     }
 
-    fname = op.join(config.deriv_root, 'dataset_description.json')
+    fname = make_bids_basename(prefix=config.deriv_root,
+                               suffix='dataset_description.json')
     _write_json(fname, ds_json, overwrite=True)
 
 

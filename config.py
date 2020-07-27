@@ -645,7 +645,7 @@ interpolate_bads_grand_average = True
 #    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'
 #    or any metric supported by scikit-learn.
 #
-#    With AUC, chance level is same regardless of the class balance
+#    With AUC, chance level is the same regardless of class balance.
 
 decoding_metric = 'roc_auc'
 

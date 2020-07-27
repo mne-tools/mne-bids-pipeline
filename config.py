@@ -261,13 +261,14 @@ use_maxwell_filter = False
 # and set mf_st_duration to None
 #
 # If you are interested in low frequency above 0.1 Hz, you can use the
-# default mf_st_duration to 10 s meaning it acts like a 0.1 Hz highpass filter.
+# default mf_st_duration to 10 s meaning it acts like a 0.1 Hz high-pass
+# filter.
 #
 # Example
 # ~~~~~~~
 # >>> mf_st_duration = None
 # or
-# >>> mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
+# >>> mf_st_duration = 10.  # to apply tSSS with 0.1Hz high-pass filter.
 
 mf_st_duration = None
 
@@ -345,31 +346,31 @@ mf_reference_run = 0
 #
 # If you use this pipeline for evoked responses, you could consider
 # a low-pass filter cut-off of h_freq = 40 Hz
-# and possibly a high-pass filter cut-off of l_freq = 1 Hz
-# so you would preserve only the power in the 1Hz to 40 Hz band.
-# Note that highpass filtering is not necessarily recommended as it can
+# and possibly a high-pass filter cut-off of l_freq = 0.1 Hz
+# so you would preserve only the power in the 0.1 Hz to 40.0 Hz band.
+# Note that high-pass filtering is not necessarily recommended as it can
 # distort waveforms of evoked components, or simply wash out any low
 # frequency that can may contain brain signal. It can also act as
 # a replacement for baseline correction in Epochs. See below.
 #
 # If you use this pipeline for time-frequency analysis, a default filtering
-# coult be a high-pass filter cut-off of l_freq = 1 Hz
-# a low-pass filter cut-off of h_freq = 120 Hz
-# so you would preserve only the power in the 1Hz to 120 Hz band.
+# could be a high-pass filter cut-off of l_freq = 1 Hz and
+# a low-pass filter cutoff of h_freq = 120 Hz
+# so you would preserve only the power in the 1 Hz to 120 Hz band.
 #
-# If you need more fancy analysis, you are already likely past this kind
-# of tips! :)
+# If you need a more fancy analysis, you are already likely past this kind
+# of tips! :-)
 
 
 # ``l_freq`` : float
-#   The low-frequency cut-off in the highpass filtering step.
-#   Keep it None if no highpass filtering should be applied.
+#   The low-frequency cutoff in the high-pass filtering step.
+#   Keep it ``None`` if no high-pass filtering should be applied.
 
-l_freq = 1.
+l_freq = 0.1
 
 # ``h_freq`` : float
-#   The high-frequency cut-off in the lowpass filtering step.
-#   Keep it None if no lowpass filtering should be applied.
+#   The high-frequency cutoff in the low-pass filtering step.
+#   Keep it None if no low-pass filtering should be applied.
 
 h_freq = 40.
 
@@ -405,7 +406,7 @@ resample_sfreq = None
 #
 # Good Practice / Advice
 # ~~~~~~~~~~~~~~~~~~~~~~
-# Decimation requires to lowpass filtered the data to avoid aliasing.
+# Decimation requires to low-pass filtered the data to avoid aliasing.
 # Note that using decimation is much faster than resampling.
 #
 # Example
@@ -753,14 +754,14 @@ fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 #
 # ``l_trans_bandwidth`` : float | 'auto'
 #    A float that specifies the transition bandwidth of the
-#    highpass filter. By default it's `'auto'` and uses default mne
+#    high-pass filter. By default it's `'auto'` and uses default mne
 #    parameters.
 
 l_trans_bandwidth = 'auto'
 
 #  ``h_trans_bandwidth`` : float | 'auto'
 #    A float that specifies the transition bandwidth of the
-#    lowpass filter. By default it's `'auto'` and uses default mne
+#    low-pass filter. By default it's `'auto'` and uses default mne
 #    parameters.
 
 h_trans_bandwidth = 'auto'

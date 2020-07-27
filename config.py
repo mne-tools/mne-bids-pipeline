@@ -257,7 +257,7 @@ use_maxwell_filter = False
 #
 # Good Practice / Advice
 # ~~~~~~~~~~~~~~~~~~~~~~
-# If you are interested in low frequency activity (<0.1Hz), avoid using tSSS
+# If you are interested in low frequency activity (<0.1 Hz), avoid using tSSS
 # and set mf_st_duration to None
 #
 # If you are interested in low frequency above 0.1 Hz, you can use the
@@ -268,7 +268,7 @@ use_maxwell_filter = False
 # ~~~~~~~
 # >>> mf_st_duration = None
 # or
-# >>> mf_st_duration = 10.  # to apply tSSS with 0.1Hz high-pass filter.
+# >>> mf_st_duration = 10.  # to apply tSSS with 0.1 Hz high-pass filter.
 
 mf_st_duration = None
 

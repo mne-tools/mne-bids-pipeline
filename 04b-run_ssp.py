@@ -6,7 +6,6 @@
 Compute Signal Suspace Projections (SSP).
 """
 
-import os.path as op
 import itertools
 import logging
 

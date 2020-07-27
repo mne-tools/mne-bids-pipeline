@@ -31,7 +31,7 @@ logger = logging.getLogger('mne-study-template')
 
 
 @failsafe_run(on_error=on_error)
-def apply_ica(subject, run, session):
+def apply_ica(subject, session):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
@@ -61,16 +61,6 @@ def apply_ica(subject, run, session):
     logger.debug(gen_log_message(message=msg, step=5, subject=subject,
                                  session=session))
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=config.get_runs()[0],
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
     if config.use_maxwell_filter:
         raw_fname_in = (bids_basename.copy()
                         .update(run=config.get_runs()[0],
@@ -83,20 +73,20 @@ def apply_ica(subject, run, session):
     raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
     for ch_type in config.ch_types:
-        report = None
+        report_fname = (bids_basename.copy()
+                        .update(suffix=f'ica-reject.html'))
+        report = Report(report_fname, verbose=False)
 
         # Load ICA
         fname_ica = (bids_basename.copy()
-                     .update(run=None, suffix=f'{ch_type}-ica.fif'))
+                     .update(run=None, suffix=f'ica.fif'))
 
         msg = f'Reading ICA: {fname_ica}'
         logger.debug(gen_log_message(message=msg, step=5, subject=subject,
                                      session=session))
         ica = read_ica(fname=fname_ica)
 
-        # ECG
-        # either needs an ecg channel, or avg of the mags (i.e. MEG data)
-        ecg_inds = list()
+        # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
         if 'ecg' in raw.get_channel_types() or ch_type in ('meg', 'mag'):
             # Create ecg epochs
             if ch_type == 'meg':
@@ -116,34 +106,27 @@ def apply_ica(subject, run, session):
             ecg_inds, scores = \
                 ica.find_bads_ecg(ecg_epochs, method='ctps',
                                   threshold=config.ica_ctps_ecg_threshold)
+            ica.exclude = ecg_inds
             del ecg_epochs
-
-            report_fname = (bids_basename.copy()
-                            .update(run=None,
-                                    suffix=f'{ch_type}-reject_ica.html'))
-
-            report = Report(report_fname, verbose=False)
 
             # Plot r score
             report.add_figs_to_section(
-                ica.plot_scores(scores, exclude=ecg_inds,
-                                show=config.interactive),
-                captions=ch_type.upper() + ' - ECG - R scores')
+                ica.plot_scores(scores, show=config.interactive),
+                captions='ECG - R scores')
 
             # Plot source time course
             report.add_figs_to_section(
-                ica.plot_sources(ecg_average, exclude=ecg_inds,
-                                 show=config.interactive),
-                captions=ch_type.upper() + ' - ECG - Sources time course')
+                ica.plot_sources(ecg_average, show=config.interactive),
+                captions='ECG - Sources time course')
 
             # Plot source time course
             report.add_figs_to_section(
-                ica.plot_overlay(ecg_average, exclude=ecg_inds,
-                                 show=config.interactive),
-                captions=ch_type.upper() + ' - ECG - Corrections')
+                ica.plot_overlay(ecg_average, show=config.interactive),
+                captions='ECG - Corrections')
 
         else:
             # XXX : to check when EEG only is processed
+            ecg_inds = list()
             msg = ('No ECG channel is present. Cannot automate IC detection '
                    'for ECG')
             logger.info(gen_log_message(message=msg, step=5, subject=subject,
@@ -152,7 +135,6 @@ def apply_ica(subject, run, session):
         # EOG
         pick_eog = mne.pick_types(raw.info, meg=False, eeg=False,
                                   ecg=False, eog=True)
-        eog_inds = list()
         if pick_eog.any():
             msg = 'Using EOG channel'
             logger.debug(gen_log_message(message=msg, step=5, subject=subject,
@@ -165,56 +147,68 @@ def apply_ica(subject, run, session):
 
             eog_average = eog_epochs.average()
             eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)
+            ica.exclude = eog_inds
             del eog_epochs
 
-            params = dict(exclude=eog_inds, show=config.interactive)
-
             # Plot r score
-            report.add_figs_to_section(ica.plot_scores(scores, **params),
-                                       captions=ch_type.upper() + ' - EOG - ' +
-                                       'R scores')
+            report.add_figs_to_section(
+                ica.plot_scores(scores, show=config.interactive),
+                captions='EOG - R scores')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_sources(eog_average, **params),
-                                       captions=ch_type.upper() + ' - EOG - ' +
-                                       'Sources time course')
+            report.add_figs_to_section(
+                ica.plot_sources(eog_average, show=config.interactive),
+                captions=f'EOG - Sources time course')
 
             # Plot source time course
-            report.add_figs_to_section(ica.plot_overlay(eog_average, **params),
-                                       captions=ch_type.upper() + ' - EOG - ' +
-                                       'Corrections')
-
-            report.save(report_fname, overwrite=True, open_browser=False)
-
+            report.add_figs_to_section(
+                ica.plot_overlay(eog_average, show=config.interactive),
+                captions='EOG - Corrections')
         else:
+            eog_inds = list()
             msg = ('No EOG channel is present. Cannot automate IC detection '
                    'for EOG')
             logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                         session=session))
 
-        ica_reject = (list(ecg_inds) + list(eog_inds) +
-                      list(config.rejcomps_man[subject][ch_type]))
+        # Now compile a list of all ICs that should be rejected, and add them
+        # to the ICA object. From then on, the rejected ICs will be handled
+        # correctly automatically (e.g. no need to pass `exclude=...` to the
+        # ICA plotting functions etc.).
+        exclude_ics = (list(ecg_inds) + list(eog_inds) +
+                       list(config.rejcomps_man[subject][ch_type]))
+        ica.exclude = exclude_ics
 
-        # now reject the components
-        msg = f'Rejecting from {ch_type}: {ica_reject}'
+        # Compare ERP/ERF before and after ICA artifact rejection. The evoked
+        # response is calculated across ALL epochs, just like ICA was run on
+        # all epochs, regardless of their respective experimental condition.
+        #
+        # Note that until now, we haven't actually rejected any ICs from the
+        # epochs.
+        fig = ica.plot_overlay(epochs.average(),
+                               show=config.interactive)
+        report.add_figs_to_section(
+            fig,
+            captions='Evoked response (across all epochs) before and after '
+                     'ICA')
+        report.save(report_fname, overwrite=True, open_browser=False)
+
+        # Now actually reject the components.
+        msg = f'Rejecting from {ch_type}: {ica.exclude}'
         logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                     session=session))
-        epochs = ica.apply(epochs, exclude=ica_reject)
+        epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
-        msg = 'Saving cleaned epochs'
+        msg = ('Saving cleaned epochs and updated ICA object (with list of '
+               'excluded components)')
         logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                     session=session))
-        epochs.save(fname_out)
-
-        if report is not None:
-            fig = ica.plot_overlay(raw, exclude=ica_reject,
-                                   show=config.interactive)
-            report.add_figs_to_section(fig, captions=ch_type.upper() +
-                                       ' - ALL(epochs) - Corrections')
+        epochs_cleaned.save(fname_out, overwrite=True)
+        ica.save(fname_ica)
 
         if config.interactive:
-            epochs.plot_image(combine='gfp', group_by='type', sigma=2.,
-                              cmap="YlGnBu_r", show=config.interactive)
+            epochs_cleaned.plot_image(combine='gfp', group_by='type', sigma=2.,
+                                      cmap="YlGnBu_r")
 
 
 def main():
@@ -222,15 +216,14 @@ def main():
     if not config.use_ica:
         return
 
-    msg = 'Running Step 4: Apply ICA'
+    msg = 'Running Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))
 
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.get_subjects(), config.get_runs(),
-                               config.get_sessions()))
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Completed Step 4: Apply ICA'
+    msg = 'Completed Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))
 
 

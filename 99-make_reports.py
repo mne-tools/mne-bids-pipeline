@@ -126,6 +126,8 @@ def run_report(subject, session=None):
                                        space=config.space,
                                        prefix=deriv_path)
 
+    fname_epo = bids_basename.copy().update(suffix='epo.fif')
+    fname_ica = bids_basename.copy().update(suffix='ica.fif')
     fname_ave = bids_basename.copy().update(suffix='ave.fif')
     fname_trans = bids_basename.copy().update(suffix='trans.fif')
     subjects_dir = config.get_fs_subjects_dir()
@@ -152,14 +154,27 @@ def run_report(subject, session=None):
                             captions='Events in filtered continuous data',
                             section='Events')
 
-    conditions = config.conditions.copy()
-    conditions.extend(config.contrasts)
-    evokeds = mne.read_evokeds(fname_ave)
+    ###########################################################################
+    #
+    # Visualize effect of ICA artifact rejection.
+    #
+    if config.use_ica:
+        epochs = mne.read_epochs(fname_epo)
+        ica = mne.preprocessing.read_ica(fname_ica)
+        fig = ica.plot_overlay(epochs.average(), show=False)
+        rep.add_figs_to_section(fig,
+                                captions='Evoked response (across all epochs) '
+                                         'before and after ICA',
+                                section='ICA')
 
     ###########################################################################
     #
     # Visualize evoked responses.
     #
+    conditions = config.conditions.copy()
+    conditions.extend(config.contrasts)
+    evokeds = mne.read_evokeds(fname_ave)
+
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Condition: {condition}'

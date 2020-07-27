@@ -35,7 +35,7 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
-              pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard
+              pip install numpy scipy pandas matplotlib seaborn nibabel coloredlogs python-picard
               pip install -U scikit-learn
               pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
@@ -100,7 +100,7 @@ jobs:
                export DS=ds000246
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -109,7 +109,7 @@ jobs:
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -118,7 +118,7 @@ jobs:
                export DS=ds001810
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -127,7 +127,7 @@ jobs:
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -136,7 +136,7 @@ jobs:
                export DS=somato
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - store_artifacts:

@@ -36,7 +36,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import json_tricks
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell

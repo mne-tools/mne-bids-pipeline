@@ -9,7 +9,6 @@ To actually remove designated ICA components from your data, you will have to
 run 06a-apply_ica.py.
 """
 
-import os.path as op
 import itertools
 import logging
 
@@ -68,11 +67,24 @@ def run_ica(subject, session=None):
     # in the ICA computation.
     reject_ica = config.get_reject()
     if reject_ica and 'eog' in reject_ica:
-        reject_ica = dict(reject_ica)
+        reject_ica = reject_ica.copy()
         del reject_ica['eog']
 
-    # produce high-pass filtered version of the data for ICA
-    raw_ica = raw.copy().filter(l_freq=1., h_freq=None)
+    # produce high-pass filtered version of the data for ICA.
+    # We don't have to worry about edge artifacts due to raw concatenation as
+    # we'll be epoching the data in the next step.
+    if config.ica_l_freq == config.l_freq or config.ica_l_freq is None:
+        # Nothing to do here!
+        msg = 'Not applying high-pass filter.'
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
+        raw_ica = raw.copy()
+    else:
+        msg = f'Applying high-pass filter with {config.ica_l_freq} Hz cutoff …'
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
+        raw_ica = raw.copy().filter(l_freq=config.ica_l_freq, h_freq=None)
+
     epochs_for_ica = mne.Epochs(raw_ica,
                                 events, event_id, config.tmin,
                                 config.tmax, proj=True,
@@ -84,10 +96,6 @@ def run_ica(subject, session=None):
     # compute_rank requires 0.18
     # n_components_meg = (mne.compute_rank(epochs_for_ica.copy()
     #                        .pick_types(meg=True)))['meg']
-
-    n_components_meg = 0.999
-
-    n_components = {'meg': n_components_meg, 'eeg': 0.999}
 
     kind = config.get_kind()
     msg = f'Running ICA for {kind}'
@@ -102,37 +110,43 @@ def run_ica(subject, session=None):
         fit_params = None
 
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
-              n_components=n_components[kind], fit_params=fit_params,
+              n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 
     ica.fit(epochs_for_ica, decim=config.ica_decim)
 
-    msg = (f'Fit {ica.n_components_} components (explaining at least '
-           f'{100*n_components[kind]:.1f}% of the variance)')
+    explained_var = ica.pca_explained_variance_[:ica.n_components_].sum()
+    msg = (f'Fit {ica.n_components_} components (explaining '
+           f'{round(explained_var, 1)}% of the variance) in {ica.n_iter_} '
+           f'iterations.')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
     # Save ICA
-    ica_fname = bids_basename.copy().update(run=None, suffix=f'{kind}-ica.fif')
+    ica_fname = bids_basename.copy().update(run=None, suffix=f'ica.fif')
     ica.save(ica_fname)
 
-    if config.interactive:
-        # plot ICA components to html report
-        report_fname = (bids_basename.copy()
-                        .update(run=None, suffix=f'{kind}-ica.html'))
-        report = Report(report_fname, verbose=False)
+    # plot ICA components to html report
+    msg = ('Creating HTML report …')
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
 
-        for idx in range(0, ica.n_components_):
-            figure = ica.plot_properties(epochs_for_ica,
-                                         picks=idx,
-                                         psd_args={'fmax': 60},
-                                         show=False)
+    report_fname = (bids_basename.copy()
+                    .update(run=None, suffix=f'ica.html'))
+    report = Report(report_fname, title='Independent Component Analysis (ICA)',
+                    verbose=False)
 
-            report.add_figs_to_section(figure, section=subject,
-                                       captions=(kind.upper() +
-                                                 ' - ICA Components'))
+    for component_num in range(ica.n_components_):
+        figure = ica.plot_properties(epochs_for_ica,
+                                     picks=component_num,
+                                     psd_args={'fmax': 60},
+                                     show=False)
 
-        report.save(report_fname, overwrite=True, open_browser=False)
+        report.add_figs_to_section(figure, section=subject,
+                                   captions=f'IC {component_num}')
+
+    open_browser = True if config.interactive else False
+    report.save(report_fname, overwrite=True, open_browser=open_browser)
 
 
 def main():

@@ -130,16 +130,17 @@ exclude_subjects = []
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
 #
+#    Note that currently, MEG and EEG data cannot be processed together.
+#
 # Example
 # ~~~~~~~
-# >>> ch_types = ['meg', 'eeg']  # to use MEG and EEG channels
-# or
-# >>> ch_types = ['meg']  # to use only MEG
-# or
-# >>> ch_types = ['grad']  # to use only gradiometer MEG channels
+# Use EEG channels:
+# >>> ch_types = ['eeg']
+# Use magnetometer and gradiometer MEG channels:
+# >>> ch_types = ['mag', 'grad']
+# Currently does not work and will raise an error message:
+# >>> ch_types = ['meg', 'eeg']
 
-# Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
-# specified here or not
 ch_types = []
 
 ###############################################################################
@@ -546,6 +547,22 @@ use_ica = False
 
 ica_algorithm = 'picard'
 
+# ``ica_l_freq`` : float | None
+#   The cutoff frequency of the high-pass filter to apply before running ICA.
+#   Using a relatively high cutoff like 1 Hz will remove slow drifts from the
+#   data, yielding improved ICA results.
+#
+#   Set to ``None`` to not apply an additional high-pass filter.
+#
+#   Notes
+#   ~~~~~
+#   The filter will be applied to raw data which was already filtered
+#   according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
+#   data will be epoched, and the epochs will be submitted to ICA.
+
+ica_l_freq = 1.
+
+
 # ``ica_max_iterations`` : int
 #   Maximum number of iterations to decompose the data into independent
 #   components. A low number means to finish earlier, but the consequence is
@@ -559,14 +576,25 @@ ica_algorithm = 'picard'
 
 ica_max_iterations = 200
 
+# ``ica_n_components`` : None | float | int
+#   If int, specifies the number of principal components that are passed to the
+#   ICA algorithm.
+#
+#   If float between 0 and 1, all principal components with cumulative
+#   explained variance less than the value specified here will be passed to
+#   ICA.
+#
+#   If None, all principal components will be used.
+
+ica_n_components = 0.999
+
 # ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means
 #    that 1 every 5 sample is used by ICA solver. The higher the faster
 #    it is to run but the less data you have to compute a good ICA. Set to
-#    ``1`` ``None`` to not perform an decimation.
+#    ``1`` or ``None`` to not perform any decimation.
 
 ica_decim = None
-
 
 # ``default_reject_comps_factory`` : callable
 #    A factory function that returns a default rejection component dictionary:
@@ -574,12 +602,10 @@ ica_decim = None
 #    for each subject. For example you can use:
 #    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
 
-def default_reject_comps_factory():
-    """Return the default rejection component dictionary."""
-    return dict(meg=[], eeg=[])
-
 
 rejcomps_man = defaultdict(default_reject_comps_factory)
+
+ica_reject_components
 
 # ``ica_ctps_ecg_threshold``: float
 #    The threshold parameter passed to `find_bads_ecg` method.
@@ -867,6 +893,14 @@ if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
     msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
            f"are: 'picard', 'fastica', and 'extended_infomax', but received "
            f"{ica_algorithm}.")
+    raise ValueError(msg)
+
+if use_ica and ica_l_freq < l_freq:
+    msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
+           f'than for your raw data: ica_l_freq = {ica_l_freq} < '
+           f'l_freq = {l_freq}. Adjust the cutoffs such that ica_l_freq >= '
+           f'l_freq, or set ica_l_freq to None if you do not wish to apply '
+           f'an additional high-pass filter before running ICA.')
     raise ValueError(msg)
 
 if not ch_types:

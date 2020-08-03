@@ -171,35 +171,6 @@ eeg_template_montage = None
 
 
 ###############################################################################
-# DEFINE ADDITIONAL CHANNELS
-# --------------------------
-# needed for 01-import_and_maxfilter.py
-
-# ``rename_channels`` : dict rename channels
-#    Here you name or replace extra channels that were recorded, for instance
-#    EOG, ECG.
-#
-# Example
-# ~~~~~~~
-# Here rename EEG061 to EOG061, EEG062 to EOG062, EEG063 to ECG063:
-# >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
-#                        'EEG063': 'ECG063'}
-
-# XXX should be done automatically from BIDS ?
-rename_channels = None
-
-# ``set_channel_types``: dict
-#   Here you define types of channels to pick later.
-#
-# Example
-# ~~~~~~~
-# >>> set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
-#                          'EEG063': 'ecg', 'EEG064': 'misc'}
-
-# XXX should not be necessary
-set_channel_types = None
-
-###############################################################################
 # MAXWELL FILTER PARAMETERS
 # -------------------------
 # done in 01-import_and_maxfilter.py

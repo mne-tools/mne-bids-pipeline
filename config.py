@@ -596,16 +596,30 @@ ica_n_components = 0.999
 
 ica_decim = None
 
-# ``default_reject_comps_factory`` : callable
-#    A factory function that returns a default rejection component dictionary:
-#    A dictionary that specifies the indices of the ICA components to reject
-#    for each subject. For example you can use:
-#    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
+# ``ica_reject_components`` : 'auto' | dict of lists | None
+#    Which ICs to reject. If ``'auto'``, automatically remove ICs identified
+#    as ECG and EOG artifacts. This value allows for automated processing of
+#    large volumes of data, without requiring manual inspection.
+#
+#    If a dictionary, the keys must specify the subjects, and the values
+#    are a list of corresponding indepentent components (ICs) to reject.
+#    Pass ``None`` to retain all ICs.
+#
+# Example
+# ~~~~~~~
+# Reject auto-detected ICs corresponding to ECG and EOG artifacts.
+# >>> ica_reject_components = 'auto'
+#
+# Keep all ICs.
+# >>> ica_reject_components = None
+#
+# Remove ICs 0, 1, and 2 for subject ``sub-01``.
+# >>> ica_reject_components = {'sub-01': [0, 1, 2]}
+#
+# Remove IC 0 for subjects ``sub-01`` and ``sub-02``.
+# >>> ica_reject_components = {'sub-01': [0], 'sub-02': [0]}
 
-
-rejcomps_man = defaultdict(default_reject_comps_factory)
-
-ica_reject_components
+ica_reject_components = 'auto'
 
 # ``ica_ctps_ecg_threshold``: float
 #    The threshold parameter passed to `find_bads_ecg` method.
@@ -770,9 +784,10 @@ h_trans_bandwidth = 'auto'
 N_JOBS = 1
 
 # ``random_state`` : None | int | np.random.RandomState
-#    To specify the random generator state. This allows to have
-#    the results more reproducible between machines and systems.
-#    Some methods like ICA need random values for initialisation.
+#    To specify the seed or state of the random number generator (RNG).
+#    This setting is passed to the ICA algorithm and to the decoding function,
+#    ensuring reproducible results. Set to ``None`` to avoid setting the RNG
+#    to a defined state.
 
 random_state = 42
 

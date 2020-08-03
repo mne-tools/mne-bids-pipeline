@@ -24,6 +24,7 @@ decode = True
 use_ssp = False
 use_ica = True
 ica_n_components = 0.999
+ica_reject_components = 'auto'
 
 subjects_list = ['01']
 sessions = ['anodalpre']

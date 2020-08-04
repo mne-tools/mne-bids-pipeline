@@ -621,10 +621,17 @@ ica_decim = None
 
 ica_reject_components = 'auto'
 
-# ``ica_ctps_ecg_threshold``: float
+# ``ica_ctps_ecg_threshold`` : float
 #    The threshold parameter passed to `find_bads_ecg` method.
 
 ica_ctps_ecg_threshold = 0.1
+
+# ``ica_eog_threshold`` : float
+#   The threshold to use during automated EOG classification. Lower values mean
+#   that more ICs will be identified as EOG-related. If too low, the
+#   false-alarm rate increases dramatically.
+
+ica_eog_threshold = 2.
 
 ###############################################################################
 # DECODING

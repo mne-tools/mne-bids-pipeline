@@ -33,14 +33,16 @@ def load_and_concatenate_raws(bids_basename):
     for run in config.get_runs():
         suffix = 'sss_raw.fif' if config.use_maxwell_filter else 'filt_raw.fif'
         raw_fname_in = (bids_basename.copy()
-                        .update(run=run, suffix=suffix))
-        raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
+        raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 
     raw = mne.concatenate_raws(raw_list)
+    del raw_list
+
     if config.get_kind() == 'eeg':
         raw.set_eeg_reference(projection=True)
 
+    raw.load_data()
     return raw
 
 

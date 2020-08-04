@@ -120,7 +120,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in config.ch_types or
             'mag' in config.ch_types):
-        msg = 'Performing automated ECG artifact detection.'
+        msg = 'Performing automated ECG artifact detection …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
@@ -140,6 +140,11 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
             ecg_epochs, method='ctps',
             threshold=config.ica_ctps_ecg_threshold)
         ica.exclude = ecg_inds
+
+        msg = (f'Detected {len(ecg_inds)} ECG-related ICs in '
+               f'{len(ecg_epochs)} ECG epochs.')
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
         del ecg_epochs
 
         # Plot scores
@@ -172,7 +177,7 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
     pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
                               eog=True)
     if pick_eog.any():
-        msg = 'Performing automated EOG artifact detection.'
+        msg = 'Performing automated EOG artifact detection …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
@@ -185,6 +190,11 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         eog_average = eog_epochs.average()
         eog_inds, scores = ica.find_bads_eog(eog_epochs, threshold=3.0)
         ica.exclude = eog_inds
+
+        msg = (f'Detected {len(eog_inds)} EOG-related ICs in '
+               f'{len(eog_epochs)} EOG epochs.')
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
         del eog_epochs
 
         # Plot scores

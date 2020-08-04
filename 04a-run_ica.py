@@ -106,9 +106,10 @@ def fit_ica(epochs, subject, session):
 
     ica.fit(epochs, decim=config.ica_decim)
 
-    explained_var = ica.pca_explained_variance_[:ica.n_components_].sum()
+    explained_var = (ica.pca_explained_variance_[:ica.n_components_].sum() /
+                     ica.pca_explained_variance_.sum())
     msg = (f'Fit {ica.n_components_} components (explaining '
-           f'{round(explained_var, 1)}% of the variance) in {ica.n_iter_} '
+           f'{round(explained_var * 100, 1)}% of the variance) in {ica.n_iter_} '
            f'iterations.')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
@@ -172,8 +173,8 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                               eog=True)
     if pick_eog.any():
         msg = 'Performing automated EOG artifact detection.'
-        logger.debug(gen_log_message(message=msg, step=4, subject=subject,
-                                     session=session))
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
 
         # Create EOG epochs.
         # Don't reject epochs based on EOG to retain artifacts.

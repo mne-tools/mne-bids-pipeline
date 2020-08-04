@@ -183,7 +183,7 @@ def run_report(subject, session=None):
             caption = f'Contrast: {condition[0]} – {condition[1]}'
             section = 'Contrast'
 
-        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
+        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
 
@@ -336,7 +336,6 @@ def main():
             caption = f'Average Contrast: {condition[0]} – {condition[1]}'
             section = 'Contrast'
 
-        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)

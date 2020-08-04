@@ -289,7 +289,7 @@ def run_ica(subject, session=None):
     msg = 'Saving ICA solution and detected artifacts to disk.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    ica.exclde = sorted(set(ecg_ics + eog_ics))
+    ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(ica_fname)
 
     # Lastly, plot all ICs, and add them to the report for manual inspection.

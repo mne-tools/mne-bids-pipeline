@@ -20,7 +20,6 @@ import logging
 import mne
 from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
-from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.report import Report
 
 from mne_bids import make_bids_basename
@@ -58,7 +57,7 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(suffix=f'ica-reject.html'))
+                    .update(suffix='ica-reject.html'))
     report = Report(report_fname, verbose=False)
 
     # Load ICA
@@ -91,7 +90,7 @@ def apply_ica(subject, session):
     # Plot source time course
     fig = ica.plot_sources(epochs_average, show=config.interactive)
     report.add_figs_to_section(figs=fig,
-                               captions=f'All ICs - Source time course')
+                               captions='All ICs - Source time course')
 
     # Plot original & corrected data
     fig = ica.plot_overlay(epochs_average, show=config.interactive)

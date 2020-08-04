@@ -20,11 +20,14 @@ eeg_template_montage = 'biosemi64'
 reject = {'eeg': 150e-6}
 conditions = ['61510', '61511']
 contrasts = [('61510', '61511')]
+l_freq = 0.3
 decode = True
 use_ssp = False
 use_ica = True
-ica_n_components = 0.999
+ica_n_components = 0.99
 ica_reject_components = 'auto'
+ica_l_freq = 1.
+ica_eog_threshold = 2.
 
 subjects_list = ['01']
 sessions = ['anodalpre']

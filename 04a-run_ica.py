@@ -306,17 +306,18 @@ def run_ica(subject, session=None):
 @failsafe_run(on_error=on_error)
 def main():
     """Run ICA."""
-    parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
-
-
-if __name__ == '__main__':
     msg = 'Running Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))
 
     if config.use_ica:
-        main()
+        parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
+        parallel(run_func(subject, session) for subject, session in
+                 itertools.product(config.get_subjects(),
+                                   config.get_sessions()))
 
     msg = 'Completed Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))
+
+
+if __name__ == '__main__':
+    main()

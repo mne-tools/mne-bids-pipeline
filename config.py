@@ -1163,16 +1163,18 @@ def get_picks(info):
     """Return the names of the channels we wish to analyze.
     """
     if get_kind() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
-        pick_idx = mne.pick_types(info, eog=True, ecg=True)
+        pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
-            pick_idx += mne.pick_types(info, meg='mag')
+            pick_idx += mne.pick_types(info, meg='mag', exclude=[])
         if 'grad' in ch_types:
-            pick_idx += mne.pick_types(info, meg='grad')
+            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
     elif get_kind() == 'meg':
-        pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True)
+        pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
+                                  exclude=[])
     else:
-        pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True)
+        pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True,
+                                  exclude=[])
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names

@@ -53,14 +53,13 @@ def filter_for_ica(raw, subject, session):
         msg = 'Not applying high-pass filter.'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
-        raw_ica = raw.copy()
     else:
         msg = f'Applying high-pass filter with {config.ica_l_freq} Hz cutoff …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
-        raw_ica = raw.copy().filter(l_freq=config.ica_l_freq, h_freq=None)
+        raw.filter(l_freq=config.ica_l_freq, h_freq=None)
 
-    return raw_ica
+    return raw
 
 
 def make_epochs_for_ica(raw):

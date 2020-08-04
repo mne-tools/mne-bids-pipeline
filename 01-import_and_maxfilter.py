@@ -31,7 +31,6 @@ https://github.com/bids-standard/bids-specification/pull/265
 """  # noqa: E501
 
 import os
-import os.path as op
 import itertools
 import logging
 
@@ -44,7 +43,8 @@ from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
 from mne_bids import make_bids_basename, read_raw_bids, get_matched_empty_room
 from mne_bids.config import BIDS_VERSION
-from mne_bids.utils import _write_json, _parse_bids_filename
+from mne_bids.utils import _write_json
+from mne_bids.path import _parse_bids_filename
 
 import config
 from config import gen_log_message, on_error, failsafe_run

@@ -14,7 +14,7 @@ import logging
 
 import numpy as np
 import mne
-from mne_bids.utils import get_entity_vals
+from mne_bids.path import get_entity_vals
 
 # Name, version, and hosting location of the pipeline
 PIPELINE_NAME = 'mne-study-template'

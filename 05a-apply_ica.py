@@ -111,8 +111,7 @@ def apply_ica(subject, session):
     epochs_cleaned.save(fname_epo_out, overwrite=True)
 
     if config.interactive:
-        epochs_cleaned.plot_image(combine='gfp', group_by='type', sigma=2.,
-                                  cmap="YlGnBu_r")
+        epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
 
 
 def main():

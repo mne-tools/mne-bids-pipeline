@@ -31,8 +31,8 @@ def load_and_concatenate_raws(bids_basename):
     raw_list = list()
 
     for run in config.get_runs():
-        suffix = 'sss_raw.fif' if config.use_maxwell_filter else 'filt_raw.fif'
         raw_fname_in = (bids_basename.copy()
+                        .update(run=run, suffix='filt_raw.fif'))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 

@@ -12,6 +12,7 @@ run 05a-apply_ica.py.
 
 import itertools
 import logging
+import os.path as op
 
 import mne
 from mne.report import Report
@@ -117,6 +118,9 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in config.ch_types or
             'mag' in config.ch_types):
+        msg = 'Performing automated ECG artifact detection.'
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
 
         # Create ecg epochs
         # Don't reject epochs based on ECG to retain artifacts.
@@ -155,7 +159,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         ecg_inds = list()
         msg = ('No ECG or magnetometer channels are present. Cannot '
                'automate artifact detection for ECG')
-        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
     return ecg_inds
@@ -166,8 +170,8 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
     pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
                               eog=True)
     if pick_eog.any():
-        msg = 'Using EOG channel'
-        logger.debug(gen_log_message(message=msg, step=5, subject=subject,
+        msg = 'Performing automated EOG artifact detection.'
+        logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                      session=session))
 
         # Create EOG epochs.
@@ -200,13 +204,12 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         eog_inds = list()
         msg = ('No EOG channel is present. Cannot automate IC detection '
                'for EOG')
-        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
     return eog_inds
 
 
-@failsafe_run(on_error=on_error)
 def run_ica(subject, session=None):
     """Run ICA."""
 
@@ -237,8 +240,23 @@ def run_ica(subject, session=None):
     raw = filter_for_ica(raw, subject=subject, session=session)
     epochs = make_epochs_for_ica(raw)
 
-    # Now actually perform ICA.
-    ica = fit_ica(epochs, subject=subject, session=session)
+    # Now actually perform ICA, or load from disk if the user specified ICs
+    # for rejection in the configuration file -- we want to avoid
+    # re-calculation of ICA in that case!
+    if isinstance(config.ica_reject_components, dict) and op.exists(ica_fname):
+        msg = (f'Loading existing ICA solution from disk, because you '
+               f'components for rejection via ica_reject_components in your '
+               f'configuration file. If you want to generate a new ICA '
+               f'solution, either remove the ICs from ica_reject_components, '
+               f'or delete the ICA solution file {ica_fname}')
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
+        ica = mne.preprocessing.read_ica(ica_fname)
+    else:
+        msg = 'Calculating ICA solution.'
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session))
+        ica = fit_ica(epochs, subject=subject, session=session)
 
     msg = ('Creating HTML report …')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -254,11 +272,14 @@ def run_ica(subject, session=None):
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
+    msg = 'Saving ICA solution and detected artifacts to disk.'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
     ica.exclde = sorted(set(ecg_ics + eog_ics))
     ica.save(ica_fname)
 
     # Lastly, plot all ICs, and add them to the report for manual inspection.
-    msg = ('Adding all ICs to the report …')
+    msg = ('Adding diagnostic plots for all ICs to the report …')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
     for component_num in range(ica.n_components_):
@@ -281,21 +302,20 @@ def run_ica(subject, session=None):
                                 session=session))
 
 
+@failsafe_run(on_error=on_error)
 def main():
     """Run ICA."""
-    if not config.use_ica:
-        return
-
-    msg = 'Running Step 4: Compute ICA'
-    logger.info(gen_log_message(step=4, message=msg))
-
     parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Completed Step 4: Compute ICA'
-    logger.info(gen_log_message(step=4, message=msg))
-
 
 if __name__ == '__main__':
-    main()
+    msg = 'Running Step 4: Compute ICA'
+    logger.info(gen_log_message(step=4, message=msg))
+
+    if config.use_ica:
+        main()
+
+    msg = 'Completed Step 4: Compute ICA'
+    logger.info(gen_log_message(step=4, message=msg))

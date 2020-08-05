@@ -132,7 +132,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
             del reject['ecg']
 
         ecg_epochs = create_ecg_epochs(raw, reject=reject,
-                                       baseline=(None, 0),
+                                       baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         ecg_average = ecg_epochs.average()
 
@@ -184,7 +184,7 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         # Create EOG epochs.
         # Don't reject epochs based on EOG to retain artifacts.
         eog_epochs = create_eog_epochs(raw, reject=None,
-                                       baseline=(None, 0),
+                                       baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 
         eog_average = eog_epochs.average()

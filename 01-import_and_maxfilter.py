@@ -33,7 +33,6 @@ https://github.com/bids-standard/bids-specification/pull/265
 import os
 import itertools
 import logging
-import os.path as op
 
 import numpy as np
 import pandas as pd

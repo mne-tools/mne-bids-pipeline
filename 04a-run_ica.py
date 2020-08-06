@@ -148,7 +148,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         del ecg_epochs
 
         # Plot scores
-        fig = ica.plot_scores(scores, show=config.interactive)
+        fig = ica.plot_scores(scores, labels='ecg', show=config.interactive)
         report.add_figs_to_section(figs=fig, captions='Scores - ECG',
                                    section=f'sub-{subject}')
 
@@ -200,7 +200,7 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         del eog_epochs
 
         # Plot scores
-        fig = ica.plot_scores(scores, show=config.interactive)
+        fig = ica.plot_scores(scores, labels='eog', show=config.interactive)
         report.add_figs_to_section(figs=fig, captions='Scores - EOG',
                                    section=f'sub-{subject}')
 

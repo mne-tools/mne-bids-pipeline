@@ -44,7 +44,7 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename, read_raw_bids, get_matched_empty_room
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
-from mne_bids.path import _parse_bids_filename
+from mne_bids.path import parse_bids_filename
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -196,7 +196,7 @@ def load_data(bids_basename):
     # - sets channels types according to BIDS channels.tsv `type` column
     # - sets raw.annotations using the BIDS events.tsv
 
-    params = _parse_bids_filename(bids_basename, verbose=False)
+    params = parse_bids_filename(bids_basename, verbose=False)
     subject = params['sub']
     session = params['ses']
 

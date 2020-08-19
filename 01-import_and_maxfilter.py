@@ -196,7 +196,7 @@ def load_data(bids_basename):
     # - sets channels types according to BIDS channels.tsv `type` column
     # - sets raw.annotations using the BIDS events.tsv
 
-    params = parse_bids_filename(bids_basename, verbose=False)
+    params = parse_bids_filename(bids_basename)
     subject = params['sub']
     session = params['ses']
 

@@ -921,7 +921,7 @@ def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
     if sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='ses')
+        sessions_ = get_entity_vals(bids_root, entity_key='session')
 
     if not sessions_:
         return [None]
@@ -943,7 +943,7 @@ def get_runs():
 
 def get_subjects():
     if subjects_list == 'all':
-        s = get_entity_vals(bids_root, entity_key='sub')
+        s = get_entity_vals(bids_root, entity_key='subject')
     else:
         s = subjects_list
 

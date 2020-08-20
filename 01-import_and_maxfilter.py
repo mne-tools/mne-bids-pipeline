@@ -211,9 +211,6 @@ def load_data(bids_basename):
                         extra_params=extra_params,
                         kind=config.get_kind())
 
-    if config.daysback is not None:
-        raw.anonymize(daysback=config.daysback)
-
     if subject != 'emptyroom':
         # Crop the data.
         if config.crop is not None:

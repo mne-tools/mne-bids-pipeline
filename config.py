@@ -399,11 +399,13 @@ decim = 1
 # like.
 #
 #  ``reject`` : dict | None
-#    The rejection limits to make some epochs as bads.
+#    The rejection limits to mark epochs as bads.
 #    This allows to remove strong transient artifacts.
-#    If you want to reject and retrieve blinks later, e.g. with ICA,
-#    don't specify a value for the eog channel (see examples below).
-#    Make sure to include values for eeg if you have EEG data
+#    If you want to reject and retrieve blinks or ECG artifacts later, e.g.
+#    with ICA, don't specify a value for the EOG and ECG channels, respectively
+#    (see examples below).
+#
+#    Make sure to include values for "eeg" if you have EEG data.
 #
 # Note
 # ~~~~

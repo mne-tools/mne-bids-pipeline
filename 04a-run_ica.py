@@ -65,20 +65,13 @@ def filter_for_ica(raw, subject, session):
 def make_epochs_for_ica(raw):
     """Epoch the raw data."""
 
-    # don't reject epochs based on EOG to keep blink artifacts
-    # in the ICA computation.
-    reject_ica = config.get_reject()
-    if reject_ica and 'eog' in reject_ica:
-        reject_ica = reject_ica.copy()
-        del reject_ica['eog']
-
     events, event_id = mne.events_from_annotations(raw)
     epochs = mne.Epochs(raw,
                         events, event_id, config.tmin,
                         config.tmax, proj=True,
                         baseline=config.baseline,
                         preload=True, decim=config.decim,
-                        reject=reject_ica)
+                        reject=config.get_reject())
     return epochs
 
 
@@ -124,14 +117,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
-        # Create ecg epochs
-        # Don't reject epochs based on ECG to retain artifacts.
-        reject = config.get_reject()
-        if reject and 'ecg' in reject:
-            reject = reject.copy()
-            del reject['ecg']
-
-        ecg_epochs = create_ecg_epochs(raw, reject=reject,
+        ecg_epochs = create_ecg_epochs(raw, reject=config.get_reject(),
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         ecg_average = ecg_epochs.average()
@@ -183,7 +169,7 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
 
         # Create EOG epochs.
         # Don't reject epochs based on EOG to retain artifacts.
-        eog_epochs = create_eog_epochs(raw, reject=None,
+        eog_epochs = create_eog_epochs(raw, reject=config.get_reject(),
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 

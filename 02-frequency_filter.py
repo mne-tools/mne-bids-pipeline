@@ -19,6 +19,7 @@ If config.interactive = True plots raw data and power spectral density.
 import os.path as op
 import itertools
 import logging
+import numpy as np
 
 import mne
 from mne.parallel import parallel_func
@@ -115,11 +116,12 @@ def run_filter(subject, run=None, session=None):
     if config.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
-        raw.plot_psd()
+        fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+        raw.plot_psd(fmax=fmax)
 
         if config.noise_cov == 'emptyroom':
             raw_er.plot(n_channels=50, butterfly=True)
-            raw_er.plot_psd()
+            raw_er.plot_psd(fmax)
 
 
 @failsafe_run(on_error=on_error)

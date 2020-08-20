@@ -32,18 +32,18 @@ def run_evoked(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
+    extension = '.fif'
+    processing = None
     if config.use_ica or config.use_ssp:
-        suffix = 'cleaned_epo.fif'
-    else:
-        suffix = 'epo.fif'
+        processing = 'clean'
 
-    fname_in = bids_basename.copy().update(suffix=suffix)
-    fname_out = bids_basename.copy().update(suffix='ave.fif')
+    fname_in = bids_basename.copy().update(
+        kind='epo', processing=processing, extension=extension)
+    fname_out = bids_basename.copy().update(kind='ave', extension='.fif')
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,

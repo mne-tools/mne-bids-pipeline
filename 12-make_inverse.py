@@ -33,15 +33,15 @@ def run_inverse(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
-                                       prefix=deriv_path)
+                                       prefix=deriv_path,
+                                       extension='.fif')
 
-    fname_ave = bids_basename.copy().update(suffix='ave.fif')
-    fname_fwd = bids_basename.copy().update(suffix='fwd.fif')
-    fname_cov = bids_basename.copy().update(suffix='cov.fif')
-    fname_inv = bids_basename.copy().update(suffix='inv.fif')
+    fname_ave = bids_basename.copy().update(kind='ave')
+    fname_fwd = bids_basename.copy().update(kind='fwd')
+    fname_cov = bids_basename.copy().update(kind='cov')
+    fname_inv = bids_basename.copy().update(kind='inv')
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -59,11 +59,12 @@ def run_inverse(subject, session=None):
         method = config.inverse_method
         pick_ori = None
 
-        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
-        inverse_str = 'inverse-%s' % method
+        cond_str = '%s' % condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        fname_stc = (bids_basename.copy()
-                     .update(suffix=f'{cond_str}_{inverse_str}_{hemi_str}'))
+        fname_stc = bids_basename.copy().update(
+            kind=f'{cond_str}+{inverse_str}+{hemi_str}',
+            extension=None)
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

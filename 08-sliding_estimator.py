@@ -49,12 +49,12 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                   task=config.get_task(),
                                   acquisition=config.acq,
                                   run=None,
-                                  processing=config.proc,
                                   recording=config.rec,
                                   space=config.space,
                                   prefix=deriv_path,
-                                  suffix='epo.fif')
+                                  extension='.fif')
 
+    fname_in.update(kind='epo')
     epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels
@@ -76,9 +76,13 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     scores = cross_val_multiscore(se, X=X, y=y, cv=config.decoding_n_splits)
 
     # let's save the scores now
-    a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '').replace('_', '-')
-    fname_td = (fname_in.copy()
-                .update(suffix=f'contr-{a_vs_b}_{config.decoding_metric}.mat'))
+    a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '')
+    processing = f'{a_vs_b}+{config.decoding_metric}'
+    processing = processing.replace('_', '-').replace('-', '')
+    fname_td = fname_in.copy().update(
+        kind='decoding',
+        processing=processing,
+        extension='.mat')
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 

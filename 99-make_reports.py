@@ -27,11 +27,12 @@ def plot_events(subject, session, deriv_path):
                                        session=session,
                                        task=config.get_task(),
                                        acquisition=config.acq,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path,
-                                       suffix='filt_raw.fif')
+                                       kind=config.get_kind(),
+                                       processing='filt',
+                                       extension='.fif')
 
     for run in config.get_runs():
         fname = bids_basename.copy().update(run=run)
@@ -56,14 +57,14 @@ def plot_er_psd(subject, session):
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
-                                       task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path,
-                                       suffix='emptyroom_filt_raw.fif')
+                                       task='noise',
+                                       processing='filt',
+                                       extension='.fif')
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
@@ -93,7 +94,8 @@ def plot_auto_scores(subject, session):
                                       recording=config.rec,
                                       space=config.space,
                                       prefix=deriv_path,
-                                      suffix='scores.json')
+                                      kind='scores',
+                                      extension='.json')
 
     all_figs = []
     all_captions = []
@@ -121,13 +123,12 @@ def run_report(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
-    fname_ave = bids_basename.copy().update(suffix='ave.fif')
-    fname_trans = bids_basename.copy().update(suffix='trans.fif')
+    fname_ave = bids_basename.copy().update(kind='ave', extension='.fif')
+    fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
 
@@ -209,9 +210,8 @@ def run_report(subject, session=None):
             inverse_str = 'inverse-%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
-            fname_stc = (bids_basename.copy()
-                         .update(suffix=f'{cond_str}_{inverse_str}_'
-                                        f'{hemi_str}'))
+            fname_stc = bids_basename.copy().update(
+                kind=f'{cond_str}+{inverse_str}+{hemi_str}')
 
             if op.exists(str(fname_stc) + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -259,7 +259,8 @@ def run_report(subject, session=None):
                                          '(after filtering)',
                                 section='Empty-Room')
 
-    fname_report = bids_basename.copy().update(suffix='report.html')
+    fname_report = bids_basename.copy().update(
+        kind='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -289,11 +290,11 @@ def main():
                                       task=config.get_task(),
                                       acquisition=config.acq,
                                       run=None,
-                                      processing=config.proc,
                                       recording=config.rec,
                                       space=config.space,
                                       prefix=deriv_path,
-                                      suffix='ave.fif')
+                                      extension='.fif')
+    evoked_fname.update(kind='ave')
 
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
@@ -302,9 +303,9 @@ def main():
     subjects_dir = config.get_fs_subjects_dir()
 
     method = config.inverse_method
-    inverse_str = 'inverse-%s' % method
+    inverse_str = method
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-    morph_str = 'morph-fsaverage'
+    morph_str = 'morph2fsaverage'
 
     conditions = config.conditions.copy()
     conditions.extend(config.contrasts)
@@ -334,17 +335,15 @@ def main():
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'
-            cond_str = 'cond-%s' % (condition
-                                    .replace(op.sep, '')
-                                    .replace('_', '-'))
+            cond_str = '%s' % (condition.replace(op.sep, '').replace('_', ''))
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue
 
         section = 'Source'
-        fname_stc_avg = (evoked_fname.copy()
-                         .update(suffix=f'{cond_str}_{inverse_str}_'
-                                        f'{morph_str}_{hemi_str}'))
+        fname_stc_avg = evoked_fname.copy().update(
+            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
+            extension=None)
 
         if op.exists(str(fname_stc_avg) + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
@@ -354,7 +353,7 @@ def main():
             # otherwise.
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
-                                 initial_time=peak_time,  backend='mayavi',
+                                 initial_time=peak_time, backend='mayavi',
                                  subjects_dir=subjects_dir)
                 figs = brain._figures[0]
                 captions = caption
@@ -380,9 +379,8 @@ def main():
 
             del peak_time
 
-    fname_report = (evoked_fname.copy()
-                    .update(task=config.get_task(),
-                            suffix='report.html'))
+    fname_report = evoked_fname.copy().update(
+        task=config.get_task(), kind='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'

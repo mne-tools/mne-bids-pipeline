@@ -32,14 +32,13 @@ def run_forward(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
-    fname_evoked = bids_basename.copy().update(suffix='ave.fif')
-    fname_trans = bids_basename.copy().update(suffix='trans.fif')
-    fname_fwd = bids_basename.copy().update(suffix='fwd.fif')
+    fname_evoked = bids_basename.copy().update(kind='ave', extension='.fif')
+    fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')
+    fname_fwd = bids_basename.copy().update(kind='fwd', extension='.fif')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,

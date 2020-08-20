@@ -205,10 +205,8 @@ def run_report(subject, session=None):
                 continue
 
             method = config.inverse_method
-            cond_str = 'cond-%s' % (evoked.comment
-                                    .replace(op.sep, '')
-                                    .replace('_', '-'))
-            inverse_str = 'inverse-%s' % method
+            cond_str = evoked.comment.replace(op.sep, '').replace('_', '')
+            inverse_str = '%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
             fname_stc = bids_basename.copy().update(

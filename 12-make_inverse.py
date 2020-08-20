@@ -59,7 +59,7 @@ def run_inverse(subject, session=None):
         method = config.inverse_method
         pick_ori = None
 
-        cond_str = '%s' % condition.replace(op.sep, '').replace('_', '')
+        cond_str = condition.replace(op.sep, '').replace('_', '')
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         fname_stc = bids_basename.copy().update(

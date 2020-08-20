@@ -93,9 +93,9 @@ def plot_auto_scores(subject, session):
                                       processing=config.proc,
                                       recording=config.rec,
                                       space=config.space,
-                                      prefix=deriv_path,
-                                      kind='scores',
-                                      extension='.json')
+                                      prefix=deriv_path)
+
+    fname_scores.update(kind='scores', extension='.json')
 
     all_figs = []
     all_captions = []
@@ -335,7 +335,7 @@ def main():
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'
-            cond_str = '%s' % (condition.replace(op.sep, '').replace('_', ''))
+            cond_str = condition.replace(op.sep, '').replace('_', '')
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue

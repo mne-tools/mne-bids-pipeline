@@ -105,7 +105,7 @@ def apply_ica(subject, session):
                                 session=session))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
-    msg = ('Saving cleaned epochs.')
+    msg = 'Saving cleaned epochs.'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
     epochs_cleaned.save(fname_epo_out, overwrite=True)

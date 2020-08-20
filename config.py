@@ -7,7 +7,6 @@ of your BIDS dataset to be analyzed.
 import importlib
 import functools
 import os
-from collections import defaultdict
 import copy
 import coloredlogs
 import logging
@@ -482,8 +481,9 @@ tmin = -0.2
 
 tmax = 0.5
 
-# ``baseline`` : tuple
-#    It specifies how to baseline the epochs; if None, no baseline is applied.
+# ``baseline`` : tuple | None
+#    It specifies how to baseline-correct the epochs; if ``None``, no baseline
+#    correction is applied.
 #
 # Example
 # ~~~~~~~

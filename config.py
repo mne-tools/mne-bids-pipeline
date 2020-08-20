@@ -127,6 +127,17 @@ subjects_list = 'all'
 
 exclude_subjects = []
 
+# ``process_er`` : bool
+#
+#   Whether to apply the same pre-processing steps to the empty-room data as
+#   to the experimental data (up until including frequency filtering). This
+#   is required if you wish to use the empty-room recording to estimate noise
+#   covariance (via ``noise_cov='emptyroom'``). The empty-room recording
+#   corresponding to the processed experimental data will be retrieved
+#   automatically.
+
+process_er = True
+
 # ``ch_types``  : list of st
 #    The list of channel types to consider.
 #
@@ -912,6 +923,11 @@ if noise_cov == 'emptyroom' and 'eeg' in ch_types:
            'noise_cov to (tmin, tmax)')
     raise ValueError(msg)
 
+if noise_cov == 'emptyroom' and not process_er:
+    msg = ('You requested noise covariance estimation from empty-room '
+           'recordings by setting noise_cov = "emptyroom", but you did not '
+           'enable empty-room data processing. Please set process_er = True')
+    raise ValueError(msg)
 
 ###############################################################################
 # Helper functions

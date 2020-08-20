@@ -88,8 +88,8 @@ def run_filter(subject, run=None, session=None):
                       fir_design='firwin')
     raw.filter(**filter_kws)
 
-    if config.noise_cov == 'emptyroom':
-        msg = f'Filtering empty-room recording.'
+    if config.process_er:
+        msg = 'Filtering empty-room recording.'
         logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                     session=session, run=run,))
         raw_er = mne.io.read_raw_fif(raw_er_fname_in)
@@ -102,14 +102,14 @@ def run_filter(subject, run=None, session=None):
                                     session=session, run=run,))
         raw.resample(config.resample_sfreq, npad='auto')
 
-        if config.noise_cov == 'emptyroom':
-            msg = f'Resampling empty-room recording.'
+        if config.process_er:
+            msg = 'Resampling empty-room recording.'
             logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                         session=session, run=run,))
             raw_er.resample(config.resample_sfreq, npad='auto')
 
     raw.save(raw_fname_out, overwrite=True)
-    if config.noise_cov == 'emptyroom':
+    if config.process_er:
         raw_er.save(raw_er_fname_out, overwrite=True)
 
     if config.interactive:
@@ -118,9 +118,9 @@ def run_filter(subject, run=None, session=None):
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-        if config.noise_cov == 'emptyroom':
+        if config.process_er:
             raw_er.plot(n_channels=50, butterfly=True)
-            raw_er.plot_psd(fmax)
+            raw_er.plot_psd(fmax=fmax)
 
 
 @failsafe_run(on_error=on_error)

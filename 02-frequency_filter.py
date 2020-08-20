@@ -55,16 +55,13 @@ def run_filter(subject, run=None, session=None):
     bids_er_out_basename = bids_basename.copy().update(run=None)
 
     # Prepare a name to save the data
+    raw_fname_in = bids_basename.copy().update(extension='.fif')
+    raw_er_fname_in = bids_basename.copy().update(
+        task='noise', run=None, extension='.fif')
+
     if config.use_maxwell_filter:
-        raw_fname_in = bids_basename.copy().update(
-            processing='sss', extension='.fif')
-        raw_er_fname_in = bids_basename.copy().update(
-            processing='sss', task='noise', extension='.fif')
-    else:
-        raw_fname_in = bids_basename.copy().update(
-            extension='.fif')
-        raw_er_fname_in = bids_basename.copy().update(
-            task='noise', extension='.fif')
+        raw_fname_in = raw_fname_in.update(processing='sss')
+        raw_er_fname_in = raw_er_fname_in.update(processing='sss')
 
     raw_fname_out = bids_basename.copy().update(
         processing='filt', extension='.fif')

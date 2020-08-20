@@ -62,6 +62,7 @@ def plot_er_psd(subject, session):
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path,
+                                       kind=config.get_kind(),
                                        task='noise',
                                        processing='filt',
                                        extension='.fif')

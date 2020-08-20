@@ -378,7 +378,8 @@ def run_maxwell_filter(subject, session=None):
 
             raw_er_fname_out = raw_er_fname_out.update(prefix=deriv_path,
                                                        task='noise',
-                                                       extension='.fif')
+                                                       extension='.fif',
+                                                       run=None)
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).

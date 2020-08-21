@@ -151,7 +151,11 @@ jobs:
 workflows:
   version: 2
 
-  default:
+  commit:
+    jobs:
+      - run_tests
+
+  scheduled:
     jobs:
       - run_tests
 

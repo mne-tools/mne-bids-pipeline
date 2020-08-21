@@ -84,15 +84,22 @@ def make_epochs_for_ica(raw, subject, session):
     selection = epochs.selection
 
     # Now, create new epochs, and only keep the ones we kept in step 3.
-    # Note that we do not pass the reject parameter to mne.Epochs here!
+    # Because some events present in event_id may disappear entirely from the
+    # data, we need to remove those events from event_id, or MNE will throw
+    # an error when trying to create the epochs.
+
     events, event_id = mne.events_from_annotations(raw)
+    events = events[selection]
+    event_id = {k: v for k, v in event_id.items()
+                if v in set(events[:, 2])}
+
+    # Note that we do not pass the reject parameter to mne.Epochs here!
     epochs_ica = mne.Epochs(raw,
                             events, event_id, config.tmin,
                             config.tmax, proj=True,
                             baseline=config.baseline,
                             preload=True, decim=config.decim)
 
-    epochs_ica = epochs_ica[selection]
     return epochs_ica
 
 

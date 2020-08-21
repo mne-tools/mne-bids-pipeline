@@ -136,7 +136,7 @@ exclude_subjects = []
 #   corresponding to the processed experimental data will be retrieved
 #   automatically.
 
-process_er = True
+process_er = False
 
 # ``ch_types``  : list of st
 #    The list of channel types to consider.

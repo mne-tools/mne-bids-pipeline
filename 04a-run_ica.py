@@ -179,7 +179,6 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
 
 
 def detect_eog_artifacts(ica, raw, subject, session, report):
-    # EOG
     pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
                               eog=True)
     if pick_eog.any():

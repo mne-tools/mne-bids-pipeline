@@ -44,7 +44,7 @@ from mne.parallel import parallel_func
 from mne_bids import make_bids_basename, read_raw_bids, get_matched_empty_room
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
-from mne_bids.path import parse_bids_filename
+from mne_bids.path import get_entities_from_fname
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -70,8 +70,8 @@ def init_dataset():
         'URL': 'n/a',
     }
 
-    fname = make_bids_basename(prefix=config.deriv_root,
-                               suffix='dataset_description.json')
+    fname = os.path.join(config.deriv_root,
+                         'dataset_description.json')
     _write_json(fname, ds_json, overwrite=True)
 
 
@@ -154,7 +154,8 @@ def find_bad_channels(raw, subject, session, task, run):
                                 subject=subject, session=session))
 
     if config.find_noisy_channels_meg:
-        auto_scores_fname = bids_basename.copy().update(suffix='scores.json')
+        auto_scores_fname = bids_basename.copy().update(
+            kind='scores', extension='.json')
         with open(auto_scores_fname, 'w') as f:
             json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
@@ -165,7 +166,8 @@ def find_bad_channels(raw, subject, session, task, run):
             plt.show()
 
     # Write the bad channels to disk.
-    bads_tsv_fname = bids_basename.copy().update(suffix='bad_channels.tsv')
+    bads_tsv_fname = bids_basename.copy().update(
+        kind='bads', extension='.tsv')
     bads_for_tsv = []
     reasons = []
 
@@ -196,9 +198,9 @@ def load_data(bids_basename):
     # - sets channels types according to BIDS channels.tsv `type` column
     # - sets raw.annotations using the BIDS events.tsv
 
-    params = parse_bids_filename(bids_basename)
-    subject = params['sub']
-    session = params['ses']
+    params = get_entities_from_fname(bids_basename)
+    subject = params['subject']
+    session = params['session']
 
     extra_params = dict()
     if config.allow_maxshield:
@@ -243,6 +245,11 @@ def run_maxwell_filter(subject, session=None):
                                                kind=config.get_kind())
     os.makedirs(deriv_path, exist_ok=True)
 
+    if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
+        raise ValueError(f'You cannot set use_maxwell_filter to True '
+                         f'if data have already processed with Maxwell-filter.'
+                         f' Got proc={config.proc}.')
+
     for run_idx, run in enumerate(config.get_runs()):
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
@@ -251,7 +258,8 @@ def run_maxwell_filter(subject, session=None):
                                            run=run,
                                            processing=config.proc,
                                            recording=config.rec,
-                                           space=config.space)
+                                           space=config.space,
+                                           kind=config.get_kind())
 
         raw = load_data(bids_basename)
         if run_idx == 0:
@@ -292,7 +300,8 @@ def run_maxwell_filter(subject, session=None):
             raw_out = raw_sss
             raw_fname_out = (bids_basename.copy()
                              .update(prefix=deriv_path,
-                                     suffix='sss_raw.fif'))
+                                     processing='sss',
+                                     extension='.fif'))
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
@@ -301,7 +310,7 @@ def run_maxwell_filter(subject, session=None):
             raw_out = raw
             raw_fname_out = (bids_basename.copy()
                              .update(prefix=deriv_path,
-                                     suffix='nosss_raw.fif'))
+                                     extension='.fif'))
 
         # Save only the channel types we wish to analyze.
         # We do not rum `raw_out.pick()` here because it uses too much memory.
@@ -361,14 +370,16 @@ def run_maxwell_filter(subject, session=None):
                     raise RuntimeError(msg)
 
                 raw_er_out = raw_er_sss
-                raw_er_fname_out = (bids_basename.copy()
-                                    .update(prefix=deriv_path,
-                                            suffix='emptyroom_sss_raw.fif'))
+                raw_er_fname_out = bids_basename.copy().update(
+                    processing='sss')
             else:
                 raw_er_out = raw_er
-                raw_er_fname_out = (bids_basename.copy()
-                                    .update(prefix=deriv_path,
-                                            suffix='emptyroom_nosss_raw.fif'))
+                raw_er_fname_out = bids_basename.copy()
+
+            raw_er_fname_out = raw_er_fname_out.update(prefix=deriv_path,
+                                                       task='noise',
+                                                       extension='.fif',
+                                                       run=None)
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).

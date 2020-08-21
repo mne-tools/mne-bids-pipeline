@@ -41,13 +41,14 @@ def apply_ica(subject, run, session):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
-    fname_in = bids_basename.copy().update(suffix='epo.fif')
-    fname_out = bids_basename.copy().update(suffix='cleaned_epo.fif')
+    fname_in = bids_basename.copy().update(
+        kind='epo', extension='.fif')
+    fname_out = bids_basename.copy().update(
+        kind='epo', processing='clean', extension='.fif')
 
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_in, preload=True)
@@ -71,14 +72,19 @@ def apply_ica(subject, run, session):
                                        space=config.space
                                        )
 
+    # XXX : do we want to always take the filt?
     if config.use_maxwell_filter:
         raw_fname_in = (bids_basename.copy()
                         .update(run=config.get_runs()[0],
-                                suffix='sss_raw.fif'))
+                                processing='sss',
+                                kind=config.get_kind(),
+                                extension='.fif'))
     else:
         raw_fname_in = (bids_basename.copy()
                         .update(run=config.get_runs()[0],
-                                suffix='filt_raw.fif'))
+                                processing='filt',
+                                kind=config.get_kind(),
+                                extension='.fif'))
 
     raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
 
@@ -86,8 +92,8 @@ def apply_ica(subject, run, session):
         report = None
 
         # Load ICA
-        fname_ica = (bids_basename.copy()
-                     .update(run=None, suffix=f'{ch_type}-ica.fif'))
+        fname_ica = bids_basename.copy().update(
+          run=None, kind=f'{ch_type}-ica', extension='.fif')
 
         msg = f'Reading ICA: {fname_ica}'
         logger.debug(gen_log_message(message=msg, step=5, subject=subject,
@@ -118,9 +124,8 @@ def apply_ica(subject, run, session):
                                   threshold=config.ica_ctps_ecg_threshold)
             del ecg_epochs
 
-            report_fname = (bids_basename.copy()
-                            .update(run=None,
-                                    suffix=f'{ch_type}-reject_ica.html'))
+            report_fname = bids_basename.copy().update(
+                run=None, kind=f'{ch_type}-reject_ica', extension='.html')
 
             report = Report(report_fname, verbose=False)
 

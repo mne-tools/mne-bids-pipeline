@@ -407,6 +407,8 @@ decim = 1
 #
 #    Make sure to include values for "eeg" if you have EEG data.
 #
+#    Pass ``None`` to avoid automated epoch rejection based on amplitude.
+#
 # Note
 # ~~~~
 # These numbers tend to vary between subjects.. You might want to consider
@@ -1050,6 +1052,9 @@ def get_kind():
 
 
 def get_reject():
+    if reject is None:
+        return dict()
+
     reject_ = reject.copy()  # Avoid clash with global variable.
     kind = get_kind()
 

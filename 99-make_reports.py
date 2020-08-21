@@ -254,7 +254,7 @@ def run_report(subject, session=None):
                                         section='Sources')
                 del peak_time
 
-    if config.process_er == 'emptyroom':
+    if config.process_er:
         fig_er_psd = plot_er_psd(subject=subject, session=session)
         rep.add_figs_to_section(figs=fig_er_psd,
                                 captions='Empty-Room Power Spectral Density '

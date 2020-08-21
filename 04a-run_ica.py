@@ -28,19 +28,20 @@ logger = logging.getLogger('mne-study-template')
 
 
 def load_and_concatenate_raws(bids_basename):
-    raw_list = list()
+    kind = config.get_kind()
 
+    raw_list = list()
     for run in config.get_runs():
         raw_fname_in = (bids_basename.copy()
                         .update(run=run, processing='filt',
-                                kind=config.get_kind(), extension='.fif'))
+                                kind=kind, extension='.fif'))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 
     raw = mne.concatenate_raws(raw_list)
     del raw_list
 
-    if config.get_kind() == 'eeg':
+    if kind == 'eeg':
         raw.set_eeg_reference(projection=True)
 
     raw.load_data()
@@ -226,9 +227,9 @@ def run_ica(subject, session=None):
                                        space=config.space,
                                        prefix=deriv_path)
 
-    ica_fname = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
-                                            extension='.fif')
-    report_fname = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
+    ica_fname = bids_basename.copy().update(kind='ica', extension='.fif')
+    report_fname = bids_basename.copy().update(processing='ica',
+                                               kind='report',
                                                extension='.html')
 
     msg = 'Loading and concatenating filtered continuous "raw" data'

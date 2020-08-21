@@ -48,8 +48,7 @@ def apply_ica(subject, session):
     fname_epo_in = bids_basename.copy().update(kind='epo', extension='.fif')
     fname_epo_out = bids_basename.copy().update(kind='epo', processing='clean',
                                                 extension='.fif')
-    fname_ica = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
-                                            extension='.fif')
+    fname_ica = bids_basename.copy().update(kind='ica', extension='.fif')
 
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_epo_in, preload=True)
@@ -59,7 +58,7 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(run=None, kind=f'{kind}-ica-reject',
+                    .update(processing='clean', kind='report',
                             extension='.html'))
     report = Report(report_fname, verbose=False)
 

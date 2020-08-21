@@ -132,9 +132,9 @@ def run_report(subject, session=None):
 
     fname_ave = bids_basename.copy().update(kind='ave', extension='.fif')
     fname_epo = bids_basename.copy().update(kind='epo', extension='.fif')
-    fname_ica = bids_basename.copy().update(kind=f'{kind}-ica',
-                                            extension='.fif')
     fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')
+    fname_ica = bids_basename.copy().update(kind='ica', extension='.fif')
+
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
 

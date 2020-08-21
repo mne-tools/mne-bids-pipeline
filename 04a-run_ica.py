@@ -123,7 +123,6 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         ecg_average = ecg_epochs.average()
-
         ecg_inds, scores = ica.find_bads_ecg(
             ecg_epochs, method='ctps',
             threshold=config.ica_ctps_ecg_threshold)
@@ -169,12 +168,9 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
-        # Create EOG epochs.
-        # Don't reject epochs based on EOG to retain artifacts.
         eog_epochs = create_eog_epochs(raw, reject=config.get_reject(),
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
-
         eog_average = eog_epochs.average()
         eog_inds, scores = ica.find_bads_eog(
             eog_epochs,

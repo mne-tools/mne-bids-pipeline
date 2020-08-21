@@ -250,7 +250,23 @@ def run_maxwell_filter(subject, session=None):
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
-    for run_idx, run in enumerate(config.get_runs()):
+    # Load dev_head_t and digitization points from reference run.
+    # Re-use in all runs and for processing empty-room recording.
+    reference_run = config.get_mf_reference_run()
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       run=reference_run,
+                                       processing=config.proc,
+                                       recording=config.rec,
+                                       space=config.space)
+    raw = load_data(bids_basename)  # XXX Loading info would suffice!
+    dev_head_t = raw.info['dev_head_t']
+    dig = raw.info['dig']
+    del reference_run, raw, bids_basename
+
+    for run in config.get_runs():
         bids_basename = make_bids_basename(subject=subject,
                                            session=session,
                                            task=config.get_task(),
@@ -262,8 +278,6 @@ def run_maxwell_filter(subject, session=None):
                                            kind=config.get_kind())
 
         raw = load_data(bids_basename)
-        if run_idx == 0:
-            dev_head_t = raw.info['dev_head_t']  # Re-use in all runs.
 
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
@@ -327,7 +341,7 @@ def run_maxwell_filter(subject, session=None):
         #
         # We pick the empty-room recording closest in time to the first run
         # of the experimental session.
-        if run_idx == 0 and config.noise_cov == 'emptyroom':
+        if config.noise_cov == 'emptyroom':
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
@@ -353,7 +367,7 @@ def run_maxwell_filter(subject, session=None):
                 # very clean, as we normally should not alter info manually,
                 # except for info['bads']. Will need improvement upstream in
                 # MNE-Python.
-                raw_er.info['dig'] = raw.info['dig']
+                raw_er.info['dig'] = dig
                 raw_er.info['dev_head_t'] = dev_head_t
                 raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
                                                               **common_mf_kws)

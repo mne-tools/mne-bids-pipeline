@@ -949,6 +949,15 @@ if mf_reference_run is not None and mf_reference_run not in get_runs():
     raise ValueError(msg)
 
 
+def get_mf_reference_run():
+    """Retrieve to run identifier (number, name) of the reference run."""
+    if mf_reference_run is None:
+        # Use the first run
+        return get_runs()[0]
+    else:
+        return mf_reference_run
+
+
 def get_subjects():
     if subjects_list == 'all':
         s = get_entity_vals(bids_root, entity_key='subject')

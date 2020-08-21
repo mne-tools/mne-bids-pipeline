@@ -31,7 +31,6 @@ def morph_stc(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
@@ -39,16 +38,15 @@ def morph_stc(subject, session=None):
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
-        inverse_str = 'inverse-%s' % method
+        cond_str = condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph-fsaverage'
+        morph_str = 'morph2fsaverage'
 
-        fname_stc = (bids_basename.copy()
-                     .update(suffix=f'{cond_str}_{inverse_str}_{hemi_str}'))
-        fname_stc_fsaverage = (bids_basename.copy()
-                               .update(suffix=f'{cond_str}_{inverse_str}_'
-                                              f'{morph_str}_{hemi_str}'))
+        fname_stc = bids_basename.copy().update(
+            kind=f'{cond_str}+{inverse_str}+{hemi_str}')
+        fname_stc_fsaverage = bids_basename.copy().update(
+            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
 
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
@@ -105,14 +103,13 @@ def main():
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '').replace('_', '-')
-        inverse_str = 'inverse-%s' % method
+        cond_str = condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph-fsaverage'
+        morph_str = 'morph2fsaverage'
 
-        fname_stc_avg = (bids_basename.copy()
-                         .update(suffix=f'{cond_str}_{inverse_str}_'
-                                        f'{morph_str}_{hemi_str}'))
+        fname_stc_avg = bids_basename.copy().update(
+            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
         this_stc.save(fname_stc_avg)
 
     msg = 'Completed Step 13: Grand-average source estimates'

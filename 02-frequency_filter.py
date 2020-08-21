@@ -32,9 +32,10 @@ logger = logging.getLogger('mne-study-template')
 
 def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -48,23 +49,24 @@ def run_filter(subject, run=None, session=None):
                                        processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
-                                       prefix=deriv_path)
+                                       prefix=deriv_path,
+                                       kind=kind)
 
     bids_er_out_basename = bids_basename.copy().update(run=None)
 
     # Prepare a name to save the data
-    if config.use_maxwell_filter:
-        raw_fname_in = bids_basename.copy().update(suffix='sss_raw.fif')
-        raw_er_fname_in = (bids_basename.copy()
-                           .update(suffix='emptyroom_sss_raw.fif'))
-    else:
-        raw_fname_in = bids_basename.copy().update(suffix='nosss_raw.fif')
-        raw_er_fname_in = (bids_basename.copy()
-                           .update(suffix='emptyroom_nosss_raw.fif'))
+    raw_fname_in = bids_basename.copy().update(extension='.fif')
+    raw_er_fname_in = bids_basename.copy().update(
+        task='noise', run=None, extension='.fif')
 
-    raw_fname_out = bids_basename.copy().update(suffix='filt_raw.fif')
-    raw_er_fname_out = (bids_er_out_basename.copy()
-                        .update(suffix='emptyroom_filt_raw.fif'))
+    if config.use_maxwell_filter:
+        raw_fname_in = raw_fname_in.update(processing='sss')
+        raw_er_fname_in = raw_er_fname_in.update(processing='sss')
+
+    raw_fname_out = bids_basename.copy().update(
+        processing='filt', extension='.fif')
+    raw_er_fname_out = bids_er_out_basename.copy().update(
+        processing='filt', task='noise', extension='.fif')
 
     msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,

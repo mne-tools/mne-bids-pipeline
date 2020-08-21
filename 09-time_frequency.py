@@ -40,17 +40,17 @@ def run_time_frequency(subject, session=None):
                                        task=config.get_task(),
                                        acquisition=config.acq,
                                        run=None,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
+    extension = '.fif'
+    processing = None
     if config.use_ica or config.use_ssp:
-        suffix = 'cleaned_epo.fif'
-    else:
-        suffix = 'epo.fif'
+        processing = 'clean'
 
-    fname_in = bids_basename.copy().update(suffix=suffix)
+    fname_in = bids_basename.copy().update(
+        kind='epo', processing=processing, extension=extension)
 
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=9, subject=subject,
@@ -63,11 +63,11 @@ def run_time_frequency(subject, session=None):
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
-        condition_str = condition.replace(op.sep, '').replace('_', '-')
-        power_fname_out = (bids_basename.copy()
-                           .update(suffix=f'power_{condition_str}_tfr.h5'))
-        itc_fname_out = (bids_basename.copy()
-                         .update(suffix=f'itc_{condition_str}_tfr.h5'))
+        condition_str = condition.replace(op.sep, '').replace('_', '')
+        power_fname_out = bids_basename.copy().update(
+            kind=f'power+{condition_str}+tfr', extension='.h5')
+        itc_fname_out = bids_basename.copy().update(
+            kind=f'itc+{condition_str}+tfr', extension='.h5')
 
         power.save(power_fname_out, overwrite=True)
         itc.save(itc_fname_out, overwrite=True)

@@ -32,22 +32,24 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def apply_ica(subject, session):
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
 
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
                                        task=config.get_task(),
                                        acquisition=config.acq,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
-    fname_epo_in = bids_basename.copy().update(suffix='epo.fif')
-    fname_epo_out = bids_basename.copy().update(suffix='cleaned_epo.fif')
-    fname_ica = bids_basename.copy().update(suffix='ica.fif')
+    fname_epo_in = bids_basename.copy().update(kind='epo', extension='.fif')
+    fname_epo_out = bids_basename.copy().update(kind='epo', processing='clean',
+                                                extension='.fif')
+    fname_ica = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
+                                            extension='.fif')
 
     # load epochs to reject ICA components
     epochs = mne.read_epochs(fname_epo_in, preload=True)
@@ -57,7 +59,8 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(suffix='ica-reject.html'))
+                    .update(run=None, kind=f'{kind}-ica-reject',
+                            extension='.html'))
     report = Report(report_fname, verbose=False)
 
     # Load ICA

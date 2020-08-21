@@ -32,7 +32,8 @@ def load_and_concatenate_raws(bids_basename):
 
     for run in config.get_runs():
         raw_fname_in = (bids_basename.copy()
-                        .update(run=run, suffix='filt_raw.fif'))
+                        .update(run=run, processing='filt',
+                                kind=config.get_kind(), extension='.fif'))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 
@@ -102,8 +103,8 @@ def fit_ica(epochs, subject, session):
     explained_var = (ica.pca_explained_variance_[:ica.n_components_].sum() /
                      ica.pca_explained_variance_.sum())
     msg = (f'Fit {ica.n_components_} components (explaining '
-           f'{round(explained_var * 100, 1)}% of the variance) in {ica.n_iter_} '
-           f'iterations.')
+           f'{round(explained_var * 100, 1)}% of the variance) in '
+           f'{ica.n_iter_} iterations.')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
     return ica
@@ -213,20 +214,22 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
 def run_ica(subject, session=None):
     """Run ICA."""
 
+    kind = config.get_kind()
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
-                                               kind=config.get_kind())
+                                               kind=kind)
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
                                        task=config.get_task(),
                                        acquisition=config.acq,
-                                       processing=config.proc,
                                        recording=config.rec,
                                        space=config.space,
                                        prefix=deriv_path)
 
-    ica_fname = bids_basename.copy().update(suffix='ica.fif')
-    report_fname = (bids_basename.copy().update(suffix='ica.html'))
+    ica_fname = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
+                                            extension='.fif')
+    report_fname = bids_basename.copy().update(run=None, kind=f'{kind}-ica',
+                                               extension='.html')
 
     msg = 'Loading and concatenating filtered continuous "raw" data'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

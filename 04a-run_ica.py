@@ -72,16 +72,14 @@ def make_epochs_for_ica(raw, subject, session):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    epochs_fname = make_bids_basename(subject=subject,
-                                      session=session,
-                                      task=config.get_task(),
-                                      acquisition=config.acq,
-                                      recording=config.rec,
-                                      space=config.space,
-                                      kind='epo',
-                                      extension='.fif',
-                                      prefix=deriv_path)
-
+    bids_basename = make_bids_basename(subject=subject,
+                                       session=session,
+                                       task=config.get_task(),
+                                       acquisition=config.acq,
+                                       recording=config.rec,
+                                       space=config.space,
+                                       prefix=deriv_path)
+    epochs_fname = bids_basename.copy().update(kind='epo', extension='.fif')
     epochs = mne.read_epochs(epochs_fname)
     selection = epochs.selection
 

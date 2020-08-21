@@ -252,7 +252,12 @@ def run_maxwell_filter(subject, session=None):
 
     # Load dev_head_t and digitization points from reference run.
     # Re-use in all runs and for processing empty-room recording.
-    reference_run = config.mf_reference_run
+    if config.mf_reference_run is None:
+        # Use the first run
+        reference_run = config.get_runs()[0]
+    else:
+        reference_run = config.mf_reference_run
+
     bids_basename = make_bids_basename(subject=subject,
                                        session=session,
                                        task=config.get_task(),

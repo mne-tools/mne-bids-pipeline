@@ -294,15 +294,15 @@ mf_cal_fname = ''
 # to define a reference run (typically the one in the middle of
 # the recording session).
 #
-# ``mf_reference_run``  : int
+# ``mf_reference_run``  : int | None
 #   Which run to take as the reference for adjusting the head position of all
-#   runs.
+#   runs. If ``None``, pick the first run.
 #
 # Example
 # ~~~~~~~
-# >>> mf_reference_run = 0  # to use the first run
+# >>> mf_reference_run = '01'  # Use run "01".
 
-mf_reference_run = 0
+mf_reference_run = None
 
 ###############################################################################
 # FREQUENCY FILTERING
@@ -939,6 +939,14 @@ def get_runs():
         return [None]
     else:
         return runs_
+
+
+# XXX This check should actually go into the CHECKS section, but it depends
+# XXX on get_runs(), which is defined after that section.
+if mf_reference_run is not None and mf_reference_run not in get_runs():
+    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
+           f'only contains the following runs: {get_runs()}')
+    raise ValueError(msg)
 
 
 def get_subjects():

@@ -110,6 +110,7 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -151,6 +152,18 @@ jobs:
 workflows:
   version: 2
 
-  default:
+  commit:
     jobs:
       - run_tests
+
+  scheduled:
+    jobs:
+      - run_tests
+
+    triggers:
+      - schedule:
+          cron: "0 4 * * *"
+          filters:
+            branches:
+              only:
+                - master

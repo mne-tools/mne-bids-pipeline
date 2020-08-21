@@ -13,4 +13,5 @@ mf_reference_run = '01'
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
+process_er = True
 noise_cov = 'emptyroom'

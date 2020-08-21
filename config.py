@@ -294,7 +294,7 @@ mf_cal_fname = ''
 # to define a reference run (typically the one in the middle of
 # the recording session).
 #
-# ``mf_reference_run``  : int | None
+# ``mf_reference_run``  : str | None
 #   Which run to take as the reference for adjusting the head position of all
 #   runs. If ``None``, pick the first run.
 #

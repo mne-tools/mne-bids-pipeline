@@ -10,6 +10,7 @@ plots.
 import os.path as op
 import itertools
 import logging
+import numpy as np
 
 import mne
 from mne.parallel import parallel_func
@@ -74,7 +75,9 @@ def plot_er_psd(subject, session):
 
     raw_er_filtered = mne.io.read_raw_fif(bids_basename, preload=True,
                                           **extra_params)
-    fig = raw_er_filtered.plot_psd(show=False)
+
+    fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+    fig = raw_er_filtered.plot_psd(fmax=fmax, show=False)
     return fig
 
 
@@ -269,7 +272,7 @@ def run_report(subject, session=None):
                                         section='Sources')
                 del peak_time
 
-    if config.noise_cov == 'emptyroom':
+    if config.process_er:
         fig_er_psd = plot_er_psd(subject=subject, session=session)
         rep.add_figs_to_section(figs=fig_er_psd,
                                 captions='Empty-Room Power Spectral Density '

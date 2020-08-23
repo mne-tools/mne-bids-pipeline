@@ -341,7 +341,7 @@ def run_maxwell_filter(subject, session=None):
         #
         # We pick the empty-room recording closest in time to the first run
         # of the experimental session.
-        if config.noise_cov == 'emptyroom':
+        if config.process_er:
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))

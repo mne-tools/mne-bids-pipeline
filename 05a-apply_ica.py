@@ -50,7 +50,7 @@ def apply_ica(subject, session):
                                                 extension='.fif')
     fname_ica = bids_basename.copy().update(kind='ica', extension='.fif')
 
-    # load epochs to reject ICA components
+    # Load epochs to reject ICA components.
     epochs = mne.read_epochs(fname_epo_in, preload=True)
 
     msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
@@ -62,7 +62,7 @@ def apply_ica(subject, session):
                             extension='.html'))
     report = Report(report_fname, verbose=False)
 
-    # Load ICA
+    # Load ICA.
     msg = f'Reading ICA: {fname_ica}'
     logger.debug(gen_log_message(message=msg, step=5, subject=subject,
                                  session=session))
@@ -87,15 +87,15 @@ def apply_ica(subject, session):
     # Note that up until now, we haven't actually rejected any ICs from the
     # epochs.
 
-    epochs_average = epochs.average()
+    evoked = epochs.average()
 
     # Plot source time course
-    fig = ica.plot_sources(epochs_average, show=config.interactive)
+    fig = ica.plot_sources(evoked, show=config.interactive)
     report.add_figs_to_section(figs=fig,
                                captions='All ICs - Source time course')
 
     # Plot original & corrected data
-    fig = ica.plot_overlay(epochs_average, show=config.interactive)
+    fig = ica.plot_overlay(evoked, show=config.interactive)
     report.add_figs_to_section(figs=fig,
                                captions='Evoked response (across all epochs) '
                                         'before and after IC removal')

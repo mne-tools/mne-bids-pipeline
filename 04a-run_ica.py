@@ -99,7 +99,6 @@ def make_epochs_for_ica(raw, subject, session):
                             config.tmax, proj=True,
                             baseline=config.baseline,
                             preload=True, decim=config.decim)
-
     return epochs_ica
 
 
@@ -148,7 +147,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         ecg_epochs = create_ecg_epochs(raw, reject=config.get_reject(),
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
-        ecg_average = ecg_epochs.average()
+        ecg_evoked = ecg_epochs.average()
         ecg_inds, scores = ica.find_bads_ecg(
             ecg_epochs, method='ctps',
             threshold=config.ica_ctps_ecg_threshold)
@@ -166,13 +165,13 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
                                    section=f'sub-{subject}')
 
         # Plot source time course
-        fig = ica.plot_sources(ecg_average, show=config.interactive)
+        fig = ica.plot_sources(ecg_evoked, show=config.interactive)
         report.add_figs_to_section(figs=fig,
                                    captions='Source time course - ECG',
                                    section=f'sub-{subject}')
 
         # Plot original & corrected data
-        fig = ica.plot_overlay(ecg_average, show=config.interactive)
+        fig = ica.plot_overlay(ecg_evoked, show=config.interactive)
         report.add_figs_to_section(figs=fig, captions='Corrections - ECG',
                                    section=f'sub-{subject}')
     else:
@@ -196,7 +195,7 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         eog_epochs = create_eog_epochs(raw, reject=config.get_reject(),
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
-        eog_average = eog_epochs.average()
+        eog_evoked = eog_epochs.average()
         eog_inds, scores = ica.find_bads_eog(
             eog_epochs,
             threshold=config.ica_eog_threshold)
@@ -214,13 +213,13 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                                    section=f'sub-{subject}')
 
         # Plot source time course
-        fig = ica.plot_sources(eog_average, show=config.interactive)
+        fig = ica.plot_sources(eog_evoked, show=config.interactive)
         report.add_figs_to_section(figs=fig,
                                    captions='Source time course - EOG',
                                    section=f'sub-{subject}')
 
         # Plot original & corrected data
-        fig = ica.plot_overlay(eog_average, show=config.interactive)
+        fig = ica.plot_overlay(eog_evoked, show=config.interactive)
         report.add_figs_to_section(figs=fig, captions='Corrections - EOG',
                                    section=f'sub-{subject}')
     else:
@@ -294,6 +293,7 @@ def run_ica(subject, session=None):
                                    session=session, report=report)
     eog_ics = detect_eog_artifacts(ica=ica, raw=raw, subject=subject,
                                    session=session, report=report)
+    eog_ics = []
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.

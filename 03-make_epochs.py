@@ -10,7 +10,6 @@ Finally the epochs are saved to disk.
 To save space, the epoch data can be decimated.
 """
 
-import os.path as op
 import itertools
 import logging
 

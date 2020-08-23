@@ -85,8 +85,8 @@ def make_epochs_for_ica(raw, subject, session):
 
     # Now, create new epochs, and only keep the ones we kept in step 3.
     # Because some events present in event_id may disappear entirely from the
-    # data, we pass `on_missing='ignore'` to Epochs. Also note that we do not
-    # pass the reject parameter to mne.Epochs here.
+    # data, we pass `on_missing='ignore'` to mne.Epochs. Also note that we do
+    # not pass the `reject` parameter here.
 
     events, event_id = mne.events_from_annotations(raw)
     events = events[selection]

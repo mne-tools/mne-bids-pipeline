@@ -1207,7 +1207,7 @@ def plot_auto_scores(auto_scores):
 
 
 def get_channels_to_analyze(info):
-    """Return the channels of the channel types we wish to analyze.
+    """Return names of the channels of the channel types we wish to analyze.
 
     We also include channels marked as "bad" here.
     """

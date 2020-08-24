@@ -1206,8 +1206,10 @@ def plot_auto_scores(auto_scores):
     return figs
 
 
-def get_picks(info):
-    """Return the names of the channels we wish to analyze.
+def get_channels_to_analyze(info):
+    """Return the channels of the channel types we wish to analyze.
+
+    We also include channels marked as "bad" here.
     """
     if get_kind() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
@@ -1219,7 +1221,7 @@ def get_picks(info):
     elif get_kind() == 'meg':
         pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
                                   exclude=[])
-    else:
+    else:  # EEG
         pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True,
                                   exclude=[])
 

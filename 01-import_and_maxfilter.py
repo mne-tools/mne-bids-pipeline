@@ -326,9 +326,10 @@ def run_maxwell_filter(subject, session=None):
                              .update(prefix=deriv_path,
                                      extension='.fif'))
 
-        # Save only the channel types we wish to analyze.
+        # Save only the channel types we wish to analyze (including the
+        # channels marked as "bad").
         # We do not rum `raw_out.pick()` here because it uses too much memory.
-        chs_to_include = config.get_picks(raw_out.info)
+        chs_to_include = config.get_channels_to_analyze(raw_out.info)
         raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
         del raw_out
         if config.interactive:

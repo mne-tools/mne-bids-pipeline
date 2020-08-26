@@ -12,7 +12,8 @@ run 05a-apply_ica.py.
 
 import itertools
 import logging
-import os.path as op
+
+import pandas as pd
 
 import mne
 from mne.report import Report
@@ -247,6 +248,10 @@ def run_ica(subject, session=None):
 
     ica_fname = bids_basename.copy().update(kind='ica', extension='.fif',
                                             check=False)
+    ica_components_fname = bids_basename.copy().update(processing='ica',
+                                                       kind='components',
+                                                       extension='.tsv',
+                                                       check=False)
     report_fname = bids_basename.copy().update(processing='ica',
                                                kind='report',
                                                extension='.html',
@@ -264,23 +269,11 @@ def run_ica(subject, session=None):
     raw = filter_for_ica(raw, subject=subject, session=session)
     epochs = make_epochs_for_ica(raw, subject=subject, session=session)
 
-    # Now actually perform ICA, or load from disk if the user specified ICs
-    # for rejection in the configuration file -- we want to avoid
-    # re-calculation of ICA in that case!
-    if isinstance(config.ica_reject_components, dict) and op.exists(ica_fname):
-        msg = (f'Loading existing ICA solution from disk, because you '
-               f'components for rejection via ica_reject_components in your '
-               f'configuration file. If you want to generate a new ICA '
-               f'solution, either remove the ICs from ica_reject_components, '
-               f'or delete the ICA solution file {ica_fname}')
-        logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
-        ica = mne.preprocessing.read_ica(ica_fname)
-    else:
-        msg = 'Calculating ICA solution.'
-        logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
-        ica = fit_ica(epochs, subject=subject, session=session)
+    # Now actually perform ICA.
+    msg = 'Calculating ICA solution.'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
+    ica = fit_ica(epochs, subject=subject, session=session)
 
     msg = ('Creating HTML report …')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -302,6 +295,28 @@ def run_ica(subject, session=None):
     ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(ica_fname)
 
+    # Create TSV.
+    tsv_data = pd.DataFrame(
+        dict(component=list(range(ica.n_components_)),
+             type=['ica'] * ica.n_components_,
+             description=['Independent Component'] * ica.n_components_,
+             status=['good'] * ica.n_components_,
+             status_description=['n/a'] * ica.n_components_))
+
+    for component in ecg_ics:
+        row_idx = tsv_data['component'] == component
+        tsv_data.loc[row_idx, 'status'] = 'bad'
+        tsv_data.loc[row_idx,
+                     'status_description'] = 'Auto-detected ECG artifact'
+
+    for component in eog_ics:
+        row_idx = tsv_data['component'] == component
+        tsv_data.loc[row_idx, 'status'] = 'bad'
+        tsv_data.loc[row_idx,
+                     'status_description'] = 'Auto-detected EOG artifact'
+
+    tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
+
     # Lastly, plot all ICs, and add them to the report for manual inspection.
     msg = ('Adding diagnostic plots for all ICs to the report …')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -319,9 +334,8 @@ def run_ica(subject, session=None):
     report.save(report_fname, overwrite=True, open_browser=open_browser)
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
-           f"report, and add all ICs you wish to exclude to the configuration "
-           f"file, e.g.: "
-           f"ica_reject_components = {{'sub-{subject}': [0, 1, 5 ]}}")
+           f"report, and mark all components you wish to reject as 'bad' in "
+           f"{report_fname.basename}")
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 

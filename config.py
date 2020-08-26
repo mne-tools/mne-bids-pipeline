@@ -611,31 +611,6 @@ ica_n_components = 0.999
 
 ica_decim = None
 
-# ``ica_reject_components`` : 'auto' | dict of lists | None
-#    Which ICs to reject. If ``'auto'``, automatically remove ICs identified
-#    as ECG and EOG artifacts. This value allows for automated processing of
-#    large volumes of data, without requiring manual inspection.
-#
-#    If a dictionary, the keys must specify the subjects, and the values
-#    are a list of corresponding indepentent components (ICs) to reject.
-#    Pass ``None`` to retain all ICs.
-#
-# Example
-# ~~~~~~~
-# Reject auto-detected ICs corresponding to ECG and EOG artifacts.
-# >>> ica_reject_components = 'auto'
-#
-# Keep all ICs.
-# >>> ica_reject_components = None
-#
-# Remove ICs 0, 1, and 2 for subject ``sub-01``.
-# >>> ica_reject_components = {'sub-01': [0, 1, 2]}
-#
-# Remove IC 0 for subjects ``sub-01`` and ``sub-02``.
-# >>> ica_reject_components = {'sub-01': [0], 'sub-02': [0]}
-
-ica_reject_components = 'auto'
-
 # ``ica_ctps_ecg_threshold`` : float
 #    The threshold parameter passed to `find_bads_ecg` method.
 

@@ -17,6 +17,8 @@ order might differ).
 import itertools
 import logging
 
+import pandas as pd
+
 import mne
 from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
@@ -51,6 +53,8 @@ def apply_ica(subject, session):
     fname_epo_out = bids_basename.copy().update(kind='epo', processing='clean',
                                                 extension='.fif')
     fname_ica = bids_basename.copy().update(kind='ica', extension='.fif')
+    fname_ica_components = bids_basename.copy().update(
+        processing='ica', kind='components', extension='.tsv')
 
     # Load epochs to reject ICA components.
     epochs = mne.read_epochs(fname_epo_in, preload=True)
@@ -71,16 +75,10 @@ def apply_ica(subject, session):
     ica = read_ica(fname=fname_ica)
 
     # Select ICs to remove.
-    if config.ica_reject_components is None:
-        # Keep all ICs. User simply wanted the ICA report, but doesn't wish to
-        # reject any ICs.
-        ica.exclude = []
-    elif config.ica_reject_components == 'auto':
-        # We saved the ECG and EOG components to ica.exclude in the previous
-        # processing step.
-        pass
-    else:
-        ica.exclude = config.ica_reject_components[subject]
+    tsv_data = pd.read_csv(fname_ica_components, sep='\t')
+    ica.exclude = (tsv_data
+                   .loc[tsv_data['status'] == 'bad', 'component']
+                   .to_list())
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on

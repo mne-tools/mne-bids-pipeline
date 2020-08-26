@@ -101,6 +101,7 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -111,6 +112,7 @@ jobs:
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -120,6 +122,7 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -129,6 +132,7 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -138,6 +142,7 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - store_artifacts:

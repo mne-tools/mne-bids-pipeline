@@ -25,7 +25,9 @@ decode = True
 use_ssp = False
 use_ica = True
 ica_n_components = 0.99
-ica_reject_components = 'auto'
+# ica_reject_components = 'auto'
+ica_reject_components = {'01': [0, 1]}
+baseline = None
 ica_l_freq = 1.
 ica_eog_threshold = 2.
 

@@ -6,15 +6,12 @@
 Covariance matrices are computed and saved.
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
-
-from sklearn.model_selection import KFold
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -27,17 +24,17 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             processing=config.proc,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
-    extension = '.fif'
     processing = None
     if config.use_ica or config.use_ssp:
         processing = 'clean'
@@ -62,14 +59,15 @@ def compute_cov_from_empty_room(subject, session):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
     raw_er_fname = bids_basename.copy().update(
         kind=config.get_kind(), task='noise', processing='filt',

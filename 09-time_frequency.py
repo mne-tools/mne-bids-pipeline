@@ -18,7 +18,7 @@ import numpy as np
 import mne
 from mne.parallel import parallel_func
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -35,22 +35,22 @@ def run_time_frequency(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
-    extension = '.fif'
     processing = None
     if config.use_ica or config.use_ssp:
         processing = 'clean'
 
     fname_in = bids_basename.copy().update(
-        kind='epo', processing=processing, extension=extension)
+        kind='epo', processing=processing, extension='.fif')
 
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=9, subject=subject,

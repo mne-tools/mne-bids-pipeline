@@ -14,7 +14,7 @@ import mne
 from mne.parallel import parallel_func
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -28,15 +28,16 @@ def run_inverse(subject, session=None):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path,
-                                       extension='.fif')
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             extension='.fif',
+                             check=False)
 
     fname_ave = bids_basename.copy().update(kind='ave')
     fname_fwd = bids_basename.copy().update(kind='fwd')

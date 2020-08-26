@@ -6,14 +6,13 @@
 Compute Signal Suspace Projections (SSP).
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -29,14 +28,14 @@ def run_ssp(subject, session=None):
 
     # compute SSP on first run of raw
     run = config.get_runs()[0]
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=run,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=run,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
     # Prepare a name to save the data
     raw_fname_in = bids_basename.copy().update(
@@ -44,7 +43,7 @@ def run_ssp(subject, session=None):
 
     # when saving proj, use run=None
     proj_fname_out = bids_basename.copy().update(
-        run=None, kind='proj', extension='.fif')
+        run=None, kind='proj', extension='.fif', check=False)
 
     msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

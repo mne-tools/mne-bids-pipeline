@@ -41,7 +41,7 @@ import json_tricks
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename, read_raw_bids, get_matched_empty_room
+from mne_bids import BIDSPath, read_raw_bids, get_matched_empty_room
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 from mne_bids.path import get_entities_from_fname
@@ -117,15 +117,15 @@ def find_bad_channels(raw, subject, session, task, run):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=run,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=run,
+                             processing=config.proc,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw,
@@ -155,7 +155,7 @@ def find_bad_channels(raw, subject, session, task, run):
 
     if config.find_noisy_channels_meg:
         auto_scores_fname = bids_basename.copy().update(
-            kind='scores', extension='.json')
+            kind='scores', extension='.json', check=False)
         with open(auto_scores_fname, 'w') as f:
             json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
@@ -166,8 +166,8 @@ def find_bad_channels(raw, subject, session, task, run):
             plt.show()
 
     # Write the bad channels to disk.
-    bads_tsv_fname = bids_basename.copy().update(
-        kind='bads', extension='.tsv')
+    bads_tsv_fname = bids_basename.copy().update(kind='bads', extension='.tsv',
+                                                 check=False)
     bads_for_tsv = []
     reasons = []
 
@@ -253,29 +253,29 @@ def run_maxwell_filter(subject, session=None):
     # Load dev_head_t and digitization points from reference run.
     # Re-use in all runs and for processing empty-room recording.
     reference_run = config.get_mf_reference_run()
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=reference_run,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=reference_run,
+                             processing=config.proc,
+                             recording=config.rec,
+                             space=config.space)
     raw = load_data(bids_basename)  # XXX Loading info would suffice!
     dev_head_t = raw.info['dev_head_t']
     dig = raw.info['dig']
     del reference_run, raw, bids_basename
 
     for run in config.get_runs():
-        bids_basename = make_bids_basename(subject=subject,
-                                           session=session,
-                                           task=config.get_task(),
-                                           acquisition=config.acq,
-                                           run=run,
-                                           processing=config.proc,
-                                           recording=config.rec,
-                                           space=config.space,
-                                           kind=config.get_kind())
+        bids_basename = BIDSPath(subject=subject,
+                                 session=session,
+                                 task=config.get_task(),
+                                 acquisition=config.acq,
+                                 run=run,
+                                 processing=config.proc,
+                                 recording=config.rec,
+                                 space=config.space,
+                                 kind=config.get_kind())
 
         raw = load_data(bids_basename)
 

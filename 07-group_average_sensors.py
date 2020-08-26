@@ -6,6 +6,8 @@
 The M/EEG-channel data are averaged for group averages.
 """
 
+import os
+import os.path as op
 from collections import defaultdict
 import logging
 
@@ -64,6 +66,8 @@ subject = 'average'
 deriv_path = config.get_subject_deriv_path(subject=subject,
                                            session=session,
                                            kind=config.get_kind())
+if not op.exists(deriv_path):
+    os.makedirs(deriv_path)
 
 fname_out = BIDSPath(subject=subject,
                      session=session,

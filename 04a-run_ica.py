@@ -289,7 +289,6 @@ def run_ica(subject, session=None):
                                    session=session, report=report)
     eog_ics = detect_eog_artifacts(ica=ica, raw=raw, subject=subject,
                                    session=session, report=report)
-    eog_ics = []
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.

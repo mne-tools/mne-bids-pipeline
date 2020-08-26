@@ -6,14 +6,13 @@
 Calculate forward solution for MEG channels.
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename, get_head_mri_trans
+from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -27,14 +26,15 @@ def run_forward(subject, session=None):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
     fname_evoked = bids_basename.copy().update(kind='ave', extension='.fif')
     fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')

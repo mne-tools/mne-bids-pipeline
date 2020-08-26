@@ -14,7 +14,7 @@ import numpy as np
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -24,16 +24,16 @@ logger = logging.getLogger('mne-study-template')
 
 def plot_events(subject, session, deriv_path):
     raws_filt = []
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path,
-                                       kind=config.get_kind(),
-                                       processing='filt',
-                                       extension='.fif')
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             kind=config.get_kind(),
+                             processing='filt',
+                             extension='.fif')
 
     for run in config.get_runs():
         fname = bids_basename.copy().update(run=run)
@@ -57,17 +57,17 @@ def plot_er_psd(subject, session):
                                                session=session,
                                                kind=kind)
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path,
-                                       kind=kind,
-                                       task='noise',
-                                       processing='filt',
-                                       extension='.fif')
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             kind=config.get_kind(),
+                             task='noise',
+                             processing='filt',
+                             extension='.fif')
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
@@ -90,17 +90,18 @@ def plot_auto_scores(subject, session):
                                                session=session,
                                                kind=config.get_kind())
 
-    fname_scores = make_bids_basename(subject=subject,
-                                      session=session,
-                                      task=config.get_task(),
-                                      acquisition=config.acq,
-                                      run=None,
-                                      processing=config.proc,
-                                      recording=config.rec,
-                                      space=config.space,
-                                      prefix=deriv_path)
-
-    fname_scores.update(kind='scores', extension='.json')
+    fname_scores = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            run=None,
+                            processing=config.proc,
+                            recording=config.rec,
+                            space=config.space,
+                            kind='scores',
+                            extension='.json',
+                            prefix=deriv_path,
+                            check=False)
 
     all_figs = []
     all_captions = []
@@ -124,14 +125,15 @@ def run_report(subject, session=None):
                                                session=session,
                                                kind=kind)
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
     fname_ave = bids_basename.copy().update(kind='ave', extension='.fif')
     fname_epo = bids_basename.copy().update(kind='epo', extension='.fif')
@@ -305,16 +307,17 @@ def main():
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    evoked_fname = make_bids_basename(subject=subject,
-                                      session=session,
-                                      task=config.get_task(),
-                                      acquisition=config.acq,
-                                      run=None,
-                                      recording=config.rec,
-                                      space=config.space,
-                                      prefix=deriv_path,
-                                      extension='.fif')
-    evoked_fname.update(kind='ave')
+    evoked_fname = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            run=None,
+                            recording=config.rec,
+                            space=config.space,
+                            prefix=deriv_path,
+                            kind='ave',
+                            extension='.fif',
+                            check=False)
 
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())

@@ -22,10 +22,9 @@ from scipy.io import savemat
 import mne
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
@@ -44,17 +43,18 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                                                session=session,
                                                kind=config.get_kind())
 
-    fname_in = make_bids_basename(subject=subject,
-                                  session=session,
-                                  task=config.get_task(),
-                                  acquisition=config.acq,
-                                  run=None,
-                                  recording=config.rec,
-                                  space=config.space,
-                                  prefix=deriv_path,
-                                  extension='.fif')
+    fname_in = BIDSPath(subject=subject,
+                        session=session,
+                        task=config.get_task(),
+                        acquisition=config.acq,
+                        run=None,
+                        recording=config.rec,
+                        space=config.space,
+                        prefix=deriv_path,
+                        kind='epo',
+                        extension='.fif',
+                        check=False)
 
-    fname_in.update(kind='epo')
     epochs = mne.read_epochs(fname_in)
 
     # We define the epochs and the labels
@@ -79,10 +79,9 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '')
     processing = f'{a_vs_b}+{config.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
-    fname_td = fname_in.copy().update(
-        kind='decoding',
-        processing=processing,
-        extension='.mat')
+    fname_td = fname_in.copy().update(kind='decoding',
+                                      processing=processing,
+                                      extension='.mat')
     savemat(fname_td, {'scores': scores, 'times': epochs.times})
 
 

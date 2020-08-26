@@ -19,7 +19,7 @@ from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne.parallel import parallel_func
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -72,14 +72,16 @@ def make_epochs_for_ica(raw, subject, session):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
-    epochs_fname = bids_basename.copy().update(kind='epo', extension='.fif')
+    epochs_fname = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            recording=config.rec,
+                            space=config.space,
+                            kind='epo',
+                            extension='.fif',
+                            prefix=deriv_path,
+                            check=False)
     epochs = mne.read_epochs(epochs_fname)
     selection = epochs.selection
 
@@ -235,18 +237,20 @@ def run_ica(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=kind)
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
-    ica_fname = bids_basename.copy().update(kind='ica', extension='.fif')
+    ica_fname = bids_basename.copy().update(kind='ica', extension='.fif',
+                                            check=False)
     report_fname = bids_basename.copy().update(processing='ica',
                                                kind='report',
-                                               extension='.html')
+                                               extension='.html',
+                                               check=False)
 
     msg = 'Loading and concatenating filtered continuous "raw" data'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

@@ -22,7 +22,7 @@ from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
 from mne.report import Report
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -37,13 +37,15 @@ def apply_ica(subject, session):
                                                session=session,
                                                kind=kind)
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
     fname_epo_in = bids_basename.copy().update(kind='epo', extension='.fif')
     fname_epo_out = bids_basename.copy().update(kind='epo', processing='clean',

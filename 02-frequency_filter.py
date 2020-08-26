@@ -22,7 +22,7 @@ import numpy as np
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -41,16 +41,16 @@ def run_filter(subject, run=None, session=None):
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    bids_basename = make_bids_basename(subject=subject,
-                                       run=run,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path,
-                                       kind=kind)
+    bids_basename = BIDSPath(subject=subject,
+                             run=run,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             processing=config.proc,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             kind=kind)
 
     bids_er_out_basename = bids_basename.copy().update(run=None)
 

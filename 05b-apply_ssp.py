@@ -8,13 +8,12 @@ projections components are removed from the data.
 
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -31,19 +30,19 @@ def apply_ssp(subject, session=None):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path,
+                             check=False)
 
-    fname_in = bids_basename.copy().update(
-        kind='epo', extension='.fif')
-    fname_out = bids_basename.copy().update(
-        kind='epo', processing='clean', extension='.fif')
+    fname_in = bids_basename.copy().update(kind='epo', extension='.fif')
+    fname_out = bids_basename.copy().update(kind='epo', processing='clean',
+                                            extension='.fif')
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
@@ -51,8 +50,7 @@ def apply_ssp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
 
-    proj_fname_in = bids_basename.copy().update(
-        kind='proj', extension='.fif')
+    proj_fname_in = bids_basename.copy().update(kind='proj', extension='.fif')
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

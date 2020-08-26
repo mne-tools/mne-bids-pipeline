@@ -15,7 +15,7 @@ import logging
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -32,13 +32,13 @@ def run_epochs(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
     for run in config.get_runs():
         # Prepare a name to save the data
@@ -86,8 +86,8 @@ def run_epochs(subject, session=None):
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs_fname = bids_basename.copy().update(
-        kind='epo', extension='.fif')
+    epochs_fname = bids_basename.copy().update(kind='epo', extension='.fif',
+                                               check=False)
     epochs.save(epochs_fname, overwrite=True)
 
     if config.interactive:

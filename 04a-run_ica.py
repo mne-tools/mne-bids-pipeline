@@ -9,7 +9,6 @@ To actually remove designated ICA components from your data, you will have to
 run 06a-apply_ica.py.
 """
 
-import os.path as op
 import itertools
 import logging
 
@@ -18,7 +17,7 @@ from mne.report import Report
 from mne.preprocessing import ICA
 from mne.parallel import parallel_func
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -33,13 +32,13 @@ def run_ica(subject, session=None):
     deriv_path = config.get_subject_deriv_path(subject=subject,
                                                session=session,
                                                kind=config.get_kind())
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
     raw_list = list()
     msg = 'Loading filtered raw data'

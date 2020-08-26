@@ -22,7 +22,7 @@ from mne.preprocessing import read_ica
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.report import Report
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -36,14 +36,14 @@ def apply_ica(subject, run, session):
                                                session=session,
                                                kind=config.get_kind())
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       recording=config.rec,
-                                       space=config.space,
-                                       prefix=deriv_path)
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=None,
+                             recording=config.rec,
+                             space=config.space,
+                             prefix=deriv_path)
 
     fname_in = bids_basename.copy().update(
         kind='epo', extension='.fif')
@@ -62,15 +62,14 @@ def apply_ica(subject, run, session):
     logger.debug(gen_log_message(message=msg, step=5, subject=subject,
                                  session=session))
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=config.get_runs()[0],
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             run=config.get_runs()[0],
+                             processing=config.proc,
+                             recording=config.rec,
+                             space=config.space)
 
     # XXX : do we want to always take the filt?
     if config.use_maxwell_filter:

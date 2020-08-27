@@ -33,10 +33,6 @@ else:
     session = None
 
 for subject in config.get_subjects():
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     fname_in = BIDSPath(subject=subject,
                         session=session,
                         task=config.get_task(),
@@ -44,9 +40,10 @@ for subject in config.get_subjects():
                         run=None,
                         recording=config.rec,
                         space=config.space,
-                        prefix=deriv_path,
-                        kind='ave',
+                        suffix='ave',
                         extension='.fif',
+                        modality=config.get_modality(),
+                        root=config.deriv_root,
                         check=False)
 
     msg = f'Input: {fname_in}'
@@ -63,11 +60,6 @@ for idx, evokeds in all_evokeds.items():
     )  # Combine subjects
 
 subject = 'average'
-deriv_path = config.get_subject_deriv_path(subject=subject,
-                                           session=session,
-                                           kind=config.get_kind())
-if not op.exists(deriv_path):
-    os.makedirs(deriv_path)
 
 fname_out = BIDSPath(subject=subject,
                      session=session,
@@ -77,10 +69,14 @@ fname_out = BIDSPath(subject=subject,
                      processing=config.proc,
                      recording=config.rec,
                      space=config.space,
-                     prefix=deriv_path,
-                     kind='ave',
+                     suffix='ave',
                      extension='.fif',
+                     modality=config.get_modality(),
+                     root=config.deriv_root,
                      check=False)
+
+if not fname_out.fpath.parent.exists():
+    os.makedirs(fname_out.fpath.parent)
 
 msg = f'Saving grand-averaged sensor data: {fname_out}'
 logger.info(gen_log_message(message=msg, step=7, subject=subject,

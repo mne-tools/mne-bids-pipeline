@@ -22,10 +22,6 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     # compute SSP on first run of raw
     run = config.get_runs()[0]
     bids_basename = BIDSPath(subject=subject,
@@ -35,15 +31,17 @@ def run_ssp(subject, session=None):
                              run=run,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path)
+                             extension='.fif',
+                             modality=config.get_modality(),
+                             root=config.deriv_root)
 
     # Prepare a name to save the data
-    raw_fname_in = bids_basename.copy().update(
-        processing='filt', kind=config.get_kind(), extension='.fif')
+    raw_fname_in = bids_basename.copy().update(processing='filt', suffix='raw',
+                                               check=False)
 
     # when saving proj, use run=None
-    proj_fname_out = bids_basename.copy().update(
-        run=None, kind='proj', extension='.fif', check=False)
+    proj_fname_out = bids_basename.copy().update(run=None, suffix='proj',
+                                                 check=False)
 
     msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,

@@ -22,10 +22,6 @@ logger = logging.getLogger('mne-study-template')
 
 
 def morph_stc(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=config.get_task(),
@@ -33,7 +29,8 @@ def morph_stc(subject, session=None):
                              run=None,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
                              check=False)
 
     morphed_stcs = []
@@ -45,9 +42,9 @@ def morph_stc(subject, session=None):
         morph_str = 'morph2fsaverage'
 
         fname_stc = bids_basename.copy().update(
-            kind=f'{cond_str}+{inverse_str}+{hemi_str}')
+            suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
         fname_stc_fsaverage = bids_basename.copy().update(
-            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
+            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
 
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
@@ -86,10 +83,6 @@ def main():
     else:
         session = None
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=config.get_task(),
@@ -98,7 +91,8 @@ def main():
                              processing=config.proc,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
                              check=False)
 
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
@@ -111,7 +105,7 @@ def main():
         morph_str = 'morph2fsaverage'
 
         fname_stc_avg = bids_basename.copy().update(
-            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
+            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
         this_stc.save(fname_stc_avg)
 
     msg = 'Completed Step 13: Grand-average source estimates'

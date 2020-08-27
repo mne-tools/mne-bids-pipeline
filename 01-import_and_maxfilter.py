@@ -113,19 +113,17 @@ def find_bad_channels(raw, subject, session, task, run):
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
+                             task=task,
                              run=run,
+                             acquisition=config.acq,
                              processing=config.proc,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path)
+                             suffix=config.get_modality(),
+                             modality=config.get_modality(),
+                             root=config.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw,
@@ -155,7 +153,7 @@ def find_bad_channels(raw, subject, session, task, run):
 
     if config.find_noisy_channels_meg:
         auto_scores_fname = bids_basename.copy().update(
-            kind='scores', extension='.json', check=False)
+            suffix='scores', extension='.json', check=False)
         with open(auto_scores_fname, 'w') as f:
             json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
@@ -166,7 +164,8 @@ def find_bad_channels(raw, subject, session, task, run):
             plt.show()
 
     # Write the bad channels to disk.
-    bads_tsv_fname = bids_basename.copy().update(kind='bads', extension='.tsv',
+    bads_tsv_fname = bids_basename.copy().update(suffix='bads',
+                                                 extension='.tsv',
                                                  check=False)
     bads_for_tsv = []
     reasons = []
@@ -198,18 +197,17 @@ def load_data(bids_basename):
     # - sets channels types according to BIDS channels.tsv `type` column
     # - sets raw.annotations using the BIDS events.tsv
 
-    params = get_entities_from_fname(bids_basename)
-    subject = params['subject']
-    session = params['session']
+    subject = bids_basename.subject
+    session = bids_basename.session
 
     extra_params = dict()
     if config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw = read_raw_bids(bids_basename=bids_basename,
+    raw = read_raw_bids(bids_basename=bids_basename.basename,
                         bids_root=config.bids_root,
                         extra_params=extra_params,
-                        kind=config.get_kind())
+                        modality=config.get_modality())
 
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -228,7 +226,7 @@ def load_data(bids_basename):
         raw.fix_mag_coil_types()
 
     montage_name = config.eeg_template_montage
-    if config.get_kind() == 'eeg' and montage_name:
+    if config.get_modality() == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locatiions to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
@@ -240,44 +238,41 @@ def load_data(bids_basename):
 
 
 def run_maxwell_filter(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-    os.makedirs(deriv_path, exist_ok=True)
-
     if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
+    basename_in = BIDSPath(subject=subject,
+                           session=session,
+                           task=config.get_task(),
+                           acquisition=config.acq,
+                           processing=config.proc,
+                           recording=config.rec,
+                           space=config.space,
+                           suffix=config.get_modality(),
+                           modality=config.get_modality(),
+                           root=config.bids_root)
+    basename_out = basename_in.copy().update(suffix='raw',
+                                             root=config.deriv_root,
+                                             check=False)
+
+    if not basename_out.fpath.parent.exists():
+        os.makedirs(basename_out.fpath.parent)
+
     # Load dev_head_t and digitization points from reference run.
     # Re-use in all runs and for processing empty-room recording.
     reference_run = config.get_mf_reference_run()
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=reference_run,
-                             processing=config.proc,
-                             recording=config.rec,
-                             space=config.space)
-    raw = load_data(bids_basename)  # XXX Loading info would suffice!
+    # XXX Loading info would suffice!
+    basename_in.update(run=reference_run)
+    raw = load_data(basename_in)
     dev_head_t = raw.info['dev_head_t']
     dig = raw.info['dig']
-    del reference_run, raw, bids_basename
 
-    for run in config.get_runs():
-        bids_basename = BIDSPath(subject=subject,
-                                 session=session,
-                                 task=config.get_task(),
-                                 acquisition=config.acq,
-                                 run=run,
-                                 processing=config.proc,
-                                 recording=config.rec,
-                                 space=config.space,
-                                 kind=config.get_kind())
-
-        raw = load_data(bids_basename)
+    for run_idx, run in enumerate(config.get_runs()):
+        basename_in.update(run=run)
+        basename_out.update(run=run)
+        raw = load_data(basename_in)
 
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
@@ -312,9 +307,8 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss
-            raw_fname_out = (bids_basename.copy()
-                             .update(prefix=deriv_path,
-                                     processing='sss',
+            raw_fname_out = (basename_out.copy()
+                             .update(processing='sss',
                                      extension='.fif'))
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
@@ -322,9 +316,7 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session))
             raw_out = raw
-            raw_fname_out = (bids_basename.copy()
-                             .update(prefix=deriv_path,
-                                     extension='.fif'))
+            raw_fname_out = basename_out.copy().update(extension='.fif')
 
         # Save only the channel types we wish to analyze.
         # We do not rum `raw_out.pick()` here because it uses too much memory.
@@ -341,14 +333,13 @@ def run_maxwell_filter(subject, session=None):
         #
         # We pick the empty-room recording closest in time to the first run
         # of the experimental session.
-        if config.process_er:
+        if run_idx == 0 and config.process_er:
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
             bids_basename_er_in = get_matched_empty_room(
-                bids_basename=bids_basename,
-                bids_root=config.bids_root)
+                bids_basename=basename_in, bids_root=config.bids_root)
             raw_er = load_data(bids_basename_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]
@@ -384,16 +375,14 @@ def run_maxwell_filter(subject, session=None):
                     raise RuntimeError(msg)
 
                 raw_er_out = raw_er_sss
-                raw_er_fname_out = bids_basename.copy().update(
+                raw_er_fname_out = basename_out.copy().update(
                     processing='sss')
             else:
                 raw_er_out = raw_er
-                raw_er_fname_out = bids_basename.copy()
+                raw_er_fname_out = basename_out.copy()
 
-            raw_er_fname_out = raw_er_fname_out.update(prefix=deriv_path,
-                                                       task='noise',
-                                                       extension='.fif',
-                                                       run=None)
+            raw_er_fname_out = raw_er_fname_out.update(
+                task='noise', extension='.fif', run=None)
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).

@@ -243,37 +243,37 @@ def run_maxwell_filter(subject, session=None):
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
-    basename_in = BIDSPath(subject=subject,
-                           session=session,
-                           task=config.get_task(),
-                           acquisition=config.acq,
-                           processing=config.proc,
-                           recording=config.rec,
-                           space=config.space,
-                           suffix=config.get_modality(),
-                           modality=config.get_modality(),
-                           root=config.bids_root)
-    basename_out = basename_in.copy().update(suffix='raw',
-                                             root=config.deriv_root,
-                                             check=False)
+    bids_path_in = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            processing=config.proc,
+                            recording=config.rec,
+                            space=config.space,
+                            suffix=config.get_modality(),
+                            modality=config.get_modality(),
+                            root=config.bids_root)
+    bids_path_out = bids_path_in.copy().update(suffix='raw',
+                                               root=config.deriv_root,
+                                               check=False)
 
-    if not basename_out.fpath.parent.exists():
-        os.makedirs(basename_out.fpath.parent)
+    if not bids_path_out.fpath.parent.exists():
+        os.makedirs(bids_path_out.fpath.parent)
 
     # Load dev_head_t and digitization points from reference run.
     # Re-use in all runs and for processing empty-room recording.
     reference_run = config.get_mf_reference_run()
     # XXX Loading info would suffice!
-    basename_in.update(run=reference_run)
-    raw = load_data(basename_in)
+    bids_path_in.update(run=reference_run)
+    raw = load_data(bids_path_in)
     dev_head_t = raw.info['dev_head_t']
     dig = raw.info['dig']
     del reference_run, raw
 
     for run_idx, run in enumerate(config.get_runs()):
-        basename_in.update(run=run)
-        basename_out.update(run=run)
-        raw = load_data(basename_in)
+        bids_path_in.update(run=run)
+        bids_path_out.update(run=run)
+        raw = load_data(bids_path_in)
 
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
@@ -308,7 +308,7 @@ def run_maxwell_filter(subject, session=None):
 
             raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss
-            raw_fname_out = (basename_out.copy()
+            raw_fname_out = (bids_path_out.copy()
                              .update(processing='sss',
                                      extension='.fif'))
         else:
@@ -317,7 +317,7 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session))
             raw_out = raw
-            raw_fname_out = basename_out.copy().update(extension='.fif')
+            raw_fname_out = bids_path_out.copy().update(extension='.fif')
 
         # Save only the channel types we wish to analyze.
         # We do not rum `raw_out.pick()` here because it uses too much memory.
@@ -340,7 +340,7 @@ def run_maxwell_filter(subject, session=None):
                                         session=session, message=msg))
 
             bids_path_er_in = get_matched_empty_room(
-                bids_path=basename_in, bids_root=config.bids_root)
+                bids_path=bids_path_in, bids_root=config.bids_root)
             raw_er = load_data(bids_path_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]
@@ -376,11 +376,11 @@ def run_maxwell_filter(subject, session=None):
                     raise RuntimeError(msg)
 
                 raw_er_out = raw_er_sss
-                raw_er_fname_out = basename_out.copy().update(
+                raw_er_fname_out = bids_path_out.copy().update(
                     processing='sss')
             else:
                 raw_er_out = raw_er
-                raw_er_fname_out = basename_out.copy()
+                raw_er_fname_out = bids_path_out.copy()
 
             raw_er_fname_out = raw_er_fname_out.update(
                 task='noise', extension='.fif', run=None)

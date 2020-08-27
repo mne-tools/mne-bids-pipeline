@@ -22,16 +22,16 @@ logger = logging.getLogger('mne-study-template')
 
 
 def morph_stc(subject, session=None):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     morphed_stcs = []
     for condition in config.conditions:
@@ -41,9 +41,9 @@ def morph_stc(subject, session=None):
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph2fsaverage'
 
-        fname_stc = bids_basename.copy().update(
+        fname_stc = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
-        fname_stc_fsaverage = bids_basename.copy().update(
+        fname_stc_fsaverage = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
 
         stc = mne.read_source_estimate(fname_stc)
@@ -83,17 +83,17 @@ def main():
     else:
         session = None
 
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             processing=config.proc,
-                             recording=config.rec,
-                             space=config.space,
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         processing=config.proc,
+                         recording=config.rec,
+                         space=config.space,
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
@@ -104,7 +104,7 @@ def main():
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph2fsaverage'
 
-        fname_stc_avg = bids_basename.copy().update(
+        fname_stc_avg = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
         this_stc.save(fname_stc_avg)
 

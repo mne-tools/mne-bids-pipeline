@@ -22,28 +22,28 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
-    fname_evoked = bids_basename.copy().update(suffix='ave')
-    fname_trans = bids_basename.copy().update(suffix='trans')
-    fname_fwd = bids_basename.copy().update(suffix='fwd')
+    fname_evoked = bids_path.copy().update(suffix='ave')
+    fname_trans = bids_path.copy().update(suffix='trans')
+    fname_fwd = bids_path.copy().update(suffix='fwd')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
     # Find the raw data file
     trans = get_head_mri_trans(
-        bids_basename=(bids_basename.copy().update(run=config.get_runs()[0])),
+        bids_path=(bids_path.copy().update(run=config.get_runs()[0])),
         bids_root=config.bids_root)
 
     mne.write_trans(fname_trans, trans)

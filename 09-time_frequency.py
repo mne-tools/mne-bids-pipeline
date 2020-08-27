@@ -32,23 +32,23 @@ n_cycles = freqs / 3.
 
 @failsafe_run(on_error=on_error)
 def run_time_frequency(subject, session=None):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     processing = None
     if config.use_ica or config.use_ssp:
         processing = 'clean'
 
-    fname_in = bids_basename.copy().update(suffix='epo', processing=processing,
-                                           extension='.fif')
+    fname_in = bids_path.copy().update(suffix='epo', processing=processing,
+                                       extension='.fif')
 
     msg = f'Input: {fname_in}'
     logger.info(gen_log_message(message=msg, step=9, subject=subject,
@@ -62,9 +62,9 @@ def run_time_frequency(subject, session=None):
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
         condition_str = condition.replace(op.sep, '').replace('_', '')
-        power_fname_out = bids_basename.copy().update(
+        power_fname_out = bids_path.copy().update(
             suffix=f'power+{condition_str}+tfr', extension='.h5')
-        itc_fname_out = bids_basename.copy().update(
+        itc_fname_out = bids_path.copy().update(
             suffix=f'itc+{condition_str}+tfr', extension='.h5')
 
         power.save(power_fname_out, overwrite=True)

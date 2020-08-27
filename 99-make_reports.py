@@ -24,21 +24,21 @@ logger = logging.getLogger('mne-study-template')
 
 def plot_events(subject, session):
     raws_filt = []
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             recording=config.rec,
-                             space=config.space,
-                             processing='filt',
-                             suffix='raw',
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         recording=config.rec,
+                         space=config.space,
+                         processing='filt',
+                         suffix='raw',
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     for run in config.get_runs():
-        fname = bids_basename.copy().update(run=run)
+        fname = bids_path.copy().update(run=run)
         raw_filt = mne.io.read_raw_fif(fname)
         raws_filt.append(raw_filt)
         del fname
@@ -54,25 +54,25 @@ def plot_events(subject, session):
 
 
 def plot_er_psd(subject, session):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             task='noise',
-                             processing='filt',
-                             suffix='raw',
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         task='noise',
+                         processing='filt',
+                         suffix='raw',
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw_er_filtered = mne.io.read_raw_fif(bids_basename, preload=True,
+    raw_er_filtered = mne.io.read_raw_fif(bids_path, preload=True,
                                           **extra_params)
 
     fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
@@ -116,20 +116,20 @@ def plot_auto_scores(subject, session):
 
 
 def run_report(subject, session=None):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
-    fname_ave = bids_basename.copy().update(suffix='ave')
-    fname_trans = bids_basename.copy().update(suffix='trans')
+    fname_ave = bids_path.copy().update(suffix='ave')
+    fname_trans = bids_path.copy().update(suffix='trans')
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
 
@@ -209,7 +209,7 @@ def run_report(subject, session=None):
             inverse_str = '%s' % method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
-            fname_stc = bids_basename.copy().update(
+            fname_stc = bids_path.copy().update(
                 suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
 
             if op.exists(str(fname_stc) + "-lh.stc"):
@@ -258,8 +258,7 @@ def run_report(subject, session=None):
                                          '(after filtering)',
                                 section='Empty-Room')
 
-    fname_report = bids_basename.copy().update(
-        suffix='report', extension='.html')
+    fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 

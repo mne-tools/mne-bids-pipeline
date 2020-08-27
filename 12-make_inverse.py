@@ -24,22 +24,22 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_inverse(subject, session=None):
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
-    fname_ave = bids_basename.copy().update(suffix='ave')
-    fname_fwd = bids_basename.copy().update(suffix='fwd')
-    fname_cov = bids_basename.copy().update(suffix='cov')
-    fname_inv = bids_basename.copy().update(suffix='inv')
+    fname_ave = bids_path.copy().update(suffix='ave')
+    fname_fwd = bids_path.copy().update(suffix='fwd')
+    fname_cov = bids_path.copy().update(suffix='cov')
+    fname_inv = bids_path.copy().update(suffix='inv')
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -60,7 +60,7 @@ def run_inverse(subject, session=None):
         cond_str = condition.replace(op.sep, '').replace('_', '')
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        fname_stc = bids_basename.copy().update(
+        fname_stc = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
             extension=None)
 

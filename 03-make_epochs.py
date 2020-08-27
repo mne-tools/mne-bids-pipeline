@@ -28,20 +28,20 @@ logger = logging.getLogger('mne-study-template')
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
     raw_list = list()
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             recording=config.rec,
-                             space=config.space,
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root)
 
     for run in config.get_runs():
         # Prepare a name to save the data
-        raw_fname_in = bids_basename.copy().update(run=run, processing='filt',
-                                                   suffix='raw', check=False)
+        raw_fname_in = bids_path.copy().update(run=run, processing='filt',
+                                               suffix='raw', check=False)
 
         msg = f'Loading filtered raw data from {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
@@ -82,7 +82,7 @@ def run_epochs(subject, session=None):
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs_fname = bids_basename.copy().update(suffix='epo', check=False)
+    epochs_fname = bids_path.copy().update(suffix='epo', check=False)
     epochs.save(epochs_fname, overwrite=True)
 
     if config.interactive:

@@ -37,34 +37,31 @@ def run_filter(subject, run=None, session=None):
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    bids_basename = BIDSPath(subject=subject,
-                             run=run,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             processing=config.proc,
-                             recording=config.rec,
-                             space=config.space,
-                             suffix='raw',
-                             extension='.fif',
-                             modality=config.get_modality(),
-                             root=config.deriv_root,
-                             check=False)
-
-    bids_er_out_basename = bids_basename.copy().update(run=None)
+    bids_path = BIDSPath(subject=subject,
+                         run=run,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         processing=config.proc,
+                         recording=config.rec,
+                         space=config.space,
+                         suffix='raw',
+                         extension='.fif',
+                         modality=config.get_modality(),
+                         root=config.deriv_root,
+                         check=False)
 
     # Prepare a name to save the data
-    raw_fname_in = bids_basename.copy()
-    raw_er_fname_in = bids_basename.copy().update(task='noise', run=None)
+    raw_fname_in = bids_path.copy()
+    raw_er_fname_in = bids_path.copy().update(task='noise', run=None)
 
     if config.use_maxwell_filter:
         raw_fname_in = raw_fname_in.update(processing='sss')
         raw_er_fname_in = raw_er_fname_in.update(processing='sss')
 
-    raw_fname_out = bids_basename.copy().update(
-        processing='filt', extension='.fif')
-    raw_er_fname_out = bids_er_out_basename.copy().update(
-        processing='filt', task='noise', extension='.fif')
+    raw_fname_out = bids_path.copy().update(processing='filt')
+    raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
+                                               task='noise')
 
     msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,

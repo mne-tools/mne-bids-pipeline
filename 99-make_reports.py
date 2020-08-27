@@ -22,7 +22,7 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-def plot_events(subject, session, deriv_path):
+def plot_events(subject, session):
     raws_filt = []
     bids_basename = BIDSPath(subject=subject,
                              session=session,
@@ -30,10 +30,12 @@ def plot_events(subject, session, deriv_path):
                              acquisition=config.acq,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
-                             kind=config.get_kind(),
                              processing='filt',
-                             extension='.fif')
+                             suffix='raw',
+                             extension='.fif',
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
+                             check=False)
 
     for run in config.get_runs():
         fname = bids_basename.copy().update(run=run)
@@ -52,21 +54,19 @@ def plot_events(subject, session, deriv_path):
 
 
 def plot_er_psd(subject, session):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              acquisition=config.acq,
                              run=None,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
-                             kind=config.get_kind(),
                              task='noise',
                              processing='filt',
-                             extension='.fif')
+                             suffix='raw',
+                             extension='.fif',
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
+                             check=False)
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:
@@ -85,10 +85,6 @@ def plot_auto_scores(subject, session):
     """
     import json_tricks
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     fname_scores = BIDSPath(subject=subject,
                             session=session,
                             task=config.get_task(),
@@ -97,9 +93,10 @@ def plot_auto_scores(subject, session):
                             processing=config.proc,
                             recording=config.rec,
                             space=config.space,
-                            kind='scores',
+                            suffix='scores',
                             extension='.json',
-                            prefix=deriv_path,
+                            modality=config.get_modality(),
+                            root=config.deriv_root,
                             check=False)
 
     all_figs = []
@@ -119,10 +116,6 @@ def plot_auto_scores(subject, session):
 
 
 def run_report(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=config.get_task(),
@@ -130,11 +123,13 @@ def run_report(subject, session=None):
                              run=None,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
+                             extension='.fif',
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
                              check=False)
 
-    fname_ave = bids_basename.copy().update(kind='ave', extension='.fif')
-    fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')
+    fname_ave = bids_basename.copy().update(suffix='ave')
+    fname_trans = bids_basename.copy().update(suffix='trans')
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
 
@@ -143,7 +138,8 @@ def run_report(subject, session=None):
         params['subjects_dir'] = subjects_dir
 
     rep = mne.Report(**params)
-    rep.parse_folder(deriv_path, verbose=True)
+    # XXX Needs fix upstream: support Path so we don't have to cast to string
+    rep.parse_folder(str(fname_ave.fpath.parent), verbose=True)
 
     # Visualize automated noisy channel detection.
     if config.find_noisy_channels_meg:
@@ -153,8 +149,7 @@ def run_report(subject, session=None):
                                 section='Data Quality')
 
     # Visualize events.
-    events_fig = plot_events(subject=subject, session=session,
-                             deriv_path=deriv_path)
+    events_fig = plot_events(subject=subject, session=session)
     rep.add_figs_to_section(figs=events_fig,
                             captions='Events in filtered continuous data',
                             section='Events')
@@ -215,7 +210,7 @@ def run_report(subject, session=None):
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
             fname_stc = bids_basename.copy().update(
-                kind=f'{cond_str}+{inverse_str}+{hemi_str}')
+                suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
 
             if op.exists(str(fname_stc) + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -264,7 +259,7 @@ def run_report(subject, session=None):
                                 section='Empty-Room')
 
     fname_report = bids_basename.copy().update(
-        kind='report', extension='.html')
+        suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
 
@@ -286,9 +281,6 @@ def main():
     else:
         session = None
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
                             task=config.get_task(),
@@ -296,15 +288,15 @@ def main():
                             run=None,
                             recording=config.rec,
                             space=config.space,
-                            prefix=deriv_path,
-                            kind='ave',
+                            suffix='ave',
                             extension='.fif',
+                            modality=config.get_modality(),
+                            root=config.deriv_root,
                             check=False)
 
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
-    deriv_path = config.deriv_root
     subjects_dir = config.get_fs_subjects_dir()
 
     method = config.inverse_method
@@ -347,7 +339,7 @@ def main():
 
         section = 'Source'
         fname_stc_avg = evoked_fname.copy().update(
-            kind=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
+            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
             extension=None)
 
         if op.exists(str(fname_stc_avg) + "-lh.stc"):
@@ -385,7 +377,7 @@ def main():
             del peak_time
 
     fname_report = evoked_fname.copy().update(
-        task=config.get_task(), kind='report', extension='.html')
+        task=config.get_task(), suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'

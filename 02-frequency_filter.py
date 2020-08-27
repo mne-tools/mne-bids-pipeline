@@ -32,10 +32,6 @@ logger = logging.getLogger('mne-study-template')
 
 def run_filter(subject, run=None, session=None):
     """Filter data from a single subject."""
-    kind = config.get_kind()
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=kind)
 
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -49,15 +45,17 @@ def run_filter(subject, run=None, session=None):
                              processing=config.proc,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
-                             kind=kind)
+                             suffix='raw',
+                             extension='.fif',
+                             modality=config.get_modality(),
+                             root=config.deriv_root,
+                             check=False)
 
     bids_er_out_basename = bids_basename.copy().update(run=None)
 
     # Prepare a name to save the data
-    raw_fname_in = bids_basename.copy().update(extension='.fif')
-    raw_er_fname_in = bids_basename.copy().update(
-        task='noise', run=None, extension='.fif')
+    raw_fname_in = bids_basename.copy()
+    raw_er_fname_in = bids_basename.copy().update(task='noise', run=None)
 
     if config.use_maxwell_filter:
         raw_fname_in = raw_fname_in.update(processing='sss')

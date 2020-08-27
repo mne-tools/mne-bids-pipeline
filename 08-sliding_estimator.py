@@ -39,10 +39,6 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     logger.info(gen_log_message(message=msg, step=8, subject=subject,
                                 session=session))
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     fname_in = BIDSPath(subject=subject,
                         session=session,
                         task=config.get_task(),
@@ -50,9 +46,10 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                         run=None,
                         recording=config.rec,
                         space=config.space,
-                        prefix=deriv_path,
-                        kind='epo',
+                        suffix='epo',
                         extension='.fif',
+                        modality=config.get_modality(),
+                        root=config.deriv_root,
                         check=False)
 
     epochs = mne.read_epochs(fname_in)
@@ -79,7 +76,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '')
     processing = f'{a_vs_b}+{config.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
-    fname_td = fname_in.copy().update(kind='decoding',
+    fname_td = fname_in.copy().update(suffix='decoding',
                                       processing=processing,
                                       extension='.mat')
     savemat(fname_td, {'scores': scores, 'times': epochs.times})

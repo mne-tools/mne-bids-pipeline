@@ -204,7 +204,7 @@ def load_data(bids_basename):
     if config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw = read_raw_bids(bids_basename=bids_basename.basename,
+    raw = read_raw_bids(bids_path=bids_basename.basename,
                         bids_root=config.bids_root,
                         extra_params=extra_params,
                         modality=config.get_modality())
@@ -340,7 +340,7 @@ def run_maxwell_filter(subject, session=None):
                                         session=session, message=msg))
 
             bids_basename_er_in = get_matched_empty_room(
-                bids_basename=basename_in, bids_root=config.bids_root)
+                bids_path=basename_in, bids_root=config.bids_root)
             raw_er = load_data(bids_basename_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]

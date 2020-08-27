@@ -268,6 +268,7 @@ def run_maxwell_filter(subject, session=None):
     raw = load_data(basename_in)
     dev_head_t = raw.info['dev_head_t']
     dig = raw.info['dig']
+    del reference_run, raw
 
     for run_idx, run in enumerate(config.get_runs()):
         basename_in.update(run=run)

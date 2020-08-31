@@ -204,9 +204,7 @@ def load_data(bids_path):
         extra_params['allow_maxshield'] = config.allow_maxshield
 
     raw = read_raw_bids(bids_path=bids_path.basename,
-                        bids_root=config.bids_root,
-                        extra_params=extra_params,
-                        datatype=config.get_datatype())
+                        extra_params=extra_params)
 
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)

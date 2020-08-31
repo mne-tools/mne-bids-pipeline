@@ -22,7 +22,7 @@ conditions = ['61510', '61511']
 contrasts = [('61510', '61511')]
 decode = True
 use_ssp = False
-use_ica = True
+use_ica = False
 
 subjects_list = ['01']
 sessions = ['anodalpre']

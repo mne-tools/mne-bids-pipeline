@@ -47,7 +47,7 @@ def run_filter(subject, run=None, session=None):
                          space=config.space,
                          suffix='raw',
                          extension='.fif',
-                         modality=config.get_datatype(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 

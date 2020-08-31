@@ -121,7 +121,7 @@ def find_bad_channels(raw, subject, session, task, run):
                          recording=config.rec,
                          space=config.space,
                          suffix=config.get_datatype(),
-                         modality=config.get_datatype(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
@@ -206,7 +206,7 @@ def load_data(bids_path):
     raw = read_raw_bids(bids_path=bids_path.basename,
                         bids_root=config.bids_root,
                         extra_params=extra_params,
-                        modality=config.get_datatype())
+                        datatype=config.get_datatype())
 
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -250,7 +250,7 @@ def run_maxwell_filter(subject, session=None):
                             recording=config.rec,
                             space=config.space,
                             suffix=config.get_datatype(),
-                            modality=config.get_datatype(),
+                            datatype=config.get_datatype(),
                             root=config.bids_root)
     bids_path_out = bids_path_in.copy().update(suffix='raw',
                                                root=config.deriv_root,

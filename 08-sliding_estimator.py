@@ -48,7 +48,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                         space=config.space,
                         suffix='epo',
                         extension='.fif',
-                        modality=config.get_modality(),
+                        modality=config.get_datatype(),
                         root=config.deriv_root,
                         check=False)
 

@@ -39,7 +39,7 @@ def run_time_frequency(subject, session=None):
                          run=None,
                          recording=config.rec,
                          space=config.space,
-                         modality=config.get_modality(),
+                         modality=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 

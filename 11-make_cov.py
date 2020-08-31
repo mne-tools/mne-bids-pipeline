@@ -29,7 +29,7 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         modality=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -60,7 +60,7 @@ def compute_cov_from_empty_room(subject, session):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         modality=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 

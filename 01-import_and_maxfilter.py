@@ -121,8 +121,8 @@ def find_bad_channels(raw, subject, session, task, run):
                          processing=config.proc,
                          recording=config.rec,
                          space=config.space,
-                         suffix=config.get_modality(),
-                         modality=config.get_modality(),
+                         suffix=config.get_datatype(),
+                         modality=config.get_datatype(),
                          root=config.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
@@ -207,7 +207,7 @@ def load_data(bids_path):
     raw = read_raw_bids(bids_path=bids_path.basename,
                         bids_root=config.bids_root,
                         extra_params=extra_params,
-                        modality=config.get_modality())
+                        modality=config.get_datatype())
 
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -226,7 +226,7 @@ def load_data(bids_path):
         raw.fix_mag_coil_types()
 
     montage_name = config.eeg_template_montage
-    if config.get_modality() == 'eeg' and montage_name:
+    if config.get_datatype() == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locatiions to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
@@ -250,8 +250,8 @@ def run_maxwell_filter(subject, session=None):
                             processing=config.proc,
                             recording=config.rec,
                             space=config.space,
-                            suffix=config.get_modality(),
-                            modality=config.get_modality(),
+                            suffix=config.get_datatype(),
+                            modality=config.get_datatype(),
                             root=config.bids_root)
     bids_path_out = bids_path_in.copy().update(suffix='raw',
                                                root=config.deriv_root,

@@ -43,8 +43,7 @@ def run_forward(subject, session=None):
                                 session=session))
     # Find the raw data file
     trans = get_head_mri_trans(
-        bids_path=(bids_path.copy().update(run=config.get_runs()[0])),
-        bids_root=config.bids_root)
+        bids_path=(bids_path.copy().update(run=config.get_runs()[0])))
 
     mne.write_trans(fname_trans, trans)
 

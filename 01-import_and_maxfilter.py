@@ -203,7 +203,7 @@ def load_data(bids_path):
     if config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw = read_raw_bids(bids_path=bids_path.basename,
+    raw = read_raw_bids(bids_path=bids_path,
                         extra_params=extra_params)
 
     if config.daysback is not None:

@@ -41,10 +41,9 @@ import json_tricks
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
-from mne_bids import BIDSPath, read_raw_bids, get_matched_empty_room
+from mne_bids import BIDSPath, read_raw_bids
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
-from mne_bids.path import get_entities_from_fname
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -339,8 +338,7 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
-            bids_path_er_in = get_matched_empty_room(
-                bids_path=bids_path_in, bids_root=config.bids_root)
+            bids_path_er_in = bids_path_in.find_empty_room()
             raw_er = load_data(bids_path_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]

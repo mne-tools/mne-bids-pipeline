@@ -22,33 +22,32 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_forward(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             prefix=deriv_path,
-                             check=False)
-
-    fname_evoked = bids_basename.copy().update(kind='ave', extension='.fif')
-    fname_trans = bids_basename.copy().update(kind='trans', extension='.fif')
-    fname_fwd = bids_basename.copy().update(kind='fwd', extension='.fif')
+    fname_evoked = bids_path.copy().update(suffix='ave')
+    fname_trans = bids_path.copy().update(suffix='trans')
+    fname_fwd = bids_path.copy().update(suffix='fwd')
 
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
-    # Find the raw data file
-    trans = get_head_mri_trans(
-        bids_basename=(bids_basename.copy()
-                       .update(run=config.get_runs()[0], prefix=None)),
-        bids_root=config.bids_root)
 
+    # Retrieve the head -> MRI transformation matrix from the MRI sidecar file
+    # in the input data, and save it to an MNE "trans" file in the derivatives
+    # folder.
+    trans = get_head_mri_trans(bids_path.copy().update(
+        run=config.get_runs()[0],
+        root=config.bids_root))
     mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,

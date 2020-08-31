@@ -964,6 +964,7 @@ if noise_cov == 'emptyroom' and not process_er:
            'enable empty-room data processing. Please set process_er = True')
     raise ValueError(msg)
 
+
 ###############################################################################
 # Helper functions
 # ----------------
@@ -1033,7 +1034,7 @@ def get_task():
         return task
 
 
-def get_kind():
+def get_datatype():
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
     if ch_types == ['eeg']:
@@ -1047,9 +1048,9 @@ def get_reject():
         return dict()
 
     reject_ = reject.copy()  # Avoid clash with global variable.
-    kind = get_kind()
+    modality = get_datatype()
 
-    if kind == 'eeg':
+    if modality == 'eeg':
         ch_types_to_remove = ('mag', 'grad')
     else:
         ch_types_to_remove = ('eeg',)
@@ -1067,21 +1068,6 @@ def get_fs_subjects_dir():
         return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
     else:
         return subjects_dir
-
-
-def get_subject_path(subject, session, kind):
-    subject_path = f'sub-{subject}'
-    if session is not None:
-        subject_path = os.path.join(subject_path, f'ses-{session}')
-    subject_path = os.path.join(subject_path, kind)
-    return subject_path
-
-
-def get_subject_deriv_path(subject, session, kind):
-    subject_path = get_subject_path(subject=subject, session=session,
-                                    kind=kind)
-    deriv_path = os.path.join(deriv_root, subject_path)
-    return deriv_path
 
 
 def gen_log_message(message, step=None, subject=None, session=None, run=None):
@@ -1150,25 +1136,27 @@ def plot_auto_scores(auto_scores):
                       for start, stop in bins]
 
         # We store the data in a Pandas DataFrame. The seaborn heatmap function
-        # we will call below will then be able to automatically assign the correct
-        # labels to all axes.
+        # we will call below will then be able to automatically assign the
+        # correct labels to all axes.
         data_to_plot = pd.DataFrame(data=scores,
-                                    columns=pd.Index(bin_labels, name='Time (s)'),
+                                    columns=pd.Index(bin_labels,
+                                                     name='Time (s)'),
                                     index=pd.Index(ch_names, name='Channel'))
 
         # First, plot the "raw" scores.
         fig, ax = plt.subplots(1, 2, figsize=(12, 8))
         fig.suptitle(f'Automated noisy channel detection: {ch_type}',
                      fontsize=16, fontweight='bold')
-        sns.heatmap(data=data_to_plot, cmap='Reds', cbar_kws=dict(label='Score'),
-                    ax=ax[0])
+        sns.heatmap(data=data_to_plot, cmap='Reds',
+                    cbar_kws=dict(label='Score'), ax=ax[0])
         [ax[0].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
             for x in range(1, len(bins))]
         ax[0].set_title('All Scores', fontweight='bold')
 
-        # Now, adjust the color range to highlight segments that exceeded the limit.
+        # Now, adjust the color range to highlight segments that exceeded the
+        # limit.
         sns.heatmap(data=data_to_plot,
-                    vmin=np.nanmin(limits),  # bads in input data have NaN limits
+                    vmin=np.nanmin(limits),  # input data may contain NaNs
                     cmap='Reds', cbar_kws=dict(label='Score'), ax=ax[1])
         [ax[1].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
             for x in range(1, len(bins))]
@@ -1186,17 +1174,18 @@ def get_channels_to_analyze(info):
 
     We also include channels marked as "bad" here.
     """
-    if get_kind() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
+    # `exclude=[]`: keep "bad" channels, too.
+    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
             pick_idx += mne.pick_types(info, meg='mag', exclude=[])
         if 'grad' in ch_types:
-            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
-    elif get_kind() == 'meg':
+            pick_idx += mne.pick_types(info, meg='grad')
+    elif get_datatype() == 'meg':
         pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
                                   exclude=[])
-    else:  # EEG
+    else:
         pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True,
                                   exclude=[])
 

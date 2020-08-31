@@ -26,23 +26,20 @@ def apply_ssp(subject, session=None):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
 
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root)
 
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             prefix=deriv_path,
-                             check=False)
-
-    fname_in = bids_basename.copy().update(kind='epo', extension='.fif')
-    fname_out = bids_basename.copy().update(kind='epo', processing='clean',
-                                            extension='.fif')
+    fname_in = bids_path.copy().update(suffix='epo', check=False)
+    fname_out = bids_path.copy().update(processing='clean', suffix='epo',
+                                        check=False)
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
@@ -50,7 +47,7 @@ def apply_ssp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
 
-    proj_fname_in = bids_basename.copy().update(kind='proj', extension='.fif')
+    proj_fname_in = bids_path.copy().update(suffix='proj', check=False)
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

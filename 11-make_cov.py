@@ -20,28 +20,25 @@ logger = logging.getLogger('mne-study-template')
 
 
 def compute_cov_from_epochs(subject, session, tmin, tmax):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             processing=config.proc,
-                             recording=config.rec,
-                             space=config.space,
-                             prefix=deriv_path,
-                             check=False)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         processing=config.proc,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
     processing = None
     if config.use_ica or config.use_ssp:
         processing = 'clean'
 
-    epo_fname = bids_basename.copy().update(
-        kind='epo', processing=processing, extension='.fif')
-    cov_fname = bids_basename.copy().update(kind='cov', extension='.fif')
+    epo_fname = bids_path.copy().update(processing=processing, suffix='epo')
+    cov_fname = bids_path.copy().update(suffix='cov')
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname}, Output: {cov_fname}")
@@ -55,24 +52,21 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
 
 
 def compute_cov_from_empty_room(subject, session):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             prefix=deriv_path,
-                             check=False)
-
-    raw_er_fname = bids_basename.copy().update(
-        kind=config.get_kind(), task='noise', processing='filt',
-        extension='.fif')
-    cov_fname = bids_basename.copy().update(kind='cov', extension='.fif')
+    raw_er_fname = bids_path.copy().update(processing='filt', task='noise',
+                                           suffix='raw')
+    cov_fname = bids_path.copy().update(suffix='cov')
 
     extra_params = dict()
     if not config.use_maxwell_filter and config.allow_maxshield:

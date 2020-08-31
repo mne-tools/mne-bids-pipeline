@@ -22,28 +22,26 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
-
     # compute SSP on first run of raw
     run = config.get_runs()[0]
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
-                             run=run,
-                             recording=config.rec,
-                             space=config.space,
-                             prefix=deriv_path)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=run,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root)
 
     # Prepare a name to save the data
-    raw_fname_in = bids_basename.copy().update(
-        processing='filt', kind=config.get_kind(), extension='.fif')
+    raw_fname_in = bids_path.copy().update(processing='filt', suffix='raw',
+                                           check=False)
 
     # when saving proj, use run=None
-    proj_fname_out = bids_basename.copy().update(
-        run=None, kind='proj', extension='.fif', check=False)
+    proj_fname_out = bids_path.copy().update(run=None, suffix='proj',
+                                             check=False)
 
     msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -54,13 +52,13 @@ def run_ssp(subject, session=None):
     msg = 'Computing SSPs for ECG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    ecg_projs, ecg_events = \
-        compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0, average=True)
+    ecg_projs, ecg_events = compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0,
+                                             average=True)
     msg = 'Computing SSPs for EOG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    eog_projs, eog_events = \
-        compute_proj_eog(raw, n_grad=1, n_mag=1, n_eeg=1, average=True)
+    eog_projs, eog_events = compute_proj_eog(raw, n_grad=1, n_mag=1,
+                                             n_eeg=1, average=True)
 
     mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
 

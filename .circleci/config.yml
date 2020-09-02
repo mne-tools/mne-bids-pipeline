@@ -132,9 +132,9 @@ jobs:
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
-            name: test somato
+            name: test ds003104
             command: |
-               export DS=somato
+               export DS=ds003104
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*_report.html ~/reports/${DS}/

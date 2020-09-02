@@ -32,7 +32,7 @@ def run_ssp(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root)
 
     # Prepare a name to save the data

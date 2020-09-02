@@ -30,7 +30,7 @@ def run_forward(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -41,11 +41,13 @@ def run_forward(subject, session=None):
     msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
-    # Find the raw data file
-    trans = get_head_mri_trans(
-        bids_path=(bids_path.copy().update(run=config.get_runs()[0])),
-        bids_root=config.bids_root)
 
+    # Retrieve the head -> MRI transformation matrix from the MRI sidecar file
+    # in the input data, and save it to an MNE "trans" file in the derivatives
+    # folder.
+    trans = get_head_mri_trans(bids_path.copy().update(
+        run=config.get_runs()[0],
+        root=config.bids_root))
     mne.write_trans(fname_trans, trans)
 
     src = mne.setup_source_space(subject, spacing=config.spacing,

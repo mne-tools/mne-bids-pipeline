@@ -41,10 +41,9 @@ import json_tricks
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
-from mne_bids import BIDSPath, read_raw_bids, get_matched_empty_room
+from mne_bids import BIDSPath, read_raw_bids
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
-from mne_bids.path import get_entities_from_fname
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -121,8 +120,8 @@ def find_bad_channels(raw, subject, session, task, run):
                          processing=config.proc,
                          recording=config.rec,
                          space=config.space,
-                         suffix=config.get_modality(),
-                         modality=config.get_modality(),
+                         suffix=config.get_datatype(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
@@ -204,10 +203,8 @@ def load_data(bids_path):
     if config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw = read_raw_bids(bids_path=bids_path.basename,
-                        bids_root=config.bids_root,
-                        extra_params=extra_params,
-                        modality=config.get_modality())
+    raw = read_raw_bids(bids_path=bids_path,
+                        extra_params=extra_params)
 
     if config.daysback is not None:
         raw.anonymize(daysback=config.daysback)
@@ -226,7 +223,7 @@ def load_data(bids_path):
         raw.fix_mag_coil_types()
 
     montage_name = config.eeg_template_montage
-    if config.get_modality() == 'eeg' and montage_name:
+    if config.get_datatype() == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locatiions to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
@@ -250,8 +247,8 @@ def run_maxwell_filter(subject, session=None):
                             processing=config.proc,
                             recording=config.rec,
                             space=config.space,
-                            suffix=config.get_modality(),
-                            modality=config.get_modality(),
+                            suffix=config.get_datatype(),
+                            datatype=config.get_datatype(),
                             root=config.bids_root)
     bids_path_out = bids_path_in.copy().update(suffix='raw',
                                                root=config.deriv_root,
@@ -339,8 +336,7 @@ def run_maxwell_filter(subject, session=None):
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
-            bids_path_er_in = get_matched_empty_room(
-                bids_path=bids_path_in, bids_root=config.bids_root)
+            bids_path_er_in = bids_path_in.find_empty_room()
             raw_er = load_data(bids_path_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]

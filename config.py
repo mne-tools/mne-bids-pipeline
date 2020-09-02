@@ -997,7 +997,7 @@ def get_task():
         return task
 
 
-def get_modality():
+def get_datatype():
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
     if ch_types == ['eeg']:
@@ -1008,7 +1008,7 @@ def get_modality():
 
 def get_reject():
     reject_ = reject.copy()  # Avoid clash with global variable.
-    modality = get_modality()
+    modality = get_datatype()
 
     if modality == 'eeg':
         ch_types_to_remove = ('mag', 'grad')
@@ -1132,14 +1132,14 @@ def plot_auto_scores(auto_scores):
 def get_picks(info):
     """Return the names of the channels we wish to analyze.
     """
-    if get_modality() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
+    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True)
 
         if 'mag' in ch_types:
             pick_idx += mne.pick_types(info, meg='mag')
         if 'grad' in ch_types:
             pick_idx += mne.pick_types(info, meg='grad')
-    elif get_modality() == 'meg':
+    elif get_datatype() == 'meg':
         pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True)
     else:
         pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True)

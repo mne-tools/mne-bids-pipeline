@@ -30,7 +30,7 @@ def run_evoked(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root)
 
     processing = None

@@ -33,7 +33,7 @@ def plot_events(subject, session):
                          processing='filt',
                          suffix='raw',
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -64,7 +64,7 @@ def plot_er_psd(subject, session):
                          processing='filt',
                          suffix='raw',
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -95,7 +95,7 @@ def plot_auto_scores(subject, session):
                             space=config.space,
                             suffix='scores',
                             extension='.json',
-                            modality=config.get_modality(),
+                            datatype=config.get_datatype(),
                             root=config.deriv_root,
                             check=False)
 
@@ -124,7 +124,7 @@ def run_report(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          extension='.fif',
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -288,7 +288,7 @@ def main():
                             space=config.space,
                             suffix='ave',
                             extension='.fif',
-                            modality=config.get_modality(),
+                            datatype=config.get_datatype(),
                             root=config.deriv_root,
                             check=False)
 

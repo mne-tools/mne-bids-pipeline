@@ -29,7 +29,7 @@ def morph_stc(subject, session=None):
                          run=None,
                          recording=config.rec,
                          space=config.space,
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 
@@ -91,7 +91,7 @@ def main():
                          processing=config.proc,
                          recording=config.rec,
                          space=config.space,
-                         modality=config.get_modality(),
+                         datatype=config.get_datatype(),
                          root=config.deriv_root,
                          check=False)
 

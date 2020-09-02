@@ -42,7 +42,7 @@ for subject in config.get_subjects():
                         space=config.space,
                         suffix='ave',
                         extension='.fif',
-                        modality=config.get_modality(),
+                        datatype=config.get_datatype(),
                         root=config.deriv_root,
                         check=False)
 
@@ -71,7 +71,7 @@ fname_out = BIDSPath(subject=subject,
                      space=config.space,
                      suffix='ave',
                      extension='.fif',
-                     modality=config.get_modality(),
+                     datatype=config.get_datatype(),
                      root=config.deriv_root,
                      check=False)
 

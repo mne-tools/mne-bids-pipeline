@@ -34,11 +34,6 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def apply_ica(subject, session):
-    kind = config.get_kind()
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=kind)
-
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=config.get_task(),
@@ -46,15 +41,16 @@ def apply_ica(subject, session):
                              run=None,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path,
+                             datatype=config.get_datatype(),
+                             root=config.deriv_root,
                              check=False)
 
-    fname_epo_in = bids_basename.copy().update(kind='epo', extension='.fif')
-    fname_epo_out = bids_basename.copy().update(kind='epo', processing='clean',
-                                                extension='.fif')
-    fname_ica = bids_basename.copy().update(kind='ica', extension='.fif')
+    fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')
+    fname_epo_out = bids_basename.copy().update(
+        suffix='epo', processing='clean', extension='.fif')
+    fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
     fname_ica_components = bids_basename.copy().update(
-        processing='ica', kind='components', extension='.tsv')
+        processing='ica', suffix='components', extension='.tsv')
 
     # Load epochs to reject ICA components.
     epochs = mne.read_epochs(fname_epo_in, preload=True)
@@ -64,7 +60,7 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(processing='clean', kind='report',
+                    .update(processing='clean', suffix='report',
                             extension='.html'))
     report = Report(report_fname, verbose=False)
 

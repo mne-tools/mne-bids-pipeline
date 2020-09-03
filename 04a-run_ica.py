@@ -29,20 +29,16 @@ logger = logging.getLogger('mne-study-template')
 
 
 def load_and_concatenate_raws(bids_basename):
-    kind = config.get_kind()
-
     raw_list = list()
     for run in config.get_runs():
-        raw_fname_in = (bids_basename.copy()
-                        .update(run=run, processing='filt',
-                                kind=kind, extension='.fif'))
+        raw_fname_in = (bids_basename.copy().update(run=run, processing=None))
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 
     raw = mne.concatenate_raws(raw_list)
     del raw_list
 
-    if kind == 'eeg':
+    if bids_basename.datatype == 'eeg':
         raw.set_eeg_reference(projection=True)
 
     raw.load_data()
@@ -70,18 +66,16 @@ def make_epochs_for_ica(raw, subject, session):
 
     # First, load the existing epochs. We will extract the selection of kept
     # epochs.
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=config.get_kind())
     epochs_fname = BIDSPath(subject=subject,
                             session=session,
                             task=config.get_task(),
                             acquisition=config.acq,
                             recording=config.rec,
                             space=config.space,
-                            kind='epo',
+                            suffix='epo',
                             extension='.fif',
-                            prefix=deriv_path,
+                            datatype=config.get_datatype(),
+                            root=config.deriv_root,
                             check=False)
     epochs = mne.read_epochs(epochs_fname)
     selection = epochs.selection
@@ -102,8 +96,8 @@ def make_epochs_for_ica(raw, subject, session):
 
 
 def fit_ica(epochs, subject, session):
-    kind = config.get_kind()
-    msg = f'Running ICA for {kind}'
+    datatype = config.get_datatype()
+    msg = f'Running ICA for {datatype}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
@@ -233,34 +227,28 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
 
 def run_ica(subject, session=None):
     """Run ICA."""
-
-    kind = config.get_kind()
-    deriv_path = config.get_subject_deriv_path(subject=subject,
-                                               session=session,
-                                               kind=kind)
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=config.get_task(),
                              acquisition=config.acq,
                              recording=config.rec,
                              space=config.space,
-                             prefix=deriv_path)
+                             datatype=config.get_datatype(),
+                             root=config.deriv_root,
+                             check=False)
 
-    ica_fname = bids_basename.copy().update(kind='ica', extension='.fif',
-                                            check=False)
+    ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')
     ica_components_fname = bids_basename.copy().update(processing='ica',
-                                                       kind='components',
-                                                       extension='.tsv',
-                                                       check=False)
+                                                       suffix='components',
+                                                       extension='.tsv')
     report_fname = bids_basename.copy().update(processing='ica',
-                                               kind='report',
-                                               extension='.html',
-                                               check=False)
+                                               extension='.html')
 
     msg = 'Loading and concatenating filtered continuous "raw" data'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    raw = load_and_concatenate_raws(bids_basename)
+    raw = load_and_concatenate_raws(bids_basename.copy().update(
+        suffix='raw', extension='.fif'))
 
     # Produce high-pass filtered version of the data for ICA.
     # filter_for_ica will concatenate all runs of our raw data.

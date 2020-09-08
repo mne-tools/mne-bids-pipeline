@@ -35,7 +35,7 @@ def _provide_get_dict(dataset=None):
         'eeg_matchingpennies': ['sub-05'],
         'ds003104': ['sub-01',
                      'derivatives/freesurfer/subjects'],
-        'ds003129': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
+        'ds003129': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.fif',
                      'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
                      'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'],
         'ds000248': ['sub-01', 'sub-emptyroom',

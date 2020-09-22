@@ -1,6 +1,6 @@
 """
 ====================
-12. Forward solution
+10. Forward solution
 ====================
 
 Calculate forward solution for MEG channels.

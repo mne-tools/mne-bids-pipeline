@@ -1,7 +1,7 @@
 """
-==================================
-08. Baseline covariance estimation
-==================================
+===============================
+11. Noise covariance estimation
+===============================
 
 Covariance matrices are computed and saved.
 """

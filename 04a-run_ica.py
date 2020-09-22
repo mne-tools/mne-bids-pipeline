@@ -1,6 +1,6 @@
 """
 ===========
-05. Run ICA
+04. Run ICA
 ===========
 This fits ICA on epoched data filtered with 1 Hz highpass,
 for this purpose only using fastICA. Separate ICAs are fitted and stored for
@@ -98,11 +98,6 @@ def make_epochs_for_ica(raw, subject, session):
 
 
 def fit_ica(epochs, subject, session):
-    datatype = config.get_datatype()
-    msg = f'Running ICA for {datatype}'
-    logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                session=session))
-
     if config.ica_algorithm == 'picard':
         fit_params = dict(fastica_it=5)
     elif config.ica_algorithm == 'extended_infomax':

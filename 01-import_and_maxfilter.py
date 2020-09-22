@@ -308,6 +308,12 @@ def run_maxwell_filter(subject, session=None):
             raw_fname_out = (bids_path_out.copy()
                              .update(processing='sss',
                                      extension='.fif'))
+        elif config.ch_types == ['eeg']:
+            msg = 'Not applying Maxwell filter to EEG data.'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
+            raw_out = raw
+            raw_fname_out = bids_path_out.copy().update(extension='.fif')
         else:
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
@@ -318,7 +324,7 @@ def run_maxwell_filter(subject, session=None):
 
         # Save only the channel types we wish to analyze (including the
         # channels marked as "bad").
-        # We do not rum `raw_out.pick()` here because it uses too much memory.
+        # We do not run `raw_out.pick()` here because it uses too much memory.
         chs_to_include = config.get_channels_to_analyze(raw_out.info)
         raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
         del raw_out

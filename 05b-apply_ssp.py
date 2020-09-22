@@ -1,6 +1,6 @@
 """
 ===============
-06b. Apply SSP
+05b. Apply SSP
 ===============
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP

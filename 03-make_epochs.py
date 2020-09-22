@@ -1,6 +1,6 @@
 """
 ====================
-04. Construct epochs
+03. Construct epochs
 ====================
 
 The epochs are constructed by using the events created in script 03. MNE

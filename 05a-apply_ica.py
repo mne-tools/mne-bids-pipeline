@@ -1,6 +1,6 @@
 """
 ===============
-06. Apply ICA
+05. Apply ICA
 ===============
 
 Blinks and ECG artifacts are automatically detected and the corresponding ICA

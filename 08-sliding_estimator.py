@@ -1,7 +1,7 @@
 """
-=================
-Sliding estimator
-=================
+=====================
+08. Sliding estimator
+=====================
 
 A sliding estimator fits a logistic regression model for every time point.
 In this example, we contrast the condition 'famous' against 'scrambled'

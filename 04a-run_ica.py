@@ -94,9 +94,6 @@ def make_epochs_for_ica(raw, subject, session):
                             baseline=config.baseline,
                             preload=True, decim=config.decim)
 
-    epochs_ica_fname = epochs_fname.copy().update(suffix='ica+epo')
-    epochs_ica.save(epochs_ica_fname, overwrite=True)
-
     return epochs_ica
 
 

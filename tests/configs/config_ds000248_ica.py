@@ -21,7 +21,7 @@ baseline = (None, 0)
 
 use_ssp = False
 use_ica = True
-ica_n_components = 15
+ica_n_components = 0.99
 ica_l_freq = 1.
 
 interactive = False

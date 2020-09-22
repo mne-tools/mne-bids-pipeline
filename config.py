@@ -1068,7 +1068,8 @@ def get_datatype():
         return data_type
     elif data_type is None and ch_types == ['eeg']:
         return 'eeg'
-    elif data_type is None and ch_types in ['meg', 'mag', 'grad']:
+    elif data_type is None and any([t in ['meg', 'mag', 'grad']
+                                    for t in ch_types]):
         return 'meg'
     else:
         raise RuntimeError("This probably shouldn't happen. Please contact "

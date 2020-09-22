@@ -115,6 +115,16 @@ jobs:
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
+            name: test ds000248_ica
+            command: |
+                export DS=ds000248_ica
+                python tests/run_tests.py ${DS}
+                mkdir ~/reports/${DS}
+                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+
+        - run:
             name: test ds001810
             command: |
                export DS=ds001810

@@ -12,6 +12,7 @@ run 05a-apply_ica.py.
 
 import itertools
 import logging
+from tqdm import tqdm
 
 import pandas as pd
 
@@ -92,6 +93,10 @@ def make_epochs_for_ica(raw, subject, session):
                             tmin=config.tmin, tmax=config.tmax, proj=True,
                             baseline=config.baseline,
                             preload=True, decim=config.decim)
+
+    epochs_ica_fname = epochs_fname.copy().update(suffix='ica+epo')
+    epochs_ica.save(epochs_ica_fname, overwrite=True)
+
     return epochs_ica
 
 
@@ -137,7 +142,8 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
-        ecg_epochs = create_ecg_epochs(raw, reject=config.get_reject(),
+        # Do not reject epochs based on amplitude.
+        ecg_epochs = create_ecg_epochs(raw, reject=None,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         ecg_evoked = ecg_epochs.average()
@@ -185,7 +191,8 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
-        eog_epochs = create_eog_epochs(raw, reject=config.get_reject(),
+        # Do not reject epochs based on amplitude.
+        eog_epochs = create_eog_epochs(raw, reject=None,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         eog_evoked = eog_epochs.average()
@@ -242,6 +249,7 @@ def run_ica(subject, session=None):
                                                        suffix='components',
                                                        extension='.tsv')
     report_fname = bids_basename.copy().update(processing='ica',
+                                               suffix='report',
                                                extension='.html')
 
     msg = 'Loading and concatenating filtered continuous "raw" data'
@@ -261,15 +269,10 @@ def run_ica(subject, session=None):
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    ica = fit_ica(epochs, subject=subject, session=session)
-
-    msg = ('Creating HTML report …')
-    logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                session=session))
-
-    report = Report(report_fname, title='Independent Component Analysis (ICA)',
+    report = Report(info_fname=raw,
+                    title='Independent Component Analysis (ICA)',
                     verbose=False)
-
+    ica = fit_ica(epochs, subject=subject, session=session)
     ecg_ics = detect_ecg_artifacts(ica=ica, raw=raw, subject=subject,
                                    session=session, report=report)
     eog_ics = detect_eog_artifacts(ica=ica, raw=raw, subject=subject,
@@ -306,10 +309,10 @@ def run_ica(subject, session=None):
     tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
 
     # Lastly, plot all ICs, and add them to the report for manual inspection.
-    msg = ('Adding diagnostic plots for all ICs to the report …')
+    msg = ('Adding diagnostic plots for all ICs the HTML report …')
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    for component_num in range(ica.n_components_):
+    for component_num in tqdm(range(ica.n_components_)):
         fig = ica.plot_properties(epochs,
                                   picks=component_num,
                                   psd_args={'fmax': 60},
@@ -322,8 +325,8 @@ def run_ica(subject, session=None):
     report.save(report_fname, overwrite=True, open_browser=open_browser)
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
-           f"report, and mark all components you wish to reject as 'bad' in "
-           f"{report_fname.basename}")
+           f"report {report_fname.basename}, and mark all components you wish "
+           f"to reject as 'bad' in {ica_components_fname.basename}")
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 

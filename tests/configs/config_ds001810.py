@@ -17,7 +17,8 @@ task = 'attentionalblink'
 interactive = False
 ch_types = ['eeg']
 eeg_template_montage = 'biosemi64'
-reject = None
+reject = dict(eeg=100e-6)
+baseline = (None, 0)
 conditions = ['61510', '61511']
 contrasts = [('61510', '61511')]
 l_freq = 0.3
@@ -25,11 +26,9 @@ decode = True
 use_ssp = False
 use_ica = True
 ica_n_components = 0.99
-# ica_reject_components = 'auto'
-ica_reject_components = {'01': [0, 1]}
-baseline = None
-ica_l_freq = 1.
 ica_eog_threshold = 2.
+ica_reject_components = 'auto'
+ica_l_freq = 1.
 
 subjects_list = ['01']
 sessions = ['anodalpre']

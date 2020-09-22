@@ -23,6 +23,5 @@ use_ssp = False
 use_ica = True
 ica_n_components = 15
 ica_l_freq = 1.
-ica_reject_components = 'auto'
 
 interactive = False

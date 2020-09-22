@@ -27,7 +27,6 @@ use_ssp = False
 use_ica = True
 ica_n_components = 0.99
 ica_eog_threshold = 2.
-ica_reject_components = 'auto'
 ica_l_freq = 1.
 
 subjects_list = ['01']

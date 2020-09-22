@@ -137,7 +137,7 @@ exclude_subjects = []
 
 process_er = False
 
-# ``ch_types``  : list of st
+# ``ch_types``  : list of str
 #    The list of channel types to consider.
 #
 #    Note that currently, MEG and EEG data cannot be processed together.
@@ -152,6 +152,33 @@ process_er = False
 # >>> ch_types = ['meg', 'eeg']
 
 ch_types = []
+
+
+# ``data_type``  : str
+#   The BIDS data type.
+#
+#   For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
+#   However, if your dataset contains simultaneous recordings of MEG and EEG,
+#   stored in a single file, you will typically need to set this to 'meg'.
+#   If ``None``, we will assume that the data type matches the channel type.
+#
+# Example
+# ~~~~~~~
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the EEG data, which is stored inside the MEG files:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'
+#
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the gradiometer data:
+# >>> ch_types = ['grad']
+# >>> data_type = 'meg'  # or data_type = None
+#
+# The dataset contains only EEG data:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'  # or data_type = None
+
+data_type = None
 
 ###############################################################################
 # Apply EEG template montage?
@@ -1037,10 +1064,15 @@ def get_task():
 def get_datatype():
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
-    if ch_types == ['eeg']:
+    if data_type is not None:
+        return data_type
+    elif data_type is None and ch_types == ['eeg']:
         return 'eeg'
-    else:
+    elif data_type is None and ch_types in ['meg', 'mag', 'grad']:
         return 'meg'
+    else:
+        raise RuntimeError("This probably shouldn't happen. Please contact "
+                           "the mne-study-template developers. Thank you.")
 
 
 def get_reject():
@@ -1048,9 +1080,8 @@ def get_reject():
         return dict()
 
     reject_ = reject.copy()  # Avoid clash with global variable.
-    modality = get_datatype()
 
-    if modality == 'eeg':
+    if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
     else:
         ch_types_to_remove = ('eeg',)
@@ -1175,19 +1206,23 @@ def get_channels_to_analyze(info):
     We also include channels marked as "bad" here.
     """
     # `exclude=[]`: keep "bad" channels, too.
-    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
+    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types
+                                    or 'meg' in ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
             pick_idx += mne.pick_types(info, meg='mag', exclude=[])
         if 'grad' in ch_types:
-            pick_idx += mne.pick_types(info, meg='grad')
-    elif get_datatype() == 'meg':
-        pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
-                                  exclude=[])
+            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
+        if 'meg' in ch_types:
+            pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
+                                      exclude=[])
+    elif ch_types == ['eeg']:
+        pick_idx = mne.pick_types(info, meg=False, eeg=True, eog=True,
+                                  ecg=True, exclude=[])
     else:
-        pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True,
-                                  exclude=[])
+        raise RuntimeError('Something unexpected happened. Please contact '
+                           'the mne-study-template developers. Thank you.')
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names

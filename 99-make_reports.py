@@ -142,7 +142,7 @@ def run_report(subject, session=None):
         params['subjects_dir'] = subjects_dir
 
     rep = mne.Report(**params)
-    rep.parse_folder(fname_ave.fpath.parent, verbose=True)
+    rep.parse_folder(fname_ave.fpath.parent, verbose=False)
 
     # Visualize automated noisy channel detection.
     if config.find_noisy_channels_meg:

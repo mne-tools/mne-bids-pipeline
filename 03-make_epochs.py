@@ -1,6 +1,6 @@
 """
 ====================
-04. Construct epochs
+03. Construct epochs
 ====================
 
 The epochs are constructed by using the events created in script 03. MNE
@@ -74,7 +74,8 @@ def run_epochs(subject, session=None):
     msg = 'Epoching'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs = mne.Epochs(raw, events, event_id, config.tmin, config.tmax,
+    epochs = mne.Epochs(raw, events=events, event_id=event_id,
+                        tmin=config.tmin, tmax=config.tmax,
                         proj=True, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.get_reject())

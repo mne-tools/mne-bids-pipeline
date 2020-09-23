@@ -130,6 +130,10 @@ def run_report(subject, session=None):
 
     fname_ave = bids_path.copy().update(suffix='ave')
     fname_trans = bids_path.copy().update(suffix='trans')
+    fname_epo = bids_path.copy().update(suffix='epo')
+    fname_trans = bids_path.copy().update(suffix='trans')
+    fname_ica = bids_path.copy().update(suffix='ica')
+
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
 
@@ -138,7 +142,7 @@ def run_report(subject, session=None):
         params['subjects_dir'] = subjects_dir
 
     rep = mne.Report(**params)
-    rep.parse_folder(fname_ave.fpath.parent, verbose=True)
+    rep.parse_folder(fname_ave.fpath.parent, verbose=False)
 
     # Visualize automated noisy channel detection.
     if config.find_noisy_channels_meg:
@@ -153,14 +157,27 @@ def run_report(subject, session=None):
                             captions='Events in filtered continuous data',
                             section='Events')
 
-    conditions = config.conditions.copy()
-    conditions.extend(config.contrasts)
-    evokeds = mne.read_evokeds(fname_ave)
+    ###########################################################################
+    #
+    # Visualize effect of ICA artifact rejection.
+    #
+    if config.use_ica:
+        epochs = mne.read_epochs(fname_epo)
+        ica = mne.preprocessing.read_ica(fname_ica)
+        fig = ica.plot_overlay(epochs.average(), show=False)
+        rep.add_figs_to_section(fig,
+                                captions='Evoked response (across all epochs) '
+                                         'before and after ICA',
+                                section='ICA')
 
     ###########################################################################
     #
     # Visualize evoked responses.
     #
+    conditions = config.conditions.copy()
+    conditions.extend(config.contrasts)
+    evokeds = mne.read_evokeds(fname_ave)
+
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Condition: {condition}'
@@ -169,7 +186,7 @@ def run_report(subject, session=None):
             caption = f'Contrast: {condition[0]} – {condition[1]}'
             section = 'Contrast'
 
-        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
+        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
 
@@ -205,7 +222,7 @@ def run_report(subject, session=None):
 
             method = config.inverse_method
             cond_str = evoked.comment.replace(op.sep, '').replace('_', '')
-            inverse_str = '%s' % method
+            inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
             fname_stc = bids_path.copy().update(
@@ -317,7 +334,6 @@ def main():
             caption = f'Average Contrast: {condition[0]} – {condition[1]}'
             section = 'Contrast'
 
-        fig = evoked.plot(show=False, gfp=True, spatial_colors=True)
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)

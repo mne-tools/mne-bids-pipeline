@@ -1,6 +1,6 @@
 """
 ===========
-05. Run SSP
+04. Run SSP
 ===========
 
 Compute Signal Suspace Projections (SSP).

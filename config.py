@@ -7,7 +7,6 @@ of your BIDS dataset to be analyzed.
 import importlib
 import functools
 import os
-from collections import defaultdict
 import copy
 import coloredlogs
 import logging
@@ -138,18 +137,48 @@ exclude_subjects = []
 
 process_er = False
 
-# ``ch_types``  : list of st
+# ``ch_types``  : list of str
 #    The list of channel types to consider.
+#
+#    Note that currently, MEG and EEG data cannot be processed together.
 #
 # Example
 # ~~~~~~~
-# >>> ch_types = ['meg', 'eeg']  # to use MEG and EEG channels
-# or
-# >>> ch_types = ['meg']  # to use only MEG
-# or
-# >>> ch_types = ['grad']  # to use only gradiometer MEG channels
+# Use EEG channels:
+# >>> ch_types = ['eeg']
+# Use magnetometer and gradiometer MEG channels:
+# >>> ch_types = ['mag', 'grad']
+# Currently does not work and will raise an error message:
+# >>> ch_types = ['meg', 'eeg']
 
 ch_types = []
+
+
+# ``data_type``  : str
+#   The BIDS data type.
+#
+#   For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
+#   However, if your dataset contains simultaneous recordings of MEG and EEG,
+#   stored in a single file, you will typically need to set this to 'meg'.
+#   If ``None``, we will assume that the data type matches the channel type.
+#
+# Example
+# ~~~~~~~
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the EEG data, which is stored inside the MEG files:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'
+#
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the gradiometer data:
+# >>> ch_types = ['grad']
+# >>> data_type = 'meg'  # or data_type = None
+#
+# The dataset contains only EEG data:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'  # or data_type = None
+
+data_type = None
 
 ###############################################################################
 # Apply EEG template montage?
@@ -408,11 +437,15 @@ decim = 1
 # like.
 #
 #  ``reject`` : dict | None
-#    The rejection limits to make some epochs as bads.
+#    The rejection limits to mark epochs as bads.
 #    This allows to remove strong transient artifacts.
-#    If you want to reject and retrieve blinks later, e.g. with ICA,
-#    don't specify a value for the eog channel (see examples below).
-#    Make sure to include values for eeg if you have EEG data
+#    If you want to reject and retrieve blinks or ECG artifacts later, e.g.
+#    with ICA, don't specify a value for the EOG and ECG channels, respectively
+#    (see examples below).
+#
+#    Make sure to include values for "eeg" if you have EEG data.
+#
+#    Pass ``None`` to avoid automated epoch rejection based on amplitude.
 #
 # Note
 # ~~~~
@@ -490,8 +523,9 @@ tmin = -0.2
 
 tmax = 0.5
 
-# ``baseline`` : tuple
-#    It specifies how to baseline the epochs; if None, no baseline is applied.
+# ``baseline`` : tuple | None
+#    It specifies how to baseline-correct the epochs; if ``None``, no baseline
+#    correction is applied.
 #
 # Example
 # ~~~~~~~
@@ -555,6 +589,22 @@ use_ica = False
 
 ica_algorithm = 'picard'
 
+# ``ica_l_freq`` : float | None
+#   The cutoff frequency of the high-pass filter to apply before running ICA.
+#   Using a relatively high cutoff like 1 Hz will remove slow drifts from the
+#   data, yielding improved ICA results.
+#
+#   Set to ``None`` to not apply an additional high-pass filter.
+#
+#   Notes
+#   ~~~~~
+#   The filter will be applied to raw data which was already filtered
+#   according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
+#   data will be epoched, and the epochs will be submitted to ICA.
+
+ica_l_freq = 1.
+
+
 # ``ica_max_iterations`` : int
 #   Maximum number of iterations to decompose the data into independent
 #   components. A low number means to finish earlier, but the consequence is
@@ -568,32 +618,37 @@ ica_algorithm = 'picard'
 
 ica_max_iterations = 200
 
+# ``ica_n_components`` : None | float | int
+#   If int, specifies the number of principal components that are passed to the
+#   ICA algorithm.
+#
+#   If float between 0 and 1, all principal components with cumulative
+#   explained variance less than the value specified here will be passed to
+#   ICA.
+#
+#   If None, all principal components will be used.
+
+ica_n_components = 0.999
+
 # ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means
 #    that 1 every 5 sample is used by ICA solver. The higher the faster
 #    it is to run but the less data you have to compute a good ICA. Set to
-#    ``1`` ``None`` to not perform an decimation.
+#    ``1`` or ``None`` to not perform any decimation.
 
 ica_decim = None
 
-
-# ``default_reject_comps_factory`` : callable
-#    A factory function that returns a default rejection component dictionary:
-#    A dictionary that specifies the indices of the ICA components to reject
-#    for each subject. For example you can use:
-#    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
-
-def default_reject_comps_factory():
-    """Return the default rejection component dictionary."""
-    return dict(meg=[], eeg=[])
-
-
-rejcomps_man = defaultdict(default_reject_comps_factory)
-
-# ``ica_ctps_ecg_threshold``: float
+# ``ica_ctps_ecg_threshold`` : float
 #    The threshold parameter passed to `find_bads_ecg` method.
 
 ica_ctps_ecg_threshold = 0.1
+
+# ``ica_eog_threshold`` : float
+#   The threshold to use during automated EOG classification. Lower values mean
+#   that more ICs will be identified as EOG-related. If too low, the
+#   false-alarm rate increases dramatically.
+
+ica_eog_threshold = 2.
 
 ###############################################################################
 # DECODING
@@ -753,9 +808,10 @@ h_trans_bandwidth = 'auto'
 N_JOBS = 1
 
 # ``random_state`` : None | int | np.random.RandomState
-#    To specify the random generator state. This allows to have
-#    the results more reproducible between machines and systems.
-#    Some methods like ICA need random values for initialisation.
+#    To specify the seed or state of the random number generator (RNG).
+#    This setting is passed to the ICA algorithm and to the decoding function,
+#    ensuring reproducible results. Set to ``None`` to avoid setting the RNG
+#    to a defined state.
 
 random_state = 42
 
@@ -876,6 +932,14 @@ if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
     msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
            f"are: 'picard', 'fastica', and 'extended_infomax', but received "
            f"{ica_algorithm}.")
+    raise ValueError(msg)
+
+if use_ica and ica_l_freq < l_freq:
+    msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
+           f'than for your raw data: ica_l_freq = {ica_l_freq} < '
+           f'l_freq = {l_freq}. Adjust the cutoffs such that ica_l_freq >= '
+           f'l_freq, or set ica_l_freq to None if you do not wish to apply '
+           f'an additional high-pass filter before running ICA.')
     raise ValueError(msg)
 
 if not ch_types:
@@ -1000,17 +1064,25 @@ def get_task():
 def get_datatype():
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
-    if ch_types == ['eeg']:
+    if data_type is not None:
+        return data_type
+    elif data_type is None and ch_types == ['eeg']:
         return 'eeg'
-    else:
+    elif data_type is None and any([t in ['meg', 'mag', 'grad']
+                                    for t in ch_types]):
         return 'meg'
+    else:
+        raise RuntimeError("This probably shouldn't happen. Please contact "
+                           "the mne-study-template developers. Thank you.")
 
 
 def get_reject():
-    reject_ = reject.copy()  # Avoid clash with global variable.
-    modality = get_datatype()
+    if reject is None:
+        return dict()
 
-    if modality == 'eeg':
+    reject_ = reject.copy()  # Avoid clash with global variable.
+
+    if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
     else:
         ch_types_to_remove = ('eeg',)
@@ -1129,20 +1201,29 @@ def plot_auto_scores(auto_scores):
     return figs
 
 
-def get_picks(info):
-    """Return the names of the channels we wish to analyze.
+def get_channels_to_analyze(info):
+    """Return names of the channels of the channel types we wish to analyze.
+
+    We also include channels marked as "bad" here.
     """
-    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types):
-        pick_idx = mne.pick_types(info, eog=True, ecg=True)
+    # `exclude=[]`: keep "bad" channels, too.
+    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types
+                                    or 'meg' in ch_types):
+        pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
-            pick_idx += mne.pick_types(info, meg='mag')
+            pick_idx += mne.pick_types(info, meg='mag', exclude=[])
         if 'grad' in ch_types:
-            pick_idx += mne.pick_types(info, meg='grad')
-    elif get_datatype() == 'meg':
-        pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True)
+            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
+        if 'meg' in ch_types:
+            pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
+                                      exclude=[])
+    elif ch_types == ['eeg']:
+        pick_idx = mne.pick_types(info, meg=False, eeg=True, eog=True,
+                                  ecg=True, exclude=[])
     else:
-        pick_idx = mne.pick_types(info, eeg=True, eog=True, ecg=True)
+        raise RuntimeError('Something unexpected happened. Please contact '
+                           'the mne-study-template developers. Thank you.')
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names

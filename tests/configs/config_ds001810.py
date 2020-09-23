@@ -17,12 +17,13 @@ task = 'attentionalblink'
 interactive = False
 ch_types = ['eeg']
 eeg_template_montage = 'biosemi64'
-reject = {'eeg': 150e-6}
+reject = dict(eeg=100e-6)
+baseline = (None, 0)
 conditions = ['61510', '61511']
 contrasts = [('61510', '61511')]
+l_freq = 0.3
 decode = True
 use_ssp = False
-use_ica = False
 
 subjects_list = ['01']
 sessions = ['anodalpre']

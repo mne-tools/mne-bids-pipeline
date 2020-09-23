@@ -66,6 +66,7 @@ DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
 TEST_SUITE = {
     'ds000246': ('config_ds000246', sensor, report),
     'ds000248': ('config_ds000248', sensor, source, report),
+    'ds000248_ica': ('config_ds000248_ica', sensor, report),
     'ds001810': ('config_ds001810', sensor, report),
     'eeg_matchingpennies': ('config_eeg_matchingpennies', sensor, report),
     'ds003104': ('config_ds003104', sensor, source, report),

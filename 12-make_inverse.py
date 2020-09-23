@@ -1,6 +1,6 @@
 """
 ====================
-13. Inverse solution
+12. Inverse solution
 ====================
 
 Compute and apply an inverse solution for each evoked data set.

@@ -105,11 +105,6 @@ def fit_ica(epochs, subject, session):
     elif config.ica_algorithm == 'fastica':
         fit_params = None
 
-    # XXX get number of components for ICA
-    # compute_rank requires 0.18
-    # n_components_meg = (mne.compute_rank(epochs_for_ica.copy()
-    #                        .pick_types(meg=True)))['meg']
-
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
               n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)

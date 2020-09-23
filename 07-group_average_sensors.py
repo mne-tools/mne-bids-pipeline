@@ -7,7 +7,6 @@ The M/EEG-channel data are averaged for group averages.
 """
 
 import os
-import os.path as op
 from collections import defaultdict
 import logging
 

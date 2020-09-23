@@ -25,7 +25,7 @@ l_freq = 0.3
 decode = True
 use_ssp = False
 
-subjects_list = ['01']
+subjects = ['01']
 sessions = ['anodalpre']
 
 interpolate_bads_grand_average = False

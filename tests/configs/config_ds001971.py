@@ -24,6 +24,6 @@ use_ssp = False
 use_ica = False
 
 
-subjects_list = ['001']
+subjects = ['001']
 
 runs = ['01']

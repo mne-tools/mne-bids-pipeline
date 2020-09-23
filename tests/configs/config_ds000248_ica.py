@@ -16,8 +16,8 @@ conditions = ['Auditory/Left',
               'Visual/Left',
               'Visual/Right']
 
-tmin = -0.3
-tmax = 0.7
+tmin = -0.2
+tmax = 0.5
 baseline = (None, 0)
 reject = dict(mag=3000e-15,
               grad=3000e-13)

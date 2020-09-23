@@ -94,24 +94,24 @@ rec = None
 
 space = None
 
-# ``subjects_list`` : 'all' | list of str
+# ``subjects`` : 'all' | list of str
 #   Subjects to analyze. If ``'all``, include all subjects. To only
 #   include a subset of subjects, pass a list of their identifiers. Even
 #   if you plan on analyzing only a single subject, pass their identifier
 #   as a list.
 #
 #   Please note that if you intend to EXCLUDE only a few subjects, you
-#   should consider setting ``subjects_list = 'all'`` and adding the
+#   should consider setting ``subjects = 'all'`` and adding the
 #   identifiers of the excluded subjects to ``exclude_subjects`` (see next
 #   section).
 #
 # Example
 # ~~~~~~~
-# >>> subjects_list = 'all'  # Include all subjects.
-# >>> subjects_list = ['05']  # Only include subject 05.
-# >>> subjects_list = ['01', '02']  # Only include subjects 01 and 02.
+# >>> subjects = 'all'  # Include all subjects.
+# >>> subjects = ['05']  # Only include subject 05.
+# >>> subjects = ['01', '02']  # Only include subjects 01 and 02.
 
-subjects_list = 'all'
+subjects = 'all'
 
 # ``exclude_subjects`` : list of str
 #   Specify subjects to exclude from analysis. The MEG empty-room mock-subject
@@ -1038,10 +1038,12 @@ def get_mf_reference_run():
 
 
 def get_subjects():
-    if subjects_list == 'all':
+    global subjects
+
+    if subjects == 'all':
         s = get_entity_vals(bids_root, entity_key='subject')
     else:
-        s = subjects_list
+        s = subjects
 
     subjects = set(s) - set(exclude_subjects)
     # Drop empty-room subject.

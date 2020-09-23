@@ -21,7 +21,7 @@ interactive = False
 acq = None
 bids_root = op.join(op.expanduser('~'), 'data', 'ds000117')
 subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
-subjects_list = ['01']
+subjects = ['01']
 
 use_maxwell_filter = True
 mf_ctc_fname = None

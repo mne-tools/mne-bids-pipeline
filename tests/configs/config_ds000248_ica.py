@@ -5,7 +5,7 @@ study_name = 'MNE "sample" dataset'
 ch_types = ['meg']
 data_type = 'meg'
 
-subjects_list = ['01']
+subjects = ['01']
 task = 'audiovisual'
 run = '01'
 l_freq = 0.3

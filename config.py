@@ -618,7 +618,13 @@ ica_l_freq = 1.
 
 ica_max_iterations = 200
 
-# ``ica_n_components`` : None | float | int
+# ``ica_max_pca_components`` : float | int | None
+#
+#   MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
+#   on the data; and in the second step, the data is passed to the actual ICA.
+#   This allows us to e.g. reduce dimensionality of the data using PCA
+#   before submitting it to ICA.
+#
 #   If int, specifies the number of principal components that are passed to the
 #   ICA algorithm.
 #
@@ -626,9 +632,14 @@ ica_max_iterations = 200
 #   explained variance less than the value specified here will be passed to
 #   ICA.
 #
-#   If None, all principal components will be used.
+#   If ``None``, **all** principal components will be used.
+#
+#   It is a good idea to set this to a float smaller zero, or an int smaller
+#   than the number of channels in the data, as this will avoid running into
+#   issues due to rank deficiency, while also – depending on the dataset –
+#   dramatically reducing processing time.
 
-ica_n_components = 0.999
+ica_max_pca_components = 0.999
 
 # ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means

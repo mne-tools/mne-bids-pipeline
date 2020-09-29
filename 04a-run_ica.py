@@ -106,8 +106,8 @@ def fit_ica(epochs, subject, session):
         fit_params = None
 
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
-              n_components=config.ica_n_components, fit_params=fit_params,
-              max_iter=config.ica_max_iterations)
+              max_pca_components=config.ica_max_pca_components,
+              fit_params=fit_params, max_iter=config.ica_max_iterations)
 
     ica.fit(epochs, decim=config.ica_decim)
 

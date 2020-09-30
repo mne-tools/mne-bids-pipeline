@@ -306,7 +306,9 @@ def run_ica(subject, session=None):
                                   show=False)
 
         caption = f'IC {component_num}'
-        if component_num in eog_ics:
+        if component_num in eog_ics and component_num in ecg_ics:
+            caption += ' (EOG & ECG)'
+        elif component_num in eog_ics:
             caption += ' (EOG)'
         elif component_num in ecg_ics:
             caption += ' (ECG)'

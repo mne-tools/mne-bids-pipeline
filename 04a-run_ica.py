@@ -305,8 +305,13 @@ def run_ica(subject, session=None):
                                   psd_args={'fmax': 60},
                                   show=False)
 
+        caption = f'IC {component_num}'
+        if component_num in eog_ics:
+            caption += ' (EOG)'
+        elif component_num in ecg_ics:
+            caption += ' (ECG)'
         report.add_figs_to_section(fig, section=f'sub-{subject}',
-                                   captions=f'IC {component_num}')
+                                   captions=caption)
 
     open_browser = True if config.interactive else False
     report.save(report_fname, overwrite=True, open_browser=open_browser)

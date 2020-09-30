@@ -659,7 +659,7 @@ ica_ctps_ecg_threshold = 0.1
 #   that more ICs will be identified as EOG-related. If too low, the
 #   false-alarm rate increases dramatically.
 
-ica_eog_threshold = 2.
+ica_eog_threshold = 3.0
 
 ###############################################################################
 # DECODING

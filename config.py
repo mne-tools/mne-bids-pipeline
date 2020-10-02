@@ -618,15 +618,24 @@ ica_l_freq = 1.
 
 ica_max_iterations = 200
 
-# ``ica_max_pca_components`` : float | int | None
+# ``ica_n_components`` : float | int | None
 #
 #   MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 #   on the data; and in the second step, the data is passed to the actual ICA.
-#   This allows us to e.g. reduce dimensionality of the data using PCA
-#   before submitting it to ICA.
+#   This allows us to reduce dimensionality of the data using PCA, before
+#   submitting the data to ICA. We will always reduce dimensionality such that
+#   the remaining principal components explain about 99.99% of the variance in
+#   the data; this ensures that any components **not** contributing to variance
+#   will be dropped to avoid working with rank-deficient data.
+#
+#   As said above, after this PCA step, the actual ICA takes place. You can
+#   control how many principal components to pass to the ICA algorithm, thereby
+#   determining how many independent components to fit.
 #
 #   If int, specifies the number of principal components that are passed to the
-#   ICA algorithm.
+#   ICA algorithm, which will also be the number of independent components to
+#   fit. It must not be greater than the rank of your data (which is typically
+#   the number of channels, but may be less in some cases).
 #
 #   If float between 0 and 1, all principal components with cumulative
 #   explained variance less than the value specified here will be passed to
@@ -634,12 +643,9 @@ ica_max_iterations = 200
 #
 #   If ``None``, **all** principal components will be used.
 #
-#   It is a good idea to set this to a float smaller zero, or an int smaller
-#   than the number of channels in the data, as this will avoid running into
-#   issues due to rank deficiency, while also – depending on the dataset –
-#   dramatically reducing processing time.
+#   This setting may drastically alter the time required to compute ICA.
 
-ica_max_pca_components = 0.999
+ica_n_components = 0.8
 
 # ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means

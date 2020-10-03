@@ -106,8 +106,8 @@ def fit_ica(epochs, subject, session):
         fit_params = None
 
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
-              n_components=config.ica_n_components, fit_params=fit_params,
-              max_iter=config.ica_max_iterations)
+              n_components=config.ica_n_components, max_pca_components=0.9999,
+              fit_params=fit_params, max_iter=config.ica_max_iterations)
 
     ica.fit(epochs, decim=config.ica_decim)
 
@@ -305,8 +305,15 @@ def run_ica(subject, session=None):
                                   psd_args={'fmax': 60},
                                   show=False)
 
+        caption = f'IC {component_num}'
+        if component_num in eog_ics and component_num in ecg_ics:
+            caption += ' (EOG & ECG)'
+        elif component_num in eog_ics:
+            caption += ' (EOG)'
+        elif component_num in ecg_ics:
+            caption += ' (ECG)'
         report.add_figs_to_section(fig, section=f'sub-{subject}',
-                                   captions=f'IC {component_num}')
+                                   captions=caption)
 
     open_browser = True if config.interactive else False
     report.save(report_fname, overwrite=True, open_browser=open_browser)

@@ -34,11 +34,11 @@ def sensor():
     mod.main()
     mod = importlib.import_module('06-make_evoked')
     mod.main()
-    mod = importlib.import_module('07-group_average_sensors')
+    mod = importlib.import_module('07-sliding_estimator')
     mod.main()
-    mod = importlib.import_module('08-sliding_estimator')
+    mod = importlib.import_module('08-time_frequency')
     mod.main()
-    mod = importlib.import_module('09-time_frequency')
+    mod = importlib.import_module('09-group_average_sensors')
     mod.main()
 
 

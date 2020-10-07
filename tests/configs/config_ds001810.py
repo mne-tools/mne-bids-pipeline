@@ -19,14 +19,13 @@ ch_types = ['eeg']
 eeg_template_montage = 'biosemi64'
 reject = dict(eeg=100e-6)
 baseline = (None, 0)
-conditions = ['61450', '61511']
-contrasts = [('61450', '61511')]
-decode = True
-
+conditions = ['61510', '61511']
+contrasts = [('61510', '61511')]
 l_freq = 0.3
+decode = True
 use_ssp = False
 
-subjects = ['01', '02', '03', '04', '05']
+subjects = ['01']
 sessions = ['anodalpre']
 
 interpolate_bads_grand_average = False

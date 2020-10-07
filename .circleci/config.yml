@@ -101,7 +101,6 @@ jobs:
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:

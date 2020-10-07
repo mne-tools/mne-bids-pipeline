@@ -677,6 +677,12 @@ ica_eog_threshold = 3.0
 
 decode = True
 
+# ``n_boot`` : int
+#   The number of bootstrap resamples when estimating the standard error and
+#   confidence interval of the mean decoding score.
+
+n_boot = 5000
+
 ###############################################################################
 # GROUP AVERAGE SENSORS
 # ---------------------

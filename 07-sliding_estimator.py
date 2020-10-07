@@ -1,14 +1,11 @@
 """
 =====================
-08. Sliding estimator
+07. Sliding estimator
 =====================
 
 A sliding estimator fits a logistic regression model for every time point.
-In this example, we contrast the condition 'famous' against 'scrambled'
-using this approach. The end result is an averaging effect across sensors.
-The contrast across different sensors are combined into a single plot.
-
-"""  # noqa: E501
+The end result is an averaging effect across sensors.
+"""
 
 ###############################################################################
 # Let us first import the libraries
@@ -17,6 +14,7 @@ import os.path as op
 import logging
 
 import numpy as np
+import pandas as pd
 from scipy.io import savemat
 
 import mne
@@ -36,66 +34,77 @@ logger = logging.getLogger('mne-study-template')
 
 def run_time_decoding(subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(gen_log_message(message=msg, step=8, subject=subject,
+    logger.info(gen_log_message(message=msg, step=7, subject=subject,
                                 session=session))
 
-    fname_in = BIDSPath(subject=subject,
-                        session=session,
-                        task=config.get_task(),
-                        acquisition=config.acq,
-                        run=None,
-                        recording=config.rec,
-                        space=config.space,
-                        suffix='epo',
-                        extension='.fif',
-                        datatype=config.get_datatype(),
-                        root=config.deriv_root,
-                        check=False)
+    fname_epochs = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            run=None,
+                            recording=config.rec,
+                            space=config.space,
+                            suffix='epo',
+                            extension='.fif',
+                            datatype=config.get_datatype(),
+                            root=config.deriv_root,
+                            check=False)
 
-    epochs = mne.read_epochs(fname_in)
+    epochs = mne.read_epochs(fname_epochs)
 
     # We define the epochs and the labels
     epochs = mne.concatenate_epochs([epochs[condition1],
                                      epochs[condition2]])
-    epochs.apply_baseline()
-
-    # Get the data and labels
     X = epochs.get_data()
     n_cond1 = len(epochs[condition1])
     n_cond2 = len(epochs[condition2])
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
-    se = SlidingEstimator(
-        make_pipeline(StandardScaler(),
-                      LogisticRegression(solver='liblinear',
-                                         random_state=config.random_state)),
-        scoring=config.decoding_metric, n_jobs=config.N_JOBS)
+    clf = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(solver='liblinear',
+                           random_state=config.random_state))
+
+    se = SlidingEstimator(clf,
+                          scoring=config.decoding_metric,
+                          n_jobs=config.N_JOBS)
     scores = cross_val_multiscore(se, X=X, y=y, cv=config.decoding_n_splits)
 
     # let's save the scores now
     a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '')
     processing = f'{a_vs_b}+{config.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
-    fname_td = fname_in.copy().update(suffix='decoding',
-                                      processing=processing,
-                                      extension='.mat')
-    savemat(fname_td, {'scores': scores, 'times': epochs.times})
+
+    fname_mat = fname_epochs.copy().update(suffix='decoding',
+                                           processing=processing,
+                                           extension='.mat')
+    savemat(fname_mat, {'scores': scores, 'times': epochs.times})
+
+    fname_tsv = fname_mat.copy().update(extension='.tsv')
+    tabular_data = pd.DataFrame(
+        dict(cond_1=[condition1] * len(epochs.times),
+             cond_2=[condition2] * len(epochs.times),
+             time=epochs.times,
+             mean_crossval_score=scores.mean(axis=0),
+             metric=[config.decoding_metric] * len(epochs.times))
+    )
+    tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
 @failsafe_run(on_error=on_error)
 def main():
     """Run sliding estimator."""
-    msg = 'Running Step 8: Sliding estimator'
-    logger.info(gen_log_message(step=8, message=msg))
+    msg = 'Running Step 7: Sliding estimator'
+    logger.info(gen_log_message(step=7, message=msg))
 
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
-        logger.info(gen_log_message(step=8, message=msg))
+        logger.info(gen_log_message(step=7, message=msg))
         return
 
     if not config.decode:
         msg = 'No decoding requested by user.'
-        logger.info(gen_log_message(step=8, message=msg))
+        logger.info(gen_log_message(step=7, message=msg))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
@@ -107,8 +116,8 @@ def main():
                 run_time_decoding(subject=subject, condition1=cond_1,
                                   condition2=cond_2, session=session)
 
-    msg = 'Completed Step 8: Sliding estimator'
-    logger.info(gen_log_message(step=8, message=msg))
+    msg = 'Completed Step 7: Sliding estimator'
+    logger.info(gen_log_message(step=7, message=msg))
 
 
 if __name__ == '__main__':

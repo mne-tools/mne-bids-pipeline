@@ -1,12 +1,10 @@
 """
 ================================
-09. Time-frequency decomposition
+08. Time-frequency decomposition
 ================================
 
 The epoched data is transformed to time-frequency domain using morlet wavelets.
-Faces and scrambled data sets are used and for both of them, the average power
-and inter-trial coherence are computed and saved to disk. Only channel 'EEG070'
-is used to save time.
+The average power and inter-trial coherence are computed and saved to disk.
 """
 
 import os.path as op
@@ -51,7 +49,7 @@ def run_time_frequency(subject, session=None):
                                        extension='.fif')
 
     msg = f'Input: {fname_in}'
-    logger.info(gen_log_message(message=msg, step=9, subject=subject,
+    logger.info(gen_log_message(message=msg, step=8, subject=subject,
                                 session=session))
 
     epochs = mne.read_epochs(fname_in)
@@ -73,16 +71,16 @@ def run_time_frequency(subject, session=None):
 
 def main():
     """Run tf."""
-    msg = 'Running Step 9: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg, step=9))
+    msg = 'Running Step 8: Time-frequency decomposition'
+    logger.info(gen_log_message(message=msg, step=8))
 
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Completed Step 9: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg, step=9))
+    msg = 'Completed Step 8: Time-frequency decomposition'
+    logger.info(gen_log_message(message=msg, step=8))
 
 
 if __name__ == '__main__':

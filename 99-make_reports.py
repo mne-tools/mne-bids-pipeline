@@ -11,6 +11,9 @@ import os.path as op
 import itertools
 import logging
 import numpy as np
+from scipy.io import loadmat
+
+import matplotlib.pyplot as plt
 
 import mne
 from mne.parallel import parallel_func
@@ -115,6 +118,71 @@ def plot_auto_scores(subject, session):
     return all_figs, all_captions
 
 
+def plot_decoding_scores(times, cross_val_scores, metric):
+    """Plot cross-validation results from time-by-time decoding.
+    """
+    mean_scores = cross_val_scores.mean(axis=0)
+    max_scores = cross_val_scores.max(axis=0)
+    min_scores = cross_val_scores.min(axis=0)
+
+    fig, ax = plt.subplots()
+    ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
+    if times.min() < 0 < times.max():
+        ax.axvline(0, ls='-', lw=0.5, color='black')
+    ax.fill_between(x=times, y1=min_scores, y2=max_scores, color='lightgray',
+                    alpha=0.5, label='range [min, max]')
+    ax.plot(times, mean_scores, ls='-', lw=2, color='black',
+            label='mean')
+
+    ax.set_xlabel('Time (s)')
+    if metric == 'roc_auc':
+        metric = 'ROC AUC'
+    ax.set_ylabel(f'Score ({metric})')
+    ax.set_ylim((-0.025, 1.025))
+    ax.legend(loc='lower right')
+    fig.tight_layout()
+
+    return fig
+
+
+def plot_decoding_scores_gavg(decoding_data):
+    """Plot the grand-averaged decoding scores.
+    """
+    # We squeeze() to make Matplotlib happy.
+    times = decoding_data['times'].squeeze()
+    mean_scores = decoding_data['mean'].squeeze()
+    se_lower = mean_scores - decoding_data['mean_se'].squeeze()
+    se_upper = mean_scores + decoding_data['mean_se'].squeeze()
+    ci_lower = decoding_data['mean_ci_lower'].squeeze()
+    ci_upper = decoding_data['mean_ci_upper'].squeeze()
+    metric = config.decoding_metric
+
+    fig, ax = plt.subplots()
+    ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
+    if times.min() < 0 < times.max():
+        ax.axvline(0, ls='-', lw=0.5, color='black')
+    ax.fill_between(x=times, y1=ci_lower, y2=ci_upper, color='lightgray',
+                    alpha=0.5, label='95% confidence interval')
+    ax.plot(times, mean_scores, ls='-', lw=2, color='black',
+            label='mean')
+    ax.plot(times, se_lower, ls='-.', lw=0.5, color='gray',
+            label='standard error')
+    ax.plot(times, se_upper, ls='-.', lw=0.5, color='gray')
+    ax.text(0.05, 0.05, s=f'$N$={decoding_data["N"].squeeze()}',
+            fontsize='x-large', horizontalalignment='left',
+            verticalalignment='bottom', transform=ax.transAxes)
+
+    ax.set_xlabel('Time (s)')
+    if metric == 'roc_auc':
+        metric = 'ROC AUC'
+    ax.set_ylabel(f'Score ({metric})')
+    ax.set_ylim((-0.025, 1.025))
+    ax.legend(loc='lower right')
+    fig.tight_layout()
+
+    return fig
+
+
 def run_report(subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -133,6 +201,8 @@ def run_report(subject, session=None):
     fname_epo = bids_path.copy().update(suffix='epo')
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_ica = bids_path.copy().update(suffix='ica')
+    fname_decoding = fname_epo.copy().update(suffix='decoding',
+                                             extension='.mat')
 
     subjects_dir = config.get_fs_subjects_dir()
     params = dict(info_fname=fname_ave, raw_psd=True)
@@ -189,6 +259,38 @@ def run_report(subject, session=None):
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
+
+    ###########################################################################
+    #
+    # Visualize decoding results.
+    #
+    if config.decode:
+        epochs = mne.read_epochs(fname_epo)
+
+        for contrast in config.contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}-{cond_2}'.replace(op.sep, '')
+            processing = f'{a_vs_b}+{config.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding_ = (fname_decoding.copy()
+                               .update(processing=processing))
+            decoding_data = loadmat(fname_decoding_)
+            del fname_decoding_, processing, a_vs_b
+
+            fig = plot_decoding_scores(
+                times=epochs.times,
+                cross_val_scores=decoding_data['scores'],
+                metric=config.decoding_metric)
+
+            caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
+            comment = (f'{len(epochs[cond_1])} × {cond_1} ./. '
+                       f'{len(epochs[cond_2])} × {cond_2}')
+            rep.add_figs_to_section(figs=fig, captions=caption,
+                                    comments=comment,
+                                    section='Decoding')
+            del decoding_data, cond_1, cond_2, caption, comment
+
+        del epochs
 
     ###########################################################################
     #
@@ -337,6 +439,33 @@ def main():
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
+
+    ###########################################################################
+    #
+    # Visualize decoding results.
+    #
+    if config.decode:
+        for contrast in config.contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}-{cond_2}'.replace(op.sep, '')
+            processing = f'{a_vs_b}+{config.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding_ = (evoked_fname.copy()
+                               .update(processing=processing,
+                                       suffix='decoding',
+                                       extension='.mat'))
+            decoding_data = loadmat(fname_decoding_)
+            del fname_decoding_, processing, a_vs_b
+
+            fig = plot_decoding_scores_gavg(decoding_data)
+            caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
+            comment = (f'Based on N={decoding_data["N"].squeeze()} subjects. '
+                       f'Standard error and confidence interval of the mean '
+                       f'were bootstrapped with {config.n_boot} resamples.')
+            rep.add_figs_to_section(figs=fig, captions=caption,
+                                    comments=comment,
+                                    section='Decoding')
+            del decoding_data, cond_1, cond_2, caption, comment
 
     ###########################################################################
     #

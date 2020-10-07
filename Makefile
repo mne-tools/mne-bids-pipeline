@@ -19,9 +19,9 @@ sensor:
 	$(PYTHON) 05a-apply_ica.py
 	$(PYTHON) 05b-apply_ssp.py
 	$(PYTHON) 06-make_evoked.py
-	$(PYTHON) 07-group_average_sensors.py
-	$(PYTHON) 08-sliding_estimator.py
-	$(PYTHON) 09-time_frequency.py
+	$(PYTHON) 07-sliding_estimator.py
+	$(PYTHON) 08-time_frequency.py
+	$(PYTHON) 09-group_average_sensors.py
 
 source:
 	$(PYTHON) 10-make_forward.py

@@ -679,7 +679,7 @@ decode = True
 
 # ``n_boot`` : int
 #   The number of bootstrap resamples when estimating the standard error and
-#   confidence interval of the mean.
+#   confidence interval of the mean decoding score.
 
 n_boot = 5000
 

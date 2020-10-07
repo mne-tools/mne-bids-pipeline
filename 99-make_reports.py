@@ -166,7 +166,7 @@ def plot_decoding_scores_gavg(decoding_data):
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
     ax.plot(times, se_lower, ls='-.', lw=0.5, color='gray',
-            label='standard error')
+            label='mean ± standard error')
     ax.plot(times, se_upper, ls='-.', lw=0.5, color='gray')
     ax.text(0.05, 0.05, s=f'$N$={decoding_data["N"].squeeze()}',
             fontsize='x-large', horizontalalignment='left',

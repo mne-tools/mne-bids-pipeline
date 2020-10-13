@@ -621,19 +621,15 @@ ica_max_iterations = 200
 # ``ica_n_components`` : float | int | None
 #
 #   MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
-#   on the data; and in the second step, the data is passed to the actual ICA.
-#   This allows us to reduce dimensionality of the data using PCA, before
-#   submitting the data to ICA. We will always reduce dimensionality such that
-#   the remaining principal components explain about 99.99% of the variance in
-#   the data; this ensures that any components **not** contributing to variance
-#   will be dropped to avoid working with rank-deficient data.
-#
-#   As said above, after this PCA step, the actual ICA takes place. You can
-#   control how many principal components to pass to the ICA algorithm, thereby
-#   determining how many independent components to fit.
+#   on the data (trying to exclude zero-valued components in rank-deficient
+#   data); and in the second step, the principal componenets are passed
+#   to the actual ICA. You can select how many of the total principal
+#   components to pass to ICA – it can be all or just a subset. This determines
+#   how many independent components to fit, and can be controlled via this
+#   setting.
 #
 #   If int, specifies the number of principal components that are passed to the
-#   ICA algorithm, which will also be the number of independent components to
+#   ICA algorithm, which will be the number of independent components to
 #   fit. It must not be greater than the rank of your data (which is typically
 #   the number of channels, but may be less in some cases).
 #

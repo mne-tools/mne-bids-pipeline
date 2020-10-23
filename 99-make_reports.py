@@ -350,6 +350,7 @@ def run_report(subject, session=None):
                     brain = stc.plot(views=['lat'], hemi='both',
                                      initial_time=peak_time, backend='pyvista',
                                      time_viewer=True,
+                                     show_traces=True,
                                      subjects_dir=subjects_dir)
                     brain.toggle_interface()
                     figs = brain._renderer.figure

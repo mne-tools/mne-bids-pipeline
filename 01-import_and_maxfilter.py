@@ -272,6 +272,15 @@ def run_maxwell_filter(subject, session=None):
         bids_path_out.update(run=run)
         raw = load_data(bids_path_in)
 
+        # Fix stimulation artifact
+        if config.fix_stim_artifact:
+            events, _ = mne.events_from_annotations(raw)
+            raw = mne.preprocessing.fix_stim_artifact(
+                raw, events=events, event_id=None,
+                tmin=config.stim_artifact_tmin,
+                tmax=config.stim_artifact_tmax,
+                mode='linear')
+
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
             find_bad_channels(raw=raw, subject=subject, session=session,

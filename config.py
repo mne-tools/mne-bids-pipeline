@@ -342,6 +342,34 @@ mf_cal_fname = ''
 
 mf_reference_run = None
 
+
+###############################################################################
+# STIMULATION ARTIFACT
+# --------------------
+# used in 01-import_and_maxfilter.py
+#
+# When using electric stimulation systems, e.g. for median nerve or index
+# stimulation it is frequent to have a stimulation artifact. This option
+# allows to fix it by linear interpolation early the pipeline on the raw
+# data.
+#
+# fix_stim_artifact : bool
+#     Apply interpolation to fix stimulation artifact.
+# stim_artifact_tmin : float
+#     Start time of the interpolation window in seconds.
+# stim_artifact_tmax : float
+#     End time of the interpolation window in seconds.
+#
+# Example
+# ~~~~~~~
+# >>> fix_stim_artifact = False
+# >>> stim_artifact_tmin = 0.  # on stim onset
+# >>> stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
+
+fix_stim_artifact = False
+stim_artifact_tmin = 0.
+stim_artifact_tmax = 0.01
+
 ###############################################################################
 # FREQUENCY FILTERING
 # -------------------

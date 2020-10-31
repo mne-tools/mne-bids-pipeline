@@ -349,15 +349,15 @@ mf_reference_run = None
 # used in 01-import_and_maxfilter.py
 #
 # When using electric stimulation systems, e.g. for median nerve or index
-# stimulation it is frequent to have a stimulation artifact. This option
-# allows to fix it by linear interpolation early the pipeline on the raw
+# stimulation, it is frequent to have a stimulation artifact. This option
+# allows to fix it by linear interpolation early in the pipeline on the raw
 # data.
 #
-# fix_stim_artifact : bool
+# ``fix_stim_artifact`` : bool
 #     Apply interpolation to fix stimulation artifact.
-# stim_artifact_tmin : float
+# ``stim_artifact_tmin`` : float
 #     Start time of the interpolation window in seconds.
-# stim_artifact_tmax : float
+# ``stim_artifact_tmax`` : float
 #     End time of the interpolation window in seconds.
 #
 # Example

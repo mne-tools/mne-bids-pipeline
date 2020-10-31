@@ -1,6 +1,6 @@
 """
 =================================
-14. Group average on source level
+13. Group average on source level
 =================================
 
 Source estimates are morphed to the ``fsaverage`` brain.
@@ -13,7 +13,7 @@ import logging
 import mne
 from mne.parallel import parallel_func
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -22,48 +22,34 @@ logger = logging.getLogger('mne-study-template')
 
 
 def morph_stc(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
-
-    subject_path = op.join(subject_path, config.get_kind())
-
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
-    mne.utils.set_config('SUBJECTS_DIR', config.get_subjects_dir())
-    mne.datasets.fetch_fsaverage(subjects_dir=config.get_subjects_dir())
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
-        inverse_str = 'inverse-%s' % method
+        cond_str = condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph-fsaverage'
-        fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
-                                                   inverse_str, hemi_str]))
-        fname_stc_fsaverage = op.join(fpath_deriv,
-                                      '_'.join([bids_basename, cond_str,
-                                                inverse_str, morph_str,
-                                                hemi_str]))
+        morph_str = 'morph2fsaverage'
+
+        fname_stc = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
+        fname_stc_fsaverage = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
 
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
             stc, subject_from=subject, subject_to='fsaverage',
-            subjects_dir=config.get_subjects_dir())
+            subjects_dir=config.get_fs_subjects_dir())
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
         morphed_stcs.append(stc_fsaverage)
@@ -79,6 +65,8 @@ def main():
     msg = 'Running Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
 
+    mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
+
     parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
     all_morphed_stcs = parallel(run_func(subject, session)
                                 for subject, session in
@@ -88,29 +76,36 @@ def main():
                         zip(all_morphed_stcs, config.get_subjects())]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME)
+    subject = 'average'
+    # XXX to fix
+    if config.get_sessions():
+        session = config.get_sessions()[0]
+    else:
+        session = None
 
-    bids_basename = make_bids_basename(task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space)
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         processing=config.proc,
+                         recording=config.rec,
+                         space=config.space,
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
     for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
-        inverse_str = 'inverse-%s' % method
+        cond_str = condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph-fsaverage'
+        morph_str = 'morph2fsaverage'
 
-        fname_stc_avg = op.join(fpath_deriv, '_'.join(['average',
-                                                       bids_basename, cond_str,
-                                                       inverse_str, morph_str,
-                                                       hemi_str]))
+        fname_stc_avg = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
         this_stc.save(fname_stc_avg)
 
     msg = 'Completed Step 13: Grand-average source estimates'

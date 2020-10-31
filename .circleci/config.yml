@@ -10,9 +10,10 @@ jobs:
             name: Set BASH_ENV
             command: |
               echo "set -e" >> $BASH_ENV;
-              echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
               echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+              # echo "export DISPLAY=:99" >> $BASH_ENV;
+              echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 
         - restore_cache:
             keys:
@@ -34,7 +35,7 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
-              pip install numpy scipy matplotlib nibabel coloredlogs
+              pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard
               pip install -U scikit-learn
               pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
@@ -42,24 +43,24 @@ jobs:
               pip install -e .
               cd ..
 
-        - run:
-            name: Spin up Xvfb
-            command: |
-              /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
+        # - run:
+        #     name: Spin up Xvfb
+        #     command: |
+        #       /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset;
 
         # https://github.com/ContinuumIO/anaconda-issues/issues/9190#issuecomment-386508136
         # https://github.com/golemfactory/golem/issues/1019
-        - run:
-            name: Install PyQt5 dependencies
-            command: |
-              sudo apt-get install libxkbcommon-x11-0
+        # - run:
+        #     name: Install PyQt5 dependencies
+        #     command: |
+        #       sudo apt-get install libxkbcommon-x11-0
 
-        - run:
-            name: Install 3D dependencies
-            command: |
-              pip install --user --upgrade --progress-bar off vtk
-              pip install --user --upgrade --progress-bar off mayavi
-              pip install --user --upgrade --progress-bar off PySurfer[save_movie]
+        # - run:
+        #     name: Install 3D dependencies
+        #     command: |
+        #       pip install --user --upgrade --progress-bar off vtk
+        #       pip install --user --upgrade --progress-bar off mayavi
+        #       pip install --user --upgrade --progress-bar off PySurfer[save_movie]
 
         - run:
             name: Install datalad to conveniently pull testing datasets
@@ -99,8 +100,8 @@ jobs:
                export DS=ds000246
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -109,9 +110,20 @@ jobs:
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+
+        - run:
+            name: test ds000248_ica
+            command: |
+                export DS=ds000248_ica
+                python tests/run_tests.py ${DS}
+                mkdir ~/reports/${DS}
+                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test ds001810
@@ -119,8 +131,7 @@ jobs:
                export DS=ds001810
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/*/report_*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
@@ -129,18 +140,16 @@ jobs:
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
-            name: test somato
+            name: test ds003104
             command: |
-               export DS=somato
+               export DS=ds003104
                python tests/run_tests.py ${DS}
-               # mkdir ~/reports/${DS}
-               # cp ~/mne_data/${DS}/derivatives/mne-study-template/*/*/report_*.html ~/reports/${DS}/
-               # cp ~/mne_data/${DS}/derivatives/mne-study-template/report_average_*.html ~/reports/${DS}/
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - store_artifacts:
@@ -155,6 +164,18 @@ jobs:
 workflows:
   version: 2
 
-  default:
+  commit:
     jobs:
       - run_tests
+
+  scheduled:
+    jobs:
+      - run_tests
+
+    triggers:
+      - schedule:
+          cron: "0 4 * * *"
+          filters:
+            branches:
+              only:
+                - master

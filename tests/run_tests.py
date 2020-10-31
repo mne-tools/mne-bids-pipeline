@@ -34,11 +34,11 @@ def sensor():
     mod.main()
     mod = importlib.import_module('06-make_evoked')
     mod.main()
-    mod = importlib.import_module('07-group_average_sensors')
+    mod = importlib.import_module('07-sliding_estimator')
     mod.main()
-    mod = importlib.import_module('08-sliding_estimator')
+    mod = importlib.import_module('08-time_frequency')
     mod.main()
-    mod = importlib.import_module('09-time_frequency')
+    mod = importlib.import_module('09-group_average_sensors')
     mod.main()
 
 
@@ -65,10 +65,11 @@ DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
 
 TEST_SUITE = {
     'ds000246': ('config_ds000246', sensor, report),
-    'ds000248': ('config_ds000248', sensor, report),
+    'ds000248': ('config_ds000248', sensor, source, report),
+    'ds000248_ica': ('config_ds000248_ica', sensor, report),
     'ds001810': ('config_ds001810', sensor, report),
     'eeg_matchingpennies': ('config_eeg_matchingpennies', sensor, report),
-    'somato': ('config_somato', sensor, source),
+    'ds003104': ('config_ds003104', sensor, source, report),
 }
 
 

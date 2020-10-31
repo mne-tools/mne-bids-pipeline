@@ -7,7 +7,6 @@ of your BIDS dataset to be analyzed.
 import importlib
 import functools
 import os
-from collections import defaultdict
 import copy
 import coloredlogs
 import logging
@@ -15,7 +14,7 @@ import pdb, traceback, sys
 
 import numpy as np
 import mne
-from mne_bids.utils import get_entity_vals
+from mne_bids.path import get_entity_vals
 
 # Name, version, and hosting location of the pipeline
 PIPELINE_NAME = 'mne-study-template'
@@ -60,12 +59,13 @@ subjects_dir = None
 
 daysback = None
 
-# ``plot`` : boolean
-#   If True, the scripts will generate plots.
-#   If running the scripts from a notebook or spyder
-#   run %matplotlib qt in the command line to get the plots in extra windows
+# ``interactive`` : boolean
+#   If True, the scripts will provide some interactive elements, such as
+#   figures. If running the scripts from a notebook or Spyder,
+#   run %matplotlib qt in the command line to open the figures in a separate
+#   window.
 
-plot = False
+interactive = False
 
 # ``crop`` : tuple or None
 # If tuple, (tmin, tmax) to crop the raw data
@@ -95,68 +95,119 @@ rec = None
 
 space = None
 
-# ``subjects_list`` : list of str
-#   To define the list of participants, we use a list with all the anonymized
-#   participant names. Even if you plan on analyzing a single participant, it
-#   needs to be set up as a list with a single element, as in the 'example'
-#   subjects_list = ['SB01']
+# ``subjects`` : 'all' | list of str
+#   Subjects to analyze. If ``'all``, include all subjects. To only
+#   include a subset of subjects, pass a list of their identifiers. Even
+#   if you plan on analyzing only a single subject, pass their identifier
+#   as a list.
+#
+#   Please note that if you intend to EXCLUDE only a few subjects, you
+#   should consider setting ``subjects = 'all'`` and adding the
+#   identifiers of the excluded subjects to ``exclude_subjects`` (see next
+#   section).
+#
+# Example
+# ~~~~~~~
+# >>> subjects = 'all'  # Include all subjects.
+# >>> subjects = ['05']  # Only include subject 05.
+# >>> subjects = ['01', '02']  # Only include subjects 01 and 02.
 
-subjects_list = 'all'
+subjects = 'all'
 
 # ``exclude_subjects`` : list of str
-#   Now you can specify subjects to exclude from the group study:
+#   Specify subjects to exclude from analysis. The MEG empty-room mock-subject
+#   is automatically excluded from regular analysis.
 #
 # Good Practice / Advice
 # ~~~~~~~~~~~~~~~~~~~~~~
 # Keep track of the criteria leading you to exclude
 # a participant (e.g. too many movements, missing blocks, aborted experiment,
 # did not understand the instructions, etc, ...)
+# The ``emptyroom`` subject will be excluded automatically.
 
-exclude_subjects = ['emptyroom']
+exclude_subjects = []
 
-# ``ch_types``  : list of st
+# ``process_er`` : bool
+#
+#   Whether to apply the same pre-processing steps to the empty-room data as
+#   to the experimental data (up until including frequency filtering). This
+#   is required if you wish to use the empty-room recording to estimate noise
+#   covariance (via ``noise_cov='emptyroom'``). The empty-room recording
+#   corresponding to the processed experimental data will be retrieved
+#   automatically.
+
+process_er = False
+
+# ``ch_types``  : list of str
 #    The list of channel types to consider.
 #
+#    Note that currently, MEG and EEG data cannot be processed together.
+#
 # Example
 # ~~~~~~~
-# >>> ch_types = ['meg', 'eeg']  # to use MEG and EEG channels
-# or
-# >>> ch_types = ['meg']  # to use only MEG
-# or
-# >>> ch_types = ['grad']  # to use only gradiometer MEG channels
+# Use EEG channels:
+# >>> ch_types = ['eeg']
+# Use magnetometer and gradiometer MEG channels:
+# >>> ch_types = ['mag', 'grad']
+# Currently does not work and will raise an error message:
+# >>> ch_types = ['meg', 'eeg']
 
-# Note: If `kind` is 'eeg', EEG ch_types will be used regardless of whether
-# specified here or not
 ch_types = []
 
+
+# ``data_type``  : str
+#   The BIDS data type.
+#
+#   For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
+#   However, if your dataset contains simultaneous recordings of MEG and EEG,
+#   stored in a single file, you will typically need to set this to 'meg'.
+#   If ``None``, we will assume that the data type matches the channel type.
+#
+# Example
+# ~~~~~~~
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the EEG data, which is stored inside the MEG files:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'
+#
+# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+# to process the gradiometer data:
+# >>> ch_types = ['grad']
+# >>> data_type = 'meg'  # or data_type = None
+#
+# The dataset contains only EEG data:
+# >>> ch_types = ['eeg']
+# >>> data_type = 'eeg'  # or data_type = None
+
+data_type = None
+
 ###############################################################################
-# DEFINE ADDITIONAL CHANNELS
-# --------------------------
-# needed for 01-import_and_maxfilter.py
-
-# ``rename_channels`` : dict rename channels
-#    Here you name or replace extra channels that were recorded, for instance
-#    EOG, ECG.
+# Apply EEG template montage?
+# ---------------------------
+#
+# In situations where you wish to process EEG data and no individual
+# digitization points (measured channel locations) are available, you can apply
+# a "template" montage. This means we will assume the EEG cap was placed
+# either according to an international system like 10/20, or as suggested by
+# the cap manufacturers in their respective manual.
+#
+# Please be aware that the actual cap placement most likely deviated somewhat
+# from the template, and, therefore, source reconstruction may be impaired.
+#
+# ``eeg_template_montage`` : None | str
+#   If ``None``, do not apply a template montage. If a string, must be the
+#   name of a built-in template montage in MNE-Python.
+#   You can find an overview of supported template montages at
+#   https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 #
 # Example
 # ~~~~~~~
-# Here rename EEG061 to EOG061, EEG062 to EOG062, EEG063 to ECG063:
-# >>> rename_channels = {'EEG061': 'EOG061', 'EEG062': 'EOG062',
-#                        'EEG063': 'ECG063'}
+# Do not apply template montage:
+# >>> eeg_template_montage = None
+# Apply 64-channel Biosemi 10/20 template montage:
+# >>> eeg_template_montage = 'biosemi64'
+eeg_template_montage = None
 
-# XXX should be done automatically from BIDS ?
-rename_channels = None
-
-# ``set_channel_types``: dict
-#   Here you define types of channels to pick later.
-#
-# Example
-# ~~~~~~~
-# >>> set_channel_types = {'EEG061': 'eog', 'EEG062': 'eog',
-#                          'EEG063': 'ecg', 'EEG064': 'misc'}
-
-# XXX should not be necessary
-set_channel_types = None
 
 ###############################################################################
 # MAXWELL FILTER PARAMETERS
@@ -282,15 +333,15 @@ mf_cal_fname = ''
 # to define a reference run (typically the one in the middle of
 # the recording session).
 #
-# ``mf_reference_run``  : int
+# ``mf_reference_run``  : str | None
 #   Which run to take as the reference for adjusting the head position of all
-#   runs.
+#   runs. If ``None``, pick the first run.
 #
 # Example
 # ~~~~~~~
-# >>> mf_reference_run = 0  # to use the first run
+# >>> mf_reference_run = '01'  # Use run "01".
 
-mf_reference_run = 0
+mf_reference_run = None
 
 ###############################################################################
 # FREQUENCY FILTERING
@@ -387,11 +438,15 @@ decim = 1
 # like.
 #
 #  ``reject`` : dict | None
-#    The rejection limits to make some epochs as bads.
+#    The rejection limits to mark epochs as bads.
 #    This allows to remove strong transient artifacts.
-#    If you want to reject and retrieve blinks later, e.g. with ICA,
-#    don't specify a value for the eog channel (see examples below).
-#    Make sure to include values for eeg if you have EEG data
+#    If you want to reject and retrieve blinks or ECG artifacts later, e.g.
+#    with ICA, don't specify a value for the EOG and ECG channels, respectively
+#    (see examples below).
+#
+#    Make sure to include values for "eeg" if you have EEG data.
+#
+#    Pass ``None`` to avoid automated epoch rejection based on amplitude.
 #
 # Note
 # ~~~~
@@ -430,6 +485,27 @@ rename_events = dict()
 # EPOCHING
 # --------
 #
+#  `conditions`` : list
+#    The condition names to consider. This can either be name of the
+#    experimental condition as specified in the BIDS ``events.tsv`` file; or
+#    the name of condition *grouped*, if the condition names contain the
+#    (MNE-specific) group separator, ``/``. See the "Subselecting epochs"
+#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
+#
+# Example
+# ~~~~~~~
+# >>> conditions = ['auditory/left', 'visual/left']
+# or
+# >>> conditions = ['auditory/left', 'auditory/right']
+# or
+# >>> conditions = ['auditory']  # All "auditory" conditions (left AND right)
+# or
+# >>> conditions = ['auditory', 'visual']
+# or
+# >>> conditions = ['left', 'right']
+
+conditions = ['left', 'right']
+
 # ``tmin``: float
 #    A float in seconds that gives the start time before event of an epoch.
 #
@@ -448,19 +524,9 @@ tmin = -0.2
 
 tmax = 0.5
 
-# ``trigger_time_shift`` : float | None
-#    If float it specifies the offset for the trigger and the stimulus
-#    (in seconds). You need to measure this value for your specific
-#    experiment/setup.
-#
-# Example
-# ~~~~~~~
-# >>> trigger_time_shift = 0  # don't apply any offset
-
-trigger_time_shift = 0.
-
-# ``baseline`` : tuple
-#    It specifies how to baseline the epochs; if None, no baseline is applied.
+# ``baseline`` : tuple | None
+#    It specifies how to baseline-correct the epochs; if ``None``, no baseline
+#    correction is applied.
 #
 # Example
 # ~~~~~~~
@@ -468,27 +534,29 @@ trigger_time_shift = 0.
 
 baseline = (None, 0)
 
-#  `conditions`` : list
-#    The condition names to consider. This can either be the keys of
-#    ``event_id``, or – if event names were specified with ``/`` for
-#    grouping – the name of the *grouped* condition (i.e., the
-#    condition name before or after that ``/`` that is shared between the
-#    respective conditions you wish to group). See the "Subselecting epochs"
-#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
+
+#  ``contrasts`` : list of tuples
+#    The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
+#    in the list corresponds to one contrast. The condition names must be
+#    specified in ``conditions`` above. Pass an empty list to avoid calculation
+#    of contrasts.
 #
 # Example
 # ~~~~~~~
-# >>> conditions = ['auditory/left', 'visual/left']
-# or
-# >>> conditions = ['auditory/left', 'auditory/right']
-# or
-# >>> conditions = ['auditory']
-# or
-# >>> conditions = ['auditory', 'visual']
-# or
+# Contrast the "left" and the "right" conditions by calculating "left - right"
+# at every time point of the evoked responses:
 # >>> conditions = ['left', 'right']
+# >>> contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
+#
+# Contrast the "left" and the "right" conditions within the "auditory" and
+# the "visual" modality, and "auditory" vs "visual" regardless of side:
+# >>> conditions = ['auditory/left', 'auditory/right',
+#                   'visual/left', 'visual/right']
+# >>> contrasts = [('auditory/left', 'auditory/right'),
+#                  ('visual/left', 'visual/right'),
+#                  ('auditory', 'visual')]
 
-conditions = ['left', 'right']
+contrasts = []
 
 ###############################################################################
 # ARTIFACT REMOVAL
@@ -501,58 +569,116 @@ conditions = ['left', 'right']
 # if you choose SSP, run scripts 5b and 6b
 #
 # Currently you cannot use both.
+
+# SSP
+# ~~~
 #
 # ``use_ssp`` : bool
 #    If True ICA should be used or not.
 
 use_ssp = True
 
+# ICA
+# ~~~
 # ``use_ica`` : bool
 #    If True ICA should be used or not.
 
 use_ica = False
 
-# ``ica_decim`` : int
+# ``ica_algorithm`` : 'picard' | 'fastica' | 'extended_infomax'
+#   The ICA algorithm to use.
+
+ica_algorithm = 'picard'
+
+# ``ica_l_freq`` : float | None
+#   The cutoff frequency of the high-pass filter to apply before running ICA.
+#   Using a relatively high cutoff like 1 Hz will remove slow drifts from the
+#   data, yielding improved ICA results.
+#
+#   Set to ``None`` to not apply an additional high-pass filter.
+#
+#   Notes
+#   ~~~~~
+#   The filter will be applied to raw data which was already filtered
+#   according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
+#   data will be epoched, and the epochs will be submitted to ICA.
+
+ica_l_freq = 1.
+
+
+# ``ica_max_iterations`` : int
+#   Maximum number of iterations to decompose the data into independent
+#   components. A low number means to finish earlier, but the consequence is
+#   that the algorithm may not have finished converging. To ensure
+#   convergence, pick a high number here (e.g. 3000); yet the algorithm will
+#   terminate as soon as it determines that is has successfully converged, and
+#   not necessarily exhaust the maximum number of iterations. Note that the
+#   default of 200 seems to be sufficient for Picard in many datasets, because
+#   it converges quicker than the other algorithms; but e.g. for FastICA, this
+#   limit may be too low to achieve convergence.
+
+ica_max_iterations = 200
+
+# ``ica_n_components`` : float | int | None
+#
+#   MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
+#   on the data (trying to exclude zero-valued components in rank-deficient
+#   data); and in the second step, the principal componenets are passed
+#   to the actual ICA. You can select how many of the total principal
+#   components to pass to ICA – it can be all or just a subset. This determines
+#   how many independent components to fit, and can be controlled via this
+#   setting.
+#
+#   If int, specifies the number of principal components that are passed to the
+#   ICA algorithm, which will be the number of independent components to
+#   fit. It must not be greater than the rank of your data (which is typically
+#   the number of channels, but may be less in some cases).
+#
+#   If float between 0 and 1, all principal components with cumulative
+#   explained variance less than the value specified here will be passed to
+#   ICA.
+#
+#   If ``None``, **all** principal components will be used.
+#
+#   This setting may drastically alter the time required to compute ICA.
+
+ica_n_components = 0.8
+
+# ``ica_decim`` : None | None
 #    The decimation parameter to compute ICA. If 5 it means
 #    that 1 every 5 sample is used by ICA solver. The higher the faster
-#    it is to run but the less data you have to compute a good ICA.
+#    it is to run but the less data you have to compute a good ICA. Set to
+#    ``1`` or ``None`` to not perform any decimation.
 
-ica_decim = 11
+ica_decim = None
 
-
-# ``default_reject_comps_factory`` : callable
-#    A factory function that returns a default rejection component dictionary:
-#    A dictionary that specifies the indices of the ICA components to reject
-#    for each subject. For example you can use:
-#    rejcomps_man['subject01'] = dict(eeg=[12], meg=[7])
-
-def default_reject_comps_factory():
-    """Return the default rejection component dictionary."""
-    return dict(meg=[], eeg=[])
-
-
-rejcomps_man = defaultdict(default_reject_comps_factory)
-
-# ``ica_ctps_ecg_threshold``: float
+# ``ica_ctps_ecg_threshold`` : float
 #    The threshold parameter passed to `find_bads_ecg` method.
 
 ica_ctps_ecg_threshold = 0.1
+
+# ``ica_eog_threshold`` : float
+#   The threshold to use during automated EOG classification. Lower values mean
+#   that more ICs will be identified as EOG-related. If too low, the
+#   false-alarm rate increases dramatically.
+
+ica_eog_threshold = 3.0
 
 ###############################################################################
 # DECODING
 # --------
 #
-# ``decoding_conditions`` : list
-#    List of conditions to be classified.
-#
-# Example
-# ~~~~~~~
-# >>> decoding_conditions = []  # don't do decoding
-# or
-# >>> decoding_conditions = [('auditory', 'visual'), ('left', 'right')]
+# ``decode`` : bool
+#    Whether to perform decoding (MVPA) on the contrasts specified above as
+#    "contrasts". MVPA will be performed on the level of individual epochs.
 
-decoding_conditions = []
-# decoding_conditions = [('left', 'right')]
+decode = True
+
+# ``n_boot`` : int
+#   The number of bootstrap resamples when estimating the standard error and
+#   confidence interval of the mean decoding score.
+
+n_boot = 5000
 
 ###############################################################################
 # GROUP AVERAGE SENSORS
@@ -573,6 +699,8 @@ interpolate_bads_grand_average = True
 # ``decoding_metric`` : str
 #    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'
 #    or any metric supported by scikit-learn.
+#
+#    With AUC, chance level is the same regardless of class balance.
 
 decoding_metric = 'roc_auc'
 
@@ -635,6 +763,38 @@ depth = 0.8
 
 inverse_method = 'dSPM'
 
+# noise_cov : (None, 0) | ‘emptyroom’
+#   Specify how to estimate the noise covariance matrix, which is used in
+#   inverse modeling.
+#
+#   If a tuple, it takes the form ``(tmin, tmax)`` with the time specified in
+#   seconds. If the first value of the tuple is ``None``, the considered
+#   period starts at the beginning of the epoch. If the second value of the
+#   tuple is ``None``, the considered period ends at the end of the epoch.
+#   The default, ``(None, 0)``, includes the entire period before the event,
+#   which is typically the pre-stimulus period.
+#
+#   If ``emptyroom``, the noise covariance matrix will be estimated from an
+#   empty-room MEG recording. The empty-room recording will be automatically
+#   selected based on recording date and time.
+#
+#   Please note that when processing data that contains EEG channels, the noise
+#   covariance can ONLY be estimated from the pre-stimulus period.
+#
+# Example
+# ~~~~~~~
+# Use the period from start of the epoch until 100 ms before the experimental
+# event:
+# >>> noise_cov = (None, -0.1)
+#
+# Use the time period from the experimental event until the end of the epoch:
+# >>> noise_cov = (0, None)
+#
+# Use an empty-room recording:
+# >>> noise_cov = 'emptyroom'
+
+noise_cov = (None, 0)
+
 # smooth : int | None
 #    Number of iterations for the smoothing of the surface data.
 #    If None, smooth is automatically defined to fill the surface
@@ -668,9 +828,10 @@ h_trans_bandwidth = 'auto'
 N_JOBS = 1
 
 # ``random_state`` : None | int | np.random.RandomState
-#    To specify the random generator state. This allows to have
-#    the results more reproducible between machines and systems.
-#    Some methods like ICA need random values for initialisation.
+#    To specify the seed or state of the random number generator (RNG).
+#    This setting is passed to the ICA algorithm and to the decoding function,
+#    ensuring reproducible results. Set to ``None`` to avoid setting the RNG
+#    to a defined state.
 
 random_state = 42
 
@@ -732,7 +893,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
 
     if os.path.exists(cfg_path):
-        msg = 'Using custom configuration specified in MNE_BIDS_STUDY_CONFIG.'
+        msg = f'Using custom configuration: {cfg_path}'
         logger.info(msg)
     else:
         msg = ('The custom configuration file specified in the '
@@ -771,6 +932,12 @@ if not bids_root:
 
 
 ###############################################################################
+# Derivates root
+# --------------
+deriv_root = os.path.join(bids_root, 'derivatives', PIPELINE_NAME)
+
+
+###############################################################################
 # CHECKS
 # ------
 
@@ -780,6 +947,20 @@ if (use_maxwell_filter and
 
 if use_ssp and use_ica:
     raise ValueError('Cannot use both SSP and ICA.')
+
+if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
+    msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
+           f"are: 'picard', 'fastica', and 'extended_infomax', but received "
+           f"{ica_algorithm}.")
+    raise ValueError(msg)
+
+if use_ica and ica_l_freq < l_freq:
+    msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
+           f'than for your raw data: ica_l_freq = {ica_l_freq} < '
+           f'l_freq = {l_freq}. Adjust the cutoffs such that ica_l_freq >= '
+           f'l_freq, or set ica_l_freq to None if you do not wish to apply '
+           f'an additional high-pass filter before running ICA.')
+    raise ValueError(msg)
 
 if not ch_types:
     msg = 'Please specify ch_types in your configuration.'
@@ -812,6 +993,24 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"received {on_error}")
     logger.info(msg)
 
+if isinstance(noise_cov, str) and noise_cov != 'emptyroom':
+    msg = (f"noise_cov must be a tuple or 'emptyroom', but received "
+           f"{noise_cov}")
+    raise ValueError(msg)
+
+if noise_cov == 'emptyroom' and 'eeg' in ch_types:
+    msg = ('You requested to process data that contains EEG channels. In this '
+           'case, noise covariance can only be estimated from the '
+           'experimental data, e.g., the pre-stimulus period. Please set '
+           'noise_cov to (tmin, tmax)')
+    raise ValueError(msg)
+
+if noise_cov == 'emptyroom' and not process_er:
+    msg = ('You requested noise covariance estimation from empty-room '
+           'recordings by setting noise_cov = "emptyroom", but you did not '
+           'enable empty-room data processing. Please set process_er = True')
+    raise ValueError(msg)
+
 
 ###############################################################################
 # Helper functions
@@ -821,7 +1020,7 @@ def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
     if sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='ses')
+        sessions_ = get_entity_vals(bids_root, entity_key='session')
 
     if not sessions_:
         return [None]
@@ -841,36 +1040,71 @@ def get_runs():
         return runs_
 
 
-def get_subjects():
-    if subjects_list == 'all':
-        s = get_entity_vals(bids_root, entity_key='sub')
-    else:
-        s = subjects_list
+# XXX This check should actually go into the CHECKS section, but it depends
+# XXX on get_runs(), which is defined after that section.
+if mf_reference_run is not None and mf_reference_run not in get_runs():
+    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
+           f'only contains the following runs: {get_runs()}')
+    raise ValueError(msg)
 
-    return list(set(s) - set(exclude_subjects))
+
+def get_mf_reference_run():
+    """Retrieve to run identifier (number, name) of the reference run."""
+    if mf_reference_run is None:
+        # Use the first run
+        return get_runs()[0]
+    else:
+        return mf_reference_run
+
+
+def get_subjects():
+    global subjects
+
+    if subjects == 'all':
+        s = get_entity_vals(bids_root, entity_key='subject')
+    else:
+        s = subjects
+
+    subjects = set(s) - set(exclude_subjects)
+    # Drop empty-room subject.
+    subjects = subjects - set(['emptyroom'])
+
+    return list(subjects)
 
 
 def get_task():
     if not task:
-        return get_entity_vals(bids_root, entity_key='task')[0]
+        tasks = get_entity_vals(bids_root, entity_key='task')
+        if not tasks:
+            return None
+        else:
+            return tasks[0]
     else:
         return task
 
 
-def get_kind():
+def get_datatype():
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
-    if ch_types == ['eeg']:
+    if data_type is not None:
+        return data_type
+    elif data_type is None and ch_types == ['eeg']:
         return 'eeg'
-    else:
+    elif data_type is None and any([t in ['meg', 'mag', 'grad']
+                                    for t in ch_types]):
         return 'meg'
+    else:
+        raise RuntimeError("This probably shouldn't happen. Please contact "
+                           "the mne-study-template developers. Thank you.")
 
 
 def get_reject():
-    reject_ = reject.copy()  # Avoid clash with global variable.
-    kind = get_kind()
+    if reject is None:
+        return dict()
 
-    if kind == 'eeg':
+    reject_ = reject.copy()  # Avoid clash with global variable.
+
+    if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
     else:
         ch_types_to_remove = ('eeg',)
@@ -883,7 +1117,7 @@ def get_reject():
     return reject_
 
 
-def get_subjects_dir():
+def get_fs_subjects_dir():
     if not subjects_dir:
         return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
     else:
@@ -914,7 +1148,7 @@ def failsafe_run(on_error):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
             try:
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             except Exception as e:
                 message = 'A critical error occurred.'
                 message = gen_log_message(message=message)
@@ -932,3 +1166,91 @@ def failsafe_run(on_error):
                     logger.critical(message)
         return wrapper
     return failsafe_run_decorator
+
+
+def plot_auto_scores(auto_scores):
+    """Plot scores of automated bad channel detection.
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    if ch_types == ['meg']:
+        ch_types_ = ['grad', 'mag']
+    else:
+        ch_types_ = ch_types
+
+    figs = []
+    for ch_type in ch_types_:
+        # Only select the data for mag or grad channels.
+        ch_subset = auto_scores['ch_types'] == ch_type
+        ch_names = auto_scores['ch_names'][ch_subset]
+        scores = auto_scores['scores_noisy'][ch_subset]
+        limits = auto_scores['limits_noisy'][ch_subset]
+        bins = auto_scores['bins']  # The the windows that were evaluated.
+
+        # We will label each segment by its start and stop time, with up to 3
+        # digits before and 3 digits after the decimal place (1 ms precision).
+        bin_labels = [f'{start:3.3f} – {stop:3.3f}'
+                      for start, stop in bins]
+
+        # We store the data in a Pandas DataFrame. The seaborn heatmap function
+        # we will call below will then be able to automatically assign the
+        # correct labels to all axes.
+        data_to_plot = pd.DataFrame(data=scores,
+                                    columns=pd.Index(bin_labels,
+                                                     name='Time (s)'),
+                                    index=pd.Index(ch_names, name='Channel'))
+
+        # First, plot the "raw" scores.
+        fig, ax = plt.subplots(1, 2, figsize=(12, 8))
+        fig.suptitle(f'Automated noisy channel detection: {ch_type}',
+                     fontsize=16, fontweight='bold')
+        sns.heatmap(data=data_to_plot, cmap='Reds',
+                    cbar_kws=dict(label='Score'), ax=ax[0])
+        [ax[0].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
+            for x in range(1, len(bins))]
+        ax[0].set_title('All Scores', fontweight='bold')
+
+        # Now, adjust the color range to highlight segments that exceeded the
+        # limit.
+        sns.heatmap(data=data_to_plot,
+                    vmin=np.nanmin(limits),  # input data may contain NaNs
+                    cmap='Reds', cbar_kws=dict(label='Score'), ax=ax[1])
+        [ax[1].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
+            for x in range(1, len(bins))]
+        ax[1].set_title('Scores > Limit', fontweight='bold')
+
+        # The figure title should not overlap with the subplots.
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        figs.append(fig)
+
+    return figs
+
+
+def get_channels_to_analyze(info):
+    """Return names of the channels of the channel types we wish to analyze.
+
+    We also include channels marked as "bad" here.
+    """
+    # `exclude=[]`: keep "bad" channels, too.
+    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types
+                                    or 'meg' in ch_types):
+        pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
+
+        if 'mag' in ch_types:
+            pick_idx += mne.pick_types(info, meg='mag', exclude=[])
+        if 'grad' in ch_types:
+            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
+        if 'meg' in ch_types:
+            pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
+                                      exclude=[])
+    elif ch_types == ['eeg']:
+        pick_idx = mne.pick_types(info, meg=False, eeg=True, eog=True,
+                                  ecg=True, exclude=[])
+    else:
+        raise RuntimeError('Something unexpected happened. Please contact '
+                           'the mne-study-template developers. Thank you.')
+
+    ch_names = [info['ch_names'][i] for i in pick_idx]
+    return ch_names

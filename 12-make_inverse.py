@@ -1,6 +1,6 @@
 """
 ====================
-13. Inverse solution
+12. Inverse solution
 ====================
 
 Compute and apply an inverse solution for each evoked data set.
@@ -14,7 +14,7 @@ import mne
 from mne.parallel import parallel_func
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -24,37 +24,22 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_inverse(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root,
+                         check=False)
 
-    subject_path = op.join(subject_path, config.get_kind())
-
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_ave = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
-
-    fname_fwd = \
-        op.join(fpath_deriv, bids_basename + '-fwd.fif')
-
-    fname_cov = \
-        op.join(fpath_deriv, bids_basename + '-cov.fif')
-
-    fname_inv = \
-        op.join(fpath_deriv, bids_basename + '-inv.fif')
+    fname_ave = bids_path.copy().update(suffix='ave')
+    fname_fwd = bids_path.copy().update(suffix='fwd')
+    fname_cov = bids_path.copy().update(suffix='cov')
+    fname_inv = bids_path.copy().update(suffix='inv')
 
     evokeds = mne.read_evokeds(fname_ave)
     cov = mne.read_cov(fname_cov)
@@ -72,11 +57,12 @@ def run_inverse(subject, session=None):
         method = config.inverse_method
         pick_ori = None
 
-        cond_str = 'cond-%s' % condition.replace(op.sep, '')
-        inverse_str = 'inverse-%s' % method
+        cond_str = condition.replace(op.sep, '').replace('_', '')
+        inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        fname_stc = op.join(fpath_deriv, '_'.join([bids_basename, cond_str,
-                                                   inverse_str, hemi_str]))
+        fname_stc = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
+            extension=None)
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

@@ -46,12 +46,27 @@ For Windows users, it might be necessary to install [GNU make](https://chocolate
 
 ## Running on your own data
 
-1. Make sure your data is formatted in BIDS
-1. Set an environment variable `BIDS_ROOT` to point to your dataset
+1. Make sure your data is formatted according to the BIDS standard. **It is of great importance that**
+    - the BIDS data are anonymized if you require anonymization,
+      as the `mne-study-template` does not allow you to anonymize
+      data.
+
+      *This was a conscious design decision, not a technical
+       limitation *per se*. If you think this decision should be
+       reconsidered, please get in touch with the developers.*
+
+    - faulty channels are marked as "bad" in the BIDS dataset.
+      While we *do* run automated bad channel detection in the
+      `mne-study-template`, it is considered good practice to flag
+      obviously problematic channels as such in the BIDS dataset.
+      In the future, we will offer a way to alter the relevant entries
+      in the BIDS data directly from the pipeline.
+
+1. Set an environment variable `BIDS_ROOT` to point to your dataset.
 1. (optional) Set an environment variable `MNE_BIDS_STUDY_CONFIG` to point to
    a custom `config_<dataset_name>.py` file that you created to overwrite
 	 the standard parameters in the main `config.py` file.
-1. Use the `Makefile` to run your analyses
+1. Use the `Makefile` to run your analyses.
 
 # Processing steps
 

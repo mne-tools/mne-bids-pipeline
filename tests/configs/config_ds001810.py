@@ -14,15 +14,19 @@ export BIDS_ROOT=~/mne_data/ds001810
 
 study_name = 'ds001810'
 task = 'attentionalblink'
-plot = False
+interactive = False
 ch_types = ['eeg']
-reject = {'eeg': 150e-6}
-conditions = ['61510', '61511']
-decoding_conditions = [('61510', '61511')]
-use_ssp = False
-use_ica = False
+eeg_template_montage = 'biosemi64'
+reject = dict(eeg=100e-6)
+baseline = (None, 0)
+conditions = ['61450', '61511']
+contrasts = [('61450', '61511')]
+decode = True
 
-subjects_list = ['01']
+l_freq = 0.3
+use_ssp = False
+
+subjects = ['01', '02', '03', '04', '05']
 sessions = ['anodalpre']
 
 interpolate_bads_grand_average = False

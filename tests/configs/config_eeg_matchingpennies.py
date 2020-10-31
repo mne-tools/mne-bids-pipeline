@@ -9,13 +9,14 @@ Download the eeg_matchingpennies dataset from OSF: https://osf.io/cj2dr/
 """
 
 study_name = 'eeg_matchingpennies'
-subjects_list = ['05']
+subjects = ['05']
 task = 'matchingpennies'
 ch_types = ['eeg']
-plot = False
+interactive = False
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
-decoding_conditions = [('left', 'right')]
+contrasts = [('right', 'left')]
+decode = True
 use_ssp = False
 use_ica = False
 

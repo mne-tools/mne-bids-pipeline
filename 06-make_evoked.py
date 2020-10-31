@@ -6,14 +6,13 @@
 The evoked data sets are created by averaging different conditions.
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 from mne.parallel import parallel_func
 
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -23,49 +22,55 @@ logger = logging.getLogger('mne-study-template')
 
 @failsafe_run(on_error=on_error)
 def run_evoked(subject, session=None):
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root)
 
-    subject_path = op.join(subject_path, config.get_kind())
-
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
+    processing = None
     if config.use_ica or config.use_ssp:
-        extension = '_cleaned-epo'
-    else:
-        extension = '-epo'
+        processing = 'clean'
 
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '%s.fif' % extension)
-
-    fname_out = \
-        op.join(fpath_deriv, bids_basename + '-ave.fif')
+    fname_in = bids_path.copy().update(processing=processing, suffix='epo',
+                                       check=False)
+    fname_out = bids_path.copy().update(suffix='ave', check=False)
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+    logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
+    msg = 'Creating evoked data based on experimental conditions …'
+    logger.info(gen_log_message(message=msg, step=6, subject=subject,
+                                session=session))
     evokeds = []
     for condition in config.conditions:
-        evokeds.append(epochs[condition].average())
-    mne.evoked.write_evokeds(fname_out, evokeds)
+        evoked = epochs[condition].average()
+        evokeds.append(evoked)
 
-    if config.plot:
+    if config.contrasts:
+        msg = 'Contrasting evoked responses …'
+        logger.info(gen_log_message(message=msg, step=6, subject=subject,
+                                    session=session))
+
+        for contrast in config.contrasts:
+            cond_1, cond_2 = contrast
+            evoked_1 = epochs[cond_1].average()
+            evoked_2 = epochs[cond_2].average()
+            evoked_diff = mne.combine_evoked([evoked_1, evoked_2],
+                                             weights=[1, -1])
+            evokeds.append(evoked_diff)
+
+    mne.write_evokeds(fname_out, evokeds)
+
+    if config.interactive:
         for evoked in evokeds:
             evoked.plot()
 

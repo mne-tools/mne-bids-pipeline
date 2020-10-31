@@ -14,15 +14,16 @@ export BIDS_ROOT=~/mne_data/ds001971
 
 study_name = 'ds001971'
 task = 'AudioCueWalkingStudy'
-plot = False
+interactive = False
 ch_types = ['eeg']
 reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
-decoding_conditions = [('left', 'right')]
+contrasts = [('left', 'right')]
+decode = True
 use_ssp = False
 use_ica = False
 
 
-subjects_list = ['001']
+subjects = ['001']
 
 runs = ['01']

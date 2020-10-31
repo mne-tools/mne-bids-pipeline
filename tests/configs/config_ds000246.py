@@ -1,9 +1,13 @@
 study_name = 'ds000246'
 runs = ['01']
-subjects_list = ['0001']
+l_freq = .3
+h_freq = 100.
+decim = 4
+subjects = ['0001']
 ch_types = ['meg']
-reject = {'mag': 4e-12}
+reject = dict(mag=4e-12, eog=250e-6)
 conditions = ['standard', 'deviant', 'button']
-decoding_conditions = [('standard', 'deviant')]
-crop = (100, 200)
+contrasts = [('deviant', 'standard')]
+decode = True
 daysback = -365 * 110
+on_error = 'debug'

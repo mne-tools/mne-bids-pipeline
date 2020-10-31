@@ -17,11 +17,11 @@ task = 'facerecognition'
 ch_types = ['meg']
 runs = ['01']
 sessions = ['meg']
-plot = False
+interactive = False
 acq = None
 bids_root = op.join(op.expanduser('~'), 'data', 'ds000117')
 subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
-subjects_list = ['01']
+subjects = ['01']
 
 use_maxwell_filter = True
 mf_ctc_fname = None
@@ -29,6 +29,7 @@ mf_cal_fname = None
 
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 conditions = ['face', 'scrambled']
-decoding_conditions = [('face', 'scrambled')]
+contrasts = [('face', 'scrambled')]
+decode = True
 use_ssp = False
 use_ica = False

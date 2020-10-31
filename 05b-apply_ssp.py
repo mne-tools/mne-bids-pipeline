@@ -1,6 +1,6 @@
 """
 ===============
-06b. Apply SSP
+05b. Apply SSP
 ===============
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP
@@ -8,13 +8,12 @@ projections components are removed from the data.
 
 """
 
-import os.path as op
 import itertools
 import logging
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import make_bids_basename
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -26,31 +25,21 @@ logger = logging.getLogger('mne-study-template')
 def apply_ssp(subject, session=None):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
-    # Construct the search path for the data file. `sub` is mandatory
-    subject_path = op.join('sub-{}'.format(subject))
-    # `session` is optional
-    if session is not None:
-        subject_path = op.join(subject_path, 'ses-{}'.format(session))
 
-    subject_path = op.join(subject_path, config.get_kind())
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         run=None,
+                         recording=config.rec,
+                         space=config.space,
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.deriv_root)
 
-    bids_basename = make_bids_basename(subject=subject,
-                                       session=session,
-                                       task=config.get_task(),
-                                       acquisition=config.acq,
-                                       run=None,
-                                       processing=config.proc,
-                                       recording=config.rec,
-                                       space=config.space
-                                       )
-
-    fpath_deriv = op.join(config.bids_root, 'derivatives',
-                          config.PIPELINE_NAME, subject_path)
-    fname_in = \
-        op.join(fpath_deriv, bids_basename + '-epo.fif')
-
-    fname_out = \
-        op.join(fpath_deriv, bids_basename + '_cleaned-epo.fif')
+    fname_in = bids_path.copy().update(suffix='epo', check=False)
+    fname_out = bids_path.copy().update(processing='clean', suffix='epo',
+                                        check=False)
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
@@ -58,8 +47,7 @@ def apply_ssp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
 
-    proj_fname_in = \
-        op.join(fpath_deriv, bids_basename + '_ssp-proj.fif')
+    proj_fname_in = bids_path.copy().update(suffix='proj', check=False)
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

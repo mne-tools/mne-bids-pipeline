@@ -14,9 +14,12 @@ def _provide_testing_data(dataset=None):
     urls_dict = {
         'eeg_matchingpennies': (
             'https://github.com/sappelhoff/eeg_matchingpennies'),
-        'somato': ('https://github.com/sappelhoff/MNE-somato-data'),
+        # Anonymized "somato" dataset.
+        'ds003104': 'https://github.com/OpenNeuroDatasets/ds003104',
         'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
+        # MNE "sample" dataset.
         'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
+        'ds000248_ica': 'https://github.com/OpenNeuroDatasets/ds000248',
         'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
         'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
         'ds001971': 'https://github.com/OpenNeuroDatasets/ds001971',
@@ -31,28 +34,30 @@ def _provide_get_dict(dataset=None):
     """Return dict of dataset, and which data to get from it."""
     get_dict = {
         'eeg_matchingpennies': ['sub-05'],
-        'somato': ['sub-01',
-                   'derivatives/freesurfer/subjects',
-                   ],
+        'ds003104': ['sub-01',
+                     'derivatives/freesurfer/subjects'],
         'ds000246': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
                      'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
-                     'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'
-                     ],
-        'ds000248': ['sub-01'],
+                     'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'],
+        'ds000248': ['sub-01', 'sub-emptyroom',
+                     'derivatives/freesurfer/subjects'],
+        'ds000248_ica': ['sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501
-                     'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos'
-                     ],
-        'ds001810': ['sub-01/ses-anodalpre'],
+                     'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos'],
+        'ds001810': ['sub-01/ses-anodalpre',
+                     'sub-02/ses-anodalpre',
+                     'sub-03/ses-anodalpre',
+                     'sub-04/ses-anodalpre',
+                     'sub-05/ses-anodalpre'],
         'ds001971': ['sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.fdt',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
-                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv',  # noqa: E501
-                     ],
+                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv']  # noqa: E501
     }
     if dataset is None:
         return get_dict
@@ -81,7 +86,7 @@ def main(dataset):
 
         # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
         # if datalad fails, use "get" twice, or set `n_jobs=1`
-        if dsname == 'somato':
+        if dsname == 'ds003104':
             n_jobs = 16
         else:
             n_jobs = 1

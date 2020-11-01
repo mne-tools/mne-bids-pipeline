@@ -852,7 +852,7 @@ allow_maxshield = False
 log_level = 'info'
 mne_log_level = 'error'
 
-# ``on_abort`` : 'continue' | 'abort' | 'debug'
+# ``on_error`` : 'continue' | 'abort' | 'debug'
 #    Whether to abort processing as soon as an error occurs, or whether to
 #    continue with all other processing steps for as long as possible.
 #    If `'debug'` then on error it will enter the pdb interactive debugger.

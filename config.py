@@ -10,6 +10,9 @@ import os
 import copy
 import coloredlogs
 import logging
+import pdb
+import traceback
+import sys
 
 import numpy as np
 import mne
@@ -877,9 +880,12 @@ allow_maxshield = False
 log_level = 'info'
 mne_log_level = 'error'
 
-# ``on_abort`` : 'continue' | 'abort'
+# ``on_error`` : 'continue' | 'abort' | 'debug'
 #    Whether to abort processing as soon as an error occurs, or whether to
 #    continue with all other processing steps for as long as possible.
+#    If `'debug'` then on error it will enter the pdb interactive debugger.
+#    To debug it is recommended to deactivate parallel processing by
+#    setting `N_JOBS` to 1.
 
 on_error = 'abort'
 
@@ -1015,9 +1021,9 @@ if 'eeg' in ch_types:
                'To turn it on, set use_ica=True.')
         logger.info(msg)
 
-if on_error not in ('continue', 'abort'):
-    msg = (f"on_error must be one of 'continue' or 'abort', but received "
-           f"{on_error}.")
+if on_error not in ('continue', 'abort', 'debug'):
+    msg = (f"on_error must be one of 'continue' or 'abort' or 'debug', but "
+           f"received {on_error}")
     logger.info(msg)
 
 if isinstance(noise_cov, str) and noise_cov != 'emptyroom':
@@ -1183,6 +1189,11 @@ def failsafe_run(on_error):
                 if on_error == 'abort':
                     logger.critical(message)
                     raise(e)
+                elif on_error == 'debug':
+                    logger.critical(message)
+                    extype, value, tb = sys.exc_info()
+                    traceback.print_exc()
+                    pdb.post_mortem(tb)
                 else:
                     message = f'{message} The error message was:\n{str(e)}'
                     logger.critical(message)

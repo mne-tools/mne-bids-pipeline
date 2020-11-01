@@ -10,3 +10,4 @@ conditions = ['standard', 'deviant', 'button']
 contrasts = [('deviant', 'standard')]
 decode = True
 daysback = -365 * 110
+on_error = 'debug'

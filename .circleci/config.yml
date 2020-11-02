@@ -198,7 +198,7 @@ jobs:
               # Install deps required so MkDocs can import config.py
               conda install -c conda-forge -y coloredlogs
               pip install mne mne_bids                                      
-              cd mne-bids
+              cd mne-study-template
               mkdocs build
 
         - store_artifacts:

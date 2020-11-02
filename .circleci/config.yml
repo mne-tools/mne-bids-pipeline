@@ -247,9 +247,9 @@ workflows:
       - run_tests
       - build_docs
       - deploy_docs:
-        requires:
-          - run_tests
-          - build_docs
+          requires:
+            - run_tests
+            - build_docs
   
     triggers:
       - schedule:

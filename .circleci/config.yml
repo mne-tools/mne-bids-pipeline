@@ -105,26 +105,26 @@ jobs:
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
-        - run:
-            name: test ds000248
-            command: |
-               export DS=ds000248
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+        # - run:
+        #     name: test ds000248
+        #     command: |
+        #        export DS=ds000248
+        #        python tests/run_tests.py ${DS}
+        #        mkdir ~/reports/${DS}
+        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
+        #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+        #        rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
-        - run:
-            name: test ds000248_ica
-            command: |
-                export DS=ds000248_ica
-                python tests/run_tests.py ${DS}
-                mkdir ~/reports/${DS}
-                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+        # - run:
+        #     name: test ds000248_ica
+        #     command: |
+        #         export DS=ds000248_ica
+        #         python tests/run_tests.py ${DS}
+        #         mkdir ~/reports/${DS}
+        #         cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+        #         cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+        #         rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
             name: test ds001810
@@ -226,7 +226,7 @@ jobs:
             command: gh-pages --message "[skip ci] Update docs" --dist site
         - add_ssh_keys:
             fingerprints:
-              - "bc:92:50:d3:b1:c5:66:fc:7c:08:0d:1c:00:5e:1b:0a"
+              - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
     
 workflows:
   version: 2

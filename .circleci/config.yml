@@ -237,7 +237,7 @@ workflows:
       - build_docs
       - deploy_docs:
           requires:
-            - run_tests
+            # - run_tests
             - build_docs
           filters:
             branches:
@@ -249,7 +249,7 @@ workflows:
       - build_docs
       - deploy_docs:
           requires:
-            - run_tests
+            # - run_tests
             - build_docs
   
     triggers:

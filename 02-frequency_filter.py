@@ -59,6 +59,11 @@ def run_filter(subject, run=None, session=None):
         raw_fname_in = raw_fname_in.update(processing='sss')
         raw_er_fname_in = raw_er_fname_in.update(processing='sss')
 
+    if raw_fname_in.copy().update(split='01').fpath.exists():
+        raw_fname_in.update(split='01')
+    if raw_er_fname_in.copy().update(split='01').fpath.exists():
+        raw_er_fname_in.update(split='01')
+
     raw_fname_out = bids_path.copy().update(processing='filt')
     raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
                                                task='noise')
@@ -103,9 +108,9 @@ def run_filter(subject, run=None, session=None):
                                         session=session, run=run,))
             raw_er.resample(config.resample_sfreq, npad='auto')
 
-    raw.save(raw_fname_out, overwrite=True)
+    raw.save(raw_fname_out, overwrite=True, split_naming='bids')
     if config.process_er:
-        raw_er.save(raw_er_fname_out, overwrite=True)
+        raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
 
     if config.interactive:
         # Plot raw data and power spectral density.

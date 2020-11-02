@@ -43,6 +43,9 @@ def run_epochs(subject, session=None):
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
 
+        if raw_fname_in.copy().update(split='01').fpath.exists():
+            raw_fname_in.update(split='01')
+
         msg = f'Loading filtered raw data from {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session, run=run))

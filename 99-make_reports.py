@@ -16,6 +16,8 @@ from scipy.io import loadmat
 import matplotlib
 
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 import mne
 from mne.parallel import parallel_func
@@ -31,7 +33,7 @@ logger = logging.getLogger('mne-study-template')
 
 def plot_events(subject, session):
     raws_filt = []
-    bids_path = BIDSPath(subject=subject,
+    raw_fname = BIDSPath(subject=subject,
                          session=session,
                          task=config.get_task(),
                          acquisition=config.acq,
@@ -45,10 +47,14 @@ def plot_events(subject, session):
                          check=False)
 
     for run in config.get_runs():
-        fname = bids_path.copy().update(run=run)
-        raw_filt = mne.io.read_raw_fif(fname)
+        raw_fname = raw_fname.copy().update(run=run)
+
+        if raw_fname.copy().update(split='01').fpath.exists():
+            raw_fname.update(split='01')
+
+        raw_filt = mne.io.read_raw_fif(raw_fname)
         raws_filt.append(raw_filt)
-        del fname
+        del raw_fname
 
     # Concatenate the filtered raws and extract the events.
     raw_filt_concat = mne.concatenate_raws(raws_filt)
@@ -61,7 +67,7 @@ def plot_events(subject, session):
 
 
 def plot_er_psd(subject, session):
-    bids_path = BIDSPath(subject=subject,
+    raw_fname = BIDSPath(subject=subject,
                          session=session,
                          acquisition=config.acq,
                          run=None,
@@ -79,7 +85,10 @@ def plot_er_psd(subject, session):
     if not config.use_maxwell_filter and config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw_er_filtered = mne.io.read_raw_fif(bids_path, preload=True,
+    if raw_fname.copy().update(split='01').fpath.exists():
+        raw_fname.update(split='01')
+
+    raw_er_filtered = mne.io.read_raw_fif(raw_fname, preload=True,
                                           **extra_params)
 
     fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
@@ -400,6 +409,10 @@ def run_report(subject, session=None):
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
     import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
+
+    # Cleanup by closing all opened figures
+    import matplotlib.pyplot as plt
+    plt.close('all')
 
 
 def run_report_average(session):

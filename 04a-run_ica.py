@@ -33,6 +33,10 @@ def load_and_concatenate_raws(bids_basename):
     raw_list = list()
     for run in config.get_runs():
         raw_fname_in = (bids_basename.copy().update(run=run, processing=None))
+
+        if raw_fname_in.copy().update(split='01').fpath.exists():
+            raw_fname_in.update(split='01')
+
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raw_list.append(raw)
 

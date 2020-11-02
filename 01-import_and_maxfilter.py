@@ -275,11 +275,13 @@ def run_maxwell_filter(subject, session=None):
         # Fix stimulation artifact
         if config.fix_stim_artifact:
             events, _ = mne.events_from_annotations(raw)
+            raw.set_channel_types({'EOG 061': 'eeg', 'EOG 062': 'eeg'})
             raw = mne.preprocessing.fix_stim_artifact(
                 raw, events=events, event_id=None,
                 tmin=config.stim_artifact_tmin,
                 tmax=config.stim_artifact_tmax,
                 mode='linear')
+            raw.set_channel_types({'EOG 061': 'eog', 'EOG 062': 'eog'})
 
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
@@ -335,7 +337,8 @@ def run_maxwell_filter(subject, session=None):
         # channels marked as "bad").
         # We do not run `raw_out.pick()` here because it uses too much memory.
         chs_to_include = config.get_channels_to_analyze(raw_out.info)
-        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
+        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True,
+                     split_naming='bids')
         del raw_out
         if config.interactive:
             # Load the data we have just written, because it contains only
@@ -400,7 +403,7 @@ def run_maxwell_filter(subject, session=None):
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).
             raw_er_out.save(raw_er_fname_out, picks=chs_to_include,
-                            overwrite=True)
+                            overwrite=True, split_naming='bids')
             del raw_er_out
 
 

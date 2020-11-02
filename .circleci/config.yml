@@ -203,6 +203,30 @@ jobs:
         - store_artifacts:
             path: site
 
+        - persist_to_workspace:
+            root: .
+            paths: site
+
+    deploy_docs:
+      docker:
+        - image: node:10
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - run:
+            name: Install and configure dependencies
+            command: |
+              npm install -g --silent gh-pages
+              git config user.email "ci-build@mne.tools"
+              git config user.name "ci-build"
+        - run:
+            name: Deploy docs to gh-pages branch
+            command: gh-pages --dist site
+        - add_ssh_keys:
+          fingerprints:
+            - "bc:92:50:d3:b1:c5:66:fc:7c:08:0d:1c:00:5e:1b:0a"
+    
 workflows:
   version: 2
 
@@ -210,12 +234,23 @@ workflows:
     jobs:
       - run_tests
       - build_docs
+      - deploy_docs:
+          requires:
+            - run_tests
+            - build_docs
+          filters:
+            branches:
+              only: master
 
   scheduled:
     jobs:
       - run_tests
       - build_docs
-
+      - deploy_docs:
+        requires:
+          - run_tests
+          - build_docs
+  
     triggers:
       - schedule:
           cron: "0 4 * * *"

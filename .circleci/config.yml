@@ -36,6 +36,7 @@ jobs:
             command: |
               conda update -n base -c defaults conda
               pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard
+              pip install typing_extensions  # for Python <3.8
               pip install -U scikit-learn
               pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1
@@ -161,17 +162,96 @@ jobs:
             paths:
               - ~/mne_data/
 
+    build_docs:
+      docker:
+        - image: circleci/python:3.6.8-stretch
+      steps:
+        - checkout
+
+        - run:
+            name: Set BASH_ENV
+            command: |
+              echo "set -e" >> $BASH_ENV;
+              echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
+              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+              # echo "export DISPLAY=:99" >> $BASH_ENV;
+              echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
+
+        - run:
+            name: Get conda running
+            command: |
+              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
+              chmod +x ~/miniconda.sh;
+              ~/miniconda.sh -b -p ~/miniconda;
+              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+
+        - run:
+            name: Install dependencies in conda base environment
+            command: |
+              conda update -n base -c defaults conda
+              # Install deps immediately required for doc building
+              conda install -c conda-forge -y python=3.8 \
+                                              mkdocs \
+                                              mkdocs-material \
+                                              mkdocs-material-extensions \
+                                              mkdocstrings
+              # Install deps required so MkDocs can import config.py
+              conda install -c conda-forge -y coloredlogs
+              pip install mne mne_bids                                      
+              mkdocs build
+
+        - store_artifacts:
+            path: site
+
+        - persist_to_workspace:
+            root: .
+            paths: site
+
+    deploy_docs:
+      docker:
+        - image: node:10
+
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - run:
+            name: Install and configure dependencies
+            command: |
+              npm install -g --silent gh-pages
+              git config user.email "ci-build@mne.tools"
+              git config user.name "ci-build"
+        - run:
+            name: Deploy docs to gh-pages branch
+            command: gh-pages --message "[skip ci] Update docs" --dist site
+        - add_ssh_keys:
+            fingerprints:
+              - "bc:92:50:d3:b1:c5:66:fc:7c:08:0d:1c:00:5e:1b:0a"
+    
 workflows:
   version: 2
 
   commit:
     jobs:
       - run_tests
+      - build_docs
+      - deploy_docs:
+          requires:
+            - run_tests
+            - build_docs
+          filters:
+            branches:
+              only: master
 
   scheduled:
     jobs:
       - run_tests
-
+      - build_docs
+      - deploy_docs:
+          requires:
+            - run_tests
+            - build_docs
+  
     triggers:
       - schedule:
           cron: "0 4 * * *"

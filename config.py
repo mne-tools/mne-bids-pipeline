@@ -7,12 +7,17 @@ of your BIDS dataset to be analyzed.
 import importlib
 import functools
 import os
-import copy
-import coloredlogs
-import logging
 import pdb
 import traceback
 import sys
+import copy
+import coloredlogs
+import logging
+from typing import Optional, Union, Iterable
+try:
+    from typing import Literal
+except ImportError:  # Python <3.8
+    from typing_extensions import Literal
 
 import numpy as np
 import mne
@@ -24,192 +29,212 @@ VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 
-# ``study_name`` : str
-#   Specify the name of your study. It will be used to populate filenames for
-#   saving the analysis results.
-#
-# Example
-# ~~~~~~~
-# >>> study_name = 'my-study'
+study_name: str = ''
+"""
+Specify the name of your study. It will be used to populate filenames for
+saving the analysis results.
 
-study_name = ''
+**Example**
+```python
 
-# ``bids_root`` : str or None
-#   Speficy the BIDS root directory. Pass an empty string or ```None`` to use
-#   the value specified in the ``BIDS_ROOT`` environment variable instead.
-#   Raises an exception if the BIDS root has not been specified.
-#
-# Example
-# ~~~~~~~
-# >>> bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
-# or
-# >>> bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+study_name = 'my-study'
+```
+"""
 
-bids_root = None
+bids_root: Optional[str] = None
+"""
+Speficy the BIDS root directory. Pass an empty string or ```None`` to use
+the value specified in the ``BIDS_ROOT`` environment variable instead.
+Raises an exception if the BIDS root has not been specified.
 
-# ``subjects_dir`` : str or None
-#   Path to the directory that contains the MRI data files and their
-#   derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-#   $SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
-#   ``'bids_root/derivatives/freesurfer/subjects'``.
+???+ "Example"
+    ``` python
+    bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
+    bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+    ```
+"""
 
-subjects_dir = None
+subjects_dir: Optional[str] = None
+"""
+Path to the directory that contains the MRI data files and their
+derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
+$SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
+``'bids_root/derivatives/freesurfer/subjects'``.
+"""
 
-# ``daysback``  : int
-#   If not None apply a time shift to dates to adjust for limitateions
-#   of fif files
+daysback: Optional[int] = None
+"""
+??? warning
+    This parameter will soon be removed!
+    Anonymization should be done on the BIDS dataset **before** running
+    the Study Template!
 
-daysback = None
+If not ``None``, apply a time shift to dates to adjust for limitateions
+of FIFF files.
+"""
 
-# ``interactive`` : boolean
-#   If True, the scripts will provide some interactive elements, such as
-#   figures. If running the scripts from a notebook or Spyder,
-#   run %matplotlib qt in the command line to open the figures in a separate
-#   window.
+interactive: bool = False
+"""
+If True, the scripts will provide some interactive elements, such as
+figures. If running the scripts from a notebook or Spyder,
+run `%matplotlib qt` in the command line to open the figures in a separate
+window.
+"""
 
-interactive = False
+crop: Optional[tuple] = None
+"""
+If tuple, (tmin, tmax) to crop the raw data
+If None (default), do not crop.
+"""
 
-# ``crop`` : tuple or None
-# If tuple, (tmin, tmax) to crop the raw data
-# If None (default), do not crop.
-crop = None
+sessions: Union[Iterable, Literal['all']] = 'all'
+"""
+The sessions to process.
+"""
 
-# BIDS params
-# see: bids-specification.rtfd.io/en/latest/99-appendices/04-entity-table.html
+task: str = ''
+"""
+The task to process.
+"""
 
-# ``sessions`` : iterable or 'all'
-#   The sessions to process.
-sessions = 'all'
+runs: Union[Iterable, Literal['all']] = 'all'
+"""
+The runs to process.
+"""
 
-# ``task`` : str
-#   The task to process.
-task = ''
+acq: Optional[str] = None
 
-# ``runs`` : iterable or 'all'
-#   The runs to process.
-runs = 'all'
+proc: Optional[str] = None
 
-acq = None
+rec: Optional[str] = None
 
-proc = None
+space: Optional[str] = None
 
-rec = None
+subjects: Union[Iterable[str], Literal['all']] = 'all'
+"""
+Subjects to analyze. If ``'all'``, include all subjects. To only
+include a subset of subjects, pass a list of their identifiers. Even
+if you plan on analyzing only a single subject, pass their identifier
+as a list.
 
-space = None
+Please note that if you intend to EXCLUDE only a few subjects, you
+should consider setting ``subjects = 'all'`` and adding the
+identifiers of the excluded subjects to ``exclude_subjects`` (see next
+section).
 
-# ``subjects`` : 'all' | list of str
-#   Subjects to analyze. If ``'all``, include all subjects. To only
-#   include a subset of subjects, pass a list of their identifiers. Even
-#   if you plan on analyzing only a single subject, pass their identifier
-#   as a list.
-#
-#   Please note that if you intend to EXCLUDE only a few subjects, you
-#   should consider setting ``subjects = 'all'`` and adding the
-#   identifiers of the excluded subjects to ``exclude_subjects`` (see next
-#   section).
-#
-# Example
-# ~~~~~~~
-# >>> subjects = 'all'  # Include all subjects.
-# >>> subjects = ['05']  # Only include subject 05.
-# >>> subjects = ['01', '02']  # Only include subjects 01 and 02.
+**Example**
+```python
+subjects = 'all'  # Include all subjects.
+subjects = ['05']  # Only include subject 05.
+subjects = ['01', '02']  # Only include subjects 01 and 02.
+```
+"""
 
-subjects = 'all'
+exclude_subjects: Iterable[str] = []
+"""
+Specify subjects to exclude from analysis. The MEG empty-room mock-subject
+is automatically excluded from regular analysis.
 
-# ``exclude_subjects`` : list of str
-#   Specify subjects to exclude from analysis. The MEG empty-room mock-subject
-#   is automatically excluded from regular analysis.
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# Keep track of the criteria leading you to exclude
-# a participant (e.g. too many movements, missing blocks, aborted experiment,
-# did not understand the instructions, etc, ...)
-# The ``emptyroom`` subject will be excluded automatically.
+Note: Good Practice / Advice
+    Keep track of the criteria leading you to exclude
+    a participant (e.g. too many movements, missing blocks, aborted experiment,
+    did not understand the instructions, etc, ...)
+    The ``emptyroom`` subject will be excluded automatically.
+"""
 
-exclude_subjects = []
+process_er: bool = False
+"""
+Whether to apply the same pre-processing steps to the empty-room data as
+to the experimental data (up until including frequency filtering). This
+is required if you wish to use the empty-room recording to estimate noise
+covariance (via ``noise_cov='emptyroom'``). The empty-room recording
+corresponding to the processed experimental data will be retrieved
+automatically.
+"""
 
-# ``process_er`` : bool
-#
-#   Whether to apply the same pre-processing steps to the empty-room data as
-#   to the experimental data (up until including frequency filtering). This
-#   is required if you wish to use the empty-room recording to estimate noise
-#   covariance (via ``noise_cov='emptyroom'``). The empty-room recording
-#   corresponding to the processed experimental data will be retrieved
-#   automatically.
+ch_types: Iterable[str] = []
+"""
+The channel types to consider.
 
-process_er = False
+Note: Note
+      Currently, MEG and EEG data cannot be processed together.
 
-# ``ch_types``  : list of str
-#    The list of channel types to consider.
-#
-#    Note that currently, MEG and EEG data cannot be processed together.
-#
-# Example
-# ~~~~~~~
-# Use EEG channels:
-# >>> ch_types = ['eeg']
-# Use magnetometer and gradiometer MEG channels:
-# >>> ch_types = ['mag', 'grad']
-# Currently does not work and will raise an error message:
-# >>> ch_types = ['meg', 'eeg']
+???+ "Example"
+    ```python
+    # Use EEG channels:
+    ch_types = ['eeg']
 
-ch_types = []
+    # Use magnetometer and gradiometer MEG channels:
+    ch_types = ['mag', 'grad']
 
+    # Currently does not work and will raise an error message:
+    ch_types = ['meg', 'eeg']
+    ```
+"""
 
-# ``data_type``  : str
-#   The BIDS data type.
-#
-#   For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
-#   However, if your dataset contains simultaneous recordings of MEG and EEG,
-#   stored in a single file, you will typically need to set this to 'meg'.
-#   If ``None``, we will assume that the data type matches the channel type.
-#
-# Example
-# ~~~~~~~
-# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
-# to process the EEG data, which is stored inside the MEG files:
-# >>> ch_types = ['eeg']
-# >>> data_type = 'eeg'
-#
-# The dataset contains simultaneous recordings of MEG and EEG, and we only wish
-# to process the gradiometer data:
-# >>> ch_types = ['grad']
-# >>> data_type = 'meg'  # or data_type = None
-#
-# The dataset contains only EEG data:
-# >>> ch_types = ['eeg']
-# >>> data_type = 'eeg'  # or data_type = None
+data_type: Optional[str] = None
+"""
+The BIDS data type.
 
-data_type = None
+For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
+However, if your dataset contains simultaneous recordings of MEG and EEG,
+stored in a single file, you will typically need to set this to 'meg'.
+If ``None``, we will assume that the data type matches the channel type.
 
-###############################################################################
-# Apply EEG template montage?
-# ---------------------------
-#
-# In situations where you wish to process EEG data and no individual
-# digitization points (measured channel locations) are available, you can apply
-# a "template" montage. This means we will assume the EEG cap was placed
-# either according to an international system like 10/20, or as suggested by
-# the cap manufacturers in their respective manual.
-#
-# Please be aware that the actual cap placement most likely deviated somewhat
-# from the template, and, therefore, source reconstruction may be impaired.
-#
-# ``eeg_template_montage`` : None | str
-#   If ``None``, do not apply a template montage. If a string, must be the
-#   name of a built-in template montage in MNE-Python.
-#   You can find an overview of supported template montages at
-#   https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
-#
-# Example
-# ~~~~~~~
-# Do not apply template montage:
-# >>> eeg_template_montage = None
-# Apply 64-channel Biosemi 10/20 template montage:
-# >>> eeg_template_montage = 'biosemi64'
+**Example**
+
+The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+to process the EEG data, which is stored inside the MEG files:
+
+```python
+ch_types = ['eeg']
+data_type = 'eeg'
+```
+
+The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+to process the gradiometer data:
+
+```python
+ch_types = ['grad']
+data_type = 'meg'  # or data_type = None
+```
+
+The dataset contains only EEG data:
+
+```python
+ch_types = ['eeg']
+data_type = 'eeg'  # or data_type = None
+```
+"""
+
+eeg_template_montage: Optional[str] = None
+"""
+In situations where you wish to process EEG data and no individual
+digitization points (measured channel locations) are available, you can apply
+a "template" montage. This means we will assume the EEG cap was placed
+either according to an international system like 10/20, or as suggested by
+the cap manufacturers in their respective manual.
+
+Please be aware that the actual cap placement most likely deviated somewhat
+from the template, and, therefore, source reconstruction may be impaired.
+
+If ``None``, do not apply a template montage. If a string, must be the
+name of a built-in template montage in MNE-Python.
+You can find an overview of supported template montages at
+https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
+
+**Example**
+
+Do not apply template montage:
+```python
 eeg_template_montage = None
+```
 
+Apply 64-channel Biosemi 10/20 template montage:
+```python
+eeg_template_montage = 'biosemi64'
+```
+"""
 
 ###############################################################################
 # MAXWELL FILTER PARAMETERS
@@ -252,49 +277,51 @@ find_noisy_channels_meg = False
 
 use_maxwell_filter = False
 
-# There are two kinds of maxfiltering: SSS and tSSS
-# [SSS = signal space separation ; tSSS = temporal signal space separation]
-# (Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
-#
-# ``mf_st_duration`` : float | None
-#    If not None, apply spatiotemporal SSS (tSSS) with specified buffer
-#    duration (in seconds). MaxFilter™'s default is 10.0 seconds in v2.2.
-#    Spatiotemporal SSS acts as implicitly as a high-pass filter where the
-#    cut-off frequency is 1/st_dur Hz. For this (and other) reasons, longer
-#    buffers are generally better as long as your system can handle the
-#    higher memory usage. To ensure that each window is processed
-#    identically, choose a buffer length that divides evenly into your data.
-#    Any data at the trailing edge that doesn't fit evenly into a whole
-#    buffer window will be lumped into the previous buffer.
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# If you are interested in low frequency activity (<0.1Hz), avoid using tSSS
-# and set mf_st_duration to None
-#
-# If you are interested in low frequency above 0.1 Hz, you can use the
-# default mf_st_duration to 10 s meaning it acts like a 0.1 Hz highpass filter.
-#
-# Example
-# ~~~~~~~
-# >>> mf_st_duration = None
-# or
-# >>> mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
+mf_st_duration: Optional[float] = None
+"""
+There are two kinds of maxfiltering: SSS and tSSS
+[SSS = signal space separation ; tSSS = temporal signal space separation]
+(Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
 
+If not None, apply spatiotemporal SSS (tSSS) with specified buffer
+duration (in seconds). MaxFilter™'s default is 10.0 seconds in v2.2.
+Spatiotemporal SSS acts as implicitly as a high-pass filter where the
+cut-off frequency is 1/st_dur Hz. For this (and other) reasons, longer
+buffers are generally better as long as your system can handle the
+higher memory usage. To ensure that each window is processed
+identically, choose a buffer length that divides evenly into your data.
+Any data at the trailing edge that doesn't fit evenly into a whole
+buffer window will be lumped into the previous buffer.
+
+Note: Good Practice / Advice
+      If you are interested in low frequency activity (<0.1Hz), avoid using
+      tSSS and set ``mf_st_duration`` to ``None``.
+
+      If you are interested in low frequency above 0.1 Hz, you can use the
+      default ``mf_st_duration`` to 10 s, meaning it acts like a 0.1 Hz
+      high-pass filter.
+
+**Example**
+```python
 mf_st_duration = None
-
-# ``mf_head_origin`` : array-like, shape (3,) | 'auto'
-#   Origin of internal and external multipolar moment space in meters.
-#   If 'auto', it will be estimated from headshape points.
-#   If automatic fitting fails (e.g., due to having too few digitization
-#   points), consider separately calling the fitting function with different
-#   options or specifying the origin manually.
-#
-# Example
-# ~~~~~~~
-# >>> mf_head_origin = 'auto'
+mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
+```
+"""
 
 mf_head_origin = 'auto'
+"""
+``mf_head_origin`` : array-like, shape (3,) | 'auto'
+Origin of internal and external multipolar moment space in meters.
+If 'auto', it will be estimated from headshape points.
+If automatic fitting fails (e.g., due to having too few digitization
+points), consider separately calling the fitting function with different
+options or specifying the origin manually.
+
+**Example**
+```python
+mf_head_origin = 'auto'
+```
+"""
 
 # ``cross talk`` : str
 #   Path to the cross talk file
@@ -328,23 +355,23 @@ mf_head_origin = 'auto'
 mf_ctc_fname = ''
 mf_cal_fname = ''
 
-# Despite all possible care to avoid movements in the MEG, the participant
-# will likely slowly drift down from the Dewar or slightly shift the head
-# around in the course of the recording session. Hence, to take this into
-# account, we are realigning all data to a single position. For this, you need
-# to define a reference run (typically the one in the middle of
-# the recording session).
-#
-# ``mf_reference_run``  : str | None
-#   Which run to take as the reference for adjusting the head position of all
-#   runs. If ``None``, pick the first run.
-#
-# Example
-# ~~~~~~~
-# >>> mf_reference_run = '01'  # Use run "01".
+mf_reference_run: Optional[str] = None
+"""
+Despite all possible care to avoid movements in the MEG, the participant
+will likely slowly drift down from the Dewar or slightly shift the head
+around in the course of the recording session. Hence, to take this into
+account, we are realigning all data to a single position. For this, you need
+to define a reference run (typically the one in the middle of
+the recording session).
 
-mf_reference_run = None
+Which run to take as the reference for adjusting the head position of all
+runs. If ``None``, pick the first run.
 
+**Example**
+```python
+mf_reference_run = '01'  # Use run "01"
+```
+"""
 
 ###############################################################################
 # STIMULATION ARTIFACT
@@ -373,6 +400,7 @@ fix_stim_artifact = False
 stim_artifact_tmin = 0.
 stim_artifact_tmax = 0.01
 
+
 ###############################################################################
 # FREQUENCY FILTERING
 # -------------------
@@ -400,18 +428,17 @@ stim_artifact_tmax = 0.01
 # If you need more fancy analysis, you are already likely past this kind
 # of tips! :)
 
+l_freq: float = 1.
+"""
+The low-frequency cut-off in the highpass filtering step.
+Keep it None if no highpass filtering should be applied.
+"""
 
-# ``l_freq`` : float
-#   The low-frequency cut-off in the highpass filtering step.
-#   Keep it None if no highpass filtering should be applied.
-
-l_freq = 1.
-
-# ``h_freq`` : float
-#   The high-frequency cut-off in the lowpass filtering step.
-#   Keep it None if no lowpass filtering should be applied.
-
-h_freq = 40.
+h_freq: float = 40.
+"""
+The high-frequency cut-off in the lowpass filtering step.
+Keep it None if no lowpass filtering should be applied.
+"""
 
 ###############################################################################
 # RESAMPLING
@@ -438,23 +465,22 @@ h_freq = 40.
 
 resample_sfreq = None
 
-# ``decim`` : int
-#   Says how much to decimate data at the epochs level.
-#   It is typically an alternative to the `resample_sfreq` parameter that
-#   can be used for resampling raw data. 1 means no decimation.
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# Decimation requires to lowpass filtered the data to avoid aliasing.
-# Note that using decimation is much faster than resampling.
-#
-# Example
-# ~~~~~~~
-# >>> decim = 1  # no decimation
-# or
-# >>> decim = 4  # decimate by 4 ie devide sampling frequency by 4
+decim: int = 1
+"""
+Says how much to decimate data at the epochs level.
+It is typically an alternative to the `resample_sfreq` parameter that
+can be used for resampling raw data. ``1`` means no decimation.
 
-decim = 1
+Note: Good Practice / Advice
+      Decimation requires to lowpass filtered the data to avoid aliasing.
+      Note that using decimation is much faster than resampling.
+
+**Example**
+```python
+decim = 1  # no decimation
+decim = 4  # decimate by 4 ie devide sampling frequency by 4
+```
+"""
 
 ###############################################################################
 # AUTOMATIC REJECTION OF ARTIFACTS
@@ -552,42 +578,44 @@ tmin = -0.2
 # ~~~~~~~
 # >>> tmax = 0.5  # take 500ms after event onset.
 
-tmax = 0.5
+tmax: float = 0.5
 
-# ``baseline`` : tuple | None
-#    It specifies how to baseline-correct the epochs; if ``None``, no baseline
-#    correction is applied.
-#
-# Example
-# ~~~~~~~
-# >>> baseline = (None, 0)  # baseline between tmin and 0
+baseline: Optional[tuple] = (None, 0)
+"""
+Specifies how to baseline-correct the epochs; if ``None``, no baseline
+correction is applied.
 
-baseline = (None, 0)
+???+ "Example"
+    ```python
+    baseline = (None, 0)  # baseline between tmin and 0
+    ```
+"""
 
+contrasts: Iterable[tuple] = []
+"""
+The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
+in the list corresponds to one contrast. The condition names must be
+specified in ``conditions`` above. Pass an empty list to avoid calculation
+of contrasts.
 
-#  ``contrasts`` : list of tuples
-#    The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
-#    in the list corresponds to one contrast. The condition names must be
-#    specified in ``conditions`` above. Pass an empty list to avoid calculation
-#    of contrasts.
-#
-# Example
-# ~~~~~~~
-# Contrast the "left" and the "right" conditions by calculating "left - right"
-# at every time point of the evoked responses:
-# >>> conditions = ['left', 'right']
-# >>> contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
-#
-# Contrast the "left" and the "right" conditions within the "auditory" and
-# the "visual" modality, and "auditory" vs "visual" regardless of side:
-# >>> conditions = ['auditory/left', 'auditory/right',
-#                   'visual/left', 'visual/right']
-# >>> contrasts = [('auditory/left', 'auditory/right'),
-#                  ('visual/left', 'visual/right'),
-#                  ('auditory', 'visual')]
+???+ "Example"
+    Contrast the "left" and the "right" conditions by calculating
+    ``left - right`` at every time point of the evoked responses:
+    ```python
+    conditions = ['left', 'right']
+    contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
+    ```
 
-contrasts = []
-
+    Contrast the "left" and the "right" conditions within the "auditory" and
+    the "visual" modality, and "auditory" vs "visual" regardless of side:
+    ```python
+    conditions = ['auditory/left', 'auditory/right',
+                  'visual/left', 'visual/right']
+    contrasts = [('auditory/left', 'auditory/right'),
+                 ('visual/left', 'visual/right'),
+                 ('auditory', 'visual')]
+    ```
+"""
 ###############################################################################
 # ARTIFACT REMOVAL
 # ----------------
@@ -602,196 +630,199 @@ contrasts = []
 
 # SSP
 # ~~~
-#
-# ``use_ssp`` : bool
-#    If True ICA should be used or not.
 
-use_ssp = True
+use_ssp: bool = True
+"""
+Whether SSP should be used or not.
+"""
 
 # ICA
 # ~~~
-# ``use_ica`` : bool
-#    If True ICA should be used or not.
 
-use_ica = False
+use_ica: bool = False
+"""
+Whether ICA should be used or not.
+"""
 
-# ``ica_algorithm`` : 'picard' | 'fastica' | 'extended_infomax'
-#   The ICA algorithm to use.
+ica_algorithm: Literal['picard', 'fastica', 'extended_infomax']= 'picard'
+"""
+The ICA algorithm to use.
+"""
 
-ica_algorithm = 'picard'
+ica_l_freq: Optional[float] = 1.
+"""
+The cutoff frequency of the high-pass filter to apply before running ICA.
+Using a relatively high cutoff like 1 Hz will remove slow drifts from the
+data, yielding improved ICA results.
 
-# ``ica_l_freq`` : float | None
-#   The cutoff frequency of the high-pass filter to apply before running ICA.
-#   Using a relatively high cutoff like 1 Hz will remove slow drifts from the
-#   data, yielding improved ICA results.
-#
-#   Set to ``None`` to not apply an additional high-pass filter.
-#
-#   Notes
-#   ~~~~~
-#   The filter will be applied to raw data which was already filtered
-#   according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
-#   data will be epoched, and the epochs will be submitted to ICA.
+Set to ``None`` to not apply an additional high-pass filter.
 
-ica_l_freq = 1.
+Note: Note
+      The filter will be applied to raw data which was already filtered
+      according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
+      data will be epoched, and the epochs will be submitted to ICA.
+"""
 
+ica_max_iterations: int = 200
+"""
+Maximum number of iterations to decompose the data into independent
+components. A low number means to finish earlier, but the consequence is
+that the algorithm may not have finished converging. To ensure
+convergence, pick a high number here (e.g. 3000); yet the algorithm will
+terminate as soon as it determines that is has successfully converged, and
+not necessarily exhaust the maximum number of iterations. Note that the
+default of 200 seems to be sufficient for Picard in many datasets, because
+it converges quicker than the other algorithms; but e.g. for FastICA, this
+limit may be too low to achieve convergence.
+"""
 
-# ``ica_max_iterations`` : int
-#   Maximum number of iterations to decompose the data into independent
-#   components. A low number means to finish earlier, but the consequence is
-#   that the algorithm may not have finished converging. To ensure
-#   convergence, pick a high number here (e.g. 3000); yet the algorithm will
-#   terminate as soon as it determines that is has successfully converged, and
-#   not necessarily exhaust the maximum number of iterations. Note that the
-#   default of 200 seems to be sufficient for Picard in many datasets, because
-#   it converges quicker than the other algorithms; but e.g. for FastICA, this
-#   limit may be too low to achieve convergence.
+ica_n_components: Optional[Union[float, int]] = 0.8
+"""
+MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
+on the data (trying to exclude zero-valued components in rank-deficient
+data); and in the second step, the principal componenets are passed
+to the actual ICA. You can select how many of the total principal
+components to pass to ICA – it can be all or just a subset. This determines
+how many independent components to fit, and can be controlled via this
+setting.
 
-ica_max_iterations = 200
+If int, specifies the number of principal components that are passed to the
+ICA algorithm, which will be the number of independent components to
+fit. It must not be greater than the rank of your data (which is typically
+the number of channels, but may be less in some cases).
 
-# ``ica_n_components`` : float | int | None
-#
-#   MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
-#   on the data (trying to exclude zero-valued components in rank-deficient
-#   data); and in the second step, the principal componenets are passed
-#   to the actual ICA. You can select how many of the total principal
-#   components to pass to ICA – it can be all or just a subset. This determines
-#   how many independent components to fit, and can be controlled via this
-#   setting.
-#
-#   If int, specifies the number of principal components that are passed to the
-#   ICA algorithm, which will be the number of independent components to
-#   fit. It must not be greater than the rank of your data (which is typically
-#   the number of channels, but may be less in some cases).
-#
-#   If float between 0 and 1, all principal components with cumulative
-#   explained variance less than the value specified here will be passed to
-#   ICA.
-#
-#   If ``None``, **all** principal components will be used.
-#
-#   This setting may drastically alter the time required to compute ICA.
+If float between 0 and 1, all principal components with cumulative
+explained variance less than the value specified here will be passed to
+ICA.
 
-ica_n_components = 0.8
+If ``None``, **all** principal components will be used.
 
-# ``ica_decim`` : None | None
-#    The decimation parameter to compute ICA. If 5 it means
-#    that 1 every 5 sample is used by ICA solver. The higher the faster
-#    it is to run but the less data you have to compute a good ICA. Set to
-#    ``1`` or ``None`` to not perform any decimation.
+This setting may drastically alter the time required to compute ICA.
+"""
 
-ica_decim = None
+ica_decim: Optional[int] = None
+"""
+The decimation parameter to compute ICA. If 5 it means
+that 1 every 5 sample is used by ICA solver. The higher the faster
+it is to run but the less data you have to compute a good ICA. Set to
+``1`` or ``None`` to not perform any decimation.
+"""
 
-# ``ica_ctps_ecg_threshold`` : float
-#    The threshold parameter passed to `find_bads_ecg` method.
+ica_ctps_ecg_threshold: float = 0.1
+"""
+The threshold parameter passed to `find_bads_ecg` method.
+"""
 
-ica_ctps_ecg_threshold = 0.1
-
-# ``ica_eog_threshold`` : float
-#   The threshold to use during automated EOG classification. Lower values mean
-#   that more ICs will be identified as EOG-related. If too low, the
-#   false-alarm rate increases dramatically.
-
-ica_eog_threshold = 3.0
+ica_eog_threshold: float = 3.0
+"""
+The threshold to use during automated EOG classification. Lower values mean
+that more ICs will be identified as EOG-related. If too low, the
+false-alarm rate increases dramatically.
+"""
 
 ###############################################################################
 # DECODING
 # --------
-#
-# ``decode`` : bool
-#    Whether to perform decoding (MVPA) on the contrasts specified above as
-#    "contrasts". MVPA will be performed on the level of individual epochs.
 
-decode = True
+decode: bool = True
+"""
+Whether to perform decoding (MVPA) on the contrasts specified above as
+"contrasts". MVPA will be performed on the level of individual epochs.
+"""
 
-# ``n_boot`` : int
-#   The number of bootstrap resamples when estimating the standard error and
-#   confidence interval of the mean decoding score.
-
-n_boot = 5000
+n_boot: int = 5000
+"""
+The number of bootstrap resamples when estimating the standard error and
+confidence interval of the mean decoding score.
+"""
 
 ###############################################################################
 # GROUP AVERAGE SENSORS
 # ---------------------
-#
-# ``interpolate_bads_grand_average`` : bool
-#    Interpolate bad sensors in each dataset before calculating the grand
-#    average. This parameter is passed to the `mne.grand_average` function via
-#    the keyword argument `interpolate_bads`. It requires to have channel
-#    locations set.
-#
-# Example
-# ~~~~~~~
-# >>> interpolate_bads_grand_average = True
 
-interpolate_bads_grand_average = True
+interpolate_bads_grand_average: bool = True
+"""
+Interpolate bad sensors in each dataset before calculating the grand
+average. This parameter is passed to the `mne.grand_average` function via
+the keyword argument `interpolate_bads`. It requires to have channel
+locations set.
 
-# ``decoding_metric`` : str
-#    The metric to use for cross-validation. It can be 'roc_auc' or 'accuracy'
-#    or any metric supported by scikit-learn.
-#
-#    With AUC, chance level is the same regardless of class balance.
+???+ "Example"
+    ```python
+    interpolate_bads_grand_average = True
+    ```
+"""
+decoding_metric: str = 'roc_auc'
+"""
+The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
+or any other metric supported by `scikit-learn`.
 
-decoding_metric = 'roc_auc'
+With AUC, chance level is the same regardless of class balance.
+"""
 
-# ``decoding_n_splits`` : int
-#    The number of folds (a.k.a. splits) to use in the cross-validation.
-
-decoding_n_splits = 5
+decoding_n_splits: int = 5
+"""
+The number of folds (a.k.a. splits) to use in the cross-validation.
+"""
 
 ###############################################################################
 # TIME-FREQUENCY
 # --------------
-#
-# ``time_frequency_conditions`` : list
-#    The conditions to compute time-frequency decomposition on.
 
-# time_frequency_conditions = ['left', 'right']
-time_frequency_conditions = []
+time_frequency_conditions: Iterable[str] = []
+"""
+The conditions to compute time-frequency decomposition on.
+
+**Example**
+```python
+time_frequency_conditions = ['left', 'right']
+```
+"""
 
 ###############################################################################
 # SOURCE SPACE PARAMETERS
 # -----------------------
 #
 
-# ``spacing`` : str
+spacing: str = 'oct6'
+"""
 #    The spacing to use. Can be ``'ico#'`` for a recursively subdivided
 #    icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
 #    ``'all'`` for all points, or an integer to use appoximate
 #    distance-based spacing (in mm).
+"""
 
-spacing = 'oct6'
+mindist: float = 5
+"""
+Exclude points closer than this distance (mm) to the bounding surface.
+"""
 
-# ``mindist`` : float
-#    Exclude points closer than this distance (mm) to the bounding surface.
-
-mindist = 5
-
+loose: Union[float, Literal['auto']] = 0.2
 # ``loose`` : float in [0, 1] | 'auto'
-#    Value that weights the source variances of the dipole components
-#    that are parallel (tangential) to the cortical surface. If loose
-#    is 0 then the solution is computed with fixed orientation,
-#    and fixed must be True or "auto".
-#    If loose is 1, it corresponds to free orientations.
-#    The default value ('auto') is set to 0.2 for surface-oriented source
-#    space and set to 1.0 for volumetric, discrete, or mixed source spaces,
-#    unless ``fixed is True`` in which case the value 0. is used.
+"""
+Value that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface. If loose
+is 0 then the solution is computed with fixed orientation,
+and fixed must be True or "auto".
+If loose is 1, it corresponds to free orientations.
+The default value ('auto') is set to 0.2 for surface-oriented source
+space and set to 1.0 for volumetric, discrete, or mixed source spaces,
+unless ``fixed is True`` in which case the value 0. is used.
+"""
 
-loose = 0.2
+depth: Optional[Union[float, dict]] = 0.8
+"""
+If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+to use (must be between 0 and 1). None is equivalent to 0, meaning no
+depth weighting is performed. Can also be a `dict` containing additional
+keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+(see docstring for details and defaults).
+"""
 
-# ``depth`` : None | float | dict
-#    If float (default 0.8), it acts as the depth weighting exponent (``exp``)
-#    to use (must be between 0 and 1). None is equivalent to 0, meaning no
-#    depth weighting is performed. Can also be a `dict` containing additional
-#    keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-#    (see docstring for details and defaults).
-
-depth = 0.8
-
-# inverse_method : "MNE" | "dSPM" | "sLORETA" | "eLORETA"
-#    Use minimum norm, dSPM (default), sLORETA, or eLORETA.
-
-inverse_method = 'dSPM'
+inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
+"""
+Use minimum norm, dSPM (default), sLORETA, or eLORETA.
+"""
 
 # noise_cov : (None, 0) | ‘emptyroom’
 #   Specify how to estimate the noise covariance matrix, which is used in
@@ -825,70 +856,67 @@ inverse_method = 'dSPM'
 
 noise_cov = (None, 0)
 
-# smooth : int | None
-#    Number of iterations for the smoothing of the surface data.
-#    If None, smooth is automatically defined to fill the surface
-#    with non-zero values. The default is spacing=None.
-
-smooth = 10
+smooth: Optional[int] = 10
+"""
+Number of iterations for the smoothing of the surface data.
+If None, smooth is automatically defined to fill the surface
+with non-zero values. The default is spacing=None.
+"""
 
 fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
 ###############################################################################
 # ADVANCED
 # --------
-#
-# ``l_trans_bandwidth`` : float | 'auto'
-#    A float that specifies the transition bandwidth of the
-#    highpass filter. By default it's `'auto'` and uses default mne
-#    parameters.
 
-l_trans_bandwidth = 'auto'
+l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+highpass filter. By default it's `'auto'` and uses default mne
+parameters.
+"""
 
-#  ``h_trans_bandwidth`` : float | 'auto'
-#    A float that specifies the transition bandwidth of the
-#    lowpass filter. By default it's `'auto'` and uses default mne
-#    parameters.
+h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+lowpass filter. By default it's `'auto'` and uses default mne
+parameters.
+"""
 
-h_trans_bandwidth = 'auto'
+N_JOBS: int = 1
+"""
+Specifies how many subjects you want to process in parallel.
+"""
 
-#  ``N_JOBS`` : int
-#    An integer that specifies how many subjects you want to run in parallel.
-
-N_JOBS = 1
-
+random_state: Optional[int] = 42
 # ``random_state`` : None | int | np.random.RandomState
-#    To specify the seed or state of the random number generator (RNG).
-#    This setting is passed to the ICA algorithm and to the decoding function,
-#    ensuring reproducible results. Set to ``None`` to avoid setting the RNG
-#    to a defined state.
+"""
+To specify the seed or state of the random number generator (RNG).
+This setting is passed to the ICA algorithm and to the decoding function,
+ensuring reproducible results. Set to ``None`` to avoid setting the RNG
+to a defined state.
+"""
 
-random_state = 42
+shortest_event: int = 1
+"""
+Minimum number of samples an event must last. If the
+duration is less than this an exception will be raised.
+"""
 
-# ``shortest_event`` : int
-#    Minimum number of samples an event must last. If the
-#    duration is less than this an exception will be raised.
-
-shortest_event = 1
-
-# ``allow_maxshield``  : bool
-#    To import data that was recorded with Maxshield on before running
-#    maxfilter set this to True.
-
-allow_maxshield = False
+allow_maxshield: bool = False
+"""
+To import data that was recorded with Maxshield on before running
+Maxfilter set this to ``True``.
+"""
 
 log_level = 'info'
 mne_log_level = 'error'
 
-# ``on_error`` : 'continue' | 'abort' | 'debug'
-#    Whether to abort processing as soon as an error occurs, or whether to
-#    continue with all other processing steps for as long as possible.
-#    If `'debug'` then on error it will enter the pdb interactive debugger.
-#    To debug it is recommended to deactivate parallel processing by
-#    setting `N_JOBS` to 1.
-
-on_error = 'abort'
-
+on_error: Literal['continue', 'abort'] = 'abort'
+"""
+Whether to abort processing as soon as an error occurs, or whether to
+continue with all other processing steps for as long as possible.
+"""
 
 ###############################################################################
 #                                                                             #
@@ -1021,9 +1049,9 @@ if 'eeg' in ch_types:
                'To turn it on, set use_ica=True.')
         logger.info(msg)
 
-if on_error not in ('continue', 'abort', 'debug'):
-    msg = (f"on_error must be one of 'continue' or 'abort' or 'debug', but "
-           f"received {on_error}")
+if on_error not in ('continue', 'abort'):
+    msg = (f"on_error must be one of 'continue' or 'abort', but received "
+           f"{on_error}.")
     logger.info(msg)
 
 if isinstance(noise_cov, str) and noise_cov != 'emptyroom':

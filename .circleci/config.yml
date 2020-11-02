@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
     run_tests:
       docker:
@@ -210,6 +210,7 @@ jobs:
     deploy_docs:
       docker:
         - image: node:10
+
       steps:
         - checkout
         - attach_workspace:
@@ -222,10 +223,10 @@ jobs:
               git config user.name "ci-build"
         - run:
             name: Deploy docs to gh-pages branch
-            command: gh-pages --dist site
+            command: gh-pages --message "[skip ci] Update docs" --dist site
         - add_ssh_keys:
-          fingerprints:
-            - "bc:92:50:d3:b1:c5:66:fc:7c:08:0d:1c:00:5e:1b:0a"
+            fingerprints:
+              - "bc:92:50:d3:b1:c5:66:fc:7c:08:0d:1c:00:5e:1b:0a"
     
 workflows:
   version: 2

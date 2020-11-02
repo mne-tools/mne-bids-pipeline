@@ -1,0 +1,29 @@
+site_name: MNE Study Template
+theme: material
+    # palette:
+    #     scheme: preference
+extra_css:
+    - css/extra.css
+nav:
+    - Introduction: index.md
+    - Configuration Options: settings.md
+plugins:
+    - search
+    - mkdocstrings:
+        default_handler: python
+        handlers:
+            python:
+                setup_commands:
+                    - import os
+                    - os.environ["MNE_BIDS_STUDY_CONFIG"] = "docs/doc-config.py"
+                rendering:
+                    show_source: true
+                    show_if_no_docstring: true
+                    show_root_heading: true
+        watch:
+            - .
+            - ./config.py
+markdown_extensions:
+    - admonition
+    - pymdownx.details
+    - pymdownx.superfences

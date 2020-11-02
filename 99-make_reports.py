@@ -212,7 +212,12 @@ def run_report(subject, session=None):
         params['subjects_dir'] = subjects_dir
 
     rep = mne.Report(**params)
-    rep.parse_folder(fname_ave.fpath.parent, verbose=False)
+    rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
+    if mne.viz.get_3d_backend() is not None:
+        with mne.viz.use_3d_backend('pyvista'):
+            rep.parse_folder(**rep_kwargs)
+    else:
+        rep.parse_folder(**rep_kwargs)
 
     # Visualize automated noisy channel detection.
     if config.find_noisy_channels_meg:
@@ -311,24 +316,29 @@ def run_report(subject, session=None):
             logger.warning(gen_log_message(message=msg, step=99,
                                            subject=subject, session=session))
 
-        for evoked in evokeds:
+        for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'
             logger.info(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
             if condition in config.conditions:
-                caption = f'Condition: {condition}'
+                full_condition = (evoked.comment
+                                  .replace(op.sep, '')
+                                  .replace('_', ''))
+                caption = f'Condition: {full_condition}'
+                del full_condition
             else:  # It's a contrast of two conditions.
                 # XXX Will change once we process contrasts here too
                 continue
 
             method = config.inverse_method
-            cond_str = evoked.comment.replace(op.sep, '').replace('_', '')
+            cond_str = condition.replace(op.sep, '').replace('_', '')
             inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
             fname_stc = bids_path.copy().update(
-                suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
+                suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
+                extension=None)
 
             if op.exists(str(fname_stc) + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc, subject)
@@ -338,8 +348,11 @@ def run_report(subject, session=None):
                 # otherwise.
                 if mne.viz.get_3d_backend() is not None:
                     brain = stc.plot(views=['lat'], hemi='both',
-                                     initial_time=peak_time,  backend='mayavi')
-                    figs = brain._figures[0]
+                                     initial_time=peak_time, backend='pyvista',
+                                     time_viewer=True,
+                                     subjects_dir=subjects_dir)
+                    brain.toggle_interface()
+                    figs = brain._renderer.figure
                     comments = evoked.comment
                     captions = caption
                 else:
@@ -493,9 +506,12 @@ def main():
             # otherwise.
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
-                                 initial_time=peak_time, backend='mayavi',
+                                 initial_time=peak_time, backend='pyvista',
+                                 time_viewer=True,
+                                 show_traces=True,
                                  subjects_dir=subjects_dir)
-                figs = brain._figures[0]
+                brain.toggle_interface()
+                figs = brain._renderer.figure
                 captions = caption
             else:
                 import matplotlib.pyplot as plt

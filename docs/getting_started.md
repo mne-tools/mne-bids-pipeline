@@ -17,7 +17,7 @@ It is of great importance that
     obviously problematic channels as such in the BIDS dataset.
 
 2. Adjust the configuration file
-------------------------------
+--------------------------------
 The Study Template ships with a default configuration file, `config.py`.
 You need to create a copy of that configuration file and adjust all parameters
 that are relevant to your data processing and analysis.

@@ -28,14 +28,7 @@ msg = 'Running Step 9: Grand-average sensor data'
 logger.info(gen_log_message(step=9, message=msg))
 
 
-# XXX to fix
-if config.get_sessions():
-    session = config.get_sessions()[0]
-else:
-    session = None
-
-
-def average_evokeds():
+def average_evokeds(session):
     # Container for all conditions:
     all_evokeds = defaultdict(list)
 
@@ -91,7 +84,7 @@ def average_evokeds():
     return list(all_evokeds.values())
 
 
-def average_decoding():
+def average_decoding(session):
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
     fname_epo = BIDSPath(subject=config.get_subjects()[0],
@@ -183,13 +176,18 @@ def average_decoding():
 
 
 def main():
-    evokeds = average_evokeds()
-    if config.interactive:
-        for evoked in evokeds:
-            evoked.plot()
+    sessions = config.get_sessions()
+    if not sessions:
+        sessions = [None]
 
-    if config.decode:
-        average_decoding()
+    for session in sessions:
+        evokeds = average_evokeds(session)
+        if config.interactive:
+            for evoked in evokeds:
+                evoked.plot()
+
+        if config.decode:
+            average_decoding(session)
 
 
 if __name__ == '__main__':

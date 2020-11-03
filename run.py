@@ -29,14 +29,16 @@ SOURCE_SCRIPTS = ('10-make_forward.py',
                   '12-make_inverse.py',
                   '13-group_average_source.py')
 
-REPORT_SCRIPTS = ('99-make_reports.py')
+REPORT_SCRIPTS = ('99-make_reports.py',)
+
+ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 
 
 def _run_script(script, config, root_dir):
     logger.info(f'Running: {script}')
     if not config:
-        logger.critical('Please specify a Study Template configuration via '
-                        '--config=/path/to/config.py')
+        logger.critical('Please specify a Study Template configuration'
+                        'via --config=/path/to/config.py')
         sys.exit(1)
 
     script_path = (STUDY_TEMPLATE_DIR / script).name
@@ -56,35 +58,29 @@ def _run_script(script, config, root_dir):
         sys.exit(1)
 
 
-def sensor(config=None, root_dir=None):
-    """Run sensor-level processing & analysis."""
-    for script in SENSOR_SCRIPTS:
+def process(steps=None, config=None, root_dir=None):
+    if not steps:
+        logger.critical('Please specify which processing step(s) to run via '
+                        '--steps=...')
+        sys.exit(1)
+
+    if steps == 'sensor':
+        scripts = SENSOR_SCRIPTS
+    elif steps == 'source':
+        scripts = SOURCE_SCRIPTS
+    elif steps == 'report':
+        scripts = REPORT_SCRIPTS
+    elif steps == 'all':
+        scripts = ALL_SCRIPTS
+    else:
+        scripts = ALL_SCRIPTS[steps-1]
+
+    if isinstance(scripts, str):
+        scripts = (scripts,)
+
+    for script in scripts:
         _run_script(script, config, root_dir)
-
-
-def source(config=None, root_dir=None):
-    """Run source-level processing & analysis."""
-    for script in SOURCE_SCRIPTS:
-        _run_script(script, config, root_dir)
-
-
-def report(config=None, root_dir=None):
-    """Create processing & analysis reports."""
-    for script in REPORT_SCRIPTS:
-        _run_script(script, config, root_dir)
-
-
-def all(config=None, root_dir=None):
-    """
-    Run sensor and source level processing & analysis, and create reports.
-    """
-    sensor(config)
-    source(config)
-    report(config)
 
 
 if __name__ == '__main__':
-    fire.Fire(dict(sensor=sensor,
-                   source=source,
-                   report=report,
-                   all=all))
+    fire.Fire(dict(process=process))

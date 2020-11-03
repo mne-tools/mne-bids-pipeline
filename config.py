@@ -21,11 +21,6 @@ import numpy as np
 import mne
 from mne_bids.path import get_entity_vals
 
-# Name, version, and hosting location of the pipeline
-PIPELINE_NAME = 'mne-study-template'
-VERSION = '0.1.dev0'
-CODE_URL = 'https://github.com/mne-tools/mne-study-template'
-
 
 study_name: str = ''
 """
@@ -922,6 +917,13 @@ continue with all other processing steps for as long as possible.
 #                                                                             #
 ###############################################################################
 
+###############################################################################
+# Name, version, and hosting location of the pipeline
+# ---------------------------------------------------
+
+PIPELINE_NAME = 'mne-study-template'
+VERSION = '0.1.dev0'
+CODE_URL = 'https://github.com/mne-tools/mne-study-template'
 
 ###############################################################################
 # Logger

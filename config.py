@@ -34,11 +34,11 @@ study_name: str = ''
 Specify the name of your study. It will be used to populate filenames for
 saving the analysis results.
 
-**Example**
-```python
+???+ example "Example"
+    ```python
 
-study_name = 'my-study'
-```
+    study_name = 'my-study'
+    ```
 """
 
 bids_root: Optional[str] = None
@@ -64,10 +64,10 @@ $SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
 
 daysback: Optional[int] = None
 """
-??? warning
-    This parameter will soon be removed!
-    Anonymization should be done on the BIDS dataset **before** running
-    the Study Template!
+warning:
+     This parameter will soon be removed!
+     Anonymization should be done on the BIDS dataset **before** running
+     the Study Template!
 
 If not ``None``, apply a time shift to dates to adjust for limitateions
 of FIFF files.
@@ -103,12 +103,24 @@ The runs to process.
 """
 
 acq: Optional[str] = None
+"""
+The BIDS `acquisition` entity.
+"""
 
 proc: Optional[str] = None
+"""
+The BIDS `processing` entity.
+"""
 
 rec: Optional[str] = None
+"""
+The BIDS `recording` entity.
+"""
 
 space: Optional[str] = None
+"""
+The BIDS `space` entity.
+"""
 
 subjects: Union[Iterable[str], Literal['all']] = 'all'
 """
@@ -122,12 +134,12 @@ should consider setting ``subjects = 'all'`` and adding the
 identifiers of the excluded subjects to ``exclude_subjects`` (see next
 section).
 
-**Example**
-```python
-subjects = 'all'  # Include all subjects.
-subjects = ['05']  # Only include subject 05.
-subjects = ['01', '02']  # Only include subjects 01 and 02.
-```
+???+ example "Example"
+    ```python
+    subjects = 'all'  # Include all subjects.
+    subjects = ['05']  # Only include subject 05.
+    subjects = ['01', '02']  # Only include subjects 01 and 02.
+    ```
 """
 
 exclude_subjects: Iterable[str] = []
@@ -135,7 +147,7 @@ exclude_subjects: Iterable[str] = []
 Specify subjects to exclude from analysis. The MEG empty-room mock-subject
 is automatically excluded from regular analysis.
 
-Note: Good Practice / Advice
+???+ note "Good Practice / Advice"
     Keep track of the criteria leading you to exclude
     a participant (e.g. too many movements, missing blocks, aborted experiment,
     did not understand the instructions, etc, ...)
@@ -159,7 +171,7 @@ The channel types to consider.
 Note: Note
       Currently, MEG and EEG data cannot be processed together.
 
-???+ "Example"
+???+ example "Example"
     ```python
     # Use EEG channels:
     ch_types = ['eeg']
@@ -181,30 +193,29 @@ However, if your dataset contains simultaneous recordings of MEG and EEG,
 stored in a single file, you will typically need to set this to 'meg'.
 If ``None``, we will assume that the data type matches the channel type.
 
-**Example**
+???+ example "Example"
+    The dataset contains simultaneous recordings of MEG and EEG, and we only
+    wish to process the EEG data, which is stored inside the MEG files:
 
-The dataset contains simultaneous recordings of MEG and EEG, and we only wish
-to process the EEG data, which is stored inside the MEG files:
+    ```python
+    ch_types = ['eeg']
+    data_type = 'eeg'
+    ```
 
-```python
-ch_types = ['eeg']
-data_type = 'eeg'
-```
+    The dataset contains simultaneous recordings of MEG and EEG, and we only wish
+    to process the gradiometer data:
 
-The dataset contains simultaneous recordings of MEG and EEG, and we only wish
-to process the gradiometer data:
+    ```python
+    ch_types = ['grad']
+    data_type = 'meg'  # or data_type = None
+    ```
 
-```python
-ch_types = ['grad']
-data_type = 'meg'  # or data_type = None
-```
+    The dataset contains only EEG data:
 
-The dataset contains only EEG data:
-
-```python
-ch_types = ['eeg']
-data_type = 'eeg'  # or data_type = None
-```
+    ```python
+    ch_types = ['eeg']
+    data_type = 'eeg'  # or data_type = None
+    ```
 """
 
 eeg_template_montage: Optional[str] = None
@@ -223,17 +234,16 @@ name of a built-in template montage in MNE-Python.
 You can find an overview of supported template montages at
 https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 
-**Example**
+???+ example "Example"
+    Do not apply template montage:
+    ```python
+    eeg_template_montage = None
+    ```
 
-Do not apply template montage:
-```python
-eeg_template_montage = None
-```
-
-Apply 64-channel Biosemi 10/20 template montage:
-```python
-eeg_template_montage = 'biosemi64'
-```
+    Apply 64-channel Biosemi 10/20 template montage:
+    ```python
+    eeg_template_montage = 'biosemi64'
+    ```
 """
 
 ###############################################################################
@@ -254,28 +264,29 @@ eeg_template_montage = 'biosemi64'
 # on this procedure. The list of bad channels detected through this procedure
 # will be merged with the list of bad channels already present in the dataset,
 # if any.
-#
-# ``find_flat_channels_meg`` : bool
-#   Auto-detect "flat" channels and mark them as bad.
-#
-# ``find_noisy_channels_meg`` : bool
-#   Auto-detect "noisy" channels and mark them as bad.
 
-find_flat_channels_meg = False
+find_flat_channels_meg: bool = False
+"""
+Auto-detect "flat" channels (i.e. those with unusually low variability) and mark
+them as bad.
+"""
+
 find_noisy_channels_meg = False
+"""
+Auto-detect "noisy" channels and mark them as bad.
+"""
 
-# ``use_maxwell_filter`` : bool
-#   Use or not maxwell filter to preprocess the data.
-#
-# Warning
-# ~~~~~~~
-# If the data were recorded with internal active compensation (MaxShield),
-# they need to be run through Maxwell filter to avoid distortions.
-# Bad channels need to be set through BIDS channels.tsv and / or via the
-# ``find_flat_channels_meg`` and ``find_noisy_channels_meg`` options above
-# before applying Maxwell filter.
+use_maxwell_filter: bool = False
+"""
+Whether or not to use Maxwell filtering to preprocess the data.
 
-use_maxwell_filter = False
+warning:
+    If the data were recorded with internal active compensation (MaxShield),
+    they need to be run through Maxwell filter to avoid distortions.
+    Bad channels need to be set through BIDS channels.tsv and / or via the
+    ``find_flat_channels_meg`` and ``find_noisy_channels_meg`` options above
+    before applying Maxwell filter.
+"""
 
 mf_st_duration: Optional[float] = None
 """
@@ -293,19 +304,19 @@ identically, choose a buffer length that divides evenly into your data.
 Any data at the trailing edge that doesn't fit evenly into a whole
 buffer window will be lumped into the previous buffer.
 
-Note: Good Practice / Advice
-      If you are interested in low frequency activity (<0.1Hz), avoid using
-      tSSS and set ``mf_st_duration`` to ``None``.
+???+ note "Good Practice / Advice"
+    If you are interested in low frequency activity (<0.1Hz), avoid using
+    tSSS and set ``mf_st_duration`` to ``None``.
 
-      If you are interested in low frequency above 0.1 Hz, you can use the
-      default ``mf_st_duration`` to 10 s, meaning it acts like a 0.1 Hz
-      high-pass filter.
+    If you are interested in low frequency above 0.1 Hz, you can use the
+    default ``mf_st_duration`` to 10 s, meaning it acts like a 0.1 Hz
+    high-pass filter.
 
-**Example**
-```python
-mf_st_duration = None
-mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
-```
+???+ example "Example"
+    ```python
+    mf_st_duration = None
+    mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
+    ```
 """
 
 mf_head_origin = 'auto'
@@ -317,43 +328,11 @@ If automatic fitting fails (e.g., due to having too few digitization
 points), consider separately calling the fitting function with different
 options or specifying the origin manually.
 
-**Example**
-```python
-mf_head_origin = 'auto'
-```
+???+ example "Example"
+    ```python
+    mf_head_origin = 'auto'
+    ```
 """
-
-# ``cross talk`` : str
-#   Path to the cross talk file
-#
-#
-# ``calibration`` : str
-#   Path to the calibration file.
-#
-#
-# These 2 files should be downloaded and made available for running
-# maxwell filtering.
-#
-# Example
-# ~~~~~~~
-# >>> cal_files_path = os.path.join(study_path, 'SSS')
-# >>> mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
-# >>> mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
-#
-# Warning
-# ~~~~~~~
-# These 2 files are site and machine specific files that provide information
-# about the environmental noise. For practical purposes, place them in your
-# study folder.
-#
-# At NeuroSpin: ct_sparse and sss_call are on the meg_tmp server
-
-# cal_files_path = os.path.join(study_path, 'SSS')
-# mf_ctc_fname = os.path.join(cal_files_path, 'ct_sparse_mgh.fif')
-# mf_cal_fname = os.path.join(cal_files_path, 'sss_cal_mgh.dat')
-
-mf_ctc_fname = ''
-mf_cal_fname = ''
 
 mf_reference_run: Optional[str] = None
 """
@@ -367,10 +346,10 @@ the recording session).
 Which run to take as the reference for adjusting the head position of all
 runs. If ``None``, pick the first run.
 
-**Example**
-```python
-mf_reference_run = '01'  # Use run "01"
-```
+???+ example "Example"
+    ```python
+    mf_reference_run = '01'  # Use run "01"
+    ```
 """
 
 ###############################################################################
@@ -382,24 +361,36 @@ mf_reference_run = '01'  # Use run "01"
 # stimulation, it is frequent to have a stimulation artifact. This option
 # allows to fix it by linear interpolation early in the pipeline on the raw
 # data.
-#
-# ``fix_stim_artifact`` : bool
-#     Apply interpolation to fix stimulation artifact.
-# ``stim_artifact_tmin`` : float
-#     Start time of the interpolation window in seconds.
-# ``stim_artifact_tmax`` : float
-#     End time of the interpolation window in seconds.
-#
-# Example
-# ~~~~~~~
-# >>> fix_stim_artifact = False
-# >>> stim_artifact_tmin = 0.  # on stim onset
-# >>> stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
 
-fix_stim_artifact = False
-stim_artifact_tmin = 0.
-stim_artifact_tmax = 0.01
+fix_stim_artifact: bool = False
+"""
+Apply interpolation to fix stimulation artifact.
 
+???+ example "Example"
+    ```python
+    fix_stim_artifact = False
+    ```
+"""
+
+stim_artifact_tmin: float = 0.
+"""
+Start time of the interpolation window in seconds.
+
+???+ example "Example"
+    ```python
+    stim_artifact_tmin = 0.  # on stim onset
+    ```
+"""
+
+stim_artifact_tmax: float = 0.01
+"""
+End time of the interpolation window in seconds.
+
+???+ example "Example"
+    ```python
+    stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
+    ```
+"""
 
 ###############################################################################
 # FREQUENCY FILTERING
@@ -452,18 +443,18 @@ Keep it None if no lowpass filtering should be applied.
 # If you are interested in typical analysis (up to 120 Hz) you can typically
 # resample your data down to 500 Hz without preventing reliable time-frequency
 # exploration of your data
-#
-# ``resample_sfreq``  : float
-#   Specifies at which sampling frequency the data should be resampled.
-#   If None then no resampling will be done.
-#
-# Example
-# ~~~~~~~
-# >>> resample_sfreq = None  # no resampling
-# or
-# >>> resample_sfreq = 500  # resample to 500Hz
 
-resample_sfreq = None
+resample_sfreq: Optional[float] = None
+"""
+Specifies at which sampling frequency the data should be resampled.
+If None then no resampling will be done.
+
+???+ example "Example"
+    ```python
+    resample_sfreq = None  # no resampling
+    resample_sfreq = 500  # resample to 500Hz
+    ```
+"""
 
 decim: int = 1
 """
@@ -471,15 +462,15 @@ Says how much to decimate data at the epochs level.
 It is typically an alternative to the `resample_sfreq` parameter that
 can be used for resampling raw data. ``1`` means no decimation.
 
-Note: Good Practice / Advice
-      Decimation requires to lowpass filtered the data to avoid aliasing.
-      Note that using decimation is much faster than resampling.
+???+ note "Good Practice / Advice"
+    Decimation requires to lowpass filtered the data to avoid aliasing.
+    Note that using decimation is much faster than resampling.
 
-**Example**
-```python
-decim = 1  # no decimation
-decim = 4  # decimate by 4 ie devide sampling frequency by 4
-```
+???+ example "Example"
+    ```python
+    decim = 1  # no decimation
+    decim = 4  # decimate by 4 ie devide sampling frequency by 4
+    ```
 """
 
 ###############################################################################
@@ -492,93 +483,91 @@ decim = 4  # decimate by 4 ie devide sampling frequency by 4
 # beat and an eye movement.
 # You can do a quick average of blink data and check what the amplitude looks
 # like.
-#
-#  ``reject`` : dict | None
-#    The rejection limits to mark epochs as bads.
-#    This allows to remove strong transient artifacts.
-#    If you want to reject and retrieve blinks or ECG artifacts later, e.g.
-#    with ICA, don't specify a value for the EOG and ECG channels, respectively
-#    (see examples below).
-#
-#    Make sure to include values for "eeg" if you have EEG data.
-#
-#    Pass ``None`` to avoid automated epoch rejection based on amplitude.
-#
-# Note
-# ~~~~
-# These numbers tend to vary between subjects.. You might want to consider
-# using the autoreject method by Jas et al. 2018.
-# See https://autoreject.github.io
-#
-# Example
-# ~~~~~~~
-# >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-# >>> reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
-# >>> reject = None
 
-reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+reject: Optional[dict] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+"""
+The rejection limits to mark epochs as bads.
+This allows to remove strong transient artifacts.
+If you want to reject and retrieve blinks or ECG artifacts later, e.g.
+with ICA, don't specify a value for the EOG and ECG channels, respectively
+(see examples below).
 
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ note "Note"
+    These numbers tend to vary between subjects.. You might want to consider
+    using the autoreject method by Jas et al. 2018.
+    See https://autoreject.github.io
+
+
+???+ example "Example"
+    ```python
+    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
+    reject = None
+    ```
+"""
 
 ###############################################################################
 # RENAME EXPERIMENTAL EVENTS
 # --------------------------
-#
-# ``rename_events`` : dict
-#   A dictionary specifying which events in the BIDS dataset to rename upon
-#   loading, and before processing begins.
-#
-#   Pass an empty dictionary to not perform any renaming.
-#
-# Example
-# ~~~~~~~
-# Rename ``audio_left`` in the BIDS dataset to ``audio/left`` in the pipeline:
-# >>> rename_events = {'audio_left': 'audio/left'}
 
-rename_events = dict()
+rename_events: dict = dict()
+"""
+A dictionary specifying which events in the BIDS dataset to rename upon
+loading, and before processing begins.
 
+Pass an empty dictionary to not perform any renaming.
+
+???+ example "Example"
+    Rename ``audio_left`` in the BIDS dataset to ``audio/left`` in the
+    pipeline:
+    ```python
+    rename_events = {'audio_left': 'audio/left'}
+    ```
+"""
 
 ###############################################################################
 # EPOCHING
 # --------
-#
-#  `conditions`` : list
-#    The condition names to consider. This can either be name of the
-#    experimental condition as specified in the BIDS ``events.tsv`` file; or
-#    the name of condition *grouped*, if the condition names contain the
-#    (MNE-specific) group separator, ``/``. See the "Subselecting epochs"
-#    tutorial for more information: https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs  # noqa: 501
-#
-# Example
-# ~~~~~~~
-# >>> conditions = ['auditory/left', 'visual/left']
-# or
-# >>> conditions = ['auditory/left', 'auditory/right']
-# or
-# >>> conditions = ['auditory']  # All "auditory" conditions (left AND right)
-# or
-# >>> conditions = ['auditory', 'visual']
-# or
-# >>> conditions = ['left', 'right']
 
-conditions = ['left', 'right']
+conditions: Iterable[str] = ['left', 'right']
+"""
+The condition names to consider. This can either be name of the
+experimental condition as specified in the BIDS ``events.tsv`` file; or
+the name of condition *grouped*, if the condition names contain the
+(MNE-specific) group separator, ``/``. See the [Subselecting epochs
+tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
+for more information.
 
-# ``tmin``: float
-#    A float in seconds that gives the start time before event of an epoch.
-#
-# Example
-# ~~~~~~~
-# >>> tmin = -0.2  # take 200ms before event onset.
+???+ example "Example"
+    ```python
+    conditions = ['auditory/left', 'visual/left']
+    conditions = ['auditory/left', 'auditory/right']
+    conditions = ['auditory']  # All "auditory" conditions (left AND right)
+    conditions = ['auditory', 'visual']
+    conditions = ['left', 'right']
+    ```
+"""
 
 tmin = -0.2
+"""
+The beginning of an epoch, relative to the respective event, in seconds.
 
-# ``tmax``: float
-#    A float in seconds that gives the end time before event of an epoch.
-#
-# Example
-# ~~~~~~~
-# >>> tmax = 0.5  # take 500ms after event onset.
+???+ example "Example"
+    ```python
+    tmin = -0.2  # take 200ms before event onset.
+    ```
+"""
 
 tmax: float = 0.5
+"""
+The end of an epoch, relative to the respective event, in seconds.
+???+ example "Example"
+    ```python
+    tmax = 0.5  # take 500ms after event onset.
+    ```
+"""
 
 baseline: Optional[tuple] = (None, 0)
 """
@@ -633,7 +622,7 @@ of contrasts.
 
 use_ssp: bool = True
 """
-Whether SSP should be used or not.
+Whether signal-space projection should be used or not.
 """
 
 # ICA
@@ -641,7 +630,7 @@ Whether SSP should be used or not.
 
 use_ica: bool = False
 """
-Whether ICA should be used or not.
+Whether independent component analysis should be used or not.
 """
 
 ica_algorithm: Literal['picard', 'fastica', 'extended_infomax']= 'picard'
@@ -773,10 +762,10 @@ time_frequency_conditions: Iterable[str] = []
 """
 The conditions to compute time-frequency decomposition on.
 
-**Example**
-```python
-time_frequency_conditions = ['left', 'right']
-```
+???+ example "Example"
+    ```python
+    time_frequency_conditions = ['left', 'right']
+    ```
 """
 
 ###############################################################################
@@ -786,10 +775,10 @@ time_frequency_conditions = ['left', 'right']
 
 spacing: str = 'oct6'
 """
-#    The spacing to use. Can be ``'ico#'`` for a recursively subdivided
-#    icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
-#    ``'all'`` for all points, or an integer to use appoximate
-#    distance-based spacing (in mm).
+The spacing to use. Can be ``'ico#'`` for a recursively subdivided
+icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
+``'all'`` for all points, or an integer to use appoximate
+distance-based spacing (in mm).
 """
 
 mindist: float = 5
@@ -821,40 +810,46 @@ keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
 
 inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
 """
-Use minimum norm, dSPM (default), sLORETA, or eLORETA.
+Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
+solution.
 """
 
-# noise_cov : (None, 0) | ‘emptyroom’
-#   Specify how to estimate the noise covariance matrix, which is used in
-#   inverse modeling.
-#
-#   If a tuple, it takes the form ``(tmin, tmax)`` with the time specified in
-#   seconds. If the first value of the tuple is ``None``, the considered
-#   period starts at the beginning of the epoch. If the second value of the
-#   tuple is ``None``, the considered period ends at the end of the epoch.
-#   The default, ``(None, 0)``, includes the entire period before the event,
-#   which is typically the pre-stimulus period.
-#
-#   If ``emptyroom``, the noise covariance matrix will be estimated from an
-#   empty-room MEG recording. The empty-room recording will be automatically
-#   selected based on recording date and time.
-#
-#   Please note that when processing data that contains EEG channels, the noise
-#   covariance can ONLY be estimated from the pre-stimulus period.
-#
-# Example
-# ~~~~~~~
-# Use the period from start of the epoch until 100 ms before the experimental
-# event:
-# >>> noise_cov = (None, -0.1)
-#
-# Use the time period from the experimental event until the end of the epoch:
-# >>> noise_cov = (0, None)
-#
-# Use an empty-room recording:
-# >>> noise_cov = 'emptyroom'
+noise_cov: Union[tuple, Literal['emptyroom']] = (None, 0)
+"""
+Specify how to estimate the noise covariance matrix, which is used in
+inverse modeling.
 
-noise_cov = (None, 0)
+If a tuple, it takes the form ``(tmin, tmax)`` with the time specified in
+seconds. If the first value of the tuple is ``None``, the considered
+period starts at the beginning of the epoch. If the second value of the
+tuple is ``None``, the considered period ends at the end of the epoch.
+The default, ``(None, 0)``, includes the entire period before the event,
+which is typically the pre-stimulus period.
+
+If ``emptyroom``, the noise covariance matrix will be estimated from an
+empty-room MEG recording. The empty-room recording will be automatically
+selected based on recording date and time.
+
+Please note that when processing data that contains EEG channels, the noise
+covariance can ONLY be estimated from the pre-stimulus period.
+
+???+ example "Example"
+    Use the period from start of the epoch until 100 ms before the experimental
+    event:
+    ```python
+    noise_cov = (None, -0.1)
+    ```
+
+    Use the time period from the experimental event until the end of the epoch:
+    ```python
+    noise_cov = (0, None)
+    ```
+
+    Use an empty-room recording:
+    ```python
+    noise_cov = 'emptyroom'
+    ```
+"""
 
 smooth: Optional[int] = 10
 """
@@ -862,8 +857,6 @@ Number of iterations for the smoothing of the surface data.
 If None, smooth is automatically defined to fill the surface
 with non-zero values. The default is spacing=None.
 """
-
-fsaverage_vertices = [np.arange(10242), np.arange(10242)]
 
 ###############################################################################
 # ADVANCED
@@ -909,8 +902,15 @@ To import data that was recorded with Maxshield on before running
 Maxfilter set this to ``True``.
 """
 
-log_level = 'info'
-mne_log_level = 'error'
+log_level: Literal['info', 'error'] = 'error'
+"""
+Set the Study Template logging verbosity.
+"""
+
+mne_log_level: Literal['info', 'error'] = 'error'
+"""
+Set the MNE-Python logging verbosity.
+"""
 
 on_error: Literal['continue', 'abort'] = 'abort'
 """
@@ -1110,7 +1110,7 @@ if mf_reference_run is not None and mf_reference_run not in get_runs():
 
 
 def get_mf_reference_run():
-    """Retrieve to run identifier (number, name) of the reference run."""
+    # Retrieve to run identifier (number, name) of the reference run
     if mf_reference_run is None:
         # Use the first run
         return get_runs()[0]
@@ -1230,8 +1230,7 @@ def failsafe_run(on_error):
 
 
 def plot_auto_scores(auto_scores):
-    """Plot scores of automated bad channel detection.
-    """
+    # Plot scores of automated bad channel detection.
     import matplotlib.pyplot as plt
     import seaborn as sns
     import pandas as pd
@@ -1290,10 +1289,8 @@ def plot_auto_scores(auto_scores):
 
 
 def get_channels_to_analyze(info):
-    """Return names of the channels of the channel types we wish to analyze.
-
-    We also include channels marked as "bad" here.
-    """
+    # Return names of the channels of the channel types we wish to analyze.
+    # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
     if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types
                                     or 'meg' in ch_types):

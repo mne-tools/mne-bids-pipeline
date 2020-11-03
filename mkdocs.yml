@@ -18,7 +18,7 @@ plugins:
                     - os.environ["MNE_BIDS_STUDY_CONFIG"] = "docs/doc-config.py"
                 rendering:
                     show_source: true
-                    show_if_no_docstring: true
+                    show_if_no_docstring: false
                     show_root_heading: true
         watch:
             - .

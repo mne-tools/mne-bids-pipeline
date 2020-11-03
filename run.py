@@ -1,5 +1,6 @@
 import fire
 import sys
+import os
 import subprocess
 import pathlib
 import logging
@@ -32,19 +33,23 @@ REPORT_SCRIPTS = ('99-make_reports.py')
 
 
 def _run_script(script, config, root_dir):
+    logger.info(f'Running: {script}')
     if not config:
         logger.critical('Please specify a Study Template configuration via '
                         '--config=/path/to/config.py')
         sys.exit(1)
 
     script_path = (STUDY_TEMPLATE_DIR / script).name
+    cmd = [PYTHON, script_path]
 
-    cmd = []
+    env = os.environ.copy()
+    env['MNE_BIDS_STUDY_CONFIG'] = pathlib.Path(config).expanduser()
     if root_dir:
-        cmd = [f'BIDS_ROOT={root_dir}']
-    cmd += [PYTHON, script_path]
+        env['BIDS_ROOT'] = pathlib.Path(root_dir).expanduser()
 
-    completed_process = subprocess.run(cmd)
+    completed_process = subprocess.run(cmd, env=env,
+                                       stdout=sys.stdout,
+                                       stderr=sys.stdout)
     if completed_process.returncode != 0:
         logger.critical(f'Encountered an error while running: {script}. '
                         f'Aborting.')

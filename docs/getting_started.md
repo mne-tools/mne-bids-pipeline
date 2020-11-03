@@ -1,16 +1,3 @@
-1. Adjust the configuration file
-------------------------------
-The 
-Generally, there is a single `config.py` file, which contains all parameters
-for the analysis of the data. Many parameters are automatically inferred from
-the BIDS structure of the data. Either edit the `config.py` in-place, or create
-a copy and edit the copy.
-
-???+ info
-    You should only need to touch `config.py. All other scripts should not be
-    edited.
-
-
 1. Inspect your dataset
 -----------------------
 The Study Template **only** works with BIDS-formatted raw data.
@@ -29,11 +16,25 @@ It is of great importance that
     Study Template, it is considered good practice to flag
     obviously problematic channels as such in the BIDS dataset.
 
+2. Adjust the configuration file
+------------------------------
+The Study Template ships with a default configuration file, `config.py`.
+You need to create a copy of that configuration file and adjust all parameters
+that are relevant to your data processing and analysis.
 
-1. Set `MNE_BIDS_STUDY_CONFIG` environment variable
----------------------------------------------------
+???+ info
+    You should only need to touch the configuration file. None of the scripts
+    should be edited.
 
-1. Use the `Makefile` to run your analyses
------------------------------------------
-
-
+3. Run the Study Template
+-------------------------
+Run the full Study Template by invoking
+```shell
+python run.py all --config=/path/to/your/custom_config.py
+```
+To only run the sensor-level, source-level, or report-generating steps, run:
+```shell
+python run.py sensor --config=/path/to/your/custom_config.py  # sensor-level
+python run.py source --config=/path/to/your/custom_config.py  # source-level
+python run.py report --config=/path/to/your/custom_config.py  # generate Reports
+```

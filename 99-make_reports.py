@@ -13,7 +13,7 @@ import logging
 import numpy as np
 from scipy.io import loadmat
 
-import matplotlib.pyplot as plt
+import matplotlib
 
 import mne
 from mne.parallel import parallel_func
@@ -22,12 +22,14 @@ from mne_bids import BIDSPath
 import config
 from config import gen_log_message, on_error, failsafe_run
 
+matplotlib.use('Agg')  # do not open any window  # noqa
+
 logger = logging.getLogger('mne-study-template')
 
 
 def plot_events(subject, session):
     raws_filt = []
-    bids_path = BIDSPath(subject=subject,
+    raw_fname = BIDSPath(subject=subject,
                          session=session,
                          task=config.get_task(),
                          acquisition=config.acq,
@@ -41,10 +43,14 @@ def plot_events(subject, session):
                          check=False)
 
     for run in config.get_runs():
-        fname = bids_path.copy().update(run=run)
-        raw_filt = mne.io.read_raw_fif(fname)
+        raw_fname = raw_fname.copy().update(run=run)
+
+        if raw_fname.copy().update(split='01').fpath.exists():
+            raw_fname.update(split='01')
+
+        raw_filt = mne.io.read_raw_fif(raw_fname)
         raws_filt.append(raw_filt)
-        del fname
+        del raw_fname
 
     # Concatenate the filtered raws and extract the events.
     raw_filt_concat = mne.concatenate_raws(raws_filt)
@@ -57,7 +63,7 @@ def plot_events(subject, session):
 
 
 def plot_er_psd(subject, session):
-    bids_path = BIDSPath(subject=subject,
+    raw_fname = BIDSPath(subject=subject,
                          session=session,
                          acquisition=config.acq,
                          run=None,
@@ -75,7 +81,10 @@ def plot_er_psd(subject, session):
     if not config.use_maxwell_filter and config.allow_maxshield:
         extra_params['allow_maxshield'] = config.allow_maxshield
 
-    raw_er_filtered = mne.io.read_raw_fif(bids_path, preload=True,
+    if raw_fname.copy().update(split='01').fpath.exists():
+        raw_fname.update(split='01')
+
+    raw_er_filtered = mne.io.read_raw_fif(raw_fname, preload=True,
                                           **extra_params)
 
     fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
@@ -121,6 +130,8 @@ def plot_auto_scores(subject, session):
 def plot_decoding_scores(times, cross_val_scores, metric):
     """Plot cross-validation results from time-by-time decoding.
     """
+    import matplotlib.pyplot as plt
+
     mean_scores = cross_val_scores.mean(axis=0)
     max_scores = cross_val_scores.max(axis=0)
     min_scores = cross_val_scores.min(axis=0)
@@ -148,6 +159,8 @@ def plot_decoding_scores(times, cross_val_scores, metric):
 def plot_decoding_scores_gavg(decoding_data):
     """Plot the grand-averaged decoding scores.
     """
+    import matplotlib.pyplot as plt
+
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
     mean_scores = decoding_data['mean'].squeeze()
@@ -213,6 +226,9 @@ def run_report(subject, session=None):
 
     rep = mne.Report(**params)
     rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
+    task = config.get_task()
+    if task is not None:
+        rep_kwargs['pattern'] = f'*_task-{task}*'
     if mne.viz.get_3d_backend() is not None:
         with mne.viz.use_3d_backend('pyvista'):
             rep.parse_folder(**rep_kwargs)
@@ -391,25 +407,15 @@ def run_report(subject, session=None):
 
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
+    import matplotlib.pyplot as plt  # nested import to help joblib
+    plt.close('all')  # close all figures to save memory
 
 
-@failsafe_run(on_error=on_error)
-def main():
-    """Make reports."""
-    msg = 'Running Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
-
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
-
+def run_report_average(session):
     # Group report
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
     subject = 'average'
-    # XXX to fix
-    if config.get_sessions():
-        session = config.get_sessions()[0]
-    else:
-        session = None
 
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
@@ -514,7 +520,6 @@ def main():
                 figs = brain._renderer.figure
                 captions = caption
             else:
-                import matplotlib.pyplot as plt
                 fig_lh = plt.figure()
                 fig_rh = plt.figure()
 
@@ -541,6 +546,25 @@ def main():
 
     msg = 'Completed Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
+    plt.close('all')  # close all figures to save memory
+
+
+@failsafe_run(on_error=on_error)
+def main():
+    """Make reports."""
+    msg = 'Running Step 99: Create reports'
+    logger.info(gen_log_message(step=99, message=msg))
+
+    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.get_subjects(), config.get_sessions()))
+
+    sessions = config.get_sessions()
+    if not sessions:
+        sessions = [None]
+
+    for session in sessions:
+        run_report_average(session)
 
 
 if __name__ == '__main__':

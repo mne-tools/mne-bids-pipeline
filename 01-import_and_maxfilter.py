@@ -335,7 +335,8 @@ def run_maxwell_filter(subject, session=None):
         # channels marked as "bad").
         # We do not run `raw_out.pick()` here because it uses too much memory.
         chs_to_include = config.get_channels_to_analyze(raw_out.info)
-        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True)
+        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True,
+                     split_naming='bids')
         del raw_out
         if config.interactive:
             # Load the data we have just written, because it contains only
@@ -400,7 +401,7 @@ def run_maxwell_filter(subject, session=None):
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).
             raw_er_out.save(raw_er_fname_out, picks=chs_to_include,
-                            overwrite=True)
+                            overwrite=True, split_naming='bids')
             del raw_er_out
 
 

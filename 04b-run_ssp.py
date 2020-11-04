@@ -47,6 +47,9 @@ def run_ssp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
+    if raw_fname_in.copy().update(split='01').fpath.exists():
+        raw_fname_in.update(split='01')
+
     raw = mne.io.read_raw_fif(raw_fname_in)
     # XXX : n_xxx should be options in config
     msg = 'Computing SSPs for ECG'

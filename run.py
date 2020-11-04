@@ -1,5 +1,4 @@
 import fire
-import sys
 import os
 import runpy
 import signal
@@ -35,10 +34,6 @@ ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 
 def _run_script(script, config, root_dir):
     logger.info(f'Now running: {script}')
-    if not config:
-        logger.critical('Please specify a Study Template configuration '
-                        'via --config=/path/to/config.py')
-        sys.exit(1)
 
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
@@ -52,11 +47,6 @@ def _run_script(script, config, root_dir):
 
 
 def process(steps, config, root_dir=None):
-    if not steps:
-        logger.critical('Please specify which processing step(s) to run via '
-                        '--steps=...')
-        sys.exit(1)
-
     if steps == 'sensor':
         scripts = SENSOR_SCRIPTS
     elif steps == 'source':

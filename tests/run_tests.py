@@ -65,7 +65,7 @@ def run_tests(test_suite):
         argv_orig = sys.argv.copy()
         for step in steps:
             sys.argv = [sys.argv[0],
-                        f'--steps={step}',
+                        f'{step}',
                         f'--config={config_path}']
             # We have to use run_path because run_module doesn't allow
             # relative imports.

@@ -801,14 +801,14 @@ with non-zero values. The default is spacing=None.
 l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
 Specifies the transition bandwidth of the
-highpass filter. By default it's `'auto'` and uses default mne
+highpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
 h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
 Specifies the transition bandwidth of the
-lowpass filter. By default it's `'auto'` and uses default mne
+lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 

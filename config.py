@@ -195,8 +195,8 @@ If ``None``, we will assume that the data type matches the channel type.
     data_type = 'eeg'
     ```
 
-    The dataset contains simultaneous recordings of MEG and EEG, and we only wish
-    to process the gradiometer data:
+    The dataset contains simultaneous recordings of MEG and EEG, and we only
+    wish to process the gradiometer data:
 
     ```python
     ch_types = ['grad']
@@ -260,8 +260,8 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 
 find_flat_channels_meg: bool = False
 """
-Auto-detect "flat" channels (i.e. those with unusually low variability) and mark
-them as bad.
+Auto-detect "flat" channels (i.e. those with unusually low variability) and
+mark them as bad.
 """
 
 find_noisy_channels_meg = False
@@ -626,7 +626,7 @@ use_ica: bool = False
 Whether independent component analysis should be used or not.
 """
 
-ica_algorithm: Literal['picard', 'fastica', 'extended_infomax']= 'picard'
+ica_algorithm: Literal['picard', 'fastica', 'extended_infomax'] = 'picard'
 """
 The ICA algorithm to use.
 """
@@ -1049,9 +1049,9 @@ if 'eeg' in ch_types:
                'To turn it on, set use_ica=True.')
         logger.info(msg)
 
-if on_error not in ('continue', 'abort'):
-    msg = (f"on_error must be one of 'continue' or 'abort', but received "
-           f"{on_error}.")
+if on_error not in ('continue', 'abort', 'debug'):
+    msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
+           f"but received: {on_error}.")
     logger.info(msg)
 
 if isinstance(noise_cov, str) and noise_cov != 'emptyroom':

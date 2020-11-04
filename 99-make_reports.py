@@ -13,6 +13,8 @@ import logging
 import numpy as np
 from scipy.io import loadmat
 
+import matplotlib
+
 import matplotlib.pyplot as plt
 
 import mne
@@ -21,6 +23,8 @@ from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
+
+matplotlib.use('Agg')  # do not open any window  # noqa
 
 logger = logging.getLogger('mne-study-template')
 
@@ -213,6 +217,9 @@ def run_report(subject, session=None):
 
     rep = mne.Report(**params)
     rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
+    task = config.get_task()
+    if task is not None:
+        rep_kwargs['pattern'] = f'*_task-{task}*'
     if mne.viz.get_3d_backend() is not None:
         with mne.viz.use_3d_backend('pyvista'):
             rep.parse_folder(**rep_kwargs)
@@ -391,25 +398,12 @@ def run_report(subject, session=None):
 
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
+    plt.close('all')  # close all figures to save memory
 
 
-@failsafe_run(on_error=on_error)
-def main():
-    """Make reports."""
-    msg = 'Running Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
-
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
-
+def run_report_average(session):
     # Group report
     subject = 'average'
-    # XXX to fix
-    if config.get_sessions():
-        session = config.get_sessions()[0]
-    else:
-        session = None
 
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
@@ -541,6 +535,25 @@ def main():
 
     msg = 'Completed Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
+    plt.close('all')  # close all figures to save memory
+
+
+@failsafe_run(on_error=on_error)
+def main():
+    """Make reports."""
+    msg = 'Running Step 99: Create reports'
+    logger.info(gen_log_message(step=99, message=msg))
+
+    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+    parallel(run_func(subject, session) for subject, session in
+             itertools.product(config.get_subjects(), config.get_sessions()))
+
+    sessions = config.get_sessions()
+    if not sessions:
+        sessions = [None]
+
+    for session in sessions:
+        run_report_average(session)
 
 
 if __name__ == '__main__':

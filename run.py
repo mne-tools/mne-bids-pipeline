@@ -35,6 +35,9 @@ ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 def _run_script(script, config, root_dir):
     logger.info(f'Now running: {script}')
 
+    # It's okay to fiddle with the environment variables here as process()
+    # has set up some handlers to reset the environment to its previous state
+    # upon exit.
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
     if root_dir:

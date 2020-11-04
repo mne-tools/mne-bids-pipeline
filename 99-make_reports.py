@@ -398,6 +398,7 @@ def run_report(subject, session=None):
 
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
+    import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
 
 
@@ -535,6 +536,7 @@ def run_report_average(session):
 
     msg = 'Completed Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
+    import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
 
 

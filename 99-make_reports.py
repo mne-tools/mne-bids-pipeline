@@ -15,10 +15,6 @@ from scipy.io import loadmat
 
 import matplotlib
 
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
-
 import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
@@ -134,6 +130,8 @@ def plot_auto_scores(subject, session):
 def plot_decoding_scores(times, cross_val_scores, metric):
     """Plot cross-validation results from time-by-time decoding.
     """
+    import matplotlib.pyplot as plt
+
     mean_scores = cross_val_scores.mean(axis=0)
     max_scores = cross_val_scores.max(axis=0)
     min_scores = cross_val_scores.min(axis=0)
@@ -161,6 +159,8 @@ def plot_decoding_scores(times, cross_val_scores, metric):
 def plot_decoding_scores_gavg(decoding_data):
     """Plot the grand-averaged decoding scores.
     """
+    import matplotlib.pyplot as plt
+
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
     mean_scores = decoding_data['mean'].squeeze()
@@ -410,13 +410,11 @@ def run_report(subject, session=None):
     import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
 
-    # Cleanup by closing all opened figures
-    import matplotlib.pyplot as plt
-    plt.close('all')
-
 
 def run_report_average(session):
     # Group report
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
     subject = 'average'
 
     evoked_fname = BIDSPath(subject=subject,
@@ -522,7 +520,6 @@ def run_report_average(session):
                 figs = brain._renderer.figure
                 captions = caption
             else:
-                import matplotlib.pyplot as plt
                 fig_lh = plt.figure()
                 fig_rh = plt.figure()
 
@@ -549,7 +546,6 @@ def run_report_average(session):
 
     msg = 'Completed Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
-    import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
 
 

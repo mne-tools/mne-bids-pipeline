@@ -91,4 +91,4 @@ def process(steps=None, config=None, root_dir=None):
 
 
 if __name__ == '__main__':
-    fire.Fire(dict(process=process))
+    fire.Fire(process)

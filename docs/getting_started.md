@@ -35,11 +35,11 @@ Run the Study Template
 ----------------------
 Run the full Study Template by invoking
 ```shell
-python run.py process --steps=all --config=/path/to/your/custom_config.py
+python run.py --steps=all --config=/path/to/your/custom_config.py
 ```
 To only run the sensor-level, source-level, or report-generating steps, run:
 ```shell
-python run.py process --steps=sensor --config=/path/to/your/custom_config.py  # sensor-level
-python run.py process --steps=source --config=/path/to/your/custom_config.py  # source-level
-python run.py process --steps=report --config=/path/to/your/custom_config.py  # generate Reports
+python run.py --steps=sensor --config=/path/to/your/custom_config.py  # sensor-level
+python run.py --steps=source --config=/path/to/your/custom_config.py  # source-level
+python run.py --steps=report --config=/path/to/your/custom_config.py  # generate Reports
 ```

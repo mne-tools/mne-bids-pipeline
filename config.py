@@ -268,9 +268,9 @@ warning:
 
 mf_st_duration: Optional[float] = None
 """
-There are two kinds of maxfiltering: SSS and tSSS
-[SSS = signal space separation ; tSSS = temporal signal space separation]
-(Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
+There are two kinds of maxfiltering: SSS (signal space separation) and tSSS
+(temporal signal space separation)
+(see [Taulu et al., 2004](http://cds.cern.ch/record/709081/files/0401166.pdf)).
 
 If not None, apply spatiotemporal SSS (tSSS) with specified buffer
 duration (in seconds). MaxFilter™'s default is 10.0 seconds in v2.2.

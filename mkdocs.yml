@@ -21,9 +21,9 @@ nav:
             - Epoching: settings/epoched_data/epochs.md
             - Amplitude-based artifact removal: settings/epoched_data/artifacts.md
             - SSP & ICA: settings/epoched_data/ssp_ica.md
-            - Contrasts: settings/epoched_data/contrasts.md
+            - Statistics: settings/epoched_data/statistics.md
             - Time-frequency analysis: settings/epoched_data/time_freq.md
-            - Source estimation: settings/epoched_data/inverse.md
+        - Source estimation: settings/epoched_data/inverse.md
 
 plugins:
     - search

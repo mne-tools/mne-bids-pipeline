@@ -51,7 +51,7 @@ def _run_script(script, config, root_dir):
     logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps, config=None, root_dir=None):
+def process(steps, config, root_dir=None):
     if not steps:
         logger.critical('Please specify which processing step(s) to run via '
                         '--steps=...')

@@ -6,6 +6,8 @@ extra_css:
     - css/extra.css
 nav:
     - Introduction: index.md
+    - Installation: install.md
+    - Getting Started: getting_started.md
     - Configuration Options: settings.md
 plugins:
     - search

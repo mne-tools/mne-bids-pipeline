@@ -1,13 +1,13 @@
 """Download test data and run a test suite."""
 import sys
 import os
-import os.path as op
+from pathlib import Path
 import argparse
-import importlib
+import runpy
 
 # Add the pipelines dir to the PATH
-pipeline_dir = os.path.abspath(op.join(op.dirname(__file__), '..'))
-sys.path.append(pipeline_dir)
+study_template_dir = Path(__file__).absolute().parents[1]
+sys.path.append(str(study_template_dir))
 
 
 def fetch(dataset=None):
@@ -16,60 +16,16 @@ def fetch(dataset=None):
     main(dataset)
 
 
-def sensor():
-    """Run sensor pipeline."""
-    mod = importlib.import_module('01-import_and_maxfilter')
-    mod.main()
-    mod = importlib.import_module('02-frequency_filter')
-    mod.main()
-    mod = importlib.import_module('03-make_epochs')
-    mod.main()
-    mod = importlib.import_module('04a-run_ica')
-    mod.main()
-    mod = importlib.import_module('04b-run_ssp')
-    mod.main()
-    mod = importlib.import_module('05a-apply_ica')
-    mod.main()
-    mod = importlib.import_module('05b-apply_ssp')
-    mod.main()
-    mod = importlib.import_module('06-make_evoked')
-    mod.main()
-    mod = importlib.import_module('07-sliding_estimator')
-    mod.main()
-    mod = importlib.import_module('08-time_frequency')
-    mod.main()
-    mod = importlib.import_module('09-group_average_sensors')
-    mod.main()
-
-
-def source():
-    """Run source pipeline."""
-    mod = importlib.import_module('10-make_forward')
-    mod.main()
-    mod = importlib.import_module('11-make_cov')
-    mod.main()
-    mod = importlib.import_module('12-make_inverse')
-    mod.main()
-    mod = importlib.import_module('13-group_average_source')
-    mod.main()
-
-
-def report():
-    """Run report pipeline."""
-    mod = importlib.import_module('99-make_reports')
-    mod.main()
-
-
 # Where to download the data to
-DATA_DIR = op.join(op.expanduser('~'), 'mne_data')
+DATA_DIR = Path('~/mne_data').expanduser()
 
 TEST_SUITE = {
-    'ds000246': ('config_ds000246', sensor, report),
-    'ds000248': ('config_ds000248', sensor, source, report),
-    'ds000248_ica': ('config_ds000248_ica', sensor, report),
-    'ds001810': ('config_ds001810', sensor, report),
-    'eeg_matchingpennies': ('config_eeg_matchingpennies', sensor, report),
-    'ds003104': ('config_ds003104', sensor, source, report),
+    'ds000246': ('config_ds000246', 'sensor', 'report'),
+    'ds000248': ('config_ds000248', 'sensor', 'source', 'report'),
+    'ds000248_ica': ('config_ds000248_ica', 'sensor', 'report'),
+    'ds001810': ('config_ds001810', 'sensor', 'report'),
+    'eeg_matchingpennies': ('config_eeg_matchingpennies', 'sensor', 'report'),
+    'ds003104': ('config_ds003104', 'sensor', 'source', 'report'),
 }
 
 
@@ -91,20 +47,29 @@ def run_tests(test_suite):
     for dataset, test_tuple in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset
-        os.environ['BIDS_ROOT'] = op.join(DATA_DIR, dataset)
+        os.environ['BIDS_ROOT'] = str(DATA_DIR / dataset)
 
         config_name = test_tuple[0]
-        config_path = os.path.join(pipeline_dir, 'tests', 'configs',
-                                   config_name + '.py')
-        os.environ['MNE_BIDS_STUDY_CONFIG'] = config_path
-        del config_name, config_path
+        config_path = (study_template_dir / 'tests' / 'configs' /
+                       (config_name + '.py'))
+        del config_name
 
         # Fetch the data.
         fetch(dataset)
 
-        # run the pipelines
-        for pipeline in test_tuple[1::]:
-            pipeline()
+        # Run the tests.
+        steps = test_tuple[1:]
+        run_script = study_template_dir / 'run.py'
+        # We need to adjust sys.argv so we can pass "command line arguments"
+        # to run.py when executed via runpy.
+        argv_orig = sys.argv.copy()
+        for step in steps:
+            sys.argv = [sys.argv[0], 'process', f'--steps={step}',
+                        f'--config={config_path}']
+            # We have to use run_path because run_module doesn't allow
+            # relative imports.
+            runpy.run_path(run_script, run_name='__main__')
+        sys.argv = argv_orig
 
 
 if __name__ == '__main__':

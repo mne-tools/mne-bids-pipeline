@@ -8,7 +8,21 @@ nav:
     - Introduction: index.md
     - Installation: install.md
     - Getting Started: getting_started.md
-    - Configuration Options: settings.md
+    - Configuration Options:
+        - Basic settings: settings/basic.md
+        - Continuous data:
+            - Bad channel detection: settings/continuous_data/autobads.md
+            - Maxwell filter: settings/continuous_data/maxfilter.md
+            - Stimulation artifact: settings/continuous_data/stim_artifact.md
+            - Frequency filtering & resampling:
+                - Filtering: settings/continuous_data/filter.md
+                - Resampling: settings/continuous_data/resample.md
+        - Epoched data:
+            - Epoching: settings/epoched_data/epochs.md
+            - Amplitude-based artifact removal: settings/epoched_data/artifacts.md
+            - SSP & ICA: settings/epoched_data/ssp_ica.md
+            - Contrasts: settings/epoched_data/contrasts.md
+
 plugins:
     - search
     - mkdocstrings:
@@ -22,6 +36,7 @@ plugins:
                     show_source: true
                     show_if_no_docstring: false
                     show_root_heading: true
+                    show_root_full_path: false
         watch:
             - .
             - ./config.py

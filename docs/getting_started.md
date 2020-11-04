@@ -1,6 +1,8 @@
 1. Inspect your dataset
 -----------------------
-The Study Template **only** works with BIDS-formatted raw data.
+The Study Template **only** works with BIDS-formatted raw data. To find out
+more about BIDS and how to convert your data to the BIDS format, please see
+[the documentation of MNE-BIDS](https://mne.tools/mne-bids/stable/index.html).
 
 It is of great importance that
 

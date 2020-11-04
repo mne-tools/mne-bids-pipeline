@@ -40,7 +40,7 @@ Speficy the BIDS root directory. Pass an empty string or ```None`` to use
 the value specified in the ``BIDS_ROOT`` environment variable instead.
 Raises an exception if the BIDS root has not been specified.
 
-???+ "Example"
+???+ example "Example"
     ``` python
     bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
     bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
@@ -51,8 +51,7 @@ subjects_dir: Optional[str] = None
 """
 Path to the directory that contains the MRI data files and their
 derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-$SUBJECTS_DIR used by the Freesurfer software. If ``None``, will use
-``'bids_root/derivatives/freesurfer/subjects'``.
+$SUBJECTS_DIR used by the Freesurfer software.
 """
 
 daysback: Optional[int] = None
@@ -140,7 +139,7 @@ exclude_subjects: Iterable[str] = []
 Specify subjects to exclude from analysis. The MEG empty-room mock-subject
 is automatically excluded from regular analysis.
 
-???+ note "Good Practice / Advice"
+???+ info "Good Practice / Advice"
     Keep track of the criteria leading you to exclude
     a participant (e.g. too many movements, missing blocks, aborted experiment,
     did not understand the instructions, etc, ...)
@@ -161,8 +160,8 @@ ch_types: Iterable[str] = []
 """
 The channel types to consider.
 
-Note: Note
-      Currently, MEG and EEG data cannot be processed together.
+!!! info
+    Currently, MEG and EEG data cannot be processed together.
 
 ???+ example "Example"
     ```python
@@ -243,20 +242,6 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 # MAXWELL FILTER PARAMETERS
 # -------------------------
 # done in 01-import_and_maxfilter.py
-#
-# Note: For any of this to work, you must set ``mf_ctc_fname`` and
-# ``mf_cal_fname`` above.
-#
-# "Bad", i.e. flat and overly noisy channels, can be automatically detected
-# using a procedure inspired by the commercial MaxFilter by Elekta. First,
-# a copy of the data is low-pass filtered at 40 Hz. Then, channels with
-# unusually low variability are flagged as "flat", while channels with
-# excessively high variability are flagged as "noisy". Flat and noisy channels
-# are marked as "bad" and excluded from subsequent analysis. See
-# :func:`mne.preprocssessing.find_bad_channels_maxwell` for more information
-# on this procedure. The list of bad channels detected through this procedure
-# will be merged with the list of bad channels already present in the dataset,
-# if any.
 
 find_flat_channels_meg: bool = False
 """
@@ -264,7 +249,7 @@ Auto-detect "flat" channels (i.e. those with unusually low variability) and
 mark them as bad.
 """
 
-find_noisy_channels_meg = False
+find_noisy_channels_meg: bool = False
 """
 Auto-detect "noisy" channels and mark them as bad.
 """
@@ -283,9 +268,9 @@ warning:
 
 mf_st_duration: Optional[float] = None
 """
-There are two kinds of maxfiltering: SSS and tSSS
-[SSS = signal space separation ; tSSS = temporal signal space separation]
-(Taulu et al, 2004): http://cds.cern.ch/record/709081/files/0401166.pdf
+There are two kinds of maxfiltering: SSS (signal space separation) and tSSS
+(temporal signal space separation)
+(see [Taulu et al., 2004](http://cds.cern.ch/record/709081/files/0401166.pdf)).
 
 If not None, apply spatiotemporal SSS (tSSS) with specified buffer
 duration (in seconds). MaxFilter™'s default is 10.0 seconds in v2.2.
@@ -297,7 +282,7 @@ identically, choose a buffer length that divides evenly into your data.
 Any data at the trailing edge that doesn't fit evenly into a whole
 buffer window will be lumped into the previous buffer.
 
-???+ note "Good Practice / Advice"
+???+ info "Good Practice / Advice"
     If you are interested in low frequency activity (<0.1Hz), avoid using
     tSSS and set ``mf_st_duration`` to ``None``.
 
@@ -349,11 +334,6 @@ runs. If ``None``, pick the first run.
 # STIMULATION ARTIFACT
 # --------------------
 # used in 01-import_and_maxfilter.py
-#
-# When using electric stimulation systems, e.g. for median nerve or index
-# stimulation, it is frequent to have a stimulation artifact. This option
-# allows to fix it by linear interpolation early in the pipeline on the raw
-# data.
 
 fix_stim_artifact: bool = False
 """
@@ -390,28 +370,6 @@ End time of the interpolation window in seconds.
 # -------------------
 # done in 02-frequency_filter.py
 
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# It is typically better to set your filtering properties on the raw data so
-# as to avoid what we call border (or edge) effects.
-#
-# If you use this pipeline for evoked responses, you could consider
-# a low-pass filter cut-off of h_freq = 40 Hz
-# and possibly a high-pass filter cut-off of l_freq = 1 Hz
-# so you would preserve only the power in the 1Hz to 40 Hz band.
-# Note that highpass filtering is not necessarily recommended as it can
-# distort waveforms of evoked components, or simply wash out any low
-# frequency that can may contain brain signal. It can also act as
-# a replacement for baseline correction in Epochs. See below.
-#
-# If you use this pipeline for time-frequency analysis, a default filtering
-# coult be a high-pass filter cut-off of l_freq = 1 Hz
-# a low-pass filter cut-off of h_freq = 120 Hz
-# so you would preserve only the power in the 1Hz to 120 Hz band.
-#
-# If you need more fancy analysis, you are already likely past this kind
-# of tips! :)
-
 l_freq: float = 1.
 """
 The low-frequency cut-off in the highpass filtering step.
@@ -427,15 +385,6 @@ Keep it None if no lowpass filtering should be applied.
 ###############################################################################
 # RESAMPLING
 # ----------
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# If you have acquired data with a very high sampling frequency (e.g. 2 kHz)
-# you will likely want to downsample to lighten up the size of the files you
-# are working with (pragmatics)
-# If you are interested in typical analysis (up to 120 Hz) you can typically
-# resample your data down to 500 Hz without preventing reliable time-frequency
-# exploration of your data
 
 resample_sfreq: Optional[float] = None
 """
@@ -455,7 +404,7 @@ Says how much to decimate data at the epochs level.
 It is typically an alternative to the `resample_sfreq` parameter that
 can be used for resampling raw data. ``1`` means no decimation.
 
-???+ note "Good Practice / Advice"
+???+ info "Good Practice / Advice"
     Decimation requires to lowpass filtered the data to avoid aliasing.
     Note that using decimation is much faster than resampling.
 
@@ -469,13 +418,6 @@ can be used for resampling raw data. ``1`` means no decimation.
 ###############################################################################
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
-#
-# Good Practice / Advice
-# ~~~~~~~~~~~~~~~~~~~~~~
-# Have a look at your raw data and train yourself to detect a blink, a heart
-# beat and an eye movement.
-# You can do a quick average of blink data and check what the amplitude looks
-# like.
 
 reject: Optional[dict] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 """
@@ -567,7 +509,7 @@ baseline: Optional[tuple] = (None, 0)
 Specifies how to baseline-correct the epochs; if ``None``, no baseline
 correction is applied.
 
-???+ "Example"
+???+ example "Example"
     ```python
     baseline = (None, 0)  # baseline between tmin and 0
     ```
@@ -580,7 +522,7 @@ in the list corresponds to one contrast. The condition names must be
 specified in ``conditions`` above. Pass an empty list to avoid calculation
 of contrasts.
 
-???+ "Example"
+???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating
     ``left - right`` at every time point of the evoked responses:
     ```python
@@ -712,6 +654,19 @@ Whether to perform decoding (MVPA) on the contrasts specified above as
 "contrasts". MVPA will be performed on the level of individual epochs.
 """
 
+decoding_metric: str = 'roc_auc'
+"""
+The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
+or any other metric supported by `scikit-learn`.
+
+With AUC, chance level is the same regardless of class balance.
+"""
+
+decoding_n_splits: int = 5
+"""
+The number of folds (a.k.a. splits) to use in the cross-validation.
+"""
+
 n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and
@@ -729,22 +684,10 @@ average. This parameter is passed to the `mne.grand_average` function via
 the keyword argument `interpolate_bads`. It requires to have channel
 locations set.
 
-???+ "Example"
+???+ example "Example"
     ```python
     interpolate_bads_grand_average = True
     ```
-"""
-decoding_metric: str = 'roc_auc'
-"""
-The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
-or any other metric supported by `scikit-learn`.
-
-With AUC, chance level is the same regardless of class balance.
-"""
-
-decoding_n_splits: int = 5
-"""
-The number of folds (a.k.a. splits) to use in the cross-validation.
 """
 
 ###############################################################################
@@ -858,14 +801,14 @@ with non-zero values. The default is spacing=None.
 l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
 Specifies the transition bandwidth of the
-highpass filter. By default it's `'auto'` and uses default mne
+highpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
 h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
 Specifies the transition bandwidth of the
-lowpass filter. By default it's `'auto'` and uses default mne
+lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 

@@ -9,8 +9,7 @@ import logging
 import coloredlogs
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', level='DEBUG',
-                    logger=logger)
+coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
 
 SENSOR_SCRIPTS = ('01-import_and_maxfilter.py',
                   '02-frequency_filter.py',

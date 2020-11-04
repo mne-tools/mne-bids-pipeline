@@ -1,7 +1,9 @@
 import fire
 import sys
 import os
-import subprocess
+import runpy
+import signal
+import atexit
 import pathlib
 import logging
 import coloredlogs
@@ -10,8 +12,6 @@ logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', level='DEBUG',
                     logger=logger)
 
-PYTHON = sys.executable
-STUDY_TEMPLATE_DIR = pathlib.Path(__file__).parent
 SENSOR_SCRIPTS = ('01-import_and_maxfilter.py',
                   '02-frequency_filter.py',
                   '03-make_epochs.py',
@@ -35,27 +35,21 @@ ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 
 
 def _run_script(script, config, root_dir):
-    logger.info(f'Running: {script}')
+    logger.info(f'Now running: {script}')
     if not config:
         logger.critical('Please specify a Study Template configuration'
                         'via --config=/path/to/config.py')
         sys.exit(1)
 
-    script_path = (STUDY_TEMPLATE_DIR / script).name
-    cmd = [PYTHON, script_path]
-
-    env = os.environ.copy()
-    env['MNE_BIDS_STUDY_CONFIG'] = pathlib.Path(config).expanduser()
+    env = os.environ
+    env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
     if root_dir:
-        env['BIDS_ROOT'] = pathlib.Path(root_dir).expanduser()
+        env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
 
-    completed_process = subprocess.run(cmd, env=env,
-                                       stdout=sys.stdout,
-                                       stderr=sys.stdout)
-    if completed_process.returncode != 0:
-        logger.critical(f'Encountered an error while running: {script}. '
-                        f'Aborting.')
-        sys.exit(1)
+    module_name = script.replace('.py', '')
+    runpy.run_module(mod_name=module_name, run_name='__main__')
+
+    logger.info(f'Successfully finished running: {script}')
 
 
 def process(steps=None, config=None, root_dir=None):
@@ -77,6 +71,21 @@ def process(steps=None, config=None, root_dir=None):
 
     if isinstance(scripts, str):
         scripts = (scripts,)
+
+    # Ensure we will restore the original environment variables in most cases
+    # upon exit.
+    env_orig = os.environ.copy()
+
+    def _restore_env():
+        os.environ.update(env_orig)
+
+    signals = (
+        signal.SIGINT,  # Ctrl-C
+        signal.SIGTERM  # Sent by kill command
+    )
+    for s in signals:
+        signal.signal(s, _restore_env)
+    atexit.register(_restore_env)
 
     for script in scripts:
         _run_script(script, config, root_dir)

@@ -895,7 +895,7 @@ To import data that was recorded with Maxshield on before running
 Maxfilter set this to ``True``.
 """
 
-log_level: Literal['info', 'error'] = 'error'
+log_level: Literal['info', 'error'] = 'info'
 """
 Set the Study Template logging verbosity.
 """

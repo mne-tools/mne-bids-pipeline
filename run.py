@@ -36,7 +36,7 @@ ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 def _run_script(script, config, root_dir):
     logger.info(f'Now running: {script}')
     if not config:
-        logger.critical('Please specify a Study Template configuration'
+        logger.critical('Please specify a Study Template configuration '
                         'via --config=/path/to/config.py')
         sys.exit(1)
 

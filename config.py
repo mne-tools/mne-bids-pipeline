@@ -843,8 +843,7 @@ log_level: Literal['info', 'error'] = 'info'
 Set the Study Template logging verbosity.
 """
 
-# mne_log_level: Literal['info', 'error'] = 'error'
-mne_log_level: Literal['info', 'error'] = 'info'
+mne_log_level: Literal['info', 'error'] = 'error'
 """
 Set the MNE-Python logging verbosity.
 """

@@ -1105,8 +1105,8 @@ def get_task():
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
         if task not in valid_tasks:
-            raise ValueError(
-                f'Invalid task. It can be: {", ".join(valid_tasks)} but got: {task}')
+            raise ValueError(f'Invalid task. It can be: '
+                             f'{", ".join(valid_tasks)} but got: {task}')
 
     if not task:
         if not valid_tasks:

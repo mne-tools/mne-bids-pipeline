@@ -32,7 +32,7 @@ REPORT_SCRIPTS = ('99-make_reports.py',)
 ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 
 
-def _run_script(script, config, root_dir):
+def _run_script(script, config, root_dir, task, session, run, subject):
     logger.info(f'Now running: {script}')
 
     # It's okay to fiddle with the environment variables here as process()
@@ -40,8 +40,21 @@ def _run_script(script, config, root_dir):
     # upon exit.
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
+
+    if task:
+        env['MNE_BIDS_STUDY_TASK'] = task
+
+    if session:
+        env['MNE_BIDS_STUDY_SESSION'] = session
+
+    if run:
+        env['MNE_BIDS_STUDY_RUN'] = run
+
+    if subject:
+        env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
     module_name = script.replace('.py', '')
     runpy.run_module(mod_name=module_name, run_name='__main__')
@@ -49,7 +62,8 @@ def _run_script(script, config, root_dir):
     logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps, config, root_dir=None):
+def process(steps, config, root_dir=None, task=None, session=None,
+            run=None, subject=None):
     if steps == 'sensor':
         scripts = SENSOR_SCRIPTS
     elif steps == 'source':
@@ -80,7 +94,7 @@ def process(steps, config, root_dir=None):
     atexit.register(_restore_env)
 
     for script in scripts:
-        _run_script(script, config, root_dir)
+        _run_script(script, config, root_dir, task, session, run, subject)
 
 
 if __name__ == '__main__':

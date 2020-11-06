@@ -5,9 +5,10 @@ site_author: MNE Study Template authors
 docs_dir: ./source
 site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
-theme: material
-    # palette:
-    #     scheme: preference
+theme:
+    name: material
+    logo: _static/mne.svg
+    favicon: _static/favicon.ico
 extra_css:
     - css/extra.css
 nav:

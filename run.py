@@ -59,9 +59,13 @@ def _run_script(script, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
-    module_name = script.replace('.py', '')
-    runpy.run_module(mod_name=module_name, run_name='__main__')
+    # Keep old implementation using run_module here in case we decide to
+    # switch back …
+    # module_name = script.replace('.py', '')
+    # runpy.run_module(mod_name=module_name, run_name='__main__')
 
+    script_path = pathlib.Path(__file__).parent / 'scripts' / script
+    runpy.run_path(str(script_path), run_name='__main__')
     logger.info(f'Successfully finished running: {script}')
 
 

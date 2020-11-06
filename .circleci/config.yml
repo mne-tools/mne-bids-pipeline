@@ -203,12 +203,12 @@ jobs:
               cd ..
 
         - store_artifacts:
-            path: docs
-            prefix: foobar
+            path: docs/site
+            destination: site
 
-        # - persist_to_workspace:
-        #     root: docs
-        #     paths: site
+        - persist_to_workspace:  # For documentation deployment to gh-pages
+            root: docs
+            paths: site
 
     deploy_docs:
       docker:

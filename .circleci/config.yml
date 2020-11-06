@@ -205,9 +205,9 @@ jobs:
             path: docs/site
             prefix: foobar
 
-        - persist_to_workspace:
-            root: docs
-            paths: site
+        # - persist_to_workspace:
+        #     root: docs
+        #     paths: site
 
     deploy_docs:
       docker:

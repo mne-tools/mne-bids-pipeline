@@ -65,7 +65,7 @@ def _run_script(script, config, root_dir, subject, session, task, run):
     # runpy.run_module(mod_name=module_name, run_name='__main__')
 
     script_path = pathlib.Path(__file__).parent / 'scripts' / script
-    runpy.run_path(str(script_path), run_name='__main__')
+    runpy.run_path(script_path, run_name='__main__')
     logger.info(f'Successfully finished running: {script}')
 
 

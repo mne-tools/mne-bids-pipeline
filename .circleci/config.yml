@@ -197,14 +197,17 @@ jobs:
                                               mkdocstrings
               # Install deps required so MkDocs can import config.py
               conda install -c conda-forge -y coloredlogs
-              pip install mne mne_bids                                      
+              pip install mne mne_bids
+              cd docs
               mkdocs build
+              cd ..
 
         - store_artifacts:
-            path: site
+            path: docs/site
+            destination: site
 
-        - persist_to_workspace:
-            root: .
+        - persist_to_workspace:  # For documentation deployment to gh-pages
+            root: docs
             paths: site
 
     deploy_docs:
@@ -214,7 +217,7 @@ jobs:
       steps:
         - checkout
         - attach_workspace:
-            at: .
+            at: docs
         - run:
             name: Install and configure dependencies
             command: |

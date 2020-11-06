@@ -197,15 +197,16 @@ jobs:
                                               mkdocstrings
               # Install deps required so MkDocs can import config.py
               conda install -c conda-forge -y coloredlogs
-              pip install mne mne_bids                                      
+              pip install mne mne_bids
+              cd docs
               mkdocs build
 
         - store_artifacts:
-            path: site
+            path: docs/site
 
         - persist_to_workspace:
             root: .
-            paths: site
+            paths: docs/site
 
     deploy_docs:
       docker:

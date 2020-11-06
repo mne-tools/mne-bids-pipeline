@@ -1,4 +1,11 @@
 site_name: MNE Study Template
+site_url: https://mne.tools/mne-study-template
+repo_url: https://github.com/mne-tools/mne-study-template
+site_description: The MNE Study Template is a collection of scripts for automated processing of MEG and EEG data.
+site_author: MNE Study Template authors
+docs_dir: ./source
+site_dir: ./site
+use_directory_urls: false  # For easier navigation on CircleCI
 theme: material
     # palette:
     #     scheme: preference
@@ -33,7 +40,9 @@ plugins:
             python:
                 setup_commands:
                     - import os
-                    - os.environ["MNE_BIDS_STUDY_CONFIG"] = "docs/doc-config.py"
+                    - os.environ["MNE_BIDS_STUDY_CONFIG"] = "./source/doc-config.py"
+                    - import sys
+                    - sys.path.insert(0, "..")
                 rendering:
                     show_source: true
                     show_if_no_docstring: false
@@ -46,3 +55,5 @@ markdown_extensions:
     - admonition
     - pymdownx.details
     - pymdownx.superfences
+    - toc:
+        permalink: true  # Add paragraph symbol to link to current headline

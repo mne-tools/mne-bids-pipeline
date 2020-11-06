@@ -6,4 +6,4 @@
 data
 .vscode
 *.code-workspace
-site/
+docs/site/

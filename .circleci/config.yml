@@ -207,8 +207,8 @@ jobs:
             destination: site
 
         - persist_to_workspace:  # For documentation deployment to gh-pages
-            root: docs
-            paths: site
+            root: .
+            paths: docs/site
 
     deploy_docs:
       docker:
@@ -217,7 +217,7 @@ jobs:
       steps:
         - checkout
         - attach_workspace:
-            at: docs
+            at: .
         - run:
             name: Install and configure dependencies
             command: |
@@ -226,7 +226,7 @@ jobs:
               git config user.name "ci-build"
         - run:
             name: Deploy docs to gh-pages branch
-            command: gh-pages --message "[skip ci] Update docs" --dist site
+            command: gh-pages --message "[skip ci] Update docs" --dist docs/site
         - add_ssh_keys:
             fingerprints:
               - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"

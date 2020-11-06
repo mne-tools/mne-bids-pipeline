@@ -7,8 +7,8 @@ site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
 theme:
     name: material
-    logo: _static/mne.svg
-    favicon: _static/favicon.ico
+    logo: assets/mne.svg
+    favicon: assets/favicon.ico
 extra_css:
     - css/extra.css
 nav:

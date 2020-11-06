@@ -205,8 +205,8 @@ jobs:
             path: docs/site
 
         - persist_to_workspace:
-            root: .
-            paths: docs/site
+            root: docs
+            paths: site
 
     deploy_docs:
       docker:
@@ -215,7 +215,7 @@ jobs:
       steps:
         - checkout
         - attach_workspace:
-            at: .
+            at: docs
         - run:
             name: Install and configure dependencies
             command: |

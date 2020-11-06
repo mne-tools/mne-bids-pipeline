@@ -1099,6 +1099,8 @@ def get_subjects():
 
 
 def get_task():
+    global task
+
     env = os.environ
     valid_tasks = get_entity_vals(bids_root, entity_key='task')
 

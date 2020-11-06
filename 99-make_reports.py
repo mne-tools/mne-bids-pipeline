@@ -43,14 +43,14 @@ def plot_events(subject, session):
                          check=False)
 
     for run in config.get_runs():
-        raw_fname = raw_fname.copy().update(run=run)
+        this_raw_fname = raw_fname.copy().update(run=run)
 
-        if raw_fname.copy().update(split='01').fpath.exists():
-            raw_fname.update(split='01')
+        if this_raw_fname.copy().update(split='01').fpath.exists():
+            this_raw_fname.update(split='01')
 
-        raw_filt = mne.io.read_raw_fif(raw_fname)
+        raw_filt = mne.io.read_raw_fif(this_raw_fname)
         raws_filt.append(raw_filt)
-        del raw_fname
+        del this_raw_fname
 
     # Concatenate the filtered raws and extract the events.
     raw_filt_concat = mne.concatenate_raws(raws_filt)

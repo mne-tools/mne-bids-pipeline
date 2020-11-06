@@ -1023,7 +1023,10 @@ if noise_cov == 'emptyroom' and not process_er:
 def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
-    if sessions_ == 'all':
+    env = os.environ
+    if env.get('MNE_BIDS_STUDY_SESSION'):
+        sessions_ = env['MNE_BIDS_STUDY_SESSION']
+    elif sessions_ == 'all':
         sessions_ = get_entity_vals(bids_root, entity_key='session')
 
     if not sessions_:
@@ -1034,9 +1037,17 @@ def get_sessions():
 
 def get_runs():
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
+    valid_runs = get_entity_vals(bids_root, entity_key='run')
 
-    if runs_ == 'all':
-        runs_ = get_entity_vals(bids_root, entity_key='run')
+    env = os.environ
+    if env.get('MNE_BIDS_STUDY_RUN'):
+        env_run = env['MNE_BIDS_STUDY_RUN']
+        raise ValueError(
+            f'Invalid run. It can be {valid_runs} but '
+            f'got {env_run}')
+        runs_ = [env_run]
+    elif runs_ == 'all':
+        runs_ = valid_runs
 
     if not runs_:
         return [None]
@@ -1064,8 +1075,19 @@ def get_mf_reference_run():
 def get_subjects():
     global subjects
 
-    if subjects == 'all':
-        s = get_entity_vals(bids_root, entity_key='subject')
+    env = os.environ
+
+    valid_subjects = get_entity_vals(bids_root, entity_key='subject')
+
+    if env.get('MNE_BIDS_STUDY_SUBJECT'):
+        env_subject = env['MNE_BIDS_STUDY_SUBJECT']
+        if env_subject not in valid_subjects:
+            raise ValueError(
+                f'Invalid subject. It can be {valid_subjects} but '
+                f'got {env_subject}')
+        s = [env_subject]
+    elif subjects == 'all':
+        s = valid_subjects
     else:
         s = subjects
 
@@ -1077,12 +1099,22 @@ def get_subjects():
 
 
 def get_task():
+    global task
+
+    env = os.environ
+    valid_tasks = get_entity_vals(bids_root, entity_key='task')
+
+    if env.get('MNE_BIDS_STUDY_TASK'):
+        task = env['MNE_BIDS_STUDY_TASK']
+        if task not in valid_tasks:
+            raise ValueError(f'Invalid task. It can be: '
+                             f'{", ".join(valid_tasks)} but got: {task}')
+
     if not task:
-        tasks = get_entity_vals(bids_root, entity_key='task')
-        if not tasks:
+        if not valid_tasks:
             return None
         else:
-            return tasks[0]
+            return valid_tasks[0]
     else:
         return task
 

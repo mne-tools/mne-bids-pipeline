@@ -6,6 +6,7 @@ import atexit
 import pathlib
 import logging
 import coloredlogs
+from typing import Literal, Union, Optional
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
@@ -32,7 +33,7 @@ REPORT_SCRIPTS = ('99-make_reports.py',)
 ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
 
 
-def _run_script(script, config, root_dir):
+def _run_script(script, config, root_dir, subject, session, task, run):
     logger.info(f'Now running: {script}')
 
     # It's okay to fiddle with the environment variables here as process()
@@ -40,8 +41,21 @@ def _run_script(script, config, root_dir):
     # upon exit.
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
+
+    if task:
+        env['MNE_BIDS_STUDY_TASK'] = task
+
+    if session:
+        env['MNE_BIDS_STUDY_SESSION'] = session
+
+    if run:
+        env['MNE_BIDS_STUDY_RUN'] = run
+
+    if subject:
+        env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
     module_name = script.replace('.py', '')
     runpy.run_module(mod_name=module_name, run_name='__main__')
@@ -49,7 +63,35 @@ def _run_script(script, config, root_dir):
     logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps, config, root_dir=None):
+def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
+            *,
+            config: Union[str, pathlib.Path],
+            root_dir: Optional[Union[str, pathlib.Path]] = None,
+            subject: Optional[str] = None,
+            session: Optional[str] = None,
+            task: Optional[str] = None,
+            run: Optional[str] = None):
+    """Run the Study Template.
+
+    Parameters
+    ----------
+    steps
+        The processing steps to run.
+        Can either be one of 'sensors', 'source', 'report', or 'all',
+        or an integer specifying a specific processing step.
+    config
+        The path of the Study Template configuration file to use.
+    root_dir
+        BIDS root directory of the data to process.
+    subject
+        The subject to process.
+    session
+        The session to process.
+    task
+        The task to process.
+    run
+        The run to process.
+    """
     if steps == 'sensor':
         scripts = SENSOR_SCRIPTS
     elif steps == 'source':
@@ -80,7 +122,7 @@ def process(steps, config, root_dir=None):
     atexit.register(_restore_env)
 
     for script in scripts:
-        _run_script(script, config, root_dir)
+        _run_script(script, config, root_dir, subject, session, task, run)
 
 
 if __name__ == '__main__':

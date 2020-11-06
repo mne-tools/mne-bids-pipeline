@@ -203,7 +203,7 @@ jobs:
 
         - store_artifacts:
             path: docs/site
-            prefix: site
+            prefix: foobar
 
         - persist_to_workspace:
             root: docs

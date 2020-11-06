@@ -200,9 +200,10 @@ jobs:
               pip install mne mne_bids
               cd docs
               mkdocs build
+              cd ..
 
         - store_artifacts:
-            path: docs/site
+            path: docs
             prefix: foobar
 
         # - persist_to_workspace:

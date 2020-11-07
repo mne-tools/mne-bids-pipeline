@@ -11,3 +11,6 @@ and source estimation. All intermediate results are saved to disk for later
 inspection, and an extensive report is generated. Analyses are conducted on
 individual (per-subject) as well as group level.
 
+
+*[MEG]: magnetoencaphalography
+*[EEG]: electroencephalography

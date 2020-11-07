@@ -29,6 +29,7 @@ extra_css:
     - css/extra.css
 nav:
     - Home: index.md
+    - Features: features.md
     - Getting started:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/getting_started.md
@@ -73,7 +74,11 @@ plugins:
 markdown_extensions:
     - admonition
     - abbr
+    - attr_list  # Allows to turn any element into a button
     - pymdownx.details
+    - pymdownx.emoji:
+        emoji_index: !!python/name:materialx.emoji.twemoji
+        emoji_generator: !!python/name:materialx.emoji.to_svg
     - pymdownx.superfences
     - toc:
         permalink: true  # Add paragraph symbol to link to current headline

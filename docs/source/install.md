@@ -8,7 +8,19 @@ system. See the [installation instructions](https://mne.tools/stable/install/mne
 You will also need to install the a number of additional dependencies that are
 required to run the Study Template.
 
-??? info "List of dependencies"
+??? example "Install for Python 3.8 and newer"
+    Run in your terminal:
+    ```shell
+    pip install mne-bids coloredlogs tqdm pandas scikit-learn json_tricks fire
+    ```
+
+??? example "Install for older Python versions"
+    Run in your terminal:
+    ```shell
+    pip install mne-bids coloredlogs tqdm pandas json_tricks scikit-learn fire typing_extension
+    ```
+
+??? info "Detailed list of dependencies"
     - `mne-bids` to operate on BIDS data
     - `coloredlogs` for nicer logging output
     - `tqdm` for progress bars
@@ -17,16 +29,6 @@ required to run the Study Template.
     - `scikit-learn` for decoding
     - `fire` for the command line interface
     - `typing_extensions` if you're using a Python version older than 3.8
-
-??? example "Install for Python 3.8 and newer"
-    ```shell
-    pip install mne-bids coloredlogs tqdm pandas scikit-learn json_tricks fire
-    ```
-
-??? example "Install for older Python versions"
-    ```shell
-    pip install mne-bids coloredlogs tqdm pandas json_tricks scikit-learn fire typing_extension
-    ```
 
 3. Download the Study Template
 ------------------------------

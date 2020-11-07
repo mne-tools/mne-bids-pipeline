@@ -9,6 +9,11 @@ p {
   hyphens: auto;
 }
 
+/* Larger font in tables */
+.md-typeset table td {
+  font-size: 0.8rem;
+}
+
 
 /* Styles suggested by mkdocstrings */
 /* Indentation. */

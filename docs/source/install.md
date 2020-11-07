@@ -1,10 +1,10 @@
-1. Install MNE-Python
----------------------
+Install MNE-Python
+------------------
 First, you need to make sure you have MNE-Python installed and working on your
 system. See the [installation instructions](https://mne.tools/stable/install/mne_python.html).
 
-2. Install additional dependencies
-----------------------------------
+Install additional dependencies
+-------------------------------
 You will also need to install the a number of additional dependencies that are
 required to run the Study Template.
 
@@ -30,6 +30,6 @@ required to run the Study Template.
     - `fire` for the command line interface
     - `typing_extensions` if you're using a Python version older than 3.8
 
-3. Download the Study Template
-------------------------------
+Download the Study Template
+---------------------------
 TODO

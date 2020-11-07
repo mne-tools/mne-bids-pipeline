@@ -2,100 +2,18 @@
 
 # MNE-study-template
 
-This repository contains an exemplary pipeline for processing MEG/EEG data
-using [MNE-Python](mne.tools) and the [Brain Imaging Data Structure (BIDS)](https://bids.neuroimaging.io/).
+The MNE Study Template is a full-flegded processing pipeline for your MEG and
+EEG data. It operates on data stored according to the Brain Imaging Data
+Structure (BIDS).
 
-The study template expects input data to adhere to BIDS. You can check whether
-your data complies with the BIDS standard using the [BIDS validator]().
+# Documentation
 
-# Installation
-
-First, you need to make sure you have MNE-Python installed and working on your
-system. See the [installation instructions](http://martinos.org/mne/stable/install_mne_python.html).
-Once this is done, you should be able to run this in a terminal:
-
-`$ python -c "import mne; mne.sys_info()"`
-
-You can then install the following additional packages via `pip`. Note that
-the URL points to the bleeding edge version of `mne_bids`:
-
-`$ pip install https://github.com/mne-tools/mne-bids/zipball/master`
-
-# Usage
-
-## Sample Data
-You can run the template on the mne sample subject, which you need to convert to BIDS [as described here.](https://mne.tools/mne-bids/auto_examples/convert_mne_sample.html)
-
-Another option is to fetch the data, see the [section on Contributing.](https://github.com/mne-tools/mne-study-template/blob/master/CONTRIBUTING.md)
-
-## General
-
-Generally, there is a single `config.py` file, which contains all parameters
-for the analysis of the data. Many parameters are automatically inferred from
-the BIDS structure of the data.
-
-All other scripts should not be edited.
-
-## Makefile
-
-To ease interaction with the study template, there is a `Makefile`. Simply
-type `make` from the root of your study template to see a summary of what
-you can do, or inspect the file directly.
-
-For Windows users, it might be necessary to install [GNU make](https://chocolatey.org/packages/make).
-
-## Running on your own data
-
-1. Make sure your data is formatted according to the BIDS standard. **It is of great importance that**
-    - the BIDS data are anonymized if you require anonymization,
-      as the `mne-study-template` does not allow you to anonymize
-      data.
-
-      *This was a conscious design decision, not a technical
-       limitation *per se*. If you think this decision should be
-       reconsidered, please get in touch with the developers.*
-
-    - faulty channels are marked as "bad" in the BIDS dataset.
-      While we *do* run automated bad channel detection in the
-      `mne-study-template`, it is considered good practice to flag
-      obviously problematic channels as such in the BIDS dataset.
-      In the future, we will offer a way to alter the relevant entries
-      in the BIDS data directly from the pipeline.
-
-1. Set an environment variable `BIDS_ROOT` to point to your dataset.
-1. (optional) Set an environment variable `MNE_BIDS_STUDY_CONFIG` to point to
-   a custom `config_<dataset_name>.py` file that you created to overwrite
-	 the standard parameters in the main `config.py` file.
-1. Use the `Makefile` to run your analyses.
-
-# Processing steps
-
-The following table provides a concise summary of each step in the pipeline.
-
-| Script | Description |
-|:-----------|:----------------------------------------------------------|
-| [config.py](config.py) | The only file you need to modify in principle. This file contain all your parameters. |
-| [01-import_and_maxfilter.py](01-import_and_maxfilter.py) | Import raw data and apply Maxwell filter. |
-| [02-frequency_filter.py](02-frequency_filter.py) | Apply low- and high-pass filters. |
-| [03-make_epochs.py](04-make_epochs.py) | Extract epochs. |
-| [04a-run_ica.py](04a-run_ica.py) | Run Independant Component Analysis (ICA) for artifact correction. |
-| [04b-run_ssp.py](04a-run_ssp.py) | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
-| [05a-apply_ica.py](05a-apply_ica.py) | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart artifacts. Use either 5a/6a, or 5b/6b. |
-| [05b-apply_ssp.py](05b-apply_ssp.py) | Apply SSP projections and obtain the cleaned epochs.  |
-| [06-make_evoked.py](06-make_evoked.py) | Extract evoked data for each condition. |
-| [07-group_average_sensors.py](07-group_average_sensors.py) | Make a group average of the time domain data. |
-| [08-sliding_estimator.py](08-sliding_estimator.py) | Running a time-by-time decoder with sliding window. |
-| [09-time_frequency.py](09-time_frequency.py) | Running a time-frequency analysis. |
-| [10-make_forward.py](10-make_forward.py) | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
-| [11-make_cov.py](11-make_cov.py) | Compute noise covariances for each subject. |
-| [12-make_inverse.py](12-make_inverse.py) | Compute inverse problem to obtain source estimates. |
-| [13-group_average_source.py](13-group_average_source.py) | Compute source estimates average over subjects. |
-| [99-make_reports.py](99-make_reports.py) | Compute HTML reports for each subject. |
-
+Please find the installation and usage instructions at
+[mne.tools/mne-study-template](https://mne.tools/mne-study-template).
 
 # Acknowledgments
 
-The original pipeline for MEG/EEG data processing with MNE python was build
+The original pipeline for MEG/EEG data processing with MNE python was built
 jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/)
 and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
 based on scripts originally developed for this publication:

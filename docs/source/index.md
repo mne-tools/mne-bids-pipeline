@@ -24,7 +24,7 @@ configuration file.
 
 <a  href="getting_started/install.html"
     title="Installation"
-    class="md-button md-button--primary">👉 Let's get started!</a>
+    class="md-button md-button--primary">👉 Let's get started</a>
 
 
 *[MEG]: magnetoencaphalography

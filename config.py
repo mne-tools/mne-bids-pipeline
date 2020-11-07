@@ -156,7 +156,7 @@ corresponding to the processed experimental data will be retrieved
 automatically.
 """
 
-ch_types: Iterable[str] = []
+ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
 """
 The channel types to consider.
 
@@ -176,7 +176,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[str] = None
+data_type: Optional[Literal['meg', 'eeg']] = None
 """
 The BIDS data type.
 

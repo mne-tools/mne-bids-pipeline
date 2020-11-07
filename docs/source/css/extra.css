@@ -9,6 +9,27 @@ p {
   hyphens: auto;
 }
 
+/* Larger font in tables */
+.md-typeset table td,
+.md-typeset table th {
+  font-size: 0.8rem;
+}
+
+/* Larger font in code, example, info, warning blocks */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 1em;
+}
+
+/* Make parameter names bold, but leave their type with normal font weight */
+.doc-heading code {
+  font-weight: bold;
+}
+
+.doc-heading code span {
+  font-weight: normal;
+}
+
 
 /* Styles suggested by mkdocstrings */
 /* Indentation. */

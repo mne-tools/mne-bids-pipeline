@@ -68,6 +68,7 @@ plugins:
             - ./config.py
 markdown_extensions:
     - admonition
+    - abbr
     - pymdownx.details
     - pymdownx.superfences
     - toc:

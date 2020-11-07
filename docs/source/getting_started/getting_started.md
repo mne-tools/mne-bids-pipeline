@@ -27,7 +27,7 @@ The Study Template ships with a default configuration file, `config.py`.
 You need to **create a copy** of that configuration file and adjust all
 parameters that are relevant to your data processing and analysis.
 
-???+ info
+!!! info "Avoid modifying the scripts"
     You should **only** need to touch the configuration file.
     None of the scripts should be edited.
 

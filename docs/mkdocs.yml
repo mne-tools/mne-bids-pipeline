@@ -25,9 +25,10 @@ copyright: Copyright &copy; MNE Study Template authors
 extra_css:
     - css/extra.css
 nav:
-    - Introduction: index.md
-    - Installation: install.md
-    - Getting Started: getting_started.md
+    - About: index.md
+    - Getting started:
+        - Installation: getting_started/install.md
+        - Basic usage: getting_started/getting_started.md
     - Processing Steps: 
         - List of steps: steps/steps.md
     - Configuration Options:

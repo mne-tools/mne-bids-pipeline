@@ -28,6 +28,8 @@ nav:
     - Introduction: index.md
     - Installation: install.md
     - Getting Started: getting_started.md
+    - Processing Steps: 
+        - List of steps: steps/steps.md
     - Configuration Options:
         - Basic settings: settings/basic.md
         - Continuous data:

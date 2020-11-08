@@ -1,5 +1,5 @@
-List of features
-================
+What the Study Template can do
+==============================
     
 - preprocessing (filtering, artifact rejection)
 - epoching
@@ -13,4 +13,4 @@ inspection, and an **extensive report** is generated.
 
 Analyses are conducted on individual (per-subject) as well as group level.
 
-[Get started :fontawesome-solid-rocket:](getting_started/install.md){: .md-button .md-button--primary }
+[Get started :fontawesome-solid-rocket:](../getting_started/install.md){: .md-button .md-button--primary }

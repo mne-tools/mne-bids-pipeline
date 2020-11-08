@@ -29,12 +29,12 @@ extra_css:
     - css/extra.css
 nav:
     - Home: index.md
-    - Features: features.md
+    - Features:
+        - What the Study Template can do: features/features.md
+        - List of processing steps: features/steps.md
     - Getting started:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/getting_started.md
-    - Processing Steps: 
-        - List of steps: steps/steps.md
     - Configuration Options:
         - Basic settings: settings/basic.md
         - Continuous data:

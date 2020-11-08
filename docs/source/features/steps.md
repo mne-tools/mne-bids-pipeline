@@ -1,3 +1,6 @@
+Processing steps
+================
+
 The following table provides a concise summary of each step in the Study
 Template. You can find the scripts in the `scripts` directory.
 

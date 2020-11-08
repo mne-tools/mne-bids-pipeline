@@ -4,15 +4,7 @@ The Study Template **only** works with BIDS-formatted raw data. To find out
 more about BIDS and how to convert your data to the BIDS format, please see
 [the documentation of MNE-BIDS](https://mne.tools/mne-bids/stable/index.html).
 
-It is of great importance that
-
-- the **data is anonymized** if you require anonymization,
-  as the Study Template does not allow for anonymization.
-
-    ??? info "Why?"
-        This was a conscious design decision, not a technical
-        limitation *per se*. If you think this decision should be
-        reconsidered, please get in touch with the developers.
+We recommend that
 
 - **faulty channels are marked** as "bad".
 
@@ -21,25 +13,68 @@ It is of great importance that
         Study Template, it is considered good practice to flag
         obviously problematic channels as such in the BIDS dataset.
 
+    ??? tip "How?"
+        MNE-BIDS provides a convenient way to visually inspect raw data and 
+        interactively mark problematic channels as bad by using the command
+        ```shell
+        mne-bids inspect
+        ```
+        Please see the MNE-BIDS documentation for more information.
+
+- the **data is anonymized** before running the Study Template if you
+  require anonymization, as the Study Template itself does not allow for anonymization.
+
+    ??? info "Why?"
+        This was a conscious design decision, not a technical
+        limitation *per se*. If you think this decision should be
+        reconsidered, please get in touch with the developers.
+
+    ??? tip "How?"
+        The `write_raw_bids` function of MNE-BIDS accepts an `anonymize`
+        parameter that can be used to anonymize your data by removing
+        subject-identifying information and shifting the measurement date by
+        a given number of days. For example, you could use
+        ```python
+        from mne_bids import write_raw_bids
+
+        write_raw_bids(..., anonymize=dict(daysback=1000))
+        ```
+        to shift the recording date 1000 days into the past. By default,
+        information like participant handedness etc. will be removed as well.
+        Please see [the documentation](https://mne.tools/mne-bids/stable/generated/mne_bids.write_raw_bids.html) of `write_raw_bids` for more information.
+
 Adjust your configuration file
 ------------------------------
 The Study Template ships with a default configuration file, `config.py`.
 You need to **create a copy** of that configuration file and adjust all
 parameters that are relevant to your data processing and analysis.
 
-!!! info "Avoid modifying the scripts"
+!!! warning "Avoid modifying the scripts"
     You should **only** need to touch the configuration file.
     None of the scripts should be edited.
 
 Run the Study Template
 ----------------------
-Run the full Study Template by invoking
-```shell
-python run.py all --config=/path/to/your/custom_config.py
-```
-To only run the sensor-level, source-level, or report-generating steps, run:
-```shell
-python run.py sensor --config=/path/to/your/custom_config.py  # sensor-level
-python run.py source --config=/path/to/your/custom_config.py  # source-level
-python run.py report --config=/path/to/your/custom_config.py  # generate Reports
-```
+
+???+ example "Run the full Study Template"
+    To run the full Study Template, execute the following command in your
+    terminal:
+    ```shell
+    python run.py all --config=/path/to/your/custom_config.py
+    ```
+
+??? example "Run only parts of the Study Template"
+    Run only the sensor-level processing steps:
+    ```shell
+    python run.py sensor --config=/path/to/your/custom_config.py
+    ```
+
+    Run only the source-level (inverse solution) processing steps:
+    ```shell
+    python run.py source --config=/path/to/your/custom_config.py
+    ```
+
+    Only generate the report:
+    ```shell
+    python run.py report --config=/path/to/your/custom_config.py
+    ```

@@ -330,6 +330,28 @@ runs. If ``None``, pick the first run.
     ```
 """
 
+mf_cal_fname: Optional[str] = None
+"""
+Path to the Maxwell Filter calibration file. If None the recommended
+location is used.
+
+???+ example "Example"
+    ```python
+    mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
+    ```
+"""
+
+mf_ctc_fname: Optional[str] = None
+"""
+Path to the Maxwell Filter cross-talk file. If None the recommended
+location is used.
+
+???+ example "Example"
+    ```python
+    mf_cal_fname = '/path/to/your/file/crosstalk_ct.fif'
+    ```
+"""
+
 ###############################################################################
 # STIMULATION ARTIFACT
 # --------------------

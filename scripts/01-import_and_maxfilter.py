@@ -16,7 +16,8 @@ The head position of all runs is corrected to the run specified in
 config.mf_reference_run.
 It is critical to mark bad channels before Maxwell filtering.
 
-The function loads machine-specific calibration files from the paths set for
+The function loads machine-specific calibration files. If these files are not
+written according to the BIDS standard recommendation you can set:
 config.mf_ctc_fname  and config.mf_cal_fname.
 
 Notes
@@ -74,6 +75,37 @@ def init_dataset():
     _write_json(fname, ds_json, overwrite=True)
 
 
+def get_mf_cal_fname(subject, session):
+    if config.mf_cal_fname is None:
+        mf_cal_fpath = BIDSPath(subject=subject,
+                                session=session,
+                                acquisition='calibration',
+                                suffix='meg',
+                                extension='dat',
+                                root=config.bids_root).fpath
+    else:
+        mf_cal_fpath = Path(config.mf_cal_fname)
+    if not mf_cal_fpath.exists():
+        raise ValueError(f'Could not find Maxwell Filter Calibration '
+                         f'file at {str(mf_cal_fpath)}.')
+    return mf_cal_fpath
+
+
+def get_mf_ctc_fname(subject, session):
+    if config.mf_ctc_fname is None:
+        mf_ctc_fpath = BIDSPath(subject=subject,
+                                session=session,
+                                acquisition='crosstalk',
+                                suffix='meg',
+                                extension='fif',
+                                root=config.bids_root).fpath
+    else:
+        mf_ctc_fpath = Path(config.mf_cal_fname)
+    if not mf_ctc_fpath.exists():
+        raise ValueError(f'Could not find Maxwell Filter cross-talk '
+                         f'file at {str(mf_ctc_fpath)}.')
+    return mf_ctc_fpath
+
 def rename_events(raw, subject, session):
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
@@ -126,8 +158,8 @@ def find_bad_channels(raw, subject, session, task, run):
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw,
-        calibration=config.mf_cal_fname,
-        cross_talk=config.mf_ctc_fname,
+        calibration=get_mf_cal_fname(subject, session),
+        cross_talk=get_mf_ctc_fname(subject, session),
         return_scores=True)
 
     preexisting_bads = raw.info['bads'].copy()
@@ -305,8 +337,8 @@ def run_maxwell_filter(subject, session=None):
 
             # Keyword arguments shared between Maxwell filtering of the
             # experimental and the empty-room data.
-            common_mf_kws = dict(calibration=config.mf_cal_fname,
-                                 cross_talk=config.mf_ctc_fname,
+            common_mf_kws = dict(calibration=get_mf_cal_fname(subject, session),
+                                 cross_talk=get_mf_ctc_fname(subject, session),
                                  st_duration=config.mf_st_duration,
                                  origin=config.mf_head_origin,
                                  coord_frame='head',

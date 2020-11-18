@@ -50,6 +50,8 @@ def run_forward(subject, session=None):
         root=config.bids_root))
     mne.write_trans(fname_trans, trans)
 
+    subject = f'sub-{subject}'
+
     src = mne.setup_source_space(subject, spacing=config.spacing,
                                  subjects_dir=config.get_fs_subjects_dir(),
                                  add_dist=False)

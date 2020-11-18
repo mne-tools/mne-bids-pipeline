@@ -34,6 +34,7 @@ https://github.com/bids-standard/bids-specification/pull/265
 import os
 import itertools
 import logging
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -105,6 +106,7 @@ def get_mf_ctc_fname(subject, session):
         raise ValueError(f'Could not find Maxwell Filter cross-talk '
                          f'file at {str(mf_ctc_fpath)}.')
     return mf_ctc_fpath
+
 
 def rename_events(raw, subject, session):
     # Check if the user requested to rename events that don't exist.

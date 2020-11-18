@@ -221,7 +221,7 @@ def run_report(subject, session=None):
     params = dict(info_fname=fname_ave, raw_psd=True)
 
     if op.exists(fname_trans):
-        params['subject'] = subject
+        params['subject'] = config._fs_subject(subject)
         params['subjects_dir'] = subjects_dir
 
     rep = mne.Report(**params)
@@ -321,7 +321,7 @@ def run_report(subject, session=None):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
             fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                         subject=subject,
+                                         subject=config._fs_subject(subject),
                                          subjects_dir=subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(figs=fig, captions='Coregistration',
@@ -357,7 +357,8 @@ def run_report(subject, session=None):
                 extension=None)
 
             if op.exists(str(fname_stc) + "-lh.stc"):
-                stc = mne.read_source_estimate(fname_stc, subject)
+                stc = mne.read_source_estimate(fname_stc,
+                                               config._fs_subject(subject))
                 _, peak_time = stc.get_peak()
 
                 # Plot using 3d backend if available, and use Matplotlib

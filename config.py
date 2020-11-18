@@ -3,6 +3,7 @@ but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
 import importlib
+import pathlib
 import functools
 import os
 import pdb
@@ -1309,3 +1310,15 @@ def get_channels_to_analyze(info):
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names
+
+
+def _fs_subject(subject):
+    subjects_dir = get_fs_subjects_dir()
+
+    if subject.startswith('sub-'):
+        return subject
+
+    if (pathlib.Path(subjects_dir) / subject).exists():
+        return subject
+
+    return f'sub-{subject}'

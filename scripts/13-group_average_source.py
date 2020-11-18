@@ -33,6 +33,8 @@ def morph_stc(subject, session=None):
                          root=config.deriv_root,
                          check=False)
 
+    subject = config._fs_subject(subject)
+
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method

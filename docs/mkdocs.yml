@@ -1,5 +1,6 @@
 site_name: MNE Study Template
 repo_url: https://github.com/mne-tools/mne-study-template
+edit_uri: edit/master/docs/source/
 site_description: The MNE Study Template is a collection of scripts for automated processing of MEG and EEG data.
 site_author: MNE Study Template authors
 docs_dir: ./source
@@ -7,10 +8,12 @@ site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
 theme:
     name: material
+    custom_dir: overrides
     logo: assets/mne.svg
     favicon: assets/favicon.ico
     features:
         - navigation.tabs
+        - navigation.instant  # Load pages via XMLHttpRequest (XHR)
 extra:
     social:
         - icon: fontawesome/brands/github
@@ -25,11 +28,13 @@ copyright: Copyright &copy; MNE Study Template authors
 extra_css:
     - css/extra.css
 nav:
-    - Introduction: index.md
-    - Installation: install.md
-    - Getting Started: getting_started.md
-    - Processing Steps: 
-        - List of steps: steps/steps.md
+    - Home: index.md
+    - Features:
+        - What the Study Template can do: features/features.md
+        - List of processing steps: features/steps.md
+    - Getting started:
+        - Installation: getting_started/install.md
+        - Basic usage: getting_started/getting_started.md
     - Configuration Options:
         - Basic settings: settings/basic.md
         - Continuous data:
@@ -69,7 +74,11 @@ plugins:
 markdown_extensions:
     - admonition
     - abbr
+    - attr_list  # Allows to turn any element into a button
     - pymdownx.details
+    - pymdownx.emoji:
+        emoji_index: !!python/name:materialx.emoji.twemoji
+        emoji_generator: !!python/name:materialx.emoji.to_svg
     - pymdownx.superfences
     - toc:
         permalink: true  # Add paragraph symbol to link to current headline

@@ -18,7 +18,12 @@ p {
 /* Larger font in code, example, info, warning blocks */
 .md-typeset .admonition,
 .md-typeset details {
-  font-size: 1em;
+  font-size: 0.8rem;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-size: 0.7rem;
 }
 
 /* Make parameter names bold, but leave their type with normal font weight */

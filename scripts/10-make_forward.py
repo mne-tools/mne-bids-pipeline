@@ -50,22 +50,25 @@ def run_forward(subject, session=None):
         root=config.bids_root))
     mne.write_trans(fname_trans, trans)
 
-    subject = f'sub-{subject}'
+    fs_subject = config.get_fs_subject(subject)
+    fs_subjects_dir = config.get_fs_subjects_dir()
 
-    src = mne.setup_source_space(subject, spacing=config.spacing,
-                                 subjects_dir=config.get_fs_subjects_dir(),
+    src = mne.setup_source_space(subject=fs_subject,
+                                 subjects_dir=fs_subjects_dir,
+                                 spacing=config.spacing,
                                  add_dist=False)
 
     evoked = mne.read_evokeds(fname_evoked, condition=0)
 
     # Here we only use 3-layers BEM only if EEG is available.
     if 'eeg' in config.ch_types:
-        model = mne.make_bem_model(subject, ico=4,
-                                   conductivity=(0.3, 0.006, 0.3),
-                                   subjects_dir=config.get_fs_subjects_dir())
+        conductivity = (0.3, 0.006, 0.3)
     else:
-        model = mne.make_bem_model(subject, ico=4, conductivity=(0.3,),
-                                   subjects_dir=config.get_fs_subjects_dir())
+        conductivity = (0.3,)
+
+    model = mne.make_bem_model(subject=fs_subject,
+                               subjects_dir=fs_subjects_dir,
+                               ico=4, conductivity=conductivity)
 
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(evoked.info, trans, src, bem,

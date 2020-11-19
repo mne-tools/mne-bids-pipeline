@@ -1312,13 +1312,10 @@ def get_channels_to_analyze(info):
     return ch_names
 
 
-def _fs_subject(subject):
+def get_fs_subject(subject):
     subjects_dir = get_fs_subjects_dir()
-
-    if subject.startswith('sub-'):
-        return subject
 
     if (pathlib.Path(subjects_dir) / subject).exists():
         return subject
-
-    return f'sub-{subject}'
+    else:
+        return f'sub-{subject}'

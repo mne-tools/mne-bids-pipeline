@@ -303,7 +303,7 @@ def run_ica(subject, session=None):
     tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
 
     # Lastly, plot all ICs, and add them to the report for manual inspection.
-    msg = ('Adding diagnostic plots for all ICs in the HTML report …')
+    msg = 'Adding diagnostic plots for all ICs to the HTML report …'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
     for component_num in tqdm(range(ica.n_components_)):

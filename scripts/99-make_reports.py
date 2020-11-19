@@ -217,12 +217,13 @@ def run_report(subject, session=None):
     fname_decoding = fname_epo.copy().update(suffix='decoding',
                                              extension='.mat')
 
-    subjects_dir = config.get_fs_subjects_dir()
-    params = dict(info_fname=fname_ave, raw_psd=True)
+    fs_subject = config.get_fs_subject(subject)
+    fs_subjects_dir = config.get_fs_subjects_dir()
 
+    params = dict(info_fname=fname_ave, raw_psd=True)
     if op.exists(fname_trans):
-        params['subject'] = subject
-        params['subjects_dir'] = subjects_dir
+        params['subject'] = fs_subject
+        params['subjects_dir'] = fs_subjects_dir
 
     rep = mne.Report(**params)
     rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
@@ -321,8 +322,8 @@ def run_report(subject, session=None):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
             fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                         subject=subject,
-                                         subjects_dir=subjects_dir,
+                                         subject=fs_subject,
+                                         subjects_dir=fs_subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(figs=fig, captions='Coregistration',
                                     section='Coregistration')
@@ -357,7 +358,8 @@ def run_report(subject, session=None):
                 extension=None)
 
             if op.exists(str(fname_stc) + "-lh.stc"):
-                stc = mne.read_source_estimate(fname_stc, subject)
+                stc = mne.read_source_estimate(fname_stc,
+                                               subject=fs_subject)
                 _, peak_time = stc.get_peak()
 
                 # Plot using 3d backend if available, and use Matplotlib
@@ -366,7 +368,7 @@ def run_report(subject, session=None):
                     brain = stc.plot(views=['lat'], hemi='both',
                                      initial_time=peak_time, backend='pyvista',
                                      time_viewer=True,
-                                     subjects_dir=subjects_dir)
+                                     subjects_dir=fs_subjects_dir)
                     brain.toggle_interface()
                     figs = brain._renderer.figure
                     comments = evoked.comment
@@ -379,11 +381,11 @@ def run_report(subject, session=None):
                     brain_lh = stc.plot(views='lat', hemi='lh',
                                         initial_time=peak_time,
                                         backend='matplotlib',
-                                        subjects_dir=subjects_dir,
+                                        subjects_dir=fs_subjects_dir,
                                         figure=fig_lh)
                     brain_rh = stc.plot(views='lat', hemi='rh',
                                         initial_time=peak_time,
-                                        subjects_dir=subjects_dir,
+                                        subjects_dir=fs_subjects_dir,
                                         backend='matplotlib',
                                         figure=fig_rh)
                     figs = [brain_lh, brain_rh]
@@ -433,7 +435,7 @@ def run_report_average(session):
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
-    subjects_dir = config.get_fs_subjects_dir()
+    fs_subjects_dir = config.get_fs_subjects_dir()
 
     method = config.inverse_method
     inverse_str = method
@@ -515,7 +517,7 @@ def run_report_average(session):
                                  initial_time=peak_time, backend='pyvista',
                                  time_viewer=True,
                                  show_traces=True,
-                                 subjects_dir=subjects_dir)
+                                 subjects_dir=fs_subjects_dir)
                 brain.toggle_interface()
                 figs = brain._renderer.figure
                 captions = caption
@@ -526,11 +528,11 @@ def run_report_average(session):
                 brain_lh = stc.plot(views='lat', hemi='lh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_lh,
-                                    subjects_dir=subjects_dir)
+                                    subjects_dir=fs_subjects_dir)
                 brain_rh = stc.plot(views='lat', hemi='rh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_rh,
-                                    subjects_dir=subjects_dir)
+                                    subjects_dir=fs_subjects_dir)
                 figs = [brain_lh, brain_rh]
                 captions = [f'{caption} - left',
                             f'{caption} - right']

@@ -3,6 +3,7 @@ but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
 import importlib
+import pathlib
 import functools
 import os
 import pdb
@@ -327,6 +328,44 @@ runs. If ``None``, pick the first run.
 ???+ example "Example"
     ```python
     mf_reference_run = '01'  # Use run "01"
+    ```
+"""
+
+mf_cal_fname: Optional[str] = None
+"""
+warning:
+     This parameter will soon be removed!
+     Please store the fine-calibration file
+     [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files),
+     e.g. using MNE-BIDS's
+     [`write_meg_calibration`](https://mne.tools/mne-bids/stable/generated/mne_bids.write_meg_calibration.html)
+     function.
+
+Path to the Maxwell Filter calibration file. If None the recommended
+location is used.
+
+???+ example "Example"
+    ```python
+    mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
+    ```
+"""
+
+mf_ctc_fname: Optional[str] = None
+"""
+Path to the Maxwell Filter cross-talk file. If None the recommended
+location is used.
+
+warning:
+     This parameter will soon be removed!
+     Please store the fine-calibration file
+     [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files),
+     e.g. using MNE-BIDS's
+     [`write_meg_crosstalk`](https://mne.tools/mne-bids/stable/generated/mne_bids.write_meg_crosstalk.html)
+     function.
+
+???+ example "Example"
+    ```python
+    mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
 """
 
@@ -1287,3 +1326,12 @@ def get_channels_to_analyze(info):
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names
+
+
+def get_fs_subject(subject):
+    subjects_dir = get_fs_subjects_dir()
+
+    if (pathlib.Path(subjects_dir) / subject).exists():
+        return subject
+    else:
+        return f'sub-{subject}'

@@ -89,7 +89,8 @@ def run_filter(subject, run=None, session=None):
     raw.filter(**filter_kws)
 
     if config.process_er:
-        msg = 'Filtering empty-room recording.'
+        msg = (f'Filtering empty-room data between {config.l_freq} and '
+               f'{config.h_freq} Hz')
         logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                     session=session, run=run,))
         raw_er = mne.io.read_raw_fif(raw_er_fname_in)

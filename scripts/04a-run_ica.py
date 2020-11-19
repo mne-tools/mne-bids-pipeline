@@ -32,7 +32,10 @@ logger = logging.getLogger('mne-study-template')
 def load_and_concatenate_raws(bids_basename):
     raw_list = list()
     for run in config.get_runs():
-        raw_fname_in = (bids_basename.copy().update(run=run, processing=None))
+        processing = None
+        if config.use_maxwell_filter:
+            processing = 'sss'
+        raw_fname_in = (bids_basename.copy().update(run=run, processing=processing))
 
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
@@ -300,7 +303,7 @@ def run_ica(subject, session=None):
     tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
 
     # Lastly, plot all ICs, and add them to the report for manual inspection.
-    msg = ('Adding diagnostic plots for all ICs the HTML report …')
+    msg = 'Adding diagnostic plots for all ICs to the HTML report …'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
     for component_num in tqdm(range(ica.n_components_)):

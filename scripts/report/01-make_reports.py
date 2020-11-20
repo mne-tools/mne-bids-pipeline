@@ -227,6 +227,9 @@ def run_report(subject, session=None):
 
     rep = mne.Report(**params)
     rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
+    if not op.exists(fname_trans):
+        rep_kwargs['render_bem'] = False
+
     task = config.get_task()
     if task is not None:
         rep_kwargs['pattern'] = f'*_task-{task}*'

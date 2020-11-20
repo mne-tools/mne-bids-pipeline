@@ -17,31 +17,44 @@ except ImportError:  # Python <3.8
 logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
 
-SENSOR_SCRIPTS = ('01-import_and_maxfilter.py',
-                  '02-frequency_filter.py',
-                  '03-make_epochs.py',
-                  '04a-run_ica.py',
-                  '04b-run_ssp.py',
-                  '05a-apply_ica.py',
-                  '05b-apply_ssp.py',
-                  '06-make_evoked.py',
-                  '07-sliding_estimator.py',
-                  '08-time_frequency.py',
-                  '09-group_average_sensors.py')
+PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
+                         '02-frequency_filter.py',
+                         '03-make_epochs.py',
+                         '04a-run_ica.py',
+                         '04b-run_ssp.py',
+                         '05a-apply_ica.py',
+                         '05b-apply_ssp.py')
 
-SOURCE_SCRIPTS = ('10-make_forward.py',
-                  '11-make_cov.py',
-                  '12-make_inverse.py',
-                  '13-group_average_source.py')
+SENSOR_SCRIPTS = ('01-make_evoked.py',
+                  '02-sliding_estimator.py',
+                  '03-time_frequency.py',
+                  '04-group_average.py')
 
-REPORT_SCRIPTS = ('99-make_reports.py',)
+SOURCE_SCRIPTS = ('01-make_forward.py',
+                  '02-make_cov.py',
+                  '03-make_inverse.py',
+                  '04-group_average.py')
 
-ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
+REPORT_SCRIPTS = ('01-make_reports.py',)
+
+SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
+
+SCRIPT_PATHS = {
+    'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
+                      for s in PREPROCESSING_SCRIPTS],
+    'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
+               for s in SENSOR_SCRIPTS],
+    'source': [SCRIPT_BASE_DIR / 'source' / s
+               for s in SOURCE_SCRIPTS],
+    'report': [SCRIPT_BASE_DIR / 'report' / s
+               for s in REPORT_SCRIPTS]
+}
+SCRIPT_PATHS['all'] = (SCRIPT_PATHS['preprocessing'] +
+                       SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
+                       SCRIPT_PATHS['report'])
 
 
-def _run_script(script, config, root_dir, subject, session, task, run):
-    logger.info(f'Now running: {script}')
-
+def _run_script(script_path, config, root_dir, subject, session, task, run):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -63,17 +76,10 @@ def _run_script(script, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
-    # Keep old implementation using run_module here in case we decide to
-    # switch back …
-    # module_name = script.replace('.py', '')
-    # runpy.run_module(mod_name=module_name, run_name='__main__')
-
-    script_path = pathlib.Path(__file__).parent / 'scripts' / script
     runpy.run_path(script_path, run_name='__main__')
-    logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
+def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
             *,
             config: Union[str, pathlib.Path],
             root_dir: Optional[Union[str, pathlib.Path]] = None,
@@ -87,8 +93,11 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
     ----------
     steps
         The processing steps to run.
-        Can either be one of 'sensors', 'source', 'report', or 'all',
-        or an integer specifying a specific processing step.
+        Can either be one of the processing groups 'preprocessing', sensor',
+        'source', 'report',  or 'all',  or the name of a processing group plus
+        the desired script sans the step number and
+        filename extension, separated by a '/'. For exmaple, to run ICA, you
+        would pass 'sensor/run_ica`.
     config
         The path of the Study Template configuration file to use.
     root_dir
@@ -102,19 +111,26 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
     run
         The run to process.
     """
-    if steps == 'sensor':
-        scripts = SENSOR_SCRIPTS
-    elif steps == 'source':
-        scripts = SOURCE_SCRIPTS
-    elif steps == 'report':
-        scripts = REPORT_SCRIPTS
-    elif steps == 'all':
-        scripts = ALL_SCRIPTS
+    if '/' in steps:
+        group, step = steps.split('/')
     else:
-        scripts = ALL_SCRIPTS[steps-1]
+        group, step = steps, None
 
-    if isinstance(scripts, str):
-        scripts = (scripts,)
+    if group not in SCRIPT_PATHS.keys():
+        raise ValueError(f'Invalid steps requested: {steps}')
+
+    if step is None:
+        # User specified `sensors`, `source`, or similar
+        script_paths = SCRIPT_PATHS[group]
+    else:
+        # User specified 'group/step'
+        for idx, script_path in enumerate(SCRIPT_PATHS[group]):
+            if step in str(script_path):
+                script_paths = (script_path,)
+                break
+            if idx == len(SCRIPT_PATHS[group]) - 1:
+                # We've iterated over all scripts, but none matched!
+                raise ValueError(f'Invalid steps requested: {group/steps}')
 
     # Ensure we will restore the original environment variables in most cases
     # upon exit.
@@ -131,8 +147,11 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
         signal.signal(s, _restore_env)
     atexit.register(_restore_env)
 
-    for script in scripts:
-        _run_script(script, config, root_dir, subject, session, task, run)
+    for script_path in script_paths:
+        step_name = script_path.name.replace('.py', '')[3:]
+        logger.info(f'Now running: {step_name}')
+        _run_script(script_path, config, root_dir, subject, session, task, run)
+        logger.info(f'Successfully finished running: {step_name}')
 
 
 if __name__ == '__main__':

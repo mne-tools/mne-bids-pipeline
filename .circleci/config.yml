@@ -33,8 +33,8 @@ jobs:
         - run:
             name: Install dependencies in conda base environment
             command: |
-              conda update -n base -c defaults conda;
-              conda install -y -n base -c defaults pip
+              conda update -y -n base conda;
+              conda install -y -n base pip
               pip install -r tests/requirements.txt
 
         # - run:
@@ -179,7 +179,7 @@ jobs:
         - run:
             name: Install dependencies in conda base environment
             command: |
-              conda update -n base -c defaults conda
+              conda update -y -n base conda
               # Install deps immediately required for doc building
               conda install -y python=3.8 \
                                mkdocs \

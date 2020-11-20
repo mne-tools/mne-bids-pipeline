@@ -64,6 +64,11 @@ Run the Study Template
     ```
 
 ??? example "Run only parts of the Study Template"
+    Run only the preprocessing steps:
+    ```shell
+    python run.py preprocessing --config=/path/to/your/custom_config.py
+    ```
+
     Run only the sensor-level processing steps:
     ```shell
     python run.py sensor --config=/path/to/your/custom_config.py
@@ -77,4 +82,9 @@ Run the Study Template
     Only generate the report:
     ```shell
     python run.py report --config=/path/to/your/custom_config.py
+    ```
+
+    (Re-)run ICA:
+    ```shell
+    python run.py preprocessing/run_ica
     ```

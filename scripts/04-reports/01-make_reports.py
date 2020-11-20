@@ -224,6 +224,9 @@ def run_report(subject, session=None):
     if op.exists(fname_trans):
         params['subject'] = fs_subject
         params['subjects_dir'] = fs_subjects_dir
+        params['render_bem'] = True
+    else:
+        params['render_bem'] = False
 
     rep = mne.Report(**params)
     rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)

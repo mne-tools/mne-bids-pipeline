@@ -35,7 +35,7 @@ jobs:
             command: |
               conda update -n base -c defaults conda;
               conda install -y -n base -c defaults pip
-              pip install -r tests/test-requirements.txt
+              pip install -r tests/requirements.txt
 
         # - run:
         #     name: Spin up Xvfb

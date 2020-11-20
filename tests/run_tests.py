@@ -20,7 +20,9 @@ def fetch(dataset=None):
 DATA_DIR = Path('~/mne_data').expanduser()
 
 TEST_SUITE = {
-    'ds000246': ('config_ds000246', 'preprocessing', 'sensor', 'report'),
+    'ds000246': ('config_ds000246', 'preprocessing',
+                 'preprocessing/make_epochs',  # Test the group/step syntax
+                 'sensor', 'report'),
     'ds000248': ('config_ds000248', 'preprocessing', 'sensor', 'source',
                  'report'),
     'ds000248_ica': ('config_ds000248_ica', 'preprocessing', 'sensor',

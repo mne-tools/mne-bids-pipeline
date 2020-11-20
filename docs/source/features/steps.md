@@ -13,12 +13,12 @@ Template. You can find the scripts in the `scripts` directory.
 | `preprocessing` | `04b-run_ssp.py` | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
 | `preprocessing` | `05a-apply_ica.py` | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart beat artifacts. Use either 5a/6a, or 5b/6b. |
 | `preprocessing` | `05b-apply_ssp.py` | Apply SSP projections and obtain the cleaned epochs.  |
-| `sensor` | `06-make_evoked.py` | Extract evoked data for each condition. |
-| `sensor` | `07-sliding_estimator.py` | Running a time-by-time decoder with sliding window. |
-| `sensor` | `08-time_frequency.py` | Running a time-frequency analysis. |
-| `sensor` | `09-group_average_sensors.py` | Make a group average of the time domain data. |
-| `source` | `10-make_forward.py` | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
-| `source` | `11-make_cov.py` | Compute noise covariances for each subject. |
-| `source` | `12-make_inverse.py` | Compute inverse problem to obtain source estimates. |
-| `source` | `13-group_average_source.py` | Compute source estimates average over subjects. |
-| `report` | `99-make_reports.py` | Compute HTML reports for each subject. |
+| `sensor` | `01-make_evoked.py` | Extract evoked data for each condition. |
+| `sensor` | `02-sliding_estimator.py` | Running a time-by-time decoder with sliding window. |
+| `sensor` | `03-time_frequency.py` | Running a time-frequency analysis. |
+| `sensor` | `04-group_average_sensors.py` | Make a group average of the time domain data. |
+| `source` | `01-make_forward.py` | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. |
+| `source` | `02-make_cov.py` | Compute noise covariances for each subject. |
+| `source` | `03-make_inverse.py` | Compute inverse problem to obtain source estimates. |
+| `source` | `04-group_average_source.py` | Compute source estimates average over subjects. |
+| `report` | `01-make_reports.py` | Compute HTML reports for each subject. |

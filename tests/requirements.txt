@@ -1,14 +1,14 @@
-- numpy
-- scipy
-- scikit-learn
-- pandas
-- json_tricks
-- matplotlib
-- seaborn
-- nibabel
-- coloredlogs
-- python-picard
-- fire
-- typing_extensions  # for Python <3.8
-- https://api.github.com/repos/mne-tools/mne-python/zipball/master
-- https://api.github.com/repos/mne-tools/mne-bids/zipball/master
+numpy
+scipy
+scikit-learn
+pandas
+json_tricks
+matplotlib
+seaborn
+nibabel
+coloredlogs
+python-picard
+fire
+typing_extensions  # for Python <3.8
+https://api.github.com/repos/mne-tools/mne-python/zipball/master
+https://api.github.com/repos/mne-tools/mne-bids/zipball/master

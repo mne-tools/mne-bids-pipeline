@@ -72,13 +72,13 @@ def _run_script(script, config, root_dir, subject, session, task, run):
 
     script_path = pathlib.Path(__file__).parent / 'scripts'
     if script in PREPROCESSING_SCRIPTS:
-        script_path = script_path / '01-preprocessing' / script
+        script_path = script_path / 'preprocessing' / script
     elif script in SENSOR_SCRIPTS:
-        script_path = script_path / '02-sensor_level' / script
+        script_path = script_path / 'sensor' / script
     elif script in SOURCE_SCRIPTS:
-        script_path = script_path / '03-source_level' / script
+        script_path = script_path / 'source' / script
     elif script in REPORT_SCRIPTS:
-        script_path = script_path / '04-reports' / script
+        script_path = script_path / 'reports' / script
 
     runpy.run_path(script_path, run_name='__main__')
     logger.info(f'Successfully finished running: {script}')

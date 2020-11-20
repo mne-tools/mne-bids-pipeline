@@ -16,6 +16,7 @@ Preprocessing
 | `preprocessing` | `04b-run_ssp.py` | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. | `preprocessing/run_ssp` |
 | `preprocessing` | `05a-apply_ica.py` | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart beat artifacts. Use either 5a/6a, or 5b/6b. | `preprocessing/apply_ica` |
 | `preprocessing` | `05b-apply_ssp.py` | Apply SSP projections and obtain the cleaned epochs.  | `preprocessing/apply_ssp` |
+| `preprocessing` | — | Run all preprocessing scripts.  | `preprocessing` |
 
 Sensor-level analysis
 ---------------------
@@ -26,6 +27,7 @@ Sensor-level analysis
 | `sensor` | `02-sliding_estimator.py` | Running a time-by-time decoder with sliding window. | `sensor/sliding_estimator` |
 | `sensor` | `03-time_frequency.py` | Running a time-frequency analysis. | `sensor/time_frequency` |
 | `sensor` | `04-group_average_sensors.py` | Make a group average of the time domain data. | `sensor/group_average_sensors` |
+| `sensor` | — | Run all sensor-level analysis scripts. | `sensor` |
 
 Source-level analysis
 ---------------------
@@ -36,6 +38,7 @@ Source-level analysis
 | `source` | `02-make_cov.py` | Compute noise covariances for each subject. | `source/make_cov` |
 | `source` | `03-make_inverse.py` | Compute inverse problem to obtain source estimates. | `source/make_inverse` |
 | `source` | `04-group_average_source.py` | Compute source estimates average over subjects. | `source/group_average_source` |
+| `source` | — | Run all source-level analysis scripts. | `source` |
 
 Analysis reports
 ----------------
@@ -43,3 +46,4 @@ Analysis reports
 | Group | Script | Description | Run via `python run.py …` |
 |:-----------|:-----------|:---------------------|:--------------------------|
 | `report` | `01-make_reports.py` | Compute HTML reports for each subject. | `report/make_reports`
+| `report` | — | Run all report-generating scripts (currently only one). | `report`

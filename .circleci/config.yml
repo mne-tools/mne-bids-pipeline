@@ -25,21 +25,15 @@ jobs:
 
         - run:
             name: Get conda running
-            shell: bash -l
             command: |
-              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-              chmod +x ~/miniconda.sh
-              ~/miniconda.sh -b -p ~/miniconda
-              # conda init bash
-              rm ~/miniconda.sh
+              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
+              chmod +x ~/miniconda.sh;
+              ~/miniconda.sh -b -p ~/miniconda;
+              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
 
         - run:
             name: Install dependencies in conda base environment
-            shell: bash -l
             command: |
-              # source ~/.bashrc
-              # conda activate base
-              source activate base
               conda update -n base -c defaults conda
               echo `which python`
               echo `which pip`
@@ -71,7 +65,6 @@ jobs:
 
         - run:
             name: Install datalad to conveniently pull testing datasets
-            shell: bash -l
             command: |
               conda install -c conda-forge git-annex
               pip install --upgrade datalad
@@ -87,7 +80,6 @@ jobs:
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation
-            shell: bash -l
             command: |
                which python
                git-annex version
@@ -105,7 +97,6 @@ jobs:
         # Run tests
         - run:
             name: test ds000246
-            shell: bash -l
             command: |
                export DS=ds000246
                python tests/run_tests.py ${DS}
@@ -137,7 +128,6 @@ jobs:
 
         - run:
             name: test ds001810
-            shell: bash -l
             command: |
                export DS=ds001810
                python tests/run_tests.py ${DS}
@@ -147,7 +137,6 @@ jobs:
 
         - run:
             name: test eeg_matchingpennies
-            shell: bash -l
             command: |
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
@@ -157,7 +146,6 @@ jobs:
 
         - run:
             name: test ds003104
-            shell: bash -l
             command: |
                export DS=ds003104
                python tests/run_tests.py ${DS}
@@ -185,7 +173,6 @@ jobs:
             command: |
               echo "set -e" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 

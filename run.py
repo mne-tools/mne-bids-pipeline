@@ -25,17 +25,17 @@ PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
                          '05a-apply_ica.py',
                          '05b-apply_ssp.py')
 
-SENSOR_SCRIPTS = ('06-make_evoked.py',
-                  '07-sliding_estimator.py',
-                  '08-time_frequency.py',
-                  '09-group_average_sensors.py')
+SENSOR_SCRIPTS = ('01-make_evoked.py',
+                  '02-sliding_estimator.py',
+                  '03-time_frequency.py',
+                  '04-group_average_sensors.py')
 
-SOURCE_SCRIPTS = ('10-make_forward.py',
-                  '11-make_cov.py',
-                  '12-make_inverse.py',
-                  '13-group_average_source.py')
+SOURCE_SCRIPTS = ('01-make_forward.py',
+                  '02-make_cov.py',
+                  '03-make_inverse.py',
+                  '04-group_average_source.py')
 
-REPORT_SCRIPTS = ('99-make_reports.py',)
+REPORT_SCRIPTS = ('01-make_reports.py',)
 
 ALL_SCRIPTS = (PREPROCESSING_SCRIPTS + SENSOR_SCRIPTS + SOURCE_SCRIPTS + 
                REPORT_SCRIPTS)

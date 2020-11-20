@@ -9,7 +9,7 @@ Preprocessing
 
 | Group | Script | Description | Run via `python run.py …` |
 |:-----------|:-----------|:---------------------|:--------------------------|
-| `preprocessing` | `01-import_and_maxfilter.py` | Import raw data and apply Maxwell filter. | `preprocessing/import_and_maxfilter |
+| `preprocessing` | `01-import_and_maxfilter.py` | Import raw data and apply Maxwell filter. | `preprocessing/import_and_maxfilter` |
 | `preprocessing` | `02-frequency_filter.py` | Apply low- and high-pass filters. | `preprocessing/frequency_filter` |
 | `preprocessing` | `03-make_epochs.py` | Extract epochs. | `preprocessing/make_epochs` |
 | `preprocessing` | `04a-run_ica.py` | Run Independant Component Analysis (ICA) for artifact correction. | `preprocessing/run_ica` |

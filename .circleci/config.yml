@@ -25,7 +25,7 @@ jobs:
         - run:
             name: Get conda running
             command: |
-              wget -q ttps://github.com/conda-forge/miniforge/releases/download/4.9.0-4/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
               chmod +x ~/miniforge.sh;
               ~/miniforge.sh -b -p ~/miniforge;
               echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
@@ -171,7 +171,7 @@ jobs:
         - run:
             name: Get conda running
             command: |
-              wget -q ttps://github.com/conda-forge/miniforge/releases/download/4.9.0-4/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
               chmod +x ~/miniforge.sh;
               ~/miniforge.sh -b -p ~/miniforge;
               echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;

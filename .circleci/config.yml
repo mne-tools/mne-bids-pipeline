@@ -29,12 +29,14 @@ jobs:
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
               chmod +x ~/miniconda.sh
               ~/miniconda.sh -b -p ~/miniconda
-              conda init
+              conda init bash
               rm ~/miniconda.sh
 
         - run:
             name: Install dependencies in conda base environment
             command: |
+              source ~/.bashrc
+              conda activate base
               conda update -n base -c defaults conda
               echo `which python`
               echo `which pip`

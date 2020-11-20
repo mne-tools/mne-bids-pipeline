@@ -34,7 +34,7 @@ jobs:
 
         - run:
             name: Install dependencies in conda base environment
-            shell: bash -l {0}
+            shell: bash -l
             command: |
               conda activate base
               conda update -n base -c defaults conda
@@ -68,7 +68,7 @@ jobs:
 
         - run:
             name: Install datalad to conveniently pull testing datasets
-            shell: bash -l {0}
+            shell: bash -l
             command: |
               conda install -c conda-forge git-annex
               pip install --upgrade datalad
@@ -84,7 +84,7 @@ jobs:
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation
-            shell: bash -l {0}
+            shell: bash -l
             command: |
                which python
                git-annex version
@@ -102,7 +102,7 @@ jobs:
         # Run tests
         - run:
             name: test ds000246
-            shell: bash -l {0}
+            shell: bash -l
             command: |
                export DS=ds000246
                python tests/run_tests.py ${DS}
@@ -134,7 +134,7 @@ jobs:
 
         - run:
             name: test ds001810
-            shell: bash -l {0}
+            shell: bash -l
             command: |
                export DS=ds001810
                python tests/run_tests.py ${DS}
@@ -144,7 +144,7 @@ jobs:
 
         - run:
             name: test eeg_matchingpennies
-            shell: bash -l {0}
+            shell: bash -l
             command: |
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
@@ -154,7 +154,7 @@ jobs:
 
         - run:
             name: test ds003104
-            shell: bash -l {0}
+            shell: bash -l
             command: |
                export DS=ds003104
                python tests/run_tests.py ${DS}

@@ -36,8 +36,8 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
-              which python
-              which pip
+              echo `which python`
+              echo `which pip`
               pip install numpy scipy scikit-learn pandas json_tricks matplotlib \
                           seaborn nibabel coloredlogs python-picard fire
               pip install typing_extensions  # for Python <3.8

@@ -28,22 +28,33 @@ PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
 SENSOR_SCRIPTS = ('01-make_evoked.py',
                   '02-sliding_estimator.py',
                   '03-time_frequency.py',
-                  '04-group_average_sensors.py')
+                  '04-group_average.py')
 
 SOURCE_SCRIPTS = ('01-make_forward.py',
                   '02-make_cov.py',
                   '03-make_inverse.py',
-                  '04-group_average_source.py')
+                  '04-group_average.py')
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 
-ALL_SCRIPTS = (PREPROCESSING_SCRIPTS + SENSOR_SCRIPTS + SOURCE_SCRIPTS + 
-               REPORT_SCRIPTS)
+SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
+
+SCRIPT_PATHS = {
+    'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
+                      for s in PREPROCESSING_SCRIPTS],
+    'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
+               for s in SENSOR_SCRIPTS],
+    'source': [SCRIPT_BASE_DIR / 'source' / s
+               for s in SOURCE_SCRIPTS],
+    'report': [SCRIPT_BASE_DIR / 'report' / s
+               for s in REPORT_SCRIPTS]
+}
+SCRIPT_PATHS['all'] = (SCRIPT_PATHS['preprocessing'] +
+                       SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
+                       SCRIPT_PATHS['report'])
 
 
-def _run_script(script, config, root_dir, subject, session, task, run):
-    logger.info(f'Now running: {script}')
-
+def _run_script(script_path, config, root_dir, subject, session, task, run):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -65,26 +76,10 @@ def _run_script(script, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
-    # Keep old implementation using run_module here in case we decide to
-    # switch back …
-    # module_name = script.replace('.py', '')
-    # runpy.run_module(mod_name=module_name, run_name='__main__')
-
-    script_path = pathlib.Path(__file__).parent / 'scripts'
-    if script in PREPROCESSING_SCRIPTS:
-        script_path = script_path / 'preprocessing' / script
-    elif script in SENSOR_SCRIPTS:
-        script_path = script_path / 'sensor' / script
-    elif script in SOURCE_SCRIPTS:
-        script_path = script_path / 'source' / script
-    elif script in REPORT_SCRIPTS:
-        script_path = script_path / 'reports' / script
-
     runpy.run_path(script_path, run_name='__main__')
-    logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], str],
+def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
             *,
             config: Union[str, pathlib.Path],
             root_dir: Optional[Union[str, pathlib.Path]] = None,
@@ -121,30 +116,21 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], str],
     else:
         group, step = steps, None
 
-    if group == 'preprocessing':
-        scripts = PREPROCESSING_SCRIPTS
-    elif group == 'sensor':
-        scripts = SENSOR_SCRIPTS
-    elif group == 'source':
-        scripts = SOURCE_SCRIPTS
-    elif group == 'report':
-        scripts = REPORT_SCRIPTS
-    elif group == 'all':
-        scripts = ALL_SCRIPTS
-    else:
+    if group not in SCRIPT_PATHS.keys():
         raise ValueError(f'Invalid steps requested: {steps}')
 
-    if step is not None:
-        for idx, script in enumerate(scripts):
-            if step in script:
-                scripts = script
+    if step is None:
+        # User specified `sensors`, `source`, or similar
+        script_paths = SCRIPT_PATHS[group]
+    else:
+        # User specified 'group/step'
+        for idx, script_path in enumerate(SCRIPT_PATHS[group]):
+            if step in str(script_path):
+                script_paths = (script_path,)
                 break
-            elif idx == len(scripts) - 1:
+            if idx == len(SCRIPT_PATHS[group]) - 1:
                 # We've iterated over all scripts, but none matched!
                 raise ValueError(f'Invalid steps requested: {group/steps}')
-
-    if isinstance(scripts, str):
-        scripts = (scripts,)
 
     # Ensure we will restore the original environment variables in most cases
     # upon exit.
@@ -161,8 +147,11 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], str],
         signal.signal(s, _restore_env)
     atexit.register(_restore_env)
 
-    for script in scripts:
-        _run_script(script, config, root_dir, subject, session, task, run)
+    for script_path in script_paths:
+        step_name = script_path.name.replace('.py', '')[3:]
+        logger.info(f'Now running: {step_name}')
+        _run_script(script_path, config, root_dir, subject, session, task, run)
+        logger.info(f'Successfully finished running: {step_name}')
 
 
 if __name__ == '__main__':

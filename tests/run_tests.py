@@ -31,7 +31,7 @@ TEST_SUITE = {
                  'report'),
     'eeg_matchingpennies': ('config_eeg_matchingpennies', 'preprocessing',
                             'sensor', 'report'),
-    'ds003104': ('config_ds003104', 'sensor', 'preprocessing', 'source',
+    'ds003104': ('config_ds003104', 'preprocessing', 'sensor',  'source',
                  'report'),
 }
 

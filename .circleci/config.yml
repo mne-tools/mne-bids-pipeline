@@ -35,11 +35,7 @@ jobs:
             command: |
               conda update -n base -c defaults conda;
               conda install -y -n base -c defaults pip
-              pip install numpy scipy scikit-learn pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard fire
-              pip install typing_extensions  # for Python <3.8
-              pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master
-              git clone https://github.com/mne-tools/mne-bids.git --depth 1
-              pip install -e ./mne-bids
+              pip install -r tests/test-requirements.txt
 
         # - run:
         #     name: Spin up Xvfb
@@ -63,8 +59,7 @@ jobs:
         - run:
             name: Install datalad to conveniently pull testing datasets
             command: |
-              conda install -c conda-forge git-annex
-              pip install --upgrade datalad
+              conda install -c conda-forge datalad
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 

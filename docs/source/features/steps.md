@@ -8,7 +8,7 @@ Preprocessing
 -------------
 
 | Group | Script | Description | Run via `python run.py …` |
-|:-----------|:-----------|:-----------------------------------------------|
+|:-----------|:-----------|:---------------------|:--------------------------|
 | `preprocessing` | `01-import_and_maxfilter.py` | Import raw data and apply Maxwell filter. | `preprocessing/import_and_maxfilter |
 | `preprocessing` | `02-frequency_filter.py` | Apply low- and high-pass filters. | `preprocessing/frequency_filter` |
 | `preprocessing` | `03-make_epochs.py` | Extract epochs. | `preprocessing/make_epochs` |
@@ -21,7 +21,7 @@ Sensor-level analysis
 ---------------------
 
 | Group | Script | Description | Run via `python run.py …` |
-|:-----------|:-----------|:-----------------------------------------------|
+|:-----------|:-----------|:---------------------|:--------------------------|
 | `sensor` | `01-make_evoked.py` | Extract evoked data for each condition. | `sensor/make_evoked` |
 | `sensor` | `02-sliding_estimator.py` | Running a time-by-time decoder with sliding window. | `sensor/sliding_estimator` |
 | `sensor` | `03-time_frequency.py` | Running a time-frequency analysis. | `sensor/time_frequency` |
@@ -31,7 +31,7 @@ Source-level analysis
 ---------------------
 
 | Group | Script | Description | Run via `python run.py …` |
-|:-----------|:-----------|:-----------------------------------------------|
+|:-----------|:-----------|:---------------------|:--------------------------|
 | `source` | `01-make_forward.py` | Compute forward operators. You will need to have computed the coregistration to obtain the `-trans.fif` files for each subject. | `source/make_forward` |
 | `source` | `02-make_cov.py` | Compute noise covariances for each subject. | `source/make_cov` |
 | `source` | `03-make_inverse.py` | Compute inverse problem to obtain source estimates. | `source/make_inverse` |
@@ -41,5 +41,5 @@ Analysis reports
 ----------------
 
 | Group | Script | Description | Run via `python run.py …` |
-|:-----------|:-----------|:-----------------------------------------------|
+|:-----------|:-----------|:---------------------|:--------------------------|
 | `report` | `01-make_reports.py` | Compute HTML reports for each subject. | `report/make_reports`

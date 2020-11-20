@@ -11,7 +11,6 @@ jobs:
             command: |
               echo "set -e" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 
@@ -34,11 +33,10 @@ jobs:
         - run:
             name: Install dependencies in conda base environment
             command: |
-              conda update -n base -c defaults conda
-              echo `which python`
-              echo `which pip`
-              pip install numpy scipy scikit-learn pandas json_tricks matplotlib \
-                          seaborn nibabel coloredlogs python-picard fire
+              conda update -n base -c defaults conda;
+              source activate base;
+              echo `which pip`;
+              pip install numpy scipy scikit-learn pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard fire
               pip install typing_extensions  # for Python <3.8
               pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master
               git clone https://github.com/mne-tools/mne-bids.git --depth 1

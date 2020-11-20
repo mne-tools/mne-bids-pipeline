@@ -17,14 +17,15 @@ except ImportError:  # Python <3.8
 logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
 
-SENSOR_SCRIPTS = ('01-import_and_maxfilter.py',
-                  '02-frequency_filter.py',
-                  '03-make_epochs.py',
-                  '04a-run_ica.py',
-                  '04b-run_ssp.py',
-                  '05a-apply_ica.py',
-                  '05b-apply_ssp.py',
-                  '06-make_evoked.py',
+PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
+                         '02-frequency_filter.py',
+                         '03-make_epochs.py',
+                         '04a-run_ica.py',
+                         '04b-run_ssp.py',
+                         '05a-apply_ica.py',
+                         '05b-apply_ssp.py')
+
+SENSOR_SCRIPTS = ('06-make_evoked.py',
                   '07-sliding_estimator.py',
                   '08-time_frequency.py',
                   '09-group_average_sensors.py')
@@ -36,7 +37,8 @@ SOURCE_SCRIPTS = ('10-make_forward.py',
 
 REPORT_SCRIPTS = ('99-make_reports.py',)
 
-ALL_SCRIPTS = SENSOR_SCRIPTS + SOURCE_SCRIPTS + REPORT_SCRIPTS
+ALL_SCRIPTS = (PREPROCESSING_SCRIPTS + SENSOR_SCRIPTS + SOURCE_SCRIPTS + 
+               REPORT_SCRIPTS)
 
 
 def _run_script(script, config, root_dir, subject, session, task, run):
@@ -68,12 +70,21 @@ def _run_script(script, config, root_dir, subject, session, task, run):
     # module_name = script.replace('.py', '')
     # runpy.run_module(mod_name=module_name, run_name='__main__')
 
-    script_path = pathlib.Path(__file__).parent / 'scripts' / script
+    script_path = pathlib.Path(__file__).parent / 'scripts'
+    if script in PREPROCESSING_SCRIPTS:
+        script_path = script_path / '01-preprocessing' / script
+    elif script in SENSOR_SCRIPTS:
+        script_path = script_path / '02-sensor_level' / script
+    elif script in SOURCE_SCRIPTS:
+        script_path = script_path / '03-source_level' / script
+    elif script in REPORT_SCRIPTS:
+        script_path = script_path / '04-reports' / script
+
     runpy.run_path(script_path, run_name='__main__')
     logger.info(f'Successfully finished running: {script}')
 
 
-def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
+def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], str],
             *,
             config: Union[str, pathlib.Path],
             root_dir: Optional[Union[str, pathlib.Path]] = None,
@@ -87,8 +98,11 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
     ----------
     steps
         The processing steps to run.
-        Can either be one of 'sensors', 'source', 'report', or 'all',
-        or an integer specifying a specific processing step.
+        Can either be one of the processing groups 'preprocessing', sensor',
+        'source', 'report',  or 'all',  or the name of a processing group plus
+        the desired script sans the step number and
+        filename extension, separayed by a '/'. For exmaple, to run ICA, you
+        would pass 'sensor/run_ica`.
     config
         The path of the Study Template configuration file to use.
     root_dir
@@ -102,16 +116,32 @@ def process(steps: Union[Literal['sensors', 'source', 'report', 'all'], int],
     run
         The run to process.
     """
-    if steps == 'sensor':
+    if '/' in steps:
+        group, step = steps.split('/')
+    else:
+        group, step = steps, None
+
+    if group == 'preprocessing':
+        scripts = PREPROCESSING_SCRIPTS
+    elif group == 'sensor':
         scripts = SENSOR_SCRIPTS
-    elif steps == 'source':
+    elif group == 'source':
         scripts = SOURCE_SCRIPTS
-    elif steps == 'report':
+    elif group == 'report':
         scripts = REPORT_SCRIPTS
-    elif steps == 'all':
+    elif group == 'all':
         scripts = ALL_SCRIPTS
     else:
-        scripts = ALL_SCRIPTS[steps-1]
+        raise ValueError(f'Invalid steps requested: {steps}')
+
+    if step is not None:
+        for idx, script in enumerate(scripts):
+            if step in script:
+                scripts = script
+                break
+            elif idx == len(scripts) - 1:
+                # We've iterated over all scripts, but none matched!
+                raise ValueError(f'Invalid steps requested: {group/steps}')
 
     if isinstance(scripts, str):
         scripts = (scripts,)

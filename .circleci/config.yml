@@ -34,8 +34,7 @@ jobs:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda;
-              source activate base;
-              echo `which pip`;
+              conda install -y -n base -c defaults pip
               pip install numpy scipy scikit-learn pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard fire
               pip install typing_extensions  # for Python <3.8
               pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master

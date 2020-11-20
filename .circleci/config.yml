@@ -25,6 +25,7 @@ jobs:
 
         - run:
             name: Get conda running
+            shell: bash -l
             command: |
               wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
               chmod +x ~/miniconda.sh

@@ -37,6 +37,7 @@ jobs:
             name: Install dependencies in conda base environment
             shell: bash -l
             command: |
+              source ~/.bashrc
               conda activate base
               conda update -n base -c defaults conda
               echo `which python`

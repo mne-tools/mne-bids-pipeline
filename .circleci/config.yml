@@ -11,7 +11,6 @@ jobs:
             command: |
               echo "set -e" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 
@@ -26,23 +25,17 @@ jobs:
         - run:
             name: Get conda running
             command: |
-              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
-              chmod +x ~/miniconda.sh;
-              ~/miniconda.sh -b -p ~/miniconda;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+              chmod +x ~/miniforge.sh;
+              ~/miniforge.sh -b -p ~/miniforge;
+              echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
 
         - run:
             name: Install dependencies in conda base environment
             command: |
-              conda update -n base -c defaults conda
-              pip install numpy scipy pandas json_tricks matplotlib seaborn nibabel coloredlogs python-picard fire
-              pip install typing_extensions  # for Python <3.8
-              pip install -U scikit-learn
-              pip install --upgrade https://api.github.com/repos/mne-tools/mne-python/zipball/master
-              git clone https://github.com/mne-tools/mne-bids.git --depth 1
-              cd mne-bids
-              pip install -e .
-              cd ..
+              conda update -n base -c defaults conda;
+              conda install -y -n base -c defaults pip
+              pip install -r tests/requirements.txt
 
         # - run:
         #     name: Spin up Xvfb
@@ -66,8 +59,7 @@ jobs:
         - run:
             name: Install datalad to conveniently pull testing datasets
             command: |
-              conda install -c conda-forge git-annex
-              pip install --upgrade datalad
+              conda install datalad
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 
@@ -173,30 +165,29 @@ jobs:
             command: |
               echo "set -e" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
               # echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 
         - run:
             name: Get conda running
             command: |
-              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
-              chmod +x ~/miniconda.sh;
-              ~/miniconda.sh -b -p ~/miniconda;
-              echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+              chmod +x ~/miniforge.sh;
+              ~/miniforge.sh -b -p ~/miniforge;
+              echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
 
         - run:
             name: Install dependencies in conda base environment
             command: |
               conda update -n base -c defaults conda
               # Install deps immediately required for doc building
-              conda install -c conda-forge -y python=3.8 \
-                                              mkdocs \
-                                              mkdocs-material \
-                                              mkdocs-material-extensions \
-                                              mkdocstrings
+              conda install -y python=3.8 \
+                               mkdocs \
+                               mkdocs-material \
+                               mkdocs-material-extensions \
+                               mkdocstrings
               # Install deps required so MkDocs can import config.py
-              conda install -c conda-forge -y coloredlogs
+              conda install -y coloredlogs
               pip install mne mne_bids
               cd docs
               mkdocs build

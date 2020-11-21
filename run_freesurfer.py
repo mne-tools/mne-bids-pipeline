@@ -11,7 +11,6 @@ import fire
 
 from mne.utils import run_subprocess
 from mne.parallel import parallel_func
-from mne_bids import get_entity_vals
 
 logger = logging.getLogger('mne-study-template')
 
@@ -60,7 +59,7 @@ def run_recon(root_dir, fs_bids_app, subject, overwrite):
     run_subprocess(cmd, env=env)
 
 
-def main(root_dir: Union[str, Path],
+def main(config: Union[str, Path],
          fs_bids_app_dir: Union[str, Path],
          overwrite: Optional[bool] = False,
          n_jobs: Optional[int] = 1):
@@ -78,18 +77,25 @@ def main(root_dir: Union[str, Path],
 
     Examples
     --------
-    run_freesurfer.py /path/to/bids/dataset/ /path/to/freesurfer_bids_app/
+    run_freesurfer.py /path/to/bids/dataset/study-template-config.py /path/to/freesurfer_bids_app/
 
     or to run in parallel (3 subjects at a time):
 
-    run_freesurfer.py /path/to/bids/dataset/ /path/to/freesurfer_bids_app/ --n_jobs=3
+    run_freesurfer.py /path/to/bids/dataset/study-template-config.py /path/to/freesurfer_bids_app/ --n_jobs=3
 
     """  # noqa
 
     logger.info('Running FreeSurfer')
 
+    env = os.environ
+    env['MNE_BIDS_STUDY_CONFIG'] = str(Path(config).expanduser())
+
+    import config  # noqa
+
+    root_dir = config.bids_root
+
     root_dir = str(Path(root_dir).expanduser())
-    subjects = sorted(get_entity_vals(root_dir, entity_key='subject'))
+    subjects = config.get_subjects()
 
     subjects_dir = _get_subjects_dir(root_dir)
 

@@ -53,21 +53,42 @@ def run_recon(root_dir, fs_bids_app, subject, overwrite):
 
     cmd = [
         f"{sys.executable}",
-        f"{fs_bids_app}/run.py "
+        f"{fs_bids_app}/run.py",
         f"{root_dir}",
-        f"{subjects_dir} participant ",
-        "--n_cpus=2 --stages=all --skip_bids_validator",
+        f"{subjects_dir}", "participant",
+        "--n_cpus=2", "--stages=all", "--skip_bids_validator",
         f"--license_file={license_file}",
         f"--participant_label={subject}"
     ]
     logger.debug("Running: " + " ".join(cmd))
-    run_subprocess(cmd, env=env, stdout=sys.stdout)
+    run_subprocess(cmd, env=env)
 
 
 def main(root_dir: Union[str, Path],
-         fs_bids_app: Union[str, Path],
+         fs_bids_app_dir: Union[str, Path],
          overwrite: Optional[bool] = False,
          n_jobs: Optional[int] = 1):
+    """Run freesurfer recon-all command on BIDS dataset.
+
+    The command allows to run the freesurfer recon-all
+    command on all subjects of your BIDS dataset. It can
+    run in parallel with the --n_jobs parameter.
+
+    It is built on top of the FreeSurfer BIDS app:
+
+    https://github.com/BIDS-Apps/freesurfer
+
+    You must have freesurfer available on your system.
+
+    Examples
+    --------
+    run_freesurfer.py /path/to/bids/dataset/ /path/to/freesurfer_bids_app/
+
+    or to run in parallel (3 subjects at a time):
+
+    run_freesurfer.py /path/to/bids/dataset/ /path/to/freesurfer_bids_app/ --n_jobs=3
+
+    """  # noqa
 
     logger.info('Running FreeSurfer')
 
@@ -75,7 +96,7 @@ def main(root_dir: Union[str, Path],
     subjects = sorted(get_entity_vals(root_dir, entity_key='subject'))
 
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
-    parallel(run_func(root_dir, fs_bids_app, subject,
+    parallel(run_func(root_dir, fs_bids_app_dir, subject,
                       overwrite) for subject in subjects)
 
     subjects_dir = _get_subjects_dir(root_dir)

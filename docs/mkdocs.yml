@@ -36,21 +36,21 @@ nav:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/getting_started.md
     - Configuration Options:
-        - Basic settings: settings/basic.md
-        - Continuous data:
-            - Bad channel detection: settings/continuous_data/autobads.md
-            - Maxwell filter: settings/continuous_data/maxfilter.md
-            - Stimulation artifact: settings/continuous_data/stim_artifact.md
+        - General settings: settings/general.md
+        - Preprocessing:
+            - Bad channel detection: settings/preprocessing/autobads.md
+            - Maxwell filter: settings/preprocessing/maxfilter.md
+            - Stimulation artifact: settings/preprocessing/stim_artifact.md
             - Frequency filtering & resampling:
-                - Filtering: settings/continuous_data/filter.md
-                - Resampling: settings/continuous_data/resample.md
-        - Epoched data:
-            - Epoching: settings/epoched_data/epochs.md
-            - Amplitude-based artifact removal: settings/epoched_data/artifacts.md
-            - SSP & ICA: settings/epoched_data/ssp_ica.md
-            - Statistics: settings/epoched_data/statistics.md
-            - Time-frequency analysis: settings/epoched_data/time_freq.md
-        - Source estimation: settings/epoched_data/inverse.md
+                - Filtering: settings/preprocessing/filter.md
+                - Resampling: settings/preprocessing/resample.md
+            - Epoching: settings/preprocessing/epochs.md
+            - Amplitude-based artifact removal: settings/preprocessing/artifacts.md
+            - SSP & ICA: settings/preprocessing/ssp_ica.md
+        - Sensor-level analysis:
+            - Statistics: settings/sensor/statistics.md
+            - Time-frequency analysis: settings/sensor/time_freq.md
+        - Source-level analysis: settings/source/inverse.md
 
 plugins:
     - search

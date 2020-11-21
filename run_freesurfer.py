@@ -26,10 +26,6 @@ def run_recon(root_dir, fs_bids_app, subject, overwrite):
     logger.info(f"Running recon-all on subject {subject}.")
 
     subjects_dir = _get_subjects_dir(root_dir)
-
-    if not subjects_dir.exists():
-        subjects_dir.mkdir()
-
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
@@ -94,6 +90,11 @@ def main(root_dir: Union[str, Path],
 
     root_dir = str(Path(root_dir).expanduser())
     subjects = sorted(get_entity_vals(root_dir, entity_key='subject'))
+
+    subjects_dir = _get_subjects_dir(root_dir)
+
+    if not subjects_dir.exists():
+        subjects_dir.mkdir(parents=True)
 
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
     parallel(run_func(root_dir, fs_bids_app_dir, subject,

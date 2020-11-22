@@ -32,9 +32,11 @@ jobs:
         git config --global user.name "mne user"
     - name: Install Python dependencies
       run: |
-        pip install numpy scipy scikit-learn pandas json_tricks matplotlib \
-                                seaborn nibabel coloredlogs python-picard fire
-        pip install typing_extensions  # for Python <3.8
+        conda install -y c conda-forge \
+            numpy scipy scikit-learn pandas json_tricks matplotlib \
+            seaborn nibabel coloredlogs python-picard fire \
+            typing_extensions  # for Python <3.8
+
         # Install MNE
         pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master
         # Install MNE-BIDS

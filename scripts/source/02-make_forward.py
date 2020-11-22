@@ -83,7 +83,7 @@ def run_forward(subject, session=None):
     msg = 'Calculating forward solution'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
-    info = mne.io.read_info(fname_evoked, condition=0)
+    info = mne.io.read_info(fname_evoked)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=config.mindist)
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)

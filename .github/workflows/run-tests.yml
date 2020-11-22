@@ -32,7 +32,7 @@ jobs:
         git config --global user.name "mne user"
     - name: Install Python dependencies
       run: |
-        conda install -y c conda-forge \
+        conda install -y -c conda-forge \
             numpy scipy scikit-learn pandas json_tricks matplotlib \
             seaborn nibabel coloredlogs python-picard fire \
             typing_extensions  # for Python <3.8

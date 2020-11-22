@@ -1134,7 +1134,7 @@ def get_subjects():
     # Drop empty-room subject.
     subjects = subjects - set(['emptyroom'])
 
-    return list(subjects)
+    return sorted(subjects)
 
 
 def get_task():

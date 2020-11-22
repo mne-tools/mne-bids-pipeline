@@ -60,6 +60,7 @@ def run_forward(subject, session=None):
     src = mne.setup_source_space(subject=fs_subject,
                                  subjects_dir=fs_subjects_dir,
                                  spacing=config.spacing,
+                                 add_dist=False,
                                  n_jobs=config.N_JOBS)
 
     # Calculate the BEM solution.

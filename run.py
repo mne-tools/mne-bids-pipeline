@@ -30,10 +30,11 @@ SENSOR_SCRIPTS = ('01-make_evoked.py',
                   '03-time_frequency.py',
                   '04-group_average.py')
 
-SOURCE_SCRIPTS = ('01-make_forward.py',
-                  '02-make_cov.py',
-                  '03-make_inverse.py',
-                  '04-group_average.py')
+SOURCE_SCRIPTS = ('01-make_bem_surfaces.py',
+                  '02-make_forward.py',
+                  '03-make_cov.py',
+                  '04-make_inverse.py',
+                  '05-group_average.py')
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 

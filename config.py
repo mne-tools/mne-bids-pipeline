@@ -744,9 +744,17 @@ The conditions to compute time-frequency decomposition on.
 """
 
 ###############################################################################
-# SOURCE SPACE PARAMETERS
-# -----------------------
+# SOURCE ESTIMATION PARAMETERS
+# ----------------------------
 #
+
+recreate_bem_surfaces: bool = False
+"""
+Whether to re-create the BEM surfaces using the watershed algorithm, even
+if existing surfaces have been found. If ``False``, the BEM surfaces are only
+created if they do not exist already. ``True`` forces their recreation,
+overwriting existing BEM surfaces.
+"""
 
 spacing: str = 'oct6'
 """

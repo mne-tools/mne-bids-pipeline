@@ -1,3 +1,4 @@
+::: config.recreate_bem_surfaces
 ::: config.spacing
 ::: config.mindist
 ::: config.loose

@@ -90,7 +90,7 @@ def get_mf_cal_fname(subject, session):
         mf_cal_fpath = Path(config.mf_cal_fname)
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
-                            f'file at {str(mf_cal_fpath)}.')
+                             f'file at {str(mf_cal_fpath)}.')
 
     return mf_cal_fpath
 
@@ -109,7 +109,7 @@ def get_mf_ctc_fname(subject, session):
         mf_ctc_fpath = Path(config.mf_cal_fname)
         if not mf_ctc_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter cross-talk '
-                            f'file at {str(mf_ctc_fpath)}.')
+                             f'file at {str(mf_ctc_fpath)}.')
 
     return mf_ctc_fpath
 
@@ -345,12 +345,14 @@ def run_maxwell_filter(subject, session=None):
 
             # Keyword arguments shared between Maxwell filtering of the
             # experimental and the empty-room data.
-            common_mf_kws = dict(calibration=get_mf_cal_fname(subject, session),
-                                 cross_talk=get_mf_ctc_fname(subject, session),
-                                 st_duration=config.mf_st_duration,
-                                 origin=config.mf_head_origin,
-                                 coord_frame='head',
-                                 destination=dev_head_t)
+            common_mf_kws = dict(
+                calibration=get_mf_cal_fname(subject, session),
+                cross_talk=get_mf_ctc_fname(subject, session),
+                st_duration=config.mf_st_duration,
+                origin=config.mf_head_origin,
+                coord_frame='head',
+                destination=dev_head_t
+            )
 
             raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
             raw_out = raw_sss

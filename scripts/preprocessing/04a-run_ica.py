@@ -35,7 +35,9 @@ def load_and_concatenate_raws(bids_basename):
         processing = None
         if config.use_maxwell_filter:
             processing = 'sss'
-        raw_fname_in = (bids_basename.copy().update(run=run, processing=processing))
+        raw_fname_in = (bids_basename.copy()
+                        .update(run=run,
+                                processing=processing))
 
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')

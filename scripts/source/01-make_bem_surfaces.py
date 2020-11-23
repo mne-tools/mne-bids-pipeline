@@ -30,6 +30,9 @@ def make_bem(subject):
     flash_dir = mri_dir / 'flash' / 'parameter_maps'
     show = True if config.interactive else False
 
+    if config.bem_from_flash and not flash_dir.exists():
+        raise RuntimeError('Cannot locate FLASH MRI images.')
+
     if (config.bem_from_flash is True) or (config.bem_from_flash is None and
                                            flash_dir.exists()):
         bem_from_flash = True

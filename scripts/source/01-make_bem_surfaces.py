@@ -23,12 +23,23 @@ logger = logging.getLogger('mne-study-template')
 def make_bem(subject):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
-    watershed_dir = Path(fs_subjects_dir) / fs_subject / 'bem' / 'watershed'
+    mri_dir = Path(fs_subjects_dir) / fs_subject / 'mri'
+    bem_dir = Path(fs_subjects_dir) / fs_subject / 'bem'
+    watershed_bem_dir = bem_dir / 'watershed'
+    flash_bem_dir = bem_dir / 'flash'
+    flash_dir = mri_dir / 'flash' / 'parameter_maps'
     show = True if config.interactive else False
 
-    if watershed_dir.exists():
+    if (config.bem_from_flash is True) or (config.bem_from_flash is None and
+                                           flash_dir.exists()):
+        bem_from_flash = True
+    else:
+        bem_from_flash = False
+
+    if ((bem_from_flash and flash_bem_dir.exists()) or
+            (not bem_from_flash and watershed_bem_dir.exists())):
         msg = 'Found existing BEM surfaces. '
-        if config.recreate_bem_surfaces:
+        if config.recreate_bem:
             msg += 'Overwriting as requested in configuration.'
             logger.info(gen_log_message(step=10, message=msg))
         else:
@@ -36,14 +47,23 @@ def make_bem(subject):
             logger.info(gen_log_message(step=10, message=msg))
             return
 
-    msg = 'Creating BEM surfaces using watershed algorithm'
-    logger.info(gen_log_message(step=10, message=msg))
-
-    mne.bem.make_watershed_bem(subject=fs_subject,
+    if bem_from_flash:
+        msg = 'Creating BEM surfaces from FLASH MRI images'
+        logger.info(gen_log_message(step=10, message=msg))
+        mne.bem.make_flash_bem(subject=fs_subject,
                                subjects_dir=fs_subjects_dir,
                                copy=True,  # XXX Revise!
                                overwrite=True,
                                show=show)
+    else:
+        msg = ('Creating BEM surfaces from T1-weighted MRI images using '
+               'watershed algorithm')
+        logger.info(gen_log_message(step=10, message=msg))
+        mne.bem.make_watershed_bem(subject=fs_subject,
+                                   subjects_dir=fs_subjects_dir,
+                                   copy=True,  # XXX Revise!
+                                   overwrite=True,
+                                   show=show)
 
 
 def main():

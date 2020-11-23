@@ -748,7 +748,20 @@ The conditions to compute time-frequency decomposition on.
 # ----------------------------
 #
 
-recreate_bem_surfaces: bool = False
+bem_from_flash: Optional[bool] = None
+"""
+Whether to create the BEM surfaces from FLASH MRI images or not. If
+``True``, use FLASH images, and throw an exception if they cannot be
+located. If ``False``, create the BEM surfaces from the T1-weighted
+images using the ``mri_watershed`` algorithm. If ``None``, use FLASH images
+if available, and run ``mri_watershed`` otherwise. It is recommended to use
+the FLASH images if available, as the quality of the extracted BEM surfaces
+will be higher.
+
+*[FLASH MRI]: Fast low angle shot magnetic resonance imaging
+"""
+
+recreate_bem: bool = False
 """
 Whether to re-create the BEM surfaces using the watershed algorithm, even
 if existing surfaces have been found. If ``False``, the BEM surfaces are only

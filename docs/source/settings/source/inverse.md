@@ -1,4 +1,5 @@
-::: config.recreate_bem_surfaces
+::: config.bem_from_flash
+::: config.recreate_bem
 ::: config.spacing
 ::: config.mindist
 ::: config.loose

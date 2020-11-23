@@ -33,6 +33,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         conda install -y -c conda-forge \
+            python=${{ matrix.python-version }} \
             numpy scipy scikit-learn pandas json_tricks matplotlib \
             seaborn nibabel coloredlogs python-picard fire \
             typing_extensions  # for Python <3.8
@@ -65,10 +66,24 @@ jobs:
         name: reports
         path: ~/reports
 
-#     - name: Lint with flake8
-#       run: |
-#         $CONDA/bin/conda install flake8
-#         # stop the build if there are Python syntax errors or undefined names
-#         $CONDA/bin/flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#         $CONDA/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  check-style:
+    name: Check style
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+    - name: Conda info
+      run: conda info
+    - name: Conda list
+      run: conda list
+    - name: Install flake8
+      run: conda install -y flake8
+    - name: Lint with flake8
+      run: flake8 .

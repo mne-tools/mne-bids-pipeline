@@ -110,7 +110,10 @@ def main(config: Union[str, Path],
     fsaverage_dir = subjects_dir / "fsaverage"
 
     if fsaverage_dir.exists():
-        shutil.rmtree(fsaverage_dir)
+        if os.path.islink(fsaverage_dir):
+            os.unlink(fsaverage_dir)
+        else:
+            shutil.rmtree(fsaverage_dir)
 
     env = os.environ
     shutil.copytree(

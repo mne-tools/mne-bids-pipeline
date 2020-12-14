@@ -106,10 +106,28 @@ def main(dataset):
                 dataset.get(to_get, jobs=n_jobs)
         else:
             # Use openneuro-py
+            if dsname == 'ds000248':
+                # Work around a bug in the dataset – trying to download these
+                # files will issue a 404.
+                common_exclude = 'derivatives/freesurfer/subjects'
+                exclude = [
+                    f'{common_exclude}/fsaverage/mri/aparc.a2005s+aseg.mgz',
+                    f'{common_exclude}/fsaverage/mri/aparc+aseg.mgz',
+                    f'{common_exclude}/fsaverage/mri/aparc.a2009s+aseg.mgz',
+                    f'{common_exclude}/fsaverage/xhemi/mri/aparc+aseg.mgz',
+                    f'{common_exclude}/sub-01/mri/aparc+aseg.mgz',
+                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz'
+                    f'{common_exclude}/sub-01/mri/aparc.a2009s+aseg.mgz'
+                ]
+            else:
+                exclude = []
+
             openneuro.download.callback(
                 dataset=testing_ds_name_to_openneuro_ds_map[dsname],
                 target_dir=dspath,
-                include=get_dict[dsname]
+                include=get_dict[dsname],
+                exclude=exclude
             )
 
 

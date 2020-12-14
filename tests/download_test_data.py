@@ -114,14 +114,12 @@ def main(dataset):
             openneuro.download(args)
 
 
-# if __name__ == '__main__':
-#     parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
-#     parser.add_option('-d', '--dataset', dest='dataset',
-#                       help='Name of the dataset', metavar='INPUT',
-#                       default=None)
-#     opt, args = parser.parse_args()
-#     dataset = opt.dataset if opt.dataset != '' else None
+if __name__ == '__main__':
+    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
+    parser.add_option('-d', '--dataset', dest='dataset',
+                      help='Name of the dataset', metavar='INPUT',
+                      default=None)
+    opt, args = parser.parse_args()
+    dataset = opt.dataset if opt.dataset != '' else None
 
-#     main(dataset)
-
-main('ds000248')
+    main(dataset)

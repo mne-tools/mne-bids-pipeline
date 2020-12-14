@@ -56,12 +56,12 @@ jobs:
         #       pip install --user --upgrade --progress-bar off mayavi
         #       pip install --user --upgrade --progress-bar off PySurfer[save_movie]
 
-        # - run:
-        #     name: Install datalad to conveniently pull testing datasets
-        #     command: |
-        #       conda install datalad
-        #       git config --global user.email "user@mne.com"
-        #       git config --global user.name "mne user"
+        - run:
+            name: Install datalad to conveniently pull testing datasets
+            command: |
+              conda install datalad
+              git config --global user.email "user@mne.com"
+              git config --global user.name "mne user"
 
         # Save Python cache
         - save_cache:

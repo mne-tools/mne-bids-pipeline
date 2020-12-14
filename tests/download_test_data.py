@@ -106,12 +106,11 @@ def main(dataset):
                 dataset.get(to_get, jobs=n_jobs)
         else:
             # Use openneuro-py
-            args = ['--dataset', testing_ds_name_to_openneuro_ds_map[dsname],
-                    '--target_dir', dspath]
-            for include in get_dict[dsname]:
-                args.extend(['--include', include])
-
-            openneuro.download(args)
+            openneuro.download.callback(
+                dataset=testing_ds_name_to_openneuro_ds_map[dsname],
+                target_dir=dspath,
+                include=get_dict[dsname]
+            )
 
 
 if __name__ == '__main__':

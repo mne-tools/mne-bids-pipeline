@@ -123,7 +123,6 @@ def main(dataset):
             else:
                 exclude = []
 
-            print(exclude)
             openneuro.download.callback(
                 dataset=testing_ds_name_to_openneuro_ds_map[dsname],
                 target_dir=dspath,

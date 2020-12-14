@@ -117,12 +117,13 @@ def main(dataset):
                     f'{common_exclude}/fsaverage/xhemi/mri/aparc+aseg.mgz',
                     f'{common_exclude}/sub-01/mri/aparc+aseg.mgz',
                     f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
-                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz'
+                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
                     f'{common_exclude}/sub-01/mri/aparc.a2009s+aseg.mgz'
                 ]
             else:
                 exclude = []
 
+            print(exclude)
             openneuro.download.callback(
                 dataset=testing_ds_name_to_openneuro_ds_map[dsname],
                 target_dir=dspath,

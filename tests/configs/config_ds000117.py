@@ -24,8 +24,6 @@ subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
 subjects = ['01']
 
 use_maxwell_filter = True
-mf_ctc_fname = None
-mf_cal_fname = None
 
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 conditions = ['face', 'scrambled']

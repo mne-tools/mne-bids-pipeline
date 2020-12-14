@@ -127,7 +127,8 @@ def main(dataset):
                 dataset=testing_ds_name_to_openneuro_ds_map[dsname],
                 target_dir=dspath,
                 include=get_dict[dsname],
-                exclude=exclude
+                exclude=exclude,
+                verify_size=False
             )
 
 

@@ -59,7 +59,7 @@ def _provide_get_dict(dataset=None):
 
 testing_ds_name_to_openneuro_ds_map = {
     # Anonymized "somato" dataset.
-    'ds003104': 's003104',
+    'ds003104': 'ds003104',
     'ds000246': 'ds000246',
     # MNE "sample" dataset.
     'ds000248': 'ds000248',

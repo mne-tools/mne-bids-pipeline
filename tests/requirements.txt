@@ -10,6 +10,6 @@ coloredlogs
 python-picard
 fire
 typing_extensions  # for Python <3.8
-openneuro-py
+https://api.github.com/repos/hoechenberger/openneuro-py/zipball/main
 https://api.github.com/repos/mne-tools/mne-python/zipball/master
 https://api.github.com/repos/mne-tools/mne-bids/zipball/master

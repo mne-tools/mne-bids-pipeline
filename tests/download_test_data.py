@@ -86,7 +86,7 @@ def main(dataset):
         dspath = op.join(data_dir, dsname)
 
         if dsname in ['eeg_matchingpennies']:
-            # install the dataset
+            # Use datalad
             urls_dict = _provide_testing_data(dataset)
             url = urls_dict[dsname]
             print('datalad installing "{}"'.format(dsname))
@@ -105,6 +105,7 @@ def main(dataset):
                 print('datalad get data "{}" for "{}"'.format(to_get, dsname))
                 dataset.get(to_get, jobs=n_jobs)
         else:
+            # Use openneuro-py
             args = ['--dataset', testing_ds_name_to_openneuro_ds_map[dsname],
                     '--target_dir', dspath]
             for include in get_dict[dsname]:

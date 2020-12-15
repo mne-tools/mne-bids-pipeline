@@ -89,6 +89,16 @@ jobs:
 
         # Run tests
         - run:
+            name: test ds003392
+            command: |
+               export DS=ds003392
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+
+        - run:
             name: test ds000246
             command: |
                export DS=ds000246

@@ -49,7 +49,9 @@ def _provide_get_dict(dataset=None):
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
-                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv']  # noqa: E501
+                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv'],  # noqa: E501
+        'ds003392': ['sub-01',
+                     'sub-emptyroom/ses-19111211']
     }
     if dataset is None:
         return get_dict
@@ -67,6 +69,8 @@ testing_ds_name_to_openneuro_ds_map = {
     'ds000117': 'ds000117',
     'ds001810': 'ds001810',
     'ds001971': 'ds001971',
+    # Localizer
+    'ds003392': 'ds003392'
 }
 
 

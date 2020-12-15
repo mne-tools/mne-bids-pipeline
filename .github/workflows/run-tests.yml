@@ -1,6 +1,6 @@
 name: Run the test suite
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   # run-tests:

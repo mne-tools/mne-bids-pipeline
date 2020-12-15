@@ -106,19 +106,26 @@ def main(dataset):
                 dataset.get(to_get, jobs=n_jobs)
         else:
             # Use openneuro-py
+            # Work around bugs in the datasets – trying to download these
+            # files will issue a 404.
             if dsname == 'ds000248':
-                # Work around a bug in the dataset – trying to download these
-                # files will issue a 404.
-                common_exclude = 'derivatives/freesurfer/subjects'
+                exclude_prefix = 'derivatives/freesurfer/subjects'
                 exclude = [
-                    f'{common_exclude}/fsaverage/mri/aparc.a2005s+aseg.mgz',
-                    f'{common_exclude}/fsaverage/mri/aparc+aseg.mgz',
-                    f'{common_exclude}/fsaverage/mri/aparc.a2009s+aseg.mgz',
-                    f'{common_exclude}/fsaverage/xhemi/mri/aparc+aseg.mgz',
-                    f'{common_exclude}/sub-01/mri/aparc+aseg.mgz',
-                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
-                    f'{common_exclude}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
-                    f'{common_exclude}/sub-01/mri/aparc.a2009s+aseg.mgz'
+                    f'{exclude_prefix}/fsaverage/mri/aparc.a2005s+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/mri/aparc.a2009s+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/xhemi/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.a2009s+aseg.mgz'
+                ]
+            elif dsname == 'ds003104':
+                exclude_prefix = 'derivatives/freesurfer/subjects'
+                exclude = [
+                    f'{exclude_prefix}/01/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/01/mri/aparc.a2009s+aseg.mgz'
                 ]
             else:
                 exclude = []

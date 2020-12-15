@@ -32,7 +32,6 @@ https://github.com/bids-standard/bids-specification/pull/265
 import os
 import itertools
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -81,8 +80,7 @@ def get_mf_cal_fname(subject, session):
                             datatype='meg',
                             root=config.bids_root).meg_calibration_fpath
     if mf_cal_fpath is None:
-        raise ValueError('Could not find Maxwell Filter Calibration '
-                             'file.')
+        raise ValueError('Could not find Maxwell Filter Calibration file.')
 
     return mf_cal_fpath
 
@@ -94,8 +92,7 @@ def get_mf_ctc_fname(subject, session):
                             datatype='meg',
                             root=config.bids_root).meg_crosstalk_fpath
     if mf_ctc_fpath is None:
-        raise ValueError('Could not find Maxwell Filter cross-talk '
-                            'file.')
+        raise ValueError('Could not find Maxwell Filter cross-talk file.')
 
     return mf_ctc_fpath
 

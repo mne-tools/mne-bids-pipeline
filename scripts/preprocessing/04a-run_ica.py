@@ -67,11 +67,12 @@ def load_and_concatenate_raws(bids_path):
 
 def filter_for_ica(raw, subject, session):
     """Apply a high-pass filter if needed."""
-    if config.ica_l_freq == config.l_freq or config.ica_l_freq is None:
+    if config.ica_l_freq <= config.l_freq or config.ica_l_freq is None:
         # Nothing to do here!
         msg = 'Not applying high-pass filter '
-        if config.ica_l_freq == config.l_freq:
-            msg += '(data is already filtered).'
+        if config.ica_l_freq <= config.l_freq:
+            msg += (f'(data is already filtered, '
+                    f'cutoff: {raw.info["highpass"]} Hz).')
         else:
             msg = '(no filtering requested).'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,

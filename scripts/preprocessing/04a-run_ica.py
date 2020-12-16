@@ -15,6 +15,7 @@ import logging
 from tqdm import tqdm
 
 import pandas as pd
+import numpy as np
 
 import mne
 from mne.report import Report
@@ -269,7 +270,9 @@ def run_ica(subject, session=None):
 
     # Sanity check – make sure we're using the correct data!
     if config.resample_sfreq is not None:
-        assert raw.info['sfreq'] == config.resample_sfreq
+        np.testing.assert_allclose(raw.info['sfreq'], config.resample_sfreq)
+    if config.l_freq is not None:
+        np.testing.assert_allclose(raw.info['highpass'], config.l_freq)
 
     # Produce high-pass filtered version of the data for ICA.
     # filter_for_ica will concatenate all runs of our raw data.

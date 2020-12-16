@@ -124,13 +124,13 @@ def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
         script_paths = SCRIPT_PATHS[group]
     else:
         # User specified 'group/step'
-        for idx, script_path in enumerate(SCRIPT_PATHS[group]):
+        for script_path in SCRIPT_PATHS[group]:
             if step in str(script_path):
                 script_paths = (script_path,)
                 break
-            if idx == len(SCRIPT_PATHS[group]) - 1:
-                # We've iterated over all scripts, but none matched!
-                raise ValueError(f'Invalid steps requested: {group/steps}')
+        else:
+            # We've iterated over all scripts, but none matched!
+            raise ValueError(f'Invalid steps requested: {group}/{steps}')
 
     # Ensure we will restore the original environment variables in most cases
     # upon exit.

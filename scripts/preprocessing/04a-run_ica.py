@@ -15,6 +15,7 @@ import logging
 from tqdm import tqdm
 
 import pandas as pd
+import numpy as np
 
 import mne
 from mne.report import Report
@@ -29,26 +30,35 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-def load_and_concatenate_raws(bids_basename):
-    raw_list = list()
+def load_and_concatenate_raws(bids_path):
+    subject = bids_path.subject
+    session = bids_path.session
+    raws = []
     for run in config.get_runs():
-        processing = None
-        if config.use_maxwell_filter:
-            processing = 'sss'
-        raw_fname_in = (bids_basename.copy()
-                        .update(run=run,
-                                processing=processing))
+        raw_fname_in = bids_path.copy().update(run=run, processing='filt',
+                                               suffix='raw', check=False)
 
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
 
+        msg = f'Loading filtered raw data from {raw_fname_in}'
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session, run=run))
+
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
-        raw_list.append(raw)
+        raws.append(raw)
 
-    raw = mne.concatenate_raws(raw_list)
-    del raw_list
+    msg = 'Concatenating runs'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
 
-    if bids_basename.datatype == 'eeg':
+    if len(raws) == 1:  # avoid extra memory usage
+        raw = raws[0]
+    else:
+        raw = mne.concatenate_raws(raws)
+    del raws
+
+    if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 
     raw.load_data()
@@ -57,9 +67,14 @@ def load_and_concatenate_raws(bids_basename):
 
 def filter_for_ica(raw, subject, session):
     """Apply a high-pass filter if needed."""
-    if config.ica_l_freq == config.l_freq or config.ica_l_freq is None:
+    if config.ica_l_freq <= config.l_freq or config.ica_l_freq is None:
         # Nothing to do here!
-        msg = 'Not applying high-pass filter.'
+        msg = 'Not applying high-pass filter '
+        if config.ica_l_freq <= config.l_freq:
+            msg += (f'(data is already filtered, '
+                    f'cutoff: {raw.info["highpass"]} Hz).')
+        else:
+            msg = '(no filtering requested).'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
     else:
@@ -252,7 +267,13 @@ def run_ica(subject, session=None):
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
     raw = load_and_concatenate_raws(bids_basename.copy().update(
-        suffix='raw', extension='.fif'))
+        processing='filt', suffix='raw', extension='.fif'))
+
+    # Sanity check – make sure we're using the correct data!
+    if config.resample_sfreq is not None:
+        np.testing.assert_allclose(raw.info['sfreq'], config.resample_sfreq)
+    if config.l_freq is not None:
+        np.testing.assert_allclose(raw.info['highpass'], config.l_freq)
 
     # Produce high-pass filtered version of the data for ICA.
     # filter_for_ica will concatenate all runs of our raw data.

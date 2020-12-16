@@ -267,6 +267,10 @@ def run_ica(subject, session=None):
     raw = load_and_concatenate_raws(bids_basename.copy().update(
         processing='filt', suffix='raw', extension='.fif'))
 
+    # Sanity check – make sure we're using the correct data!
+    if config.resample_sfreq is not None:
+        assert raw.info['sfreq'] == config.resample_sfreq
+
     # Produce high-pass filtered version of the data for ICA.
     # filter_for_ica will concatenate all runs of our raw data.
     # We don't have to worry about edge artifacts due to raw concatenation as

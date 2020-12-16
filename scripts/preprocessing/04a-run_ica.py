@@ -41,14 +41,14 @@ def load_and_concatenate_raws(bids_path):
             raw_fname_in.update(split='01')
 
         msg = f'Loading filtered raw data from {raw_fname_in}'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
         raws.append(raw)
 
     msg = 'Concatenating runs'
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
     if len(raws) == 1:  # avoid extra memory usage

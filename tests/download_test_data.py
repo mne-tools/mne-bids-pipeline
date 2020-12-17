@@ -3,6 +3,7 @@ import os
 import os.path as op
 
 import datalad.api as dl
+import openneuro
 import mne
 from mne.commands.utils import get_optparser
 
@@ -14,15 +15,6 @@ def _provide_testing_data(dataset=None):
     urls_dict = {
         'eeg_matchingpennies': (
             'https://github.com/sappelhoff/eeg_matchingpennies'),
-        # Anonymized "somato" dataset.
-        'ds003104': 'https://github.com/OpenNeuroDatasets/ds003104',
-        'ds000246': 'https://github.com/OpenNeuroDatasets/ds000246',
-        # MNE "sample" dataset.
-        'ds000248': 'https://github.com/OpenNeuroDatasets/ds000248',
-        'ds000248_ica': 'https://github.com/OpenNeuroDatasets/ds000248',
-        'ds000117': 'https://github.com/OpenNeuroDatasets/ds000117',
-        'ds001810': 'https://github.com/OpenNeuroDatasets/ds001810',
-        'ds001971': 'https://github.com/OpenNeuroDatasets/ds001971',
     }
     if dataset is None:
         return urls_dict
@@ -57,12 +49,29 @@ def _provide_get_dict(dataset=None):
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
                      'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
-                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv']  # noqa: E501
+                     'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv'],  # noqa: E501
+        'ds003392': ['sub-01',
+                     'sub-emptyroom/ses-19111211']
     }
     if dataset is None:
         return get_dict
     else:
         return {dataset: get_dict[dataset]}
+
+
+testing_ds_name_to_openneuro_ds_map = {
+    # Anonymized "somato" dataset.
+    'ds003104': 'ds003104',
+    'ds000246': 'ds000246',
+    # MNE "sample" dataset.
+    'ds000248': 'ds000248',
+    'ds000248_ica': 'ds000248',
+    'ds000117': 'ds000117',
+    'ds001810': 'ds001810',
+    'ds001971': 'ds001971',
+    # Localizer
+    'ds003392': 'ds003392'
+}
 
 
 def main(dataset):
@@ -74,27 +83,64 @@ def main(dataset):
         os.makedirs(DEFAULT_DATA_DIR, exist_ok=True)
         data_dir = DEFAULT_DATA_DIR
 
-    urls_dict = _provide_testing_data(dataset)
     get_dict = _provide_get_dict(dataset)
 
-    for dsname, url in urls_dict.items():
+    for dsname in get_dict.keys():
         print('\n----------------------')
         dspath = op.join(data_dir, dsname)
-        # install the dataset
-        print('datalad installing "{}"'.format(dsname))
-        dataset = dl.install(path=dspath, source=url)
 
-        # XXX: git-annex bug: https://github.com/datalad/datalad/issues/3583
-        # if datalad fails, use "get" twice, or set `n_jobs=1`
-        if dsname == 'ds003104':
-            n_jobs = 16
+        if dsname in ['eeg_matchingpennies']:
+            # Use datalad
+            urls_dict = _provide_testing_data(dataset)
+            url = urls_dict[dsname]
+            print('datalad installing "{}"'.format(dsname))
+            dataset = dl.install(path=dspath, source=url)
+
+            # XXX: git-annex bug:
+            # https://github.com/datalad/datalad/issues/3583
+            # if datalad fails, use "get" twice, or set `n_jobs=1`
+            if dsname == 'ds003104':
+                n_jobs = 16
+            else:
+                n_jobs = 1
+
+            # get the first subject
+            for to_get in get_dict[dsname]:
+                print('datalad get data "{}" for "{}"'.format(to_get, dsname))
+                dataset.get(to_get, jobs=n_jobs)
         else:
-            n_jobs = 1
+            # Use openneuro-py
+            # Work around bugs in the datasets – trying to download these
+            # files will issue a 404.
+            if dsname == 'ds000248':
+                exclude_prefix = 'derivatives/freesurfer/subjects'
+                exclude = [
+                    f'{exclude_prefix}/fsaverage/mri/aparc.a2005s+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/mri/aparc.a2009s+aseg.mgz',
+                    f'{exclude_prefix}/fsaverage/xhemi/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/sub-01/mri/aparc.a2009s+aseg.mgz'
+                ]
+            elif dsname == 'ds003104':
+                exclude_prefix = 'derivatives/freesurfer/subjects'
+                exclude = [
+                    f'{exclude_prefix}/01/mri/aparc+aseg.mgz',
+                    f'{exclude_prefix}/01/mri/aparc.DKTatlas+aseg.mgz',
+                    f'{exclude_prefix}/01/mri/aparc.a2009s+aseg.mgz'
+                ]
+            else:
+                exclude = []
 
-        # get the first subject
-        for to_get in get_dict[dsname]:
-            print('datalad get data "{}" for "{}"'.format(to_get, dsname))
-            dataset.get(to_get, jobs=n_jobs)
+            openneuro.download.callback(
+                dataset=testing_ds_name_to_openneuro_ds_map[dsname],
+                target_dir=dspath,
+                include=get_dict[dsname],
+                exclude=exclude,
+                verify_size=False
+            )
 
 
 if __name__ == '__main__':

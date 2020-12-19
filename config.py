@@ -710,25 +710,30 @@ The conditions to compute time-frequency decomposition on.
 # ----------------------------
 #
 
-bem_from_flash: Optional[bool] = None
+bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
 """
-Whether to create the BEM surfaces from FLASH MRI images or not. If
-``True``, use FLASH images, and throw an exception if they cannot be
-located. If ``False``, create the BEM surfaces from the T1-weighted
-images using the ``mri_watershed`` algorithm. If ``None``, use FLASH images
-if available, and run ``mri_watershed`` otherwise. It is recommended to use
-the FLASH images if available, as the quality of the extracted BEM surfaces
-will be higher.
+Which types of MRI images to use when creating the BEM model.
+If ``'FLASH'``, use FLASH MRI images, and raise an exception if they cannot be
+found.
+
+???+ info "Advice"
+    It is recommended to use the FLASH images if available, as the quality
+    of the extracted BEM surfaces will be higher.
+
+If ``'T1'``, create the BEM surfaces from the T1-weighted images using the
+``watersehd`` algorithm.
+
+If ``'auto'``, use FLASH images if available, and use the ``watershed``
+algorithm with the T1-weighted images otherwise.
 
 *[FLASH MRI]: Fast low angle shot magnetic resonance imaging
 """
 
 recreate_bem: bool = False
 """
-Whether to re-create the BEM surfaces using the watershed algorithm, even
-if existing surfaces have been found. If ``False``, the BEM surfaces are only
-created if they do not exist already. ``True`` forces their recreation,
-overwriting existing BEM surfaces.
+Whether to re-create the BEM surfaces, even if existing surfaces have been
+found. If ``False``, the BEM surfaces are only created if they do not exist
+already. ``True`` forces their recreation, overwriting existing BEM surfaces.
 """
 
 spacing: str = 'oct6'
@@ -948,6 +953,7 @@ if not bids_root:
            'root folder of your BIDS dataset')
     raise ValueError(msg)
 
+bids_root = pathlib.Path(bids_root).expanduser()
 
 ###############################################################################
 # Derivates root
@@ -1027,6 +1033,11 @@ if noise_cov == 'emptyroom' and not process_er:
     msg = ('You requested noise covariance estimation from empty-room '
            'recordings by setting noise_cov = "emptyroom", but you did not '
            'enable empty-room data processing. Please set process_er = True')
+    raise ValueError(msg)
+
+if bem_mri_images not in ('FLASH', 'T1', 'auto'):
+    msg = (f'Unknown bem_mri_images: {bem_mri_images}. Valid values '
+           f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
 
 

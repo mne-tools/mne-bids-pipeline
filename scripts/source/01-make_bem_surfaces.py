@@ -30,17 +30,17 @@ def make_bem(subject):
     flash_dir = mri_dir / 'flash' / 'parameter_maps'
     show = True if config.interactive else False
 
-    if config.bem_from_flash and not flash_dir.exists():
+    if config.bem_mri_images == 'FLASH' and not flash_dir.exists():
         raise RuntimeError('Cannot locate FLASH MRI images.')
-
-    if (config.bem_from_flash is True) or (config.bem_from_flash is None and
-                                           flash_dir.exists()):
-        bem_from_flash = True
+    elif config.bem_mri_images == 'FLASH':
+        mri_images = 'FLASH'
+    elif config.bem_mri_images == 'auto' and flash_dir.exists():
+        mri_images = 'FLASH'
     else:
-        bem_from_flash = False
+        mri_images = 'T1'
 
-    if ((bem_from_flash and flash_bem_dir.exists()) or
-            (not bem_from_flash and watershed_bem_dir.exists())):
+    if ((mri_images == 'FLASH' and flash_bem_dir.exists()) or
+            (mri_images == 'T1' and watershed_bem_dir.exists())):
         msg = 'Found existing BEM surfaces. '
         if config.recreate_bem:
             msg += 'Overwriting as requested in configuration.'
@@ -50,7 +50,7 @@ def make_bem(subject):
             logger.info(gen_log_message(step=10, message=msg))
             return
 
-    if bem_from_flash:
+    if mri_images == 'FLASH':
         msg = 'Creating BEM surfaces from FLASH MRI images'
         logger.info(gen_log_message(step=10, message=msg))
         mne.bem.make_flash_bem(subject=fs_subject,

@@ -1,2 +1,2 @@
-::: config.bem_creation_method
+::: config.bem_mri_images
 ::: config.recreate_bem

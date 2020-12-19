@@ -13,3 +13,6 @@ find_noisy_channels_meg = True
 use_maxwell_filter = True
 process_er = True
 noise_cov = 'emptyroom'
+
+bem_mri_images = 'FLASH'
+recreate_bem = True

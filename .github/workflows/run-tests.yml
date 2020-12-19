@@ -1,0 +1,91 @@
+name: Run the test suite
+
+on: [push, pull_request]
+
+jobs:
+  # run-tests:
+  #   name: ${{ matrix.os }}, Python ${{ matrix.python-version }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       # os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+  #       os: ["ubuntu-latest"]
+  #       python-version: ["3.6", "3.7", "3.8"]
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: conda-incubator/setup-miniconda@v2
+  #     with:
+  #       auto-update-conda: true
+  #       python-version: ${{ matrix.python-version }}
+  #   - name: Conda info
+  #     run: conda info
+  #   - name: Conda list
+  #     run: conda list
+  #   - name: Install datalad
+  #     run: |
+  #       conda install -y -c conda-forge git-annex datalad
+  #       git config --global user.email "user@mne.com"
+  #       git config --global user.name "mne user"
+  #   - name: Install Python dependencies
+  #     run: |
+  #       conda install -y -c conda-forge \
+  #           python=${{ matrix.python-version }} \
+  #           numpy scipy scikit-learn pandas json_tricks matplotlib \
+  #           seaborn nibabel coloredlogs python-picard fire \
+  #           typing_extensions  # for Python <3.8
+
+  #       # Install MNE
+  #       pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master
+  #       # Install MNE-BIDS
+  #       pip install -U https://api.github.com/repos/mne-tools/mne-bids/zipball/master
+  #   - name: Check installation
+  #     run: |
+  #       which python
+  #       git-annex version
+  #       datalad --version
+  #       mne_bids --version
+  #       mne --version
+  #       python -c "import mne; mne.sys_info()"
+  #   - name: Setup reports artifact storage
+  #     run: mkdir ~/reports
+  #   - name: test ds000246
+  #     run: |
+  #        export DS=ds000246
+  #        python ./tests/run_tests.py ${DS}
+  #        mkdir ~/reports/${DS}
+  #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+  #        cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
+  #        rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+  #   - name: Store artifacts
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: reports
+  #       path: ~/reports
+
+  check-style:
+    name: Check style
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+    - name: Conda info
+      run: conda info
+    - name: Conda list
+      run: conda list
+    - name: Install flake8
+      run: conda install -y flake8
+    - name: Lint scripts with flake8
+      run: flake8 ./run*.py ./scripts
+    - name: Lint config.py with flake8
+      run: flake8 ./config.py --ignore=E501,W503,W504

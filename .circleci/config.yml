@@ -86,7 +86,7 @@ jobs:
 
         - run:
             name: Temporary check
-            command: env
+            command: echo `env`
 
         # Look at what we have and fail early if there is some library conflict
         - run:

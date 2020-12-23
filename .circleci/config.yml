@@ -86,7 +86,7 @@ jobs:
                which python
                git-annex version
                datalad --version
-               freesurver --version
+               freesurfer --version
                openneuro-py --version
                mne_bids --version
                mne --version

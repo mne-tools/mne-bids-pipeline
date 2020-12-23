@@ -52,21 +52,18 @@ def make_bem(subject):
 
     if mri_images == 'FLASH':
         msg = 'Creating BEM surfaces from FLASH MRI images'
-        logger.info(gen_log_message(step=10, message=msg))
-        mne.bem.make_flash_bem(subject=fs_subject,
-                               subjects_dir=fs_subjects_dir,
-                               copy=True,  # XXX Revise!
-                               overwrite=True,
-                               show=show)
+        bem_func = mne.bem.make_flash_bem
     else:
         msg = ('Creating BEM surfaces from T1-weighted MRI images using '
                'watershed algorithm')
-        logger.info(gen_log_message(step=10, message=msg))
-        mne.bem.make_watershed_bem(subject=fs_subject,
-                                   subjects_dir=fs_subjects_dir,
-                                   copy=True,  # XXX Revise!
-                                   overwrite=True,
-                                   show=show)
+        bem_func = mne.bem.make_watershed_bem
+
+    logger.info(gen_log_message(step=10, message=msg))
+    bem_func(subject=fs_subject,
+             subjects_dir=fs_subjects_dir,
+             copy=True,
+             overwrite=True,
+             show=show)
 
 
 def main():

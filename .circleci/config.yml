@@ -77,6 +77,7 @@ jobs:
               tar xzvf freesurfer.tar.gz
               echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
               echo "export SUBJECTS_DIR=$FREESURFER_HOME/subjects" >> $BASH_ENV;
+              echo "source $FREESURFER_HOME/SetUpFreeSurfer.sh" >> $BASH_ENV;
               cp project/tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
               cd ~/project
 
@@ -84,7 +85,6 @@ jobs:
         - run:
             name: Check installation
             command: |
-               $FREESURFER_HOME/SetUpFreeSurfer.sh
                which python
                git-annex version
                datalad --version
@@ -125,7 +125,6 @@ jobs:
         - run:
             name: test ds000248
             command: |
-               $FREESURFER_HOME/SetUpFreeSurfer.sh
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}

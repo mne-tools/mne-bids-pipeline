@@ -84,6 +84,10 @@ jobs:
               echo "source ~/freesurfer/SetUpFreeSurfer.sh" >> $BASH_ENV;
               cd ~/project
 
+        - run:
+            name: Temporary check
+            command: env
+
         # Look at what we have and fail early if there is some library conflict
         - run:
             name: Check installation

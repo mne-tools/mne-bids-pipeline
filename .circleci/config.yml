@@ -72,12 +72,14 @@ jobs:
         - run:
             name: Install FreeSurfer
             command: |
+              cd ~
               curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
               tar xzvf freesurfer.tar.gz
               export FREESURFER_HOME=~/freesurfer
               export SUBJECTS_DIR=$FREESURFER_HOME/subjects
               source $FREESURFER_HOME/SetUpFreeSurfer.sh
-              cp tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
+              cp project/tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
+              cd ~/project
 
         # Look at what we have and fail early if there is some library conflict
         - run:

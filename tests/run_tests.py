@@ -37,7 +37,7 @@ TEST_SUITE = {
 }
 
 
-def run_tests(test_suite):
+def run_tests(test_suite, download):
     """Run a suite of tests.
 
     Parameters
@@ -46,6 +46,8 @@ def run_tests(test_suite):
         Each key in the dict is a dataset to be tested. The associated value is
         a tuple with the first element the dataset config, and all remaining
         elements function handles to be called.
+    download : bool
+        Whether to (re-)download the test dataset.
 
     Notes
     -----
@@ -63,7 +65,8 @@ def run_tests(test_suite):
         del config_name
 
         # Fetch the data.
-        fetch(dataset)
+        if download:
+            fetch(dataset)
 
         # Run the tests.
         steps = test_tuple[1:]
@@ -82,16 +85,16 @@ def run_tests(test_suite):
 
 
 if __name__ == '__main__':
-    # Check if we have a DATASET env var, else: inquire for one
-    dataset = os.environ.get('DATASET')
-    if dataset is None:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('dataset', help=('dataset to test. A key in the '
-                                             'TEST_SUITE dictionary. or ALL, '
-                                             'to test all datasets.'))
-        args = parser.parse_args()
-        dataset = args.dataset
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dataset', help='dataset to test. A key in the '
+                                        'TEST_SUITE dictionary, or ALL, '
+                                        'to test all datasets.')
+    parser.add_argument('--download', choices=['0', '1'],
+                        help='Whether to (re-)download the dataset.')
+    args = parser.parse_args()
+    dataset = args.dataset
+    download = args.download
+    download = True if download is None else bool(int(download))
     # Triage the dataset and raise informative error if it does not exist
     if dataset == 'ALL':
         test_suite = TEST_SUITE
@@ -110,4 +113,4 @@ if __name__ == '__main__':
     print('Running the following tests: {}'
           .format(', '.join(test_suite.keys())))
 
-    run_tests(test_suite)
+    run_tests(test_suite, download=download)

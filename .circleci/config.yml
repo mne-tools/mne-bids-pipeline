@@ -81,6 +81,7 @@ jobs:
               tar xzvf freesurfer.tar.gz
               cp project/tests/freesurfer-license.txt freesurfer/license.txt
               ~/freesurfer/SetUpFreeSurfer.sh
+              echo "export PATH=~/freesurfer/bin:$PATH" >> $BASH_ENV;
               cd ~/project
 
         # Look at what we have and fail early if there is some library conflict

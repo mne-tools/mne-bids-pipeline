@@ -78,6 +78,7 @@ jobs:
               echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
               echo "export SUBJECTS_DIR=~/freesurfer/subjects" >> $BASH_ENV;
               echo "source ~/freesurfer/SetUpFreeSurfer.sh" >> $BASH_ENV;
+              ~/freesurfer/SetUpFreeSurfer.sh
               cp project/tests/freesurfer-license.txt freesurfer/license.txt
               cd ~/project
 

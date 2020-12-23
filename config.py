@@ -723,7 +723,7 @@ found.
     of the extracted BEM surfaces will be higher.
 
 If ``'T1'``, create the BEM surfaces from the T1-weighted images using the
-``watersehd`` algorithm.
+``watershed`` algorithm.
 
 If ``'auto'``, use FLASH images if available, and use the ``watershed``
 algorithm with the T1-weighted images otherwise.
@@ -757,7 +757,7 @@ Exclude points closer than this distance (mm) to the bounding surface.
 # # ``loose`` : float in [0, 1] | 'auto'
 # """
 # Value that weights the source variances of the dipole components
-# that are parallel (tangential) to the cortical surface.If ``0``, then the
+# that are parallel (tangential) to the cortical surface. If ``0``, then the
 # inverse solution is computed with **fixed orientation.**
 # If ``1``, it corresponds to **free orientation.**
 # The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source

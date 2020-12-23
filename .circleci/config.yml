@@ -75,11 +75,13 @@ jobs:
               cd ~
               curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
               tar xzvf freesurfer.tar.gz
+              cp project/tests/freesurfer-license.txt freesurfer/license.txt
+              export FREESURFER_HOME=~/freesurfer
+              export SUBJECTS_DIR=~/freesurfer/subjects
+              ~/freesurfer/SetUpFreeSurfer.sh
               echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
               echo "export SUBJECTS_DIR=~/freesurfer/subjects" >> $BASH_ENV;
               echo "source ~/freesurfer/SetUpFreeSurfer.sh" >> $BASH_ENV;
-              ~/freesurfer/SetUpFreeSurfer.sh
-              cp project/tests/freesurfer-license.txt freesurfer/license.txt
               cd ~/project
 
         # Look at what we have and fail early if there is some library conflict

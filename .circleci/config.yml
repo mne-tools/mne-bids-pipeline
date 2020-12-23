@@ -68,6 +68,30 @@ jobs:
             key: pip-cache-0
             paths:
               - ~/.cache/pip
+        
+        - run:
+            name: Install FreeSurfer
+            command: |
+              mkdir freesurfer
+              wget ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
+              tar xzvf --exclude='freesurfer/average/mult-comp-cor' \
+                       --exclude='freesurfer/lib/cuda' \
+                       --exclude='freesurfer/lib/qt' \
+                       --exclude='freesurfer/subjects/V1_average' \
+                       --exclude='freesurfer/subjects/bert' \
+                       --exclude='freesurfer/subjects/cvs_avg35' \
+                       --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
+                       --exclude='freesurfer/subjects/fsaverage3' \
+                       --exclude='freesurfer/subjects/fsaverage4' \
+                       --exclude='freesurfer/subjects/fsaverage5' \
+                       --exclude='freesurfer/subjects/fsaverage6' \
+                       --exclude='freesurfer/subjects/fsaverage_sym' \
+                       --exclude='freesurfer/trctrain' \
+                       freesurfer.tar.gz
+              export FREESURFER_HOME=~/freesurfer
+              export SUBJECTS_DIR=$FREESURFER_HOME/subjects
+              source $FREESURFER_HOME/SetUpFreeSurfer.sh
+              cp tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
 
         # Look at what we have and fail early if there is some library conflict
         - run:
@@ -76,6 +100,7 @@ jobs:
                which python
                git-annex version
                datalad --version
+               freesurver --version
                openneuro-py --version
                mne_bids --version
                mne --version

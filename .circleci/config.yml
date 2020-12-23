@@ -4,8 +4,8 @@ jobs:
       docker:
         - image: circleci/python:3.6.8-stretch
       environment:
-        - FREESURFER_HOME: ~/freesurfer
-        - SUBJECTS_DIR: ~/freesurfer/subjects
+        - FREESURFER_HOME: /home/circleci/freesurfer
+        - SUBJECTS_DIR: /home/circleci/freesurfer/subjects
 
       steps:
         - checkout

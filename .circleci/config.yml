@@ -78,7 +78,7 @@ jobs:
               echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
               echo "export SUBJECTS_DIR=$FREESURFER_HOME/subjects" >> $BASH_ENV;
               echo "source $FREESURFER_HOME/SetUpFreeSurfer.sh" >> $BASH_ENV;
-              cp project/tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
+              cp project/tests/freesurfer-license.txt freesurfer/license.txt
               cd ~/project
 
         # Look at what we have and fail early if there is some library conflict

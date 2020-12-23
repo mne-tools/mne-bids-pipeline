@@ -3,6 +3,10 @@ jobs:
     run_tests:
       docker:
         - image: circleci/python:3.6.8-stretch
+      environment:
+        - FREESURFER_HOME: ~/freesurfer
+        - SUBJECTS_DIR: ~/freesurfer/subjects
+
       steps:
         - checkout
 
@@ -76,18 +80,8 @@ jobs:
               curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
               tar xzvf freesurfer.tar.gz
               cp project/tests/freesurfer-license.txt freesurfer/license.txt
-              export FREESURFER_HOME=~/freesurfer
-              export SUBJECTS_DIR=~/freesurfer/subjects
               ~/freesurfer/SetUpFreeSurfer.sh
-              echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
-              echo "export SUBJECTS_DIR=~/freesurfer/subjects" >> $BASH_ENV;
-              echo "source ~/freesurfer/SetUpFreeSurfer.sh" >> $BASH_ENV;
               cd ~/project
-
-        - run:
-            name: Temporary check
-            command: |
-              env
 
         # Look at what we have and fail early if there is some library conflict
         - run:
@@ -133,6 +127,7 @@ jobs:
         - run:
             name: test ds000248
             command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}

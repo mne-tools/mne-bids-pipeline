@@ -75,9 +75,8 @@ jobs:
               cd ~
               curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
               tar xzvf freesurfer.tar.gz
-              export FREESURFER_HOME=~/freesurfer
-              export SUBJECTS_DIR=$FREESURFER_HOME/subjects
-              $FREESURFER_HOME/SetUpFreeSurfer.sh
+              echo "export FREESURFER_HOME=~/freesurfer" >> $BASH_ENV;
+              echo "export SUBJECTS_DIR=$FREESURFER_HOME/subjects" >> $BASH_ENV;
               cp project/tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
               cd ~/project
 
@@ -85,6 +84,7 @@ jobs:
         - run:
             name: Check installation
             command: |
+               $FREESURFER_HOME/SetUpFreeSurfer.sh
                which python
                git-annex version
                datalad --version
@@ -125,6 +125,7 @@ jobs:
         - run:
             name: test ds000248
             command: |
+               $FREESURFER_HOME/SetUpFreeSurfer.sh
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}

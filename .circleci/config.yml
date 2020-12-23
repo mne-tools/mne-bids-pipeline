@@ -77,7 +77,7 @@ jobs:
               tar xzvf freesurfer.tar.gz
               export FREESURFER_HOME=~/freesurfer
               export SUBJECTS_DIR=$FREESURFER_HOME/subjects
-              source $FREESURFER_HOME/SetUpFreeSurfer.sh
+              $FREESURFER_HOME/SetUpFreeSurfer.sh
               cp project/tests/freesurfer-license.txt $FREESURFER_HOME/license.txt
               cd ~/project
 

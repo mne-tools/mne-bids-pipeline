@@ -34,6 +34,7 @@ def _provide_get_dict(dataset=None):
                      'derivatives/freesurfer/subjects'],
         'ds000248_ica': ['sub-01'],
         'ds000248_T1_BEM': ['derivatives/freesurfer/subjects/sub-01'],
+        'ds000248_FLASH_BEM': ['derivatives/freesurfer/subjects/sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501

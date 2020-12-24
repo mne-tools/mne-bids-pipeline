@@ -136,7 +136,7 @@ jobs:
             name: test BEM from FLASH
             command: |
               ~/freesurfer/SetUpFreeSurfer.sh
-               export DS=ds000248_T1_FLASH
+               export DS=ds000248_FLASH_BEM
                python tests/run_tests.py ${DS}
 
         - run:

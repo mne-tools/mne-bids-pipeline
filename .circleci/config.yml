@@ -3,6 +3,10 @@ jobs:
     run_tests:
       docker:
         - image: circleci/python:3.6.8-stretch
+      environment:
+        - FREESURFER_HOME: /home/circleci/freesurfer
+        - SUBJECTS_DIR: /home/circleci/freesurfer/subjects
+
       steps:
         - checkout
 
@@ -68,6 +72,17 @@ jobs:
             key: pip-cache-0
             paths:
               - ~/.cache/pip
+        
+        - run:
+            name: Install FreeSurfer
+            command: |
+              cd ~
+              curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
+              tar xzvf freesurfer.tar.gz
+              cp project/tests/freesurfer-license.txt freesurfer/license.txt
+              ~/freesurfer/SetUpFreeSurfer.sh
+              echo "export PATH=~/freesurfer/bin:$PATH" >> $BASH_ENV;
+              cd ~/project
 
         # Look at what we have and fail early if there is some library conflict
         - run:
@@ -76,6 +91,7 @@ jobs:
                which python
                git-annex version
                datalad --version
+               freesurfer --version
                openneuro-py --version
                mne_bids --version
                mne --version
@@ -110,8 +126,23 @@ jobs:
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
+            name: test BEM from T1 (watershed)
+            command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
+               export DS=ds000248_T1_BEM
+               python tests/run_tests.py ${DS}
+
+        - run:
+            name: test BEM from FLASH
+            command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
+               export DS=ds000248_FLASH_BEM
+               python tests/run_tests.py ${DS}
+
+        - run:
             name: test ds000248
             command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}

@@ -12,7 +12,7 @@ import sys
 import copy
 import coloredlogs
 import logging
-from typing import Optional, Union, Iterable
+from typing import Optional, Union, Iterable, List
 try:
     from typing import Literal
 except ImportError:  # Python <3.8
@@ -21,6 +21,8 @@ except ImportError:  # Python <3.8
 import numpy as np
 import mne
 from mne_bids.path import get_entity_vals
+
+PathLike = Union[str, pathlib.Path]
 
 
 study_name: str = ''
@@ -35,7 +37,7 @@ saving the analysis results.
     ```
 """
 
-bids_root: Optional[str] = None
+bids_root: Optional[PathLike] = None
 """
 Speficy the BIDS root directory. Pass an empty string or ```None`` to use
 the value specified in the ``BIDS_ROOT`` environment variable instead.
@@ -48,7 +50,7 @@ Raises an exception if the BIDS root has not been specified.
     ```
 """
 
-subjects_dir: Optional[str] = None
+subjects_dir: Optional[PathLike] = None
 """
 Path to the directory that contains the MRI data files and their
 derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
@@ -80,7 +82,7 @@ If tuple, (tmin, tmax) to crop the raw data
 If None (default), do not crop.
 """
 
-sessions: Union[Iterable, Literal['all']] = 'all'
+sessions: Union[List, Literal['all']] = 'all'
 """
 The sessions to process.
 """
@@ -706,16 +708,44 @@ The conditions to compute time-frequency decomposition on.
 """
 
 ###############################################################################
-# SOURCE SPACE PARAMETERS
-# -----------------------
+# SOURCE ESTIMATION PARAMETERS
+# ----------------------------
 #
 
-spacing: str = 'oct6'
+bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
+"""
+Which types of MRI images to use when creating the BEM model.
+If ``'FLASH'``, use FLASH MRI images, and raise an exception if they cannot be
+found.
+
+???+ info "Advice"
+    It is recommended to use the FLASH images if available, as the quality
+    of the extracted BEM surfaces will be higher.
+
+If ``'T1'``, create the BEM surfaces from the T1-weighted images using the
+``watershed`` algorithm.
+
+If ``'auto'``, use FLASH images if available, and use the ``watershed``
+algorithm with the T1-weighted images otherwise.
+
+*[FLASH MRI]: Fast low angle shot magnetic resonance imaging
+"""
+
+recreate_bem: bool = False
+"""
+Whether to re-create the BEM surfaces, even if existing surfaces have been
+found. If ``False``, the BEM surfaces are only created if they do not exist
+already. ``True`` forces their recreation, overwriting existing BEM surfaces.
+"""
+
+spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
 """
 The spacing to use. Can be ``'ico#'`` for a recursively subdivided
 icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
 ``'all'`` for all points, or an integer to use appoximate
-distance-based spacing (in mm).
+distance-based spacing (in mm). See (the respective MNE-Python documentation)
+[https://mne.tools/dev/overview/cookbook.html#setting-up-the-source-space]
+for more info.
 """
 
 mindist: float = 5
@@ -723,27 +753,26 @@ mindist: float = 5
 Exclude points closer than this distance (mm) to the bounding surface.
 """
 
-loose: Union[float, Literal['auto']] = 0.2
-# ``loose`` : float in [0, 1] | 'auto'
-"""
-Value that weights the source variances of the dipole components
-that are parallel (tangential) to the cortical surface. If loose
-is 0 then the solution is computed with fixed orientation,
-and fixed must be True or "auto".
-If loose is 1, it corresponds to free orientations.
-The default value ('auto') is set to 0.2 for surface-oriented source
-space and set to 1.0 for volumetric, discrete, or mixed source spaces,
-unless ``fixed is True`` in which case the value 0. is used.
-"""
+# loose: Union[float, Literal['auto']] = 0.2
+# # ``loose`` : float in [0, 1] | 'auto'
+# """
+# Value that weights the source variances of the dipole components
+# that are parallel (tangential) to the cortical surface. If ``0``, then the
+# inverse solution is computed with **fixed orientation.**
+# If ``1``, it corresponds to **free orientation.**
+# The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
+# spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
+# unless ``fixed is True`` in which case the value 0. is used.
+# """
 
-depth: Optional[Union[float, dict]] = 0.8
-"""
-If float (default 0.8), it acts as the depth weighting exponent (``exp``)
-to use (must be between 0 and 1). None is equivalent to 0, meaning no
-depth weighting is performed. Can also be a `dict` containing additional
-keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-(see docstring for details and defaults).
-"""
+# depth: Optional[Union[float, dict]] = 0.8
+# """
+# If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+# to use (must be between 0 and 1). None is equivalent to 0, meaning no
+# depth weighting is performed. Can also be a `dict` containing additional
+# keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+# (see docstring for details and defaults).
+# """
 
 inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
 """
@@ -786,13 +815,6 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'emptyroom'
     ```
-"""
-
-smooth: Optional[int] = 10
-"""
-Number of iterations for the smoothing of the surface data.
-If None, smooth is automatically defined to fill the surface
-with non-zero values. The default is spacing=None.
 """
 
 ###############################################################################
@@ -935,6 +957,7 @@ if not bids_root:
            'root folder of your BIDS dataset')
     raise ValueError(msg)
 
+bids_root = pathlib.Path(bids_root).expanduser()
 
 ###############################################################################
 # Derivates root
@@ -1016,6 +1039,11 @@ if noise_cov == 'emptyroom' and not process_er:
            'enable empty-room data processing. Please set process_er = True')
     raise ValueError(msg)
 
+if bem_mri_images not in ('FLASH', 'T1', 'auto'):
+    msg = (f'Unknown bem_mri_images: {bem_mri_images}. Valid values '
+           f'are: "FLASH", "T1", and "auto".')
+    raise ValueError(msg)
+
 
 ###############################################################################
 # Helper functions
@@ -1036,16 +1064,16 @@ def get_sessions():
         return sessions_
 
 
-def get_runs():
+def get_runs() -> list:
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
     valid_runs = get_entity_vals(bids_root, entity_key='run')
 
-    env = os.environ
-    if env.get('MNE_BIDS_STUDY_RUN'):
-        env_run = env['MNE_BIDS_STUDY_RUN']
+    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
+    if env_run and env_run not in valid_runs:
         raise ValueError(
             f'Invalid run. It can be {valid_runs} but '
             f'got {env_run}')
+    elif env_run:
         runs_ = [env_run]
     elif runs_ == 'all':
         runs_ = valid_runs
@@ -1064,7 +1092,7 @@ if mf_reference_run is not None and mf_reference_run not in get_runs():
     raise ValueError(msg)
 
 
-def get_mf_reference_run():
+def get_mf_reference_run() -> str:
     # Retrieve to run identifier (number, name) of the reference run
     if mf_reference_run is None:
         # Use the first run
@@ -1073,7 +1101,7 @@ def get_mf_reference_run():
         return mf_reference_run
 
 
-def get_subjects():
+def get_subjects() -> List[str]:
     global subjects
 
     env = os.environ
@@ -1099,7 +1127,7 @@ def get_subjects():
     return sorted(subjects)
 
 
-def get_task():
+def get_task() -> Optional[str]:
     global task
 
     env = os.environ
@@ -1120,7 +1148,7 @@ def get_task():
         return task
 
 
-def get_datatype():
+def get_datatype() -> Literal['meg', 'eeg']:
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
     if data_type is not None:
@@ -1135,7 +1163,7 @@ def get_datatype():
                            "the mne-study-template developers. Thank you.")
 
 
-def get_reject():
+def get_reject() -> dict:
     if reject is None:
         return dict()
 
@@ -1161,7 +1189,8 @@ def get_fs_subjects_dir():
         return subjects_dir
 
 
-def gen_log_message(message, step=None, subject=None, session=None, run=None):
+def gen_log_message(message, step=None, subject=None, session=None,
+                    run=None) -> str:
     if subject is not None:
         subject = f'sub-{subject}'
     if session is not None:
@@ -1264,7 +1293,7 @@ def plot_auto_scores(auto_scores):
     return figs
 
 
-def get_channels_to_analyze(info):
+def get_channels_to_analyze(info) -> List[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
@@ -1290,7 +1319,7 @@ def get_channels_to_analyze(info):
     return ch_names
 
 
-def get_fs_subject(subject):
+def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
 
     if (pathlib.Path(subjects_dir) / subject).exists():

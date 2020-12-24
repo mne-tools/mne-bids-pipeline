@@ -5,7 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 import logging
-from typing import Union, Optional
+from typing import Union
 
 import fire
 
@@ -61,8 +61,8 @@ def run_recon(root_dir, fs_bids_app, subject, overwrite):
 
 def main(config: Union[str, Path],
          fs_bids_app_dir: Union[str, Path],
-         overwrite: Optional[bool] = False,
-         n_jobs: Optional[int] = 1):
+         overwrite: bool = False,
+         n_jobs: int = 1):
     """Run freesurfer recon-all command on BIDS dataset.
 
     The command allows to run the freesurfer recon-all

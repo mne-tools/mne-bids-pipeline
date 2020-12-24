@@ -53,26 +53,39 @@ def run_forward(subject, session=None):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
+    # Create the source space.
+    msg = 'Creating source space'
+    logger.info(gen_log_message(message=msg, step=10, subject=subject,
+                                session=session))
     src = mne.setup_source_space(subject=fs_subject,
                                  subjects_dir=fs_subjects_dir,
                                  spacing=config.spacing,
-                                 add_dist=False)
+                                 add_dist=False,
+                                 n_jobs=config.N_JOBS)
 
-    evoked = mne.read_evokeds(fname_evoked, condition=0)
+    # Calculate the BEM solution.
+    # Here we only use a 3-layers BEM only if EEG is available.
+    msg = 'Calculating BEM solution'
+    logger.info(gen_log_message(message=msg, step=10, subject=subject,
+                                session=session))
 
-    # Here we only use 3-layers BEM only if EEG is available.
     if 'eeg' in config.ch_types:
         conductivity = (0.3, 0.006, 0.3)
     else:
         conductivity = (0.3,)
 
-    model = mne.make_bem_model(subject=fs_subject,
-                               subjects_dir=fs_subjects_dir,
-                               ico=4, conductivity=conductivity)
+    bem_model = mne.make_bem_model(subject=fs_subject,
+                                   subjects_dir=fs_subjects_dir,
+                                   ico=4, conductivity=conductivity)
+    bem_sol = mne.make_bem_solution(bem_model)
 
-    bem = mne.make_bem_solution(model)
-    fwd = mne.make_forward_solution(evoked.info, trans, src, bem,
-                                    mindist=config.mindist)
+    # Finally, calculate and save the forward solution.
+    msg = 'Calculating forward solution'
+    logger.info(gen_log_message(message=msg, step=10, subject=subject,
+                                session=session))
+    info = mne.io.read_info(fname_evoked)
+    fwd = mne.make_forward_solution(info, trans=trans, src=src,
+                                    bem=bem_sol, mindist=config.mindist)
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
 
 

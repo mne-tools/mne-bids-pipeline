@@ -2,7 +2,6 @@
 import os
 import os.path as op
 
-import datalad.api as dl
 import openneuro
 import mne
 from mne.commands.utils import get_optparser
@@ -34,6 +33,7 @@ def _provide_get_dict(dataset=None):
         'ds000248': ['sub-01', 'sub-emptyroom',
                      'derivatives/freesurfer/subjects'],
         'ds000248_ica': ['sub-01'],
+        'ds000248_T1_BEM': ['derivatives/freesurfer/subjects/sub-01'],
         'ds000117': ['sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
                      'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501
@@ -66,6 +66,8 @@ testing_ds_name_to_openneuro_ds_map = {
     # MNE "sample" dataset.
     'ds000248': 'ds000248',
     'ds000248_ica': 'ds000248',
+    'ds000248_T1_BEM': 'ds000248',
+    'ds000248_FLASH_BEM': 'ds000248',
     'ds000117': 'ds000117',
     'ds001810': 'ds001810',
     'ds001971': 'ds001971',
@@ -91,6 +93,8 @@ def main(dataset):
 
         if dsname in ['eeg_matchingpennies']:
             # Use datalad
+            import datalad.api as dl
+
             urls_dict = _provide_testing_data(dataset)
             url = urls_dict[dsname]
             print('datalad installing "{}"'.format(dsname))
@@ -112,7 +116,7 @@ def main(dataset):
             # Use openneuro-py
             # Work around bugs in the datasets – trying to download these
             # files will issue a 404.
-            if dsname == 'ds000248':
+            if dsname.startswith('ds000248'):
                 exclude_prefix = 'derivatives/freesurfer/subjects'
                 exclude = [
                     f'{exclude_prefix}/fsaverage/mri/aparc.a2005s+aseg.mgz',

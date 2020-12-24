@@ -126,6 +126,20 @@ jobs:
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
         - run:
+            name: test BEM from T1 (watershed)
+            command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
+               export DS=ds000248_T1_BEM
+               python tests/run_tests.py ${DS}
+
+        - run:
+            name: test BEM from FLASH
+            command: |
+              ~/freesurfer/SetUpFreeSurfer.sh
+               export DS=ds000248_T1_FLASH
+               python tests/run_tests.py ${DS}
+
+        - run:
             name: test ds000248
             command: |
               ~/freesurfer/SetUpFreeSurfer.sh

@@ -86,6 +86,6 @@ jobs:
     - name: Install flake8
       run: conda install -y flake8
     - name: Lint scripts with flake8
-      run: flake8 ./run*.py ./scripts
+      run: flake8 ./run*.py ./scripts --exclude ./scripts/freesurfer/contrib
     - name: Lint config.py with flake8
       run: flake8 ./config.py --ignore=E501,W503,W504

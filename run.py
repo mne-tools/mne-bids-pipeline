@@ -3,8 +3,6 @@
 import fire
 import os
 import runpy
-import signal
-import atexit
 import pathlib
 import logging
 import coloredlogs
@@ -16,6 +14,9 @@ except ImportError:  # Python <3.8
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
+
+PathLike = Union[str, pathlib.Path]
+
 
 PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
                          '02-frequency_filter.py',
@@ -38,6 +39,8 @@ SOURCE_SCRIPTS = ('01-make_bem_surfaces.py',
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 
+FREESURFER_SCRIPTS = ('recon_all.py',)
+
 SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
 
 SCRIPT_PATHS = {
@@ -48,8 +51,13 @@ SCRIPT_PATHS = {
     'source': [SCRIPT_BASE_DIR / 'source' / s
                for s in SOURCE_SCRIPTS],
     'report': [SCRIPT_BASE_DIR / 'report' / s
-               for s in REPORT_SCRIPTS]
+               for s in REPORT_SCRIPTS],
+    'freesurfer': [SCRIPT_BASE_DIR / 'freesurfer' / s
+                   for s in FREESURFER_SCRIPTS]
 }
+
+# Do not include the FreeSurfer scripts in "all" – we don't intend to run
+# recon-all by default!
 SCRIPT_PATHS['all'] = (SCRIPT_PATHS['preprocessing'] +
                        SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
                        SCRIPT_PATHS['report'])
@@ -82,8 +90,8 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
 
 def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
             *,
-            config: Union[str, pathlib.Path],
-            root_dir: Optional[Union[str, pathlib.Path]] = None,
+            config: PathLike,
+            root_dir: Optional[PathLike] = None,
             subject: Optional[str] = None,
             session: Optional[str] = None,
             task: Optional[str] = None,
@@ -132,21 +140,6 @@ def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
         else:
             # We've iterated over all scripts, but none matched!
             raise ValueError(f'Invalid steps requested: {group}/{steps}')
-
-    # Ensure we will restore the original environment variables in most cases
-    # upon exit.
-    env_orig = os.environ.copy()
-
-    def _restore_env():
-        os.environ.update(env_orig)
-
-    signals = (
-        signal.SIGINT,  # Ctrl-C
-        signal.SIGTERM  # Sent by kill command
-    )
-    for s in signals:
-        signal.signal(s, _restore_env)
-    atexit.register(_restore_env)
 
     for script_path in script_paths:
         step_name = script_path.name.replace('.py', '')[3:]

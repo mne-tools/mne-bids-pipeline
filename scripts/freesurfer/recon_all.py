@@ -60,7 +60,7 @@ def run_recon(root_dir, subject, fs_bids_app, overwrite) -> None:
         f"--participant_label={subject}"
     ]
     logger.debug("Running: " + " ".join(cmd))
-    run_subprocess(cmd, env=env)
+    run_subprocess(cmd, env=env, verbose=logger.level)
 
 
 def main(overwrite: bool = False,

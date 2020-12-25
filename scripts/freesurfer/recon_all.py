@@ -26,7 +26,8 @@ def _get_subjects_dir(root_dir) -> Path:
 
 
 def run_recon(root_dir, subject, fs_bids_app, overwrite) -> None:
-    logger.info(f"Running recon-all on subject {subject}.")
+    logger.info(f"Running recon-all on subject {subject}. This will take "
+                f"a LONG time – it's a good idea to let it run over night.")
 
     subjects_dir = _get_subjects_dir(root_dir)
     subj_dir = subjects_dir / f"sub-{subject}"

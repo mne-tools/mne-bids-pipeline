@@ -25,7 +25,7 @@ def _get_subjects_dir(root_dir) -> Path:
     return subjects_dir
 
 
-def run_recon(root_dir, subject, fs_bids_app, overwrite) -> None:
+def run_recon(root_dir, subject, fs_bids_app) -> None:
     logger.info(f"Running recon-all on subject {subject}. This will take "
                 f"a LONG time – it's a good idea to let it run over night.")
 
@@ -33,15 +33,11 @@ def run_recon(root_dir, subject, fs_bids_app, overwrite) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
-        if overwrite is False:
-            logger.info(f"Subject {subject} is already present. Set "
-                        f"overwrite to True if want to recompute")
-            return
-        else:
-            shutil.rmtree(subj_dir)
+        logger.info(f"Subject {subject} is already present. Please delete the "
+                    f"directory if you want to recompute.")
+        return
 
     env = os.environ
-
     if 'FREESURFER_HOME' not in env:
         raise RuntimeError("FreeSurfer is not available.")
 
@@ -64,8 +60,7 @@ def run_recon(root_dir, subject, fs_bids_app, overwrite) -> None:
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
-def main(overwrite: bool = False,
-         n_jobs: int = 1) -> None:
+def main(n_jobs: int = 1) -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
     The command allows to run the freesurfer recon-all
@@ -97,7 +92,7 @@ def main(overwrite: bool = False,
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
-    parallel(run_func(root_dir, subject, fs_bids_app, overwrite)
+    parallel(run_func(root_dir, subject, fs_bids_app)
              for subject in subjects)
 
     # Handle fsaverage

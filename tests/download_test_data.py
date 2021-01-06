@@ -1,6 +1,12 @@
 """Download test data."""
-import os
+import sys
 from pathlib import Path
+from typing import Dict, List
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
+
 
 import openneuro
 import mne
@@ -10,7 +16,14 @@ from mne.commands.utils import get_optparser
 DEFAULT_DATA_DIR = Path('~/mne_data').expanduser()
 
 
-DATASET_OPTIONS = {
+class DATASET_OPTIONS_T(TypedDict):
+    git: str
+    openneuro: str
+    include: List[str]
+    exclude: List[str]
+
+
+DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
     'eeg_matchingpennies': {
         'git': 'https://github.com/sappelhoff/eeg_matchingpennies',
         'openneuro': '',

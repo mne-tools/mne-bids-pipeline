@@ -34,7 +34,8 @@ nav:
         - List of processing steps: features/steps.md
     - Getting started:
         - Installation: getting_started/install.md
-        - Basic usage: getting_started/getting_started.md
+        - Basic usage: getting_started/basic_usage.md
+        - Preparations for source-level analyses: getting_started/freesurfer.md
     - Configuration Options:
         - General settings: settings/general.md
         - Preprocessing:
@@ -54,6 +55,8 @@ nav:
             - BEM surface: settings/source/bem.md
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
+    - Examples:
+        - ds000248: examples/ds000248.md
 
 plugins:
     - search

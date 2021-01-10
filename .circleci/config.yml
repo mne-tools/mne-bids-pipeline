@@ -27,10 +27,6 @@ jobs:
             keys:
               - pip-cache-0
 
-        - restore_cache:
-            keys:
-              - data-cache-1
-
         - run:
             name: Get conda running
             command: |
@@ -92,6 +88,10 @@ jobs:
             name: Setup report
             command: |
                mkdir ~/reports
+
+        - restore_cache:
+            keys:
+              - data-cache-1
 
         # Run tests
         - run:

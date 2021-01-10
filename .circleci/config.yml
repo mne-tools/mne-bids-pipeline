@@ -42,8 +42,12 @@ jobs:
         - run:
             name: Install dependencies in conda base environment
             command: |
-              conda update -y -n base conda;
-              conda install -y -n base pip
+              conda update -y conda
+              conda install -y mamba pip
+              mamba install -y python=3.8 typing_extensions numpy scipy \
+                               scikit-learn pandas json_tricks matplotlib \
+                               seaborn nibabel coloredlogs python-picard fire \
+                               pyqt pyvista pyvistaqt
               pip install -r tests/requirements.txt
 
         - run:

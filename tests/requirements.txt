@@ -1,17 +1,17 @@
-typing_extensions  # for Python <3.8
-numpy
-scipy
-scikit-learn
-pandas
-json_tricks
-matplotlib
-seaborn
-nibabel
-coloredlogs
-python-picard
-fire
-pyvista
-PyQt5  # For pyvista
+# typing_extensions  # for Python <3.8
+# numpy
+# scipy
+# scikit-learn
+# pandas
+# json_tricks
+# matplotlib
+# seaborn
+# nibabel
+# coloredlogs
+# python-picard
+# fire
+# pyvista
+# PyQt5  # For pyvista
 https://api.github.com/repos/hoechenberger/openneuro-py/zipball/main
 https://api.github.com/repos/mne-tools/mne-python/zipball/master
 https://api.github.com/repos/mne-tools/mne-bids/zipball/master

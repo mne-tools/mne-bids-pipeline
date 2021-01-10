@@ -117,6 +117,7 @@ jobs:
               ~/freesurfer/SetUpFreeSurfer.sh
                export DS=ds000248_T1_BEM
                python tests/run_tests.py ${DS}
+            no_output_timeout: 20m
 
         - run:
             name: test BEM from FLASH

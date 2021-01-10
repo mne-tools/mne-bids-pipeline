@@ -1,0 +1,26 @@
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python =3.8
+  - typing_extensions
+  - openneuro-py
+  - datalad
+  - numpy
+  - scipy
+  - scikit-learn
+  - pandas
+  - json_tricks
+  - matplotlib
+  - seaborn
+  - nibabel
+  - coloredlogs
+  - python-picard
+  - fire
+  - pyqt
+  - pyvista
+  - pyvistaqt
+  - pip
+  - pip:
+    - https://api.github.com/repos/mne-tools/mne-python/zipball/master
+    - https://api.github.com/repos/mne-tools/mne-bids/zipball/master

@@ -36,20 +36,14 @@ jobs:
               echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
 
         - run:
-            name: Install dependencies in conda base environment
+            name: Install dependencies from conda-forge
             command: |
-              conda update -y conda
-              conda install -y mamba pip
-              mamba install -y python=3.8 typing_extensions numpy scipy \
-                               scikit-learn pandas json_tricks matplotlib \
-                               seaborn nibabel coloredlogs python-picard fire \
-                               pyqt pyvista pyvistaqt
-              pip install -r tests/requirements.txt
+              conda install -y mamba
+              mamba env update -f tests/environment.yml
 
         - run:
-            name: Install datalad to conveniently pull testing datasets
+            name: Configure git
             command: |
-              conda install datalad
               git config --global user.email "user@mne.com"
               git config --global user.name "mne user"
 

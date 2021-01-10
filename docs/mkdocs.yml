@@ -56,6 +56,8 @@ nav:
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
     - Examples:
+        - About examples: examples/examples.md
+        - ds000246: examples/ds000246.md
         - ds000248: examples/ds000248.md
 
 plugins:

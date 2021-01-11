@@ -27,6 +27,8 @@ matplotlib.use('Agg')  # do not open any window  # noqa
 
 logger = logging.getLogger('mne-study-template')
 
+Condition_T = Union[str, Tuple[str]]
+
 
 def plot_events(subject, session):
     raws_filt = []
@@ -271,7 +273,7 @@ def run_report(subject, session=None):
     #
     # Visualize evoked responses.
     #
-    conditions: List[Union[str, Tuple[str]]] = list(config.conditions)
+    conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
 
@@ -453,7 +455,7 @@ def run_report_average(session):
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
 
-    conditions: List[Union[str, Tuple[str]]] = list(config.conditions)
+    conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
 
     ###########################################################################

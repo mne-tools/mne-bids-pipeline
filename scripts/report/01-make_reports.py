@@ -10,9 +10,10 @@ plots.
 import os.path as op
 import itertools
 import logging
+from typing import Dict, Any, List, Tuple, Union
+
 import numpy as np
 from scipy.io import loadmat
-
 import matplotlib
 
 import mne
@@ -25,6 +26,8 @@ from config import gen_log_message, on_error, failsafe_run
 matplotlib.use('Agg')  # do not open any window  # noqa
 
 logger = logging.getLogger('mne-study-template')
+
+Condition_T = Union[str, Tuple[str]]
 
 
 def plot_events(subject, session):
@@ -220,13 +223,14 @@ def run_report(subject, session=None):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    params = dict(info_fname=fname_ave, raw_psd=True)
+    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True)
     if op.exists(fname_trans):
         params['subject'] = fs_subject
         params['subjects_dir'] = fs_subjects_dir
 
     rep = mne.Report(**params)
-    rep_kwargs = dict(data_path=fname_ave.fpath.parent, verbose=False)
+    rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
+                                      verbose=False)
     if not op.exists(fname_trans):
         rep_kwargs['render_bem'] = False
 
@@ -269,7 +273,7 @@ def run_report(subject, session=None):
     #
     # Visualize evoked responses.
     #
-    conditions = config.conditions.copy()
+    conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
 
@@ -367,17 +371,23 @@ def run_report(subject, session=None):
 
                 # Plot using 3d backend if available, and use Matplotlib
                 # otherwise.
+                import matplotlib.pyplot as plt
+
                 if mne.viz.get_3d_backend() is not None:
-                    brain = stc.plot(views=['lat'], hemi='both',
+                    brain = stc.plot(views=['lat'], hemi='split',
                                      initial_time=peak_time, backend='pyvista',
                                      time_viewer=True,
                                      subjects_dir=fs_subjects_dir)
                     brain.toggle_interface()
-                    figs = brain._renderer.figure
+                    brain._renderer.plotter.reset_camera()
+                    brain._renderer.plotter.subplot(0, 0)
+                    brain._renderer.plotter.reset_camera()
+                    figs, ax = plt.subplots(figsize=(15, 10))
+                    ax.imshow(brain.screenshot(time_viewer=True))
+                    ax.axis('off')
                     comments = evoked.comment
                     captions = caption
                 else:
-                    import matplotlib.pyplot as plt
                     fig_lh = plt.figure()
                     fig_rh = plt.figure()
 
@@ -445,7 +455,7 @@ def run_report_average(session):
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
 
-    conditions = config.conditions.copy()
+    conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
 
     ###########################################################################

@@ -267,7 +267,7 @@ workflows:
   commit:
     jobs:
       - run_tests
-      - build_docs
+      - build_docs:
           requires:
             - run_tests
       - deploy_docs:

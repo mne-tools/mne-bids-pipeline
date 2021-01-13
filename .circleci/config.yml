@@ -272,9 +272,9 @@ workflows:
       - deploy_docs:
           requires:
             - build_docs
-            filters:
-              branches:
-                only: master
+          filters:
+            branches:
+              only: master
 
   scheduled:
     jobs:

@@ -268,9 +268,10 @@ workflows:
     jobs:
       - run_tests
       - build_docs
+          requires:
+            - run_tests
       - deploy_docs:
           requires:
-            # - run_tests
             - build_docs
             # filters:
             #   branches:
@@ -280,9 +281,10 @@ workflows:
     jobs:
       - run_tests
       - build_docs
+          requires:
+            - run_tests
       - deploy_docs:
           requires:
-            # - run_tests
             - build_docs
 
     triggers:

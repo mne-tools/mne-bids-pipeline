@@ -5,7 +5,7 @@ import openneuro
 import mne
 from mne.commands.utils import get_optparser
 
-from .datasets import DATASET_OPTIONS
+from datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path('~/mne_data').expanduser()
 

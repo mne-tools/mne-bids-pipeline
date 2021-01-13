@@ -224,7 +224,7 @@ jobs:
               pip install mne mne_bids
 
         - attach_workspace:
-            at: ~
+            at: ~/
 
         - run:
             name: Build documentation

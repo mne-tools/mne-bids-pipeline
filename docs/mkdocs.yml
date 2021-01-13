@@ -57,8 +57,15 @@ nav:
             - Inverse solution: settings/source/inverse.md
     - Examples:
         - About examples: examples/examples.md
-        - ds000246: examples/ds000246.md
-        - ds000248: examples/ds000248.md
+        - examples/ds003392.md
+        - examples/ds000246.md
+        - examples/ds000248.md
+        - examples/ds000248_ica.md
+        - examples/ds000248_T1_BEM.md
+        - examples/ds000248_FLASH_BEM.md
+        - examples/ds003104.md
+        - examples/eeg_matchingpennies.md
+        - examples/ds001810.md
 
 plugins:
     - search

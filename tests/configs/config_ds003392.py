@@ -1,4 +1,9 @@
+"""
+Localizer
+"""
 study_name = 'localizer'
+bids_root = '~/mne_data/ds003392'
+
 subjects_list = ['01']
 
 task = 'localizer'

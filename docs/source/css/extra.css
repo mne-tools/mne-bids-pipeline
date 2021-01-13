@@ -70,3 +70,10 @@ td p {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
+
+/* The "View Report" buttons. */
+.report-button {
+  text-align: center;
+  width: 70%;
+  min-width: 200px;
+}

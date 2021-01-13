@@ -13,6 +13,7 @@ export BIDS_ROOT=~/mne_data/ds000117
 import os.path as op
 
 study_name = 'ds000117'
+bids_root = '~/mne_data/ds000117'
 task = 'facerecognition'
 ch_types = ['meg']
 runs = ['01']

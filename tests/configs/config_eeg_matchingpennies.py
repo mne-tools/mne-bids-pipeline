@@ -1,14 +1,10 @@
-"""Configuration file for the eeg_matchingpennies dataset.
-
-Set the `MNE_BIDS_STUDY_CONFIG` environment variable to
-"config_eeg_matchingpennies" to overwrite `config.py` with the values specified
-below.
-
-Download the eeg_matchingpennies dataset from OSF: https://osf.io/cj2dr/
-
+"""
+Matchingpennies EEG experiment
 """
 
 study_name = 'eeg_matchingpennies'
+bids_root = '~/mne_data/eeg_matchingpennies'
+
 subjects = ['05']
 task = 'matchingpennies'
 ch_types = ['eeg']

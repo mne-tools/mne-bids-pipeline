@@ -1,7 +1,8 @@
 """
-MNE "sample" dataset: here we only process EEG data and check ICA.
+MNE Sample Data: ICA
 """
 study_name = 'MNE "sample" dataset'
+bids_root = '~/mne_data/ds000248_ica'
 ch_types = ['meg']
 data_type = 'meg'
 

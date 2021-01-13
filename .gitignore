@@ -6,3 +6,6 @@ data
 .vscode
 *.code-workspace
 docs/site/
+docs/source/examples/*
+!docs/source/examples/gen_examples.py
+!docs/source/examples/examples.md

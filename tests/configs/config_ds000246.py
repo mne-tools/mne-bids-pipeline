@@ -1,4 +1,9 @@
+"""
+Auditory MEG
+"""
+
 study_name = 'ds000246'
+bids_root = '~/mne_data/ds000246'
 runs = ['01']
 l_freq = .3
 h_freq = 100.

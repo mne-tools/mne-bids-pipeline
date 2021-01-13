@@ -13,6 +13,8 @@ export BIDS_ROOT=~/mne_data/ds001971
 
 
 study_name = 'ds001971'
+bids_root = '~/mne_data/ds001971'
+
 task = 'AudioCueWalkingStudy'
 interactive = False
 ch_types = ['eeg']

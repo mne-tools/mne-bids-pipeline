@@ -10,14 +10,14 @@ import pdb
 import traceback
 import sys
 import copy
-import coloredlogs
 import logging
 from typing import Optional, Union, Iterable, List
-try:
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:  # Python <3.8
+else:
     from typing_extensions import Literal
 
+import coloredlogs
 import numpy as np
 import mne
 from mne_bids.path import get_entity_vals

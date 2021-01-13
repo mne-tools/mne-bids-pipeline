@@ -181,6 +181,12 @@ jobs:
             key: data-cache-1
             paths:
               - ~/mne_data/
+  
+        - persist_to_workspace:  # For examples gallery
+            root: ~/
+            paths:
+              - reports
+              - mne_data
 
     build_docs:
       docker:
@@ -193,7 +199,6 @@ jobs:
             command: |
               echo "set -e" >> $BASH_ENV;
               echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              # echo "export DISPLAY=:99" >> $BASH_ENV;
               echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
 
         - run:
@@ -205,7 +210,7 @@ jobs:
               echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
 
         - run:
-            name: Install dependencies in conda base environment
+            name: Install dependencies
             command: |
               conda update -y -n base conda
               # Install deps immediately required for doc building
@@ -217,9 +222,13 @@ jobs:
               # Install deps required so MkDocs can import config.py
               conda install -y coloredlogs
               pip install mne mne_bids
-              cd docs
-              mkdocs build
-              cd ..
+
+        - attach_workspace:
+            at: ~/
+
+        - run:
+            name: Build documentation
+            command: ./docs/build-docs.sh
 
         - store_artifacts:
             path: docs/site
@@ -249,17 +258,19 @@ jobs:
         - add_ssh_keys:
             fingerprints:
               - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
-    
+
+
 workflows:
   version: 2
 
   commit:
     jobs:
       - run_tests
-      - build_docs
+      - build_docs:
+          requires:
+            - run_tests
       - deploy_docs:
           requires:
-            # - run_tests
             - build_docs
           filters:
             branches:
@@ -268,12 +279,13 @@ workflows:
   scheduled:
     jobs:
       - run_tests
-      - build_docs
+      - build_docs:
+          requires:
+            - run_tests
       - deploy_docs:
           requires:
-            # - run_tests
             - build_docs
-  
+
     triggers:
       - schedule:
           cron: "0 4 * * *"

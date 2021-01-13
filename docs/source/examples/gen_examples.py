@@ -4,7 +4,12 @@ from pathlib import Path
 import runpy
 from typing import Union, Iterable
 
-import logging
+
+RUNNING_ON_CIRCLE = os.environ.get('CIRCLECI')
+if RUNNING_ON_CIRCLE == 'true':
+    RUNNING_ON_CIRCLE = True
+else:
+    RUNNING_ON_CIRCLE = False
 
 
 dataset_opts_path = Path('tests/datasets.py')
@@ -58,24 +63,32 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     return funcs
 
 
-example_datasets = ['ds000248']
-
 # Copy reports to the correct place.
+datasets_without_html = []
 for dataset_name in example_datasets:
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
-    example_source_dir = Path(f'~/mne_data/{dataset_name}').expanduser()
+    if RUNNING_ON_CIRCLE:
+        example_source_dir = Path(f'~/reports/{dataset_name}').expanduser()
+    else:
+        example_source_dir = (Path(f'~/mne_data/{dataset_name}'
+                                  f'/derivatives/mne-study-template')
+                              .expanduser())
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 
     if not html_report_fnames:
-        raise RuntimeError(f'No HTML reports found for {dataset_name}')
+        datasets_without_html.append(dataset_name)
+        continue
 
     for fname in html_report_fnames:
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
 for dataset_name in example_datasets:
+    if dataset_name in datasets_without_html:
+        continue
+
     options = dataset_options[dataset_name]
 
     report_str = '\n## Generated output\n\n'

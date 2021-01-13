@@ -260,7 +260,6 @@ jobs:
               - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
 
 
-
 workflows:
   version: 2
 
@@ -273,9 +272,9 @@ workflows:
       - deploy_docs:
           requires:
             - build_docs
-            # filters:
-            #   branches:
-            #     only: master
+            filters:
+              branches:
+                only: master
 
   scheduled:
     jobs:

@@ -183,7 +183,7 @@ jobs:
               - ~/mne_data/
   
         - persist_to_workspace:  # For examples gallery
-            root: ~
+            root: ~/
             paths:
               - reports
               - mne_data

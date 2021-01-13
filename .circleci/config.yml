@@ -275,10 +275,6 @@ workflows:
             # filters:
             #   branches:
             #     only: master
-      - deploy_examples:
-          requires:
-            - run_tests
-            - deploy_docs
 
   scheduled:
     jobs:
@@ -287,10 +283,6 @@ workflows:
       - deploy_docs:
           requires:
             # - run_tests
-            - build_docs
-      - deploy_examples:
-          requires:
-            - run_tests
             - build_docs
 
     triggers:

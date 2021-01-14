@@ -173,6 +173,15 @@ jobs:
                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
 
+        - run:
+            name: test ds000117
+            command: |
+               export DS=ds000117
+               python tests/run_tests.py ${DS}
+               mkdir ~/reports/${DS}
+               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+
         - store_artifacts:
             path: /home/circleci/reports
             destination: reports

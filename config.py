@@ -958,6 +958,7 @@ if not bids_root:
     raise ValueError(msg)
 
 bids_root = pathlib.Path(bids_root).expanduser()
+print(bids_root)
 
 ###############################################################################
 # Derivates root

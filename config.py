@@ -488,7 +488,7 @@ for more information.
     ```
 """
 
-tmin = -0.2
+tmin: float = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
 
@@ -504,6 +504,16 @@ The end of an epoch, relative to the respective event, in seconds.
 ???+ example "Example"
     ```python
     tmax = 0.5  # take 500ms after event onset.
+    ```
+"""
+
+reject_tmax: Optional[float] = None
+"""
+End of the time window used to reject epochs. If None, the window will end with
+tmax.
+???+ example "Example"
+    ```python
+    reject_tmax = 0.3  # take 300ms after event onset.
     ```
 """
 

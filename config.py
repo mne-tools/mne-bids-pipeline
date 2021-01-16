@@ -373,13 +373,13 @@ End time of the interpolation window in seconds.
 # -------------------
 # done in 02-frequency_filter.py
 
-l_freq: float = 1.
+l_freq: Optional[float] = None
 """
 The low-frequency cut-off in the highpass filtering step.
 Keep it None if no highpass filtering should be applied.
 """
 
-h_freq: float = 40.
+h_freq: Optional[float] = 40.
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.

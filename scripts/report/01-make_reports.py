@@ -19,6 +19,7 @@ import matplotlib
 import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
+from mne_bids.stats import count_events
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -449,6 +450,13 @@ def run_report_average(session):
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
     fs_subjects_dir = config.get_fs_subjects_dir()
+
+    df_events = count_events(config.bids_root)
+    rep.add_htmls_to_section(
+        f'<center>{df_events.to_html()}</center>',
+        captions='Events counts',
+        section='events'
+    )
 
     method = config.inverse_method
     inverse_str = method

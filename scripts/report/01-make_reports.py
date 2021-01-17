@@ -453,8 +453,10 @@ def run_report_average(session):
 
     df_events = count_events(config.bids_root)
     rep.add_htmls_to_section(
-        f'<center>{df_events.to_html()}</center>',
-        captions='Events counts',
+        f'<div class="event-counts">\n'
+        f'{df_events.to_html()}\n'
+        f'</div>',
+        captions='Event counts',
         section='events'
     )
 

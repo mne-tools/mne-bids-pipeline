@@ -373,13 +373,13 @@ End time of the interpolation window in seconds.
 # -------------------
 # done in 02-frequency_filter.py
 
-l_freq: float = 1.
+l_freq: Optional[float] = None
 """
 The low-frequency cut-off in the highpass filtering step.
 Keep it None if no highpass filtering should be applied.
 """
 
-h_freq: float = 40.
+h_freq: Optional[float] = 40.
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
@@ -488,7 +488,7 @@ for more information.
     ```
 """
 
-tmin = -0.2
+tmin: float = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
 
@@ -504,6 +504,16 @@ The end of an epoch, relative to the respective event, in seconds.
 ???+ example "Example"
     ```python
     tmax = 0.5  # take 500ms after event onset.
+    ```
+"""
+
+reject_tmax: Optional[float] = None
+"""
+End of the time window used to reject epochs. If None, the window will end with
+tmax.
+???+ example "Example"
+    ```python
+    reject_tmax = 0.3  # take 300ms after event onset.
     ```
 """
 

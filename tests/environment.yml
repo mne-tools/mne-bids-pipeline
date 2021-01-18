@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python =3.8
   - typing_extensions
-  - openneuro-py
+  # - openneuro-py
   - datalad
   - numpy
   - scipy
@@ -22,5 +22,6 @@ dependencies:
   - pyvistaqt
   - pip
   - pip:
+    - http://github.com/hoechenberger/openneuro-py/zipball/timeouts
     - https://api.github.com/repos/mne-tools/mne-python/zipball/master
     - https://api.github.com/repos/mne-tools/mne-bids/zipball/master

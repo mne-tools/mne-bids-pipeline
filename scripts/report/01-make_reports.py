@@ -466,13 +466,13 @@ def run_report_average(session):
             section='events'
         )
         css = ('.event-counts {\n'
-            '  display: -webkit-box;\n'
-            '  display: -ms-flexbox;\n'
-            '  display: -webkit-flex;\n'
-            '  display: flex;\n'
-            '  justify-content: center;\n'
-            '  text-align: center;\n'
-            '}')
+               '  display: -webkit-box;\n'
+               '  display: -ms-flexbox;\n'
+               '  display: -webkit-flex;\n'
+               '  display: flex;\n'
+               '  justify-content: center;\n'
+               '  text-align: center;\n'
+               '}')
         rep.add_custom_css(css)
 
     method = config.inverse_method

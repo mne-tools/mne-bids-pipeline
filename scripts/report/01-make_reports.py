@@ -451,23 +451,29 @@ def run_report_average(session):
     evokeds = mne.read_evokeds(evoked_fname)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    df_events = count_events(config.bids_root)
-    rep.add_htmls_to_section(
-        f'<div class="event-counts">\n'
-        f'{df_events.to_html()}\n'
-        f'</div>',
-        captions='Event counts',
-        section='events'
-    )
-    css = ('.event-counts {\n'
-           '  display: -webkit-box;\n'
-           '  display: -ms-flexbox;\n'
-           '  display: -webkit-flex;\n'
-           '  display: flex;\n'
-           '  justify-content: center;\n'
-           '  text-align: center;\n'
-           '}')
-    rep.add_custom_css(css)
+    try:
+        df_events = count_events(config.bids_root)
+    except ValueError:
+        logger.warn('Could not read events.')
+        df_events = None
+
+    if df_events is not None:
+        rep.add_htmls_to_section(
+            f'<div class="event-counts">\n'
+            f'{df_events.to_html()}\n'
+            f'</div>',
+            captions='Event counts',
+            section='events'
+        )
+        css = ('.event-counts {\n'
+            '  display: -webkit-box;\n'
+            '  display: -ms-flexbox;\n'
+            '  display: -webkit-flex;\n'
+            '  display: flex;\n'
+            '  justify-content: center;\n'
+            '  text-align: center;\n'
+            '}')
+        rep.add_custom_css(css)
 
     method = config.inverse_method
     inverse_str = method

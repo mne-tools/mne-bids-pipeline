@@ -51,7 +51,7 @@ def init_subject_dirs(
 
     out_dir = deriv_root / f'sub-{subject}'
     if session is not None:
-        out_dir /= session
+        out_dir /= f'ses-{session}'
     out_dir /= datatype
 
     out_dir.mkdir(exist_ok=True, parents=True)

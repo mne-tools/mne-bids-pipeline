@@ -458,9 +458,11 @@ def run_report_average(session):
         df_events = None
 
     if df_events is not None:
+        css_classes = ('table', 'table-striped', 'table-borderless',
+                       'table-hover')
         rep.add_htmls_to_section(
             f'<div class="event-counts">\n'
-            f'{df_events.to_html()}\n'
+            f'{df_events.to_html(classes=css_classes, border=0)}\n'
             f'</div>',
             captions='Event counts',
             section='events'
@@ -472,7 +474,10 @@ def run_report_average(session):
                '  display: flex;\n'
                '  justify-content: center;\n'
                '  text-align: center;\n'
-               '}')
+               '}\n\n'
+               'th, td {\n'
+               '  text-align: center;\n'
+               '}\n')
         rep.add_custom_css(css)
 
     method = config.inverse_method

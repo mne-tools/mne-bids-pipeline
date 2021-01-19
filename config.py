@@ -448,8 +448,8 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
 reject_tmin: Optional[float] = None
 """
-Start of the time window used to reject epochs. If None, the window will start
-with the first time point.
+Start of the time window used to reject epochs. If ``None``, the window will
+start with the first time point.
 ???+ example "Example"
     ```python
     reject_tmin = -0.1  # 100 ms before event onset.
@@ -458,8 +458,8 @@ with the first time point.
 
 reject_tmax: Optional[float] = None
 """
-End of the time window used to reject epochs. If None, the window will end with
-the last time point.
+End of the time window used to reject epochs. If ``None``, the window will end
+with the last time point.
 ???+ example "Example"
     ```python
     reject_tmax = 0.3  # 300 ms after event onset.

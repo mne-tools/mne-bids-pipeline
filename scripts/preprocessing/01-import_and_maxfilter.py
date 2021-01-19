@@ -41,36 +41,11 @@ import mne
 from mne.preprocessing import find_bad_channels_maxwell
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
-from mne_bids.config import BIDS_VERSION
-from mne_bids.utils import _write_json
 
 import config
 from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-study-template')
-
-
-def init_dataset():
-    """Prepare the pipeline directory in /derivatives.
-    """
-    os.makedirs(config.deriv_root, exist_ok=True)
-
-    # Write a dataset_description.json for the pipeline
-    ds_json = dict()
-    ds_json['Name'] = config.PIPELINE_NAME + ' outputs'
-    ds_json['BIDSVersion'] = BIDS_VERSION
-    ds_json['PipelineDescription'] = {
-        'Name': config.PIPELINE_NAME,
-        'Version': config.VERSION,
-        'CodeURL': config.CODE_URL,
-    }
-    ds_json['SourceDatasets'] = {
-        'URL': 'n/a',
-    }
-
-    fname = os.path.join(config.deriv_root,
-                         'dataset_description.json')
-    _write_json(fname, ds_json, overwrite=True)
 
 
 def get_mf_cal_fname(subject, session):
@@ -277,9 +252,6 @@ def run_maxwell_filter(subject, session=None):
                                                root=config.deriv_root,
                                                check=False)
 
-    if not bids_path_out.fpath.parent.exists():
-        os.makedirs(bids_path_out.fpath.parent)
-
     # Load dev_head_t and digitization points from reference run.
     # Re-use in all runs and for processing empty-room recording.
     reference_run = config.get_mf_reference_run()
@@ -433,10 +405,6 @@ def run_maxwell_filter(subject, session=None):
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
-    msg = "Initializing dataset."
-    logger.info(gen_log_message(step=1, message=msg))
-    init_dataset()
-
     msg = 'Running Step 1: Data import and Maxwell filtering'
     logger.info(gen_log_message(step=1, message=msg))
 

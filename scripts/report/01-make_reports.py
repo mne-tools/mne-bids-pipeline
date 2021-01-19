@@ -474,7 +474,13 @@ def run_report_average(session):
                '  display: flex;\n'
                '  justify-content: center;\n'
                '  text-align: center;\n'
-               '}')
+               '}\n\n'
+               '.dataframe .table th {\n'
+               '  text-align: center;\n'
+               '}\n\n'
+               '.dataframe .table td {\n'
+               '  text-align: center;\n'
+               '}\n')
         rep.add_custom_css(css)
 
     method = config.inverse_method

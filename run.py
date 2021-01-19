@@ -17,6 +17,7 @@ coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
 
 PathLike = Union[str, pathlib.Path]
 
+INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
 PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
                          '02-frequency_filter.py',
@@ -44,6 +45,8 @@ FREESURFER_SCRIPTS = ('recon_all.py',)
 SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
 
 SCRIPT_PATHS = {
+    'init': [SCRIPT_BASE_DIR / 'init' / s
+             for s in INIT_SCRIPTS],
     'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
                       for s in PREPROCESSING_SCRIPTS],
     'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
@@ -58,7 +61,8 @@ SCRIPT_PATHS = {
 
 # Do not include the FreeSurfer scripts in "all" – we don't intend to run
 # recon-all by default!
-SCRIPT_PATHS['all'] = (SCRIPT_PATHS['preprocessing'] +
+SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
+                       SCRIPT_PATHS['preprocessing'] +
                        SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
                        SCRIPT_PATHS['report'])
 
@@ -140,6 +144,12 @@ def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
         else:
             # We've iterated over all scripts, but none matched!
             raise ValueError(f'Invalid steps requested: {group}/{steps}')
+
+    if steps != 'all':
+        # Always run the directory initialization scripts, but skip for 'all',
+        # because it already includes them – and we want to avoid running
+        # them twice.
+        script_paths = (*SCRIPT_PATHS['init'], *script_paths)
 
     for script_path in script_paths:
         step_name = script_path.name.replace('.py', '')[3:]

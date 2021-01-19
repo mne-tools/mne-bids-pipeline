@@ -446,6 +446,26 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     ```
 """
 
+reject_tmin: Optional[float] = None
+"""
+Start of the time window used to reject epochs. If ``None``, the window will
+start with the first time point.
+???+ example "Example"
+    ```python
+    reject_tmin = -0.1  # 100 ms before event onset.
+    ```
+"""
+
+reject_tmax: Optional[float] = None
+"""
+End of the time window used to reject epochs. If ``None``, the window will end
+with the last time point.
+???+ example "Example"
+    ```python
+    reject_tmax = 0.3  # 300 ms after event onset.
+    ```
+"""
+
 ###############################################################################
 # RENAME EXPERIMENTAL EVENTS
 # --------------------------
@@ -504,16 +524,6 @@ The end of an epoch, relative to the respective event, in seconds.
 ???+ example "Example"
     ```python
     tmax = 0.5  # take 500ms after event onset.
-    ```
-"""
-
-reject_tmax: Optional[float] = None
-"""
-End of the time window used to reject epochs. If None, the window will end with
-tmax.
-???+ example "Example"
-    ```python
-    reject_tmax = 0.3  # take 300ms after event onset.
     ```
 """
 

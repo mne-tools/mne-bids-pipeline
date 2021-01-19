@@ -82,6 +82,7 @@ def run_epochs(subject, session=None):
                         proj=True, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.get_reject(),
+                        reject_tmin=config.reject_tmin,
                         reject_tmax=config.reject_tmax)
 
     msg = 'Writing epochs to disk'

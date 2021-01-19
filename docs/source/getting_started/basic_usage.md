@@ -60,31 +60,40 @@ Run the Study Template
     To run the full Study Template, execute the following command in your
     terminal:
     ```shell
-    python run.py all --config=/path/to/your/custom_config.py
+    python run.py --config=/path/to/your/custom_config.py
     ```
 
 ??? example "Run only parts of the Study Template"
     Run only the preprocessing steps:
     ```shell
-    python run.py preprocessing --config=/path/to/your/custom_config.py
+    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing
     ```
 
     Run only the sensor-level processing steps:
     ```shell
-    python run.py sensor --config=/path/to/your/custom_config.py
+    python run.py --config=/path/to/your/custom_config.py --steps=sensor
     ```
 
     Run only the source-level (inverse solution) processing steps:
     ```shell
-    python run.py source --config=/path/to/your/custom_config.py
+    python run.py --config=/path/to/your/custom_config.py --steps=source
     ```
 
     Only generate the report:
     ```shell
-    python run.py report --config=/path/to/your/custom_config.py
+    python run.py --config=/path/to/your/custom_config.py --steps=report
     ```
 
     (Re-)run ICA:
     ```shell
-    python run.py preprocessing/run_ica
+    python run.py --config=/path/to/your/custom_config.py \
+                  --steps=preprocessing/ica
+    ```
+
+    You can also run multiple steps with one command by separating different
+    steps by a comma. For example, to run preprocessing and sensor-level
+    processing steps using a single command, do:
+    ```shell
+    python run.py --config=/path/to/your/custom_config.py \
+                  --steps=preprocessing,sensor
     ```

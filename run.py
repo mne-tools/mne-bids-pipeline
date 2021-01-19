@@ -6,7 +6,7 @@ import runpy
 import pathlib
 import logging
 import coloredlogs
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 try:
     from typing import Literal
 except ImportError:  # Python <3.8
@@ -92,9 +92,12 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
     runpy.run_path(script_path, run_name='__main__')
 
 
-def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
-            *,
-            config: PathLike,
+Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
+                        'freesurfer'], str]
+Steps_T = Union[Step_T, Tuple[Step_T]]
+
+def process(config: PathLike,
+            steps: Optional[Steps_T] = None,
             root_dir: Optional[PathLike] = None,
             subject: Optional[str] = None,
             session: Optional[str] = None,
@@ -104,15 +107,16 @@ def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
 
     Parameters
     ----------
+    config
+        The path of the Study Template configuration file to use.
     steps
         The processing steps to run.
         Can either be one of the processing groups 'preprocessing', sensor',
         'source', 'report',  or 'all',  or the name of a processing group plus
         the desired script sans the step number and
         filename extension, separated by a '/'. For exmaple, to run ICA, you
-        would pass 'sensor/run_ica`.
-    config
-        The path of the Study Template configuration file to use.
+        would pass 'sensor/run_ica`. If unspecified, will run all processing
+        steps. Can also be a tuple of steps.
     root_dir
         BIDS root directory of the data to process.
     subject
@@ -124,32 +128,53 @@ def process(steps: Union[Literal['sensor', 'source', 'report', 'all'], str],
     run
         The run to process.
     """
-    if '/' in steps:
-        group, step = steps.split('/')
-    else:
-        group, step = steps, None
+    if steps is None:
+        steps = ('all',)
+    elif isinstance(steps, str) and ',' in steps:
+        # Work around limitation in Fire: --steps=foo,bar/baz won't produce a
+        # tuple ('foo', 'bar/baz'), but a string 'foo,bar/baz'.
+        steps = tuple(steps.split(','))
+    elif isinstance(steps, str):
+        steps = (steps,)
 
-    if group not in SCRIPT_PATHS.keys():
-        raise ValueError(f'Invalid steps requested: {steps}')
+    assert isinstance(steps, tuple)
 
-    if step is None:
-        # User specified `sensors`, `source`, or similar
-        script_paths = SCRIPT_PATHS[group]
-    else:
-        # User specified 'group/step'
-        for script_path in SCRIPT_PATHS[group]:
-            if step in str(script_path):
-                script_paths = (script_path,)
-                break
+    processing_stages = []
+    processing_steps = []
+    for steps_ in steps:        
+        if '/' in steps_:
+            stage, step = steps_.split('/')
+            processing_stages.append(stage)
+            processing_steps.append(step)
         else:
-            # We've iterated over all scripts, but none matched!
-            raise ValueError(f'Invalid steps requested: {group}/{steps}')
+            # User specified "sensor", "preprocessing" or similar, but without
+            # any further grouping.
+            processing_stages.append(steps_)
+            processing_steps.append(None)
 
-    if steps != 'all':
+    script_paths = []
+    for stage, step in zip(processing_stages, processing_steps):
+        if stage not in SCRIPT_PATHS.keys():
+            raise ValueError(f'Invalid step requested: {stage}')
+
+        if step is None:
+            # User specified `sensors`, `source`, or similar
+            script_paths.extend(SCRIPT_PATHS[stage])
+        else:
+            # User specified 'stage/step'
+            for script_path in SCRIPT_PATHS[stage]:
+                if step in str(script_path):
+                    script_paths.append(script_path)
+                    break
+            else:
+                # We've iterated over all scripts, but none matched!
+                raise ValueError(f'Invalid steps requested: {stage}/{step}')
+
+    if processing_stages[0] != 'all':
         # Always run the directory initialization scripts, but skip for 'all',
         # because it already includes them – and we want to avoid running
         # them twice.
-        script_paths = (*SCRIPT_PATHS['init'], *script_paths)
+        script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
     for script_path in script_paths:
         step_name = script_path.name.replace('.py', '')[3:]

@@ -63,6 +63,14 @@ def run_epochs(subject, session=None):
         raw = mne.concatenate_raws(raw_list)
 
     events, event_id = mne.events_from_annotations(raw)
+
+    # Only keep the events of interest.
+    event_id = {cond: event_id[cond] for cond in config.conditions}
+    keep_events_idx = [idx for idx, event in enumerate(events)
+                       if event[-1] in event_id.values()]
+    events = events[keep_events_idx]
+    del keep_events_idx
+
     if "eeg" in config.ch_types:
         raw.set_eeg_reference(projection=True)
 

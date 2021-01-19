@@ -29,7 +29,6 @@ to the WIP specification for common BIDS derivatives, see this PR:
 https://github.com/bids-standard/bids-specification/pull/265
 """  # noqa: E501
 
-import os
 import itertools
 import logging
 

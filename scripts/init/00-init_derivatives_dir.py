@@ -47,7 +47,7 @@ def init_subject_dirs(
     """Create processing data output directories for individual participants.
     """
     deriv_root = Path(config.deriv_root)
-    datatype = datatype=config.get_datatype()
+    datatype = config.get_datatype()
 
     out_dir = deriv_root / f'sub-{subject}'
     if session is not None:

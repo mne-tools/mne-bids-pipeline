@@ -5,4 +5,5 @@
     like.
 
 ::: config.reject
+::: config.reject_tmin
 ::: config.reject_tmax

@@ -87,12 +87,17 @@ def rename_events(raw, subject, session):
     msg = 'Renaming events …'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
-    description = raw.annotations.description
+    descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in config.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
         logger.info(gen_log_message(message=msg, step=1,
                                     subject=subject, session=session))
-        description[description == old_event_name] = new_event_name
+        for idx, description in enumerate(descriptions.copy()):
+            if description == old_event_name:
+                descriptions[idx] = new_event_name
+
+    descriptions = np.asarray(descriptions, dtype=str)
+    raw.annotations.description = descriptions
 
 
 def find_bad_channels(raw, subject, session, task, run):

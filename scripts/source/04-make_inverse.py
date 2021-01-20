@@ -64,6 +64,9 @@ def run_inverse(subject, session=None):
             suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
             extension=None)
 
+        if "eeg" in config.ch_types:
+            evoked.set_eeg_reference('average', projection=True)
+
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,
                             lambda2=lambda2, method=method, pick_ori=pick_ori)

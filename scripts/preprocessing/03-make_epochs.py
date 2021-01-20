@@ -64,7 +64,8 @@ def run_epochs(subject, session=None):
 
     events, event_id = mne.events_from_annotations(raw)
     if "eeg" in config.ch_types:
-        raw.set_eeg_reference(projection=True)
+        projection = True if config.eeg_reference == 'average' else False
+        raw.set_eeg_reference(config.eeg_reference, projection=projection)
 
     del raw_list
 

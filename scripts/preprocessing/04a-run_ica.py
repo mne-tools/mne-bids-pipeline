@@ -59,7 +59,8 @@ def load_and_concatenate_raws(bids_path):
     del raws
 
     if "eeg" in config.ch_types:
-        raw.set_eeg_reference(projection=True)
+        projection = True if config.eeg_reference == 'average' else False
+        raw.set_eeg_reference(config.eeg_reference, projection=projection)
 
     raw.load_data()
     return raw

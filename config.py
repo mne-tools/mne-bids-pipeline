@@ -213,6 +213,29 @@ If ``None``, we will assume that the data type matches the channel type.
     ```
 """
 
+eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
+"""
+The EEG reference to use. If ``average``, will use the average reference,
+i.e. the average across all channels. If a string, must be the name of a single
+channel. To use multiple channels as reference, set to a list of channel names.
+
+???+ example "Example"
+    Use the average reference:
+    ```python
+    eeg_reference = 'average'
+    ```
+
+    Use the `P9` channel as reference:
+    ```python
+    eeg_reference = 'P9'
+    ```
+
+    Use the average of the `P9` and `P10` channels as reference:
+    ```python
+    eeg_reference = ['P9', 'P10']
+    ```
+"""
+
 eeg_template_montage: Optional[str] = None
 """
 In situations where you wish to process EEG data and no individual

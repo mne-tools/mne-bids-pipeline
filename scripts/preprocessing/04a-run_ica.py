@@ -58,11 +58,12 @@ def load_and_concatenate_raws(bids_path):
         raw = mne.concatenate_raws(raws)
     del raws
 
+    raw.load_data()  # Load before setting EEG reference
+
     if "eeg" in config.ch_types:
         projection = True if config.eeg_reference == 'average' else False
         raw.set_eeg_reference(config.eeg_reference, projection=projection)
 
-    raw.load_data()
     return raw
 
 

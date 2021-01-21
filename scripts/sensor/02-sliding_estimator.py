@@ -51,6 +51,8 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                             check=False)
 
     epochs = mne.read_epochs(fname_epochs)
+    if config.analyze_channels:
+        epochs.pick(config.analyze_channels)
 
     # We define the epochs and the labels
     epochs = mne.concatenate_epochs([epochs[condition1],

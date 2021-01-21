@@ -277,6 +277,9 @@ def run_report(subject, session=None):
     conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
+    if config.analyze_channels:
+        for evoked in evokeds:
+            evoked.pick(config.analyze_channels)
 
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
@@ -326,6 +329,8 @@ def run_report(subject, session=None):
     #
     # Visualize the coregistration & inverse solutions.
     #
+    evokeds = mne.read_evokeds(fname_ave)
+
     if op.exists(fname_trans):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
@@ -347,9 +352,7 @@ def run_report(subject, session=None):
                                         subject=subject, session=session))
 
             if condition in config.conditions:
-                full_condition = (evoked.comment
-                                  .replace(op.sep, '')
-                                  .replace('_', ''))
+                full_condition = config.sanitize_cond_name(evoked.comment)
                 caption = f'Condition: {full_condition}'
                 del full_condition
             else:  # It's a contrast of two conditions.
@@ -449,6 +452,10 @@ def run_report_average(session):
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir())
     evokeds = mne.read_evokeds(evoked_fname)
+    if config.analyze_channels:
+        for evoked in evokeds:
+            evoked.pick(config.analyze_channels)
+
     fs_subjects_dir = config.get_fs_subjects_dir()
 
     try:
@@ -535,7 +542,6 @@ def run_report_average(session):
     #
     # Visualize inverse solutions.
     #
-
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'

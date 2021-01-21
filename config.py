@@ -301,6 +301,31 @@ drop_channels: Iterable[str] = []
 Names of channels to remove from the data. This can be useful, for example,
 if you have added a new bipolar channel via `eeg_bipolar_channels` and now wish
 to remove the anode, cathode, or both.
+
+???+ example "Example"
+    Exclude channels `Fp1` and `Cz` from processing:
+    ```python
+    drop_channels = ['Fp1', 'Cz]
+    ```
+"""
+
+ChannelName_T = Iterable['str']
+analyze_channels : Union[Literal['all'], ChannelName_T] = 'all'
+"""
+The names of the channels to analyze during ERP/ERF and time-frequency analysis
+steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
+sensor-space analysis to only a few specific sensors. If `'all'`, do not
+exclude any channels (except for those selected for removal via the
+`drop_channels` setting). The constraint will be applied to all sensor-level
+analyses after the preprocessing stage, but not to the preprocessing stage
+itself, nor to the source analysis stage.
+
+???+ example "Example"
+    Only use channel `Pz` for ERP, evoked contrasts, time-by-time
+    decoding, and time-frequency analysis:
+    ```python
+    analyze_channels = ['Pz']
+    ```
 """
 
 ###############################################################################

@@ -53,6 +53,8 @@ def run_time_frequency(subject, session=None):
                                 session=session))
 
     epochs = mne.read_epochs(fname_in)
+    if config.analyze_channels:
+        epochs.pick(config.analyze_channels)
 
     for condition in config.time_frequency_conditions:
         this_epochs = epochs[condition]

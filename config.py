@@ -1409,3 +1409,11 @@ def get_fs_subject(subject) -> str:
         return subject
     else:
         return f'sub-{subject}'
+
+
+def sanitize_cond_name(cond: str) -> str:
+    cond = (cond
+            .replace(op.sep, '')
+            .replace('_', '')
+            .replace('-', ''))
+    return cond

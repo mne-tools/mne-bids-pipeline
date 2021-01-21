@@ -357,7 +357,7 @@ def run_report(subject, session=None):
                 continue
 
             method = config.inverse_method
-            cond_str = condition.replace(op.sep, '').replace('_', '')
+            cond_str = config.sanitize_cond_name(condition)
             inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
@@ -539,7 +539,7 @@ def run_report_average(session):
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'
-            cond_str = condition.replace(op.sep, '').replace('_', '')
+            cond_str = config.sanitize_cond_name(condition)
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue

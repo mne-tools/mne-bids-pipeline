@@ -59,7 +59,7 @@ def run_time_frequency(subject, session=None):
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
-        condition_str = condition.replace(op.sep, '').replace('_', '')
+        condition_str = config.sanitize_cond_name(condition)
         power_fname_out = bids_path.copy().update(
             suffix=f'power+{condition_str}+tfr', extension='.h5')
         itc_fname_out = bids_path.copy().update(

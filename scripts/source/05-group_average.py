@@ -39,7 +39,7 @@ def morph_stc(subject, session=None):
     morphed_stcs = []
     for condition in config.conditions:
         method = config.inverse_method
-        cond_str = condition.replace(op.sep, '').replace('_', '')
+        cond_str = config.sanitize_cond_name(condition)
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph2fsaverage'
@@ -102,7 +102,7 @@ def main():
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method
-        cond_str = condition.replace(op.sep, '').replace('_', '')
+        cond_str = config.sanitize_cond_name(condition)
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         morph_str = 'morph2fsaverage'

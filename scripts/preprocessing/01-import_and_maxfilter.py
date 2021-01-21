@@ -233,6 +233,16 @@ def load_data(bids_path):
         montage = mne.channels.make_standard_montage(montage_name)    
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
+    if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:
+        raw.load_data()
+        for anode, cathode, ch_name in config.eeg_bipolar_channels:
+            mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
+                                      ch_name=ch_name, drop_refs=False,
+                                      copy=False)
+
+    if config.drop_channels:
+        raw.drop_channels(config.drop_channels)
+
     return raw
 
 

@@ -11,7 +11,7 @@ import traceback
 import sys
 import copy
 import logging
-from typing import Optional, Union, Iterable, List
+from typing import Optional, Union, Iterable, List, Tuple
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -213,6 +213,38 @@ If ``None``, we will assume that the data type matches the channel type.
     ```
 """
 
+Bipolar_T = Tuple[str, str, str]
+eeg_bipolar_channels: Iterable[Bipolar_T] = []
+"""
+Combine two channels into a bipolar channel, whose signal is the **difference**
+between the two combined channels, and add it to the data.
+A typical use case is the combination of two EOG channels – for example, a
+left and a right horizontal EOG – into a single, bipolar EOG channel. You need
+to pass a list of tuples, where the tuples consist of three strings: name of
+the channel acting as anode, name of the channel acting as cathode, and desired
+name of the bipolar channel, i.e. `(anode, cathode, ch_name)`. You can request
+to construct multiple bipolar channels by passing multiple tuples, one for each
+channel. See the examples below.
+
+??? info "Note"
+    The channels used to create the bipolar channels are **not** automatically
+    dropped from the data. To drop channels, set `drop_channels`.
+
+???+ example "Example"
+    Combine the existing channels `HEOG_left` and `HEOG_right` into a new,
+    bipolar channel, `HEOG`:
+    ```python
+    eeg_add_bipolar_channels = [('HEOG_left', 'HEOG_right', 'HEOG')]
+    ```
+
+    Create two bipolar channels, `HEOG` and `VEOG`:
+    ```python
+    eeg_add_bipolar_channels = [('HEOG_left', 'HEOG_right', 'HEOG'),
+                                ('VEOG_lower', 'VEOG_upper', 'VEOG')]
+    ```
+
+"""
+
 eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
 """
 The EEG reference to use. If ``average``, will use the average reference,
@@ -262,6 +294,13 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
     ```python
     eeg_template_montage = 'biosemi64'
     ```
+"""
+
+drop_channels: Iterable[str] = []
+"""
+Names of channels to remove from the data. This can be useful, for example,
+if you have added a new bipolar channel via `eeg_bipolar_channels` and now wish
+to remove the anode, cathode, or both.
 """
 
 ###############################################################################
@@ -514,11 +553,11 @@ Pass an empty dictionary to not perform any renaming.
 
 conditions: Iterable[str] = ['left', 'right']
 """
-The condition names to consider. This can either be name of the
-experimental condition as specified in the BIDS ``events.tsv`` file; or
-the name of condition *grouped*, if the condition names contain the
-(MNE-specific) group separator, ``/``. See the [Subselecting epochs
-tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
+The events based on which to create epochs and evoked responses.
+This can either be name of the experimental condition as specified in the
+BIDS ``events.tsv`` file; or the name of condition *grouped*, if the condition
+names contain the (MNE-specific) group separator, ``/``. See the [Subselecting
+epochs tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
 for more information.
 
 ???+ example "Example"
@@ -586,6 +625,7 @@ of contrasts.
                  ('auditory', 'visual')]
     ```
 """
+
 ###############################################################################
 # ARTIFACT REMOVAL
 # ----------------

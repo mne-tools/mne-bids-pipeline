@@ -1413,7 +1413,7 @@ def get_fs_subject(subject) -> str:
 
 def sanitize_cond_name(cond: str) -> str:
     cond = (cond
-            .replace(op.sep, '')
+            .replace(os.path.sep, '')
             .replace('_', '')
             .replace('-', ''))
     return cond

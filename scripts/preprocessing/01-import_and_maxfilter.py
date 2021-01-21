@@ -234,13 +234,22 @@ def load_data(bids_path):
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
     if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:
+        msg = 'Creating bipolar channels …'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session))
         raw.load_data()
         for anode, cathode, ch_name in config.eeg_bipolar_channels:
+            msg = f'    {anode} – {cathode} -> {ch_name}'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
 
     if config.drop_channels:
+        msg = f'Dropping channels: {", ".join(config.drop_channels)}'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session))
         raw.drop_channels(config.drop_channels)
 
     return raw

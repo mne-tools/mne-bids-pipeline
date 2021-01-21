@@ -230,20 +230,8 @@ def load_data(bids_path):
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
-        montage = mne.channels.make_standard_montage(montage_name)
-        # Rename channels in the montage if need be.
-        for ch_name_raw in raw.ch_names:
-            idx_montage = montage.ch_names.index(ch_name_raw)
-            ch_name_montage = montage.ch_names[idx_montage]
-            if ch_name_raw.startswith('FP'):
-                new_name = ch_name_montage.replace('Fp', 'FP')
-            elif ch_name_raw.startswith('TP'):
-                new_name = ch_name_montage.replace('Tp', 'TP')
-            else:
-                continue
-            montage.ch_names[idx_montage] = new_name
-    
-        raw.set_montage(montage, on_missing='warn')
+        montage = mne.channels.make_standard_montage(montage_name)    
+        raw.set_montage(montage, match_case=False, on_missing='warn')
 
     return raw
 

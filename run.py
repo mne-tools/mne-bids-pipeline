@@ -93,8 +93,9 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
-                        'freesurfer'], str]
+                       'freesurfer'], str]
 Steps_T = Union[Step_T, Tuple[Step_T]]
+
 
 def process(config: PathLike,
             steps: Optional[Steps_T] = None,
@@ -141,7 +142,7 @@ def process(config: PathLike,
 
     processing_stages = []
     processing_steps = []
-    for steps_ in steps:        
+    for steps_ in steps:
         if '/' in steps_:
             stage, step = steps_.split('/')
             processing_stages.append(stage)

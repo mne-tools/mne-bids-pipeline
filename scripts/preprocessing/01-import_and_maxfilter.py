@@ -81,7 +81,10 @@ def rename_events(raw, subject, session):
         msg = (f'You requested to rename the following events, but '
                f'they are not present in the BIDS input data:\n'
                f'{", ".join(sorted(list(events_not_in_raw)))}')
-        raise ValueError(msg)
+        if config.on_rename_missing_events == 'warn':
+            logger.warn(msg)
+        else:
+            raise ValueError(msg)
 
     # Do the actual event renaming.
     msg = 'Renaming events …'

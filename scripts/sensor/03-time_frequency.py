@@ -54,6 +54,12 @@ def run_time_frequency(subject, session=None):
 
     epochs = mne.read_epochs(fname_in)
     if config.analyze_channels:
+        # We special-case the average reference here.
+        # See 02-sliding_estimator.py for more info.
+        if 'eeg' in config.ch_types and config.eeg_reference == 'average':
+            epochs.set_eeg_reference('average')
+        else:
+            epochs.apply_proj()
         epochs.pick(config.analyze_channels)
 
     for condition in config.time_frequency_conditions:

@@ -6,7 +6,6 @@
 Source estimates are morphed to the ``fsaverage`` brain.
 """
 
-import os.path as op
 import itertools
 import logging
 

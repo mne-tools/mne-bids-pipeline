@@ -310,7 +310,7 @@ to remove the anode, cathode, or both.
 """
 
 ChannelName_T = Iterable['str']
-analyze_channels : Union[Literal['all'], ChannelName_T] = 'all'
+analyze_channels: Union[Literal['all'], ChannelName_T] = 'all'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain

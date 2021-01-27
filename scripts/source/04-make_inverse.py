@@ -6,7 +6,6 @@
 Compute and apply an inverse solution for each evoked data set.
 """
 
-import os.path as op
 import itertools
 import logging
 

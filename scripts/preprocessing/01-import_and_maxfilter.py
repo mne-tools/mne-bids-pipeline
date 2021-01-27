@@ -233,7 +233,7 @@ def load_data(bids_path):
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
-        montage = mne.channels.make_standard_montage(montage_name)    
+        montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
     if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:

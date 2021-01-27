@@ -7,7 +7,6 @@ The epoched data is transformed to time-frequency domain using morlet wavelets.
 The average power and inter-trial coherence are computed and saved to disk.
 """
 
-import os.path as op
 import itertools
 import logging
 

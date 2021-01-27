@@ -430,12 +430,66 @@ def run_report(subject, session=None):
     plt.close('all')  # close all figures to save memory
 
 
-def run_report_average(session):
+def add_event_counts(*,
+                     session: str,
+                     report: mne.Report) -> None:
+    try:
+        df_events = count_events(BIDSPath(root=config.bids_root,
+                                          session=session))
+    except ValueError:
+        logger.warn('Could not read events.')
+        df_events = None
+
+    if df_events is not None:
+        css_classes = ('table', 'table-striped', 'table-borderless',
+                        'table-hover')
+        report.add_htmls_to_section(
+            f'<div class="event-counts">\n'
+            f'{df_events.to_html(classes=css_classes, border=0)}\n'
+            f'</div>',
+            captions='Event counts',
+            section='events'
+        )
+        css = ('.event-counts {\n'
+                '  display: -webkit-box;\n'
+                '  display: -ms-flexbox;\n'
+                '  display: -webkit-flex;\n'
+                '  display: flex;\n'
+                '  justify-content: center;\n'
+                '  text-align: center;\n'
+                '}\n\n'
+                'th, td {\n'
+                '  text-align: center;\n'
+                '}\n')
+        report.add_custom_css(css)
+
+
+def add_epochs_drop_info(*,
+                         session: str,
+                         report: mne.Report) -> None:
+
+    epochs_fname = BIDSPath(session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            run=None,
+                            recording=config.rec,
+                            space=config.space,
+                            suffix='epo',
+                            extension='.fif',
+                            datatype=config.get_datatype(),
+                            root=config.deriv_root,
+                            check=False)
+
+    for subject in config.get_subjects():
+        fname_epochs = epochs_fname.update(subject=subject)
+        epochs = mne.read_epochs(fname_epochs)
+        
+
+def run_report_average(session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     subject = 'average'
-
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
                             task=config.get_task(),
@@ -458,35 +512,6 @@ def run_report_average(session):
 
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    try:
-        df_events = count_events(config.bids_root)
-    except ValueError:
-        logger.warn('Could not read events.')
-        df_events = None
-
-    if df_events is not None:
-        css_classes = ('table', 'table-striped', 'table-borderless',
-                       'table-hover')
-        rep.add_htmls_to_section(
-            f'<div class="event-counts">\n'
-            f'{df_events.to_html(classes=css_classes, border=0)}\n'
-            f'</div>',
-            captions='Event counts',
-            section='events'
-        )
-        css = ('.event-counts {\n'
-               '  display: -webkit-box;\n'
-               '  display: -ms-flexbox;\n'
-               '  display: -webkit-flex;\n'
-               '  display: flex;\n'
-               '  justify-content: center;\n'
-               '  text-align: center;\n'
-               '}\n\n'
-               'th, td {\n'
-               '  text-align: center;\n'
-               '}\n')
-        rep.add_custom_css(css)
-
     method = config.inverse_method
     inverse_str = method
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
@@ -494,6 +519,15 @@ def run_report_average(session):
 
     conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
+
+    ###########################################################################
+    #
+    # Add events end epochs drop log stats.
+    #
+    add_event_counts(report=rep, session=session)
+
+        
+
 
     ###########################################################################
     #

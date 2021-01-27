@@ -16,6 +16,8 @@
 ::: config.process_er
 ::: config.ch_types
 ::: config.data_type
+::: eog_channels
+::: eeg_bipolar_channels
 ::: config.eeg_reference
 ::: config.eeg_template_montage
 ::: config.drop_channels

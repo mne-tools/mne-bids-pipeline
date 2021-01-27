@@ -261,7 +261,7 @@ name of the bipolar channel, i.e. `(anode, cathode, ch_name)`. You can request
 to construct multiple bipolar channels by passing multiple tuples, one for each
 channel. See the examples below.
 
-??? info "Note"
+Note: Note
     The channels used to create the bipolar channels are **not** automatically
     dropped from the data. To drop channels, set `drop_channels`.
 

@@ -81,18 +81,26 @@ def rename_events(raw, subject, session):
         msg = (f'You requested to rename the following events, but '
                f'they are not present in the BIDS input data:\n'
                f'{", ".join(sorted(list(events_not_in_raw)))}')
-        raise ValueError(msg)
+        if config.on_rename_missing_events == 'warn':
+            logger.warn(msg)
+        else:
+            raise ValueError(msg)
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
-    description = raw.annotations.description
+    descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in config.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
         logger.info(gen_log_message(message=msg, step=1,
                                     subject=subject, session=session))
-        description[description == old_event_name] = new_event_name
+        for idx, description in enumerate(descriptions.copy()):
+            if description == old_event_name:
+                descriptions[idx] = new_event_name
+
+    descriptions = np.asarray(descriptions, dtype=str)
+    raw.annotations.description = descriptions
 
 
 def find_bad_channels(raw, subject, session, task, run):
@@ -226,7 +234,26 @@ def load_data(bids_path):
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
         montage = mne.channels.make_standard_montage(montage_name)
-        raw.set_montage(montage, on_missing='warn')
+        raw.set_montage(montage, match_case=False, on_missing='warn')
+
+    if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:
+        msg = 'Creating bipolar channels …'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session))
+        raw.load_data()
+        for anode, cathode, ch_name in config.eeg_bipolar_channels:
+            msg = f'    {anode} – {cathode} -> {ch_name}'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
+            mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
+                                      ch_name=ch_name, drop_refs=False,
+                                      copy=False)
+
+    if config.drop_channels:
+        msg = f'Dropping channels: {", ".join(config.drop_channels)}'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session))
+        raw.drop_channels(config.drop_channels)
 
     return raw
 

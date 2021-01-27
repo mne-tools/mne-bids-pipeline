@@ -7,7 +7,6 @@ The epoched data is transformed to time-frequency domain using morlet wavelets.
 The average power and inter-trial coherence are computed and saved to disk.
 """
 
-import os.path as op
 import itertools
 import logging
 
@@ -53,13 +52,21 @@ def run_time_frequency(subject, session=None):
                                 session=session))
 
     epochs = mne.read_epochs(fname_in)
+    if config.analyze_channels:
+        # We special-case the average reference here.
+        # See 02-sliding_estimator.py for more info.
+        if 'eeg' in config.ch_types and config.eeg_reference == 'average':
+            epochs.set_eeg_reference('average')
+        else:
+            epochs.apply_proj()
+        epochs.pick(config.analyze_channels)
 
     for condition in config.time_frequency_conditions:
         this_epochs = epochs[condition]
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
 
-        condition_str = condition.replace(op.sep, '').replace('_', '')
+        condition_str = config.sanitize_cond_name(condition)
         power_fname_out = bids_path.copy().update(
             suffix=f'power+{condition_str}+tfr', extension='.h5')
         itc_fname_out = bids_path.copy().update(

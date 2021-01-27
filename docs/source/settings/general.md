@@ -16,4 +16,7 @@
 ::: config.process_er
 ::: config.ch_types
 ::: config.data_type
+::: config.eeg_reference
 ::: config.eeg_template_montage
+::: config.drop_channels
+::: config.analyze_channels

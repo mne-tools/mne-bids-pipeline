@@ -51,6 +51,18 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                             check=False)
 
     epochs = mne.read_epochs(fname_epochs)
+    if config.analyze_channels:
+        # We special-case the average reference here to work around a situation
+        # where e.g. `analyze_channels` might contain only a single channel:
+        # `concatenate_epochs` below will then fail when trying to create /
+        # apply the projection. We can avoid this by removing an existing
+        # average reference projection here, and applying the average reference
+        # directly – without going through a projector.
+        if 'eeg' in config.ch_types and config.eeg_reference == 'average':
+            epochs.set_eeg_reference('average')
+        else:
+            epochs.apply_proj()
+        epochs.pick(config.analyze_channels)
 
     # We define the epochs and the labels
     epochs = mne.concatenate_epochs([epochs[condition1],

@@ -6,7 +6,6 @@
 Compute and apply an inverse solution for each evoked data set.
 """
 
-import os.path as op
 import itertools
 import logging
 
@@ -57,12 +56,15 @@ def run_inverse(subject, session=None):
         method = config.inverse_method
         pick_ori = None
 
-        cond_str = condition.replace(op.sep, '').replace('_', '')
+        cond_str = config.sanitize_cond_name(condition)
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         fname_stc = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
             extension=None)
+
+        if "eeg" in config.ch_types:
+            evoked.set_eeg_reference('average', projection=True)
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,

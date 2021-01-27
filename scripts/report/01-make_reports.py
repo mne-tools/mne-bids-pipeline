@@ -277,6 +277,9 @@ def run_report(subject, session=None):
     conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
+    if config.analyze_channels:
+        for evoked in evokeds:
+            evoked.pick(config.analyze_channels)
 
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
@@ -326,6 +329,8 @@ def run_report(subject, session=None):
     #
     # Visualize the coregistration & inverse solutions.
     #
+    evokeds = mne.read_evokeds(fname_ave)
+
     if op.exists(fname_trans):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
@@ -347,9 +352,7 @@ def run_report(subject, session=None):
                                         subject=subject, session=session))
 
             if condition in config.conditions:
-                full_condition = (evoked.comment
-                                  .replace(op.sep, '')
-                                  .replace('_', ''))
+                full_condition = config.sanitize_cond_name(evoked.comment)
                 caption = f'Condition: {full_condition}'
                 del full_condition
             else:  # It's a contrast of two conditions.
@@ -357,7 +360,7 @@ def run_report(subject, session=None):
                 continue
 
             method = config.inverse_method
-            cond_str = condition.replace(op.sep, '').replace('_', '')
+            cond_str = config.sanitize_cond_name(condition)
             inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
@@ -427,32 +430,12 @@ def run_report(subject, session=None):
     plt.close('all')  # close all figures to save memory
 
 
-def run_report_average(session):
-    # Group report
-    import matplotlib.pyplot as plt  # nested import to help joblib
-
-    subject = 'average'
-
-    evoked_fname = BIDSPath(subject=subject,
-                            session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
-                            run=None,
-                            recording=config.rec,
-                            space=config.space,
-                            suffix='ave',
-                            extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.deriv_root,
-                            check=False)
-
-    rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.get_fs_subjects_dir())
-    evokeds = mne.read_evokeds(evoked_fname)
-    fs_subjects_dir = config.get_fs_subjects_dir()
-
+def add_event_counts(*,
+                     session: str,
+                     report: mne.Report) -> None:
     try:
-        df_events = count_events(config.bids_root)
+        df_events = count_events(BIDSPath(root=config.bids_root,
+                                          session=session))
     except ValueError:
         logger.warn('Could not read events.')
         df_events = None
@@ -460,7 +443,7 @@ def run_report_average(session):
     if df_events is not None:
         css_classes = ('table', 'table-striped', 'table-borderless',
                        'table-hover')
-        rep.add_htmls_to_section(
+        report.add_htmls_to_section(
             f'<div class="event-counts">\n'
             f'{df_events.to_html(classes=css_classes, border=0)}\n'
             f'</div>',
@@ -478,7 +461,56 @@ def run_report_average(session):
                'th, td {\n'
                '  text-align: center;\n'
                '}\n')
-        rep.add_custom_css(css)
+        report.add_custom_css(css)
+
+
+# def add_epochs_drop_info(*,
+#                          session: str,
+#                          report: mne.Report) -> None:
+
+#     epochs_fname = BIDSPath(session=session,
+#                             task=config.get_task(),
+#                             acquisition=config.acq,
+#                             run=None,
+#                             recording=config.rec,
+#                             space=config.space,
+#                             suffix='epo',
+#                             extension='.fif',
+#                             datatype=config.get_datatype(),
+#                             root=config.deriv_root,
+#                             check=False)
+
+#     for subject in config.get_subjects():
+#         fname_epochs = epochs_fname.update(subject=subject)
+#         epochs = mne.read_epochs(fname_epochs)
+
+
+def run_report_average(session: str) -> None:
+    # Group report
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    subject = 'average'
+    evoked_fname = BIDSPath(subject=subject,
+                            session=session,
+                            task=config.get_task(),
+                            acquisition=config.acq,
+                            run=None,
+                            recording=config.rec,
+                            space=config.space,
+                            suffix='ave',
+                            extension='.fif',
+                            datatype=config.get_datatype(),
+                            root=config.deriv_root,
+                            check=False)
+
+    rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
+                     subjects_dir=config.get_fs_subjects_dir())
+    evokeds = mne.read_evokeds(evoked_fname)
+    if config.analyze_channels:
+        for evoked in evokeds:
+            evoked.pick(config.analyze_channels)
+
+    fs_subjects_dir = config.get_fs_subjects_dir()
 
     method = config.inverse_method
     inverse_str = method
@@ -487,6 +519,12 @@ def run_report_average(session):
 
     conditions: List[Condition_T] = list(config.conditions)
     conditions.extend(config.contrasts)
+
+    ###########################################################################
+    #
+    # Add events end epochs drop log stats.
+    #
+    add_event_counts(report=rep, session=session)
 
     ###########################################################################
     #
@@ -535,11 +573,10 @@ def run_report_average(session):
     #
     # Visualize inverse solutions.
     #
-
     for condition, evoked in zip(conditions, evokeds):
         if condition in config.conditions:
             caption = f'Average: {condition}'
-            cond_str = condition.replace(op.sep, '').replace('_', '')
+            cond_str = config.sanitize_cond_name(condition)
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue

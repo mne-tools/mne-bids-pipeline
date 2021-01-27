@@ -199,13 +199,20 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
 def detect_eog_artifacts(ica, raw, subject, session, report):
     pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
                               eog=True)
-    if pick_eog.any():
+    if config.eog_channels:
+        assert all([ch_name in raw.ch_names
+                    for ch_name in config.eog_channels])
+        ch_name = ','.join(config.eog_channels)
+    else:
+        ch_name = None
+
+    if pick_eog.any() or config.eog_channels:
         msg = 'Performing automated EOG artifact detection …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
         # Do not reject epochs based on amplitude.
-        eog_epochs = create_eog_epochs(raw, reject=None,
+        eog_epochs = create_eog_epochs(raw, ch_name=ch_name, reject=None,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
         eog_evoked = eog_epochs.average()

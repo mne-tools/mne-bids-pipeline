@@ -60,8 +60,16 @@ def run_ssp(subject, session=None):
     msg = 'Computing SSPs for EOG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    eog_projs, eog_events = compute_proj_eog(raw, n_grad=1, n_mag=1,
-                                             n_eeg=1, average=True)
+    if config.eog_channels:
+        assert all([ch_name in raw.ch_names
+                    for ch_name in config.eog_channels])
+        ch_name = ','.join(config.eog_channels)
+    else:
+        ch_name = None
+
+    eog_projs, eog_events = compute_proj_eog(raw, ch_name=ch_name,
+                                             n_grad=1, n_mag=1, n_eeg=1,
+                                             average=True)
 
     mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
 

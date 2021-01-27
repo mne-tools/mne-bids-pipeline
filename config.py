@@ -213,6 +213,41 @@ If ``None``, we will assume that the data type matches the channel type.
     ```
 """
 
+eog_channels: Optional[Iterable[str]] = None
+"""
+Specify EOG channel to use, or create virtual EOG channels.
+
+Allows the specification of custom channel names that shall be used as
+(virtual) EOG channels. For example, say you recorded EEG **without** dedicated
+EOG electrodes, but with some EEG electrodes placed close to the eyes, e.g.
+Fp1 and Fp2. These channels would be expected to have captured large quantities
+of ocular activity, and you might want to use them as "virtual" EOG channels,
+while also including them in the EEG analysis. By default, MNE won't know that
+these channels are suitable for recovering EOG, and hence won't be able to
+perform tasks like automated blink removal, unless a "true" EOG sensor is
+present in the data as well. Speficying channel names here allows MNE to find
+the respective EOG signals.
+
+You can specify one or multiple channel names. Each will be treated as if it
+were a dedicated EOG channel, without excluding it from any other analyses.
+
+If ``None``, only "true" EOG channels will be used for EOG recovery.
+
+If there are multiple true EOG channels in your data, and you only specify
+a subset of them here, only this subset will be used during processing.
+
+???+ example "Example"
+    Treat ``Fp1`` as virtual EOG channel:
+    ```python
+    eog_channels = ['Fp1']
+    ```
+
+    Treat ``Fp1`` and ``Fp2`` as virtual EOG channels:
+    ```python
+    eog_channels = ['Fp1', 'Fp2']
+    ```
+"""
+
 Bipolar_T = Tuple[str, str, str]
 eeg_bipolar_channels: Iterable[Bipolar_T] = []
 """

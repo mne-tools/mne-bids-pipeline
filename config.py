@@ -11,7 +11,7 @@ import traceback
 import sys
 import copy
 import logging
-from typing import Optional, Union, Iterable, List, Tuple
+from typing import Optional, Union, Iterable, List, Tuple, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -248,18 +248,20 @@ a subset of them here, only this subset will be used during processing.
     ```
 """
 
-Bipolar_T = Tuple[str, str, str]
-eeg_bipolar_channels: Iterable[Bipolar_T] = []
+eeg_bipolar_channels: Optional[Dict[str, Tuple[str, str]]] = None
 """
 Combine two channels into a bipolar channel, whose signal is the **difference**
 between the two combined channels, and add it to the data.
 A typical use case is the combination of two EOG channels – for example, a
 left and a right horizontal EOG – into a single, bipolar EOG channel. You need
-to pass a list of tuples, where the tuples consist of three strings: name of
-the channel acting as anode, name of the channel acting as cathode, and desired
-name of the bipolar channel, i.e. `(anode, cathode, ch_name)`. You can request
-to construct multiple bipolar channels by passing multiple tuples, one for each
-channel. See the examples below.
+to pass a dictionary whose **keys** are the name of the new bipolar channel you
+wish to create, and whose **values** are tuples consisting of two strings: the
+name of the channel acting as anode and the name of the channel acting as
+cathode, i.e. `{'ch_name': ('anode', 'cathode')}`. You can request
+to construct more than one bipolar channel by specifying multiple key/value
+pairs. See the examples below.
+
+Can also be `None` if you do not want to create bipolar channels.
 
 Note: Note
     The channels used to create the bipolar channels are **not** automatically
@@ -269,15 +271,14 @@ Note: Note
     Combine the existing channels `HEOG_left` and `HEOG_right` into a new,
     bipolar channel, `HEOG`:
     ```python
-    eeg_add_bipolar_channels = [('HEOG_left', 'HEOG_right', 'HEOG')]
+    eeg_add_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right')}
     ```
 
     Create two bipolar channels, `HEOG` and `VEOG`:
     ```python
-    eeg_add_bipolar_channels = [('HEOG_left', 'HEOG_right', 'HEOG'),
-                                ('VEOG_lower', 'VEOG_upper', 'VEOG')]
+    eeg_add_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
+                                'VEOG': ('VEOG_lower', 'VEOG_upper')}
     ```
-
 """
 
 eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
@@ -344,8 +345,7 @@ to remove the anode, cathode, or both.
     ```
 """
 
-ChannelName_T = Iterable['str']
-analyze_channels: Union[Literal['all'], ChannelName_T] = 'all'
+analyze_channels: Union[Literal['all'], Iterable['str']] = 'all'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain

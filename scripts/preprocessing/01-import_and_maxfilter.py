@@ -241,7 +241,7 @@ def load_data(bids_path):
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
         raw.load_data()
-        for anode, cathode, ch_name in config.eeg_bipolar_channels:
+        for ch_name, (anode, cathode) in config.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session))

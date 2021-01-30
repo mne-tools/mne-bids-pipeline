@@ -646,7 +646,7 @@ to only get a warning instead.
 
 conditions: Iterable[str] = ['left', 'right']
 """
-The events based on which to create epochs and evoked responses.
+The time-locked events based on which to create epochs and evoked responses.
 This can either be name of the experimental condition as specified in the
 BIDS ``events.tsv`` file; or the name of condition *grouped*, if the condition
 names contain the (MNE-specific) group separator, ``/``. See the [Subselecting
@@ -691,6 +691,22 @@ if ``None``, no baseline correction is applied.
     ```python
     baseline = (None, 0)  # beginning of epoch until time point zero
     ```
+"""
+
+epochs_metadata_tmin: Optional[float] = None
+"""
+The beginning of the time period for epochs metadata generation, in seconds,
+relative to the time-locked event of the respective epoch. This may be less
+than or larger than the epoch's first time point. If ``None``, use the first
+time point of the epoch.
+"""
+
+epochs_metadata_tmax: Optional[float] = None
+"""
+The end of the time period for epochs metadata generation, in seconds,
+relative to the time-locked event of the respective epoch. This may be last
+than or larger than the epoch's last time point. If ``None``, use the first
+time point of the epoch.
 """
 
 contrasts: Iterable[Tuple[str, str]] = []
@@ -766,7 +782,7 @@ Note: Note
       data will be epoched, and the epochs will be submitted to ICA.
 """
 
-ica_max_iterations: int = 200
+ica_max_iterations: int = 500
 """
 Maximum number of iterations to decompose the data into independent
 components. A low number means to finish earlier, but the consequence is
@@ -887,6 +903,11 @@ The conditions to compute time-frequency decomposition on.
 # SOURCE ESTIMATION PARAMETERS
 # ----------------------------
 #
+
+run_source_estimation: bool = True
+"""
+Whether to run source estimation processing steps if not explicitly requested.
+"""
 
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
 """

@@ -63,9 +63,14 @@ def morph_stc(subject, session=None):
 
 @failsafe_run(on_error=on_error)
 def main():
-    """Run grp ave."""
+    """Run group average in source space"""
     msg = 'Running Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
+
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(gen_log_message(step=13, message=msg))
+        return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 

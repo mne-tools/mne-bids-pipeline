@@ -1,5 +1,6 @@
 ::: config.study_name
 ::: config.bids_root
+::: config.deriv_root
 ::: config.subjects_dir
 ::: config.daysback
 ::: config.interactive

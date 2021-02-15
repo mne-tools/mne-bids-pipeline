@@ -50,6 +50,13 @@ Raises an exception if the BIDS root has not been specified.
     ```
 """
 
+deriv_root: Optional[PathLike] = None
+"""
+The root of the derivatives directory in which the Study Template will store
+the processing results. If ``None``, this will be
+``derivatives/mne-study-template`` inside the BIDS root.
+"""
+
 subjects_dir: Optional[PathLike] = None
 """
 Path to the directory that contains the MRI data files and their
@@ -1069,9 +1076,9 @@ mne.set_log_level(verbose=mne_log_level.upper())
 # ``export MNE_BIDS_STUDY_CONFIG=/data/mystudy/mydataset-template-config.py``
 
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-    cfg_path = os.environ['MNE_BIDS_STUDY_CONFIG']
+    cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
 
-    if os.path.exists(cfg_path):
+    if cfg_path.exists():
         msg = f'Using custom configuration: {cfg_path}'
         logger.info(msg)
     else:
@@ -1099,7 +1106,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 # BIDS_ROOT environment variable takes precedence over any configuration file
 # values.
 if os.getenv('BIDS_ROOT') is not None:
-    bids_root = os.getenv('BIDS_ROOT')
+    bids_root = pathlib.Path(os.getenv('BIDS_ROOT'))
 
 # If we don't have a bids_root until now, raise an exeception as we cannot
 # proceed.
@@ -1109,12 +1116,13 @@ if not bids_root:
            'root folder of your BIDS dataset')
     raise ValueError(msg)
 
-bids_root = pathlib.Path(bids_root).expanduser()
+bids_root: pathlib.Path = pathlib.Path(bids_root).expanduser()
 
-###############################################################################
 # Derivates root
-# --------------
-deriv_root = os.path.join(bids_root, 'derivatives', PIPELINE_NAME)
+if deriv_root is None:
+    deriv_root = bids_root / 'derivatives' / PIPELINE_NAME
+else:
+    deriv_root = pathlib.Path(deriv_root).expanduser()
 
 
 ###############################################################################
@@ -1336,7 +1344,7 @@ def get_reject() -> dict:
 
 def get_fs_subjects_dir():
     if not subjects_dir:
-        return os.path.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+        return bids_root / 'derivatives' / 'freesurfer' / 'subjects'
     else:
         return subjects_dir
 

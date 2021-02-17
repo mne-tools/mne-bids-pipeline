@@ -64,17 +64,6 @@ derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
 $SUBJECTS_DIR used by the Freesurfer software.
 """
 
-daysback: Optional[int] = None
-"""
-warning:
-     This parameter will soon be removed!
-     Anonymization should be done on the BIDS dataset **before** running
-     the Study Template!
-
-If not ``None``, apply a time shift to dates to adjust for limitateions
-of FIFF files.
-"""
-
 interactive: bool = False
 """
 If True, the scripts will provide some interactive elements, such as

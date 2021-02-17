@@ -437,7 +437,7 @@ def add_event_counts(*,
         df_events = count_events(BIDSPath(root=config.bids_root,
                                           session=session))
     except ValueError:
-        logger.warn('Could not read events.')
+        logger.warning('Could not read events.')
         df_events = None
 
     if df_events is not None:

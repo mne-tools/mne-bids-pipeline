@@ -79,7 +79,7 @@ def run_epochs(subject, session=None):
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
-                        tmin=config.tmin, tmax=config.tmax,
+                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
                         proj=True, baseline=config.baseline,
                         preload=False, decim=config.decim,
                         reject=config.get_reject(),

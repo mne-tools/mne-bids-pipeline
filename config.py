@@ -72,10 +72,10 @@ run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 """
 
-crop: Optional[tuple] = None
+crop: Optional[Tuple[float, float]] = None
 """
-If tuple, (tmin, tmax) to crop the raw data
-If None (default), do not crop.
+Crop the raw data to the specified time interval ``[tmin, tmax]`` in seconds.
+If ``None``, do not crop the data.
 """
 
 sessions: Union[List, Literal['all']] = 'all'
@@ -635,37 +635,37 @@ for more information.
     ```
 """
 
-tmin: float = -0.2
+epochs_tmin: float = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
 
 ???+ example "Example"
     ```python
-    tmin = -0.2  # take 200ms before event onset.
+    epochs_tmin = -0.2  # 200 ms before event onset
     ```
 """
 
-tmax: float = 0.5
+epochs_tmax: float = 0.5
 """
 The end of an epoch, relative to the respective event, in seconds.
 ???+ example "Example"
     ```python
-    tmax = 0.5  # take 500ms after event onset.
+    epochs_tmax = 0.5  # 500 ms after event onset
     ```
 """
 
-baseline: Optional[tuple] = (None, 0)
+baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
 """
-Specifies how to baseline-correct the epochs; if ``None``, no baseline
-correction is applied.
+Specifies which time interval to use for baseline correction of epochs;
+if ``None``, no baseline correction is applied.
 
 ???+ example "Example"
     ```python
-    baseline = (None, 0)  # baseline between tmin and 0
+    baseline = (None, 0)  # beginning of epoch until time point zero
     ```
 """
 
-contrasts: Iterable[tuple] = []
+contrasts: Iterable[Tuple[str, str]] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
 in the list corresponds to one contrast. The condition names must be
@@ -928,7 +928,8 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[tuple, Literal['emptyroom']] = (None, 0)
+noise_cov: Union[Tuple[Optional[float], Optional[float]],
+                 Literal['emptyroom']] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.

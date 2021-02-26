@@ -116,8 +116,8 @@ def make_epochs_for_ica(raw, subject, session):
     events = events[selection]
     epochs_ica = mne.Epochs(raw, events=events, event_id=event_id,
                             on_missing='ignore',
-                            tmin=config.tmin, tmax=config.tmax, proj=True,
-                            baseline=config.baseline,
+                            tmin=config.epochs_tmin, tmax=config.epochs_tmax,
+                            proj=True, baseline=config.baseline,
                             preload=True, decim=config.decim)
 
     return epochs_ica

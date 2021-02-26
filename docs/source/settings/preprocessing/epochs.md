@@ -1,5 +1,5 @@
 ::: config.rename_events
 ::: config.conditions
-::: config.tmin
-::: config.tmax
+::: config.epochs_tmin
+::: config.epochs_tmax
 ::: config.baseline

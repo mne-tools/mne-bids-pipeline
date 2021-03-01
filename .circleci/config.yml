@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    run_tests:
+    run_tests_and_doc:
       docker:
         - image: circleci/python:3.8-buster
       environment:
@@ -191,49 +191,17 @@ jobs:
             paths:
               - ~/mne_data/
   
-        - persist_to_workspace:  # For examples gallery
-            root: ~/
-            paths:
-              - reports
-              - mne_data
-
-    build_docs:
-      docker:
-        - image: circleci/python:3.6.8-stretch
-      steps:
-        - checkout
+        # Now build the doc
 
         - run:
-            name: Set BASH_ENV
+            name: Install doc dependencies
             command: |
-              echo "set -e" >> $BASH_ENV;
-              echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
-
-        - run:
-            name: Get conda running
-            command: |
-              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
-              chmod +x ~/miniforge.sh;
-              ~/miniforge.sh -b -p ~/miniforge;
-              echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
-
-        - run:
-            name: Install dependencies
-            command: |
-              conda update -y -n base conda
-              # Install deps immediately required for doc building
-              conda install -y python=3.8 \
-                               mkdocs \
+              conda install -y mkdocs \
                                mkdocs-material \
                                mkdocs-material-extensions \
                                mkdocstrings
               # Install deps required so MkDocs can import config.py
               conda install -y coloredlogs
-              pip install mne mne_bids
-
-        - attach_workspace:
-            at: ~/
 
         - run:
             name: Build documentation
@@ -274,26 +242,20 @@ workflows:
 
   commit:
     jobs:
-      - run_tests
-      - build_docs:
-          requires:
-            - run_tests
+      - run_tests_and_doc
       - deploy_docs:
           requires:
-            - build_docs
+            - run_tests_and_doc
           filters:
             branches:
               only: master
 
   scheduled:
     jobs:
-      - run_tests
-      - build_docs:
-          requires:
-            - run_tests
+      - run_tests_and_doc
       - deploy_docs:
           requires:
-            - build_docs
+            - run_tests_and_doc
 
     triggers:
       - schedule:

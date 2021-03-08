@@ -644,16 +644,20 @@ to only get a warning instead.
 # EPOCHING
 # --------
 
-conditions: Iterable[str] = ['left', 'right']
+conditions: Union[Iterable[str], Dict[str, str]] = ['left', 'right']
 """
 The time-locked events based on which to create epochs and evoked responses.
 This can either be name of the experimental condition as specified in the
-BIDS ``events.tsv`` file; or the name of condition *grouped*, if the condition
+BIDS ``events.tsv`` file; or the name of condition *groups*, if the condition
 names contain the (MNE-specific) group separator, ``/``. See the [Subselecting
 epochs tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
 for more information.
 
+Passing a dictionary allows to assign a name to map a complex condition name
+(value) to a more legible one (value).
+
 ???+ example "Example"
+    Specifying conditions as lists of strings:
     ```python
     conditions = ['auditory/left', 'visual/left']
     conditions = ['auditory/left', 'auditory/right']
@@ -661,6 +665,11 @@ for more information.
     conditions = ['auditory', 'visual']
     conditions = ['left', 'right']
     ```
+    Pass a dictionary to define a mapping:
+    ```python
+    conditions = {'simple_name': 'complex/condition/with_subconditions'}
+    conditions = {'correct': 'response/correct',
+                  'incorrect': 'response/incorrect'}
 """
 
 epochs_tmin: float = -0.2

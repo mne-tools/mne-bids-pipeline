@@ -52,7 +52,12 @@ def run_inverse(subject, session=None):
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
 
-    for condition, evoked in zip(config.conditions, evokeds):
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition, evoked in zip(conditions, evokeds):
         method = config.inverse_method
         pick_ori = None
 

@@ -36,7 +36,13 @@ def morph_stc(subject, session=None):
     fs_subjects_dir = config.get_fs_subjects_dir()
 
     morphed_stcs = []
-    for condition in config.conditions:
+
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition in conditions:
         method = config.inverse_method
         cond_str = config.sanitize_cond_name(condition)
         inverse_str = method
@@ -102,7 +108,13 @@ def main():
                          root=config.deriv_root,
                          check=False)
 
-    for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
+
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition, this_stc in zip(conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method

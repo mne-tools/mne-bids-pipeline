@@ -102,6 +102,9 @@ def apply_ica(subject, session):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
+    # Re-apply baseline correction, as removing ICs may have introduced a
+    # shift of the signal
+    epochs_cleaned.apply_baseline(epochs_cleaned.baseline)
 
     msg = 'Saving cleaned epochs.'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

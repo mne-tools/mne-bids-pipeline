@@ -224,9 +224,9 @@ def run_report(subject, session=None):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True)
+    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
+                                  subject=fs_subject)
     if op.exists(fname_trans):
-        params['subject'] = fs_subject
         params['subjects_dir'] = fs_subjects_dir
 
     rep = mne.Report(**params)

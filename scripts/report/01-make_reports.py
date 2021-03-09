@@ -266,8 +266,9 @@ def run_report(subject, session=None):
         ica = mne.preprocessing.read_ica(fname_ica)
         fig = ica.plot_overlay(epochs.average(), show=False)
         rep.add_figs_to_section(fig,
-                                captions='Evoked response (across all epochs) '
-                                         'before and after ICA',
+                                captions=f'Evoked response (across all epochs) '
+                                         f'before and after ICA '
+                                         f'({len(ica.exclude)} ICs removed)',
                                 section='ICA')
 
     ###########################################################################

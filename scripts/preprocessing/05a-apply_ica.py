@@ -82,7 +82,7 @@ def apply_ica(subject, session):
     #
     # Note that up until now, we haven't actually rejected any ICs from the
     # epochs.
-    evoked = epochs.average().apply_baseline(config.baseline)
+    evoked = epochs.average()
 
     # Plot source time course
     fig = ica.plot_sources(evoked, show=config.interactive)

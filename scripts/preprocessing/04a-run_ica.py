@@ -115,10 +115,10 @@ def make_epochs_for_ica(raw, subject, session):
     events, event_id = mne.events_from_annotations(raw)
     events = events[selection]
     epochs_ica = mne.Epochs(raw, events=events, event_id=event_id,
+                            tmin=epochs.tmin, tmax=epochs.tmax,
+                            baseline=None,
                             on_missing='ignore',
-                            tmin=epochs.tmin, tmax=epochs.tmax, proj=True,
-                            baseline=epochs.baseline,
-                            preload=True, decim=config.decim)
+                            decim=config.decim, proj=True, preload=True)
 
     return epochs_ica
 

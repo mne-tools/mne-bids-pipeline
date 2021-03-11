@@ -96,7 +96,7 @@ def run_epochs(subject, session=None):
                                 session=session))
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        proj=True, baseline=config.baseline,
+                        proj=True, baseline=None,
                         preload=False, decim=config.decim,
                         reject=config.get_reject(),
                         reject_tmin=config.reject_tmin,

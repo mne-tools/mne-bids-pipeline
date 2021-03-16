@@ -644,11 +644,60 @@ to only get a warning instead.
 # EPOCHING
 # --------
 
+epochs_metadata_tmin: Optional[float] = None
+"""
+The beginning of the time window for metadata generation, in seconds,
+relative to the time-locked event of the respective epoch. This may be less
+than or larger than the epoch's first time point. If ``None``, use the first
+time point of the epoch.
+"""
+
+epochs_metadata_tmax: Optional[float] = None
+"""
+Same as ``epochs_metadata_tmin``, but specifying the **end** of the time
+window for metadata generation.
+"""
+
+epochs_metadata_keep_first: Optional[Iterable[str]] = None
+"""
+Event groupings using hierarchical event descriptors (HEDs) for which to store
+the time of the **first** occurrence of any event of this group in a new column
+with the group name, and the **type** of that event in a column named after the
+group, but with a ``first_`` prefix. If ``None`` (default), no event
+aggregation will take place and no new columns will be created.
+
+???+ example "Example"
+    Assume you have two response events types, ``response/left`` and
+    ``response/right``; in some trials, both responses occur, because the
+    participant pressed both buttons. Now, you want to keep the first response
+    only. To achieve this, set
+    ```python
+    epochs_metadata_keep_first = ['response']
+    ```
+    This will add two new columns to the metadata: ``response``, indicating
+    the **time** relative to the time-locked event; and ``first_response``,
+    depicting the **type** of event (``'left'`` or ``'right'``).
+
+    You may also specify a grouping for multiple event types:
+    ```python
+    keep_first=['response', 'stimulus']. 
+    ```
+    This will add the columns ``response``, ``first_response``, ``stimulus``,
+    and ``first_stimulus``.
+"""
+
+epochs_metadata_keep_last: Optional[Iterable[str]] = None
+"""
+Same as ``epochs_metadata_keep_first``, but for keeping the **last**
+occurrence of matching event types. The columns indicating the event types
+will be named with a ``last_`` instead of a ``first_`` prefix.
+"""
+
 conditions: Union[Iterable[str], Dict[str, str]] = ['left', 'right']
 """
-The time-locked events based on which to create epochs and evoked responses.
+The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
-BIDS ``events.tsv`` file; or the name of condition *groups*, if the condition
+BIDS ``*_events.tsv`` file; or the name of condition *groups*, if the condition
 names contain the (MNE-specific) group separator, ``/``. See the [Subselecting
 epochs tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
 for more information.
@@ -700,22 +749,6 @@ if ``None``, no baseline correction is applied.
     ```python
     baseline = (None, 0)  # beginning of epoch until time point zero
     ```
-"""
-
-epochs_metadata_tmin: Optional[float] = None
-"""
-The beginning of the time period for epochs metadata generation, in seconds,
-relative to the time-locked event of the respective epoch. This may be less
-than or larger than the epoch's first time point. If ``None``, use the first
-time point of the epoch.
-"""
-
-epochs_metadata_tmax: Optional[float] = None
-"""
-The end of the time period for epochs metadata generation, in seconds,
-relative to the time-locked event of the respective epoch. This may be last
-than or larger than the epoch's last time point. If ``None``, use the first
-time point of the epoch.
 """
 
 contrasts: Iterable[Tuple[str, str]] = []

@@ -86,8 +86,9 @@ def run_epochs(subject, session=None):
     metadata, _, _ = mne.epochs.make_metadata(
         events=events, event_id=event_id,
         tmin=epochs_metadata_tmin, tmax=epochs_metadata_tmax,
+        keep_first=config.epochs_metadata_keep_first,
+        keep_last=config.epochs_metadata_keep_last,
         sfreq=raw.info['sfreq'])
-
 
     # Epoch the data
     msg = (f'Creating epochs with duration: '

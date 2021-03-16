@@ -31,6 +31,7 @@ https://github.com/bids-standard/bids-specification/pull/265
 
 import itertools
 import logging
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -48,25 +49,39 @@ logger = logging.getLogger('mne-study-template')
 
 
 def get_mf_cal_fname(subject, session):
-    mf_cal_fpath = BIDSPath(subject=subject,
-                            session=session,
-                            suffix='meg',
-                            datatype='meg',
-                            root=config.bids_root).meg_calibration_fpath
-    if mf_cal_fpath is None:
-        raise ValueError('Could not find Maxwell Filter Calibration file.')
+    if config.mf_cal_fname is None:
+        mf_cal_fpath = BIDSPath(subject=subject,
+                                session=session,
+                                suffix='meg',
+                                datatype='meg',
+                                root=config.bids_root).meg_calibration_fpath
+        if mf_cal_fpath is None:
+            raise ValueError('Could not find Maxwell Filter Calibration '
+                             'file.')
+    else:
+        mf_cal_fpath = Path(config.mf_cal_fname)
+        if not mf_cal_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter Calibration '
+                             f'file at {str(mf_cal_fpath)}.')
 
     return mf_cal_fpath
 
 
 def get_mf_ctc_fname(subject, session):
-    mf_ctc_fpath = BIDSPath(subject=subject,
-                            session=session,
-                            suffix='meg',
-                            datatype='meg',
-                            root=config.bids_root).meg_crosstalk_fpath
-    if mf_ctc_fpath is None:
-        raise ValueError('Could not find Maxwell Filter cross-talk file.')
+    if config.mf_ctc_fname is None:
+        mf_ctc_fpath = BIDSPath(subject=subject,
+                                session=session,
+                                suffix='meg',
+                                datatype='meg',
+                                root=config.bids_root).meg_crosstalk_fpath
+        if mf_ctc_fpath is None:
+            raise ValueError('Could not find Maxwell Filter cross-talk '
+                             'file.')
+    else:
+        mf_ctc_fpath = Path(config.mf_cal_fname)
+        if not mf_ctc_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter cross-talk '
+                             f'file at {str(mf_ctc_fpath)}.')
 
     return mf_ctc_fpath
 

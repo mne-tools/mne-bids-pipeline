@@ -451,6 +451,34 @@ runs. If ``None``, pick the first run.
     ```
 """
 
+mf_cal_fname: Optional[str] = None
+"""
+warning:
+     This parameter should only be used for BIDS datasets that don't store
+     the fine-calibration file
+     [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files).
+Path to the Maxwell Filter calibration file. If None the recommended
+location is used.
+???+ example "Example"
+    ```python
+    mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
+    ```
+"""
+
+mf_ctc_fname: Optional[str] = None
+"""
+Path to the Maxwell Filter cross-talk file. If None the recommended
+location is used.
+warning:
+     This parameter should only be used for BIDS datasets that don't store
+     the cross-talk file
+     [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files).
+???+ example "Example"
+    ```python
+    mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
+    ```
+"""
+
 ###############################################################################
 # STIMULATION ARTIFACT
 # --------------------

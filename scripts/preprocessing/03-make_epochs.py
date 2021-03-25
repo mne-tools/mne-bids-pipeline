@@ -70,12 +70,12 @@ def run_epochs(subject, session=None):
 
     # Construct metadata from the epochs
     if config.epochs_metadata_tmin is None:
-        epochs_metadata_tmin = config.epochs_metadata_tmin
+        epochs_metadata_tmin = config.epochs_tmin
     else:
         epochs_metadata_tmin = config.epochs_metadata_tmin
 
     if config.epochs_metadata_tmax is None:
-        epochs_metadata_tmax = config.epochs_metadata_tmax
+        epochs_metadata_tmax = config.epochs_tmax
     else:
         epochs_metadata_tmax = config.epochs_metadata_tmax
 

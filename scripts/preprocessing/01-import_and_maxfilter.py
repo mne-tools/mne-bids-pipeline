@@ -1,7 +1,7 @@
 """
-========================
-01. Apply Maxwell filter
-========================
+========================================================================
+01. Import data, apply MaxWell filter to MEG data, and find bad channels
+========================================================================
 
 The data are imported from the BIDS folder.
 
@@ -356,9 +356,6 @@ def run_maxwell_filter(subject, session=None):
                              .update(processing='sss',
                                      extension='.fif'))
         elif config.ch_types == ['eeg']:
-            msg = 'Not applying Maxwell filter to EEG data.'
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
             raw_out = raw
             raw_fname_out = bids_path_out.copy().update(extension='.fif')
         else:
@@ -446,7 +443,7 @@ def run_maxwell_filter(subject, session=None):
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
-    msg = 'Running Step 1: Data import and Maxwell filtering'
+    msg = 'Running Step 1: Data import'
     logger.info(gen_log_message(step=1, message=msg))
 
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
@@ -454,7 +451,7 @@ def main():
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
-    msg = 'Completed Step 1: Data import and Maxwell filtering'
+    msg = 'Completed Step 1: Data import'
     logger.info(gen_log_message(step=1, message=msg))
 
 

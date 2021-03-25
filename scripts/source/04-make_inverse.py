@@ -52,7 +52,12 @@ def run_inverse(subject, session=None):
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
 
-    for condition, evoked in zip(config.conditions, evokeds):
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition, evoked in zip(conditions, evokeds):
         method = config.inverse_method
         pick_ori = None
 
@@ -76,6 +81,11 @@ def main():
     """Run inv."""
     msg = 'Running Step 12: Compute and apply inverse solution'
     logger.info(gen_log_message(step=12, message=msg))
+
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(gen_log_message(step=12, message=msg))
+        return
 
     parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in

@@ -54,12 +54,13 @@ def apply_ssp(subject, session=None):
                                 session=session))
 
     projs = mne.read_proj(proj_fname_in)
-    epochs.add_proj(projs).apply_proj()
+    epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
+    epochs_cleaned.apply_baseline(config.baseline)
 
     msg = 'Saving epochs'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
-    epochs.save(fname_out, overwrite=True)
+    epochs_cleaned.save(fname_out, overwrite=True)
 
 
 def main():

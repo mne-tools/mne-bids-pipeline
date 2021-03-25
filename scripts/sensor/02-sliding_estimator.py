@@ -65,11 +65,20 @@ def run_time_decoding(subject, condition1, condition2, session=None):
         epochs.pick(config.analyze_channels)
 
     # We define the epochs and the labels
-    epochs = mne.concatenate_epochs([epochs[condition1],
-                                     epochs[condition2]])
+    if isinstance(config.conditions, dict):
+        epochs_conds = [config.conditions[condition1],
+                        config.conditions[condition2]]
+        cond_names = [condition1, condition2]
+    else:
+        epochs_conds = cond_names = [condition1, condition2]
+        epochs_conds = [condition1, condition2]
+
+    epochs = mne.concatenate_epochs([epochs[epochs_conds[0]],
+                                     epochs[epochs_conds[1]]])
+    n_cond1 = len(epochs[epochs_conds[0]])
+    n_cond2 = len(epochs[epochs_conds[1]])
+
     X = epochs.get_data()
-    n_cond1 = len(epochs[condition1])
-    n_cond2 = len(epochs[condition2])
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
     clf = make_pipeline(
@@ -83,7 +92,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
     scores = cross_val_multiscore(se, X=X, y=y, cv=config.decoding_n_splits)
 
     # let's save the scores now
-    a_vs_b = f'{condition1}-{condition2}'.replace(op.sep, '')
+    a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
     processing = f'{a_vs_b}+{config.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
 
@@ -94,8 +103,8 @@ def run_time_decoding(subject, condition1, condition2, session=None):
 
     fname_tsv = fname_mat.copy().update(extension='.tsv')
     tabular_data = pd.DataFrame(
-        dict(cond_1=[condition1] * len(epochs.times),
-             cond_2=[condition2] * len(epochs.times),
+        dict(cond_1=[cond_names[0]] * len(epochs.times),
+             cond_2=[cond_names[1]] * len(epochs.times),
              time=epochs.times,
              mean_crossval_score=scores.mean(axis=0),
              metric=[config.decoding_metric] * len(epochs.times))

@@ -10,7 +10,7 @@ plots.
 import os.path as op
 import itertools
 import logging
-from typing import Dict, Any, List, Tuple, Union
+from typing import Dict, Any, Tuple, Union
 
 import numpy as np
 from scipy.io import loadmat
@@ -224,9 +224,9 @@ def run_report(subject, session=None):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True)
+    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
+                                  subject=fs_subject)
     if op.exists(fname_trans):
-        params['subject'] = fs_subject
         params['subjects_dir'] = fs_subjects_dir
 
     rep = mne.Report(**params)
@@ -265,16 +265,23 @@ def run_report(subject, session=None):
         epochs = mne.read_epochs(fname_epo)
         ica = mne.preprocessing.read_ica(fname_ica)
         fig = ica.plot_overlay(epochs.average(), show=False)
-        rep.add_figs_to_section(fig,
-                                captions='Evoked response (across all epochs) '
-                                         'before and after ICA',
-                                section='ICA')
+        rep.add_figs_to_section(
+            fig,
+            captions=f'Evoked response (across all epochs) '
+                     f'before and after ICA '
+                     f'({len(ica.exclude)} ICs removed)',
+            section='ICA'
+        )
 
     ###########################################################################
     #
     # Visualize evoked responses.
     #
-    conditions: List[Condition_T] = list(config.conditions)
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions.copy()
+
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
     if config.analyze_channels:
@@ -302,7 +309,7 @@ def run_report(subject, session=None):
 
         for contrast in config.contrasts:
             cond_1, cond_2 = contrast
-            a_vs_b = f'{cond_1}-{cond_2}'.replace(op.sep, '')
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{config.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding_ = (fname_decoding.copy()
@@ -517,7 +524,11 @@ def run_report_average(session: str) -> None:
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
 
-    conditions: List[Condition_T] = list(config.conditions)
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions.copy()
+
     conditions.extend(config.contrasts)
 
     ###########################################################################
@@ -549,7 +560,7 @@ def run_report_average(session: str) -> None:
     if config.decode:
         for contrast in config.contrasts:
             cond_1, cond_2 = contrast
-            a_vs_b = f'{cond_1}-{cond_2}'.replace(op.sep, '')
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{config.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding_ = (evoked_fname.copy()

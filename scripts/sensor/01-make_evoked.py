@@ -50,10 +50,18 @@ def run_evoked(subject, session=None):
     msg = 'Creating evoked data based on experimental conditions …'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
-    evokeds = []
-    for condition in config.conditions:
-        evoked = epochs[condition].average()
-        evokeds.append(evoked)
+    all_evoked = dict()
+
+    if isinstance(config.conditions, dict):
+        for new_cond_name, orig_cond_name in config.conditions.items():
+            evoked = epochs[orig_cond_name].average()
+            evoked.comment = evoked.comment.replace(orig_cond_name,
+                                                    new_cond_name)
+            all_evoked[new_cond_name] = evoked
+    else:
+        for condition in config.conditions:
+            evoked = epochs[condition].average()
+            all_evoked[condition] = evoked
 
     if config.contrasts:
         msg = 'Contrasting evoked responses …'
@@ -62,12 +70,12 @@ def run_evoked(subject, session=None):
 
         for contrast in config.contrasts:
             cond_1, cond_2 = contrast
-            evoked_1 = epochs[cond_1].average()
-            evoked_2 = epochs[cond_2].average()
-            evoked_diff = mne.combine_evoked([evoked_1, evoked_2],
+            evoked_diff = mne.combine_evoked([all_evoked[cond_1],
+                                              all_evoked[cond_2]],
                                              weights=[1, -1])
-            evokeds.append(evoked_diff)
+            all_evoked[contrast] = evoked_diff
 
+    evokeds = list(all_evoked.values())
     mne.write_evokeds(fname_out, evokeds)
 
     if config.interactive:

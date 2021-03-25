@@ -75,11 +75,21 @@ def run_filter(subject, run=None, session=None):
     raw = mne.io.read_raw_fif(raw_fname_in)
     raw.load_data()
 
-    # Band-pass the data channels (MEG and EEG)
-    msg = (f'Filtering experimental data between {config.l_freq} and '
-           f'{config.h_freq} Hz')
+    # Filter data channels (MEG and EEG)
+    if config.l_freq is not None and config.h_freq is None:
+        msg = f'High-pass filtering data; lower bound: {config.l_freq} Hz'
+    elif config.l_freq is None and config.h_freq is not None:
+        msg = f'Low-pass filtering data; upper bound: {config.h_freq} Hz'
+    elif config.l_freq is not None and config.h_freq is not None:
+        msg = (f'Band-pass filtering data; range: '
+               f'{config.l_freq} – {config.h_freq} Hz')
+    else:
+        msg = 'Not applying frequency filter.'
+
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run))
+    if config.l_freq is None and config.h_freq is None:
+        return
 
     filter_kws = dict(l_freq=config.l_freq, h_freq=config.h_freq,
                       l_trans_bandwidth=config.l_trans_bandwidth,

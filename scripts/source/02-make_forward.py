@@ -94,6 +94,11 @@ def main():
     msg = 'Running Step 10: Create forward solution'
     logger.info(gen_log_message(step=10, message=msg))
 
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
     parallel(run_func(subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))

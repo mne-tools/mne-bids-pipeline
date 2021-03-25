@@ -117,7 +117,7 @@ def average_decoding(session):
                                 'mean_ci_lower': np.empty(len(times)),
                                 'mean_ci_upper': np.empty(len(times))}
 
-        a_vs_b = f'{cond_1}-{cond_2}'.replace(op.sep, '')
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
         processing = f'{a_vs_b}+{config.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
 

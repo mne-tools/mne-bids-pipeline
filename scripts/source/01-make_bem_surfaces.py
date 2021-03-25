@@ -71,6 +71,11 @@ def main():
     msg = 'Running Step 10: Create BEM surfaces'
     logger.info(gen_log_message(step=10, message=msg))
 
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(make_bem, n_jobs=config.N_JOBS)
     parallel(run_func(subject) for subject in config.get_subjects())
 

@@ -23,7 +23,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-study-template')
 
 
-###############################################################################
 @failsafe_run(on_error=on_error)
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
@@ -70,21 +69,36 @@ def run_epochs(subject, session=None):
     del raw_list
 
     # Construct metadata from the epochs
-    # Add here if you need to attach a pandas dataframe as metadata
-    # to your epochs object:
-    # https://martinos.org/mne/dev/auto_tutorials/plot_metadata_epochs.html
+    if config.epochs_metadata_tmin is None:
+        epochs_metadata_tmin = config.epochs_tmin
+    else:
+        epochs_metadata_tmin = config.epochs_metadata_tmin
+
+    if config.epochs_metadata_tmax is None:
+        epochs_metadata_tmax = config.epochs_tmax
+    else:
+        epochs_metadata_tmax = config.epochs_metadata_tmax
+
+    metadata, _, _ = mne.epochs.make_metadata(
+        events=events, event_id=event_id,
+        tmin=epochs_metadata_tmin, tmax=epochs_metadata_tmax,
+        keep_first=config.epochs_metadata_keep_first,
+        keep_last=config.epochs_metadata_keep_last,
+        sfreq=raw.info['sfreq'])
 
     # Epoch the data
-    msg = 'Epoching'
+    msg = (f'Creating epochs with duration: '
+           f'[{config.epochs_tmin}, {config.epochs_tmin}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        proj=True, baseline=config.baseline,
+                        proj=True, baseline=None,
                         preload=False, decim=config.decim,
                         reject=config.get_reject(),
                         reject_tmin=config.reject_tmin,
-                        reject_tmax=config.reject_tmax)
+                        reject_tmax=config.reject_tmax,
+                        metadata=metadata)
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

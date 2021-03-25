@@ -82,7 +82,6 @@ def apply_ica(subject, session):
     #
     # Note that up until now, we haven't actually rejected any ICs from the
     # epochs.
-
     evoked = epochs.average()
 
     # Plot source time course
@@ -93,8 +92,9 @@ def apply_ica(subject, session):
     # Plot original & corrected data
     fig = ica.plot_overlay(evoked, show=config.interactive)
     report.add_figs_to_section(figs=fig,
-                               captions='Evoked response (across all epochs) '
-                                        'before and after IC removal')
+                               captions=f'Evoked response (across all epochs) '
+                                        f'before and after cleaning via ICA '
+                                        f'({len(ica.exclude)} ICs removed)')
     report.save(report_fname, overwrite=True, open_browser=False)
 
     # Now actually reject the components.
@@ -102,6 +102,7 @@ def apply_ica(subject, session):
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
+    epochs_cleaned.apply_baseline(config.baseline)
 
     msg = 'Saving cleaned epochs.'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,

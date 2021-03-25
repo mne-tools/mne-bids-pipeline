@@ -36,7 +36,13 @@ def morph_stc(subject, session=None):
     fs_subjects_dir = config.get_fs_subjects_dir()
 
     morphed_stcs = []
-    for condition in config.conditions:
+
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition in conditions:
         method = config.inverse_method
         cond_str = config.sanitize_cond_name(condition)
         inverse_str = method
@@ -63,9 +69,14 @@ def morph_stc(subject, session=None):
 
 @failsafe_run(on_error=on_error)
 def main():
-    """Run grp ave."""
+    """Run group average in source space"""
     msg = 'Running Step 13: Grand-average source estimates'
     logger.info(gen_log_message(step=13, message=msg))
+
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(gen_log_message(step=13, message=msg))
+        return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
@@ -97,7 +108,12 @@ def main():
                          root=config.deriv_root,
                          check=False)
 
-    for condition, this_stc in zip(config.conditions, mean_morphed_stcs):
+    if isinstance(config.conditions, dict):
+        conditions = list(config.conditions.keys())
+    else:
+        conditions = config.conditions
+
+    for condition, this_stc in zip(conditions, mean_morphed_stcs):
         this_stc /= len(all_morphed_stcs)
 
         method = config.inverse_method

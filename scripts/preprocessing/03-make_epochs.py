@@ -12,10 +12,6 @@ To save space, the epoch data can be decimated.
 
 import itertools
 import logging
-from typing import Dict, Tuple
-
-import numpy as np
-import pandas as pd
 
 import mne
 from mne.parallel import parallel_func

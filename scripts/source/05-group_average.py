@@ -108,7 +108,6 @@ def main():
                          root=config.deriv_root,
                          check=False)
 
-
     if isinstance(config.conditions, dict):
         conditions = list(config.conditions.keys())
     else:

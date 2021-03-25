@@ -10,7 +10,7 @@ plots.
 import os.path as op
 import itertools
 import logging
-from typing import Dict, Any, List, Tuple, Union
+from typing import Dict, Any, Tuple, Union
 
 import numpy as np
 from scipy.io import loadmat
@@ -265,11 +265,13 @@ def run_report(subject, session=None):
         epochs = mne.read_epochs(fname_epo)
         ica = mne.preprocessing.read_ica(fname_ica)
         fig = ica.plot_overlay(epochs.average(), show=False)
-        rep.add_figs_to_section(fig,
-                                captions=f'Evoked response (across all epochs) '
-                                         f'before and after ICA '
-                                         f'({len(ica.exclude)} ICs removed)',
-                                section='ICA')
+        rep.add_figs_to_section(
+            fig,
+            captions=f'Evoked response (across all epochs) '
+                     f'before and after ICA '
+                     f'({len(ica.exclude)} ICs removed)',
+            section='ICA'
+        )
 
     ###########################################################################
     #

@@ -280,7 +280,7 @@ def run_report(subject, session=None):
     if isinstance(config.conditions, dict):
         conditions = list(config.conditions.keys())
     else:
-        conditions = config.conditions
+        conditions = config.conditions.copy()
 
     conditions.extend(config.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
@@ -527,7 +527,7 @@ def run_report_average(session: str) -> None:
     if isinstance(config.conditions, dict):
         conditions = list(config.conditions.keys())
     else:
-        conditions = config.conditions
+        conditions = config.conditions.copy()
 
     conditions.extend(config.contrasts)
 

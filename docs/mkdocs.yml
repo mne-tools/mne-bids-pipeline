@@ -1,8 +1,8 @@
-site_name: MNE Study Template
+site_name: MNE-BIDS-Pipeline
 repo_url: https://github.com/mne-tools/mne-bids-pipeline
 edit_uri: edit/main/docs/source/
-site_description: The MNE Study Template is a collection of scripts for automated processing of MEG and EEG data.
-site_author: MNE Study Template authors
+site_description: The MNE-BIDS-Pipeline is a collection of scripts for automated processing of MEG and EEG data.
+site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
@@ -23,14 +23,14 @@ extra:
           link: https://twitter.com/mne_news
           name: MNE news on Twitter
 
-copyright: Copyright &copy; MNE Study Template authors
+copyright: Copyright &copy; MNE-BIDS-Pipelie authors
 
 extra_css:
     - css/extra.css
 nav:
     - Home: index.md
     - Features:
-        - What the Study Template can do: features/features.md
+        - What the pipeline can do: features/features.md
         - List of processing steps: features/steps.md
     - Getting started:
         - Installation: getting_started/install.md

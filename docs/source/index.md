@@ -1,7 +1,7 @@
-What is the MNE Study Template?
-===============================
+What is the MNE-BIDS-Pipeline?
+==============================
 
-**The MNE Study Template is a full-flegded processing pipeline for your MEG and
+**The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
 EEG data.**
 
 It operates on raw data stored according to the Brain Imaging Data

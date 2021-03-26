@@ -17,11 +17,11 @@ installed MNE-Python via `conda`, you can simply call:
 
 `conda install -c conda-forge git-annex`
 
-Now, get the study template through git:
+Now, get the pipeline through git:
 
 `$ git clone https://github.com/mne-tools/mne-bids-pipeline.git`
 
-If you do not know how to use git, download the study template as a zip file
+If you do not know how to use git, download the pipeline as a zip file
 [here](https://github.com/mne-tools/mne-bids-pipeline/archive/main.zip).
 
 Finally, for source analysis you'll also need `FreeSurfer`, follow the

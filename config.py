@@ -52,7 +52,7 @@ Raises an exception if the BIDS root has not been specified.
 
 deriv_root: Optional[PathLike] = None
 """
-The root of the derivatives directory in which the Study Template will store
+The root of the derivatives directory in which the pipeline will store
 the processing results. If ``None``, this will be
 ``derivatives/mne-bids-pipeline`` inside the BIDS root.
 """
@@ -1103,7 +1103,7 @@ Maxfilter set this to ``True``.
 
 log_level: Literal['info', 'error'] = 'info'
 """
-Set the Study Template logging verbosity.
+Set the pipeline logging verbosity.
 """
 
 mne_log_level: Literal['info', 'error'] = 'error'

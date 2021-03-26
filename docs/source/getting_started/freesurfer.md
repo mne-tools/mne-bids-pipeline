@@ -16,7 +16,7 @@ images too).
 
 ## Install FreeSurfer
 
-Before running the source-analysis parts of the Study Template, you need to
+Before running the source-analysis parts of the pipeline, you need to
 create the above-mentioned 3D surfaces and parcellations. This is done using
 the [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/) tool. FreeSurfer
 is a free software package that runs on macOS and Linux.
@@ -37,7 +37,7 @@ nstructions](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads).
 
 ## Generate surfaces and brain parcellation
 
-The Study Template provides a convenient way to invoke FreeSurfer. After
+MNE-BIDS-Pipeline provides a convenient way to invoke FreeSurfer. After
 [adjusting your configuration file](basic_usage.md#adjust-your-configuration-file),
 invoke FreeSurfer via the `run.py` script in the following way:
 
@@ -56,7 +56,7 @@ to create the required surfaces.
 
 ## Run source-level analyses
 
-Now you are ready to run the Study Template, including all parts of inverse
+Now you are ready to run MNE-BIDS-Pipeline, including all parts of inverse
 modeling. To perform the projection, MNE-Python will first need to detect
 brain, skull, and skin, so it can then start constructing the actual BEM
 conductor model. These BEM surfaces can be created based on FLASH MRI

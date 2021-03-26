@@ -1,6 +1,6 @@
 Prepare your dataset
 --------------------
-The Study Template **only** works with BIDS-formatted raw data. To find out
+MNE-BIDS-Pipeline **only** works with BIDS-formatted raw data. To find out
 more about BIDS and how to convert your data to the BIDS format, please see
 [the documentation of MNE-BIDS](https://mne.tools/mne-bids/stable/index.html).
 
@@ -10,7 +10,7 @@ We recommend that
 
     ??? info "Why?"
         While we *do* run automated bad channel detection in the
-        Study Template, it is considered good practice to flag
+        pipeline, it is considered good practice to flag
         obviously problematic channels as such in the BIDS dataset.
 
     ??? tip "How?"
@@ -21,8 +21,8 @@ We recommend that
         ```
         Please see the MNE-BIDS documentation for more information.
 
-- the **data is anonymized** before running the Study Template if you
-  require anonymization, as the Study Template itself does not allow for anonymization.
+- the **data is anonymized** before running the pipeline if you
+  require anonymization, as the pipeline itself does not allow for anonymization.
 
     ??? info "Why?"
         This was a conscious design decision, not a technical
@@ -45,7 +45,7 @@ We recommend that
 
 Adjust your configuration file
 ------------------------------
-The Study Template ships with a default configuration file, `config.py`.
+The pipeline ships with a default configuration file, `config.py`.
 You need to **create a copy** of that configuration file and adjust all
 parameters that are relevant to your data processing and analysis.
 
@@ -53,17 +53,17 @@ parameters that are relevant to your data processing and analysis.
     You should **only** need to touch the configuration file.
     None of the scripts should be edited.
 
-Run the Study Template
-----------------------
+Run the pipeline
+----------------
 
-???+ example "Run the full Study Template"
-    To run the full Study Template, execute the following command in your
+???+ example "Run the full pipeline"
+    To run the full pipeline, execute the following command in your
     terminal:
     ```shell
     python run.py --config=/path/to/your/custom_config.py
     ```
 
-??? example "Run only parts of the Study Template"
+??? example "Run only parts of the pipeline"
     Run only the preprocessing steps:
     ```shell
     python run.py --config=/path/to/your/custom_config.py --steps=preprocessing

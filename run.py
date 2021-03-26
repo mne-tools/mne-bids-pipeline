@@ -104,12 +104,12 @@ def process(config: PathLike,
             session: Optional[str] = None,
             task: Optional[str] = None,
             run: Optional[str] = None):
-    """Run the Study Template.
+    """Run the BIDS pipeline.
 
     Parameters
     ----------
     config
-        The path of the Study Template configuration file to use.
+        The path of the pipeline configuration file to use.
     steps
         The processing steps to run.
         Can either be one of the processing groups 'preprocessing', sensor',

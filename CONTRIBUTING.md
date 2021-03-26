@@ -10,19 +10,19 @@ You can then install the following additional packages via `pip`. Note that
 the URL points to the bleeding edge version of `mne_bids`:
 
 `$ pip install datalad`
-`$ pip install https://github.com/mne-tools/mne-bids/zipball/master`
+`$ pip install https://github.com/mne-tools/mne-bids/zipball/main`
 
 To get the test data, you need to install `git-annex` on your system. If you
 installed MNE-Python via `conda`, you can simply call:
 
 `conda install -c conda-forge git-annex`
 
-Now, get the study template through git:
+Now, get the pipeline through git:
 
-`$ git clone https://github.com/mne-tools/mne-study-template.git`
+`$ git clone https://github.com/mne-tools/mne-bids-pipeline.git`
 
-If you do not know how to use git, download the study template as a zip file
-[here](https://github.com/mne-tools/mne-study-template/archive/master.zip).
+If you do not know how to use git, download the pipeline as a zip file
+[here](https://github.com/mne-tools/mne-bids-pipeline/archive/main.zip).
 
 Finally, for source analysis you'll also need `FreeSurfer`, follow the
 instructions on [their website](https://surfer.nmr.mgh.harvard.edu/).
@@ -65,8 +65,8 @@ The tests are run with help of the `tests/run_tests.py` module and the
 Instead of specifying an argument via the command line, you can also define
 an environment variable `DATASET` to pass your option.
 
-For every pull request or merge into the `master` branch of the
-`mne-study-template`,
+For every pull request or merge into the `main` branch of the
+`mne-bids-pipeline`,
 [CircleCI](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline)
 will run tests as defined in `./circleci/config.yml`.
 

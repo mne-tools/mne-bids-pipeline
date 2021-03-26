@@ -1,5 +1,5 @@
 !!! warning
-    This functionality will soon be removed from the Study Template, and
+    This functionality will soon be removed from the pipeline, and
     will be integrated into MNE-BIDS.
 
 "Bad", i.e. flat and overly noisy channels, can be automatically detected

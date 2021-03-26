@@ -6,7 +6,7 @@ system. See the [installation instructions](https://mne.tools/stable/install/mne
 Install additional dependencies
 -------------------------------
 You will also need to install the a number of additional dependencies that are
-required to run the Study Template.
+required to run the pipeline.
 
 ??? example "Install for Python 3.8 and newer"
     Run in your terminal:
@@ -30,6 +30,6 @@ required to run the Study Template.
     - `fire` for the command line interface
     - `typing_extensions` if you're using a Python version older than 3.8
 
-Download the Study Template
----------------------------
+Download MNE-BIDS-Pipeline
+--------------------------
 TODO

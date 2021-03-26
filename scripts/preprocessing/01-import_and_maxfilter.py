@@ -45,7 +45,7 @@ from mne_bids import BIDSPath, read_raw_bids
 import config
 from config import gen_log_message, on_error, failsafe_run
 
-logger = logging.getLogger('mne-study-template')
+logger = logging.getLogger('mne-bids-pipeline')
 
 
 def get_mf_cal_fname(subject, session):
@@ -202,7 +202,7 @@ def find_bad_channels(raw, subject, session, task, run):
     preexisting_bads = list(preexisting_bads)
     if preexisting_bads:
         bads_for_tsv.extend(preexisting_bads)
-        reasons.extend(['pre-existing (before mne-study-template was run)'] *
+        reasons.extend(['pre-existing (before MNE-BIDS-pipeline was run)'] *
                        len(preexisting_bads))
 
     tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))

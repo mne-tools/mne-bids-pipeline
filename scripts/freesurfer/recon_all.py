@@ -15,7 +15,7 @@ from mne.parallel import parallel_func
 import config
 
 PathLike = Union[str, Path]
-logger = logging.getLogger('mne-study-template')
+logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 

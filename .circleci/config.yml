@@ -67,6 +67,27 @@ jobs:
           key: conda-cache
           paths:
             - "~/miniforge"
+      # Look at what we have and fail early if there is some library conflict
+      - run:
+          name: Check installation
+          command: |
+              which python
+              git-annex version
+              datalad --version
+              openneuro-py --version
+              mne_bids --version
+              mne sys_info
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+            - miniforge
+            - reports
+            - mne_data
+
+  setup_freesurfer:
+    <<: *imageconfig
+    steps:
       - restore_cache:
           keys:
             - freesurfer-cache
@@ -85,24 +106,6 @@ jobs:
           key: freesurfer-cache
           paths:
             - "~/freesurfer"
-      # Look at what we have and fail early if there is some library conflict
-      - run:
-          name: Check installation
-          command: |
-              which python
-              git-annex version
-              datalad --version
-              freesurfer --version
-              openneuro-py --version
-              mne_bids --version
-              mne sys_info
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project
-            - miniforge
-            - reports
-            - mne_data
 
   get_ds003392:
     <<: *imageconfig
@@ -168,8 +171,8 @@ jobs:
           path: docs/site
           destination: site
       - persist_to_workspace:  # For documentation deployment to gh-pages
-          root: .
-          paths: docs/site
+          root: ~/
+          paths: ~/project/docs/site
 
   deploy_docs:
     docker:
@@ -184,7 +187,7 @@ jobs:
           paths:
             - ".git"
       - attach_workspace:
-          at: .
+          at: ~/
       - run:
           name: Install and configure dependencies
           command: |
@@ -213,6 +216,7 @@ workflows:
             - get_ds003392
       - build_docs:
           requires:
+            - setup_freesurfer
             - get_ds003392
       - deploy_docs:
           requires:

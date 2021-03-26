@@ -33,9 +33,9 @@ jobs:
     steps:
       - checkout
       - run:
-        <<: *bashenv
+          <<: *bashenv
       - run:
-        <<: *xvfb
+          <<: *xvfb
       - run:
           name: Get conda running
           command: |
@@ -87,7 +87,7 @@ jobs:
           keys:
             - data-cache-ds003392
       - run:
-        <<: *bashenv
+          <<: *bashenv
       - run:
           name: Get ds003392
           command: |
@@ -105,9 +105,9 @@ jobs:
     <<: *imageconfig
     steps:
       - run:
-        <<: *bashenv
+          <<: *bashenv
       - run:
-        <<: *xvfb
+          <<: *xvfb
       - attach_workspace:
           at: ~/
       - run:
@@ -127,9 +127,9 @@ jobs:
     <<: *imageconfig
     steps:
       - run:
-        <<: *bashenv
+          <<: *bashenv
       - run:
-        <<: *xvfb
+          <<: *xvfb
       - attach_workspace:
           at: ~/
       - run:

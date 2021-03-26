@@ -50,10 +50,7 @@ jobs:
             wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
             chmod +x ~/miniforge.sh;
             ~/miniforge.sh -b -p ~/miniforge;
-            conda update conda
-            conda install -y mamba
-            mamba env update -f tests/environment.yml
-            conda install -y mkdocs mkdocs-material mkdocs-material-extensions mkdocstrings coloredlogs
+            conda env update -f tests/environment.yml
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

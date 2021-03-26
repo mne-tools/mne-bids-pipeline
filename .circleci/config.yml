@@ -143,6 +143,25 @@ jobs:
           paths:
             - ~/mne_data/ds000248_ica
 
+  cache_ds001810:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds001810
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds001810
+          command: |
+            python ~/project/tests/download_test_data.py -d ds001810
+      - save_cache:
+          key: data-cache-ds001810
+          paths:
+            - ~/mne_data/ds001810
+
   cache_ds003392:
     <<: *imageconfig
     steps:
@@ -180,25 +199,6 @@ jobs:
           key: data-cache-eegmatchingpennies
           paths:
             - ~/mne_data/eegmatchingpennies
-
-  cache_ds001810:
-    <<: *imageconfig
-    steps:
-      - attach_workspace:
-          at: ~/
-      - restore_cache:
-          keys:
-            - data-cache-ds001810
-      - run:
-          <<: *bashenv
-      - run:
-          name: Get ds001810
-          command: |
-            python ~/project/tests/download_test_data.py -d ds001810
-      - save_cache:
-          key: data-cache-ds001810
-          paths:
-            - ~/mne_data/ds001810
 
   test_ds000246:
     <<: *imageconfig
@@ -273,6 +273,29 @@ jobs:
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
+
+  test_ds001810:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds001810
+      - run:
+          name: test ds001810
+          command: |
+            export DS=ds001810
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds001810
+          destination: reports/ds001810
 
   test_ds003392:
     <<: *imageconfig
@@ -417,7 +440,7 @@ workflows:
       - cache_ds001810:
           requires:
             - setup_env
-      - test_ds003392:
+      - test_ds001810:
           requires:
             - cache_ds001810
 

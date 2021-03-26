@@ -478,6 +478,11 @@ jobs:
           <<: *xvfb
       - attach_workspace:
           at: ~/
+      # necessary because gen_examples.py runs config script, which otherwise complains:
+      # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh

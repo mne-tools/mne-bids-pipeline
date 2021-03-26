@@ -26,7 +26,7 @@ _bashenv: &bashenv
     source get_minimal_commands.sh
     git config --global user.email "user@mne.tools"
     git config --global user.name "mne user"
-    mkdir -p ~/reports ~/mne_data
+    mkdir -p ~/mne_data
 
 jobs:
   setup_env:
@@ -67,7 +67,6 @@ jobs:
           paths:
             - project
             - miniforge
-            - reports
             - mne_data
             - minimal_cmds
 
@@ -224,7 +223,7 @@ jobs:
           command: |
             export DS=ds000117
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
+            mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000117
@@ -232,7 +231,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds000117
+            - mne_data/ds000117/derivatives/mne-bids-pipeline/*/*/*/*.html
 
   test_ds000246:
     <<: *imageconfig
@@ -251,7 +250,7 @@ jobs:
           command: |
             export DS=ds000246
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
+            mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
       - store_artifacts:
@@ -260,7 +259,8 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds000246
+            - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_ds000248:
     <<: *imageconfig
@@ -279,17 +279,19 @@ jobs:
           command: |
             export DS=ds000248
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.json ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248
           destination: reports/ds000248
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds000248
+            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.json
+            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_ds000248_ica:
     <<: *imageconfig
@@ -308,16 +310,17 @@ jobs:
           command: |
             export DS=ds000248_ica
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds000248_ica
+            - mne_data/ds000248_ica/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000248_ica/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_ds000248_FLASH_BEM:
     <<: *imageconfig
@@ -334,8 +337,7 @@ jobs:
       - run:
           name: test BEM from FLASH
           command: |
-            export DS=ds000248_FLASH_BEM
-            python tests/run_tests.py ${DS}
+            python tests/run_tests.py ds000248_FLASH_BEM
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -352,8 +354,7 @@ jobs:
       - run:
           name: test BEM from T1 (watershed)
           command: |
-            export DS=ds000248_T1_BEM
-            python tests/run_tests.py ${DS}
+            python tests/run_tests.py ds000248_T1_BEM
           no_output_timeout: 20m
 
   test_ds001810:
@@ -373,15 +374,15 @@ jobs:
           command: |
             export DS=ds001810
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*/*.html ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds001810
           destination: reports/ds001810
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds001810
+            - mne_data/ds001810/derivatives/mne-bids-pipeline/*/*/*/*.html
 
   test_ds003104:
     <<: *imageconfig
@@ -400,15 +401,15 @@ jobs:
           command: |
             export DS=ds003104
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds003104
           destination: reports/ds003104
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds003104
+            - mne_data/ds003104/derivatives/mne-bids-pipeline/*/*/*.html
 
   test_ds003392:
     <<: *imageconfig
@@ -427,7 +428,7 @@ jobs:
           command: |
             export DS=ds003392
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
+            mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
@@ -437,7 +438,9 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/ds003392
+            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.json
+            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_eeg_matchingpennies:
     <<: *imageconfig
@@ -456,7 +459,7 @@ jobs:
           command: |
             export DS=eeg_matchingpennies
             python tests/run_tests.py ${DS}
-            mkdir ~/reports/${DS}
+            mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/eeg_matchingpennies
@@ -464,7 +467,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - reports/eeg_matchingpennies
+            - mne_data/eeg_matchingpennies/derivatives/mne-bids-pipeline/*/*/*.html
 
   build_docs:
     <<: *imageconfig

@@ -211,6 +211,7 @@ workflows:
       - get_ds003392:
           requires:
             - setup_env
+      - setup_freesurfer
       - test_ds003392:
           requires:
             - get_ds003392

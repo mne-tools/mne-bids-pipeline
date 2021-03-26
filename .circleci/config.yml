@@ -4,10 +4,6 @@ version: 2
 _imageconfig: &imageconfig
   docker:
     - image: circleci/python:3.8-buster
-  environment:
-    - FREESURFER_HOME: /home/circleci/freesurfer
-    - SUBJECTS_DIR: /home/circleci/freesurfer/subjects
-    - DISPLAY: :99
 
 _xvfb: &xvfb
   name: Start Xvfb virtual framebuffer
@@ -17,12 +13,17 @@ _xvfb: &xvfb
 _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
+    set -e
+    sudo apt install pv
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
-    echo "export PATH=~/miniforge/bin:~/freesurfer/bin:$PATH" >> $BASH_ENV;
+    echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
+    PATH=~/miniforge/bin:$PATH
     echo "export MNE_DATA=/home/circleci/mne_data" >> $BASH_ENV;
-    echo "export FS_LICENSE=~/project/tests/freesurfer-license.txt"
+    echo "export DISPLAY=:99"
+    wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
+    source get_minimal_commands.sh
     git config --global user.email "user@mne.tools"
     git config --global user.name "mne user"
     mkdir -p ~/reports ~/mne_data
@@ -71,12 +72,13 @@ jobs:
       - run:
           name: Check installation
           command: |
-              which python
-              git-annex version
-              datalad --version
-              openneuro-py --version
-              mne_bids --version
-              mne sys_info
+            which python
+            git-annex version
+            datalad --version
+            openneuro-py --version
+            mri_convert --version
+            mne_bids --version
+            mne sys_info
       - persist_to_workspace:
           root: ~/
           paths:
@@ -84,30 +86,66 @@ jobs:
             - miniforge
             - reports
             - mne_data
+            - minimal_cmds
 
-  setup_freesurfer:
+  cache_ds000246:
     <<: *imageconfig
     steps:
+      - attach_workspace:
+          at: ~/
       - restore_cache:
           keys:
-            - freesurfer-cache
+            - data-cache-ds000246
       - run:
-          name: Install FreeSurfer
+          <<: *bashenv
+      - run:
+          name: Get ds000246
           command: |
-            if [ -d "~/freesurfer" ]; then
-              echo "Skipping, freesurfer exists"
-              exit 0
-            fi
-            cd ~
-            curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
-            tar xzvf freesurfer.tar.gz
-            ~/freesurfer/SetUpFreeSurfer.sh
+            python ~/project/tests/download_test_data.py -d ds000246
       - save_cache:
-          key: freesurfer-cache
+          key: data-cache-ds000246
           paths:
-            - "~/freesurfer"
+            - ~/mne_data/ds000246
 
-  get_ds003392:
+  cache_ds000248:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds000248
+          command: |
+            python ~/project/tests/download_test_data.py -d ds000248
+      - save_cache:
+          key: data-cache-ds000248
+          paths:
+            - ~/mne_data/ds000248
+
+  cache_ds000248_ica:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248_ica
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds000248_ica
+          command: |
+            python ~/project/tests/download_test_data.py -d ds000248_ica
+      - save_cache:
+          key: data-cache-ds000248_ica
+          paths:
+            - ~/mne_data/ds000248_ica
+
+  cache_ds003392:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -125,10 +163,118 @@ jobs:
           key: data-cache-ds003392
           paths:
             - ~/mne_data/ds003392
-      - persist_to_workspace:
-          root: ~/
+
+  cache_eegmatchingpennies:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-eegmatchingpennies
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get eegmatchingpennies
+          command: |
+            python ~/project/tests/download_test_data.py -d eegmatchingpennies
+      - save_cache:
+          key: data-cache-eegmatchingpennies
           paths:
-            - mne_data/ds003392
+            - ~/mne_data/eegmatchingpennies
+
+  cache_ds001810:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds001810
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds001810
+          command: |
+            python ~/project/tests/download_test_data.py -d ds001810
+      - save_cache:
+          key: data-cache-ds001810
+          paths:
+            - ~/mne_data/ds001810
+
+  test_ds000246:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000246
+      - run:
+          name: test ds000246
+          command: |
+            export DS=ds000246
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds000246
+          destination: reports/ds000246
+
+  test_ds000248:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
+      - run:
+          name: test ds000248
+          command: |
+            export DS=ds000248
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248
+          destination: reports/ds000248
+
+  test_ds000248_ica:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248_ica
+      - run:
+          name: test ds000248_ica
+          command: |
+            export DS=ds000248_ica
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_ica
+          destination: reports/ds000248_ica
 
   test_ds003392:
     <<: *imageconfig
@@ -139,18 +285,44 @@ jobs:
           <<: *xvfb
       - attach_workspace:
           at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds003392
       - run:
           name: test ds003392
           command: |
-             export DS=ds003392
-             python tests/run_tests.py ${DS}
-             mkdir ~/reports/${DS}
-             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
-             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            export DS=ds003392
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
       - store_artifacts:
-          path: /home/circleci/reports/ds00392
-          destination: reports/ds00392
+          path: /home/circleci/reports/ds003392
+          destination: reports/ds003392
+
+  test_eegmatchingpennies:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-eegmatchingpennies
+      - run:
+          name: test eegmatchingpennies
+          command: |
+            export DS=eegmatchingpennies
+            python tests/run_tests.py ${DS}
+            mkdir ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/eegmatchingpennies
+          destination: reports/eegmatchingpennies
 
   build_docs:
     <<: *imageconfig
@@ -163,14 +335,29 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - freesurfer-cache
+            - data-cache-ds000246
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
+      - restore_cache:
+          keys:
+            - data-cache-ds000248_ica
+      - restore_cache:
+          keys:
+            - data-cache-ds001810
+      - restore_cache:
+          keys:
+            - data-cache-ds003396
+      - restore_cache:
+          keys:
+            - data-cache-eegmatchingpennies
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site
-      - persist_to_workspace:  # For documentation deployment to gh-pages
+      - persist_to_workspace: # For documentation deployment to gh-pages
           root: ~/
           paths: ~/project/docs/site
 
@@ -201,24 +388,63 @@ jobs:
           fingerprints:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
 
-
 workflows:
   version: 2
 
   commit:
     jobs:
       - setup_env
-      - get_ds003392:
+
+      - cache_ds000246:
           requires:
             - setup_env
-      - setup_freesurfer
+      - test_ds000246:
+          requires:
+            - cache_ds000246
+
+      - cache_ds000248:
+          requires:
+            - setup_env
+      - test_ds000248:
+          requires:
+            - cache_ds000248
+
+      - cache_ds000248_ica:
+          requires:
+            - setup_env
+      - test_ds000248_ica:
+          requires:
+            - cache_ds000248_ica
+
+      - cache_ds001810:
+          requires:
+            - setup_env
       - test_ds003392:
           requires:
-            - get_ds003392
+            - cache_ds001810
+
+      - cache_ds003392:
+          requires:
+            - setup_env
+      - test_ds003392:
+          requires:
+            - cache_ds003392
+
+      - cache_eegmatchingpennies:
+          requires:
+            - setup_env
+      - test_eegmatchingpennies:
+          requires:
+            - cache_eegmatchingpennies
+
       - build_docs:
           requires:
-            - setup_freesurfer
-            - get_ds003392
+            - cache_ds000246
+            - cache_ds000248
+            - cache_ds000248_ica
+            - cache_ds001810
+            - cache_ds003392
+            - cache_eegmatchingpennies
       - deploy_docs:
           requires:
             - build_docs

@@ -8,7 +8,7 @@ _imageconfig: &imageconfig
 _xvfb: &xvfb
   name: Start Xvfb virtual framebuffer
   command: |
-    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset
+    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
 
 _bashenv: &bashenv
   name: Set BASH_ENV
@@ -44,28 +44,16 @@ jobs:
           <<: *bashenv
       - run:
           <<: *xvfb
-      - restore_cache:
-          keys:
-            - conda-cache
       - run:
           name: Get conda running
           command: |
-            if [ ! -d ~/miniforge ]; then
-              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
-              chmod +x ~/miniforge.sh;
-              ~/miniforge.sh -b -p ~/miniforge;
-            fi
-      - run:
-          name: Install dependencies from conda-forge
-          command: |
+            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+            chmod +x ~/miniforge.sh;
+            ~/miniforge.sh -b -p ~/miniforge;
             conda update conda
             conda install -y mamba
             mamba env update -f tests/environment.yml
             conda install -y mkdocs mkdocs-material mkdocs-material-extensions mkdocstrings coloredlogs
-      - save_cache:
-          key: conda-cache
-          paths:
-            - "~/miniforge"
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

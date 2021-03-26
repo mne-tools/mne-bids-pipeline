@@ -22,6 +22,7 @@ _bashenv: &bashenv
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
     echo "export PATH=~/miniforge/bin:~/freesurfer/bin:$PATH" >> $BASH_ENV;
     echo "export MNE_DATA=/home/circleci/mne_data" >> $BASH_ENV;
+    echo "export FS_LICENSE=~/project/tests/freesurfer-license.txt"
     git config --global user.email "user@mne.tools"
     git config --global user.name "mne user"
     mkdir -p ~/reports ~/mne_data
@@ -42,27 +43,48 @@ jobs:
           <<: *bashenv
       - run:
           <<: *xvfb
+      - restore_cache:
+          keys:
+            - conda-cache
       - run:
           name: Get conda running
           command: |
+            if [ -d "~/miniforge" ]; then
+              echo "Skipping, miniforge exists"
+              exit 0
+            fi
             wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
             chmod +x ~/miniforge.sh;
             ~/miniforge.sh -b -p ~/miniforge;
       - run:
           name: Install dependencies from conda-forge
           command: |
+            conda update conda
             conda install -y mamba
             mamba env update -f tests/environment.yml
             conda install -y mkdocs mkdocs-material mkdocs-material-extensions mkdocstrings coloredlogs
+      - save_cache:
+          key: conda-cache
+          paths:
+            - "~/miniforge"
+      - restore_cache:
+          keys:
+            - freesurfer-cache
       - run:
           name: Install FreeSurfer
           command: |
+            if [ -d "~/freesurfer" ]; then
+              echo "Skipping, freesurfer exists"
+              exit 0
+            fi
             cd ~
             curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
             tar xzvf freesurfer.tar.gz
-            cp project/tests/freesurfer-license.txt freesurfer/license.txt
             ~/freesurfer/SetUpFreeSurfer.sh
-            cd ~/project
+      - save_cache:
+          key: freesurfer-cache
+          paths:
+            - "~/freesurfer"
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -73,13 +95,11 @@ jobs:
               freesurfer --version
               openneuro-py --version
               mne_bids --version
-              mne --version
-              python -c "import mne; mne.sys_info()"
+              mne sys_info
       - persist_to_workspace:
           root: ~/
           paths:
             - project
-            - freesurfer
             - miniforge
             - reports
             - mne_data
@@ -138,6 +158,9 @@ jobs:
           <<: *xvfb
       - attach_workspace:
           at: ~/
+      - restore_cache:
+          keys:
+            - freesurfer-cache
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh

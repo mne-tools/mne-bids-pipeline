@@ -1,240 +1,167 @@
 version: 2
+
+# Aliases to reuse
+_imageconfig: &imageconfig
+  docker:
+    - image: circleci/python:3.8-buster
+  environment:
+    - FREESURFER_HOME: /home/circleci/freesurfer
+    - SUBJECTS_DIR: /home/circleci/freesurfer/subjects
+    - DISPLAY: :99
+
+_xvfb: &xvfb
+  name: Start Xvfb virtual framebuffer
+  command: Xvfb :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
+  background: true
+
+_bashenv: &bashenv
+  name: Set BASH_ENV
+  command: |
+    echo "set -e" >> $BASH_ENV;
+    echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
+    echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
+    echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
+    echo "export PATH=~/freesurfer/bin:$PATH" >> $BASH_ENV;
+    echo "export MNE_DATA=~/mne_data" >> $BASH_ENV;
+    git config --global user.email "user@mne.tools"
+    git config --global user.name "mne user"
+    mkdir -p ~/reports ~/mne_data
+
 jobs:
-    run_tests_and_doc:
-      docker:
-        - image: circleci/python:3.8-buster
-      environment:
-        - FREESURFER_HOME: /home/circleci/freesurfer
-        - SUBJECTS_DIR: /home/circleci/freesurfer/subjects
-        - DISPLAY: :99
+  setup_env:
+    <<: *imageconfig
+    steps:
+      - checkout
+      - run:
+        <<: *bashenv
+      - run:
+        <<: *xvfb
+      - run:
+          name: Get conda running
+          command: |
+            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+            chmod +x ~/miniforge.sh;
+            ~/miniforge.sh -b -p ~/miniforge;
+      - run:
+          name: Install dependencies from conda-forge
+          command: |
+            conda install -y mamba
+            mamba env update -f tests/environment.yml
+            conda install -y mkdocs mkdocs-material mkdocs-material-extensions mkdocstrings coloredlogs
+      - run:
+          name: Install FreeSurfer
+          command: |
+            cd ~
+            curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
+            tar xzvf freesurfer.tar.gz
+            cp project/tests/freesurfer-license.txt freesurfer/license.txt
+            ~/freesurfer/SetUpFreeSurfer.sh
+            cd ~/project
+      # Look at what we have and fail early if there is some library conflict
+      - run:
+          name: Check installation
+          command: |
+              which python
+              git-annex version
+              datalad --version
+              freesurfer --version
+              openneuro-py --version
+              mne_bids --version
+              mne --version
+              python -c "import mne; mne.sys_info()"
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+            - freesurfer
+            - miniforge
+            - reports
+            - mne_data
 
-      steps:
-        - checkout
+  get_ds003392:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds003392
+      - run:
+        <<: *bashenv
+      - run:
+          name: Get ds003392
+          command: |
+            python ~/project/tests/download_test_data.py -d ds003392
+      - save_cache:
+          key: data-cache-ds003392
+          paths:
+            - ~/mne_data/ds003392
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/ds003392
 
-        - run:
-            name: Set BASH_ENV
-            command: |
-              echo "set -e" >> $BASH_ENV;
-              echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-              echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
+  test_ds003392:
+    <<: *imageconfig
+    steps:
+      - run:
+        <<: *bashenv
+      - run:
+        <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: test ds003392
+          command: |
+             export DS=ds003392
+             python tests/run_tests.py ${DS}
+             mkdir ~/reports/${DS}
+             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds00392
+          destination: reports/ds00392
 
-        - run:
-            name: Start Xvfb virtual framebuffer
-            command: Xvfb :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
-            background: true
+  build_docs:
+    <<: *imageconfig
+    steps:
+      - run:
+        <<: *bashenv
+      - run:
+        <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Build documentation
+          command: ./docs/build-docs.sh
+      - store_artifacts:
+          path: docs/site
+          destination: site
+      - persist_to_workspace:  # For documentation deployment to gh-pages
+          root: .
+          paths: docs/site
 
-        - restore_cache:
-            keys:
-              - pip-cache-0
+  deploy_docs:
+    docker:
+      - image: node:10
 
-        - run:
-            name: Get conda running
-            command: |
-              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
-              chmod +x ~/miniforge.sh;
-              ~/miniforge.sh -b -p ~/miniforge;
-              echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
-
-        - run:
-            name: Install dependencies from conda-forge
-            command: |
-              conda install -y mamba
-              mamba env update -f tests/environment.yml
-
-        - run:
-            name: Configure git
-            command: |
-              git config --global user.email "user@mne.com"
-              git config --global user.name "mne user"
-
-        # Save Python cache
-        - save_cache:
-            key: pip-cache-0
-            paths:
-              - ~/.cache/pip
-
-        - run:
-            name: Install FreeSurfer
-            command: |
-              cd ~
-              curl ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.1/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.1.tar.gz -o freesurfer.tar.gz
-              tar xzvf freesurfer.tar.gz
-              cp project/tests/freesurfer-license.txt freesurfer/license.txt
-              ~/freesurfer/SetUpFreeSurfer.sh
-              echo "export PATH=~/freesurfer/bin:$PATH" >> $BASH_ENV;
-              cd ~/project
-
-        # Look at what we have and fail early if there is some library conflict
-        - run:
-            name: Check installation
-            command: |
-               which python
-               git-annex version
-               datalad --version
-               freesurfer --version
-               openneuro-py --version
-               mne_bids --version
-               mne --version
-               python -c "import mne; mne.sys_info()"
-
-        # Setup for report
-        - run:
-            name: Setup report
-            command: |
-               mkdir ~/reports
-
-        - restore_cache:
-            keys:
-              - data-cache-1
-
-        # Run tests
-        - run:
-            name: test ds003392
-            command: |
-               export DS=ds003392
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test ds000246
-            command: |
-               export DS=ds000246
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test BEM from T1 (watershed)
-            command: |
-              ~/freesurfer/SetUpFreeSurfer.sh
-               export DS=ds000248_T1_BEM
-               python tests/run_tests.py ${DS}
-            no_output_timeout: 20m
-
-        - run:
-            name: test BEM from FLASH
-            command: |
-              ~/freesurfer/SetUpFreeSurfer.sh
-               export DS=ds000248_FLASH_BEM
-               python tests/run_tests.py ${DS}
-
-        - run:
-            name: test ds000248
-            command: |
-              ~/freesurfer/SetUpFreeSurfer.sh
-               export DS=ds000248
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test ds000248_ica
-            command: |
-                export DS=ds000248_ica
-                python tests/run_tests.py ${DS}
-                mkdir ~/reports/${DS}
-                cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-                cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
-                rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test ds001810
-            command: |
-               export DS=ds001810
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test eeg_matchingpennies
-            command: |
-               export DS=eeg_matchingpennies
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test ds003104
-            command: |
-               export DS=ds003104
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - run:
-            name: test ds000117
-            command: |
-               export DS=ds000117
-               python tests/run_tests.py ${DS}
-               mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
-
-        - store_artifacts:
-            path: /home/circleci/reports
-            destination: reports
-
-        - save_cache:
-            key: data-cache-1
-            paths:
-              - ~/mne_data/
-
-        # Now build the doc
-
-        - run:
-            name: Install doc dependencies
-            command: |
-              conda install -y mkdocs \
-                               mkdocs-material \
-                               mkdocs-material-extensions \
-                               mkdocstrings
-              # Install deps required so MkDocs can import config.py
-              conda install -y coloredlogs
-
-        - run:
-            name: Build documentation
-            command: ./docs/build-docs.sh
-
-        - store_artifacts:
-            path: docs/site
-            destination: site
-
-        - persist_to_workspace:  # For documentation deployment to gh-pages
-            root: .
-            paths: docs/site
-
-    deploy_docs:
-      docker:
-        - image: node:10
-
-      steps:
-        - checkout
-        - attach_workspace:
-            at: .
-        - run:
-            name: Install and configure dependencies
-            command: |
-              npm install -g --silent gh-pages@3.0.0  # Work around https://github.com/tschaub/gh-pages/issues/354
-              git config user.email "ci-build@mne.tools"
-              git config user.name "ci-build"
-        - run:
-            name: Deploy docs to gh-pages branch
-            command: gh-pages --message "[skip ci] Update docs" --dist docs/site
-        - add_ssh_keys:
-            fingerprints:
-              - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install and configure dependencies
+          command: |
+            npm install -g --silent gh-pages@3.0.0  # Work around https://github.com/tschaub/gh-pages/issues/354
+            git config user.email "ci-build@mne.tools"
+            git config user.name "ci-build"
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: gh-pages --message "[skip ci] Update docs" --dist docs/site
+      - add_ssh_keys:
+          fingerprints:
+            - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
 
 
 workflows:
@@ -242,24 +169,19 @@ workflows:
 
   commit:
     jobs:
-      - run_tests_and_doc
+      - setup_env
+      - get_ds003392
+          requires:
+            - setup_env
+      - test_ds003392:
+          requires:
+            - get_ds003392
+      - build_docs:
+          requires:
+            - get_ds003392
       - deploy_docs:
           requires:
-            - run_tests_and_doc
-          filters:
-            branches:
-              only: main
-
-  scheduled:
-    jobs:
-      - run_tests_and_doc
-      - deploy_docs:
-          requires:
-            - run_tests_and_doc
-
-    triggers:
-      - schedule:
-          cron: "0 4 * * *"
+            - build_docs
           filters:
             branches:
               only:

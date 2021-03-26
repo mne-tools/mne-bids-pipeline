@@ -104,29 +104,13 @@ jobs:
           name: Get ds000248
           command: |
             python ~/project/tests/download_test_data.py -d ds000248
+            python ~/project/tests/download_test_data.py -d ds000248_ica
+            python ~/project/tests/download_test_data.py -d ds000248_FLASH_BEM
+            python ~/project/tests/download_test_data.py -d ds000248_T1_BEM
       - save_cache:
           key: data-cache-ds000248
           paths:
             - ~/mne_data/ds000248
-
-  cache_ds000248_ica:
-    <<: *imageconfig
-    steps:
-      - attach_workspace:
-          at: ~/
-      - restore_cache:
-          keys:
-            - data-cache-ds000248_ica
-      - run:
-          <<: *bashenv
-      - run:
-          name: Get ds000248_ica
-          command: |
-            python ~/project/tests/download_test_data.py -d ds000248_ica
-      - save_cache:
-          key: data-cache-ds000248_ica
-          paths:
-            - ~/mne_data/ds000248_ica
 
   cache_ds001810:
     <<: *imageconfig
@@ -166,24 +150,24 @@ jobs:
           paths:
             - ~/mne_data/ds003392
 
-  cache_eegmatchingpennies:
+  cache_eeg_matchingpennies:
     <<: *imageconfig
     steps:
       - attach_workspace:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-eegmatchingpennies
+            - data-cache-eeg_matchingpennies
       - run:
           <<: *bashenv
       - run:
-          name: Get eegmatchingpennies
+          name: Get eeg_matchingpennies
           command: |
-            python ~/project/tests/download_test_data.py -d eegmatchingpennies
+            python ~/project/tests/download_test_data.py -d eeg_matchingpennies
       - save_cache:
-          key: data-cache-eegmatchingpennies
+          key: data-cache-eeg_matchingpennies
           paths:
-            - ~/mne_data/eegmatchingpennies
+            - ~/mne_data/eeg_matchingpennies
 
   test_ds000246:
     <<: *imageconfig
@@ -204,11 +188,14 @@ jobs:
             python tests/run_tests.py ${DS}
             mkdir ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000246
           destination: reports/ds000246
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/ds000246
 
   test_ds000248:
     <<: *imageconfig
@@ -234,6 +221,10 @@ jobs:
       - store_artifacts:
           path: /home/circleci/reports/ds000248
           destination: reports/ds000248
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/ds000248
 
   test_ds000248_ica:
     <<: *imageconfig
@@ -246,7 +237,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248_ica
+            - data-cache-ds000248
       - run:
           name: test ds000248_ica
           command: |
@@ -258,6 +249,47 @@ jobs:
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/ds000248_ica
+
+  test_ds000248_FLASH_BEM:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
+      - run:
+          name: test BEM from FLASH
+          command: |
+            export DS=ds000248_FLASH_BEM
+            python tests/run_tests.py ${DS}
+
+  test_ds000248_T1_BEM:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248
+      - run:
+          name: test BEM from T1 (watershed)
+          command: |
+            export DS=ds000248_T1_BEM
+            python tests/run_tests.py ${DS}
+          no_output_timeout: 20m
 
   test_ds001810:
     <<: *imageconfig
@@ -281,6 +313,10 @@ jobs:
       - store_artifacts:
           path: /home/circleci/reports/ds001810
           destination: reports/ds001810
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/ds001810
 
   test_ds003392:
     <<: *imageconfig
@@ -306,8 +342,12 @@ jobs:
       - store_artifacts:
           path: /home/circleci/reports/ds003392
           destination: reports/ds003392
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/ds003392
 
-  test_eegmatchingpennies:
+  test_eeg_matchingpennies:
     <<: *imageconfig
     steps:
       - run:
@@ -318,17 +358,21 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-eegmatchingpennies
+            - data-cache-eeg_matchingpennies
       - run:
-          name: test eegmatchingpennies
+          name: test eeg_matchingpennies
           command: |
-            export DS=eegmatchingpennies
+            export DS=eeg_matchingpennies
             python tests/run_tests.py ${DS}
             mkdir ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
       - store_artifacts:
-          path: /home/circleci/reports/eegmatchingpennies
-          destination: reports/eegmatchingpennies
+          path: /home/circleci/reports/eeg_matchingpennies
+          destination: reports/eeg_matchingpennies
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - reports/eeg_matchingpennies
 
   build_docs:
     <<: *imageconfig
@@ -339,24 +383,6 @@ jobs:
           <<: *xvfb
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys:
-            - data-cache-ds000246
-      - restore_cache:
-          keys:
-            - data-cache-ds000248
-      - restore_cache:
-          keys:
-            - data-cache-ds000248_ica
-      - restore_cache:
-          keys:
-            - data-cache-ds001810
-      - restore_cache:
-          keys:
-            - data-cache-ds003396
-      - restore_cache:
-          keys:
-            - data-cache-eegmatchingpennies
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh
@@ -398,6 +424,7 @@ workflows:
   version: 2
 
   commit:
+    parallelism: 4
     jobs:
       - setup_env
 
@@ -414,13 +441,15 @@ workflows:
       - test_ds000248:
           requires:
             - cache_ds000248
-
-      - cache_ds000248_ica:
-          requires:
-            - setup_env
       - test_ds000248_ica:
           requires:
-            - cache_ds000248_ica
+            - cache_ds000248
+      - test_ds000248_FLASH_BEM:
+          requires:
+            - cache_ds000248
+      - test_ds000248_T1_BEM:
+          requires:
+            - cache_ds000248
 
       - cache_ds001810:
           requires:
@@ -436,21 +465,21 @@ workflows:
           requires:
             - cache_ds003392
 
-      - cache_eegmatchingpennies:
+      - cache_eeg_matchingpennies:
           requires:
             - setup_env
-      - test_eegmatchingpennies:
+      - test_eeg_matchingpennies:
           requires:
-            - cache_eegmatchingpennies
+            - cache_eeg_matchingpennies
 
       - build_docs:
           requires:
-            - cache_ds000246
-            - cache_ds000248
-            - cache_ds000248_ica
-            - cache_ds001810
-            - cache_ds003392
-            - cache_eegmatchingpennies
+            - test_ds000246
+            - test_ds000248
+            - test_ds000248_ica
+            - test_ds001810
+            - test_ds003392
+            - test_eeg_matchingpennies
       - deploy_docs:
           requires:
             - build_docs

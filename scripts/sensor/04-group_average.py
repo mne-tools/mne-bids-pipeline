@@ -21,7 +21,7 @@ from mne_bids import BIDSPath
 import config
 from config import gen_log_message
 
-logger = logging.getLogger('mne-study-template')
+logger = logging.getLogger('mne-bids-pipeline')
 
 
 msg = 'Running Step 9: Grand-average sensor data'

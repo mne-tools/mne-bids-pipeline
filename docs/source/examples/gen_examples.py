@@ -73,7 +73,7 @@ for dataset_name in example_datasets:
         example_source_dir = Path(f'~/reports/{dataset_name}').expanduser()
     else:
         example_source_dir = (Path(f'~/mne_data/{dataset_name}'
-                                  f'/derivatives/mne-study-template')
+                                  f'/derivatives/mne-bids-pipeline')
                               .expanduser())
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 

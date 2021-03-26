@@ -1,6 +1,6 @@
 site_name: MNE Study Template
-repo_url: https://github.com/mne-tools/mne-study-template
-edit_uri: edit/master/docs/source/
+repo_url: https://github.com/mne-tools/mne-bids-pipeline
+edit_uri: edit/main/docs/source/
 site_description: The MNE Study Template is a collection of scripts for automated processing of MEG and EEG data.
 site_author: MNE Study Template authors
 docs_dir: ./source
@@ -17,14 +17,14 @@ theme:
 extra:
     social:
         - icon: fontawesome/brands/github
-          link: https://github.com/mne-stools/mne-study-template
+          link: https://github.com/mne-tools/mne-bids-pipeline
           name: GitHub repository
         - icon: fontawesome/brands/twitter
           link: https://twitter.com/mne_news
           name: MNE news on Twitter
-    
+
 copyright: Copyright &copy; MNE Study Template authors
- 
+
 extra_css:
     - css/extra.css
 nav:

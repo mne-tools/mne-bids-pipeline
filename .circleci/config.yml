@@ -22,7 +22,7 @@ jobs:
             name: Start Xvfb virtual framebuffer
             command: Xvfb :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
             background: true
-        
+
         - restore_cache:
             keys:
               - pip-cache-0
@@ -52,7 +52,7 @@ jobs:
             key: pip-cache-0
             paths:
               - ~/.cache/pip
-        
+
         - run:
             name: Install FreeSurfer
             command: |
@@ -94,10 +94,10 @@ jobs:
                export DS=ds003392
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test ds000246
@@ -105,9 +105,9 @@ jobs:
                export DS=ds000246
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test BEM from T1 (watershed)
@@ -131,10 +131,10 @@ jobs:
                export DS=ds000248
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.json ~/reports/${DS}/
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test ds000248_ica
@@ -142,9 +142,9 @@ jobs:
                 export DS=ds000248_ica
                 python tests/run_tests.py ${DS}
                 mkdir ~/reports/${DS}
-                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-                cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.tsv ~/reports/${DS}/
-                rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+                cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+                cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+                rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test ds001810
@@ -152,8 +152,8 @@ jobs:
                export DS=ds001810
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test eeg_matchingpennies
@@ -161,8 +161,8 @@ jobs:
                export DS=eeg_matchingpennies
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test ds003104
@@ -170,8 +170,8 @@ jobs:
                export DS=ds003104
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - run:
             name: test ds000117
@@ -179,8 +179,8 @@ jobs:
                export DS=ds000117
                python tests/run_tests.py ${DS}
                mkdir ~/reports/${DS}
-               cp ~/mne_data/${DS}/derivatives/mne-study-template/*/**/*.html ~/reports/${DS}/
-               rm -rf ~/mne_data/${DS}/derivatives/mne-study-template/
+               cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+               rm -rf ~/mne_data/${DS}/derivatives/mne-bids-pipeline/
 
         - store_artifacts:
             path: /home/circleci/reports
@@ -190,7 +190,7 @@ jobs:
             key: data-cache-1
             paths:
               - ~/mne_data/
-  
+
         # Now build the doc
 
         - run:
@@ -248,7 +248,7 @@ workflows:
             - run_tests_and_doc
           filters:
             branches:
-              only: master
+              only: main
 
   scheduled:
     jobs:
@@ -263,4 +263,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main

@@ -413,12 +413,12 @@ jobs:
             npm install -g --silent gh-pages@3.0.0  # Work around https://github.com/tschaub/gh-pages/issues/354
             git config user.email "ci-build@mne.tools"
             git config user.name "ci-build"
-      - run:
-          name: Deploy docs to gh-pages branch
-          command: gh-pages --message "[skip ci] Update docs" --dist docs/site
       - add_ssh_keys:
           fingerprints:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: gh-pages --message "[skip ci] Update docs" --dist docs/site
 
 workflows:
   version: 2

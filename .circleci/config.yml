@@ -170,7 +170,7 @@ workflows:
   commit:
     jobs:
       - setup_env
-      - get_ds003392
+      - get_ds003392:
           requires:
             - setup_env
       - test_ds003392:

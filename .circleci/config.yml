@@ -50,13 +50,11 @@ jobs:
       - run:
           name: Get conda running
           command: |
-            if [ -d "~/miniforge" ]; then
-              echo "Skipping, miniforge exists"
-              exit 0
+            if [ ! -d "~/miniforge" ]; then
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
+              chmod +x ~/miniforge.sh;
+              ~/miniforge.sh -b -p ~/miniforge;
             fi
-            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
-            chmod +x ~/miniforge.sh;
-            ~/miniforge.sh -b -p ~/miniforge;
       - run:
           name: Install dependencies from conda-forge
           command: |

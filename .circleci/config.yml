@@ -11,8 +11,8 @@ _imageconfig: &imageconfig
 
 _xvfb: &xvfb
   name: Start Xvfb virtual framebuffer
-  command: Xvfb :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
-  background: true
+  command: |
+    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render -noreset
 
 _bashenv: &bashenv
   name: Set BASH_ENV
@@ -20,9 +20,8 @@ _bashenv: &bashenv
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
-    echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
-    echo "export PATH=~/freesurfer/bin:$PATH" >> $BASH_ENV;
-    echo "export MNE_DATA=~/mne_data" >> $BASH_ENV;
+    echo "export PATH=~/miniforge/bin:~/freesurfer/bin:$PATH" >> $BASH_ENV;
+    echo "export MNE_DATA=/home/circleci/mne_data" >> $BASH_ENV;
     git config --global user.email "user@mne.tools"
     git config --global user.name "mne user"
     mkdir -p ~/reports ~/mne_data
@@ -31,7 +30,14 @@ jobs:
   setup_env:
     <<: *imageconfig
     steps:
+      - restore_cache:
+          keys:
+            - source-cache
       - checkout
+      - save_cache:
+          key: source-cache
+          paths:
+            - ".git"
       - run:
           <<: *bashenv
       - run:
@@ -145,9 +151,15 @@ jobs:
   deploy_docs:
     docker:
       - image: node:10
-
     steps:
+      - restore_cache:
+          keys:
+            - source-cache
       - checkout
+      - save_cache:
+          key: source-cache
+          paths:
+            - ".git"
       - attach_workspace:
           at: .
       - run:

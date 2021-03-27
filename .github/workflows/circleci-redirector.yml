@@ -10,4 +10,4 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           artifact-path: 0/site/index.html
-          circleci-jobs: run_tests_and_doc
+          circleci-jobs: build_docs

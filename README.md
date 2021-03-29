@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/mne-tools/mne-bids-pipeline.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-bids-pipeline)
 
-# MNE-BIDS-pipeline
+# MNE-BIDS-Pipeline
 
 The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
 EEG data. It operates on data stored according to the Brain Imaging Data

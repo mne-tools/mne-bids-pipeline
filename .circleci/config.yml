@@ -18,8 +18,8 @@ _bashenv: &bashenv
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
-    echo "export PATH=~/miniforge/bin:$PATH" >> $BASH_ENV;
-    PATH=~/miniforge/bin:$PATH
+    echo "export PATH=~/.local/bin:$PATH" >> $BASH_ENV;
+    PATH=~/.local/bin:$PATH
     echo "export MNE_DATA=/home/circleci/mne_data" >> $BASH_ENV;
     echo "export DISPLAY=:99" >> $BASH_ENV;
     wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh

@@ -14,7 +14,7 @@ _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
     set -e
-    sudo apt install tcsh git-annex
+    sudo apt install tcsh datalad
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **

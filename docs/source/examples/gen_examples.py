@@ -5,13 +5,6 @@ import runpy
 from typing import Union, Iterable
 
 
-RUNNING_ON_CIRCLE = os.environ.get('CIRCLECI')
-if RUNNING_ON_CIRCLE == 'true':
-    RUNNING_ON_CIRCLE = True
-else:
-    RUNNING_ON_CIRCLE = False
-
-
 dataset_opts_path = Path('tests/datasets.py')
 run_tests_path = Path('tests/run_tests.py')
 
@@ -69,12 +62,8 @@ for dataset_name in example_datasets:
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
-    if RUNNING_ON_CIRCLE:
-        example_source_dir = Path(f'~/reports/{dataset_name}').expanduser()
-    else:
-        example_source_dir = (Path(f'~/mne_data/{dataset_name}'
-                                  f'/derivatives/mne-study-template')
-                              .expanduser())
+    example_source_dir = Path(f'~/mne_data/{dataset_name}'
+                              '/derivatives/mne-bids-pipeline').expanduser()
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 
     if not html_report_fnames:

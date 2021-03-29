@@ -26,7 +26,7 @@ from config import gen_log_message, on_error, failsafe_run
 
 matplotlib.use('Agg')  # do not open any window  # noqa
 
-logger = logging.getLogger('mne-study-template')
+logger = logging.getLogger('mne-bids-pipeline')
 
 Condition_T = Union[str, Tuple[str]]
 

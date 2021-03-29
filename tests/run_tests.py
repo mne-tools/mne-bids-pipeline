@@ -37,7 +37,8 @@ TEST_SUITE = {
                             'sensor', 'report'),
     'ds003104': ('config_ds003104', 'preprocessing', 'sensor',  'source',
                  'report'),
-    'ds000117': ('config_ds000117', 'preprocessing', 'sensor', 'report')
+    'ds000117': ('config_ds000117', 'preprocessing', 'sensor', 'report'),
+    'ERP_CORE': ('config_ERP_CORE', 'preprocessing', 'sensor', 'report')
 }
 
 

@@ -52,9 +52,9 @@ Raises an exception if the BIDS root has not been specified.
 
 deriv_root: Optional[PathLike] = None
 """
-The root of the derivatives directory in which the Study Template will store
+The root of the derivatives directory in which the pipeline will store
 the processing results. If ``None``, this will be
-``derivatives/mne-study-template`` inside the BIDS root.
+``derivatives/mne-bids-pipeline`` inside the BIDS root.
 """
 
 subjects_dir: Optional[PathLike] = None
@@ -1103,7 +1103,7 @@ Maxfilter set this to ``True``.
 
 log_level: Literal['info', 'error'] = 'info'
 """
-Set the Study Template logging verbosity.
+Set the pipeline logging verbosity.
 """
 
 mne_log_level: Literal['info', 'error'] = 'error'
@@ -1127,15 +1127,15 @@ continue with all other processing steps for as long as possible.
 # Name, version, and hosting location of the pipeline
 # ---------------------------------------------------
 
-PIPELINE_NAME = 'mne-study-template'
+PIPELINE_NAME = 'mne-bids-pipeline'
 VERSION = '0.1.dev0'
-CODE_URL = 'https://github.com/mne-tools/mne-study-template'
+CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
 
 ###############################################################################
 # Logger
 # ------
 
-logger = logging.getLogger('mne-study-template')
+logger = logging.getLogger('mne-bids-pipeline')
 
 log_fmt = '%(asctime)s %(message)s'
 log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
@@ -1401,7 +1401,7 @@ def get_datatype() -> Literal['meg', 'eeg']:
         return 'meg'
     else:
         raise RuntimeError("This probably shouldn't happen. Please contact "
-                           "the mne-study-template developers. Thank you.")
+                           "the MNE-BIDS-pipeline developers. Thank you.")
 
 
 def get_reject() -> dict:
@@ -1554,7 +1554,7 @@ def get_channels_to_analyze(info) -> List[str]:
                                   ecg=True, exclude=[])
     else:
         raise RuntimeError('Something unexpected happened. Please contact '
-                           'the mne-study-template developers. Thank you.')
+                           'the mne-bids-pipeline developers. Thank you.')
 
     ch_names = [info['ch_names'][i] for i in pick_idx]
     return ch_names

@@ -1,5 +1,5 @@
-What the Study Template can do
-==============================
+What the MNE-BIDS-Pipeline can do
+=================================
     
 - preprocessing (filtering, artifact rejection)
 - epoching

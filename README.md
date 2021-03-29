@@ -1,15 +1,15 @@
-[![CircleCI](https://circleci.com/gh/mne-tools/mne-study-template.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-study-template)
+[![CircleCI](https://circleci.com/gh/mne-tools/mne-bids-pipeline.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-bids-pipeline)
 
-# MNE-study-template
+# MNE-BIDS-Pipeline
 
-The MNE Study Template is a full-flegded processing pipeline for your MEG and
+The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
 EEG data. It operates on data stored according to the Brain Imaging Data
 Structure (BIDS).
 
 # Documentation
 
 Please find the installation and usage instructions at
-[mne.tools/mne-study-template](https://mne.tools/mne-study-template).
+[mne.tools/mne-bids-pipeline](https://mne.tools/mne-bids-pipeline).
 
 # Acknowledgments
 

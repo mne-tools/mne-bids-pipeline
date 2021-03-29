@@ -20,6 +20,11 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
 
+    # Set one of the various tasks for ERP CORE, as we currently raise if none
+    # was provided
+    if example_config_path.name == 'config_ERP_CORE.py':
+        env['MNE_BIDS_STUDY_TASK'] = 'N400'
+
     example_config = runpy.run_path(example_config_path)
     env['BIDS_ROOT'] = example_config['bids_root']
 

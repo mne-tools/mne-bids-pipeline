@@ -14,7 +14,7 @@ _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
     set -e
-    sudo apt install pv tcsh
+    sudo apt install tcsh
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
@@ -44,13 +44,28 @@ jobs:
           <<: *bashenv
       - run:
           <<: *xvfb
+      - restore_cache:
+          keys:
+            - pip-cache
+      - restore_cache:
+          keys:
+            - user-install-bin-cache
       - run:
-          name: Get conda running
+          name: Get Python running
           command: |
-            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O ~/miniforge.sh;
-            chmod +x ~/miniforge.sh;
-            ~/miniforge.sh -b -p ~/miniforge;
-            conda env update -f tests/environment.yml
+            # Work around PyQt5 bug
+            sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
+            python -m pip install --user --upgrade --progress-bar off pip setuptools
+            python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+      - save_cache:
+          key: pip-cache
+          paths:
+            - ~/.cache/pip
+      - save_cache:
+          key: user-install-bin-cache
+          paths:
+            - ~/.local/lib/python3.8/site-packages
+            - ~/.local/bin
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -69,6 +84,8 @@ jobs:
             - miniforge
             - mne_data
             - minimal_cmds
+            - .local/bin
+            - .local/lib/python3.8/site-packages
 
   cache_ds000117:
     <<: *imageconfig

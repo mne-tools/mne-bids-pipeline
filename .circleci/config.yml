@@ -616,7 +616,7 @@ workflows:
       # - cache_ERP_CORE:
       #     requires:
       #       - setup_env
-      - test_ERP_CORE:
+      - test_ERP_CORE
           # requires:
           #   - cache_ds003392
 

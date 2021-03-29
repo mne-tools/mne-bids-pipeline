@@ -14,7 +14,10 @@ _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
     set -e
-    sudo apt install tcsh git-annex
+    wget -O- http://neuro.debian.net/lists/buster.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+    sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+    sudo apt-get update
+    sudo apt install tcsh git-annex-standalone
     echo "set -e" >> $BASH_ENV;
     echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
     echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **

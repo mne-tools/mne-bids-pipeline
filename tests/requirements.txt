@@ -1,5 +1,5 @@
 typing_extensions
-datalad<0.14
+datalad
 numpy
 scipy
 scikit-learn

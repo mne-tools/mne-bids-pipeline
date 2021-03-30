@@ -484,52 +484,39 @@ jobs:
       - run:
           name: test ERP CORE N400
           command: |
-            export DS=ERP_CORE_N400
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py ERP_CORE_N400
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE ERN
           command: |
-            export DS=ERP_CORE_ERN
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_ERN
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE LRP
           command: |
-            export DS=ERP_CORE_LRP
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_LRP
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE MMN
           command: |
-            export DS=ERP_CORE_MMN
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_MMN
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE N2pc
           command: |
-            export DS=ERP_CORE_N2pc
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_N2pc
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE N170
           command: |
-            export DS=ERP_CORE_N170
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_N170
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE P3
           command: |
-            export DS=ERP_CORE_P3
-            python tests/run_tests.py ${DS}
-            mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            python tests/run_tests.py ERP_CORE_P3
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE

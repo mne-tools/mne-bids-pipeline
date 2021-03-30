@@ -47,6 +47,7 @@ TEST_SUITE = {
         'env': {}
     },
     'ds000248_T1_BEM': {
+        'dataset': 'ds000248_FLASH_BEM',
         'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
         'env': {}

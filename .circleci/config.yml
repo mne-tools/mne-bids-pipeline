@@ -491,12 +491,12 @@ jobs:
           name: test ERP CORE ERN
           command: |
             python tests/run_tests.py ERP_CORE_ERN
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*ERN*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE LRP
           command: |
             python tests/run_tests.py ERP_CORE_LRP
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*LRP*.html ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE MMN
           command: |

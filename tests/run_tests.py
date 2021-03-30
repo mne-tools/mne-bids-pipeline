@@ -58,7 +58,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'env': {}
     },
     'ds000248_T1_BEM': {
-        'dataset': 'ds000248_FLASH_BEM',
+        'dataset': 'ds000248_T1_BEM',
         'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
         'env': {}

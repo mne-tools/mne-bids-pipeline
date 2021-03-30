@@ -90,7 +90,7 @@ elif task == 'ERN':
 
     eeg_reference = ['P9', 'P10']
     ica_n_components = 30 - len(eeg_reference)
-    epochs_tim = -0.6
+    epochs_tmin = -0.6
     epochs_tmax = 0.4
     baseline = (-0.4, -0.2)
     conditions = ['response/correct', 'response/incorrect']

@@ -484,8 +484,49 @@ jobs:
       - run:
           name: test ERP CORE N400
           command: |
-            export DS=ERP_CORE
-            export MNE_BIDS_STUDY_TASK=N400
+            export DS=ERP_CORE_N400
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE ERN
+          command: |
+            export DS=ERP_CORE_ERN
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE LRP
+          command: |
+            export DS=ERP_CORE_LRP
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE MMN
+          command: |
+            export DS=ERP_CORE_MMN
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE N2pc
+          command: |
+            export DS=ERP_CORE_N2pc
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE N170
+          command: |
+            export DS=ERP_CORE_N170
+            python tests/run_tests.py ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+      - run:
+          name: test ERP CORE P3
+          command: |
+            export DS=ERP_CORE_P3
             python tests/run_tests.py ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/

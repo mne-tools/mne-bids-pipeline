@@ -46,6 +46,11 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
     from tqdm import tqdm
 
     url = DATASET_OPTIONS[ds_name]['web']
+    if ds_path.exists():
+        print('Dataset directory already exists; remove it if you wish to '
+              're-download the dataset')
+        return
+
     ds_path.mkdir(parents=True, exist_ok=True)
 
     with httpx.Client() as client:

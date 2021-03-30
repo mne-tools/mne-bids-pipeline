@@ -4,6 +4,11 @@ import os
 from pathlib import Path
 import argparse
 import runpy
+if sys.version_info >= (3, 8):
+    from typing import TypedDict, Collection, Dict
+else:
+    from typing_extensions import TypedDict, Collection, Dict
+
 
 # Add the pipelines dir to the PATH
 study_template_dir = Path(__file__).absolute().parents[1]
@@ -19,7 +24,13 @@ def fetch(dataset=None):
 # Where to download the data to
 DATA_DIR = Path('~/mne_data').expanduser()
 
-TEST_SUITE = {
+class TestOptionsT(TypedDict):
+    dataset: str
+    config: str
+    steps: Collection[str]
+    env: Dict[str, str]
+
+TEST_SUITE: Dict[str, TestOptionsT] = {
     'ds003392': {
         'dataset': 'ds003392',
         'config': 'config_ds003392.py',

@@ -206,6 +206,25 @@ jobs:
           paths:
             - ~/mne_data/eeg_matchingpennies
 
+  cache_ERP_CORE:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ERP_CORE
+          command: |
+            python ~/project/tests/download_test_data.py -d ERP_CORE
+      - save_cache:
+          key: data-cache-ERP_CORE
+          paths:
+            - ~/mne_data/ERP_CORE
+
   test_ds000117:
     <<: *imageconfig
     steps:
@@ -478,9 +497,9 @@ jobs:
           <<: *xvfb
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000117
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE
       - run:
           name: test ERP CORE N400
           command: |
@@ -641,15 +660,12 @@ workflows:
           requires:
             - cache_eeg_matchingpennies
 
-      # - cache_ERP_CORE:
-      #     requires:
-      #       - setup_env
-      - test_ERP_CORE:
+      - cache_ERP_CORE:
           requires:
             - setup_env
-
-          # requires:
-          #   - cache_ds003392
+      - test_ERP_CORE:
+          requires:
+            - cache_ERP_CORE
 
       - build_docs:
           requires:

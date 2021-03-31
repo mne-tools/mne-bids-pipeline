@@ -568,7 +568,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Optional[dict] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+reject: Optional[dict] = None
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.

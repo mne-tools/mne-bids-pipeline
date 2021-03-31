@@ -206,6 +206,25 @@ jobs:
           paths:
             - ~/mne_data/eeg_matchingpennies
 
+  cache_ERP_CORE:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ERP_CORE
+          command: |
+            python ~/project/tests/download_test_data.py -d ERP_CORE
+      - save_cache:
+          key: data-cache-ERP_CORE
+          paths:
+            - ~/mne_data/ERP_CORE
+
   test_ds000117:
     <<: *imageconfig
     steps:
@@ -469,6 +488,62 @@ jobs:
           paths:
             - mne_data/eeg_matchingpennies/derivatives/mne-bids-pipeline/*/*/*.html
 
+  test_ERP_CORE:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE
+      - run:
+          name: test ERP CORE N400
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py ERP_CORE_N400
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE ERN
+          command: |
+            python tests/run_tests.py ERP_CORE_ERN
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*ERN*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE LRP
+          command: |
+            python tests/run_tests.py ERP_CORE_LRP
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*LRP*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE MMN
+          command: |
+            python tests/run_tests.py ERP_CORE_MMN
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*MMN*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE N2pc
+          command: |
+            python tests/run_tests.py ERP_CORE_N2pc
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N2pc*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE N170
+          command: |
+            python tests/run_tests.py ERP_CORE_N170
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N170*.html ~/reports/ERP_CORE/
+      - run:
+          name: test ERP CORE P3
+          command: |
+            python tests/run_tests.py ERP_CORE_P3
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*P3*.html ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/*/*/*.html
+
   build_docs:
     <<: *imageconfig
     steps:
@@ -585,6 +660,13 @@ workflows:
           requires:
             - cache_eeg_matchingpennies
 
+      - cache_ERP_CORE:
+          requires:
+            - setup_env
+      - test_ERP_CORE:
+          requires:
+            - cache_ERP_CORE
+
       - build_docs:
           requires:
             - test_ds000117
@@ -595,6 +677,7 @@ workflows:
             - test_ds003104
             - test_ds003392
             - test_eeg_matchingpennies
+            - test_ERP_CORE
       - deploy_docs:
           requires:
             - build_docs

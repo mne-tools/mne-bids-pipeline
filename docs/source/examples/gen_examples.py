@@ -9,9 +9,7 @@ dataset_opts_path = Path('tests/datasets.py')
 run_tests_path = Path('tests/run_tests.py')
 
 dataset_options = runpy.run_path(dataset_opts_path)['DATASET_OPTIONS']
-example_datasets = sorted(runpy.
-                          run_path(run_tests_path)['TEST_SUITE']
-                          .keys())
+test_options = runpy.run_path(run_tests_path)['TEST_SUITE']
 
 
 def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
@@ -19,6 +17,11 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     """
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
+
+    # Set one of the various tasks for ERP CORE, as we currently raise if none
+    # was provided
+    if example_config_path.name == 'config_ERP_CORE.py':
+        env['MNE_BIDS_STUDY_TASK'] = 'N400'
 
     example_config = runpy.run_path(example_config_path)
     env['BIDS_ROOT'] = example_config['bids_root']
@@ -58,7 +61,8 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
 
 # Copy reports to the correct place.
 datasets_without_html = []
-for dataset_name in example_datasets:
+for test_name, test_opt in test_options.items():
+    dataset_name = test_opt['dataset']
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
@@ -74,7 +78,8 @@ for dataset_name in example_datasets:
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
-for dataset_name in example_datasets:
+for test_name, test_opt in test_options.items():
+    dataset_name = test_opt['dataset']
     if dataset_name in datasets_without_html:
         continue
 
@@ -82,16 +87,57 @@ for dataset_name in example_datasets:
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
-    for fname in example_target_dir.glob('*'):
+
+    fnames_reports = sorted(
+        [f for f in example_target_dir.glob('*.html')
+         if 'proc-clean' not in f.name and
+         'proc-ica' not in f.name and 'proc-ssp' not in f.name]
+    )
+
+    fnames_cleaning = sorted(
+        [f for f in example_target_dir.glob('*')
+         if 'proc-clean' in f.name or
+         'proc-ica' in f.name or 'proc-ssp' in f.name]
+    )
+
+    fnames_other = sorted(
+        set(example_target_dir.glob('*')) -
+        set(fnames_cleaning) -
+        set(fnames_reports)
+    )
+
+    report_str += '???+ info "Summary reports"\n'
+    for fname in fnames_reports:
         link_target = Path(dataset_name) / fname.name
-        report_str += (f'<a href="{link_target}" target="_blank" '
+        report_str += (f'    <a href="{link_target}" target="_blank" '
+                       f'class="report-button md-button md-button--primary">'
+                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+
+    if fnames_cleaning:
+        report_str += '??? info "Data cleaning"\n'
+    for fname in fnames_cleaning:
+        link_target = Path(dataset_name) / fname.name
+        report_str += (f'    <a href="{link_target}" target="_blank" '
+                       f'class="report-button md-button md-button--primary">'
+                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+
+    if fnames_other:
+        report_str += '??? info "Other output"\n'
+    for fname in fnames_other:
+        link_target = Path(dataset_name) / fname.name
+        report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
                        f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
 
     if options['openneuro']:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
-    else:
+    elif options['git']:
         url = options['git']
+    elif options['web']:
+        url = options['web']
+    else:
+        url = ''
+
     source_str = (f'## Dataset source\n\nThis dataset was acquired from '
                   f'[{url}]({url})\n')
 

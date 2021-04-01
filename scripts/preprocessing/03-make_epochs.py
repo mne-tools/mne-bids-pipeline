@@ -98,7 +98,8 @@ def run_epochs(subject, session=None):
                         reject=config.get_reject(),
                         reject_tmin=config.reject_tmin,
                         reject_tmax=config.reject_tmax,
-                        metadata=metadata)
+                        metadata=metadata,
+                        event_repeated=config.event_repeated)
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

@@ -641,6 +641,25 @@ to only get a warning instead.
 """
 
 ###############################################################################
+# HANDLING OF REPEATED EVENTS
+# ---------------------------
+
+event_repeated: Literal['error', 'drop', 'merge'] = 'error'
+"""
+How to handle repeated events. We call events "repeated" if more than one event
+occurred at the exact same time point. Currently, MNE-Python cannot handle
+this situation gracefully when trying to create epochs, and will throw an
+error. To only keep the event of that time point ("first" here referring to
+the order that events appear in `*_events.tsv`), pass `'drop'`. You can also
+request to create a new type of event by merging repeated events by setting
+this to `'merge'`.
+
+warning:
+    The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
+    April 1st, 2021.
+"""
+
+###############################################################################
 # EPOCHING
 # --------
 

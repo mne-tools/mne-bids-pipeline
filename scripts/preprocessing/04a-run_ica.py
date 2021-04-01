@@ -52,7 +52,11 @@ def load_and_concatenate_raws(bids_path):
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
-    all_bads = sorted(set(raw.info['bads'] for raw in raws))
+    all_bads = []
+    for raw in raws:
+        all_bads += raw.info['bads']
+    all_bads = sorted(set(all_bads))
+
     if all_bads and len(raws) > 1:
         for raw in raws:
             raw.info['bads'] = all_bads

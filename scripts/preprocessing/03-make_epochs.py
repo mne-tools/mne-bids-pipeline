@@ -56,7 +56,11 @@ def run_epochs(subject, session=None):
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
 
-    all_bads = sorted(set(raw.info['bads'] for raw in raws))
+    all_bads = []
+    for raw in raws:
+        all_bads += raw.info['bads']
+    all_bads = sorted(set(all_bads))
+
     if all_bads and len(raws) > 1:
         msg = f'    Equating bad channels list across runs: {all_bads}'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,

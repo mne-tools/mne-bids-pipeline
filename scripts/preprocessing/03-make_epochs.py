@@ -26,7 +26,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 @failsafe_run(on_error=on_error)
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
-    raw_list = list()
+    raws = list()
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=config.get_task(),
@@ -50,23 +50,31 @@ def run_epochs(subject, session=None):
                                     session=session, run=run))
 
         raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-        raw_list.append(raw)
+        raws.append(raw)
 
     msg = 'Concatenating runs'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
 
-    if len(raw_list) == 1:  # avoid extra memory usage
-        raw = raw_list[0]
+    all_bads = sorted(set(raw.info['bads'] for raw in raws))
+    if all_bads and len(raws) > 1:
+        msg = f'    Equating bad channels list across runs: {all_bads}'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
+        for raw in raws:
+            raw.info['bads'] = all_bads
+
+    if len(raws) == 1:  # avoid extra memory usage
+        raw = raws[0]
     else:
-        raw = mne.concatenate_raws(raw_list)
+        raw = mne.concatenate_raws(raws)
 
     events, event_id = mne.events_from_annotations(raw)
     if "eeg" in config.ch_types:
         projection = True if config.eeg_reference == 'average' else False
         raw.set_eeg_reference(config.eeg_reference, projection=projection)
 
-    del raw_list
+    del raws
 
     # Construct metadata from the epochs
     if config.epochs_metadata_tmin is None:

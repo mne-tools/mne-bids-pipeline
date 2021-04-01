@@ -57,6 +57,11 @@ def plot_events(subject, session):
         del this_raw_fname
 
     # Concatenate the filtered raws and extract the events.
+    all_bads = sorted(set(raw.info['bads'] for raw in raws_filt))
+    if all_bads and len(raws_filt) > 1:
+        for raw in raws_filt:
+            raw.info['bads'] = all_bads
+
     raw_filt_concat = mne.concatenate_raws(raws_filt)
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     fig = mne.viz.plot_events(events=events, event_id=event_id,

@@ -740,6 +740,11 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
+overlap: Optional[float] = None
+"""
+Overlap between epochs in seconds.
+"""
+
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;

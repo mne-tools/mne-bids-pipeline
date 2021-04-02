@@ -16,7 +16,7 @@ import logging
 import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
-
+from autoreject import get_rejection_threshold
 import config
 from config import gen_log_message, on_error, failsafe_run
 
@@ -24,6 +24,17 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
+
+def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
+    epochs = mne.Epochs(
+        raw, events, event_id=event_id, tmin=tmin, tmax=tmax,
+        proj=False, baseline=None, reject=None)
+    epochs.load_data()
+    epochs.pick_types(meg=True)
+    epochs.apply_proj()
+    reject = get_rejection_threshold(epochs, decim=1)
+    return reject
+
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
     raw_list = list()
@@ -61,7 +72,19 @@ def run_epochs(subject, session=None):
     else:
         raw = mne.concatenate_raws(raw_list)
 
-    events, event_id = mne.events_from_annotations(raw)
+    #Events for rest session
+    if config.session == 'rest' :
+        stop = raw.times[-1]
+        duration = config.epochs_tmax - config.epochs_tmin
+        overlap = config.overlap
+        events = mne.make_fixed_length_events(
+            raw, id=3000, start=0, duration=overlap,
+            stop=stop - duration)
+        event_id = dict(rest=3000)
+    #Events for other sessions
+    else :
+        events, event_id = mne.events_from_annotations(raw)
+
     if "eeg" in config.ch_types:
         projection = True if config.eeg_reference == 'average' else False
         raw.set_eeg_reference(config.eeg_reference, projection=projection)
@@ -88,14 +111,20 @@ def run_epochs(subject, session=None):
 
     # Epoch the data
     msg = (f'Creating epochs with duration: '
-           f'[{config.epochs_tmin}, {config.epochs_tmin}] sec')
+           f'[{config.epochs_tmin}, {config.epochs_tmax}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
+
+    reject = _get_global_reject_epochs(
+            raw, tmin=config.epochs_tmin, tmax=config.epochs_tmax,
+            events=events,
+            event_id=event_id)
+
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,
                         proj=True, baseline=None,
                         preload=False, decim=config.decim,
-                        reject=config.get_reject(),
+                        reject=reject,
                         reject_tmin=config.reject_tmin,
                         reject_tmax=config.reject_tmax,
                         metadata=metadata)

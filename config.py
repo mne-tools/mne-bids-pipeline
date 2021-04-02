@@ -565,6 +565,53 @@ can be used for resampling raw data. ``1`` means no decimation.
     ```
 """
 
+###############################################################################
+# AUTOMATIC REJECTION OF ARTIFACTS
+# --------------------------------
+
+reject: Union[dict, Literal['auto']] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+"""
+The rejection limits to mark epochs as bads.
+This allows to remove strong transient artifacts.
+If you want to reject and retrieve blinks or ECG artifacts later, e.g.
+with ICA, don't specify a value for the EOG and ECG channels, respectively
+(see examples below).
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ note "Note"
+    These numbers tend to vary between subjects.. You might want to consider
+    using the autoreject method by Jas et al. 2018.
+    See https://autoreject.github.io
+
+
+???+ example "Example"
+    ```python
+    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
+    reject = None
+    ```
+"""
+
+reject_tmin: Optional[float] = None
+"""
+Start of the time window used to reject epochs. If ``None``, the window will
+start with the first time point.
+???+ example "Example"
+    ```python
+    reject_tmin = -0.1  # 100 ms before event onset.
+    ```
+"""
+
+reject_tmax: Optional[float] = None
+"""
+End of the time window used to reject epochs. If ``None``, the window will end
+with the last time point.
+???+ example "Example"
+    ```python
+    reject_tmax = 0.3  # 300 ms after event onset.
+    ```
+"""
 
 ###############################################################################
 # RENAME EXPERIMENTAL EVENTS
@@ -713,9 +760,10 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-overlap: Optional[float] = None
+epochs_overlap: Optional[float] = None
 """
-Overlap between epochs in seconds.
+Overlap between epochs in seconds. This is used if the task is 'rest'
+and when the annotations do not contain any stimulation or behavior events.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -1538,7 +1586,10 @@ def _get_reject(
     if reject is None:
         return dict()
 
-    reject = reject.copy()
+    if reject == 'auto' :
+        return 'auto'
+
+    reject_ = reject.copy()  # Avoid clash with global variable.
 
     if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')

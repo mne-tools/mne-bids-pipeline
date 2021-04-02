@@ -26,6 +26,7 @@ dependencies:
   - mkdocs-material-extensions
   - mkdocstrings
   - coloredlogs
+  - autoreject
   - pip:
     - http://github.com/hoechenberger/openneuro-py/zipball/timeouts
     - https://api.github.com/repos/mne-tools/mne-python/zipball/main

@@ -568,7 +568,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Optional[dict] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+reject: Union[dict, Literal['auto']] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.
@@ -740,9 +740,10 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-overlap: Optional[float] = None
+epochs_overlap: Optional[float] = None
 """
-Overlap between epochs in seconds.
+Overlap between epochs in seconds. This is used if the task is 'rest'
+and when the annotations do not contain any stimulation or behavior events.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -1412,6 +1413,9 @@ def get_datatype() -> Literal['meg', 'eeg']:
 def get_reject() -> dict:
     if reject is None:
         return dict()
+
+    if reject == 'auto' :
+        return 'auto'
 
     reject_ = reject.copy()  # Avoid clash with global variable.
 

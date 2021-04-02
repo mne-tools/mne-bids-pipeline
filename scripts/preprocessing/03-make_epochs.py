@@ -72,8 +72,8 @@ def run_epochs(subject, session=None):
     else:
         raw = mne.concatenate_raws(raw_list)
 
-    #Events for rest session
-    if config.session == 'rest' :
+    # Compute events for rest tasks
+    if config.task == 'rest' :
         stop = raw.times[-1]
         duration = config.epochs_tmax - config.epochs_tmin
         overlap = config.overlap
@@ -81,8 +81,7 @@ def run_epochs(subject, session=None):
             raw, id=3000, start=0, duration=overlap,
             stop=stop - duration)
         event_id = dict(rest=3000)
-    #Events for other sessions
-    else :
+    else : # Events for task runs
         events, event_id = mne.events_from_annotations(raw)
 
     if "eeg" in config.ch_types:
@@ -115,10 +114,13 @@ def run_epochs(subject, session=None):
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
 
-    reject = _get_global_reject_epochs(
-            raw, tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-            events=events,
-            event_id=event_id)
+    reject = config.get_rejects()
+    if reject == 'auto':
+        reject = _get_global_reject_epochs(
+                raw, tmin=config.epochs_tmin,
+                tmax=config.epochs_tmax,
+                events=events,
+                event_id=event_id)
 
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,

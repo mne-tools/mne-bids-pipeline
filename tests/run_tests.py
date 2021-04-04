@@ -4,6 +4,11 @@ import os
 from pathlib import Path
 import argparse
 import runpy
+if sys.version_info >= (3, 8):
+    from typing import TypedDict, Collection, Dict
+else:
+    from typing_extensions import TypedDict, Collection, Dict
+
 
 # Add the pipelines dir to the PATH
 study_template_dir = Path(__file__).absolute().parents[1]
@@ -19,25 +24,117 @@ def fetch(dataset=None):
 # Where to download the data to
 DATA_DIR = Path('~/mne_data').expanduser()
 
-TEST_SUITE = {
-    'ds003392': ('config_ds003392', 'preprocessing', 'sensor', 'report'),
-    'ds000246': ('config_ds000246', 'preprocessing',
-                 'preprocessing/make_epochs',  # Test the group/step syntax
-                 'sensor', 'report'),
-    'ds000248': ('config_ds000248', 'preprocessing', 'sensor', 'source',
-                 'report'),
-    'ds000248_ica': ('config_ds000248_ica', 'preprocessing', 'sensor',
-                     'report'),
-    'ds000248_T1_BEM': ('config_ds000248_T1_BEM', 'source/make_bem_surfaces'),
-    'ds000248_FLASH_BEM': ('config_ds000248_FLASH_BEM',
-                           'source/make_bem_surfaces'),
-    'ds001810': ('config_ds001810', 'preprocessing', 'preprocessing', 'sensor',
-                 'report'),
-    'eeg_matchingpennies': ('config_eeg_matchingpennies', 'preprocessing',
-                            'sensor', 'report'),
-    'ds003104': ('config_ds003104', 'preprocessing', 'sensor',  'source',
-                 'report'),
-    'ds000117': ('config_ds000117', 'preprocessing', 'sensor', 'report')
+class TestOptionsT(TypedDict):
+    dataset: str
+    config: str
+    steps: Collection[str]
+    env: Dict[str, str]
+
+TEST_SUITE: Dict[str, TestOptionsT] = {
+    'ds003392': {
+        'dataset': 'ds003392',
+        'config': 'config_ds003392.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {}
+    },
+    'ds000246': {
+        'dataset': 'ds000246',
+        'config':'config_ds000246.py',
+        'steps': ('preprocessing',
+                  'preprocessing/make_epochs',  # Test the group/step syntax
+                  'sensor', 'report'),
+        'env': {}
+    },
+    'ds000248': {
+        'dataset': 'ds000248',
+        'config': 'config_ds000248.py',
+        'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'env': {}
+    },
+    'ds000248_ica': {
+        'dataset': 'ds000248_ica',
+        'config': 'config_ds000248_ica.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {}
+    },
+    'ds000248_T1_BEM': {
+        'dataset': 'ds000248_T1_BEM',
+        'config': 'config_ds000248_T1_BEM.py',
+        'steps': ('source/make_bem_surfaces',),
+        'env': {}
+    },
+    'ds000248_FLASH_BEM': {
+        'dataset': 'ds000248_FLASH_BEM',
+        'config': 'config_ds000248_FLASH_BEM.py',
+        'steps': ('source/make_bem_surfaces',),
+        'env': {}
+    },
+    'ds001810': {
+        'dataset': 'ds001810',
+        'config': 'config_ds001810.py',
+        'steps': ('preprocessing', 'preprocessing', 'sensor', 'report'),
+        'env': {}
+    },
+    'eeg_matchingpennies': {
+        'dataset': 'eeg_matchingpennies',
+        'config': 'config_eeg_matchingpennies.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {}
+    },
+    'ds003104': {
+        'dataset': 'ds003104',
+        'config': 'config_ds003104.py',
+        'steps': ('preprocessing', 'sensor',  'source', 'report'),
+        'env': {}
+    },
+    'ds000117': {
+        'dataset': 'ds000117',
+        'config': 'config_ds000117.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {}
+    },
+    'ERP_CORE_N400': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'N400'}
+    },
+    'ERP_CORE_ERN': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'ERN'}
+    },
+    'ERP_CORE_LRP': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'LRP'}
+    },
+    'ERP_CORE_MMN': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'MMN'}
+    },
+    'ERP_CORE_N2pc': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'N2pc'}
+    },
+    'ERP_CORE_N170': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'N170'}
+    },
+    'ERP_CORE_P3': {
+        'dataset': 'ERP_CORE',
+        'config': 'config_ERP_CORE.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'env': {'MNE_BIDS_STUDY_TASK': 'P3'}
+    }
 }
 
 
@@ -58,22 +155,21 @@ def run_tests(test_suite, download):
     For every entry in the dict, the function `fetch` is called.
 
     """
-    for dataset, test_tuple in test_suite.items():
+    for dataset, test_options in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset
-        os.environ['BIDS_ROOT'] = str(DATA_DIR / dataset)
+        if test_options['env']:
+            os.environ.update(test_options['env'])
 
-        config_name = test_tuple[0]
         config_path = (study_template_dir / 'tests' / 'configs' /
-                       (config_name + '.py'))
-        del config_name
+                       test_options['config'])
 
         # Fetch the data.
         if download:
-            fetch(dataset)
+            fetch(test_options['dataset'])
 
         # Run the tests.
-        steps = test_tuple[1:]
+        steps = test_options['steps']
         run_script = study_template_dir / 'run.py'
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.

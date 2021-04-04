@@ -73,7 +73,7 @@ def run_epochs(subject, session=None):
         raw = mne.concatenate_raws(raw_list)
 
     # Compute events for rest tasks
-    if config.task == 'rest' :
+    if config.task == 'rest':
         stop = raw.times[-1]
         duration = config.epochs_tmax - config.epochs_tmin
         assert config.epochs_tmin == 0., "epochs_tmin must be 0 for rest"
@@ -138,7 +138,8 @@ def run_epochs(subject, session=None):
                         reject=reject,
                         reject_tmin=config.reject_tmin,
                         reject_tmax=config.reject_tmax,
-                        metadata=metadata)
+                        metadata=metadata,
+                        event_repeated=config.event_repeated)
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

@@ -568,7 +568,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Union[dict, Literal['auto']] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+reject: Optional[Union[dict, Literal['auto']]] = None
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.
@@ -578,17 +578,17 @@ with ICA, don't specify a value for the EOG and ECG channels, respectively
 
 Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
-???+ note "Note"
-    These numbers tend to vary between subjects.. You might want to consider
-    using the autoreject method by Jas et al. 2018.
-    See https://autoreject.github.io
-
+Pass ``'auto'`` if you want to automate the estimation of the reject
+parameter using AutoReject [Jas et al. 2017] (See https://autoreject.github.io).
+AutoReject is useful as the optimal rejection thresholds tend to vary between
+subjects.
 
 ???+ example "Example"
     ```python
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
     reject = None
+    reject = 'auto'
     ```
 """
 
@@ -638,6 +638,25 @@ How to handle the situation where you specified an event to be renamed via
 default, we will raise an exception to avoid accidental mistakes due to typos;
 however, if you're sure what you're doing, you may change this to ``'warn'``
 to only get a warning instead.
+"""
+
+###############################################################################
+# HANDLING OF REPEATED EVENTS
+# ---------------------------
+
+event_repeated: Literal['error', 'drop', 'merge'] = 'error'
+"""
+How to handle repeated events. We call events "repeated" if more than one event
+occurred at the exact same time point. Currently, MNE-Python cannot handle
+this situation gracefully when trying to create epochs, and will throw an
+error. To only keep the event of that time point ("first" here referring to
+the order that events appear in `*_events.tsv`), pass `'drop'`. You can also
+request to create a new type of event by merging repeated events by setting
+this to `'merge'`.
+
+warning:
+    The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
+    April 1st, 2021.
 """
 
 ###############################################################################

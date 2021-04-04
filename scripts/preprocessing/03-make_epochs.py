@@ -76,9 +76,11 @@ def run_epochs(subject, session=None):
     if config.task == 'rest' :
         stop = raw.times[-1]
         duration = config.epochs_tmax - config.epochs_tmin
-        overlap = config.overlap
+        assert config.epochs_tmin == 0., "epochs_tmin must be 0 for rest"
+        assert config.epochs_overlap is not None, \
+            "epochs_overlap cannot be None for rest"
         events = mne.make_fixed_length_events(
-            raw, id=3000, start=0, duration=overlap,
+            raw, id=3000, start=0, duration=config.epochs_overlap,
             stop=stop - duration)
         event_id = dict(rest=3000)
     else : # Events for task runs
@@ -115,13 +117,20 @@ def run_epochs(subject, session=None):
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
 
-    reject = config.get_rejects()
+    reject = config.get_reject()
     if reject == 'auto':
+        msg = "Using AutoReject to estimate reject parameter"
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
         reject = _get_global_reject_epochs(
-                raw, tmin=config.epochs_tmin,
-                tmax=config.epochs_tmax,
-                events=events,
-                event_id=event_id)
+            raw, tmin=config.epochs_tmin,
+            tmax=config.epochs_tmax,
+            events=events,
+            event_id=event_id
+        )
+        msg = f"reject = {reject}"
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
 
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,

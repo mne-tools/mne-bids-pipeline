@@ -46,7 +46,7 @@ def run_forward(subject, session=None):
     else:
         t1_bids_path = BIDSPath(subject=bids_path.subject,
                                 session=bids_path.session,
-                                root=bids_path.root)
+                                root=config.bids_root)
         t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
         if t1_bids_path.suffix is None:
             t1_bids_path.update(suffix='T1w')

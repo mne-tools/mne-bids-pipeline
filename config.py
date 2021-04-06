@@ -1046,7 +1046,7 @@ Note: Note
     The MRI recording is stored in a different BIDS dataset than the
     electrophysiological data:
     ```python
-    def electrophys_mri_map(bids_path):
+    def get_t1_from_meeg(bids_path):
         bids_path.root = '/data/mri'
         return bids_path
 

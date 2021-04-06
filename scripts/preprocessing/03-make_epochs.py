@@ -76,7 +76,7 @@ def run_epochs(subject, session=None):
         stop = raw.times[-1] - config.fixed_length_epochs_duration
         duration = config.epochs_tmax - config.epochs_tmin
         assert config.epochs_tmin == 0., "epochs_tmin must be 0 for rest"
-        assert config.epochs_overlap is not None, \
+        assert config.fixed_length_epochs_overlap is not None, \
             "epochs_overlap cannot be None for rest"
         events = mne.make_fixed_length_events(
             raw, id=3000, start=0,

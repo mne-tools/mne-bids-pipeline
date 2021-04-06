@@ -1030,17 +1030,17 @@ This `BIDSPath` can then be modified – or an entirely new `BIDSPath` can be
 generated – and returned by the function, pointing to the T1-weighted image.
 
 Note: Note
-    The function accept and return a single `BIDSPath`.
+    The function accepts and returns a single `BIDSPath`.
 
 ???+ example "Example"
     The MRI session is different than the electrophysiological session:
     ```python
-    def electrophys_mri_map(bids_path):
+    def get_t1_from_meeg(bids_path):
         bids_path.session = 'MRI'
         return bids_path
 
 
-    mri_t1_path_generator = electrophys_mri_map
+    mri_t1_path_generator = get_t1_from_meeg
     ```
 
     The MRI recording is stored in a different BIDS dataset than the
@@ -1051,7 +1051,7 @@ Note: Note
         return bids_path
 
 
-    mri_t1_path_generator = electrophys_mri_map
+    mri_t1_path_generator = get_t1_from_meeg
     ```
 """
 

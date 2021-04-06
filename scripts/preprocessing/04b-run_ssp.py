@@ -79,7 +79,6 @@ def run_ssp(subject, session=None):
     raw = mne.io.read_raw_fif(raw_fname_in)
     # XXX : n_xxx should be options in config
     reject_eog, reject_ecg = _get_global_reject_ssp(raw)
-    print(reject_eog)
 
     msg = 'Computing SSPs for ECG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,

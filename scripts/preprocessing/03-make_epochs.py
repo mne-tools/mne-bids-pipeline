@@ -30,9 +30,8 @@ def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
         raw, events, event_id=event_id, tmin=tmin, tmax=tmax,
         proj=False, baseline=None, reject=None)
     epochs.load_data()
-    epochs.pick_types(meg=True)
     epochs.apply_proj()
-    reject = get_rejection_threshold(epochs, decim=1)
+    reject = get_rejection_threshold(epochs)
     return reject
 
 def run_epochs(subject, session=None):
@@ -74,14 +73,16 @@ def run_epochs(subject, session=None):
 
     # Compute events for rest tasks
     if config.task == 'rest':
-        stop = raw.times[-1]
+        stop = raw.times[-1] - config.fixed_length_epochs_duration
         duration = config.epochs_tmax - config.epochs_tmin
         assert config.epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert config.epochs_overlap is not None, \
             "epochs_overlap cannot be None for rest"
         events = mne.make_fixed_length_events(
-            raw, id=3000, start=0, duration=config.epochs_overlap,
-            stop=stop - duration)
+            raw, id=3000, start=0,
+            duration=config.fixed_length_epochs_duration,
+            overlap=config.fixed_length_epochs_overlap,
+            stop=stop)
         event_id = dict(rest=3000)
     else : # Events for task runs
         events, event_id = mne.events_from_annotations(raw)

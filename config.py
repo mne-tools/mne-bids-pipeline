@@ -759,9 +759,14 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-epochs_overlap: Optional[float] = None
+fixed_length_epochs_duration : Optional[float] = None
 """
-Overlap between epochs in seconds. This is used if the task is 'rest'
+Duration of epochs in seconds.
+"""
+
+fixed_length_epochs_overlap: Optional[float] = None
+"""
+Overlap between epochs in seconds. This is used if the task is ``rest``
 and when the annotations do not contain any stimulation or behavior events.
 """
 

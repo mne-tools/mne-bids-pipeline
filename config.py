@@ -11,11 +11,12 @@ import traceback
 import sys
 import copy
 import logging
-from typing import Optional, Union, Iterable, List, Tuple, Dict
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    from typing import (Optional, Union, Iterable, List, Tuple, Dict, Literal,
+                        Callable)
 else:
-    from typing_extensions import Literal
+    from typing_extensions import (Optional, Union, Iterable, List, Tuple,
+                                   Dict, Literal, Callable)
 
 import coloredlogs
 import numpy as np
@@ -994,6 +995,66 @@ recreate_bem: bool = False
 Whether to re-create the BEM surfaces, even if existing surfaces have been
 found. If ``False``, the BEM surfaces are only created if they do not exist
 already. ``True`` forces their recreation, overwriting existing BEM surfaces.
+"""
+
+mri_t1_path_generator: Optional[Callable] = None
+"""
+To perform source-level analyses, the Pipeline needs to generate a
+transformation matrix that translates coordinates from MEG and EEG sensor
+space to MRI space, and vice versa. This process, called "coregistration",
+requires access to both, the electrophyisiological recordings as well as
+T1-weighted MRI images of the same participant. If both are stored within
+the same session, the Pipeline (or, more specicifally, MNE-BIDS) can find the
+respective files automatically.
+
+However, in certain situations, this is not possible. Examples include:
+
+- MRI was conducted during a different session than the electrophysiological
+  recording.
+- MRI was conducated in a single session, while electrophysiological recordings
+  spanned across several sessions.
+- MRI and electrophysiological data are stored in separate BIDS datasets to
+  allow easier storage and distribution in certain situations.
+
+To allow the Pipeline to find the correct MRI images and perform coregistration
+automatically, we provide a "hook" that allows you to provide in a custom
+function whose output tells the Pipeline where to find the T1-weightes image.
+
+The function is expected to accept a single parameter. The Pipeline will pass
+a `BIDSPath` with the following parameters set based on the currently processed
+electrophysiological data:
+
+- the subject ID, `BIDSPath.subject`
+- the experimental session, `BIDSPath.session`
+- the BIDS root, `BIDSPath.root`
+
+This `BIDSPath` can then be modified – or an entirely new `BIDSPath` can be
+generated – and returned by the function, pointing to the T1-weighted image.
+
+Note: Note
+    The function accepts and returns a single `BIDSPath`.
+
+???+ example "Example"
+    The MRI session is different than the electrophysiological session:
+    ```python
+    def get_t1_from_meeg(bids_path):
+        bids_path.session = 'MRI'
+        return bids_path
+
+
+    mri_t1_path_generator = get_t1_from_meeg
+    ```
+
+    The MRI recording is stored in a different BIDS dataset than the
+    electrophysiological data:
+    ```python
+    def get_t1_from_meeg(bids_path):
+        bids_path.root = '/data/mri'
+        return bids_path
+
+
+    mri_t1_path_generator = get_t1_from_meeg
+    ```
 """
 
 spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'

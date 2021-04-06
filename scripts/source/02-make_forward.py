@@ -42,9 +42,9 @@ def run_forward(subject, session=None):
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
 
-    # Retrieve the head -> MRI transformation matrix from the MRI sidecar file
-    # in the input data, and save it to an MNE "trans" file in the derivatives
-    # folder.
+    # Generate a head -> MRI transformation matrix from the
+    # electrophysiological and MRI sidecar files, and save it to an MNE
+    # "trans" file in the derivatives folder.
     trans = get_head_mri_trans(bids_path.copy().update(
         run=config.get_runs()[0],
         root=config.bids_root))

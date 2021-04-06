@@ -38,16 +38,29 @@ def run_forward(subject, session=None):
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_fwd = bids_path.copy().update(suffix='fwd')
 
-    msg = f'Input: {fname_evoked}, Output: {fname_fwd}'
+    # Generate a head ↔ MRI transformation matrix from the
+    # electrophysiological and MRI sidecar files, and save it to an MNE
+    # "trans" file in the derivatives folder.
+    if config.mri_t1_path_generator is None:
+        t1_bids_path = None
+    else:
+        t1_bids_path = BIDSPath(subject=bids_path.subject,
+                                session=bids_path.session,
+                                root=bids_path.root)
+        t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
+        if t1_bids_path.suffix is None:
+            t1_bids_path.update(suffix='T1w')
+        if t1_bids_path.datatype is None:
+            t1_bids_path.update(datatype='anat')
+
+    msg = 'Estimating head ↔ MRI transform'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
 
-    # Generate a head -> MRI transformation matrix from the
-    # electrophysiological and MRI sidecar files, and save it to an MNE
-    # "trans" file in the derivatives folder.
-    trans = get_head_mri_trans(bids_path.copy().update(
-        run=config.get_runs()[0],
-        root=config.bids_root))
+    trans = get_head_mri_trans(
+        bids_path.copy().update(run=config.get_runs()[0],
+                                root=config.bids_root),
+        t1_bids_path=t1_bids_path)
     mne.write_trans(fname_trans, trans)
 
     fs_subject = config.get_fs_subject(subject)

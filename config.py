@@ -11,10 +11,12 @@ import traceback
 import sys
 import copy
 import logging
-if sys.version_info < (3, 8):
-    import typing_extensions as typing
-from typing import (Optional, Union, Iterable, List, Tuple, Dict, Literal,
-                    Callable)
+if sys.version_info >= (3, 8):
+    from typing import (Optional, Union, Iterable, List, Tuple, Dict, Literal,
+                        Callable)
+else:
+    from typing_extensions import (Optional, Union, Iterable, List, Tuple,
+                                   Dict, Literal, Callable)
 
 import coloredlogs
 import numpy as np

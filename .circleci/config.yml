@@ -501,6 +501,9 @@ jobs:
           keys:
             - data-cache-ERP_CORE
       - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
           name: test ERP CORE N400
           command: |
             mkdir -p ~/reports/ERP_CORE

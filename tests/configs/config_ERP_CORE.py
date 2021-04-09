@@ -21,6 +21,7 @@ eeg_template_montage = 'standard_1005'
 eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
                         'VEOG': ('VEOG_lower', 'FP2')}
 drop_channels = ['HEOG_left', 'HEOG_right', 'VEOG_lower']
+eog_channels = ['HEOG', 'VEOG']
 
 l_freq = 0.1
 h_freq = None

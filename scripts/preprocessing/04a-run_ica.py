@@ -202,6 +202,9 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
     if config.eog_channels:
         assert all([ch_name in raw.ch_names
                     for ch_name in config.eog_channels])
+        # The following line can be removed once
+        # https://github.com/mne-tools/mne-python/pull/9269
+        # has been merged
         ch_name = ','.join(config.eog_channels)
     else:
         ch_name = None

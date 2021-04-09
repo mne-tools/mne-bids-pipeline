@@ -261,6 +261,26 @@ def load_data(bids_path):
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
 
+        # If we created a new bipolar channel that the user wishes to
+        # use as an EOG channel, it is probabluy a good idea to set its channel
+        # type to 'eog'. Bipolar channels, by default, don't have a location,
+        # so one might get unexpected results otherwise, as the channel would
+        # influence e.g. in GFP calculations, but not appear on topographic
+        # maps.
+        if any([eog_ch_name in config.eeg_bipolar_channels
+                for eog_ch_name in config.eog_channels]):
+            msg = 'Setting channel type of new bipolar EOG channel(s) …'
+            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                        session=session))
+
+        for eog_ch_name in config.eog_channels:
+            if eog_ch_name in config.eeg_bipolar_channels:
+                msg = f'    {eog_ch_name} -> eog'
+                logger.info(gen_log_message(message=msg, step=1,
+                                            subject=subject,
+                                            session=session))
+                raw.set_channel_types({eog_ch_name: 'eog'})
+
     if config.drop_channels:
         msg = f'Dropping channels: {", ".join(config.drop_channels)}'
         logger.info(gen_log_message(message=msg, step=1, subject=subject,

@@ -57,6 +57,11 @@ def run_ssp(subject, session=None):
                                  session=session))
     ecg_projs, ecg_events = compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0,
                                              average=True)
+
+    if ecg_projs is None:
+        msg = 'No ECG events could be found. No ECG proj computed.'
+        ecg_projs = []
+
     msg = 'Computing SSPs for EOG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))

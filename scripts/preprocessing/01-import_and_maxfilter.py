@@ -262,7 +262,7 @@ def load_data(bids_path):
                                       copy=False)
 
         # If we created a new bipolar channel that the user wishes to
-        # use as an EOG channel, it is probabluy a good idea to set its channel
+        # use as an EOG channel, it is probably a good idea to set its channel
         # type to 'eog'. Bipolar channels, by default, don't have a location,
         # so one might get unexpected results otherwise, as the channel would
         # influence e.g. in GFP calculations, but not appear on topographic

@@ -159,6 +159,14 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         ecg_epochs = create_ecg_epochs(raw, reject=None,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
+
+        if len(ecg_epochs) == 0:
+            msg = ('No ECG events could be found. Not running ECG artifact '
+                   'detection.')
+            logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                        session=session))
+            return list()
+
         ecg_evoked = ecg_epochs.average()
         ecg_inds, scores = ica.find_bads_ecg(
             ecg_epochs, method='ctps',
@@ -200,14 +208,11 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
     pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
                               eog=True)
     if config.eog_channels:
+        ch_names = config.eog_channels
         assert all([ch_name in raw.ch_names
-                    for ch_name in config.eog_channels])
-        # The following line can be removed once
-        # https://github.com/mne-tools/mne-python/pull/9269
-        # has been merged
-        ch_name = ','.join(config.eog_channels)
+                    for ch_name in ch_names])
     else:
-        ch_name = None
+        ch_names = None
 
     if pick_eog.any() or config.eog_channels:
         msg = 'Performing automated EOG artifact detection …'
@@ -215,9 +220,17 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                                     session=session))
 
         # Do not reject epochs based on amplitude.
-        eog_epochs = create_eog_epochs(raw, ch_name=ch_name, reject=None,
+        eog_epochs = create_eog_epochs(raw, ch_name=ch_names, reject=None,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
+
+        if len(eog_epochs) == 0:
+            msg = ('No EOG events could be found. Not running EOG artifact '
+                   'detection.')
+            logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                        session=session))
+            return list()
+
         eog_evoked = eog_epochs.average()
         eog_inds, scores = ica.find_bads_eog(
             eog_epochs,

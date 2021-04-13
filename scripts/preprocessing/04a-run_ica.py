@@ -205,16 +205,16 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
 
 
 def detect_eog_artifacts(ica, raw, subject, session, report):
-    pick_eog = mne.pick_types(raw.info, meg=False, eeg=False, ecg=False,
-                              eog=True)
     if config.eog_channels:
         ch_names = config.eog_channels
         assert all([ch_name in raw.ch_names
                     for ch_name in ch_names])
     else:
-        ch_names = None
+        ch_idx = mne.pick_types(raw.info, meg=False, eog=True)
+        ch_names = [raw.ch_names[i] for i in ch_idx]
+        del ch_idx
 
-    if pick_eog.any() or config.eog_channels:
+    if ch_names:
         msg = 'Performing automated EOG artifact detection …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))

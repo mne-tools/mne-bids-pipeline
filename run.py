@@ -19,24 +19,30 @@ PathLike = Union[str, pathlib.Path]
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
-PREPROCESSING_SCRIPTS = ('01-import_and_maxfilter.py',
-                         '02-frequency_filter.py',
-                         '03-make_epochs.py',
-                         '04a-run_ica.py',
-                         '04b-run_ssp.py',
-                         '05a-apply_ica.py',
-                         '05b-apply_ssp.py')
+PREPROCESSING_SCRIPTS = (
+    '01-import_and_maxfilter.py',
+    '02-frequency_filter.py',
+    '03-make_epochs.py',
+    '04a-run_ica.py',
+    '04b-run_ssp.py',
+    '05a-apply_ica.py',
+    '05b-apply_ssp.py'
+)
 
-SENSOR_SCRIPTS = ('01-make_evoked.py',
-                  '02-sliding_estimator.py',
-                  '03-time_frequency.py',
-                  '04-group_average.py')
+SENSOR_SCRIPTS = (
+    '01-make_evoked.py',
+    '02-sliding_estimator.py',
+    '03-time_frequency.py',
+    '04-group_average.py'
+)
 
-SOURCE_SCRIPTS = ('01-make_bem_surfaces.py',
-                  '02-make_forward.py',
-                  '03-make_cov.py',
-                  '04-make_inverse.py',
-                  '05-group_average.py')
+SOURCE_SCRIPTS = (
+    '01-make_bem_surfaces.py',
+    '02-make_forward.py',
+    '03-make_cov.py',
+    '04-make_inverse.py',
+    '05-group_average.py'
+)
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 

@@ -834,7 +834,7 @@ ica_l_freq: Optional[float] = 1.
 """
 The cutoff frequency of the high-pass filter to apply before running ICA.
 Using a relatively high cutoff like 1 Hz will remove slow drifts from the
-data, yielding improved ICA results.
+data, yielding improved ICA results. Must be set to 1 Hz or above.
 
 Set to ``None`` to not apply an additional high-pass filter.
 
@@ -1303,7 +1303,25 @@ if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
            f"{ica_algorithm}.")
     raise ValueError(msg)
 
-if use_ica and ica_l_freq < l_freq:
+if (use_ica and ica_l_freq is None and
+        l_freq is not None and l_freq < 1):
+    msg = (f'You requested to high-pass filter your data with l_freq={l_freq} '
+           f'Hz and to perform ICA without performing any additional '
+           f'filtering first by setting ica_l_freq=None. However, ICA will '
+           f'not work reliably unless slow drifts have been removed from the '
+           f'data. Please either increase l_freq to 1 Hz or above, or enable '
+           f'additional filtering for ICA by setting ica_l_freq to 1 Hz or '
+           f'higher.')
+    raise ValueError(msg)
+
+if use_ica and ica_l_freq < 1:
+    msg = (f'You requested to high-pass filter the data before ICA with '
+           f'ica_l_freq={ica_l_freq} Hz. Please increase this setting to '
+           f'1 Hz or above to ensure reliable ICA function.')
+    raise ValueError(msg)
+
+if (use_ica and ica_l_freq is not None and l_freq is not None and
+        ica_l_freq < l_freq):
     msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
            f'than for your raw data: ica_l_freq = {ica_l_freq} < '
            f'l_freq = {l_freq}. Adjust the cutoffs such that ica_l_freq >= '

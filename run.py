@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
-import fire
 import os
+import sys
 import runpy
 import pathlib
 import logging
-import coloredlogs
 from typing import Union, Optional, Tuple
-try:
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:  # Python <3.8
+else:
     from typing_extensions import Literal
+
+import fire
+import coloredlogs
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)

@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 import argparse
 import runpy
+from typing import Collection, Dict
 if sys.version_info >= (3, 8):
-    from typing import TypedDict, Collection, Dict
+    from typing import TypedDict
 else:
-    from typing_extensions import TypedDict, Collection, Dict
+    from typing_extensions import TypedDict
 
 
 # Add the pipelines dir to the PATH

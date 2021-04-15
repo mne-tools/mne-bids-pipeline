@@ -842,6 +842,13 @@ Note: Note
       The filter will be applied to raw data which was already filtered
       according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
       data will be epoched, and the epochs will be submitted to ICA.
+
+!!! info
+    The Pipeline will only allow you to perform ICA on data that has been
+    high-pass filtered with a 1 Hz cutoff or higher. This is a conscious,
+    opinionated (but partially data-driven) decision made by the developers.
+    If you have reason to challenge this behavior, please get in touch with
+    us so we can discuss.
 """
 
 ica_max_iterations: int = 500

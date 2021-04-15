@@ -29,6 +29,7 @@ extra_css:
     - css/extra.css
 nav:
     - Home: index.md
+    - What's new: changes.md
     - Features:
         - What the pipeline can do: features/features.md
         - List of processing steps: features/steps.md
@@ -72,6 +73,7 @@ nav:
 
 plugins:
     - search
+    - macros
     - mkdocstrings:
         default_handler: python
         handlers:

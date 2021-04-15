@@ -60,7 +60,7 @@ def run_recon(root_dir, subject, fs_bids_app) -> None:
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
-def main(n_jobs: int = 1) -> None:
+def main(*, n_jobs: int = 1) -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
     The command allows to run the freesurfer recon-all

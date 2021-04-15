@@ -15,4 +15,4 @@ authors:
 ### Bug fixes
 
 - The FreeSurfer script could only be run if `--n_jobs` was passed explicitly
-  ({{ gh(287) }} by [Merlin Dumeur](https://github.com/MerlinDumeur))
+  ({{ gh(287) }} by {{ authors.MerlinDemeur }})

@@ -569,7 +569,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Optional[dict] = None
+reject: Optional[Union[dict, Literal['auto']]] = None
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.
@@ -579,17 +579,17 @@ with ICA, don't specify a value for the EOG and ECG channels, respectively
 
 Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
-???+ note "Note"
-    These numbers tend to vary between subjects.. You might want to consider
-    using the autoreject method by Jas et al. 2018.
-    See https://autoreject.github.io
-
+Pass ``'auto'`` if you want to automate the estimation of the reject
+parameter using AutoReject [Jas et al. 2017] (See https://autoreject.github.io).
+AutoReject is useful as the optimal rejection thresholds tend to vary between
+subjects.
 
 ???+ example "Example"
     ```python
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
     reject = None
+    reject = 'auto'
     ```
 """
 
@@ -758,6 +758,17 @@ The end of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
     ```
+"""
+
+fixed_length_epochs_duration : Optional[float] = None
+"""
+Duration of epochs in seconds.
+"""
+
+fixed_length_epochs_overlap: Optional[float] = None
+"""
+Overlap between epochs in seconds. This is used if the task is ``rest``
+and when the annotations do not contain any stimulation or behavior events.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -1487,6 +1498,9 @@ def get_datatype() -> Literal['meg', 'eeg']:
 def get_reject() -> dict:
     if reject is None:
         return dict()
+
+    if reject == 'auto' :
+        return 'auto'
 
     reject_ = reject.copy()  # Avoid clash with global variable.
 

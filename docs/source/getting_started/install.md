@@ -17,7 +17,7 @@ required to run the pipeline.
 ??? example "Install for older Python versions"
     Run in your terminal:
     ```shell
-    pip install mne-bids coloredlogs tqdm pandas json_tricks scikit-learn fire typing_extension
+    pip install mne-bids coloredlogs tqdm pandas json_tricks scikit-learn fire typing_extensions
     ```
 
 ??? info "Detailed list of dependencies"

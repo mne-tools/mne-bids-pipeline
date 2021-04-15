@@ -760,7 +760,7 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-fixed_length_epochs_duration : Optional[float] = None
+fixed_length_epochs_duration: Optional[float] = None
 """
 Duration of epochs in seconds.
 """
@@ -806,6 +806,11 @@ of contrasts.
                  ('visual/left', 'visual/right'),
                  ('auditory', 'visual')]
     ```
+"""
+
+no_epoching: bool = False
+"""
+Do not perform epoching on the data.
 """
 
 ###############################################################################
@@ -1376,6 +1381,14 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
 
+if no_epoching:
+    epochs_tmin = 0
+    fixed_length_epochs_duration = fixed_length_epochs_duration or 1
+    fixed_length_epochs_overlap = fixed_length_epochs_overlap or 0.0
+
+if task == 'rest':
+    no_epoching = True
+
 
 ###############################################################################
 # Helper functions
@@ -1499,7 +1512,7 @@ def get_reject() -> dict:
     if reject is None:
         return dict()
 
-    if reject == 'auto' :
+    if reject == 'auto':
         return 'auto'
 
     reject_ = reject.copy()  # Avoid clash with global variable.

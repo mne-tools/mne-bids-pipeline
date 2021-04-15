@@ -23,8 +23,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
-
 def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
     epochs = mne.Epochs(
         raw, events, event_id=event_id, tmin=tmin, tmax=tmax,
@@ -34,6 +32,8 @@ def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
     reject = get_rejection_threshold(epochs)
     return reject
 
+
+@failsafe_run(on_error=on_error)
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
     raw_list = list()
@@ -72,9 +72,9 @@ def run_epochs(subject, session=None):
         raw = mne.concatenate_raws(raw_list)
 
     # Compute events for rest tasks
-    if config.task == 'rest':
+    if config.no_epoching:
         stop = raw.times[-1] - config.fixed_length_epochs_duration
-        duration = config.epochs_tmax - config.epochs_tmin
+        # duration = config.epochs_tmax - config.epochs_tmin
         assert config.epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert config.fixed_length_epochs_overlap is not None, \
             "epochs_overlap cannot be None for rest"
@@ -84,7 +84,7 @@ def run_epochs(subject, session=None):
             overlap=config.fixed_length_epochs_overlap,
             stop=stop)
         event_id = dict(rest=3000)
-    else : # Events for task runs
+    else:  # Events for task runs
         events, event_id = mne.events_from_annotations(raw)
 
     if "eeg" in config.ch_types:

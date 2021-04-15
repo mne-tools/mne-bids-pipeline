@@ -22,10 +22,9 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
 def _get_global_reject_ssp(raw):
     if 'eog' in raw:
-        eog_epochs = mne.preprocessing.create_eog_epochs(raw)
+        eog_epochs = create_eog_epochs(raw)
     else:
         eog_epochs = []
     if len(eog_epochs) >= 5:
@@ -34,7 +33,7 @@ def _get_global_reject_ssp(raw):
     else:
         reject_eog = None
 
-    ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
+    ecg_epochs = create_ecg_epochs(raw)
     # we will always have an ECG as long as there are magnetometers
     if len(ecg_epochs) >= 5:
         reject_ecg = get_rejection_threshold(ecg_epochs, decim=8)
@@ -47,6 +46,7 @@ def _get_global_reject_ssp(raw):
     return reject_eog, reject_ecg
 
 
+@failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
     # compute SSP on first run of raw
     run = config.get_runs()[0]

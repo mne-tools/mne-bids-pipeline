@@ -45,17 +45,34 @@ def apply_ica(subject, session):
                              root=config.deriv_root,
                              check=False)
 
-    fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')
-    fname_epo_out = bids_basename.copy().update(
-        suffix='epo', processing='clean', extension='.fif')
+    if config.no_epoching:
+
+        fname_in = {
+            run:
+            bids_basename.copy().update(run=run, processing='filt',
+                                        suffix='raw', check=False,
+                                        extension='.fif')
+            for run in config.get_runs()
+        }
+
+        fname_out = {
+            run:
+            bids_basename.copy().update(run=run, processing='clean',
+                                        suffix='raw', check=False,
+                                        extension='.fif')
+            for run in config.get_runs()
+        }
+
+    else:
+        fname_in = bids_basename.copy().update(suffix='epo', extension='.fif')
+        fname_out = bids_basename.copy().update(
+            suffix='epo', processing='clean', extension='.fif')
+
     fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
 
-    # Load epochs to reject ICA components.
-    epochs = mne.read_epochs(fname_epo_in, preload=True)
-
-    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
+    msg = f'Input: {fname_in}, Output: {fname_out}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
 
@@ -76,41 +93,69 @@ def apply_ica(subject, session):
                    .loc[tsv_data['status'] == 'bad', 'component']
                    .to_list())
 
-    # Compare ERP/ERF before and after ICA artifact rejection. The evoked
-    # response is calculated across ALL epochs, just like ICA was run on
-    # all epochs, regardless of their respective experimental condition.
-    #
-    # Note that up until now, we haven't actually rejected any ICs from the
-    # epochs.
-    evoked = epochs.average()
+    if config.no_epoching:
 
-    # Plot source time course
-    fig = ica.plot_sources(evoked, show=config.interactive)
-    report.add_figs_to_section(figs=fig,
-                               captions='All ICs - Source time course')
+        msg = f'Rejecting ICs: {ica.exclude}'
+        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                    session=session))
 
-    # Plot original & corrected data
-    fig = ica.plot_overlay(evoked, show=config.interactive)
-    report.add_figs_to_section(figs=fig,
-                               captions=f'Evoked response (across all epochs) '
-                                        f'before and after cleaning via ICA '
-                                        f'({len(ica.exclude)} ICs removed)')
-    report.save(report_fname, overwrite=True, open_browser=False)
+        # Load and apply ICA to each run separately
+        for run in fname_in:
 
-    # Now actually reject the components.
-    msg = f'Rejecting ICs: {ica.exclude}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
-                                session=session))
-    epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
-    epochs_cleaned.apply_baseline(config.baseline)
+            raw = mne.io.read_raw_fif(fname_in[run], preload=True)
+            raw_cleaned = ica.apply(raw.copy())  # Not sure if copy needed
 
-    msg = 'Saving cleaned epochs.'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
-                                session=session))
-    epochs_cleaned.save(fname_epo_out, overwrite=True)
+            msg = 'Saving cleaned raw.'
+            logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                        session=session))
+            raw_cleaned.save(fname_out[run], overwrite=True)
 
-    if config.interactive:
-        epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
+            fig = ica.plot_sources(raw, show=config.interactive)
+            report.add_figs_to_section(figs=fig, captions='All ICs - run '
+                                                          f'{run}')
+
+            # Does it make sense to plot_overlay for raw data? I don't think so
+
+        report.save(report_fname, overwrite=True, open_browser=False)
+
+    else:
+
+        # Load epochs to reject ICA components.
+        epochs = mne.read_epochs(fname_in, preload=True)
+
+        # Compare ERP/ERF before and after ICA artifact rejection. The evoked
+        # response is calculated across ALL epochs, just like ICA was run on
+        # all epochs, regardless of their respective experimental condition.
+        #
+        # Note that up until now, we haven't actually rejected any ICs from the
+        # epochs.
+        evoked = epochs.average()
+
+        # Plot source time course
+        fig = ica.plot_sources(evoked, show=config.interactive)
+        report.add_figs_to_section(figs=fig,
+                                   captions='All ICs - Source time course')
+
+        # Plot original & corrected data
+        fig = ica.plot_overlay(evoked, show=config.interactive)
+        report.add_figs_to_section(figs=fig,
+                                   captions=f'Evoked response (across all '
+                                            f'epochs) before and after '
+                                            f'cleaning via ICA '
+                                            f'({len(ica.exclude)} ICs removed)'
+                                   )
+        report.save(report_fname, overwrite=True, open_browser=False)
+
+        epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
+        epochs_cleaned.apply_baseline(config.baseline)
+
+        msg = 'Saving cleaned epochs.'
+        logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                    session=session))
+        epochs_cleaned.save(fname_out, overwrite=True)
+
+        if config.interactive:
+            epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
 
 
 def main():

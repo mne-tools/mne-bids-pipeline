@@ -40,7 +40,7 @@ saving the analysis results.
 
 bids_root: Optional[PathLike] = None
 """
-Speficy the BIDS root directory. Pass an empty string or ```None`` to use
+Specify the BIDS root directory. Pass an empty string or ```None`` to use
 the value specified in the ``BIDS_ROOT`` environment variable instead.
 Raises an exception if the BIDS root has not been specified.
 
@@ -222,7 +222,7 @@ of ocular activity, and you might want to use them as "virtual" EOG channels,
 while also including them in the EEG analysis. By default, MNE won't know that
 these channels are suitable for recovering EOG, and hence won't be able to
 perform tasks like automated blink removal, unless a "true" EOG sensor is
-present in the data as well. Speficying channel names here allows MNE to find
+present in the data as well. Specifying channel names here allows MNE to find
 the respective EOG signals based on these channels.
 
 You can specify one or multiple channel names. Each will be treated as if it
@@ -1011,21 +1011,21 @@ transformation matrix that translates coordinates from MEG and EEG sensor
 space to MRI space, and vice versa. This process, called "coregistration",
 requires access to both, the electrophyisiological recordings as well as
 T1-weighted MRI images of the same participant. If both are stored within
-the same session, the Pipeline (or, more specicifally, MNE-BIDS) can find the
+the same session, the Pipeline (or, more specifically, MNE-BIDS) can find the
 respective files automatically.
 
 However, in certain situations, this is not possible. Examples include:
 
 - MRI was conducted during a different session than the electrophysiological
   recording.
-- MRI was conducated in a single session, while electrophysiological recordings
+- MRI was conducted in a single session, while electrophysiological recordings
   spanned across several sessions.
 - MRI and electrophysiological data are stored in separate BIDS datasets to
   allow easier storage and distribution in certain situations.
 
 To allow the Pipeline to find the correct MRI images and perform coregistration
 automatically, we provide a "hook" that allows you to provide in a custom
-function whose output tells the Pipeline where to find the T1-weightes image.
+function whose output tells the Pipeline where to find the T1-weighted image.
 
 The function is expected to accept a single parameter. The Pipeline will pass
 a `BIDSPath` with the following parameters set based on the currently processed
@@ -1068,7 +1068,7 @@ spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
 """
 The spacing to use. Can be ``'ico#'`` for a recursively subdivided
 icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
-``'all'`` for all points, or an integer to use appoximate
+``'all'`` for all points, or an integer to use approximate
 distance-based spacing (in mm). See (the respective MNE-Python documentation)
 [https://mne.tools/dev/overview/cookbook.html#setting-up-the-source-space]
 for more info.

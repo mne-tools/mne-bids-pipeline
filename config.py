@@ -569,7 +569,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Optional[Union[dict, Literal['auto']]] = None
+reject: Optional[dict] = None
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.
@@ -579,17 +579,11 @@ with ICA, don't specify a value for the EOG and ECG channels, respectively
 
 Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
-Pass ``'auto'`` if you want to automate the estimation of the reject
-parameter using AutoReject [Jas et al. 2017] (See https://autoreject.github.io).
-AutoReject is useful as the optimal rejection thresholds tend to vary between
-subjects.
-
 ???+ example "Example"
     ```python
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
     reject = None
-    reject = 'auto'
     ```
 """
 
@@ -760,15 +754,16 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-fixed_length_epochs_duration: Optional[float] = None
+fixed_length_epochs_duration: Optional[float] = 1
 """
-Duration of epochs in seconds.
+Duration of epochs in seconds. Used if `no_epoching` was set, in order to
+perform ICA cleaning.
 """
 
-fixed_length_epochs_overlap: Optional[float] = None
+fixed_length_epochs_overlap: Optional[float] = 0
 """
-Overlap between epochs in seconds. This is used if the task is ``rest``
-and when the annotations do not contain any stimulation or behavior events.
+Overlap between epochs in seconds. Used if `no_epoching` was set, in order to
+perform ICA cleaning.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -1383,8 +1378,6 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 
 if no_epoching:
     epochs_tmin = 0
-    fixed_length_epochs_duration = fixed_length_epochs_duration or 1
-    fixed_length_epochs_overlap = fixed_length_epochs_overlap or 0.0
 
 if task == 'rest':
     no_epoching = True
@@ -1510,9 +1503,6 @@ def get_datatype() -> Literal['meg', 'eeg']:
 
 def get_reject() -> dict:
     if reject is None:
-        return dict()
-
-    if reject == 'auto':
         return dict()
 
     reject_ = reject.copy()  # Avoid clash with global variable.

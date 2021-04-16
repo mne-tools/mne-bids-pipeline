@@ -93,11 +93,11 @@ def apply_ica(subject, session):
                    .loc[tsv_data['status'] == 'bad', 'component']
                    .to_list())
 
-    if config.no_epoching:
+    msg = f'Rejecting ICs: {ica.exclude}'
+    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                session=session))
 
-        msg = f'Rejecting ICs: {ica.exclude}'
-        logger.info(gen_log_message(message=msg, step=5, subject=subject,
-                                    session=session))
+    if config.no_epoching:
 
         # Load and apply ICA to each run separately
         for run in fname_in:

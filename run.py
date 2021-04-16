@@ -184,7 +184,9 @@ def process(config: PathLike,
         script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
     for script_path in script_paths:
-        step_name = script_path.name.replace('.py', '')[3:]
+        step_name = script_path.name.replace('.py', '')
+        if '-' in step_name:
+            step_name = '-'.join(step_name.split('-')[1:])
         logger.info(f'Now running: {step_name}')
         _run_script(script_path, config, root_dir, subject, session, task, run)
         logger.info(f'Successfully finished running: {step_name}')

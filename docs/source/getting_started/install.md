@@ -29,7 +29,6 @@ required to run the pipeline.
     - `scikit-learn` for decoding
     - `fire` for the command line interface
     - `typing_extensions` if you're using a Python version older than 3.8
-    - `autoreject` to automatically reject bad trials
 
 Download MNE-BIDS-Pipeline
 --------------------------

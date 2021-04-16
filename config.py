@@ -1513,7 +1513,7 @@ def get_reject() -> dict:
         return dict()
 
     if reject == 'auto':
-        return 'auto'
+        return dict()
 
     reject_ = reject.copy()  # Avoid clash with global variable.
 

@@ -7,8 +7,6 @@ from pathlib import Path
 import logging
 from typing import Union
 
-import fire
-
 from mne.utils import run_subprocess
 from mne.parallel import parallel_func
 
@@ -60,10 +58,10 @@ def run_recon(root_dir, subject, fs_bids_app) -> None:
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
-def main(*, n_jobs: int = 1) -> None:
+def main() -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
-    The command allows to run the freesurfer recon-all
+    The script allows to run the freesurfer recon-all
     command on all subjects of your BIDS dataset. It can
     run in parallel with the --n_jobs parameter.
 
@@ -71,26 +69,26 @@ def main(*, n_jobs: int = 1) -> None:
 
     https://github.com/BIDS-Apps/freesurfer
 
+    and the MNE BIDS Pipeline
+
+    https://mne.tools/mne-bids-pipeline
+
     You must have freesurfer available on your system.
 
-    Examples
-    --------
-    run_freesurfer.py /path/to/bids/dataset/study-template-config.py /path/to/freesurfer_bids_app/
+    Run via the MNE BIDS Pipeline's `run.py`:
 
-    or to run in parallel (3 subjects at a time):
-
-    run_freesurfer.py /path/to/bids/dataset/study-template-config.py /path/to/freesurfer_bids_app/ --n_jobs=3
+    python run.py --steps=freesurfer --config=your_pipeline_config.py
 
     """  # noqa
 
     logger.info('Running FreeSurfer')
 
     subjects = config.get_subjects()
-
     root_dir = config.bids_root
     subjects_dir = _get_subjects_dir(root_dir)
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
+    n_jobs = config.N_JOBS
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
     parallel(run_func(root_dir, subject, fs_bids_app)
              for subject in subjects)
@@ -109,4 +107,4 @@ def main(*, n_jobs: int = 1) -> None:
 
 
 if __name__ == '__main__':
-    fire.Fire(main)
+    main()

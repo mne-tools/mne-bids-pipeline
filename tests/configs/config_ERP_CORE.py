@@ -1,5 +1,19 @@
 """
-ERP CORE.
+ERP CORE
+
+This example demonstrate how to process 5 participants from the
+[ERP CORE](https://erpinfo.org/erp-core) dataset.
+
+## Dataset information
+
+- **Authors:** Emily S. Kappenman, Jaclyn L. Farrens, Wendy Zhang,
+                       Andrew X. Stewart, and Steven J. Luck
+- **License:** CC-BY-4.0
+- **URL:** https://erpinfo.org/erp-core
+- Citation: Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
+            & Luck, S. J. (2021). ERP CORE: An open resource for human
+            event-related potential research. *NeuroImage* 225: 117465.
+            https://doi.org/10.31234/osf.io/4azqm
 """
 import os
 

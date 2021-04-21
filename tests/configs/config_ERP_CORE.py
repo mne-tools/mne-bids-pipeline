@@ -33,7 +33,6 @@ sessions = [task]
 
 subjects = ['015', '016', '017', '018', '019']
 
-
 ch_types = ['eeg']
 interactive = False
 
@@ -44,6 +43,9 @@ eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
                         'VEOG': ('VEOG_lower', 'FP2')}
 drop_channels = ['HEOG_left', 'HEOG_right', 'VEOG_lower']
 eog_channels = ['HEOG', 'VEOG']
+
+reject =  {'eeg': 250e-6}
+reject_exclusions = ['FP1', 'FP2']
 
 l_freq = 0.1
 h_freq = None

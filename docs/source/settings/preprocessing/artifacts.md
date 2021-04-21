@@ -7,3 +7,4 @@
 ::: config.reject
 ::: config.reject_tmin
 ::: config.reject_tmax
+::: config.reject_exclusions

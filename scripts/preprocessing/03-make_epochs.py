@@ -91,15 +91,35 @@ def run_epochs(subject, session=None):
            f'[{config.epochs_tmin}, {config.epochs_tmin}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs = mne.Epochs(raw, events=events, event_id=event_id,
-                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        proj=True, baseline=None,
-                        preload=False, decim=config.decim,
-                        reject=config.get_reject(),
-                        reject_tmin=config.reject_tmin,
-                        reject_tmax=config.reject_tmax,
-                        metadata=metadata,
-                        event_repeated=config.event_repeated)
+
+    reject = config.get_reject()
+    if reject and config.reject_exclusions:
+        # Don't apply rejection thresholds to the specified channels. We
+        # achieve this by simply marking them as bad.
+        old_bads = raw.info['bads'].copy()
+        raw.info['bads'] += config.reject_exclusions
+
+        msg = (f'Not applying rejection thresholds to the following channels: '
+               f'{", ".join(config.reject_exclusions)}')
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
+
+    epochs = mne.Epochs(
+        raw, events=events, event_id=event_id,
+        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
+        proj=True, baseline=None,
+        decim=config.decim,
+        reject=reject,
+        reject_tmin=config.reject_tmin,
+        reject_tmax=config.reject_tmax,
+        metadata=metadata,
+        event_repeated=config.event_repeated,
+        preload=True  # This causes MNE to drop bad epochs right away
+    )
+
+    if reject and config.reject_exclusions:
+        # Restore the old bads.
+        epochs.info['bads'] = old_bads
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

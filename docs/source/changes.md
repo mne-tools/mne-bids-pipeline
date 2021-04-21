@@ -10,7 +10,9 @@ authors:
 
 ### New features & enhancements
 
-- ...
+- New configuration option `reject_exclusions` to exclude specific channels
+  when applying rejection thresholds to epochs ({{ gh(xxx) }} by
+  {{ authors.hoechenberger}})
 
 ### Bug fixes
 

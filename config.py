@@ -613,6 +613,23 @@ with the last time point.
     ```
 """
 
+reject_exclusions: Iterable[str] = []
+"""
+Names of channels to exclude when applying rejection thresholds. For example,
+in an EEG recording you might want to set a global rejection threshold to
+100 µV, but electrodes close to the eyes – like `Fp1` and `Fp2` – would then
+lead to the rejection of many epochs. In this situation, you could set
+`reject_exclusions = ['Fp1', 'Fp2']` to disregard those channels when it comes
+to exclusion based on peak-to-peak amplitude.
+
+???+ example "Example"
+    ```python
+    reject_exclusions = ['Fp1', 'Fp2']  # exclude Fp1 and Fp2
+    reject_exclusions = ['Fpz']  # exclude Fpz
+    ```
+"""
+
+
 ###############################################################################
 # RENAME EXPERIMENTAL EVENTS
 # --------------------------

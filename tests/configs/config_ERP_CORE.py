@@ -21,7 +21,7 @@ components from a total of 6 experimental tasks:
 - **Citation:** Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
                 & Luck, S. J. (2021). ERP CORE: An open resource for human
                 event-related potential research. *NeuroImage* 225: 117465.
-                https://doi.org/10.31234/osf.io/4azqm
+                [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
 import os
 

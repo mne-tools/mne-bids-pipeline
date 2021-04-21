@@ -1,10 +1,10 @@
 """
-Localizer
+hMT+ Localizer
 """
 study_name = 'localizer'
 bids_root = '~/mne_data/ds003392'
 
-subjects_list = ['01']
+subjects = ['01']
 
 task = 'localizer'
 find_flat_channels_meg = True

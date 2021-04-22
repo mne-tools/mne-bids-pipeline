@@ -1,5 +1,6 @@
 ::: config.use_ssp
 ::: config.use_ica
+::: config.ica_reject
 ::: config.ica_algorithm
 ::: config.ica_l_freq
 ::: config.ica_max_iterations

@@ -47,7 +47,7 @@ def apply_ica(subject, session):
 
     fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')
     fname_epo_out = bids_basename.copy().update(
-        suffix='epo', processing='clean', extension='.fif')
+        processing='ica', suffix='epo', extension='.fif')
     fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
@@ -60,7 +60,7 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(processing='clean', suffix='report',
+                    .update(processing='ica', suffix='report',
                             extension='.html'))
     report = Report(report_fname, verbose=False)
 

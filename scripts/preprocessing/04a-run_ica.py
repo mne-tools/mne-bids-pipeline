@@ -130,7 +130,7 @@ def fit_ica(epochs, subject, session):
               n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 
-    ica.fit(epochs, decim=config.ica_decim)
+    ica.fit(epochs, decim=config.ica_decim, reject=config.get_ica_reject())
 
     explained_var = (ica.pca_explained_variance_[:ica.n_components_].sum() /
                      ica.pca_explained_variance_.sum())

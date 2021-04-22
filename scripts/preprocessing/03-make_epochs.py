@@ -87,6 +87,7 @@ def run_epochs(subject, session=None):
         sfreq=raw.info['sfreq'])
 
     # Epoch the data
+    # Do not reject based on peak-to-peak or flatness thresholds at this stage
     msg = (f'Creating epochs with duration: '
            f'[{config.epochs_tmin}, {config.epochs_tmin}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
@@ -95,9 +96,6 @@ def run_epochs(subject, session=None):
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,
                         proj=True, baseline=None,
                         preload=False, decim=config.decim,
-                        reject=config.get_reject(),
-                        reject_tmin=config.reject_tmin,
-                        reject_tmax=config.reject_tmax,
                         metadata=metadata,
                         event_repeated=config.event_repeated)
 

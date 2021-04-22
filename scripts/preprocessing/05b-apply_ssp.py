@@ -38,7 +38,7 @@ def apply_ssp(subject, session=None):
                          root=config.deriv_root)
 
     fname_in = bids_path.copy().update(suffix='epo', check=False)
-    fname_out = bids_path.copy().update(processing='clean', suffix='epo',
+    fname_out = bids_path.copy().update(processing='ssp', suffix='epo',
                                         check=False)
 
     epochs = mne.read_epochs(fname_in, preload=True)

@@ -51,7 +51,7 @@ h_freq = None
 decode = True
 
 ica_reject = dict(eeg=350e-6, eog=500e-6)
-reject = dict(eeg=50e-6)
+reject = dict(eeg=150e-6)
 
 use_ssp = False
 use_ica = True

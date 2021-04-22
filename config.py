@@ -1556,7 +1556,7 @@ def get_reject() -> Dict[str, float]:
     return reject_
 
 
-def get_ica_reject() -> dict:
+def get_ica_reject() -> Dict[str, float]:
     reject = _get_reject(reject=ica_reject, ch_types=ch_types)
     return reject
 

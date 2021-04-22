@@ -49,9 +49,24 @@ def drop_ptp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
 
+    # Get rejection parameters and drop bad epochs
     reject = config.get_reject()
     epochs = mne.read_epochs(fname_in, preload=True)
+    n_epochs_before_reject = len(epochs)
+    epochs.reject_tmin = config.reject_tmin
+    epochs.reject_tmax = config.reject_tmax
     epochs.drop_bad(reject=reject)
+    n_epochs_after_reject = len(epochs)
+
+    if (n_epochs_after_reject > 0 and
+            n_epochs_after_reject < 0.5 * n_epochs_before_reject):
+        msg = ('More than 50% of all epochs rejected. Please check the '
+               'rejection thresholds.')
+        logger.warn(gen_log_message(message=msg, step=6, subject=subject,
+                                    session=session))
+    elif n_epochs_after_reject == 0:
+        raise RuntimeError('No epochs remaining after peak-to-peak-based '
+                           'rejection. Cannot continue.')
 
     msg = 'Saving cleaned eopchs …'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,

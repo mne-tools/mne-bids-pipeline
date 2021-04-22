@@ -58,8 +58,7 @@ def drop_ptp(subject, session=None):
     epochs.drop_bad(reject=reject)
     n_epochs_after_reject = len(epochs)
 
-    if (n_epochs_after_reject > 0 and
-            n_epochs_after_reject < 0.5 * n_epochs_before_reject):
+    if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = ('More than 50% of all epochs rejected. Please check the '
                'rejection thresholds.')
         logger.warn(gen_log_message(message=msg, step=6, subject=subject,

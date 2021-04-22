@@ -1528,7 +1528,6 @@ def get_datatype() -> Literal['meg', 'eeg']:
                            "the MNE-BIDS-pipeline developers. Thank you.")
 
 
-
 def _get_reject(
     reject: Optional[Dict[str, float]],
     ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']]
@@ -1553,8 +1552,8 @@ def _get_reject(
 
 
 def get_reject() -> Dict[str, float]:
-    reject = _get_reject(reject=reject, ch_types=ch_types)
-    return reject
+    reject_ = _get_reject(reject=reject, ch_types=ch_types)
+    return reject_
 
 
 def get_ica_reject() -> dict:

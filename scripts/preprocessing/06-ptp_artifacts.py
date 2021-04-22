@@ -70,8 +70,6 @@ def drop_ptp(subject, session=None):
     msg = 'Saving cleaned eopchs …'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
-    logger.info(gen_log_message(step=6, message=msg))
-
     epochs.save(fname_out, overwrite=True)
 
 

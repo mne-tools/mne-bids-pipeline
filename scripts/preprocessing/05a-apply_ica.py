@@ -66,9 +66,9 @@ def apply_ica(subject, session):
 
     title = f'ICA artifact removal – sub-{subject}'
     if session is not None:
-        title += ', ses-{session}'
+        title += f', ses-{session}'
     if task is not None:
-        title += ', task-{task}'
+        title += f', task-{task}'
     report = Report(report_fname, title=title, verbose=False)
 
     # Load ICA.

@@ -227,9 +227,9 @@ def run_report(subject, session=None):
 
     title = f'ICA – sub-{subject}'
     if session is not None:
-        title += ', ses-{session}'
+        title += f', ses-{session}'
     if task is not None:
-        title += ', task-{task}'
+        title += f', task-{task}'
 
     params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
                                   subject=fs_subject, title=title)
@@ -520,9 +520,9 @@ def run_report_average(session: str) -> None:
 
     title = f'sub-{subject}'
     if session is not None:
-        title += ', ses-{session}'
+        title += f', ses-{session}'
     if task is not None:
-        title += ', task-{task}'
+        title += f', task-{task}'
 
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
                      subjects_dir=config.get_fs_subjects_dir(),

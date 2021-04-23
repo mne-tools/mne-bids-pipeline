@@ -310,9 +310,9 @@ def run_ica(subject, session=None):
 
     title = f'ICA – sub-{subject}'
     if session is not None:
-        title += ', ses-{session}'
+        title += f', ses-{session}'
     if task is not None:
-        title += ', task-{task}'
+        title += f', task-{task}'
     report = Report(info_fname=raw, title=title, verbose=False)
 
     ica = fit_ica(epochs, subject=subject, session=session)

@@ -201,9 +201,10 @@ def plot_decoding_scores_gavg(decoding_data):
 
 
 def run_report(subject, session=None):
+    task = config.get_task()
     bids_path = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
+                         task=task,
                          acquisition=config.acq,
                          run=None,
                          recording=config.rec,
@@ -224,8 +225,14 @@ def run_report(subject, session=None):
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
+    title = f'ICA – sub-{subject}'
+    if session is not None:
+        title += ', ses-{session}'
+    if task is not None:
+        title += ', task-{task}'
+
     params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
-                                  subject=fs_subject)
+                                  subject=fs_subject, title=title)
     if op.exists(fname_trans):
         params['subjects_dir'] = fs_subjects_dir
 
@@ -497,9 +504,10 @@ def run_report_average(session: str) -> None:
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     subject = 'average'
+    task = config.get_task()
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
-                            task=config.get_task(),
+                            task=task,
                             acquisition=config.acq,
                             run=None,
                             recording=config.rec,
@@ -510,8 +518,15 @@ def run_report_average(session: str) -> None:
                             root=config.deriv_root,
                             check=False)
 
+    title = f'sub-{subject}'
+    if session is not None:
+        title += ', ses-{session}'
+    if task is not None:
+        title += ', task-{task}'
+
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.get_fs_subjects_dir())
+                     subjects_dir=config.get_fs_subjects_dir(),
+                     title=title)
     evokeds = mne.read_evokeds(evoked_fname)
     if config.analyze_channels:
         for evoked in evokeds:

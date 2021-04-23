@@ -265,9 +265,10 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
 
 def run_ica(subject, session=None):
     """Run ICA."""
+    task = config.get_task()
     bids_basename = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
+                             task=task,
                              acquisition=config.acq,
                              recording=config.rec,
                              space=config.space,
@@ -306,9 +307,14 @@ def run_ica(subject, session=None):
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    report = Report(info_fname=raw,
-                    title='Independent Component Analysis (ICA)',
-                    verbose=False)
+
+    title = f'ICA – sub-{subject}'
+    if session is not None:
+        title += ', ses-{session}'
+    if task is not None:
+        title += ', task-{task}'
+    report = Report(info_fname=raw, title=title, verbose=False)
+
     ica = fit_ica(epochs, subject=subject, session=session)
     ecg_ics = detect_ecg_artifacts(ica=ica, raw=raw, subject=subject,
                                    session=session, report=report)

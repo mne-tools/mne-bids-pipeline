@@ -279,7 +279,7 @@ def run_ica(subject, session=None):
     ica_components_fname = bids_basename.copy().update(processing='ica',
                                                        suffix='components',
                                                        extension='.tsv')
-    report_fname = bids_basename.copy().update(processing='ica',
+    report_fname = bids_basename.copy().update(processing='ica+components',
                                                suffix='report',
                                                extension='.html')
 

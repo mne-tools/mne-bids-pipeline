@@ -29,7 +29,7 @@ PREPROCESSING_SCRIPTS = (
     '04b-run_ssp.py',
     '05a-apply_ica.py',
     '05b-apply_ssp.py',
-    '06-ptp_artifacts.py'
+    '06-ptp_reject.py'
 )
 
 SENSOR_SCRIPTS = (

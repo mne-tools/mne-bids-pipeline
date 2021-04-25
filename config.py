@@ -903,7 +903,10 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
-ica_reject: Optional[Dict[str, float]] = None
+ica_reject: Optional[
+    Union[Dict[str, float],
+          Literal['autoreject_global']]
+    ] = 'autoreject_global'
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
@@ -917,11 +920,16 @@ your data, and remove them. For this to work properly, it is recommended
 to **not** specify rejection thresholds for EOG and ECG channels here –
 otherwise, ICA won't be able to "see" these artifacts.
 
+If `'autoreject_global'` (default), use `autoreject` to find suitable rejection
+thresholds for each channel type. If a dictionary, manually specify rejection
+thresholds (see examples). If `None`, do not apply automated rejection.
+
 ???+ example "Example"
     ```python
+    ica_reject = 'autoreject_global'  # use autoreject to determine thresholds
     ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
     ica_reject = {'grad': 15e-10}
-    ica_reject = None
+    ica_reject = None  # no rejection
     ```
 """
 
@@ -1012,7 +1020,10 @@ false-alarm rate increases dramatically.
 # Rejection based on peak-to-peak amplitude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-reject: Optional[Dict[str, float]] = None
+reject: Optional[
+    Union[Dict[str, float],
+          Literal['autoreject_global']]
+    ] = 'autoreject_global'
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
@@ -1824,11 +1835,16 @@ def get_datatype() -> Literal['meg', 'eeg']:
 
 
 def _get_reject(
-    reject: Optional[Dict[str, float]],
-    ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']]
-) -> Dict[str, float]:
+    reject: Optional[Union[Dict[str, float], Literal['autoreject_global']]],
+    ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']],
+    epochs: Optional[mne.Epochs] = None
+) -> Union[Dict[str, float], Literal['autoreject_global']]:
     if reject is None:
         return dict()
+
+    if reject == 'autoreject_global':
+        # reject = autoreject.get_rejection_threshold(epochs)
+        return {}  # XXX
 
     reject = reject.copy()
 
@@ -1846,12 +1862,18 @@ def _get_reject(
     return reject
 
 
-def get_reject() -> Dict[str, float]:
-    return _get_reject(reject=reject, ch_types=ch_types)
+def get_reject(
+    *,
+    epochs: Optional[mne.Epochs] = None
+) -> Union[Dict[str, float], Literal['autoreject_global']]:
+    return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 
-def get_ica_reject() -> Dict[str, float]:
-    return _get_reject(reject=ica_reject, ch_types=ch_types)
+def get_ica_reject(
+    *,
+    epochs: Optional[mne.Epochs] = None
+) -> Union[Dict[str, float], Literal['autoreject_global']]:
+    return _get_reject(reject=ica_reject, ch_types=ch_types, epochs=epochs)
 
 
 def get_fs_subjects_dir():

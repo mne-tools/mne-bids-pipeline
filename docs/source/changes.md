@@ -15,7 +15,11 @@ authors:
 ### New features & enhancements
 
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
-  exclude epochs from the ICA fit based on peak-to-peak amplitude.
+  exclude epochs from the ICA fit based on peak-to-peak amplitude. The
+  thresholds can be manually specified or automatically determined using
+  `autoreject` by setting [`ica_reject`][config.ica_reject] to
+  `'autoreject_global'`.
+  ({{ gh(302) }}, {{ gh(306) }} by {{ authors.hoechenberger }})
 - An official [project governance](governance.md) structure has officially
   been adopted.
 - Drastically reduces memory usage when creating epochs from datasets with
@@ -54,7 +58,7 @@ authors:
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
-  and SSP. The exclude epochs from ICA fitting, use the new
+  and SSP. To exclude epochs from ICA fitting, use the new
   [`ica_reject`][config.ica_reject] setting.
 - We don't apply SSP by default anymore.
   ({{ gh(315) }} by {{ authors.hoechenberger }})

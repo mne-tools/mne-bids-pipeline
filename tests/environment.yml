@@ -27,6 +27,8 @@ dependencies:
   - mkdocstrings
   - mkdocs-macros-plugin
   - coloredlogs
+  - autoreject
   - pip:
+    - http://github.com/hoechenberger/openneuro-py/zipball/main
     - https://api.github.com/repos/mne-tools/mne-python/zipball/main
     - https://api.github.com/repos/mne-tools/mne-bids/zipball/main

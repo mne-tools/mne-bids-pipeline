@@ -23,8 +23,8 @@ from mne.utils import BunchConst
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne.parallel import parallel_func
-
 from mne_bids import BIDSPath
+# import autoreject
 
 import config
 from config import (make_epochs, gen_log_message, on_error, failsafe_run,

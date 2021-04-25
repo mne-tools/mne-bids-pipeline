@@ -1552,13 +1552,11 @@ def _get_reject(
 
 
 def get_reject() -> Dict[str, float]:
-    reject_ = _get_reject(reject=reject, ch_types=ch_types)
-    return reject_
+    return _get_reject(reject=reject, ch_types=ch_types)
 
 
 def get_ica_reject() -> Dict[str, float]:
-    reject = _get_reject(reject=ica_reject, ch_types=ch_types)
-    return reject
+    return _get_reject(reject=ica_reject, ch_types=ch_types)
 
 
 def get_fs_subjects_dir():

@@ -269,9 +269,8 @@ def run_ica(subject, session=None):
     events, event_id = mne.events_from_annotations(raw)
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        baseline=None,
-                        on_missing='ignore',
-                        decim=config.decim, proj=True, preload=True)
+                        baseline=None, decim=config.decim, proj=True,
+                        preload=True)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'

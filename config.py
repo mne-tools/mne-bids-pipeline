@@ -794,9 +794,9 @@ otherwise, ICA won't be able to "see" these artifacts.
 
 ???+ example "Example"
     ```python
-    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
-    reject = {'grad': 4000e-13}
-    reject = None
+    ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ica_reject = {'grad': 15e-10}
+    ica_reject = None
     ```
 """
 

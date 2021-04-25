@@ -83,41 +83,6 @@ def filter_for_ica(raw, subject, session):
     return raw
 
 
-def make_epochs_for_ica(raw, subject, session):
-    """Epoch the raw data, and equalize epoch selection with step 3."""
-
-    # First, load the existing epochs. We will extract the selection of kept
-    # epochs.
-    epochs_fname = BIDSPath(subject=subject,
-                            session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
-                            recording=config.rec,
-                            space=config.space,
-                            suffix='epo',
-                            extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.deriv_root,
-                            check=False)
-    epochs = mne.read_epochs(epochs_fname)
-    selection = epochs.selection
-
-    # Now, create new epochs, and only keep the ones we kept in step 3.
-    # Because some events present in event_id may disappear entirely from the
-    # data, we pass `on_missing='ignore'` to mne.Epochs. Also note that we do
-    # not pass the `reject` parameter here.
-
-    events, event_id = mne.events_from_annotations(raw)
-    events = events[selection]
-    epochs_ica = mne.Epochs(raw, events=events, event_id=event_id,
-                            tmin=epochs.tmin, tmax=epochs.tmax,
-                            baseline=None,
-                            on_missing='ignore',
-                            decim=config.decim, proj=True, preload=True)
-
-    return epochs_ica
-
-
 def fit_ica(epochs, subject, session):
     if config.ica_algorithm == 'picard':
         fit_params = dict(fastica_it=5)
@@ -301,7 +266,12 @@ def run_ica(subject, session=None):
     # We don't have to worry about edge artifacts due to raw concatenation as
     # we'll be epoching the data in the next step.
     raw = filter_for_ica(raw, subject=subject, session=session)
-    epochs = make_epochs_for_ica(raw, subject=subject, session=session)
+    events, event_id = mne.events_from_annotations(raw)
+    epochs = mne.Epochs(raw, events=events, event_id=event_id,
+                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
+                        baseline=None,
+                        on_missing='ignore',
+                        decim=config.decim, proj=True, preload=True)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'

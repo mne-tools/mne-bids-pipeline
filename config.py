@@ -906,7 +906,7 @@ ways using the configuration options you can find below.
 ica_reject: Optional[
     Union[Dict[str, float],
           Literal['autoreject_global']]
-    ] = 'autoreject_global'
+    ] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
@@ -920,9 +920,12 @@ your data, and remove them. For this to work properly, it is recommended
 to **not** specify rejection thresholds for EOG and ECG channels here –
 otherwise, ICA won't be able to "see" these artifacts.
 
-If `'autoreject_global'` (default), use `autoreject` to find suitable rejection
-thresholds for each channel type. If a dictionary, manually specify rejection
-thresholds (see examples). If `None`, do not apply automated rejection.
+If `None` (default), do not apply artifact rejection. If a dictionary,
+manually specify rejection thresholds (see examples).  If
+`'autoreject_global'`, use [`autoreject`](https://autoreject.github.io) to find
+suitable "global" rejection thresholds for each channel type, i.e. `autoreject`
+will generate a dictionary with (hopefully!) optimal thresholds for each
+channel type. Note that using `autoreject` can be a time-consuming process.
 
 ???+ example "Example"
     ```python
@@ -1023,17 +1026,22 @@ false-alarm rate increases dramatically.
 reject: Optional[
     Union[Dict[str, float],
           Literal['autoreject_global']]
-    ] = 'autoreject_global'
+    ] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
+
+If `None` (default), do not apply artifact rejection. If a dictionary,
+manually specify rejection thresholds (see examples).  If
+`'autoreject_global'`, use [`autoreject`](https://autoreject.github.io) to find
+suitable "global" rejection thresholds for each channel type, i.e. `autoreject`
+will generate a dictionary with (hopefully!) optimal thresholds for each
+channel type. Note that using `autoreject` can be a time-consuming process.
 
 Note: Note
       The rejection is performed **after** SSP or ICA, if any of those methods
       is used. To reject epochs before fitting ICA, see the
       [`ica_reject`][config.ica_reject] setting.
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
 ???+ example "Example"
     ```python
@@ -1841,6 +1849,8 @@ def _get_reject(
 ) -> Union[Dict[str, float], Literal['autoreject_global']]:
     if reject is None:
         return dict()
+    elif reject == 'auto':
+        return reject
 
     if reject == 'autoreject_global':
         # reject = autoreject.get_rejection_threshold(epochs)

@@ -24,7 +24,8 @@ required to run the pipeline.
 
 ??? info "Detailed list of dependencies"
     - `mne-bids` to operate on BIDS data
-    - `autoreject` to automatically detect problematic epochs
+    - `autoreject` to automatically detect problematic epochs based on
+      peak-to-peak (PTP) amplitudes
     - `coloredlogs` for nicer logging output
     - `tqdm` for progress bars
     - `pandas` for table creation

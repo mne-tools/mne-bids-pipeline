@@ -28,3 +28,5 @@ authors:
 - Fix a problem with the FreeSurfer processing step that caused the error
   message `Could not consume arg` after completion ({{ gh(301) }} by
   {{ authors.hoechenberger }})
+- Selecting the `extended_infomax` ICA algorithm caused a crash
+  ({{ gh(308) }} by {{ authors.hoechenberger }})

@@ -84,12 +84,14 @@ def filter_for_ica(raw, subject, session):
 
 
 def fit_ica(epochs, subject, session):
-    if config.ica_algorithm == 'picard':
+    algorithm = config.ica_algorithm
+    fit_params = None
+
+    if algorithm == 'picard':
         fit_params = dict(fastica_it=5)
-    elif config.ica_algorithm == 'extended_infomax':
+    elif algorithm == 'extended_infomax':
+        algorithm = 'infomax'
         fit_params = dict(extended=True)
-    elif config.ica_algorithm == 'fastica':
-        fit_params = None
 
     ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
               n_components=config.ica_n_components, fit_params=fit_params,

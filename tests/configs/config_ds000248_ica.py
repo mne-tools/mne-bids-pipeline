@@ -26,6 +26,7 @@ reject = dict(mag=3000e-15,
 
 use_ssp = False
 use_ica = True
+ica_algorithm = 'extended_infomax'
 ica_l_freq = 1.0
 ica_n_components = 0.8
 ica_max_iterations = 500

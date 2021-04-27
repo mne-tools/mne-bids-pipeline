@@ -30,3 +30,6 @@ authors:
   {{ authors.hoechenberger }})
 - Selecting the `extended_infomax` ICA algorithm caused a crash
   ({{ gh(308) }} by {{ authors.hoechenberger }})
+- Correctly handle `eog_channels = None` setting after creation of bipolar EEG
+  channels
+  ({{ gh(311) }} by {{ authors.hoechenberger }})

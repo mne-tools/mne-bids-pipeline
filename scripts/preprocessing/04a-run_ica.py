@@ -93,7 +93,7 @@ def fit_ica(epochs, subject, session):
         algorithm = 'infomax'
         fit_params = dict(extended=True)
 
-    ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
+    ica = ICA(method=algorithm, random_state=config.random_state,
               n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 

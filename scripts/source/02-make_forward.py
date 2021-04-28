@@ -91,13 +91,13 @@ def run_forward(subject, session=None):
         bem_model = mne.make_bem_model(subject=fs_subject,
                                        subjects_dir=fs_subjects_dir,
                                        ico=4, conductivity=conductivity)
-    except FileNotFoundError as exc:
+    except FileNotFoundError:
         message = ("Could not make BEM model due to a missing file. \n"
                    "Can be solved by setting recreate_bem=True in the config "
                    "to force recreation of the BEM model, or by deleting the\n"
                    f" {config.bids_root}/derivatives/freesurfer/subjects/"
                    f"sub-{subject}/bem/ folder")
-        raise FileNotFoundError(message) from exc
+        raise FileNotFoundError(message)
 
     bem_sol = mne.make_bem_solution(bem_model)
 

@@ -10,7 +10,16 @@ authors:
 
 ### New features & enhancements
 
-- ...
+- The new configuration option [`ica_reject`][config.ica_reject] allows to
+  exclude epochs from the ICA fit based on peak-to-peak amplitude.
+
+### Behavior changes
+
+- Epochs rejection based on peak-to-peak amplitude, as controlled via the
+  [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
+  In previous versions of the Pipeline, rejection was carried out before ICA
+  and SSP. The exclude epochs from ICA fitting, use the new
+  [`ica_reject`][config.ica_reject] setting.
 
 ### Bug fixes
 
@@ -19,4 +28,10 @@ authors:
 - Fix a problem with the FreeSurfer processing step that caused the error
   message `Could not consume arg` after completion ({{ gh(301) }} by
   {{ authors.hoechenberger }})
-- Added instructions on how to handle `FileNotFoundError` when loading the BEM model in the source pipeline by ({{(gh(304)) by authors.MerlinDumeur }})
+- Selecting the `extended_infomax` ICA algorithm caused a crash
+  ({{ gh(308) }} by {{ authors.hoechenberger }})
+- Correctly handle `eog_channels = None` setting after creation of bipolar EEG
+  channels
+  ({{ gh(311) }} by {{ authors.hoechenberger }})
+- Added instructions on how to handle `FileNotFoundError` when loading the BEM
+  model in the source pipeline by ({{(gh(304)) by authors.MerlinDumeur }})

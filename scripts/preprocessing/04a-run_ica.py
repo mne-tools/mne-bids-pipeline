@@ -83,54 +83,21 @@ def filter_for_ica(raw, subject, session):
     return raw
 
 
-def make_epochs_for_ica(raw, subject, session):
-    """Epoch the raw data, and equalize epoch selection with step 3."""
-
-    # First, load the existing epochs. We will extract the selection of kept
-    # epochs.
-    epochs_fname = BIDSPath(subject=subject,
-                            session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
-                            recording=config.rec,
-                            space=config.space,
-                            suffix='epo',
-                            extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.deriv_root,
-                            check=False)
-    epochs = mne.read_epochs(epochs_fname)
-    selection = epochs.selection
-
-    # Now, create new epochs, and only keep the ones we kept in step 3.
-    # Because some events present in event_id may disappear entirely from the
-    # data, we pass `on_missing='ignore'` to mne.Epochs. Also note that we do
-    # not pass the `reject` parameter here.
-
-    events, event_id = mne.events_from_annotations(raw)
-    events = events[selection]
-    epochs_ica = mne.Epochs(raw, events=events, event_id=event_id,
-                            tmin=epochs.tmin, tmax=epochs.tmax,
-                            baseline=None,
-                            on_missing='ignore',
-                            decim=config.decim, proj=True, preload=True)
-
-    return epochs_ica
-
-
 def fit_ica(epochs, subject, session):
-    if config.ica_algorithm == 'picard':
-        fit_params = dict(fastica_it=5)
-    elif config.ica_algorithm == 'extended_infomax':
-        fit_params = dict(extended=True)
-    elif config.ica_algorithm == 'fastica':
-        fit_params = None
+    algorithm = config.ica_algorithm
+    fit_params = None
 
-    ica = ICA(method=config.ica_algorithm, random_state=config.random_state,
+    if algorithm == 'picard':
+        fit_params = dict(fastica_it=5)
+    elif algorithm == 'extended_infomax':
+        algorithm = 'infomax'
+        fit_params = dict(extended=True)
+
+    ica = ICA(method=algorithm, random_state=config.random_state,
               n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 
-    ica.fit(epochs, decim=config.ica_decim)
+    ica.fit(epochs, decim=config.ica_decim, reject=config.get_ica_reject())
 
     explained_var = (ica.pca_explained_variance_[:ica.n_components_].sum() /
                      ica.pca_explained_variance_.sum())
@@ -265,9 +232,10 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
 
 def run_ica(subject, session=None):
     """Run ICA."""
+    task = config.get_task()
     bids_basename = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
+                             task=task,
                              acquisition=config.acq,
                              recording=config.rec,
                              space=config.space,
@@ -279,7 +247,7 @@ def run_ica(subject, session=None):
     ica_components_fname = bids_basename.copy().update(processing='ica',
                                                        suffix='components',
                                                        extension='.tsv')
-    report_fname = bids_basename.copy().update(processing='ica',
+    report_fname = bids_basename.copy().update(processing='ica+components',
                                                suffix='report',
                                                extension='.html')
 
@@ -300,15 +268,24 @@ def run_ica(subject, session=None):
     # We don't have to worry about edge artifacts due to raw concatenation as
     # we'll be epoching the data in the next step.
     raw = filter_for_ica(raw, subject=subject, session=session)
-    epochs = make_epochs_for_ica(raw, subject=subject, session=session)
+    events, event_id = mne.events_from_annotations(raw)
+    epochs = mne.Epochs(raw, events=events, event_id=event_id,
+                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
+                        baseline=None, decim=config.decim, proj=True,
+                        preload=True)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-    report = Report(info_fname=raw,
-                    title='Independent Component Analysis (ICA)',
-                    verbose=False)
+
+    title = f'ICA – sub-{subject}'
+    if session is not None:
+        title += f', ses-{session}'
+    if task is not None:
+        title += f', task-{task}'
+    report = Report(info_fname=raw, title=title, verbose=False)
+
     ica = fit_ica(epochs, subject=subject, session=session)
     ecg_ics = detect_ecg_artifacts(ica=ica, raw=raw, subject=subject,
                                    session=session, report=report)

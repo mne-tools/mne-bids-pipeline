@@ -267,8 +267,9 @@ def load_data(bids_path):
         # so one might get unexpected results otherwise, as the channel would
         # influence e.g. in GFP calculations, but not appear on topographic
         # maps.
-        if any([eog_ch_name in config.eeg_bipolar_channels
-                for eog_ch_name in config.eog_channels]):
+        if (config.eog_channels and
+                any([eog_ch_name in config.eeg_bipolar_channels
+                     for eog_ch_name in config.eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session))

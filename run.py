@@ -28,7 +28,8 @@ PREPROCESSING_SCRIPTS = (
     '04a-run_ica.py',
     '04b-run_ssp.py',
     '05a-apply_ica.py',
-    '05b-apply_ssp.py'
+    '05b-apply_ssp.py',
+    '06-ptp_reject.py'
 )
 
 SENSOR_SCRIPTS = (
@@ -164,7 +165,10 @@ def process(config: PathLike,
     script_paths = []
     for stage, step in zip(processing_stages, processing_steps):
         if stage not in SCRIPT_PATHS.keys():
-            raise ValueError(f'Invalid step requested: {stage}')
+            raise ValueError(
+                f"Invalid step requested: '{stage}'. "
+                f'It should be one of {list(SCRIPT_PATHS.keys())}.'
+            )
 
         if step is None:
             # User specified `sensors`, `source`, or similar

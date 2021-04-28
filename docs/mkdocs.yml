@@ -42,13 +42,14 @@ nav:
         - Preprocessing:
             - Bad channel detection: settings/preprocessing/autobads.md
             - Maxwell filter: settings/preprocessing/maxfilter.md
-            - Stimulation artifact: settings/preprocessing/stim_artifact.md
-            - Frequency filtering & resampling:
+            - Filtering & resampling:
                 - Filtering: settings/preprocessing/filter.md
                 - Resampling: settings/preprocessing/resample.md
             - Epoching: settings/preprocessing/epochs.md
-            - Amplitude-based artifact removal: settings/preprocessing/artifacts.md
-            - SSP & ICA: settings/preprocessing/ssp_ica.md
+            - Artifact removal:
+                - Stimulation artifact: settings/preprocessing/stim_artifact.md
+                - SSP & ICA: settings/preprocessing/ssp_ica.md
+                - Amplitude-based: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
             - Statistics: settings/sensor/statistics.md
             - Time-frequency analysis: settings/sensor/time_freq.md

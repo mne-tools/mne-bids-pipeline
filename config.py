@@ -565,53 +565,6 @@ can be used for resampling raw data. ``1`` means no decimation.
     ```
 """
 
-###############################################################################
-# AUTOMATIC REJECTION OF ARTIFACTS
-# --------------------------------
-
-reject: Optional[dict] = None
-"""
-The rejection limits to mark epochs as bads.
-This allows to remove strong transient artifacts.
-If you want to reject and retrieve blinks or ECG artifacts later, e.g.
-with ICA, don't specify a value for the EOG and ECG channels, respectively
-(see examples below).
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
-
-???+ note "Note"
-    These numbers tend to vary between subjects.. You might want to consider
-    using the autoreject method by Jas et al. 2018.
-    See https://autoreject.github.io
-
-
-???+ example "Example"
-    ```python
-    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 200e-6}
-    reject = None
-    ```
-"""
-
-reject_tmin: Optional[float] = None
-"""
-Start of the time window used to reject epochs. If ``None``, the window will
-start with the first time point.
-???+ example "Example"
-    ```python
-    reject_tmin = -0.1  # 100 ms before event onset.
-    ```
-"""
-
-reject_tmax: Optional[float] = None
-"""
-End of the time window used to reject epochs. If ``None``, the window will end
-with the last time point.
-???+ example "Example"
-    ```python
-    reject_tmax = 0.3  # 300 ms after event onset.
-    ```
-"""
 
 ###############################################################################
 # RENAME EXPERIMENTAL EVENTS
@@ -814,7 +767,9 @@ of contrasts.
 
 use_ssp: bool = True
 """
-Whether signal-space projection should be used or not.
+Whether signal-space projection should be used or not. The BIDS Pipeline will
+try to recover EOG and ECG artifacts, and produce projection vectors that
+remove these signals from the data.
 """
 
 # ICA
@@ -823,6 +778,26 @@ Whether signal-space projection should be used or not.
 use_ica: bool = False
 """
 Whether independent component analysis should be used or not.
+"""
+
+ica_reject: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
+
+This allows you to remove strong transient artifacts, which could negatively
+affect ICA performance.
+
+The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to **not** specify rejection thresholds for EOG and ECG channels here –
+otherwise, ICA won't be able to "see" these artifacts.
+
+???+ example "Example"
+    ```python
+    ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ica_reject = {'grad': 15e-10}
+    ica_reject = None
+    ```
 """
 
 ica_algorithm: Literal['picard', 'fastica', 'extended_infomax'] = 'picard'
@@ -906,6 +881,50 @@ ica_eog_threshold: float = 3.0
 The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
+"""
+
+
+# Rejection based on peak-to-peak amplitude
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+reject: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
+epochs with strong transient artifacts.
+
+Note: Note
+      The rejection is performed **after** SSP or ICA, if any of those methods
+      is used. To reject epochs before fitting ICA, see the
+      [`ica_reject`][config.ica_reject] setting.
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ example "Example"
+    ```python
+    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject = {'eeg': 100e-6, 'eog': 250e-6}
+    reject = None
+    ```
+"""
+
+reject_tmin: Optional[float] = None
+"""
+Start of the time window used to reject epochs. If ``None``, the window will
+start with the first time point.
+???+ example "Example"
+    ```python
+    reject_tmin = -0.1  # 100 ms before event onset.
+    ```
+"""
+
+reject_tmax: Optional[float] = None
+"""
+End of the time window used to reject epochs. If ``None``, the window will end
+with the last time point.
+???+ example "Example"
+    ```python
+    reject_tmax = 0.3  # 300 ms after event onset.
+    ```
 """
 
 ###############################################################################
@@ -1509,11 +1528,14 @@ def get_datatype() -> Literal['meg', 'eeg']:
                            "the MNE-BIDS-pipeline developers. Thank you.")
 
 
-def get_reject() -> dict:
+def _get_reject(
+    reject: Optional[Dict[str, float]],
+    ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']]
+) -> Dict[str, float]:
     if reject is None:
         return dict()
 
-    reject_ = reject.copy()  # Avoid clash with global variable.
+    reject = reject.copy()
 
     if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
@@ -1522,10 +1544,19 @@ def get_reject() -> dict:
 
     for ch_type in ch_types_to_remove:
         try:
-            del reject_[ch_type]
+            del reject[ch_type]
         except KeyError:
             pass
-    return reject_
+
+    return reject
+
+
+def get_reject() -> Dict[str, float]:
+    return _get_reject(reject=reject, ch_types=ch_types)
+
+
+def get_ica_reject() -> Dict[str, float]:
+    return _get_reject(reject=ica_reject, ch_types=ch_types)
 
 
 def get_fs_subjects_dir():

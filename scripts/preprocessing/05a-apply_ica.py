@@ -34,9 +34,10 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 @failsafe_run(on_error=on_error)
 def apply_ica(subject, session):
+    task = config.get_task()
     bids_basename = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
+                             task=task,
                              acquisition=config.acq,
                              run=None,
                              recording=config.rec,
@@ -47,7 +48,7 @@ def apply_ica(subject, session):
 
     fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')
     fname_epo_out = bids_basename.copy().update(
-        suffix='epo', processing='clean', extension='.fif')
+        processing='ica', suffix='epo', extension='.fif')
     fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
@@ -60,9 +61,15 @@ def apply_ica(subject, session):
                                 session=session))
 
     report_fname = (bids_basename.copy()
-                    .update(processing='clean', suffix='report',
+                    .update(processing='ica', suffix='report',
                             extension='.html'))
-    report = Report(report_fname, verbose=False)
+
+    title = f'ICA artifact removal – sub-{subject}'
+    if session is not None:
+        title += f', ses-{session}'
+    if task is not None:
+        title += f', task-{task}'
+    report = Report(report_fname, title=title, verbose=False)
 
     # Load ICA.
     msg = f'Reading ICA: {fname_ica}'

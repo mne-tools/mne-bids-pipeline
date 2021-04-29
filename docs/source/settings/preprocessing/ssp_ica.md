@@ -1,5 +1,4 @@
-::: config.use_ssp
-::: config.use_ica
+::: config.spatial_filter
 ::: config.ica_reject
 ::: config.ica_algorithm
 ::: config.ica_l_freq

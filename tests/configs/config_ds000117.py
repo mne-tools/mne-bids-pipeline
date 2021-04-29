@@ -21,5 +21,3 @@ contrasts = [('Famous', 'Scrambled'),
              ('Unfamiliar', 'Scrambled'),
              ('Famous', 'Unfamiliar')]
 decode = True
-use_ssp = False
-use_ica = False

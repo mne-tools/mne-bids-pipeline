@@ -36,12 +36,7 @@ def drop_ptp(subject, session=None):
                          root=config.deriv_root,
                          check=False)
 
-    infile_processing = None
-    if config.use_ica:
-        infile_processing = 'ica'
-    elif config.use_ssp:
-        infile_processing = 'ssp'
-
+    infile_processing = config.spatial_filter
     fname_in = bids_path.copy().update(processing=infile_processing)
     fname_out = bids_path.copy().update(processing='clean')
 

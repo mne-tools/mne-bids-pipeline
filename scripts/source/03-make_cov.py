@@ -34,7 +34,7 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                          check=False)
 
     processing = None
-    if config.use_ica or config.use_ssp:
+    if config.spatial_filter is not None:
         processing = 'clean'
 
     epo_fname = bids_path.copy().update(processing=processing, suffix='epo')

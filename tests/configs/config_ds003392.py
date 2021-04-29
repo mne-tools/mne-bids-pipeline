@@ -18,8 +18,7 @@ h_freq = 40.
 resample_sfreq = 250
 
 # Artifact correction.
-use_ssp = False
-use_ica = True
+spatial_filter = 'ica'
 ica_max_iterations = 500
 ica_l_freq = 1.
 ica_n_components = 0.99

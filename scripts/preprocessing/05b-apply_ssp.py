@@ -65,7 +65,7 @@ def apply_ssp(subject, session=None):
 
 def main():
     """Apply ssp."""
-    if not config.use_ssp:
+    if not config.spatial_filter == 'ssp':
         return
 
     msg = 'Running Step 5: Apply SSP'

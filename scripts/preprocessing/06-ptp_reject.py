@@ -33,7 +33,7 @@ def drop_ptp(subject, session=None):
                          suffix='epo',
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     infile_processing = config.spatial_filter

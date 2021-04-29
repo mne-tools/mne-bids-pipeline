@@ -31,7 +31,7 @@ def run_forward(subject, session=None):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     fname_evoked = bids_path.copy().update(suffix='ave')
@@ -46,7 +46,7 @@ def run_forward(subject, session=None):
     else:
         t1_bids_path = BIDSPath(subject=bids_path.subject,
                                 session=bids_path.session,
-                                root=config.bids_root)
+                                root=config.get_bids_root())
         t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
         if t1_bids_path.suffix is None:
             t1_bids_path.update(suffix='T1w')
@@ -59,7 +59,7 @@ def run_forward(subject, session=None):
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=config.get_runs()[0],
-                                root=config.bids_root),
+                                root=config.get_bids_root()),
         t1_bids_path=t1_bids_path)
     mne.write_trans(fname_trans, trans)
 
@@ -95,8 +95,8 @@ def run_forward(subject, session=None):
         message = ("Could not make BEM model due to a missing file. \n"
                    "Can be solved by setting recreate_bem=True in the config "
                    "to force recreation of the BEM model, or by deleting the\n"
-                   f" {config.bids_root}/derivatives/freesurfer/subjects/"
-                   f"sub-{subject}/bem/ folder")
+                   f" {config.get_bids_root()}/derivatives/freesurfer/"
+                   f"subjects/sub-{subject}/bem/ folder")
         raise FileNotFoundError(message)
 
     bem_sol = mne.make_bem_solution(bem_model)

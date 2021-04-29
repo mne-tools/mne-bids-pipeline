@@ -29,7 +29,7 @@ def morph_stc(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     fs_subject = config.get_fs_subject(subject)
@@ -105,7 +105,7 @@ def main():
                          recording=config.rec,
                          space=config.space,
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     if isinstance(config.conditions, dict):

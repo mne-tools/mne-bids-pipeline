@@ -19,7 +19,7 @@ def init_dataset() -> None:
     msg = "Initializing output directories."
     logger.info(gen_log_message(step=1, message=msg))
 
-    deriv_root = Path(config.deriv_root)
+    deriv_root = config.get_deriv_root()
     deriv_root.mkdir(exist_ok=True, parents=True)
 
     # Write a dataset_description.json for the pipeline
@@ -46,7 +46,7 @@ def init_subject_dirs(
 ) -> None:
     """Create processing data output directories for individual participants.
     """
-    deriv_root = Path(config.deriv_root)
+    deriv_root = config.get_deriv_root()
     datatype = config.get_datatype()
 
     out_dir = deriv_root / f'sub-{subject}'

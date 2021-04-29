@@ -47,7 +47,7 @@ def run_time_decoding(subject, condition1, condition2, session=None):
                             suffix='epo',
                             extension='.fif',
                             datatype=config.get_datatype(),
-                            root=config.deriv_root,
+                            root=config.get_deriv_root(),
                             check=False)
 
     epochs = mne.read_epochs(fname_epochs)

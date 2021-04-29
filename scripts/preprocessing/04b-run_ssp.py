@@ -33,7 +33,7 @@ def run_ssp(subject, session=None):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root)
+                         root=config.get_deriv_root())
 
     # Prepare a name to save the data
     raw_fname_in = bids_path.copy().update(processing='filt', suffix='raw',

@@ -37,7 +37,7 @@ def run_time_frequency(subject, session=None):
                          recording=config.rec,
                          space=config.space,
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     processing = None

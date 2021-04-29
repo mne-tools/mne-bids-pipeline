@@ -43,7 +43,7 @@ def apply_ica(subject, session):
                              recording=config.rec,
                              space=config.space,
                              datatype=config.get_datatype(),
-                             root=config.deriv_root,
+                             root=config.get_deriv_root(),
                              check=False)
 
     fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')

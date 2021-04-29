@@ -240,7 +240,7 @@ def run_ica(subject, session=None):
                              recording=config.rec,
                              space=config.space,
                              datatype=config.get_datatype(),
-                             root=config.deriv_root,
+                             root=config.get_deriv_root(),
                              check=False)
 
     ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')

@@ -34,4 +34,4 @@ authors:
   channels
   ({{ gh(311) }} by {{ authors.hoechenberger }})
 - Added instructions on how to handle `FileNotFoundError` when loading the BEM
-  model in the source pipeline by ({{(gh(304)) by authors.MerlinDumeur }})
+  model in the source steps ({{ gh(304) }}  by {{ authors.MerlinDumeur }})

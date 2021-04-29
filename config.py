@@ -1319,13 +1319,15 @@ if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
     raise ValueError('Cannot use maxwell filter without MEG channels.')
 
-if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
+if (spatial_filter == 'ica' and
+        ica_algorithm not in ('picard', 'fastica', 'extended_infomax')):
     msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
            f"are: 'picard', 'fastica', and 'extended_infomax', but received "
            f"{ica_algorithm}.")
     raise ValueError(msg)
 
-if (use_ica and ica_l_freq is None and
+if (spatial_filter == 'ica' and
+        ica_l_freq is None and
         l_freq is not None and l_freq < 1):
     msg = (f'You requested to high-pass filter your data with l_freq={l_freq} '
            f'Hz and to perform ICA without performing any additional '
@@ -1336,13 +1338,15 @@ if (use_ica and ica_l_freq is None and
            f'higher.')
     raise ValueError(msg)
 
-if use_ica and ica_l_freq < 1:
+if spatial_filter == 'ica' and ica_l_freq < 1:
     msg = (f'You requested to high-pass filter the data before ICA with '
            f'ica_l_freq={ica_l_freq} Hz. Please increase this setting to '
            f'1 Hz or above to ensure reliable ICA function.')
     raise ValueError(msg)
 
-if (use_ica and ica_l_freq is not None and l_freq is not None and
+if (spatial_filter == 'ica' and
+        ica_l_freq is not None and
+        l_freq is not None and
         ica_l_freq < l_freq):
     msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
            f'than for your raw data: ica_l_freq = {ica_l_freq} < '

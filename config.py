@@ -653,7 +653,7 @@ aggregation will take place and no new columns will be created.
 
     You may also specify a grouping for multiple event types:
     ```python
-    keep_first=['response', 'stimulus'].
+    epochs_metadata_keep_first = ['response', 'stimulus']
     ```
     This will add the columns ``response``, ``first_response``, ``stimulus``,
     and ``first_stimulus``.

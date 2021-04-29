@@ -23,7 +23,7 @@ authors:
 - We don't apply SSP by default anymore.
   ({{ gh(315) }} by {{ authors.hoechenberger }})
 - The `use_ssp` and `use_ica` settings have been removed. Please use the
-  `spatial_filter` setting instead.
+  [`spatial_filter`][config.spatial_filter] setting instead.
   ({{ gh(315) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes

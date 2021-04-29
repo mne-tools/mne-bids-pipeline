@@ -46,8 +46,8 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
                  f'{_bool_to_icon(config["use_maxwell_filter"])}')
     funcs.append(f'Frequency filter | '
                  f'{_bool_to_icon(config["l_freq"] or config["h_freq"])}')
-    funcs.append(f'SSP | {_bool_to_icon(config["use_ssp"])}')
-    funcs.append(f'ICA | {_bool_to_icon(config["use_ica"])}')
+    funcs.append(f'SSP | {_bool_to_icon(config["spatial_filter"] == "ssp")}')
+    funcs.append(f'ICA | {_bool_to_icon(config["spatial_filter"] == "ica")}')
     funcs.append(f'Evoked contrasts | {_bool_to_icon(config["contrasts"])}')
     funcs.append(f'Time-by-time decoding | {_bool_to_icon(config["decode"])}')
     funcs.append(f'Time-frequency analysis | '

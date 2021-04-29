@@ -34,7 +34,7 @@ def run_evoked(subject, session=None):
                          root=config.deriv_root)
 
     processing = None
-    if config.use_ica or config.use_ssp:
+    if config.spatial_filter is not None:
         processing = 'clean'
 
     fname_in = bids_path.copy().update(processing=processing, suffix='epo',

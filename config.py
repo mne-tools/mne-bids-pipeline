@@ -762,22 +762,21 @@ of contrasts.
 #
 # Currently you cannot use both.
 
-# SSP
-# ~~~
-
-use_ssp: bool = True
+spatial_filter: Optional[Literal['ssp', 'ica']] = None
 """
-Whether signal-space projection should be used or not. The BIDS Pipeline will
-try to recover EOG and ECG artifacts, and produce projection vectors that
-remove these signals from the data.
-"""
+Whether to use a spatial filter to detect and remove artifacts. The BIDS
+Pipeline offers the use of signal-space projection (SSP) and independent
+component analysis (ICA).
 
-# ICA
-# ~~~
+Use `'ssp'` for SSP, `'ica'` for ICA, and `None` if you do not wish to apply
+a spatial filter for artifact removal.
 
-use_ica: bool = False
-"""
-Whether independent component analysis should be used or not.
+The Pipeline will try to automatically discover EOG and ECG artifacts. For SSP,
+it will then produce projection vectors that remove ("project out") these
+artifacts from the data. For ICA, the independent components related to
+EOG and ECG activity will be omitted during the signal reconstruction step in
+order to remove the artifacts. The ICA procedure can be configured in various
+ways using the configuration options you can find below.
 """
 
 ica_reject: Optional[Dict[str, float]] = None
@@ -1320,16 +1319,15 @@ if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
     raise ValueError('Cannot use maxwell filter without MEG channels.')
 
-if use_ssp and use_ica:
-    raise ValueError('Cannot use both SSP and ICA.')
-
-if use_ica and ica_algorithm not in ('picard', 'fastica', 'extended_infomax'):
+if (spatial_filter == 'ica' and
+        ica_algorithm not in ('picard', 'fastica', 'extended_infomax')):
     msg = (f"Invalid ICA algorithm requested. Valid values for ica_algorithm "
            f"are: 'picard', 'fastica', and 'extended_infomax', but received "
            f"{ica_algorithm}.")
     raise ValueError(msg)
 
-if (use_ica and ica_l_freq is None and
+if (spatial_filter == 'ica' and
+        ica_l_freq is None and
         l_freq is not None and l_freq < 1):
     msg = (f'You requested to high-pass filter your data with l_freq={l_freq} '
            f'Hz and to perform ICA without performing any additional '
@@ -1340,13 +1338,15 @@ if (use_ica and ica_l_freq is None and
            f'higher.')
     raise ValueError(msg)
 
-if use_ica and ica_l_freq < 1:
+if spatial_filter == 'ica' and ica_l_freq < 1:
     msg = (f'You requested to high-pass filter the data before ICA with '
            f'ica_l_freq={ica_l_freq} Hz. Please increase this setting to '
            f'1 Hz or above to ensure reliable ICA function.')
     raise ValueError(msg)
 
-if (use_ica and ica_l_freq is not None and l_freq is not None and
+if (spatial_filter == 'ica' and
+        ica_l_freq is not None and
+        l_freq is not None and
         ica_l_freq < l_freq):
     msg = (f'You requested a lower high-pass filter cutoff frequency for ICA '
            f'than for your raw data: ica_l_freq = {ica_l_freq} < '
@@ -1371,15 +1371,11 @@ elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
     raise ValueError(msg)
 
 if 'eeg' in ch_types:
-    if use_ssp:
-        msg = ('You requested SSP for EEG data via use_ssp=True. However, '
-               'this is not presently supported. Please use ICA instead by '
-               'setting use_ssp=False and use_ica=True.')
+    if spatial_filter == 'ssp':
+        msg = ("You requested SSP for EEG data via spatial_filter='ssp'. "
+               "However, this is not presently supported. Please use ICA "
+               "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
-    if not use_ica:
-        msg = ('You did not request ICA artifact correction for your data. '
-               'To turn it on, set use_ica=True.')
-        logger.info(msg)
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "

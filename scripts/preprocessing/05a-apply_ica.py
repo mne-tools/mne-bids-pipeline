@@ -122,7 +122,7 @@ def apply_ica(subject, session):
 
 def main():
     """Apply ICA."""
-    if not config.use_ica:
+    if not config.spatial_filter == 'ica':
         return
 
     msg = 'Running Step 5: Apply ICA'

@@ -87,7 +87,7 @@ def run_ssp(subject, session=None):
 
 def main():
     """Run SSP."""
-    if not config.use_ssp:
+    if not config.spatial_filter == 'ssp':
         return
 
     msg = 'Running Step 4: SSP'

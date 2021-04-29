@@ -53,8 +53,7 @@ decode = True
 ica_reject = dict(eeg=350e-6, eog=500e-6)
 reject = dict(eeg=150e-6)
 
-use_ssp = False
-use_ica = True
+spatial_filter = 'ica'
 ica_max_iterations = 1000
 ica_eog_threshold = 2
 

@@ -268,7 +268,7 @@ def run_report(subject, session=None):
     #
     # Visualize effect of ICA artifact rejection.
     #
-    if config.use_ica:
+    if config.spatial_filter == 'ica':
         epochs = mne.read_epochs(fname_epo)
         ica = mne.preprocessing.read_ica(fname_ica)
         fig = ica.plot_overlay(epochs.average(), show=False)

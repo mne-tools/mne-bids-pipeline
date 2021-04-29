@@ -13,7 +13,5 @@ reject = {'eeg': 150e-6}
 conditions = ['left', 'right']
 contrasts = [('right', 'left')]
 decode = True
-use_ssp = False
-use_ica = False
 
 interpolate_bads_grand_average = False

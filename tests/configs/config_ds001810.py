@@ -16,7 +16,6 @@ contrasts = [('61450', '61511')]
 decode = True
 
 l_freq = 0.3
-use_ssp = False
 
 subjects = ['01', '02', '03', '04', '05']
 sessions = ['anodalpre']

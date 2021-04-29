@@ -358,7 +358,7 @@ def main():
     msg = 'Running Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))
 
-    if config.use_ica:
+    if config.spatial_filter == 'ica':
         parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
         parallel(run_func(subject, session) for subject, session in
                  itertools.product(config.get_subjects(),

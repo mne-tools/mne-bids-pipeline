@@ -24,8 +24,7 @@ reject = dict(mag=3000e-15,
               grad=3000e-13)
 
 
-use_ssp = False
-use_ica = True
+spatial_filter = 'ica'
 ica_algorithm = 'extended_infomax'
 ica_l_freq = 1.0
 ica_n_components = 0.8

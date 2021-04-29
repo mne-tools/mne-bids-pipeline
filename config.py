@@ -771,7 +771,7 @@ component analysis (ICA).
 Use `'ssp'` for SSP, `'ica'` for ICA, and `None` if you do not wish to apply
 a spatial filter for artifact removal.
 
-The Pipeline will try to automatically discover EOG and ECG artifacts. ForSSP,
+The Pipeline will try to automatically discover EOG and ECG artifacts. For SSP,
 it will then produce projection vectors that remove ("project out") these
 artifacts from the data. For ICA, the independent components related to
 EOG and ECG activity will be omitted during the signal reconstruction step in

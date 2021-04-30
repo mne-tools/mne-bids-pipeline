@@ -84,7 +84,7 @@ def main() -> None:
     logger.info('Running FreeSurfer')
 
     subjects = config.get_subjects()
-    root_dir = config.bids_root
+    root_dir = config.get_bids_root()
     subjects_dir = _get_subjects_dir(root_dir)
     subjects_dir.mkdir(parents=True, exist_ok=True)
 

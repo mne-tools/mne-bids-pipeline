@@ -30,7 +30,7 @@ def compute_cov_from_epochs(subject, session, tmin, tmax):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     processing = None
@@ -61,7 +61,7 @@ def compute_cov_from_empty_room(subject, session):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     raw_er_fname = bids_path.copy().update(processing='filt', task='noise',

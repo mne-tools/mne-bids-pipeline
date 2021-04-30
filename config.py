@@ -1289,28 +1289,6 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
             exec("%s = custom_cfg.%s" % (val, val))
 
 
-# BIDS_ROOT environment variable takes precedence over any configuration file
-# values.
-if os.getenv('BIDS_ROOT') is not None:
-    bids_root = pathlib.Path(os.getenv('BIDS_ROOT'))
-
-# If we don't have a bids_root until now, raise an exeception as we cannot
-# proceed.
-if not bids_root:
-    msg = ('You need to specify `bids_root` in your configuration, or '
-           'define an environment variable `BIDS_ROOT` pointing to the '
-           'root folder of your BIDS dataset')
-    raise ValueError(msg)
-
-bids_root: pathlib.Path = pathlib.Path(bids_root).expanduser()
-
-# Derivates root
-if deriv_root is None:
-    deriv_root = bids_root / 'derivatives' / PIPELINE_NAME
-else:
-    deriv_root = pathlib.Path(deriv_root).expanduser()
-
-
 ###############################################################################
 # CHECKS
 # ------
@@ -1410,6 +1388,30 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 # Helper functions
 # ----------------
 
+def get_bids_root() -> pathlib.Path:
+    # BIDS_ROOT environment variable takes precedence over any configuration file
+    # values.
+    if os.getenv('BIDS_ROOT') is not None:
+        return pathlib.Path(os.getenv('BIDS_ROOT')).expanduser()
+
+    # If we don't have a bids_root until now, raise an exception as we cannot
+    # proceed.
+    if not bids_root:
+        msg = ('You need to specify `bids_root` in your configuration, or '
+               'define an environment variable `BIDS_ROOT` pointing to the '
+               'root folder of your BIDS dataset')
+        raise ValueError(msg)
+
+    return pathlib.Path(bids_root).expanduser()
+
+
+def get_deriv_root() -> pathlib.Path:
+    if deriv_root is None:
+        return get_bids_root() / 'derivatives' / PIPELINE_NAME
+    else:
+        return pathlib.Path(deriv_root).expanduser()
+
+
 def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
@@ -1427,7 +1429,7 @@ def get_sessions():
 
 def get_runs() -> list:
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
-    valid_runs = get_entity_vals(bids_root, entity_key='run')
+    valid_runs = get_entity_vals(get_bids_root(), entity_key='run')
 
     env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
     if env_run and env_run not in valid_runs:
@@ -1467,7 +1469,7 @@ def get_subjects() -> List[str]:
 
     env = os.environ
 
-    valid_subjects = get_entity_vals(bids_root, entity_key='subject')
+    valid_subjects = get_entity_vals(get_bids_root(), entity_key='subject')
 
     if env.get('MNE_BIDS_STUDY_SUBJECT'):
         env_subject = env['MNE_BIDS_STUDY_SUBJECT']
@@ -1492,7 +1494,7 @@ def get_task() -> Optional[str]:
     global task
 
     env = os.environ
-    valid_tasks = get_entity_vals(bids_root, entity_key='task')
+    valid_tasks = get_entity_vals(get_bids_root(), entity_key='task')
 
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
@@ -1557,7 +1559,7 @@ def get_ica_reject() -> Dict[str, float]:
 
 def get_fs_subjects_dir():
     if not subjects_dir:
-        return bids_root / 'derivatives' / 'freesurfer' / 'subjects'
+        return get_bids_root() / 'derivatives' / 'freesurfer' / 'subjects'
     else:
         return subjects_dir
 

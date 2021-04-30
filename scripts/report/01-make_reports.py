@@ -43,7 +43,7 @@ def plot_events(subject, session):
                          suffix='raw',
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     for run in config.get_runs():
@@ -78,7 +78,7 @@ def plot_er_psd(subject, session):
                          suffix='raw',
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     extra_params = dict()
@@ -112,7 +112,7 @@ def plot_auto_scores(subject, session):
                             suffix='scores',
                             extension='.json',
                             datatype=config.get_datatype(),
-                            root=config.deriv_root,
+                            root=config.get_deriv_root(),
                             check=False)
 
     all_figs = []
@@ -211,7 +211,7 @@ def run_report(subject, session=None):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
@@ -448,7 +448,7 @@ def add_event_counts(*,
                      session: str,
                      report: mne.Report) -> None:
     try:
-        df_events = count_events(BIDSPath(root=config.bids_root,
+        df_events = count_events(BIDSPath(root=config.get_bids_root(),
                                           session=session))
     except ValueError:
         logger.warning('Could not read events.')
@@ -491,7 +491,7 @@ def add_event_counts(*,
 #                             suffix='epo',
 #                             extension='.fif',
 #                             datatype=config.get_datatype(),
-#                             root=config.deriv_root,
+#                             root=config.get_deriv_root(),
 #                             check=False)
 
 #     for subject in config.get_subjects():
@@ -515,7 +515,7 @@ def run_report_average(session: str) -> None:
                             suffix='ave',
                             extension='.fif',
                             datatype=config.get_datatype(),
-                            root=config.deriv_root,
+                            root=config.get_deriv_root(),
                             check=False)
 
     title = f'sub-{subject}'

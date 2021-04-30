@@ -35,7 +35,7 @@ def apply_ssp(subject, session=None):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root)
+                         root=config.get_deriv_root())
 
     fname_in = bids_path.copy().update(suffix='epo', check=False)
     fname_out = bids_path.copy().update(processing='ssp', suffix='epo',

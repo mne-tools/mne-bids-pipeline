@@ -43,7 +43,7 @@ def average_evokeds(session):
                             suffix='ave',
                             extension='.fif',
                             datatype=config.get_datatype(),
-                            root=config.deriv_root,
+                            root=config.get_deriv_root(),
                             check=False)
 
         msg = f'Input: {fname_in}'
@@ -71,7 +71,7 @@ def average_evokeds(session):
                          suffix='ave',
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
 
     if not fname_out.fpath.parent.exists():
@@ -97,7 +97,7 @@ def average_decoding(session):
                          suffix='epo',
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root,
+                         root=config.get_deriv_root(),
                          check=False)
     epochs = mne.read_epochs(fname_epo)
     times = epochs.times
@@ -135,7 +135,7 @@ def average_decoding(session):
                                  suffix='decoding',
                                  extension='.mat',
                                  datatype=config.get_datatype(),
-                                 root=config.deriv_root,
+                                 root=config.get_deriv_root(),
                                  check=False)
 
             decoding_data = loadmat(fname_mat)

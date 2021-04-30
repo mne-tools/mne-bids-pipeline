@@ -35,7 +35,7 @@ def run_epochs(subject, session=None):
                          space=config.space,
                          extension='.fif',
                          datatype=config.get_datatype(),
-                         root=config.deriv_root)
+                         root=config.get_deriv_root())
 
     for run in config.get_runs():
         # Prepare a name to save the data

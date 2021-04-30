@@ -50,11 +50,12 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 def get_mf_cal_fname(subject, session):
     if config.mf_cal_fname is None:
-        mf_cal_fpath = BIDSPath(subject=subject,
-                                session=session,
-                                suffix='meg',
-                                datatype='meg',
-                                root=config.bids_root).meg_calibration_fpath
+        mf_cal_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=config.get_bids_root())
+                        .meg_calibration_fpath)
         if mf_cal_fpath is None:
             raise ValueError('Could not find Maxwell Filter Calibration '
                              'file.')
@@ -69,11 +70,12 @@ def get_mf_cal_fname(subject, session):
 
 def get_mf_ctc_fname(subject, session):
     if config.mf_ctc_fname is None:
-        mf_ctc_fpath = BIDSPath(subject=subject,
-                                session=session,
-                                suffix='meg',
-                                datatype='meg',
-                                root=config.bids_root).meg_crosstalk_fpath
+        mf_ctc_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=config.get_bids_root())
+                        .meg_crosstalk_fpath)
         if mf_ctc_fpath is None:
             raise ValueError('Could not find Maxwell Filter cross-talk '
                              'file.')
@@ -142,7 +144,7 @@ def find_bad_channels(raw, subject, session, task, run):
                          space=config.space,
                          suffix=config.get_datatype(),
                          datatype=config.get_datatype(),
-                         root=config.deriv_root)
+                         root=config.get_deriv_root())
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw,
@@ -306,9 +308,9 @@ def run_maxwell_filter(subject, session=None):
                             space=config.space,
                             suffix=config.get_datatype(),
                             datatype=config.get_datatype(),
-                            root=config.bids_root)
+                            root=config.get_bids_root())
     bids_path_out = bids_path_in.copy().update(suffix='raw',
-                                               root=config.deriv_root,
+                                               root=config.get_deriv_root(),
                                                check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.

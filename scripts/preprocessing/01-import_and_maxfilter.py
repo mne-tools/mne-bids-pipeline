@@ -221,12 +221,7 @@ def load_data(bids_path):
     subject = bids_path.subject
     session = bids_path.session
 
-    extra_params = dict()
-    if config.allow_maxshield:
-        extra_params['allow_maxshield'] = config.allow_maxshield
-
-    raw = read_raw_bids(bids_path=bids_path,
-                        extra_params=extra_params)
+    raw = read_raw_bids(bids_path=bids_path)
 
     if subject != 'emptyroom':
         # Crop the data.
@@ -243,7 +238,7 @@ def load_data(bids_path):
 
     montage_name = config.eeg_template_montage
     if config.get_datatype() == 'eeg' and montage_name:
-        msg = (f'Setting EEG channel locatiions to template montage: '
+        msg = (f'Setting EEG channel locations to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
@@ -443,7 +438,7 @@ def run_maxwell_filter(subject, session=None):
                     msg = (f'Experimental data rank {rank_exp:.1f} does not '
                            f'match empty-room data rank {rank_er:.1f} after '
                            f'Maxwell filtering. This indicates that the data '
-                           f'were processed  differenlty.')
+                           f'were processed  differently.')
                     raise RuntimeError(msg)
 
                 raw_er_out = raw_er_sss

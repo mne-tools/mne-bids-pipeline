@@ -33,9 +33,7 @@ def run_evoked(subject, session=None):
                          datatype=config.get_datatype(),
                          root=config.get_deriv_root())
 
-    processing = None
-    if config.spatial_filter is not None:
-        processing = 'clean'
+    processing = 'clean'  # always use the clean epochs
 
     fname_in = bids_path.copy().update(processing=processing, suffix='epo',
                                        check=False)

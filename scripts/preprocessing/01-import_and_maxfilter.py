@@ -150,6 +150,8 @@ def find_bad_channels(raw, subject, session, task, run):
         raw=raw,
         calibration=get_mf_cal_fname(subject, session),
         cross_talk=get_mf_ctc_fname(subject, session),
+        origin=config.mf_head_origin,
+        coord_frame='head',
         return_scores=True)
 
     preexisting_bads = raw.info['bads'].copy()

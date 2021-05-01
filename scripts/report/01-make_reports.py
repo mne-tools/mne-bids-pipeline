@@ -81,15 +81,10 @@ def plot_er_psd(subject, session):
                          root=config.get_deriv_root(),
                          check=False)
 
-    extra_params = dict()
-    if not config.use_maxwell_filter and config.allow_maxshield:
-        extra_params['allow_maxshield'] = config.allow_maxshield
-
     if raw_fname.copy().update(split='01').fpath.exists():
         raw_fname.update(split='01')
 
-    raw_er_filtered = mne.io.read_raw_fif(raw_fname, preload=True,
-                                          **extra_params)
+    raw_er_filtered = mne.io.read_raw_fif(raw_fname, preload=True)
 
     fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
     fig = raw_er_filtered.plot_psd(fmax=fmax, show=False)

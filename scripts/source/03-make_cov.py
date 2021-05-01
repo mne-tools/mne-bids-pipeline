@@ -68,10 +68,6 @@ def compute_cov_from_empty_room(subject, session):
                                            suffix='raw')
     cov_fname = bids_path.copy().update(suffix='cov')
 
-    extra_params = dict()
-    if not config.use_maxwell_filter and config.allow_maxshield:
-        extra_params['allow_maxshield'] = config.allow_maxshield
-
     msg = (f'Computing regularized covariance based on empty-room recording. '
            f'Input: {raw_er_fname}, Output: {cov_fname}')
     logger.info(gen_log_message(message=msg, step=11, subject=subject,

@@ -10,7 +10,6 @@ task = 'localizer'
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
-allow_maxshield = True
 ch_types = ['meg']
 
 l_freq = 1.

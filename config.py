@@ -1186,9 +1186,8 @@ Specifies how many subjects you want to process in parallel.
 """
 
 random_state: Optional[int] = 42
-# ``random_state`` : None | int | np.random.RandomState
 """
-To specify the seed or state of the random number generator (RNG).
+You can specify the seed of the random number generator (RNG).
 This setting is passed to the ICA algorithm and to the decoding function,
 ensuring reproducible results. Set to ``None`` to avoid setting the RNG
 to a defined state.
@@ -1197,13 +1196,7 @@ to a defined state.
 shortest_event: int = 1
 """
 Minimum number of samples an event must last. If the
-duration is less than this an exception will be raised.
-"""
-
-allow_maxshield: bool = False
-"""
-To import data that was recorded with Maxshield on before running
-Maxfilter set this to ``True``.
+duration is less than this, an exception will be raised.
 """
 
 log_level: Literal['info', 'error'] = 'info'

@@ -23,9 +23,14 @@ authors:
   [`ica_reject`][config.ica_reject] setting.
 - We don't apply SSP by default anymore.
   ({{ gh(315) }} by {{ authors.hoechenberger }})
-- The `use_ssp` and `use_ica` settings have been removed. Please use the
+- The `use_ssp` and `use_ica` settings have been removed. Please use the new
   [`spatial_filter`][config.spatial_filter] setting instead.
   ({{ gh(315) }} by {{ authors.hoechenberger }})
+- The `allow_maxshield` setting has been removed. The Pipeline now
+  automatically ensures that FIFF files of recordings with active
+  shielding (MaxShield) can be imported. Later stages of the Pipeline will fail
+  if Maxwell filtering of such data is disabled via `use_maxwell_filter=False`.
+  ({{ gh(318) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

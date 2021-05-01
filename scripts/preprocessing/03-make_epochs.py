@@ -89,7 +89,7 @@ def run_epochs(subject, session=None):
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
     msg = (f'Creating epochs with duration: '
-           f'[{config.epochs_tmin}, {config.epochs_tmin}] sec')
+           f'[{config.epochs_tmin}, {config.epochs_tmax}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
     epochs = mne.Epochs(raw, events=events, event_id=event_id,

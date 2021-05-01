@@ -73,7 +73,7 @@ def compute_cov_from_empty_room(subject, session):
     logger.info(gen_log_message(message=msg, step=11, subject=subject,
                                 session=session))
 
-    raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True, **extra_params)
+    raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
     cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
     cov.save(cov_fname)
 

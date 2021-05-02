@@ -46,3 +46,11 @@ authors:
   ({{ gh(311) }} by {{ authors.hoechenberger }})
 - Added instructions on how to handle `FileNotFoundError` when loading the BEM
   model in the source steps ({{ gh(304) }}  by {{ authors.MerlinDumeur }})
+- When using [`find_noisy_channels_meg`][config.find_noisy_channels_meg] or
+  [`find_flat_channels_meg`][config.find_flat_channels_meg], we now pass [`mf_head_origin`][config.mf_head_origin] to the respective bad channel
+  detection algorithm to achieve better performance
+  ({{ gh(319) }} by {{ authors.agramfort }})
+- Baseline was not applied to epochs if neither ICA nor SSP was used
+  ({{ gh(319) }} by {{ authors.hoechenberger }})
+- Ensure we always use the cleaned epochs for constructing evoked data
+  ({{ gh(319) }} by {{ authors.agramfort }})

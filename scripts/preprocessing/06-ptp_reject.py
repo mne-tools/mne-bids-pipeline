@@ -62,9 +62,11 @@ def drop_ptp(subject, session=None):
         raise RuntimeError('No epochs remaining after peak-to-peak-based '
                            'rejection. Cannot continue.')
 
-    msg = 'Saving cleaned eopchs …'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
+    msg = 'Saving cleaned, baseline-corrected eopchs …'
+
+    epochs.apply_baseline(config.baseline)
     epochs.save(fname_out, overwrite=True)
 
 

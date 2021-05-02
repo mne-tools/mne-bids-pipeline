@@ -55,9 +55,8 @@ def apply_ssp(subject, session=None):
 
     projs = mne.read_proj(proj_fname_in)
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
-    epochs_cleaned.apply_baseline(config.baseline)
 
-    msg = 'Saving epochs'
+    msg = 'Saving epochs with projectors.'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
     epochs_cleaned.save(fname_out, overwrite=True)

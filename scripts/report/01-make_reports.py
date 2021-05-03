@@ -211,16 +211,17 @@ def run_report(subject, session=None):
 
     fname_ave = bids_path.copy().update(suffix='ave')
     fname_trans = bids_path.copy().update(suffix='trans')
-    fname_epo = bids_path.copy().update(suffix='epo')
+    fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_ica = bids_path.copy().update(suffix='ica')
-    fname_decoding = fname_epo.copy().update(suffix='decoding',
+    fname_decoding = fname_epo.copy().update(processing=None,
+                                             suffix='decoding',
                                              extension='.mat')
 
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
 
-    title = f'ICA – sub-{subject}'
+    title = f'sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
     if task is not None:

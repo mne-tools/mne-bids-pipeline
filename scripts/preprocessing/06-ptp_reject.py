@@ -56,8 +56,8 @@ def drop_ptp(subject, session=None):
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = ('More than 50% of all epochs rejected. Please check the '
                'rejection thresholds.')
-        logger.warn(gen_log_message(message=msg, step=6, subject=subject,
-                                    session=session))
+        logger.warning(gen_log_message(message=msg, step=6, subject=subject,
+                                       session=session))
     elif n_epochs_after_reject == 0:
         raise RuntimeError('No epochs remaining after peak-to-peak-based '
                            'rejection. Cannot continue.')

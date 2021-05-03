@@ -31,6 +31,9 @@ authors:
   shielding (MaxShield) can be imported. Later stages of the Pipeline will fail
   if Maxwell filtering of such data is disabled via `use_maxwell_filter=False`.
   ({{ gh(318) }} by {{ authors.hoechenberger }})
+- The overlay plots that show the effects of ICA cleaning are now based on the
+  baseline-corrected data to make it easier to spot the differences.
+  ({{ gh(320) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 
@@ -54,3 +57,6 @@ authors:
   ({{ gh(319) }} by {{ authors.hoechenberger }})
 - Ensure we always use the cleaned epochs for constructing evoked data
   ({{ gh(319) }} by {{ authors.agramfort }})
+- The summary report didn't use the cleaned epochs for showing the effects of
+  ICA.
+  ({{ gh(320) }} by {{ authors.hoechenberger }})

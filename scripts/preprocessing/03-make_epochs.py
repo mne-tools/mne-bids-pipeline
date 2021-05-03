@@ -31,7 +31,7 @@ def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
         proj=False, baseline=None, reject=None)
     epochs.load_data()
     epochs.apply_proj()
-    reject = get_rejection_threshold(epochs)
+    reject = get_rejection_threshold(epochs, ch_types=['mag', 'grad'])
     return reject
 
 def run_epochs(subject, session=None):

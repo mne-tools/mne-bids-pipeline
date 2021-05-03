@@ -57,3 +57,6 @@ authors:
   ({{ gh(319) }} by {{ authors.hoechenberger }})
 - Ensure we always use the cleaned epochs for constructing evoked data
   ({{ gh(319) }} by {{ authors.agramfort }})
+- The summary report didn't use the cleaned epochs for showing the effects of
+  ICA.
+  ({{ gh(320) }} by {{ authors.hoechenberger }})

@@ -89,7 +89,12 @@ def apply_ica(subject, session):
     #
     # Note that up until now, we haven't actually rejected any ICs from the
     # epochs.
-    evoked = epochs.average()
+    #
+    # We apply baseline correction here to (hopefully!) make the effects of
+    # ICA easier to see. Otherwise, individual channels might just have
+    # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
+    # going on!
+    evoked = epochs.average().apply_baseline(config.baseline)
 
     # Plot source time course
     fig = ica.plot_sources(evoked, show=config.interactive)

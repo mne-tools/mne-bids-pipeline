@@ -760,14 +760,14 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-fixed_length_epochs_duration : Optional[float] = None
+fixed_length_epochs_duration: Optional[float] = None
 """
 Duration of epochs in seconds.
 """
 
 fixed_length_epochs_overlap: Optional[float] = None
 """
-Overlap between epochs in seconds. This is used if the task is ``rest``
+Overlap between epochs in seconds. This is used if the task is ``'rest'``
 and when the annotations do not contain any stimulation or behavior events.
 """
 
@@ -835,6 +835,36 @@ artifacts from the data. For ICA, the independent components related to
 EOG and ECG activity will be omitted during the signal reconstruction step in
 order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
+"""
+
+n_proj_ecg_grad: Optional[int] = 1
+"""
+Number of SSP vectors for gradiometers for ECG artifacts.
+"""
+
+n_proj_ecg_mag: Optional[int] = 1
+"""
+Number of SSP vectors for magnetometers for ECG artifacts.
+"""
+
+n_proj_ecg_eeg: Optional[int] = 1
+"""
+Number of SSP vectors for EEG for ECG artifacts.
+"""
+
+n_proj_eog_grad: Optional[int] = 1
+"""
+Number of SSP vectors for gradiometers for EOG artifacts.
+"""
+
+n_proj_eog_mag: Optional[int] = 1
+"""
+Number of SSP vectors for magnetometers for EOG artifacts.
+"""
+
+n_proj_eog_eeg: Optional[int] = 1
+"""
+Number of SSP vectors for EEG for EOG artifacts.
 """
 
 ica_reject: Optional[Dict[str, float]] = None
@@ -948,6 +978,11 @@ reject: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
+
+Pass ``'auto'`` if you want to automate the estimation of the reject parameter
+using AutoReject [Jas et al. 2017] (See https://autoreject.github.io).
+AutoReject is useful as the optimal rejection thresholds tend to vary between
+subjects.
 
 Note: Note
       The rejection is performed **after** SSP or ICA, if any of those methods
@@ -1440,6 +1475,7 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 # ----------------
 
 def get_bids_root() -> pathlib.Path:
+<<<<<<< HEAD
     # BIDS_ROOT environment variable takes precedence over any configuration file
     # values.
     root = os.getenv('BIDS_ROOT')
@@ -1447,6 +1483,12 @@ def get_bids_root() -> pathlib.Path:
         return (pathlib.Path(root)
                 .expanduser()
                 .resolve(strict=True))
+=======
+    # BIDS_ROOT environment variable takes precedence over any configuration
+    # file values.
+    if os.getenv('BIDS_ROOT') is not None:
+        return pathlib.Path(os.getenv('BIDS_ROOT')).expanduser()
+>>>>>>> 9a24992 (fixes + add n_proj in config)
 
     # If we don't have a bids_root until now, raise an exception as we cannot
     # proceed.
@@ -1591,7 +1633,7 @@ def _get_reject(
     if reject is None:
         return dict()
 
-    if reject == 'auto' :
+    if reject == 'auto':
         return 'auto'
 
     reject_ = reject.copy()  # Avoid clash with global variable.

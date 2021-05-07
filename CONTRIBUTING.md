@@ -1,3 +1,8 @@
+# Overview
+
+Contributors to MNE-BIDS-Pipeline are expected to follow our
+[Code of Conduct](https://github.com/mne-tools/.github/blob/main/CODE_OF_CONDUCT.md).
+
 # Installation
 
 First, you need to make sure you have MNE-Python installed and working on your

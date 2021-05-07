@@ -34,6 +34,9 @@ authors:
 - The overlay plots that show the effects of ICA cleaning are now based on the
   baseline-corrected data to make it easier to spot the differences.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
+- `bids_root` and `deriv_root` are now converted to absolute paths to avoid
+  running into issues caused by relative path specifications.
+  ({{ gh(322) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

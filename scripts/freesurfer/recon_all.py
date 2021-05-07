@@ -20,6 +20,7 @@ fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 def _get_subjects_dir(root_dir) -> Path:
     subjects_dir = \
         Path(root_dir) / "derivatives" / "freesurfer" / "subjects"
+    assert subjects_dir.is_absolute()
     return subjects_dir
 
 

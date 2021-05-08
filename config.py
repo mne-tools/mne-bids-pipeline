@@ -1384,8 +1384,11 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 def get_bids_root() -> pathlib.Path:
     # BIDS_ROOT environment variable takes precedence over any configuration file
     # values.
-    if os.getenv('BIDS_ROOT') is not None:
-        return pathlib.Path(os.getenv('BIDS_ROOT')).expanduser()
+    root = os.getenv('BIDS_ROOT')
+    if root is not None:
+        return (pathlib.Path(root)
+                .expanduser()
+                .resolve(strict=True))
 
     # If we don't have a bids_root until now, raise an exception as we cannot
     # proceed.
@@ -1395,14 +1398,18 @@ def get_bids_root() -> pathlib.Path:
                'root folder of your BIDS dataset')
         raise ValueError(msg)
 
-    return pathlib.Path(bids_root).expanduser()
+    return (pathlib.Path(bids_root)
+            .expanduser()
+            .resolve(strict=True))
 
 
 def get_deriv_root() -> pathlib.Path:
     if deriv_root is None:
         return get_bids_root() / 'derivatives' / PIPELINE_NAME
     else:
-        return pathlib.Path(deriv_root).expanduser()
+        return (pathlib.Path(deriv_root)
+                .expanduser()
+                .resolve())
 
 
 def get_sessions():

@@ -466,10 +466,11 @@ def main():
     msg = 'Running Step 1: Data import'
     logger.info(gen_log_message(step=1, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                          n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    if config.use_maxwell_filter:
+        parallel, run_func, _ = parallel_func(run_maxwell_filter,
+                                              n_jobs=config.N_JOBS)
+        parallel(run_func(subject, session) for subject, session in
+                 itertools.product(config.get_subjects(), config.get_sessions()))
 
     msg = 'Completed Step 1: Data import'
     logger.info(gen_log_message(step=1, message=msg))

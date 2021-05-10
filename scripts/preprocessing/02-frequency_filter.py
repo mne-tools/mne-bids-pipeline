@@ -22,7 +22,7 @@ import numpy as np
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import BIDSPath
+from mne_bids import BIDSPath, read_raw_bids
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -72,7 +72,15 @@ def run_filter(subject, run=None, session=None):
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run,))
 
-    raw = mne.io.read_raw_fif(raw_fname_in)
+    read_raw = mne.io.read_raw_fif
+    if not config.use_maxwell_filter:
+        raw_fname_in.update(
+            root=config.get_bids_root(),
+            suffix=config.get_datatype(),
+            extension=None)
+        read_raw = read_raw_bids
+
+    raw = read_raw(raw_fname_in)
     raw.load_data()
 
     # Filter data channels (MEG and EEG)
@@ -103,7 +111,7 @@ def run_filter(subject, run=None, session=None):
                f'{config.h_freq} Hz')
         logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                     session=session, run=run,))
-        raw_er = mne.io.read_raw_fif(raw_er_fname_in)
+        raw_er = read_raw(raw_er_fname_in)
         raw_er.load_data()
         raw_er.filter(**filter_kws)
 

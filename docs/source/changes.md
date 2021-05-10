@@ -13,6 +13,7 @@ authors:
 
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
+- The Maxwell filtering step can now be skipped if [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`. In that case, the temporal filteting script can directly start from the input files indicated by [`bids_root`][config.bids_root].
 
 ### Behavior changes
 

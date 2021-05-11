@@ -1475,7 +1475,6 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 # ----------------
 
 def get_bids_root() -> pathlib.Path:
-<<<<<<< HEAD
     # BIDS_ROOT environment variable takes precedence over any configuration file
     # values.
     root = os.getenv('BIDS_ROOT')
@@ -1483,12 +1482,6 @@ def get_bids_root() -> pathlib.Path:
         return (pathlib.Path(root)
                 .expanduser()
                 .resolve(strict=True))
-=======
-    # BIDS_ROOT environment variable takes precedence over any configuration
-    # file values.
-    if os.getenv('BIDS_ROOT') is not None:
-        return pathlib.Path(os.getenv('BIDS_ROOT')).expanduser()
->>>>>>> 9a24992 (fixes + add n_proj in config)
 
     # If we don't have a bids_root until now, raise an exception as we cannot
     # proceed.

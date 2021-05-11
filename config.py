@@ -1687,7 +1687,7 @@ def _get_reject(
     if reject == 'auto':
         return 'auto'
 
-    reject_ = reject.copy()  # Avoid clash with global variable.
+    reject_ = dict(reject)  # Avoid clash with global variable.
 
     if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
@@ -1695,12 +1695,10 @@ def _get_reject(
         ch_types_to_remove = ('eeg',)
 
     for ch_type in ch_types_to_remove:
-        try:
-            del reject[ch_type]
-        except KeyError:
-            pass
+        if ch_type in reject_:
+            reject_.pop(ch_type)
 
-    return reject
+    return reject_
 
 
 def get_reject() -> Dict[str, float]:

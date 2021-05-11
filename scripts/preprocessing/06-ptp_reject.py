@@ -18,6 +18,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
+from autoreject import get_rejection_threshold
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -44,9 +45,22 @@ def drop_ptp(subject, session=None):
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
 
+    epochs = mne.read_epochs(fname_in, preload=True)
+
     # Get rejection parameters and drop bad epochs
     reject = config.get_reject()
-    epochs = mne.read_epochs(fname_in, preload=True)
+    if reject == 'auto':
+        msg = "Using AutoReject to estimate reject parameter"
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
+        epochs.load_data()  # normally projs have been applied already
+        epochs.apply_proj()
+        reject = get_rejection_threshold(epochs, 
+                                         ch_types=['mag', 'grad', 'eeg'])
+        msg = f"reject = {reject}"
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session))
+    
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = config.reject_tmin
     epochs.reject_tmax = config.reject_tmax

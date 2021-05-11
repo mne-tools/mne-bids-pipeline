@@ -569,7 +569,8 @@ can be used for resampling raw data. ``1`` means no decimation.
 # AUTOMATIC REJECTION OF ARTIFACTS
 # --------------------------------
 
-reject: Union[dict, Literal['auto']] = {'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
+reject: Union[dict, Literal['auto']] = {
+    'grad': 4000e-13, 'mag': 4e-12, 'eeg': 150e-6}
 """
 The rejection limits to mark epochs as bads.
 This allows to remove strong transient artifacts.
@@ -865,6 +866,63 @@ Number of SSP vectors for magnetometers for EOG artifacts.
 n_proj_eog_eeg: Optional[int] = 1
 """
 Number of SSP vectors for EEG for EOG artifacts.
+"""
+
+average_ecg_projs: Optional[bool] = True
+"""
+Whether to average ECG proejction vectors or not.
+"""
+
+average_eog_projs: Optional[bool] = True
+"""
+Whether to average EOG proejction vectors or not.
+"""
+
+ssp_reject_ecg: Union[Optional[Dict[str, float]],
+                      Optional[Literal['auto']]] = None
+"""
+Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.
+
+The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to **not** specify rejection thresholds for EOG and ECG channels here –
+otherwise, SSP won't be able to "see" these artifacts.
+
+???+ example "Example"
+    ```python
+    ssp_reject_ecg = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ssp_reject_ecg = {'grad': 15e-10}
+    ssp_reject_eog = None
+    ```
+"""
+
+ssp_reject_eog: Optional[Union[Dict[str, float],
+                               Literal['auto']]] = None
+"""
+Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.
+
+The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to **not** specify rejection thresholds for EOG and ECG channels here –
+otherwise, SSP won't be able to "see" these artifacts.
+
+???+ example "Example"
+    ```python
+    ssp_reject_eog = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ssp_reject_eog = {'grad': 15e-10}
+    ssp_reject_eog = None
+    ```
+"""
+
+ssp_autoreject_decim: Optional[int] = 3
+"""
+Default decimation if computing autorejct for SSP.
 """
 
 ica_reject: Optional[Dict[str, float]] = None
@@ -1621,8 +1679,8 @@ def get_datatype() -> Literal['meg', 'eeg']:
 
 def _get_reject(
     reject: Optional[Dict[str, float]],
-    ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']]
-) -> Dict[str, float]:
+    ch_types: Iterable[
+        Literal['meg', 'mag', 'grad', 'eeg']]) -> Dict[str, float]:
     if reject is None:
         return dict()
 

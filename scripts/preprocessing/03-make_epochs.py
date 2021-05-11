@@ -16,21 +16,10 @@ import logging
 import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
-from autoreject import get_rejection_threshold
 import config
 from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
-
-
-def _get_global_reject_epochs(raw, events, event_id, tmin, tmax):
-    epochs = mne.Epochs(
-        raw, events, event_id=event_id, tmin=tmin, tmax=tmax,
-        proj=False, baseline=None, reject=None)
-    epochs.load_data()
-    epochs.apply_proj()
-    reject = get_rejection_threshold(epochs, ch_types=['mag', 'grad', 'eeg'])
-    return reject
 
 
 @failsafe_run(on_error=on_error)
@@ -116,21 +105,6 @@ def run_epochs(subject, session=None):
            f'[{config.epochs_tmin}, {config.epochs_tmax}] sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-
-    reject = config.get_reject()
-    if reject == 'auto':
-        msg = "Using AutoReject to estimate reject parameter"
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session))
-        reject = _get_global_reject_epochs(
-            raw, tmin=config.epochs_tmin,
-            tmax=config.epochs_tmax,
-            events=events,
-            event_id=event_id
-        )
-        msg = f"reject = {reject}"
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session))
 
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=config.epochs_tmin, tmax=config.epochs_tmax,

@@ -23,14 +23,13 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-
-def _get_global_reject_ssp(raw):
+def _get_global_reject_ssp(raw, decim):
     if 'eog' in raw:
         eog_epochs = mne.preprocessing.create_eog_epochs(raw)
     else:
         eog_epochs = []
     if len(eog_epochs) >= 5:
-        reject_eog = get_rejection_threshold(eog_epochs, decim=8)
+        reject_eog = get_rejection_threshold(eog_epochs, decim=decim)
         del reject_eog['eog']  # we don't want to reject eog based on eog
     else:
         reject_eog = None
@@ -38,14 +37,16 @@ def _get_global_reject_ssp(raw):
     ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
     # we will always have an ECG as long as there are magnetometers
     if len(ecg_epochs) >= 5:
-        reject_ecg = get_rejection_threshold(ecg_epochs, decim=8)
+        reject_ecg = get_rejection_threshold(ecg_epochs, decim=decim)
         # here we want the eog
     else:
         reject_ecg = None
 
     if reject_eog is None and reject_ecg is not None:
+        # Do not keep the eog.
         reject_eog = {k: v for k, v in reject_ecg.items() if k != 'eog'}
     return reject_eog, reject_ecg
+
 
 def run_ssp(subject, session=None):
     # compute SSP on first run of raw
@@ -77,15 +78,35 @@ def run_ssp(subject, session=None):
         raw_fname_in.update(split='01')
 
     raw = mne.io.read_raw_fif(raw_fname_in)
-    # XXX : n_xxx should be options in config
-    reject_eog, reject_ecg = _get_global_reject_ssp(raw)
-    print(reject_eog)
+    
+    # by default, we have no reject values for SSP.
+    reject_eog_ = None
+    reject_ecg_ = None
+    # We currently have some dependency between EOG and ECG when
+    # doing autorject for SSP. That's why we compute the autorejct
+    # whenever it is demanded for either ECG or EOG.
+    if config.ssp_reject_ecg is 'auto' or config.ssp_reject_eog is 'auto':        
+        reject_eog, reject_ecg = _get_global_reject_ssp(
+            raw, decim=config.ssp_autoreject_decim)
+        # But we set only the one for which autoreject was asked.
+        if config.ssp_reject_ecg is 'auto':
+            reject_ecg_ = reject_ecg
+        if config.ssp_reject_eog is 'auto':
+            reject_eog_ = reject_eog
+
+    # Finally, we set the non-auto reject-based options if existing.
+    if not reject_ecg_ and isinstance(config.ssp_reject_ecg, dict):
+        reject_ecg_ = config.ssp_reject_ecg
+    if not reject_eog_ and isinstance(config.ssp_reject_eog, dict):
+        reject_eog_ = config.ssp_reject_eog
 
     msg = 'Computing SSPs for ECG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    ecg_projs, _ = compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0,
-                                    average=True)
+    ecg_projs, _ = compute_proj_ecg(
+        raw, n_grad=config.n_proj_ecg_grad, n_mag=config.n_proj_ecg_mag,
+        n_eeg=config.n_proj_ecg_eeg, average=config.average_projs,
+        reject=reject_ecg_)
 
     if not ecg_projs:
         msg = 'No ECG events could be found. No ECG projectors computed.'
@@ -97,14 +118,14 @@ def run_ssp(subject, session=None):
                                  session=session))
     if config.eog_channels:
         ch_names = config.eog_channels
-        assert all([ch_name in raw.ch_names
-                    for ch_name in ch_names])
+        assert all([ch_name in raw.ch_names for ch_name in ch_names])
     else:
         ch_names = None
 
-    eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
-                                    n_grad=1, n_mag=1, n_eeg=1,
-                                    average=True)
+    eog_projs, _ = compute_proj_ecg(
+        raw, n_grad=config.n_proj_ecg_grad, n_mag=config.n_proj_ecg_mag,
+        n_eeg=config.n_proj_ecg_eeg, average=config.average_ecg_projs,
+        reject=reject_eog_)
 
     if not eog_projs:
         msg = 'No EOG events could be found. No EOG projectors computed.'

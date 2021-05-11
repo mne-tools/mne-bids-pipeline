@@ -55,12 +55,12 @@ def drop_ptp(subject, session=None):
                                     session=session))
         epochs.load_data()  # normally projs have been applied already
         epochs.apply_proj()
-        reject = get_rejection_threshold(epochs, 
+        reject = get_rejection_threshold(epochs,
                                          ch_types=['mag', 'grad', 'eeg'])
         msg = f"reject = {reject}"
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session))
-    
+
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = config.reject_tmin
     epochs.reject_tmax = config.reject_tmax

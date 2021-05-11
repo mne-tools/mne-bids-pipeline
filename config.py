@@ -637,7 +637,7 @@ on_rename_missing_events: Literal['warn', 'raise'] = 'raise'
 """
 How to handle the situation where you specified an event to be renamed via
 ``rename_events``, but this particular event is not present in the data. By
-default, we will raise an exception to avoid accidental mistakes due to typos;
+default, we will raise an exception t
 however, if you're sure what you're doing, you may change this to ``'warn'``
 to only get a warning instead.
 """

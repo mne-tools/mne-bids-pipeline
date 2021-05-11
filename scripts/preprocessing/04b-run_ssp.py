@@ -25,7 +25,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 @failsafe_run(on_error=on_error)
 def _get_global_reject_ssp(raw, decim):
     if 'eog' in raw:
-        eog_epochs = mne.preprocessing.create_eog_epochs(raw)
+        eog_epochs = create_eog_epochs(raw)
     else:
         eog_epochs = []
     if len(eog_epochs) >= 5:
@@ -34,7 +34,7 @@ def _get_global_reject_ssp(raw, decim):
     else:
         reject_eog = None
 
-    ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
+    ecg_epochs = create_ecg_epochs(raw)
     # we will always have an ECG as long as there are magnetometers
     if len(ecg_epochs) >= 5:
         reject_ecg = get_rejection_threshold(ecg_epochs, decim=decim)
@@ -78,20 +78,20 @@ def run_ssp(subject, session=None):
         raw_fname_in.update(split='01')
 
     raw = mne.io.read_raw_fif(raw_fname_in)
-    
+
     # by default, we have no reject values for SSP.
     reject_eog_ = None
     reject_ecg_ = None
     # We currently have some dependency between EOG and ECG when
     # doing autorject for SSP. That's why we compute the autorejct
     # whenever it is demanded for either ECG or EOG.
-    if config.ssp_reject_ecg is 'auto' or config.ssp_reject_eog is 'auto':        
+    if config.ssp_reject_ecg == 'auto' or config.ssp_reject_eog == 'auto':
         reject_eog, reject_ecg = _get_global_reject_ssp(
             raw, decim=config.ssp_autoreject_decim)
         # But we set only the one for which autoreject was asked.
-        if config.ssp_reject_ecg is 'auto':
+        if config.ssp_reject_ecg == 'auto':
             reject_ecg_ = reject_ecg
-        if config.ssp_reject_eog is 'auto':
+        if config.ssp_reject_eog == 'auto':
             reject_eog_ = reject_eog
 
     # Finally, we set the non-auto reject-based options if existing.
@@ -122,9 +122,9 @@ def run_ssp(subject, session=None):
     else:
         ch_names = None
 
-    eog_projs, _ = compute_proj_ecg(
-        raw, n_grad=config.n_proj_ecg_grad, n_mag=config.n_proj_ecg_mag,
-        n_eeg=config.n_proj_ecg_eeg, average=config.average_ecg_projs,
+    eog_projs, _ = compute_proj_eog(
+        raw, n_grad=config.n_proj_eog_grad, n_mag=config.n_proj_eog_mag,
+        n_eeg=config.n_proj_eog_eeg, average=config.average_eog_projs,
         reject=reject_eog_)
 
     if not eog_projs:

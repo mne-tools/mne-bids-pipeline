@@ -1,7 +1,7 @@
 """
-========================================================================
-01. Import data, apply MaxWell filter to MEG data, and find bad channels
-========================================================================
+=============================
+01.MaxWell filter to MEG data
+=============================
 
 If you chose to run Maxwell filter (config.use_maxwell_filter = True),
 the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration

@@ -328,8 +328,8 @@ def main():
             config.drop_channels):
         parallel, run_func, _ = parallel_func(run_import, n_jobs=config.N_JOBS)
         parallel(run_func(subject, session) for subject, session in
-                    itertools.product(config.get_subjects(),
-                                    config.get_sessions()))
+                 itertools.product(config.get_subjects(),
+                                   config.get_sessions()))
 
     msg = 'Completed Step: Data import'
     logger.info(gen_log_message(step=0, message=msg))

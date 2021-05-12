@@ -80,7 +80,7 @@ def run_maxwell_filter(subject, session=None):
         if not raw.info['bads']:
             msg = '\nFound no bad channels. \n '
             logger.warning(gen_log_message(message=msg, subject=subject,
-                                            step=1, session=session))
+                                           step=1, session=session))
 
         if config.mf_st_duration:
             msg = '    st_duration=%d' % (config.mf_st_duration)
@@ -107,7 +107,7 @@ def run_maxwell_filter(subject, session=None):
         raw_sss.save(bids_path_out, picks=chs_to_include, split_naming='bids',
                      overwrite=True)
         del raw_sss
-    
+
         if config.interactive:
             # Load the data we have just written, because it contains only
             # the relevant channels.

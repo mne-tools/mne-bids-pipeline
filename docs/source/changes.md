@@ -13,6 +13,8 @@ authors:
 
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
+- An official [project governance](governance.md) structure has officially
+  been adopted.
 
 ### Behavior changes
 

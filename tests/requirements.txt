@@ -18,6 +18,7 @@ pip
 mkdocs
 mkdocs-material
 mkdocs-material-extensions
+mkdocs-macros-plugin
 mkdocstrings
 coloredlogs
 http://github.com/hoechenberger/openneuro-py/zipball/timeouts

@@ -68,17 +68,23 @@ def run_filter(subject, run=None, session=None):
     raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
                                                task='noise')
 
-    msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                session=session, run=run,))
-
     read_raw = mne.io.read_raw_fif
-    if not config.use_maxwell_filter:
+    ch_types = config.ch_types
+    if (not config.use_maxwell_filter and
+            not config.rename_events and
+            not (ch_types == ['eeg'] and config.find_flat_channels_meg) and
+            not (ch_types == ['eeg'] and config.find_noisy_channels_meg) and
+            not (ch_types == ['eeg'] and config.eeg_bipolar_channels) and
+            not config.drop_channels):
         raw_fname_in.update(
             root=config.get_bids_root(),
             suffix=config.get_datatype(),
             extension=None)
         read_raw = read_raw_bids
+
+    msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
+    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                session=session, run=run,))
 
     raw = read_raw(raw_fname_in)
     raw.load_data()

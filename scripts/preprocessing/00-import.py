@@ -1,22 +1,9 @@
 """
-========================================================================
-01. Import data, apply MaxWell filter to MEG data, and find bad channels
-========================================================================
+====================================================================
+01. Import data, add or remove channels, detect bads, rename events.
+====================================================================
 
 The data are imported from the BIDS folder.
-
-If you chose to run Maxwell filter (config.use_maxwell_filter = True),
-the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
-is not None) and movement compensation.
-
-Using tSSS with a short duration can be used as an alternative to highpass
-filtering. For instance, a duration of 10 s acts like a 0.1 Hz highpass.
-
-The head position of all runs is corrected to the run specified in
-config.mf_reference_run.
-It is critical to mark bad channels before Maxwell filtering.
-
-The function loads machine-specific calibration files.
 
 Notes
 -----
@@ -31,7 +18,6 @@ https://github.com/bids-standard/bids-specification/pull/265
 
 import itertools
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -43,49 +29,10 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import (gen_log_message, on_error, failsafe_run, get_mf_cal_fname,
+                    get_mf_ctc_fname)
 
 logger = logging.getLogger('mne-bids-pipeline')
-
-
-def get_mf_cal_fname(subject, session):
-    if config.mf_cal_fname is None:
-        mf_cal_fpath = (BIDSPath(subject=subject,
-                                 session=session,
-                                 suffix='meg',
-                                 datatype='meg',
-                                 root=config.get_bids_root())
-                        .meg_calibration_fpath)
-        if mf_cal_fpath is None:
-            raise ValueError('Could not find Maxwell Filter Calibration '
-                             'file.')
-    else:
-        mf_cal_fpath = Path(config.mf_cal_fname)
-        if not mf_cal_fpath.exists():
-            raise ValueError(f'Could not find Maxwell Filter Calibration '
-                             f'file at {str(mf_cal_fpath)}.')
-
-    return mf_cal_fpath
-
-
-def get_mf_ctc_fname(subject, session):
-    if config.mf_ctc_fname is None:
-        mf_ctc_fpath = (BIDSPath(subject=subject,
-                                 session=session,
-                                 suffix='meg',
-                                 datatype='meg',
-                                 root=config.get_bids_root())
-                        .meg_crosstalk_fpath)
-        if mf_ctc_fpath is None:
-            raise ValueError('Could not find Maxwell Filter cross-talk '
-                             'file.')
-    else:
-        mf_ctc_fpath = Path(config.mf_ctc_fname)
-        if not mf_ctc_fpath.exists():
-            raise ValueError(f'Could not find Maxwell Filter cross-talk '
-                             f'file at {str(mf_ctc_fpath)}.')
-
-    return mf_ctc_fpath
 
 
 def rename_events(raw, subject, session):
@@ -105,12 +52,12 @@ def rename_events(raw, subject, session):
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                 session=session))
     descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in config.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(gen_log_message(message=msg, step=1,
+        logger.info(gen_log_message(message=msg, step=0,
                                     subject=subject, session=session))
         for idx, description in enumerate(descriptions.copy()):
             if description == old_event_name:
@@ -131,7 +78,7 @@ def find_bad_channels(raw, subject, session, task, run):
         msg = ('Finding flat channels, and noisy channels using '
                'Maxwell filtering.')
 
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                 session=session))
 
     bids_path = BIDSPath(subject=subject,
@@ -159,19 +106,19 @@ def find_bad_channels(raw, subject, session, task, run):
 
     if config.find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
-        logger.info(gen_log_message(message=msg, step=1,
+        logger.info(gen_log_message(message=msg, step=0,
                                     subject=subject, session=session))
         bads.extend(auto_flat_chs)
     if config.find_noisy_channels_meg:
         msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-        logger.info(gen_log_message(message=msg, step=1,
+        logger.info(gen_log_message(message=msg, step=0,
                                     subject=subject, session=session))
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
     raw.info['bads'] = bads
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(gen_log_message(message=msg, step=1,
+    logger.info(gen_log_message(message=msg, step=0,
                                 subject=subject, session=session))
 
     if config.find_noisy_channels_meg:
@@ -242,19 +189,19 @@ def load_data(bids_path):
     if config.get_datatype() == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage_name}.')
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
         montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
     if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
         raw.load_data()
         for ch_name, (anode, cathode) in config.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+            logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                         session=session))
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
@@ -270,32 +217,27 @@ def load_data(bids_path):
                 any([eog_ch_name in config.eeg_bipolar_channels
                      for eog_ch_name in config.eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
+            logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                         session=session))
 
         for eog_ch_name in config.eog_channels:
             if eog_ch_name in config.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
-                logger.info(gen_log_message(message=msg, step=1,
+                logger.info(gen_log_message(message=msg, step=0,
                                             subject=subject,
                                             session=session))
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
     if config.drop_channels:
         msg = f'Dropping channels: {", ".join(config.drop_channels)}'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
         raw.drop_channels(config.drop_channels)
 
     return raw
 
 
-def run_maxwell_filter(subject, session=None):
-    if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
-        raise ValueError(f'You cannot set use_maxwell_filter to True '
-                         f'if data have already processed with Maxwell-filter.'
-                         f' Got proc={config.proc}.')
-
+def run_import(subject, session=None):
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
                             task=config.get_task(),
@@ -307,21 +249,9 @@ def run_maxwell_filter(subject, session=None):
                             datatype=config.get_datatype(),
                             root=config.get_bids_root())
     bids_path_out = bids_path_in.copy().update(suffix='raw',
+                                               extension='.fif',
                                                root=config.get_deriv_root(),
                                                check=False)
-
-    # Load dev_head_t and digitization points from MaxFilter reference run.
-    # Re-use in all runs and for processing empty-room recording.
-    if config.use_maxwell_filter:
-        reference_run = config.get_mf_reference_run()
-        msg = f'Loading reference run: {reference_run}.'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                    session=session))
-        bids_path_in.update(run=reference_run)
-        info = mne.io.read_info(bids_path_in.fpath)
-        dev_head_t = info['dev_head_t']
-        dig = info['dig']
-        del reference_run, info
 
     for run_idx, run in enumerate(config.get_runs()):
         bids_path_in.update(run=run)
@@ -342,70 +272,25 @@ def run_maxwell_filter(subject, session=None):
             find_bad_channels(raw=raw, subject=subject, session=session,
                               task=config.get_task(), run=run)
 
-        # Maxwell-filter experimental data.
-        if config.use_maxwell_filter:
-            msg = 'Applying Maxwell filter to experimental data.'
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
+        # Save the data.
+        kwargs = dict(fname=bids_path_out, split_naming='bids', overwrite=True)
+        if not config.use_maxwell_filter:
+            # Save only the channel types we wish to analyze (including the
+            # channels marked as "bad").
+            # We do not run `raw.pick()` here because it uses too much memory.
+            # Note that we skip this bit if `use_maxwell_filter=True`, as
+            # we'll want to retain all channels for Maxwell filtering in that
+            # case. The Maxwell filtering script will do this channel type
+            # subsetting after Maxwell filtering is complete.
+            chs_to_include = config.get_channels_to_analyze(raw.info)
+            kwargs['picks'] = chs_to_include
 
-            # Warn if no bad channels are set before Maxwell filter
-            if not raw.info['bads']:
-                msg = '\nFound no bad channels. \n '
-                logger.warning(gen_log_message(message=msg, subject=subject,
-                                               step=1, session=session))
-
-            if config.mf_st_duration:
-                msg = '    st_duration=%d' % (config.mf_st_duration)
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
-
-            # Keyword arguments shared between Maxwell filtering of the
-            # experimental and the empty-room data.
-            common_mf_kws = dict(
-                calibration=get_mf_cal_fname(subject, session),
-                cross_talk=get_mf_ctc_fname(subject, session),
-                st_duration=config.mf_st_duration,
-                origin=config.mf_head_origin,
-                coord_frame='head',
-                destination=dev_head_t
-            )
-
-            raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
-            raw_out = raw_sss
-            raw_fname_out = (bids_path_out.copy()
-                             .update(processing='sss',
-                                     extension='.fif'))
-        elif config.ch_types == ['eeg']:
-            raw_out = raw
-            raw_fname_out = bids_path_out.copy().update(extension='.fif')
-        else:
-            msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
-                   'set use_maxwell_filter=True in your configuration.')
-            logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
-            raw_out = raw
-            raw_fname_out = bids_path_out.copy().update(extension='.fif')
-
-        # Save only the channel types we wish to analyze (including the
-        # channels marked as "bad").
-        # We do not run `raw_out.pick()` here because it uses too much memory.
-        chs_to_include = config.get_channels_to_analyze(raw_out.info)
-        raw_out.save(raw_fname_out, picks=chs_to_include, overwrite=True,
-                     split_naming='bids')
-        del raw_out
-        if config.interactive:
-            # Load the data we have just written, because it contains only
-            # the relevant channels.
-            raw = mne.io.read_raw_fif(raw_fname_out, allow_maxshield=True)
-            raw.plot(n_channels=50, butterfly=True)
+        raw.save(**kwargs)
 
         # Empty-room processing.
-        #
-        # We pick the empty-room recording closest in time to the first run
-        # of the experimental session.
         if run_idx == 0 and config.process_er:
-            msg = 'Processing empty-room recording …'
-            logger.info(gen_log_message(step=1, subject=subject,
+            msg = 'Importing empty-room recording …'
+            logger.info(gen_log_message(step=0, subject=subject,
                                         session=session, message=msg))
 
             bids_path_er_in = bids_path_in.find_empty_room()
@@ -413,68 +298,41 @@ def run_maxwell_filter(subject, session=None):
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]
 
-            # Maxwell-filter empty-room data.
-            if config.use_maxwell_filter:
-                msg = 'Applying Maxwell filter to empty-room recording'
-                logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
+            raw_er_fname_out = bids_path_out.copy().update(task='noise',
+                                                           run=None)
 
-                # We want to ensure we use the same coordinate frame origin in
-                # empty-room and experimental data processing. To do this, we
-                # inject the sensor locations and the head <> device transform
-                # into the empty-room recording's info, and leave all other
-                # parameters the same as for the experimental data. This is not
-                # very clean, as we normally should not alter info manually,
-                # except for info['bads']. Will need improvement upstream in
-                # MNE-Python.
-                raw_er.info['dig'] = dig
-                raw_er.info['dev_head_t'] = dev_head_t
-                raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
-                                                              **common_mf_kws)
+            kwargs = dict(fname=raw_er_fname_out, split_naming='bids',
+                          overwrite=True)
+            if not config.use_maxwell_filter:
+                # Save only the channel types we wish to analyze
+                # (same as for experimental data above).
+                chs_to_include = config.get_channels_to_analyze(raw.info)
+                kwargs['picks'] = chs_to_include
 
-                # Perform a sanity check: empty-room rank should match the
-                # experimental data rank after Maxwell filtering.
-                rank_exp = mne.compute_rank(raw, rank='info')['meg']
-                rank_er = mne.compute_rank(raw_er, rank='info')['meg']
-                if not np.isclose(rank_exp, rank_er):
-                    msg = (f'Experimental data rank {rank_exp:.1f} does not '
-                           f'match empty-room data rank {rank_er:.1f} after '
-                           f'Maxwell filtering. This indicates that the data '
-                           f'were processed  differently.')
-                    raise RuntimeError(msg)
-
-                raw_er_out = raw_er_sss
-                raw_er_fname_out = bids_path_out.copy().update(
-                    processing='sss')
-            else:
-                raw_er_out = raw_er
-                raw_er_fname_out = bids_path_out.copy()
-
-            raw_er_fname_out = raw_er_fname_out.update(
-                task='noise', extension='.fif', run=None)
-
-            # Save only the channel types we wish to analyze
-            # (same as for experimental data above).
-            raw_er_out.save(raw_er_fname_out, picks=chs_to_include,
-                            overwrite=True, split_naming='bids')
-            del raw_er_out
+            raw_er.save(**kwargs)
+            del raw_er
 
 
 @failsafe_run(on_error=on_error)
 def main():
-    """Run maxwell_filter."""
-    msg = 'Running Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    """Import the data."""
+    msg = 'Running Step: Data import'
+    logger.info(gen_log_message(step=0, message=msg))
 
-    if config.use_maxwell_filter:
-        parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                              n_jobs=config.N_JOBS)
+    ch_types = config.ch_types
+    if (config.use_maxwell_filter and
+            config.rename_events and
+            (ch_types == ['eeg'] and config.find_flat_channels_meg) and
+            (ch_types == ['eeg'] and config.find_noisy_channels_meg) and
+            (ch_types == ['eeg'] and config.eeg_bipolar_channels) and
+            config.drop_channels):
+        parallel, run_func, _ = parallel_func(run_import, n_jobs=config.N_JOBS)
         parallel(run_func(subject, session) for subject, session in
-                 itertools.product(config.get_subjects(),
-                                   config.get_sessions()))
+                    itertools.product(config.get_subjects(),
+                                    config.get_sessions()))
 
-    msg = 'Completed Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    msg = 'Completed Step: Data import'
+    logger.info(gen_log_message(step=0, message=msg))
 
 
 if __name__ == '__main__':

@@ -21,6 +21,7 @@ else:
 import coloredlogs
 import numpy as np
 import mne
+from mne_bids import BIDSPath
 from mne_bids.path import get_entity_vals
 
 PathLike = Union[str, pathlib.Path]
@@ -1709,3 +1710,49 @@ def sanitize_cond_name(cond: str) -> str:
             .replace('_', '')
             .replace('-', ''))
     return cond
+
+
+def get_mf_cal_fname(
+    subject: str,
+    session: str
+) -> pathlib.Path:
+    if mf_cal_fname is None:
+        mf_cal_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=get_bids_root())
+                        .meg_calibration_fpath)
+        if mf_cal_fpath is None:
+            raise ValueError('Could not find Maxwell Filter Calibration '
+                             'file.')
+    else:
+        mf_cal_fpath = pathlib.Path(mf_cal_fname)
+        if not mf_cal_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter Calibration '
+                             f'file at {str(mf_cal_fpath)}.')
+
+    return mf_cal_fpath
+
+
+def get_mf_ctc_fname(
+    subject: str,
+    session: str
+) -> pathlib.Path:
+    if mf_ctc_fname is None:
+        mf_ctc_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=get_bids_root())
+                        .meg_crosstalk_fpath)
+        if mf_ctc_fpath is None:
+            raise ValueError('Could not find Maxwell Filter cross-talk '
+                             'file.')
+    else:
+        mf_ctc_fpath = pathlib.Path(mf_ctc_fname)
+        if not mf_ctc_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter cross-talk '
+                             f'file at {str(mf_ctc_fpath)}.')
+
+    return mf_ctc_fpath

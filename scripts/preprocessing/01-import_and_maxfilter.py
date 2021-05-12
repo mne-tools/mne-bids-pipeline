@@ -463,7 +463,7 @@ def run_maxwell_filter(subject, session=None):
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
-    msg = 'Running Step 1: Maxwell filter
+    msg = 'Running Step 1: Maxwell filter'
     logger.info(gen_log_message(step=1, message=msg))
 
     if config.use_maxwell_filter:
@@ -473,7 +473,7 @@ def main():
                  itertools.product(config.get_subjects(),
                                    config.get_sessions()))
 
-    msg = 'Completed Step 1: Maxwell filter
+    msg = 'Completed Step 1: Maxwell filter'
     logger.info(gen_log_message(step=1, message=msg))
 
 

@@ -43,7 +43,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_message, on_error, failsafe_run, rename_annotations
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -86,38 +86,6 @@ def get_mf_ctc_fname(subject, session):
                              f'file at {str(mf_ctc_fpath)}.')
 
     return mf_ctc_fpath
-
-
-def rename_events(raw, subject, session):
-    # Check if the user requested to rename events that don't exist.
-    # We don't want this to go unnoticed.
-    event_names_set = set(raw.annotations.description)
-    rename_events_set = set(config.rename_events.keys())
-    events_not_in_raw = rename_events_set - event_names_set
-    if events_not_in_raw:
-        msg = (f'You requested to rename the following events, but '
-               f'they are not present in the BIDS input data:\n'
-               f'{", ".join(sorted(list(events_not_in_raw)))}')
-        if config.on_rename_missing_events == 'warn':
-            logger.warning(msg)
-        else:
-            raise ValueError(msg)
-
-    # Do the actual event renaming.
-    msg = 'Renaming events …'
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                session=session))
-    descriptions = list(raw.annotations.description)
-    for old_event_name, new_event_name in config.rename_events.items():
-        msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(gen_log_message(message=msg, step=1,
-                                    subject=subject, session=session))
-        for idx, description in enumerate(descriptions.copy()):
-            if description == old_event_name:
-                descriptions[idx] = new_event_name
-
-    descriptions = np.asarray(descriptions, dtype=str)
-    raw.annotations.description = descriptions
 
 
 def find_bad_channels(raw, subject, session, task, run):
@@ -232,7 +200,7 @@ def load_data(bids_path):
 
         # Rename events.
         if config.rename_events:
-            rename_events(raw=raw, subject=subject, session=session)
+            rename_annotations(raw=raw, subject=subject, session=session)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):

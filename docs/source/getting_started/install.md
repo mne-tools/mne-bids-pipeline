@@ -1,10 +1,12 @@
 Install MNE-Python
 ------------------
+
 First, you need to make sure you have MNE-Python installed and working on your
 system. See the [installation instructions](https://mne.tools/stable/install/mne_python.html).
 
 Install additional dependencies
 -------------------------------
+
 You will also need to install the a number of additional dependencies that are
 required to run the pipeline.
 
@@ -32,4 +34,5 @@ required to run the pipeline.
 
 Download MNE-BIDS-Pipeline
 --------------------------
+
 TODO

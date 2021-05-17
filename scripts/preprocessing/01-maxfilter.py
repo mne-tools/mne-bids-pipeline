@@ -55,16 +55,15 @@ def run_maxwell_filter(subject, session=None):
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
-    if config.use_maxwell_filter:
-        reference_run = config.get_mf_reference_run()
-        msg = f'Loading reference run: {reference_run}.'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                    session=session))
-        bids_path_in.update(run=reference_run)
-        info = mne.io.read_info(bids_path_in)
-        dev_head_t = info['dev_head_t']
-        dig = info['dig']
-        del reference_run, info
+    reference_run = config.get_mf_reference_run()
+    msg = f'Loading reference run: {reference_run}.'
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session))
+    bids_path_in.update(run=reference_run)
+    info = mne.io.read_info(bids_path_in)
+    dev_head_t = info['dev_head_t']
+    dig = info['dig']
+    del reference_run, info
 
     for run_idx, run in enumerate(config.get_runs()):
         bids_path_in.update(run=run)

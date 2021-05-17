@@ -35,7 +35,11 @@ from config import (gen_log_message, on_error, failsafe_run, get_mf_cal_fname,
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def rename_events(raw, subject, session):
+def rename_events(raw, subject, session) -> None:
+    """Rename events (actually, annotations descriptions) in ``raw``.
+
+    Modifies ``raw`` in-place.
+    """
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
     event_names_set = set(raw.annotations.description)
@@ -67,7 +71,11 @@ def rename_events(raw, subject, session):
     raw.annotations.description = descriptions
 
 
-def find_bad_channels(raw, subject, session, task, run):
+def find_bad_channels(raw, subject, session, task, run) -> None:
+    """Find and mark bad MEG channels.
+
+    Modifies ``raw`` in-place.
+    """
     if (config.find_flat_channels_meg and
             not config.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
@@ -172,28 +180,54 @@ def load_data(bids_path):
 
     raw = read_raw_bids(bids_path=bids_path)
 
-    if subject != 'emptyroom':
-        # Crop the data.
-        if config.crop is not None:
-            raw.crop(*config.crop)
-
-        # Rename events.
-        if config.rename_events:
-            rename_events(raw=raw, subject=subject, session=session)
+    crop_data(raw, subject, session)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
-    montage_name = config.eeg_template_montage
-    if config.get_datatype() == 'eeg' and montage_name:
-        msg = (f'Setting EEG channel locations to template montage: '
-               f'{montage_name}.')
+    set_eeg_montage(raw, subject, session)
+    create_bipolar_channels(raw, subject, session)
+    drop_channels(raw, subject, session)
+
+    return raw
+
+
+def rename_events(raw, subject, session):
+    """Crop the data to the desired duration.
+
+    Modifies ``raw`` in-place.
+    """
+    if subject != 'emptyroom' and config.rename_events:
+        rename_events(raw=raw, subject=subject, session=session)
+
+
+def crop_data(raw, subject, session):
+    """Crop the data to the desired duration.
+
+    Modifies ``raw`` in-place.
+    """
+    if subject != 'emptyroom' and config.crop is not None:
+        raw.crop(*config.crop)
+
+
+def drop_channels(subject, session, raw) -> None:
+    """Drop channels from the data.
+
+    Modifies ``raw`` in-place.
+    """
+    if config.drop_channels:
+        msg = f'Dropping channels: {", ".join(config.drop_channels)}'
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
-        montage = mne.channels.make_standard_montage(montage_name)
-        raw.set_montage(montage, match_case=False, on_missing='warn')
+        raw.drop_channels(config.drop_channels)
 
+
+def create_bipolar_channels(raw, subject, session,) -> None:
+    """Create a channel from a bipolar referencing scheme..
+
+    Modifies ``raw`` in-place.
+    """
     if config.ch_types == ['eeg'] and config.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
@@ -206,20 +240,18 @@ def load_data(bids_path):
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
-
         # If we created a new bipolar channel that the user wishes to
-        # use as an EOG channel, it is probably a good idea to set its channel
-        # type to 'eog'. Bipolar channels, by default, don't have a location,
-        # so one might get unexpected results otherwise, as the channel would
-        # influence e.g. in GFP calculations, but not appear on topographic
-        # maps.
+        # # use as an EOG channel, it is probably a good idea to set its
+        # channel type to 'eog'. Bipolar channels, by default, don't have a
+        # location, so one might get unexpected results otherwise, as the
+        # channel would influence e.g. in GFP calculations, but not appear on
+        # topographic maps.
         if (config.eog_channels and
                 any([eog_ch_name in config.eeg_bipolar_channels
                      for eog_ch_name in config.eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
             logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                         session=session))
-
         for eog_ch_name in config.eog_channels:
             if eog_ch_name in config.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
@@ -228,13 +260,20 @@ def load_data(bids_path):
                                             session=session))
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
-    if config.drop_channels:
-        msg = f'Dropping channels: {", ".join(config.drop_channels)}'
+
+def set_eeg_montage(raw, subject, session) -> None:
+    """Set an EEG template montage if requested.
+
+    Modifies ``raw`` in-place.
+    """
+    montage_name = config.eeg_template_montage
+    if config.get_datatype() == 'eeg' and montage_name:
+        msg = (f'Setting EEG channel locations to template montage: '
+               f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
-        raw.drop_channels(config.drop_channels)
-
-    return raw
+        montage = mne.channels.make_standard_montage(montage_name)
+        raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
 def run_import(subject, session=None):

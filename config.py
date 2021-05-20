@@ -666,7 +666,7 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
-conditions: Union[Iterable[str], Dict[str, str]] = ['left', 'right']
+conditions: Union[Iterable[str], Dict[str, str]] = []
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the

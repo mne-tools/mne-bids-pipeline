@@ -434,8 +434,8 @@ def run_maxwell_filter(subject, session=None):
 
                 # Perform a sanity check: empty-room rank should match the
                 # experimental data rank after Maxwell filtering.
-                rank_exp = mne.compute_rank(raw, rank='info')['meg']
-                rank_er = mne.compute_rank(raw_er, rank='info')['meg']
+                rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
+                rank_er = mne.compute_rank(raw_er_sss, rank='info')['meg']
                 if not np.isclose(rank_exp, rank_er):
                     msg = (f'Experimental data rank {rank_exp:.1f} does not '
                            f'match empty-room data rank {rank_er:.1f} after '

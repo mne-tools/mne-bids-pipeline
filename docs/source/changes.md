@@ -65,3 +65,5 @@ authors:
 - The summary report didn't use the cleaned epochs for showing the effects of
   ICA.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
+- Missing (epochs_)tmin and (epochs_)tmax in some config files.
+  (by crsegerie)

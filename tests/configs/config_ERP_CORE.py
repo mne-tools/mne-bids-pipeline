@@ -203,8 +203,8 @@ elif task == 'N170':
 
         rename_events[orig_name] = new_name
 
-    tmin = -0.2
-    tmax = 0.8
+    epochs_tmin = -0.2
+    epochs_tmax = 0.8
     baseline = (None, 0)
     conditions = ['stimulus/face/normal', 'stimulus/car/normal']
     contrasts = [('stimulus/face/normal', 'stimulus/car/normal')]

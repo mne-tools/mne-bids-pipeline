@@ -65,3 +65,5 @@ authors:
 - The summary report didn't use the cleaned epochs for showing the effects of
   ICA.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
+- The sanity check computing comparing the rank of the expterimental data and the rank of the empty-room after the maxfilter did not use the maxfiltered matrices
+  (by {{ authors.agramfort }}, {{ authors.hoechenberger }} and {{ crsegerie }}).

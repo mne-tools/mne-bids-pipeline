@@ -21,6 +21,7 @@ mkdocs-material-extensions
 mkdocs-macros-plugin
 mkdocstrings
 coloredlogs
-openneuro-py
+# openneuro-py
+https://api.github.com/repos/hoechenberger/openneuro-py/zipball/main
 https://api.github.com/repos/mne-tools/mne-python/zipball/main
 https://api.github.com/repos/mne-tools/mne-bids/zipball/main

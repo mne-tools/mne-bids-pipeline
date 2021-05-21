@@ -65,3 +65,5 @@ authors:
 - The summary report didn't use the cleaned epochs for showing the effects of
   ICA.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
+- The sanity check comparing the rank of the experimental data and the rank of the empty-room after Maxwell-filtering did not use the maxfiltered data
+  (by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ crsegerie }}).

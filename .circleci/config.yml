@@ -614,6 +614,11 @@ jobs:
           fingerprints:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
       - run:
+          name: Add CircleCI config to documentation directory
+          command: |
+            mkdir docs/site/.circleci
+            cp .circleci/config.yml docs/site/.circleci/
+      - run:
           name: Deploy docs to gh-pages branch
           command: gh-pages --message "[skip ci] Update docs" --dist docs/site
 

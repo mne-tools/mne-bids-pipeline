@@ -631,7 +631,7 @@ jobs:
             git config user.email "ci-build@mne.tools"
             git config user.name "ci-build"
       - run:
-          name: Ensure we're on the gh-pages branch (sanity check)
+          name: Switch to gh-pages branch
           command: git switch gh-pages
       - run:
           name: Squash gh-pages commits

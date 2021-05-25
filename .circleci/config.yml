@@ -617,6 +617,32 @@ jobs:
           name: Deploy docs to gh-pages branch
           command: gh-pages --message "[skip ci] Update docs" --dist docs/site
 
+  squash_doc_commits:
+    docker:
+      - image: cimg/base:2021.04
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
+      - checkout
+      - run:
+          name: Configure git
+          command: |
+            git config user.email "ci-build@mne.tools"
+            git config user.name "ci-build"
+      - run:
+          name: Switch to gh-pages branch
+          command: git switch gh-pages
+      - run:
+          name: Squash gh-pages commits
+          command: |
+            git reset --soft main
+            git add -A
+            git commit -m "Squashed gh-pages commits [skip ci]"
+      - run:
+          name: Force-push squashed gh-pages branch
+          command: git push --force origin gh-pages
+
 workflows:
   version: 2
 
@@ -707,3 +733,7 @@ workflows:
             branches:
               only:
                 - main
+
+      - squash_doc_commits:
+          requires:
+            - deploy_docs

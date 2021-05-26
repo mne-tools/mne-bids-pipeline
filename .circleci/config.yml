@@ -29,9 +29,12 @@ _bashenv: &bashenv
     echo "export XDG_RUNTIME_DIR=/tmp/runtime-circleci" >> $BASH_ENV
     wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
     source get_minimal_commands.sh
-    git config --global user.email "user@mne.tools"
-    git config --global user.name "mne user"
+    git config user.email "ci-build@mne.tools"
+    git config user.name "ci-build"
     mkdir -p ~/mne_data
+  - add_ssh_keys:
+      fingerprints:
+        - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
 
 jobs:
   setup_env:
@@ -605,19 +608,9 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
-          name: Install and configure dependencies
+          name: Install "gh-pages" CLI app
           command: |
             npm install -g --silent gh-pages@3.0.0  # Work around https://github.com/tschaub/gh-pages/issues/354
-            git config user.email "ci-build@mne.tools"
-            git config user.name "ci-build"
-      - add_ssh_keys:
-          fingerprints:
-            - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
-      - run:
-          name: Add CircleCI config to documentation directory
-          command: |
-            mkdir docs/site/.circleci
-            cp .circleci/config.yml docs/site/.circleci/
       - run:
           name: Deploy docs to gh-pages branch
           command: gh-pages --no-history --message "[skip ci] Update docs" --dist docs/site

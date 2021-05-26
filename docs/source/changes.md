@@ -14,6 +14,8 @@ authors:
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
 - The Maxwell filtering step can now be skipped if [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`. In that case, the temporal filtering script can directly start from the input files indicated by [`bids_root`][config.bids_root].
+- An official [project governance](governance.md) structure has officially
+  been adopted.
 
 ### Behavior changes
 
@@ -64,3 +66,8 @@ authors:
 - The summary report didn't use the cleaned epochs for showing the effects of
   ICA.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
+- The sanity check comparing the rank of the experimental data and the rank of
+   the empty-room after Maxwell-filtering did not use the maxfiltered data.
+  ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ authors.crsegerie }})
+- `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config files.
+  ({{ gh(340) }} by {{ authors.crsegerie }})

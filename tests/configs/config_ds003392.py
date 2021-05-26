@@ -24,8 +24,8 @@ ica_n_components = 0.99
 ica_reject_components = 'auto'
 
 # Epochs
-tmin = -0.2
-tmax = 1.0
+epochs_tmin = -0.2
+epochs_tmax = 1.0
 baseline = (None, 0)
 
 # Conditions / events to consider when epoching

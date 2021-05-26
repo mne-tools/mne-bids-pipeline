@@ -40,6 +40,9 @@ def rename_events(raw, subject, session) -> None:
 
     Modifies ``raw`` in-place.
     """
+    if not config.rename_events:
+        return
+
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
     event_names_set = set(raw.annotations.description)
@@ -189,6 +192,7 @@ def load_data(bids_path):
     set_eeg_montage(raw=raw, subject=subject, session=session)
     create_bipolar_channels(raw=raw, subject=subject, session=session)
     drop_channels(raw=raw, subject=subject, session=session)
+    rename_events(raw=raw, subject=subject, session=session)
 
     return raw
 

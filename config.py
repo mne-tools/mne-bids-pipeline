@@ -36,6 +36,9 @@ saving the analysis results.
 
     study_name = 'my-study'
     ```
+
+{{ general.md }}
+
 """
 
 bids_root: Optional[PathLike] = None
@@ -49,6 +52,9 @@ Raises an exception if the BIDS root has not been specified.
     bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
     bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
     ```
+
+{{ general.md }}
+
 """
 
 deriv_root: Optional[PathLike] = None
@@ -56,6 +62,9 @@ deriv_root: Optional[PathLike] = None
 The root of the derivatives directory in which the pipeline will store
 the processing results. If ``None``, this will be
 ``derivatives/mne-bids-pipeline`` inside the BIDS root.
+
+{{ general.md }}
+
 """
 
 subjects_dir: Optional[PathLike] = None
@@ -63,6 +72,9 @@ subjects_dir: Optional[PathLike] = None
 Path to the directory that contains the MRI data files and their
 derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
 $SUBJECTS_DIR used by the Freesurfer software.
+
+{{ general.md }}
+
 """
 
 interactive: bool = False
@@ -71,47 +83,74 @@ If True, the scripts will provide some interactive elements, such as
 figures. If running the scripts from a notebook or Spyder,
 run `%matplotlib qt` in the command line to open the figures in a separate
 window.
+
+{{ preprocessing, sensor, source }}
+
 """
 
 crop: Optional[Tuple[float, float]] = None
 """
 Crop the raw data to the specified time interval ``[tmin, tmax]`` in seconds.
 If ``None``, do not crop the data.
+
+{{ preprocessing }}
+
 """
 
 sessions: Union[List, Literal['all']] = 'all'
 """
 The sessions to process.
+
+{{ general.md }}
+
 """
 
 task: str = ''
 """
 The task to process.
+
+{{ general.md }}
+
 """
 
 runs: Union[Iterable, Literal['all']] = 'all'
 """
 The runs to process.
+
+{{ general.md }}
+
 """
 
 acq: Optional[str] = None
 """
 The BIDS `acquisition` entity.
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 proc: Optional[str] = None
 """
 The BIDS `processing` entity.
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 rec: Optional[str] = None
 """
 The BIDS `recording` entity.
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 space: Optional[str] = None
 """
 The BIDS `space` entity.
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 subjects: Union[Iterable[str], Literal['all']] = 'all'
@@ -132,6 +171,9 @@ section).
     subjects = ['05']  # Only include subject 05.
     subjects = ['01', '02']  # Only include subjects 01 and 02.
     ```
+
+{{ general.md }}
+
 """
 
 exclude_subjects: Iterable[str] = []
@@ -144,6 +186,9 @@ is automatically excluded from regular analysis.
     a participant (e.g. too many movements, missing blocks, aborted experiment,
     did not understand the instructions, etc, ...)
     The ``emptyroom`` subject will be excluded automatically.
+
+{{ general.md }}
+
 """
 
 process_er: bool = False
@@ -154,6 +199,9 @@ is required if you wish to use the empty-room recording to estimate noise
 covariance (via ``noise_cov='emptyroom'``). The empty-room recording
 corresponding to the processed experimental data will be retrieved
 automatically.
+
+{{ preprocessing, report }}
+
 """
 
 ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
@@ -174,6 +222,8 @@ The channel types to consider.
     # Currently does not work and will raise an error message:
     ch_types = ['meg', 'eeg']
     ```
+{{ preprocessing, sensor, source }}
+
 """
 
 data_type: Optional[Literal['meg', 'eeg']] = None
@@ -208,6 +258,9 @@ If ``None``, we will assume that the data type matches the channel type.
     ch_types = ['eeg']
     data_type = 'eeg'  # or data_type = None
     ```
+
+{{ general.md }}
+
 """
 
 eog_channels: Optional[Iterable[str]] = None
@@ -243,6 +296,9 @@ a subset of them here, only this subset will be used during processing.
     ```python
     eog_channels = ['Fp1', 'Fp2']
     ```
+
+{{ preprocessing }}
+
 """
 
 eeg_bipolar_channels: Optional[Dict[str, Tuple[str, str]]] = None
@@ -276,6 +332,8 @@ Note: Note
     eeg_add_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
                                 'VEOG': ('VEOG_lower', 'VEOG_upper')}
     ```
+{{ preprocessing }}
+
 """
 
 eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
@@ -299,6 +357,8 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```python
     eeg_reference = ['P9', 'P10']
     ```
+{{ preprocessing, sensor }}
+
 """
 
 eeg_template_montage: Optional[str] = None
@@ -327,6 +387,8 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
     ```python
     eeg_template_montage = 'biosemi64'
     ```
+{{ preprocessing }}
+
 """
 
 drop_channels: Iterable[str] = []
@@ -340,6 +402,8 @@ to remove the anode, cathode, or both.
     ```python
     drop_channels = ['Fp1', 'Cz]
     ```
+{{ preprocessing }}
+
 """
 
 analyze_channels: Union[Literal['all'], Iterable['str']] = 'all'
@@ -358,6 +422,9 @@ itself, nor to the source analysis stage.
     ```python
     analyze_channels = ['Pz']
     ```
+
+{{ sensor, report }}
+
 """
 
 ###############################################################################
@@ -369,11 +436,17 @@ find_flat_channels_meg: bool = False
 """
 Auto-detect "flat" channels (i.e. those with unusually low variability) and
 mark them as bad.
+
+{{ preprocessing }}
+
 """
 
 find_noisy_channels_meg: bool = False
 """
 Auto-detect "noisy" channels and mark them as bad.
+
+{{ preprocessing, report }}
+
 """
 
 use_maxwell_filter: bool = False
@@ -386,6 +459,9 @@ warning:
     Bad channels need to be set through BIDS channels.tsv and / or via the
     ``find_flat_channels_meg`` and ``find_noisy_channels_meg`` options above
     before applying Maxwell filter.
+
+{{ preprocessing }}
+
 """
 
 mf_st_duration: Optional[float] = None
@@ -417,6 +493,9 @@ buffer window will be lumped into the previous buffer.
     mf_st_duration = None
     mf_st_duration = 10.  # to apply tSSS with 0.1Hz highpass filter.
     ```
+
+{{ preprocessing }}
+
 """
 
 mf_head_origin = 'auto'
@@ -432,6 +511,8 @@ options or specifying the origin manually.
     ```python
     mf_head_origin = 'auto'
     ```
+{{ preprocessing }}
+
 """
 
 mf_reference_run: Optional[str] = None
@@ -450,6 +531,8 @@ runs. If ``None``, pick the first run.
     ```python
     mf_reference_run = '01'  # Use run "01"
     ```
+{{ preprocessing }}
+
 """
 
 mf_cal_fname: Optional[str] = None
@@ -464,6 +547,8 @@ location is used.
     ```python
     mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
     ```
+{{ preprocessing }}
+
 """
 
 mf_ctc_fname: Optional[str] = None
@@ -478,6 +563,8 @@ warning:
     ```python
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
+{{ preprocessing }}
+
 """
 
 ###############################################################################
@@ -493,6 +580,8 @@ Apply interpolation to fix stimulation artifact.
     ```python
     fix_stim_artifact = False
     ```
+{{ preprocessing }}
+
 """
 
 stim_artifact_tmin: float = 0.
@@ -503,6 +592,8 @@ Start time of the interpolation window in seconds.
     ```python
     stim_artifact_tmin = 0.  # on stim onset
     ```
+{{ preprocessing }}
+
 """
 
 stim_artifact_tmax: float = 0.01
@@ -513,6 +604,8 @@ End time of the interpolation window in seconds.
     ```python
     stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
     ```
+{{ preprocessing }}
+
 """
 
 ###############################################################################
@@ -524,12 +617,18 @@ l_freq: Optional[float] = None
 """
 The low-frequency cut-off in the highpass filtering step.
 Keep it None if no highpass filtering should be applied.
+
+{{ preprocessing }}
+
 """
 
 h_freq: Optional[float] = 40.
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
+
+{{ preprocessing, report }}
+
 """
 
 ###############################################################################
@@ -546,6 +645,8 @@ If None then no resampling will be done.
     resample_sfreq = None  # no resampling
     resample_sfreq = 500  # resample to 500Hz
     ```
+{{ preprocessing }}
+
 """
 
 decim: int = 1
@@ -563,6 +664,8 @@ can be used for resampling raw data. ``1`` means no decimation.
     decim = 1  # no decimation
     decim = 4  # decimate by 4 ie devide sampling frequency by 4
     ```
+{{ preprocessing }}
+
 """
 
 
@@ -583,6 +686,8 @@ Pass an empty dictionary to not perform any renaming.
     ```python
     rename_events = {'audio_left': 'audio/left'}
     ```
+{{ preprocessing }}
+
 """
 
 on_rename_missing_events: Literal['warn', 'raise'] = 'raise'
@@ -592,6 +697,9 @@ How to handle the situation where you specified an event to be renamed via
 default, we will raise an exception to avoid accidental mistakes due to typos;
 however, if you're sure what you're doing, you may change this to ``'warn'``
 to only get a warning instead.
+
+{{ preprocessing }}
+
 """
 
 ###############################################################################
@@ -611,6 +719,9 @@ this to `'merge'`.
 warning:
     The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
     April 1st, 2021.
+
+{{ preprocessing }}
+
 """
 
 ###############################################################################
@@ -623,12 +734,18 @@ The beginning of the time window for metadata generation, in seconds,
 relative to the time-locked event of the respective epoch. This may be less
 than or larger than the epoch's first time point. If ``None``, use the first
 time point of the epoch.
+
+{{ preprocessing }}
+
 """
 
 epochs_metadata_tmax: Optional[float] = None
 """
 Same as ``epochs_metadata_tmin``, but specifying the **end** of the time
 window for metadata generation.
+
+{{ preprocessing }}
+
 """
 
 epochs_metadata_keep_first: Optional[Iterable[str]] = None
@@ -657,6 +774,9 @@ aggregation will take place and no new columns will be created.
     ```
     This will add the columns ``response``, ``first_response``, ``stimulus``,
     and ``first_stimulus``.
+
+{{ preprocessing }}
+
 """
 
 epochs_metadata_keep_last: Optional[Iterable[str]] = None
@@ -664,6 +784,9 @@ epochs_metadata_keep_last: Optional[Iterable[str]] = None
 Same as ``epochs_metadata_keep_first``, but for keeping the **last**
 occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
+
+{{ preprocessing }}
+
 """
 
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
@@ -695,6 +818,9 @@ it will raise an error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 epochs_tmin: float = -0.2
@@ -705,6 +831,8 @@ The beginning of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmin = -0.2  # 200 ms before event onset
     ```
+{{ preprocessing }}
+
 """
 
 epochs_tmax: float = 0.5
@@ -714,6 +842,8 @@ The end of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
     ```
+{{ preprocessing }}
+
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -725,6 +855,8 @@ if ``None``, no baseline correction is applied.
     ```python
     baseline = (None, 0)  # beginning of epoch until time point zero
     ```
+{{ preprocessing }}
+
 """
 
 contrasts: Iterable[Tuple[str, str]] = []
@@ -751,6 +883,8 @@ of contrasts.
                  ('visual/left', 'visual/right'),
                  ('auditory', 'visual')]
     ```
+{{ sensor, report }}
+
 """
 
 ###############################################################################
@@ -780,6 +914,9 @@ artifacts from the data. For ICA, the independent components related to
 EOG and ECG activity will be omitted during the signal reconstruction step in
 order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
+
+{{ preprocessing, sensor, source, report }}
+
 """
 
 ica_reject: Optional[Dict[str, float]] = None
@@ -800,11 +937,16 @@ otherwise, ICA won't be able to "see" these artifacts.
     ica_reject = {'grad': 15e-10}
     ica_reject = None
     ```
+{{ preprocessing }}
+
 """
 
 ica_algorithm: Literal['picard', 'fastica', 'extended_infomax'] = 'picard'
 """
 The ICA algorithm to use.
+
+{{ preprocessing }}
+
 """
 
 ica_l_freq: Optional[float] = 1.
@@ -826,6 +968,9 @@ Note: Note
     opinionated (but partially data-driven) decision made by the developers.
     If you have reason to challenge this behavior, please get in touch with
     us so we can discuss.
+
+{{ preprocessing }}
+
 """
 
 ica_max_iterations: int = 500
@@ -839,6 +984,9 @@ not necessarily exhaust the maximum number of iterations. Note that the
 default of 200 seems to be sufficient for Picard in many datasets, because
 it converges quicker than the other algorithms; but e.g. for FastICA, this
 limit may be too low to achieve convergence.
+
+{{ preprocessing }}
+
 """
 
 ica_n_components: Optional[Union[float, int]] = 0.8
@@ -863,6 +1011,9 @@ ICA.
 If ``None``, **all** principal components will be used.
 
 This setting may drastically alter the time required to compute ICA.
+
+{{ preprocessing }}
+
 """
 
 ica_decim: Optional[int] = None
@@ -871,11 +1022,17 @@ The decimation parameter to compute ICA. If 5 it means
 that 1 every 5 sample is used by ICA solver. The higher the faster
 it is to run but the less data you have to compute a good ICA. Set to
 ``1`` or ``None`` to not perform any decimation.
+
+{{ preprocessing }}
+
 """
 
 ica_ctps_ecg_threshold: float = 0.1
 """
 The threshold parameter passed to `find_bads_ecg` method.
+
+{{ preprocessing }}
+
 """
 
 ica_eog_threshold: float = 3.0
@@ -883,6 +1040,9 @@ ica_eog_threshold: float = 3.0
 The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
+
+{{ preprocessing }}
+
 """
 
 
@@ -907,6 +1067,8 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     reject = {'eeg': 100e-6, 'eog': 250e-6}
     reject = None
     ```
+{{ preprocessing }}
+
 """
 
 reject_tmin: Optional[float] = None
@@ -917,6 +1079,8 @@ start with the first time point.
     ```python
     reject_tmin = -0.1  # 100 ms before event onset.
     ```
+{{ preprocessing }}
+
 """
 
 reject_tmax: Optional[float] = None
@@ -927,6 +1091,8 @@ with the last time point.
     ```python
     reject_tmax = 0.3  # 300 ms after event onset.
     ```
+{{ preprocessing }}
+
 """
 
 ###############################################################################
@@ -937,6 +1103,9 @@ decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
 "contrasts". MVPA will be performed on the level of individual epochs.
+
+{{ sensor, report }}
+
 """
 
 decoding_metric: str = 'roc_auc'
@@ -945,17 +1114,26 @@ The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
 or any other metric supported by `scikit-learn`.
 
 With AUC, chance level is the same regardless of class balance.
+
+{{ sensor, report }}
+
 """
 
 decoding_n_splits: int = 5
 """
 The number of folds (a.k.a. splits) to use in the cross-validation.
+
+{{ sensor }}
+
 """
 
 n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding score.
+
+{{ sensor, report }}
+
 """
 
 ###############################################################################
@@ -973,6 +1151,8 @@ locations set.
     ```python
     interpolate_bads_grand_average = True
     ```
+{{ sensor }}
+
 """
 
 ###############################################################################
@@ -987,6 +1167,8 @@ The conditions to compute time-frequency decomposition on.
     ```python
     time_frequency_conditions = ['left', 'right']
     ```
+{{ sensor }}
+
 """
 
 ###############################################################################
@@ -997,6 +1179,8 @@ The conditions to compute time-frequency decomposition on.
 run_source_estimation: bool = True
 """
 Whether to run source estimation processing steps if not explicitly requested.
+
+{{ source }}
 """
 
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
@@ -1016,6 +1200,9 @@ If ``'auto'``, use FLASH images if available, and use the ``watershed``
 algorithm with the T1-weighted images otherwise.
 
 *[FLASH MRI]: Fast low angle shot magnetic resonance imaging
+
+{{ source }}
+
 """
 
 recreate_bem: bool = False
@@ -1023,6 +1210,9 @@ recreate_bem: bool = False
 Whether to re-create the BEM surfaces, even if existing surfaces have been
 found. If ``False``, the BEM surfaces are only created if they do not exist
 already. ``True`` forces their recreation, overwriting existing BEM surfaces.
+
+{{ source }}
+
 """
 
 mri_t1_path_generator: Optional[Callable] = None
@@ -1083,6 +1273,8 @@ Note: Note
 
     mri_t1_path_generator = get_t1_from_meeg
     ```
+{{ source }}
+
 """
 
 spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
@@ -1093,11 +1285,17 @@ icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
 distance-based spacing (in mm). See (the respective MNE-Python documentation)
 [https://mne.tools/dev/overview/cookbook.html#setting-up-the-source-space]
 for more info.
+
+{{ source }}
+
 """
 
 mindist: float = 5
 """
 Exclude points closer than this distance (mm) to the bounding surface.
+
+{{ source }}
+
 """
 
 # loose: Union[float, Literal['auto']] = 0.2
@@ -1125,6 +1323,9 @@ inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
 """
 Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
+
+{{ source, report }}
+
 """
 
 noise_cov: Union[Tuple[Optional[float], Optional[float]],
@@ -1163,6 +1364,8 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'emptyroom'
     ```
+{{ source }}
+
 """
 
 ###############################################################################
@@ -1174,6 +1377,8 @@ l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 Specifies the transition bandwidth of the
 highpass filter. By default it's `'auto'` and uses default MNE
 parameters.
+
+{{ preprocessing }}
 """
 
 h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
@@ -1181,11 +1386,15 @@ h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 Specifies the transition bandwidth of the
 lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
+
+{{ preprocessing }}
 """
 
 N_JOBS: int = 1
 """
 Specifies how many subjects you want to process in parallel.
+
+{{ init, preprocessing, sensor, source, report }}
 """
 
 random_state: Optional[int] = 42
@@ -1194,28 +1403,41 @@ You can specify the seed of the random number generator (RNG).
 This setting is passed to the ICA algorithm and to the decoding function,
 ensuring reproducible results. Set to ``None`` to avoid setting the RNG
 to a defined state.
+
+{{ preprocessing, sensor }}
 """
 
 shortest_event: int = 1
 """
 Minimum number of samples an event must last. If the
 duration is less than this, an exception will be raised.
+
+{{ no }}
 """
 
 log_level: Literal['info', 'error'] = 'info'
 """
 Set the pipeline logging verbosity.
+
+{{ no }}
+
 """
 
 mne_log_level: Literal['info', 'error'] = 'error'
 """
 Set the MNE-Python logging verbosity.
+
+{{ no }}
+
 """
 
 on_error: Literal['continue', 'abort'] = 'abort'
 """
 Whether to abort processing as soon as an error occurs, or whether to
 continue with all other processing steps for as long as possible.
+
+{{ no }}
+
 """
 
 ###############################################################################

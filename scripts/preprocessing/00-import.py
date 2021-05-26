@@ -40,7 +40,7 @@ def rename_events(raw, subject, session) -> None:
 
     Modifies ``raw`` in-place.
     """
-    if not config.rename_events:
+    if not config.rename_events or subject == 'emptyroom':
         return
 
     # Check if the user requested to rename events that don't exist.

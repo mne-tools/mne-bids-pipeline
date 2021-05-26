@@ -678,7 +678,8 @@ for more information.
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
-This is a REQUIRED parameter in the configuration file. If left None it will raise an error.
+This is a **required** parameter in the configuration file. If left as `None`,
+it will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -1351,8 +1352,8 @@ if 'eeg' in ch_types:
         raise ValueError(msg)
 
 if conditions is None:
-    msg = (f'Please indicate the name of your conditions in your configuration. '
-           f'Currently the `conditions` parameter is empty.')
+    msg = ('Please indicate the name of your conditions in your configuration. '
+           'Currently the `conditions` parameter is empty.')
     raise ValueError(msg)
 
 if on_error not in ('continue', 'abort', 'debug'):

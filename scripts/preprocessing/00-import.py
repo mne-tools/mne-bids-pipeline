@@ -267,6 +267,17 @@ def set_eeg_montage(raw, subject, session) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
+def fix_stim_artifact(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
+    """Fix stimulation artifact in the data."""
+    events, _ = mne.events_from_annotations(raw)
+    raw = mne.preprocessing.fix_stim_artifact(
+        raw, events=events, event_id=None,
+        tmin=config.stim_artifact_tmin,
+        tmax=config.stim_artifact_tmax,
+        mode='linear')
+    return raw
+
+
 def run_import(subject, session=None):
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
@@ -290,12 +301,7 @@ def run_import(subject, session=None):
 
         # Fix stimulation artifact
         if config.fix_stim_artifact:
-            events, _ = mne.events_from_annotations(raw)
-            raw = mne.preprocessing.fix_stim_artifact(
-                raw, events=events, event_id=None,
-                tmin=config.stim_artifact_tmin,
-                tmax=config.stim_artifact_tmax,
-                mode='linear')
+            raw = fix_stim_artifact(raw)
 
         # Auto-detect bad channels.
         if config.find_flat_channels_meg or config.find_noisy_channels_meg:
@@ -312,8 +318,7 @@ def run_import(subject, session=None):
             # we'll want to retain all channels for Maxwell filtering in that
             # case. The Maxwell filtering script will do this channel type
             # subsetting after Maxwell filtering is complete.
-            chs_to_include = config.get_channels_to_analyze(raw.info)
-            kwargs['picks'] = chs_to_include
+            kwargs['picks'] = config.get_channels_to_analyze(raw.info)
 
         raw.save(**kwargs)
 
@@ -336,8 +341,7 @@ def run_import(subject, session=None):
             if not config.use_maxwell_filter:
                 # Save only the channel types we wish to analyze
                 # (same as for experimental data above).
-                chs_to_include = config.get_channels_to_analyze(raw.info)
-                kwargs['picks'] = chs_to_include
+                kwargs['picks'] = config.get_channels_to_analyze(raw_er.info)
 
             raw_er.save(**kwargs)
             del raw_er

@@ -32,9 +32,6 @@ _bashenv: &bashenv
     git config user.email "ci-build@mne.tools"
     git config user.name "ci-build"
     mkdir -p ~/mne_data
-  - add_ssh_keys:
-      fingerprints:
-        - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
 
 jobs:
   setup_env:
@@ -52,6 +49,9 @@ jobs:
           <<: *bashenv
       - run:
           <<: *xvfb
+      - add_ssh_keys:
+          fingerprints:
+            - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
       - restore_cache:
           keys:
             - pip-cache

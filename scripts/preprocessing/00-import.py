@@ -193,15 +193,6 @@ def load_data(bids_path):
     return raw
 
 
-def rename_events(raw, subject, session):
-    """Crop the data to the desired duration.
-
-    Modifies ``raw`` in-place.
-    """
-    if subject != 'emptyroom' and config.rename_events:
-        rename_events(raw=raw, subject=subject, session=session)
-
-
 def crop_data(raw, subject, session):
     """Crop the data to the desired duration.
 

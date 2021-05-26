@@ -47,11 +47,11 @@ def run_maxwell_filter(subject, session=None):
                             recording=config.rec,
                             space=config.space,
                             suffix='raw',
+                            extension='.fif',
                             datatype=config.get_datatype(),
                             root=config.get_deriv_root(),
                             check=False)
-    bids_path_out = bids_path_in.copy().update(processing='sss',
-                                               extension='.fif')
+    bids_path_out = bids_path_in.copy().update(processing='sss')
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.

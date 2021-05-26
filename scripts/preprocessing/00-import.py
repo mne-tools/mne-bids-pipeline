@@ -354,12 +354,12 @@ def main():
     logger.info(gen_log_message(step=0, message=msg))
 
     ch_types = config.ch_types
-    if (config.use_maxwell_filter and
-            config.rename_events and
-            (ch_types == ['eeg'] and config.find_flat_channels_meg) and
-            (ch_types == ['eeg'] and config.find_noisy_channels_meg) and
-            (ch_types == ['eeg'] and config.eeg_bipolar_channels) and
-            config.drop_channels):
+    if (config.use_maxwell_filter or
+            config.rename_events or
+            config.drop_channels or
+            (ch_types != ['eeg'] and config.find_flat_channels_meg) or
+            (ch_types != ['eeg'] and config.find_noisy_channels_meg) or
+            (ch_types == ['eeg'] and config.eeg_bipolar_channels)):
         parallel, run_func, _ = parallel_func(run_import, n_jobs=config.N_JOBS)
         parallel(run_func(subject, session) for subject, session in
                  itertools.product(config.get_subjects(),

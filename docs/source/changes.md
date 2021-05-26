@@ -4,6 +4,7 @@ authors:
   agramfort: "[Alex Gramfort](https://github.com/agramfort)"
   hoechenberger: "[Richard Höchenberger](https://github.com/hoechenberger)"
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
+  crsegerie: "[Charbel-Raphael Segerie](https://github.com/crsegerie)"
 ---
 
 

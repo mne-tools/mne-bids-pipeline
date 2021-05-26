@@ -180,20 +180,20 @@ def load_data(bids_path):
 
     raw = read_raw_bids(bids_path=bids_path)
 
-    crop_data(raw, subject, session)
+    crop_data(raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
-    set_eeg_montage(raw, subject, session)
-    create_bipolar_channels(raw, subject, session)
-    drop_channels(raw, subject, session)
+    set_eeg_montage(raw=raw, subject=subject, session=session)
+    create_bipolar_channels(raw=raw, subject=subject, session=session)
+    drop_channels(raw=raw, subject=subject, session=session)
 
     return raw
 
 
-def crop_data(raw, subject, session):
+def crop_data(raw, subject):
     """Crop the data to the desired duration.
 
     Modifies ``raw`` in-place.
@@ -202,7 +202,7 @@ def crop_data(raw, subject, session):
         raw.crop(*config.crop)
 
 
-def drop_channels(subject, session, raw) -> None:
+def drop_channels(raw, subject, session) -> None:
     """Drop channels from the data.
 
     Modifies ``raw`` in-place.
@@ -214,7 +214,7 @@ def drop_channels(subject, session, raw) -> None:
         raw.drop_channels(config.drop_channels)
 
 
-def create_bipolar_channels(raw, subject, session,) -> None:
+def create_bipolar_channels(raw, subject, session) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.

@@ -216,8 +216,8 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                     'this is highly suspicious. '
                     'A manual check is suggested. '
                     'You can either lower "ica_eog_threshold" or check '
-                    'that EOG epochs are not superposed '
-                    'with actual task epochs')
+                    'that the blinks are between the tasks '
+                    ' and not during the tasks.')
             logger.warning(gen_log_message(message=warn, step=4,
                                            subject=subject,
                                            session=session))

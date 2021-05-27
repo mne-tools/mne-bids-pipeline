@@ -211,12 +211,12 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                f'{len(eog_epochs)} EOG epochs.')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
-        if len(eog_inds) == 0:
-            warn = (f'Zero EOG-related IC was detected, '
-                    f'this is highly suspicious.'
-                    f'A manual check is required.'
-                    f'You can either lower ica_eog_threshold or check'
-                    f' that EOG epochs are not superposed '
+        if not eog_inds:
+            warn = (f'No EOG-related ICs detected, '
+                    f'this is highly suspicious. '
+                    f'A manual check is suggested. '
+                    f'You can either lower "ica_eog_threshold" or check '
+                    f'that EOG epochs are not superposed '
                     f'with actual task epochs')
             logger.warning(gen_log_message(message=warn, step=4,
                                            subject=subject,

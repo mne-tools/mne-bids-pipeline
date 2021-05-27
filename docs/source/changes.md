@@ -40,7 +40,7 @@ authors:
   running into issues caused by relative path specifications.
   ({{ gh(322) }} by {{ authors.hoechenberger }})
 - Warn if using ICA and  no EOG- or ECG-related ICs were detected.
-  ({{ gh(?) }} by {{ authors.crsegerie }})
+  ({{ gh(351) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

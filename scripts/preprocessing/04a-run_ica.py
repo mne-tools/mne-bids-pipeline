@@ -139,7 +139,7 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
                f'{len(ecg_epochs)} ECG epochs.')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
-        if len(ecg_inds) == 0:
+        if not ecg_inds:
             warn = (f'No ECG-related ICs detected, '
                     f'this is highly suspicious. '
                     f'A manual check is suggested. '

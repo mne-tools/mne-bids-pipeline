@@ -39,6 +39,8 @@ authors:
 - `bids_root` and `deriv_root` are now converted to absolute paths to avoid
   running into issues caused by relative path specifications.
   ({{ gh(322) }} by {{ authors.hoechenberger }})
+- Warn if using ICA and no EOG- or ECG-related ICs were detected.
+  ({{ gh(351) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

@@ -140,10 +140,10 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
         if not ecg_inds:
-            warn = (f'No ECG-related ICs detected, '
-                    f'this is highly suspicious. '
-                    f'A manual check is suggested. '
-                    f'You can try to lower "ica_ctps_ecg_threshold".')
+            warn = ('No ECG-related ICs detected, '
+                    'this is highly suspicious. '
+                    'A manual check is suggested. '
+                    'You can try to lower "ica_ctps_ecg_threshold".')
             logger.warning(gen_log_message(message=warn, step=4,
                                            subject=subject,
                                            session=session))
@@ -212,12 +212,12 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
         if not eog_inds:
-            warn = (f'No EOG-related ICs detected, '
-                    f'this is highly suspicious. '
-                    f'A manual check is suggested. '
-                    f'You can either lower "ica_eog_threshold" or check '
-                    f'that EOG epochs are not superposed '
-                    f'with actual task epochs')
+            warn = ('No EOG-related ICs detected, '
+                    'this is highly suspicious. '
+                    'A manual check is suggested. '
+                    'You can either lower "ica_eog_threshold" or check '
+                    'that EOG epochs are not superposed '
+                    'with actual task epochs')
             logger.warning(gen_log_message(message=warn, step=4,
                                            subject=subject,
                                            session=session))

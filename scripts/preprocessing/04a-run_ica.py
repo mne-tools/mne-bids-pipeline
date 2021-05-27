@@ -140,10 +140,10 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
         if len(ecg_inds) == 0:
-            warn = (f'Zero ECG-related IC was detected, '
-                    f'this is highly suspicious.'
-                    f'A manual check is required.'
-                    f'You can try to lower ica_ctps_ecg_threshold.')
+            warn = (f'No ECG-related ICs detected, '
+                    f'this is highly suspicious. '
+                    f'A manual check is suggested. '
+                    f'You can try to lower "ica_ctps_ecg_threshold".')
             logger.warning(gen_log_message(message=warn, step=4,
                                            subject=subject,
                                            session=session))

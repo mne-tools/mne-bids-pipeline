@@ -1351,9 +1351,10 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
-if conditions is None:
-    msg = ('Please indicate the name of your conditions in your configuration. '
-           'Currently the `conditions` parameter is empty.')
+print(os.environ)
+if conditions is None and not 'MKDOCS' in os.environ:
+    msg = ('Please indicate the name of your conditions in your '
+           'configuration. Currently the `conditions` parameter is empty.')
     raise ValueError(msg)
 
 if on_error not in ('continue', 'abort', 'debug'):

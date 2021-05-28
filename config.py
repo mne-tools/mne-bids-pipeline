@@ -1476,7 +1476,7 @@ def get_runs_all_subjects() -> dict:
             get_bids_root(), entity_key='run',
             ignore_subjects=ignore_subjects)
         subj_runs[subj] = valid_runs_subj
-    print("Runs of each subject:", subj_runs)
+
     return subj_runs
 
 

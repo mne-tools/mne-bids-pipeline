@@ -1467,12 +1467,16 @@ def get_runs_all_subjects() -> dict:
         # Not very elegant, but selecting one subject is not possible
         # with the current api of get_entity_vals in mne-bids
         ignore_subjects = valid_subs.copy()
-        ignore_subjects.remove(subj)
+        if subj in ignore_subjects:
+            ignore_subjects.remove(subj)
+        else:
+            ValueError(f"{subj} not in {ignore_subjects}")
 
         valid_runs_subj = get_entity_vals(
             get_bids_root(), entity_key='run',
             ignore_subjects=ignore_subjects)
         subj_runs[subj] = valid_runs_subj
+    print("Runs of each subject:", subj_runs)
     return subj_runs
 
 
@@ -1545,7 +1549,12 @@ def get_mf_reference_run() -> str:
     # Retrieve to run identifier (number, name) of the reference run
     if mf_reference_run is None:
         # Use the first run
-        return get_intersect_run()[0]
+        if inter_runs:
+            return inter_runs[0]
+        else:
+            ValueError("The intersection of runs by subjects is empty"
+                       "Check the list of runs:"
+                       f"{get_runs_all_subjects()}")
     else:
         return mf_reference_run
 

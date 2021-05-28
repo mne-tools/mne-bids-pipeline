@@ -1501,7 +1501,11 @@ def get_runs(subject: str, verbose: bool = False) -> list:
         # Notify if different subjects do not share the same runs
 
         # set() to remove duplicates and check for values count
-        same_runs = len(list(set(list(subj_runs.values())))) == 1
+        same_runs = True
+        for runs_sub_i in subj_runs.values():
+            if set(runs_sub_i) != set(list(subj_runs.values())[0]):
+                same_runs = False
+
         if not same_runs:
             msg = ("Extracted all the runs. "
                    "Beware, not all subjects share the same "

@@ -1495,6 +1495,10 @@ def get_runs(subject: str, verbose: bool = False) -> list:
         Returns a list of the runs of this subject.
     verbose
         Notify if different subjects do not share the same runs.
+    Returns
+    -------
+    list of string
+        list of runs of the subject.
     """
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 

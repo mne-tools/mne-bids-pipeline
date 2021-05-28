@@ -37,7 +37,7 @@ def run_epochs(subject, session=None):
                          datatype=config.get_datatype(),
                          root=config.get_deriv_root())
 
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         # Prepare a name to save the data
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)

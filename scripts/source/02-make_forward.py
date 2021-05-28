@@ -58,7 +58,7 @@ def run_forward(subject, session=None):
                                 session=session))
 
     trans = get_head_mri_trans(
-        bids_path.copy().update(run=config.get_runs()[0],
+        bids_path.copy().update(run=config.get_runs(subject=subject)[0],
                                 root=config.get_bids_root()),
         t1_bids_path=t1_bids_path)
     mne.write_trans(fname_trans, trans)

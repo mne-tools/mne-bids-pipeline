@@ -1412,58 +1412,6 @@ def get_deriv_root() -> pathlib.Path:
                 .resolve())
 
 
-def get_sessions():
-    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
-
-    env = os.environ
-    if env.get('MNE_BIDS_STUDY_SESSION'):
-        sessions_ = env['MNE_BIDS_STUDY_SESSION']
-    elif sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='session')
-
-    if not sessions_:
-        return [None]
-    else:
-        return sessions_
-
-
-def get_runs() -> list:
-    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
-    valid_runs = get_entity_vals(get_bids_root(), entity_key='run')
-
-    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
-    if env_run and env_run not in valid_runs:
-        raise ValueError(
-            f'Invalid run. It can be {valid_runs} but '
-            f'got {env_run}')
-    elif env_run:
-        runs_ = [env_run]
-    elif runs_ == 'all':
-        runs_ = valid_runs
-
-    if not runs_:
-        return [None]
-    else:
-        return runs_
-
-
-# XXX This check should actually go into the CHECKS section, but it depends
-# XXX on get_runs(), which is defined after that section.
-if mf_reference_run is not None and mf_reference_run not in get_runs():
-    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
-           f'only contains the following runs: {get_runs()}')
-    raise ValueError(msg)
-
-
-def get_mf_reference_run() -> str:
-    # Retrieve to run identifier (number, name) of the reference run
-    if mf_reference_run is None:
-        # Use the first run
-        return get_runs()[0]
-    else:
-        return mf_reference_run
-
-
 def get_subjects() -> List[str]:
     global subjects
 
@@ -1488,6 +1436,115 @@ def get_subjects() -> List[str]:
     subjects = subjects - set(['emptyroom'])
 
     return sorted(subjects)
+
+
+def get_sessions():
+    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
+
+    env = os.environ
+    if env.get('MNE_BIDS_STUDY_SESSION'):
+        sessions_ = env['MNE_BIDS_STUDY_SESSION']
+    elif sessions_ == 'all':
+        sessions_ = get_entity_vals(bids_root, entity_key='session')
+
+    if not sessions_:
+        return [None]
+    else:
+        return sessions_
+
+
+def get_runs_all_subjects() -> dict:
+    '''Returns a dict of runs present in the bids_path
+    for each subject asked in the configuration file
+    (and not for each subject present in the bids_path).'''
+    # We cannot use get_subjects() because if there is just one subject
+    # we need to creat the full list of ignore_subjects
+    valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
+
+    subj_runs = dict()
+    for subj in get_subjects():
+        # ignore all subject but the one considered
+        # Not very elegant, but selecting one subject is not possible
+        # with the current api of get_entity_vals in mne-bids
+        ignore_subjects = valid_subs.copy()
+        ignore_subjects.remove(subj)
+
+        valid_runs_subj = get_entity_vals(
+            get_bids_root(), entity_key='run',
+            ignore_subjects=ignore_subjects)
+        subj_runs[subj] = valid_runs_subj
+    return subj_runs
+
+
+def get_intersect_run() -> list:
+    '''Returns the intersection of all the runs of all subjects.'''
+    subj_runs = get_runs_all_subjects()
+    return list(set.intersection(*map(set, subj_runs.values())))
+
+
+def get_runs(subject: str, verbose: bool = False) -> list:
+    """Returns a list of runs.
+
+    Parameters
+    ----------
+    subject
+        Returns a list of the runs of this subject.
+    verbose
+        Notify if different subjects do not share the same runs.
+    """
+    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
+
+    subj_runs = get_runs_all_subjects()
+    valid_runs = subj_runs[subject]
+
+    if len(get_subjects()) > 1:
+        # Notify if different subjects do not share the same runs
+
+        # set() to remove duplicates and check for values count
+        same_runs = len(list(set(list(subj_runs.values())))) == 1
+        if not same_runs:
+            msg = ("Extracted all the runs. "
+                   "Beware, not all subjects share the same "
+                   "list of run-names.")
+            logger.info(msg)
+
+    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
+    if env_run and env_run not in valid_runs:
+        raise ValueError(
+            f'Invalid run. It can be {valid_runs} but '
+            f'got {env_run}')
+    elif env_run:
+        runs_ = [env_run]
+    elif runs_ == 'all':
+        runs_ = valid_runs
+
+    if not runs_:
+        return [None]
+    else:
+        inclusion = set(runs_).issubset(set(valid_runs))
+        if not inclusion:
+            raise ValueError(
+                f'Invalid run. It can be a subset of {valid_runs} but '
+                f'got {runs_}')
+        return runs_
+
+
+# XXX This check should actually go into the CHECKS section, but it depends
+# XXX on get_runs(), which is defined after that section.
+inter_runs = get_intersect_run()
+if mf_reference_run is not None and mf_reference_run not in inter_runs:
+    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
+           f'only contains the following runs: {inter_runs}')
+    raise ValueError(msg)
+
+
+def get_mf_reference_run() -> str:
+    # Retrieve to run identifier (number, name) of the reference run
+    if mf_reference_run is None:
+        # Use the first run
+        return get_intersect_run()[0]
+    else:
+        return mf_reference_run
 
 
 def get_task() -> Optional[str]:

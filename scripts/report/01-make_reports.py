@@ -46,7 +46,7 @@ def plot_events(subject, session):
                          root=config.get_deriv_root(),
                          check=False)
 
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         this_raw_fname = raw_fname.copy().update(run=run)
 
         if this_raw_fname.copy().update(split='01').fpath.exists():
@@ -112,7 +112,7 @@ def plot_auto_scores(subject, session):
 
     all_figs = []
     all_captions = []
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         with open(fname_scores.update(run=run), 'r') as f:
             auto_scores = json_tricks.load(f)
 

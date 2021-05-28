@@ -141,9 +141,17 @@ def main():
     logger.info(gen_log_message(step=2, message=msg))
 
     parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
+
+    # Enabling different runs for different subjects
+    sub_run_ses = []
+    for subject in config.get_subjects():
+        sub_run_ses = sub_run_ses + list(itertools.product(
+            [subject],
+            config.get_runs(subject=subject),
+            config.get_sessions()))
+
     parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.get_subjects(), config.get_runs(),
-                               config.get_sessions()))
+             sub_run_ses)
 
     msg = 'Completed 2: Frequency filtering'
     logger.info(gen_log_message(step=2, message=msg))

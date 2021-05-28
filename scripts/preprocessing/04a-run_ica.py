@@ -34,7 +34,7 @@ def load_and_concatenate_raws(bids_path):
     subject = bids_path.subject
     session = bids_path.session
     raws = []
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
 

@@ -292,8 +292,17 @@ def run_ica(subject, session=None):
 
     # Lastly, we can concatenate the epochs and set an EEG reference
     epochs = mne.concatenate_epochs(epochs_all_runs)
-    epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs)
-    epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs)
+
+    if eog_epochs_all_runs:
+        epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs)
+    else:
+        epochs_eog = None
+
+    if ecg_epochs_all_runs:
+        epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs)
+    else:
+        epochs_ecg = None
+
     del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs
 
     epochs.load_data()
@@ -318,13 +327,21 @@ def run_ica(subject, session=None):
     report = Report(info_fname=epochs, title=title, verbose=False)
 
     # ECG and EOG component detection
-    ecg_ics = detect_bad_components(which='ecg', epochs=epochs_ecg, ica=ica,
-                                    subject=subject, session=session,
-                                    report=report)
+    if epochs_ecg:
+        ecg_ics = detect_bad_components(which='ecg', epochs=epochs_ecg,
+                                        ica=ica,
+                                        subject=subject, session=session,
+                                        report=report)
+    else:
+        ecg_ics = []
 
-    eog_ics = detect_bad_components(which='eog', epochs=epochs_eog, ica=ica,
-                                    subject=subject, session=session,
-                                    report=report)
+    if epochs_eog:
+        eog_ics = detect_bad_components(which='eog', epochs=epochs_eog,
+                                        ica=ica,
+                                        subject=subject, session=session,
+                                        report=report)
+    else:
+        eog_ics = []
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.

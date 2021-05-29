@@ -81,7 +81,7 @@ def make_ecg_epochs(
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in config.ch_types or
             'mag' in config.ch_types):
-        msg = 'Performing automated ECG artifact detection …'
+        msg = 'Creating ECG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
@@ -123,7 +123,7 @@ def make_eog_epochs(
         del ch_idx
 
     if ch_names:
-        msg = 'Performing automated EOG artifact detection …'
+        msg = 'Creating EOG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
@@ -160,14 +160,17 @@ def detect_bad_components(
 ) -> List[int]:
     evoked = epochs.average()
 
+    artifact = which.upper()
+    msg = f'Performing automated {artifact} artifact detection …'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
+
     if which == 'eog':
-        artifact = 'EOG'
         inds, scores = ica.find_bads_eog(
             epochs,
             threshold=config.ica_eog_threshold
         )
     else:
-        artifact = 'ECG'
         inds, scores = ica.find_bads_ecg(
             epochs, method='ctps',
             threshold=config.ica_ctps_ecg_threshold

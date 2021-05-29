@@ -1486,7 +1486,7 @@ def get_intersect_run() -> list:
     return list(set.intersection(*map(set, subj_runs.values())))
 
 
-def get_runs(subject: str, verbose: bool = False) -> list:
+def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]]:
     """Returns a list of runs.
 
     Parameters
@@ -1498,8 +1498,8 @@ def get_runs(subject: str, verbose: bool = False) -> list:
 
     Returns
     -------
-    list of string
-        list of runs of the subject. 
+    The list of runs of the subject. If no BIDS `run` entity could be found,
+    returns `[None]`.
     """
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 
@@ -1514,10 +1514,10 @@ def get_runs(subject: str, verbose: bool = False) -> list:
             if set(runs_sub_i) != set(list(subj_runs.values())[0]):
                 same_runs = False
 
-        if not same_runs:
-            msg = ("Extracted all the runs. "
-                   "Beware, not all subjects share the same "
-                   "list of run-names.")
+        if not same_runs and verbose:
+            msg = ('Extracted all the runs. '
+                   'Beware, not all subjects share the same '
+                   'set of runs.')
             logger.info(msg)
 
     env_run = os.environ.get('MNE_BIDS_STUDY_RUN')

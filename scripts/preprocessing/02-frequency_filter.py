@@ -145,7 +145,7 @@ def main():
     # Enabling different runs for different subjects
     sub_run_ses = []
     for subject in config.get_subjects():
-        sub_run_ses = sub_run_ses + list(itertools.product(
+        sub_run_ses += list(itertools.product(
             [subject],
             config.get_runs(subject=subject),
             config.get_sessions()))

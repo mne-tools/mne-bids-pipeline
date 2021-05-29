@@ -1457,7 +1457,9 @@ def get_runs() -> list:
 
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
-if mf_reference_run is not None and mf_reference_run not in get_runs():
+if (mf_reference_run is not None and
+        mf_reference_run not in get_runs() and
+        'MKDOCS' not in os.environ):
     msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
            f'only contains the following runs: {get_runs()}')
     raise ValueError(msg)

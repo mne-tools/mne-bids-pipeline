@@ -1515,9 +1515,9 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
                 same_runs = False
 
         if not same_runs:
-            msg = ("Extracted all the runs. "
-                   "Beware, not all subjects share the same "
-                   "list of run-names.")
+            msg = ('Extracted all the runs. '
+                   'Beware, not all subjects share the same '
+                   'set of runs.')
             logger.info(msg)
 
     env_run = os.environ.get('MNE_BIDS_STUDY_RUN')

@@ -1486,7 +1486,7 @@ def get_intersect_run() -> list:
     return list(set.intersection(*map(set, subj_runs.values())))
 
 
-def get_runs(subject: str, verbose: bool = False) -> list:
+def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]]:
     """Returns a list of runs.
 
     Parameters

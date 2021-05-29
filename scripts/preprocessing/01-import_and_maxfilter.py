@@ -323,7 +323,8 @@ def run_maxwell_filter(subject, session=None):
         dig = info['dig']
         del reference_run, info
 
-    for run_idx, run in enumerate(config.get_runs(subject=subject)):
+    for run_idx, run in enumerate(config.get_runs(subject=subject,
+                                                  verbose=True)):
         bids_path_in.update(run=run)
         bids_path_out.update(run=run)
         raw = load_data(bids_path_in)

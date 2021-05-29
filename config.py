@@ -1351,7 +1351,6 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
-print(os.environ)
 if conditions is None and 'MKDOCS' not in os.environ:
     msg = ('Please indicate the name of your conditions in your '
            'configuration. Currently the `conditions` parameter is empty.')

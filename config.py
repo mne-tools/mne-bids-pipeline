@@ -1458,12 +1458,12 @@ def get_runs_all_subjects() -> dict:
     for each subject asked in the configuration file
     (and not for each subject present in the bids_path).'''
     # We cannot use get_subjects() because if there is just one subject
-    # we need to creat the full list of ignore_subjects
     valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
 
     subj_runs = dict()
     for subj in get_subjects():
         # ignore all subject but the one considered
+        # We need to create the full list of ignore_subjects
         # Not very elegant, but selecting one subject is not possible
         # with the current api of get_entity_vals in mne-bids
         ignore_subjects = valid_subs.copy()
@@ -1499,7 +1499,7 @@ def get_runs(subject: str, verbose: bool = False) -> list:
     Returns
     -------
     list of string
-        list of runs of the subject.
+        list of runs of the subject. 
     """
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 

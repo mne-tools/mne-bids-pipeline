@@ -42,7 +42,7 @@ authors:
 - Warn if using ICA and no EOG- or ECG-related ICs were detected.
   ({{ gh(351) }} by {{ authors.crsegerie }})
 - Added the possibility to have different runs for different subjects.
-  ({{ gh(?) }} by {{ authors.crsegerie }}))
+  ({{ gh(353) }} by {{ authors.crsegerie }}))
 
 ### Bug fixes
 

@@ -98,7 +98,11 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
+    # Insert the script's parent directory into the Python search path, so
+    # the script can import other scripts from the same directory
+    sys.path.insert(0, str(script_path.parent))
     runpy.run_path(script_path, run_name='__main__')
+    sys.path.remove(str(script_path.parent))
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',

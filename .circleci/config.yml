@@ -29,8 +29,8 @@ _bashenv: &bashenv
     echo "export XDG_RUNTIME_DIR=/tmp/runtime-circleci" >> $BASH_ENV
     wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
     source get_minimal_commands.sh
-    git config user.email "ci-build@mne.tools"
-    git config user.name "ci-build"
+    git config --global user.email "ci-build@mne.tools"
+    git config --global user.name "ci-build"
     mkdir -p ~/mne_data
 
 jobs:

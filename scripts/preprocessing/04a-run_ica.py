@@ -139,6 +139,14 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
                f'{len(ecg_epochs)} ECG epochs.')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
+        if not ecg_inds:
+            warn = ('No ECG-related ICs detected, '
+                    'this is highly suspicious. '
+                    'A manual check is suggested. '
+                    'You can try to lower "ica_ctps_ecg_threshold".')
+            logger.warning(gen_log_message(message=warn, step=4,
+                                           subject=subject,
+                                           session=session))
         del ecg_epochs
 
         # Plot scores
@@ -203,6 +211,16 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
                f'{len(eog_epochs)} EOG epochs.')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
+        if not eog_inds:
+            warn = ('No EOG-related ICs detected, '
+                    'this is highly suspicious. '
+                    'A manual check is suggested. '
+                    'You can either lower "ica_eog_threshold" or check '
+                    'that the blinks are between the tasks '
+                    'and not during the tasks.')
+            logger.warning(gen_log_message(message=warn, step=4,
+                                           subject=subject,
+                                           session=session))
         del eog_epochs
 
         # Plot scores

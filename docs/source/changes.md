@@ -18,6 +18,9 @@ authors:
 
 ### Behavior changes
 
+- The [`conditions`][config.conditions] setting will now be `None` by default. 
+  It is a required setting so it will raise an error if left as `None`.
+  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
@@ -39,6 +42,8 @@ authors:
 - `bids_root` and `deriv_root` are now converted to absolute paths to avoid
   running into issues caused by relative path specifications.
   ({{ gh(322) }} by {{ authors.hoechenberger }})
+- Warn if using ICA and no EOG- or ECG-related ICs were detected.
+  ({{ gh(351) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

@@ -148,6 +148,9 @@ jobs:
           key: data-cache-ds000248-{{ .Revision }}
           paths:
             - ~/mne_data/ds000248
+            - ~/mne_data/ds000248_ica
+            - ~/mne_data/ds000248_T1_BEM
+            - ~/mne_data/ds000248_FLASH_BEM
 
   cache_ds001810:
     <<: *imageconfig

@@ -1498,8 +1498,8 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
 
     Returns
     -------
-    list of string
-        list of runs of the subject.
+    The list of runs of the subject. If no BIDS `run` entity could be found,
+    returns `[None]`.
     """
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 

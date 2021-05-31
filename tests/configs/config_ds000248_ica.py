@@ -8,7 +8,6 @@ data_type = 'meg'
 
 subjects = ['01']
 task = 'audiovisual'
-run = '01'
 l_freq = 0.3
 h_freq = 40.0
 

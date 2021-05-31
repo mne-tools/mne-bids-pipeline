@@ -1724,6 +1724,7 @@ def sanitize_cond_name(cond: str) -> str:
 def make_epochs(
     *,
     raw: mne.io.BaseRaw,
+    event_id: Optional[Dict[str, int]] = None,
     tmin: float,
     tmax: float,
     metadata_tmin: Optional[float] = None,
@@ -1739,7 +1740,9 @@ def make_epochs(
     rejection thresholds will be applied. No baseline-correction will be
     performed.
     """
-    events, event_id = mne.events_from_annotations(raw)
+    events, event_id_from_annotatins = mne.events_from_annotations(raw)
+    if event_id is None:
+        event_id = event_id_from_annotatins
 
     # Construct metadata from the epochs
     if metadata_tmin is None:
@@ -1766,3 +1769,28 @@ def make_epochs(
                         reject=None)
 
     return epochs
+
+
+def annotations_to_events(
+    *,
+    raw_paths: List[PathLike]
+) -> Dict[str, int]:
+    """Generate a unique event name -> event code mapping.
+
+    The mapping can that can be used across all passed raws.
+    """
+    event_names: List[str] = []
+    for raw_fname in raw_paths:
+        raw = mne.io.read_raw_fif(raw_fname)
+        _, event_id = mne.events_from_annotations(raw=raw)
+        for event_name in event_id.keys():
+            if event_name not in event_names:
+                event_names.append(event_name)
+
+    event_names = sorted(event_names)
+    event_name_to_code_map = {
+        name: code
+        for code, name in enumerate(event_names, start=1)
+    }
+
+    return event_name_to_code_map

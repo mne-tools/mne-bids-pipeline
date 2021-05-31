@@ -48,15 +48,27 @@ def run_epochs(subject, session=None):
 
         raw_fnames.append(raw_fname_in)
 
-    # Now, generate epochs from each individual run
+    # Generate a unique event name -> event code mapping that can be used
+    # across all runs.
+    event_name_to_code_map = config.annotations_to_events(raw_paths=raw_fnames)
+
+    # Now, generate epochs from each individual run.
     epochs_all_runs = []
     for raw_fname in raw_fnames:
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
+
+        # Only keep the subset of the mapping that applies to the current run
+        event_id = event_name_to_code_map.copy()
+        for event_name in event_id.copy().keys():
+            if event_name not in raw.annotations.description:
+                del event_id[event_name]
+
         epochs = make_epochs(
             raw=raw,
+            event_id=event_id,
             tmin=config.epochs_tmin,
             tmax=config.epochs_tmax,
             metadata_tmin=config.epochs_metadata_tmin,

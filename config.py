@@ -1551,7 +1551,7 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
 
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
-if ('MKDOCS' not in os.environ):
+if 'MKDOCS' not in os.environ:
     inter_runs = get_intersect_run()
     mf_ref_error = (
         (mf_reference_run is not None) and

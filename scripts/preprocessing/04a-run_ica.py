@@ -25,9 +25,8 @@ from mne.parallel import parallel_func
 
 from mne_bids import BIDSPath
 
-from common import make_epochs
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import make_epochs, gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 

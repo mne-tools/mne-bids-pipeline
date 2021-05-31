@@ -1551,15 +1551,15 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
 
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
-inter_runs = get_intersect_run()
-mf_ref_error = (
-    ('MKDOCS' not in os.environ) and
-    (mf_reference_run is not None) and
-    (mf_reference_run not in inter_runs))
-if mf_ref_error:
-    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
-           f'only contains the following runs: {inter_runs}')
-    raise ValueError(msg)
+if ('MKDOCS' not in os.environ):
+    inter_runs = get_intersect_run()
+    mf_ref_error = (
+        (mf_reference_run is not None) and
+        (mf_reference_run not in inter_runs))
+    if mf_ref_error:
+        msg = (f'You set mf_reference_run={mf_reference_run}, but your '
+               f'dataset only contains the following runs: {inter_runs}')
+        raise ValueError(msg)
 
 
 def get_mf_reference_run() -> str:

@@ -666,7 +666,7 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
-conditions: Union[Iterable[str], Dict[str, str]] = ['left', 'right']
+conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -677,6 +677,9 @@ for more information.
 
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
+
+This is a **required** parameter in the configuration file. If left as `None`,
+it will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -1348,6 +1351,11 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
+if conditions is None and 'MKDOCS' not in os.environ:
+    msg = ('Please indicate the name of your conditions in your '
+           'configuration. Currently the `conditions` parameter is empty.')
+    raise ValueError(msg)
+
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
            f"but received: {on_error}.")
@@ -1544,7 +1552,10 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
 inter_runs = get_intersect_run()
-if mf_reference_run is not None and mf_reference_run not in inter_runs:
+if ('MKDOCS' not in os.environ and 
+    mf_reference_run is not None and
+    mf_reference_run not in inter_runs
+    ):
     msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
            f'only contains the following runs: {inter_runs}')
     raise ValueError(msg)

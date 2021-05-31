@@ -1557,8 +1557,8 @@ def get_mf_reference_run() -> str:
         if inter_runs:
             return inter_runs[0]
         else:
-            ValueError("The intersection of runs by subjects is empty"
-                       "Check the list of runs:"
+            ValueError("The intersection of runs by subjects is empty. "
+                       "Check the list of runs: "
                        f"{get_runs_all_subjects()}")
     else:
         return mf_reference_run

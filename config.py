@@ -1378,12 +1378,12 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 
 if baseline[0] and baseline[0] < epochs_tmin:
     msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
-           'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}')
+           f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}')
     raise ValueError(msg)
 
 if baseline[1] and baseline[1] > epochs_tmax:
     msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
-           'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}')
+           f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}')
     raise ValueError(msg)
 
 

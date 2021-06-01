@@ -2,7 +2,7 @@
 but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
-import numbers
+
 import importlib
 import pathlib
 import functools
@@ -1378,21 +1378,46 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     raise ValueError(msg)
 
 
-if isinstance(baseline[0], numbers.Number) and baseline[0] < epochs_tmin:
-    msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
-           f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}.')
-    raise ValueError(msg)
+def check_baseline(baseline: Tuple[Optional[float], Optional[float]],
+                   epochs_tmin: float, epochs_tmax: float) -> None:
+    """Raises error if baseline not compatible with [epochs_tmin, epochs_tmax].
 
-if isinstance(baseline[1], numbers.Number) and baseline[1] > epochs_tmax:
-    msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
-           f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}.')
-    raise ValueError(msg)
+    Parameters
+    ----------
+    baseline
+        Tuple indicating the beginning and end of the baseline interval.
+    epochs_tmin:
+        Beginning of Epochs.
+    epochs_tmin:
+        End of Epochs.
 
-if (isinstance(baseline[0], numbers.Number) and
-    isinstance(baseline[1], numbers.Number) and
-        baseline[0] >= baseline[1]):
-    msg = f'{baseline} is not a correct time-interval.'
-    raise ValueError(msg)
+    Raises
+    ------
+    ValueError
+        if baseline not contained in [epochs_tmin, epochs_tmax].
+        if baseline is not a correct time-interval.
+    """
+    if baseline[0] is not None and baseline[0] < epochs_tmin:
+        msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
+               f'But {baseline} in not contained in '
+               f'{[epochs_tmin, epochs_tmax]}.')
+        raise ValueError(msg)
+
+    if baseline[1] is not None and baseline[1] > epochs_tmax:
+        msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
+               f'But {baseline} in not contained in '
+               f'{[epochs_tmin, epochs_tmax]}.')
+        raise ValueError(msg)
+
+    if ((baseline[0] is not None) and
+        (baseline[1] is not None) and
+            (baseline[0] >= baseline[1])):
+        msg = f'{baseline} is not a correct time-interval.'
+        raise ValueError(msg)
+
+
+check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
+               epochs_tmax=epochs_tmax)
 
 
 ###############################################################################

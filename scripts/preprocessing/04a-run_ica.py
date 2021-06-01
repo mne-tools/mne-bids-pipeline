@@ -12,8 +12,9 @@ run 05a-apply_ica.py.
 
 import itertools
 import logging
-from tqdm import tqdm
+from typing import List, Optional, Iterable, Literal
 
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
@@ -25,62 +26,29 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import make_epochs, gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def load_and_concatenate_raws(bids_path):
-    subject = bids_path.subject
-    session = bids_path.session
-    raws = []
-    for run in config.get_runs():
-        raw_fname_in = bids_path.copy().update(run=run, processing='filt',
-                                               suffix='raw', check=False)
-
-        if raw_fname_in.copy().update(split='01').fpath.exists():
-            raw_fname_in.update(split='01')
-
-        msg = f'Loading filtered raw data from {raw_fname_in}'
-        logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session, run=run))
-
-        raw = mne.io.read_raw_fif(raw_fname_in, preload=False)
-        raws.append(raw)
-
-    msg = 'Concatenating runs'
-    logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                session=session))
-
-    if len(raws) == 1:  # avoid extra memory usage
-        raw = raws[0]
-    else:
-        raw = mne.concatenate_raws(raws)
-    del raws
-
-    raw.load_data()  # Load before setting EEG reference
-
-    if "eeg" in config.ch_types:
-        projection = True if config.eeg_reference == 'average' else False
-        raw.set_eeg_reference(config.eeg_reference, projection=projection)
-
-    return raw
-
-
-def filter_for_ica(raw, subject, session):
+def filter_for_ica(
+    *,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: str,
+    run: Optional[str] = None
+) -> None:
     """Apply a high-pass filter if needed."""
     if config.ica_l_freq is None:
         msg = (f'Not applying high-pass filter (data is already filtered, '
                f'cutoff: {raw.info["highpass"]} Hz).')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
     else:
         msg = f'Applying high-pass filter with {config.ica_l_freq} Hz cutoff …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         raw.filter(l_freq=config.ica_l_freq, h_freq=None)
-
-    return raw
 
 
 def fit_ica(epochs, subject, session):
@@ -109,13 +77,19 @@ def fit_ica(epochs, subject, session):
     return ica
 
 
-def detect_ecg_artifacts(ica, raw, subject, session, report):
+def make_ecg_epochs(
+    *,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: str,
+    run: Optional[str] = None
+) -> Optional[mne.Epochs]:
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in config.ch_types or
             'mag' in config.ch_types):
-        msg = 'Performing automated ECG artifact detection …'
+        msg = 'Creating ECG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
 
         # Do not reject epochs based on amplitude.
         ecg_epochs = create_ecg_epochs(raw, reject=None,
@@ -126,57 +100,28 @@ def detect_ecg_artifacts(ica, raw, subject, session, report):
             msg = ('No ECG events could be found. Not running ECG artifact '
                    'detection.')
             logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                        session=session))
-            return list()
-
-        ecg_evoked = ecg_epochs.average()
-        ecg_inds, scores = ica.find_bads_ecg(
-            ecg_epochs, method='ctps',
-            threshold=config.ica_ctps_ecg_threshold)
-        ica.exclude = ecg_inds
-
-        msg = (f'Detected {len(ecg_inds)} ECG-related ICs in '
-               f'{len(ecg_epochs)} ECG epochs.')
-        logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
-        if not ecg_inds:
-            warn = ('No ECG-related ICs detected, '
-                    'this is highly suspicious. '
-                    'A manual check is suggested. '
-                    'You can try to lower "ica_ctps_ecg_threshold".')
-            logger.warning(gen_log_message(message=warn, step=4,
-                                           subject=subject,
-                                           session=session))
-        del ecg_epochs
-
-        # Plot scores
-        fig = ica.plot_scores(scores, labels='ecg', show=config.interactive)
-        report.add_figs_to_section(figs=fig, captions='Scores - ECG',
-                                   section=f'sub-{subject}')
-
-        # Plot source time course
-        fig = ica.plot_sources(ecg_evoked, show=config.interactive)
-        report.add_figs_to_section(figs=fig,
-                                   captions='Source time course - ECG',
-                                   section=f'sub-{subject}')
-
-        # Plot original & corrected data
-        fig = ica.plot_overlay(ecg_evoked, show=config.interactive)
-        report.add_figs_to_section(figs=fig, captions='Corrections - ECG',
-                                   section=f'sub-{subject}')
+                                        session=session, run=run))
+            ecg_epochs = None
     else:
-        ecg_inds = list()
         msg = ('No ECG or magnetometer channels are present. Cannot '
                'automate artifact detection for ECG')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
+        ecg_epochs = None
 
-    return ecg_inds
+    return ecg_epochs
 
 
-def detect_eog_artifacts(ica, raw, subject, session, report):
-    if config.eog_channels:
-        ch_names = config.eog_channels
+def make_eog_epochs(
+    *,
+    raw: mne.io.BaseRaw,
+    eog_channels: Optional[Iterable[str]],
+    subject: str,
+    session: str,
+    run: Optional[str] = None
+) -> Optional[mne.Epochs]:
+    if eog_channels:
+        ch_names = eog_channels
         assert all([ch_name in raw.ch_names
                     for ch_name in ch_names])
     else:
@@ -185,67 +130,94 @@ def detect_eog_artifacts(ica, raw, subject, session, report):
         del ch_idx
 
     if ch_names:
-        msg = 'Performing automated EOG artifact detection …'
+        msg = 'Creating EOG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
 
-        # Do not reject epochs based on amplitude.
-        eog_epochs = create_eog_epochs(raw, ch_name=ch_names, reject=None,
-                                       baseline=(None, -0.2),
-                                       tmin=-0.5, tmax=0.5)
+        # Create the epochs. It's important not to reject epochs based on
+        # amplitude!
+        eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
+                                       baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:
             msg = ('No EOG events could be found. Not running EOG artifact '
                    'detection.')
-            logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                        session=session))
-            return list()
-
-        eog_evoked = eog_epochs.average()
-        eog_inds, scores = ica.find_bads_eog(
-            eog_epochs,
-            threshold=config.ica_eog_threshold)
-        ica.exclude = eog_inds
-
-        msg = (f'Detected {len(eog_inds)} EOG-related ICs in '
-               f'{len(eog_epochs)} EOG epochs.')
-        logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
-        if not eog_inds:
-            warn = ('No EOG-related ICs detected, '
-                    'this is highly suspicious. '
-                    'A manual check is suggested. '
-                    'You can either lower "ica_eog_threshold" or check '
-                    'that the blinks are between the tasks '
-                    'and not during the tasks.')
-            logger.warning(gen_log_message(message=warn, step=4,
+            logger.warning(gen_log_message(message=msg, step=4,
                                            subject=subject,
-                                           session=session))
-        del eog_epochs
-
-        # Plot scores
-        fig = ica.plot_scores(scores, labels='eog', show=config.interactive)
-        report.add_figs_to_section(figs=fig, captions='Scores - EOG',
-                                   section=f'sub-{subject}')
-
-        # Plot source time course
-        fig = ica.plot_sources(eog_evoked, show=config.interactive)
-        report.add_figs_to_section(figs=fig,
-                                   captions='Source time course - EOG',
-                                   section=f'sub-{subject}')
-
-        # Plot original & corrected data
-        fig = ica.plot_overlay(eog_evoked, show=config.interactive)
-        report.add_figs_to_section(figs=fig, captions='Corrections - EOG',
-                                   section=f'sub-{subject}')
+                                           session=session, run=run))
+            eog_epochs = None
     else:
-        eog_inds = list()
         msg = ('No EOG channel is present. Cannot automate IC detection '
                'for EOG')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                    session=session, run=run))
+        eog_epochs = None
+
+    return eog_epochs
+
+
+def detect_bad_components(
+    *,
+    which: Literal['eog', 'ecg'],
+    epochs: mne.BaseEpochs,
+    ica: mne.preprocessing.ICA,
+    subject: str,
+    session: str,
+    report: mne.Report
+) -> List[int]:
+    evoked = epochs.average()
+
+    artifact = which.upper()
+    msg = f'Performing automated {artifact} artifact detection …'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
+
+    if which == 'eog':
+        inds, scores = ica.find_bads_eog(
+            epochs,
+            threshold=config.ica_eog_threshold
+        )
+    else:
+        inds, scores = ica.find_bads_ecg(
+            epochs, method='ctps',
+            threshold=config.ica_ctps_ecg_threshold
+        )
+
+    if not inds:
+        adjust_setting = ('ica_eog_threshold' if which == 'eog'
+                          else 'config.ica_ctps_ecg_threshold')
+        warn = (f'No {artifact}-related ICs detected, this is highly '
+                f'suspicious. A manual check is suggested. You may wish to '
+                f'lower "{adjust_setting}".')
+        logger.warning(gen_log_message(message=warn, step=4,
+                                       subject=subject,
+                                       session=session))
+    else:
+        msg = (f'Detected {len(inds)} {artifact}-related ICs in '
+               f'{len(epochs)} {artifact} epochs.')
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session))
 
-    return eog_inds
+    # Mark the artifact-related components for removal
+    ica.exclude = inds
+
+    # Plot scores
+    fig = ica.plot_scores(scores, labels=which, show=config.interactive)
+    report.add_figs_to_section(figs=fig, captions=f'Scores - {artifact}',
+                               section=f'sub-{subject}')
+
+    # Plot source time course
+    fig = ica.plot_sources(evoked, show=config.interactive)
+    report.add_figs_to_section(figs=fig,
+                               captions=f'Source time course - {artifact}',
+                               section=f'sub-{subject}')
+
+    # Plot original & corrected data
+    fig = ica.plot_overlay(evoked, show=config.interactive)
+    report.add_figs_to_section(figs=fig, captions=f'Corrections - {artifact}',
+                               section=f'sub-{subject}')
+
+    return inds
 
 
 def run_ica(subject, session=None):
@@ -261,6 +233,7 @@ def run_ica(subject, session=None):
                              root=config.get_deriv_root(),
                              check=False)
 
+    raw_fname = bids_basename.copy().update(processing='filt', suffix='raw')
     ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')
     ica_components_fname = bids_basename.copy().update(processing='ica',
                                                        suffix='components',
@@ -269,46 +242,129 @@ def run_ica(subject, session=None):
                                                suffix='report',
                                                extension='.html')
 
-    msg = 'Loading and concatenating filtered continuous "raw" data'
-    logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                session=session))
-    raw = load_and_concatenate_raws(bids_basename.copy().update(
-        processing='filt', suffix='raw', extension='.fif'))
+    # Generate a list of raw data paths (i.e., paths of individual runs)
+    # we want to create epochs from.
+    raw_fnames = []
+    for run in config.get_runs():
+        raw_fname.run = run
+        if raw_fname.copy().update(split='01').fpath.exists():
+            raw_fname.update(split='01')
 
-    # Sanity check – make sure we're using the correct data!
-    if config.resample_sfreq is not None:
-        np.testing.assert_allclose(raw.info['sfreq'], config.resample_sfreq)
-    if config.l_freq is not None:
-        np.testing.assert_allclose(raw.info['highpass'], config.l_freq)
+        raw_fnames.append(raw_fname)
 
-    # Produce high-pass filtered version of the data for ICA.
-    # filter_for_ica will concatenate all runs of our raw data.
-    # We don't have to worry about edge artifacts due to raw concatenation as
-    # we'll be epoching the data in the next step.
-    raw = filter_for_ica(raw, subject=subject, session=session)
-    events, event_id = mne.events_from_annotations(raw)
-    epochs = mne.Epochs(raw, events=events, event_id=event_id,
-                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        baseline=None, decim=config.decim, proj=True,
-                        preload=True)
+    # Generate a unique event name -> event code mapping that can be used
+    # across all runs.
+    event_name_to_code_map = config.annotations_to_events(raw_paths=raw_fnames)
+
+    # Now, generate epochs from each individual run
+    epochs_all_runs = []
+    eog_epochs_all_runs = []
+    ecg_epochs_all_runs = []
+
+    for run, raw_fname in zip(config.get_runs(), raw_fnames):
+        msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+
+        # EOG epochs
+        eog_epochs = make_eog_epochs(raw=raw, eog_channels=config.eog_channels,
+                                     subject=subject, session=session, run=run)
+        if eog_epochs is not None:
+            eog_epochs_all_runs.append(eog_epochs)
+
+        # ECG epochs
+        ecg_epochs = make_ecg_epochs(raw=raw, subject=subject, session=session,
+                                     run=run)
+        if ecg_epochs is not None:
+            ecg_epochs_all_runs.append(ecg_epochs)
+
+        # Produce high-pass filtered version of the data for ICA.
+        # Sanity check – make sure we're using the correct data!
+        if config.resample_sfreq is not None:
+            assert np.allclose(raw.info['sfreq'], config.resample_sfreq)
+        if config.l_freq is not None:
+            assert np.allclose(raw.info['highpass'], config.l_freq)
+
+        filter_for_ica(raw=raw, subject=subject, session=session, run=run)
+
+        # Only keep the subset of the mapping that applies to the current run
+        event_id = event_name_to_code_map.copy()
+        for event_name in event_id.copy().keys():
+            if event_name not in raw.annotations.description:
+                del event_id[event_name]
+
+        msg = 'Creating task-related epochs …'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
+        epochs = make_epochs(
+            raw=raw,
+            event_id=event_id,
+            tmin=config.epochs_tmin,
+            tmax=config.epochs_tmax,
+            metadata_tmin=config.epochs_metadata_tmin,
+            metadata_tmax=config.epochs_metadata_tmax,
+            metadata_keep_first=config.epochs_metadata_keep_first,
+            metadata_keep_last=config.epochs_metadata_keep_last,
+            event_repeated=config.event_repeated,
+            decim=config.decim
+        )
+
+        epochs_all_runs.append(epochs)
+        del raw, epochs, eog_epochs, ecg_epochs  # free memory
+
+    # Lastly, we can concatenate the epochs and set an EEG reference
+    epochs = mne.concatenate_epochs(epochs_all_runs)
+
+    if eog_epochs_all_runs:
+        epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs)
+    else:
+        epochs_eog = None
+
+    if ecg_epochs_all_runs:
+        epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs)
+    else:
+        epochs_ecg = None
+
+    del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs
+
+    epochs.load_data()
+    if "eeg" in config.ch_types:
+        projection = True if config.eeg_reference == 'average' else False
+        epochs.set_eeg_reference(config.eeg_reference, projection=projection)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
+    ica = fit_ica(epochs, subject=subject, session=session)
+
+    # Start a report
     title = f'ICA – sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
     if task is not None:
         title += f', task-{task}'
-    report = Report(info_fname=raw, title=title, verbose=False)
 
-    ica = fit_ica(epochs, subject=subject, session=session)
-    ecg_ics = detect_ecg_artifacts(ica=ica, raw=raw, subject=subject,
-                                   session=session, report=report)
-    eog_ics = detect_eog_artifacts(ica=ica, raw=raw, subject=subject,
-                                   session=session, report=report)
+    report = Report(info_fname=epochs, title=title, verbose=False)
+
+    # ECG and EOG component detection
+    if epochs_ecg:
+        ecg_ics = detect_bad_components(which='ecg', epochs=epochs_ecg,
+                                        ica=ica,
+                                        subject=subject, session=session,
+                                        report=report)
+    else:
+        ecg_ics = []
+
+    if epochs_eog:
+        eog_ics = detect_bad_components(which='eog', epochs=epochs_eog,
+                                        ica=ica,
+                                        subject=subject, session=session,
+                                        report=report)
+    else:
+        eog_ics = []
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.

@@ -60,7 +60,7 @@ def get_mf_cal_fname(subject, session):
             raise ValueError('Could not find Maxwell Filter Calibration '
                              'file.')
     else:
-        mf_cal_fpath = Path(config.mf_cal_fname)
+        mf_cal_fpath = Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
                              f'file at {str(mf_cal_fpath)}.')
@@ -80,7 +80,7 @@ def get_mf_ctc_fname(subject, session):
             raise ValueError('Could not find Maxwell Filter cross-talk '
                              'file.')
     else:
-        mf_ctc_fpath = Path(config.mf_ctc_fname)
+        mf_ctc_fpath = Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter cross-talk '
                              f'file at {str(mf_ctc_fpath)}.')
@@ -227,8 +227,8 @@ def load_data(bids_path):
 
     if subject != 'emptyroom':
         # Crop the data.
-        if config.crop is not None:
-            raw.crop(*config.crop)
+        if config.crop_runs is not None:
+            raw.crop(*config.crop_runs)
 
         # Rename events.
         if config.rename_events:
@@ -346,18 +346,20 @@ def run_maxwell_filter(subject, session=None):
         if config.use_maxwell_filter:
             msg = 'Applying Maxwell filter to experimental data.'
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
+                                        session=session, run=run))
 
             # Warn if no bad channels are set before Maxwell filter
             if not raw.info['bads']:
                 msg = '\nFound no bad channels. \n '
                 logger.warning(gen_log_message(message=msg, subject=subject,
-                                               step=1, session=session))
+                                               step=1, session=session,
+                                               run=run))
 
             if config.mf_st_duration:
                 msg = '    st_duration=%d' % (config.mf_st_duration)
                 logger.info(gen_log_message(message=msg, step=1,
-                                            subject=subject, session=session))
+                                            subject=subject, session=session,
+                                            run=run))
 
             # Keyword arguments shared between Maxwell filtering of the
             # experimental and the empty-room data.
@@ -382,7 +384,7 @@ def run_maxwell_filter(subject, session=None):
             msg = ('Not applying Maxwell filter.\nIf you wish to apply it, '
                    'set use_maxwell_filter=True in your configuration.')
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                        session=session))
+                                        session=session, run=run))
             raw_out = raw
             raw_fname_out = bids_path_out.copy().update(extension='.fif')
 

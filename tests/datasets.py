@@ -118,7 +118,11 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501
-            'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos'
+            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_events.tsv',  # noqa: E501
+            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_meg.fif',  # noqa: E501
+            'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos',
+            'derivatives/meg_derivatives/ct_sparse.fif',
+            'derivatives/meg_derivatives/sss_cal.dat'
         ],
         'exclude': []
     },

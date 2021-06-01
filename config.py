@@ -73,12 +73,6 @@ run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 """
 
-crop: Optional[Tuple[float, float]] = None
-"""
-Crop the raw data to the specified time interval ``[tmin, tmax]`` in seconds.
-If ``None``, do not crop the data.
-"""
-
 sessions: Union[List, Literal['all']] = 'all'
 """
 The sessions to process.
@@ -92,6 +86,13 @@ The task to process.
 runs: Union[Iterable, Literal['all']] = 'all'
 """
 The runs to process.
+"""
+
+crop_runs: Optional[Tuple[float, float]] = None
+"""
+Crop the raw data of each run to the specified time interval ``[tmin, tmax]``,
+in seconds. The runs will be cropped before Maxwell or frequency filtering is
+applied. If ``None``, do not crop the data.
 """
 
 acq: Optional[str] = None
@@ -1719,3 +1720,78 @@ def sanitize_cond_name(cond: str) -> str:
             .replace('_', '')
             .replace('-', ''))
     return cond
+
+
+def make_epochs(
+    *,
+    raw: mne.io.BaseRaw,
+    event_id: Optional[Dict[str, int]] = None,
+    tmin: float,
+    tmax: float,
+    metadata_tmin: Optional[float] = None,
+    metadata_tmax: Optional[float] = None,
+    metadata_keep_first: Optional[Iterable[str]] = None,
+    metadata_keep_last: Optional[Iterable[str]] = None,
+    event_repeated: Literal['error', 'drop', 'merge'],
+    decim: int
+) -> mne.Epochs:
+    """Generate Epochs from raw data.
+
+    No EEG reference will be set and no projectors will be applied. No
+    rejection thresholds will be applied. No baseline-correction will be
+    performed.
+    """
+    events, event_id_from_annotatins = mne.events_from_annotations(raw)
+    if event_id is None:
+        event_id = event_id_from_annotatins
+
+    # Construct metadata from the epochs
+    if metadata_tmin is None:
+        metadata_tmin = tmin
+
+    if metadata_tmax is None:
+        metadata_tmax = tmax
+
+    metadata, _, _ = mne.epochs.make_metadata(
+        events=events, event_id=event_id,
+        tmin=metadata_tmin, tmax=metadata_tmax,
+        keep_first=metadata_keep_first,
+        keep_last=metadata_keep_last,
+        sfreq=raw.info['sfreq'])
+
+    # Epoch the data
+    # Do not reject based on peak-to-peak or flatness thresholds at this stage
+    epochs = mne.Epochs(raw, events=events, event_id=event_id,
+                        tmin=tmin, tmax=tmax,
+                        proj=False, baseline=None,
+                        preload=False, decim=decim,
+                        metadata=metadata,
+                        event_repeated=event_repeated,
+                        reject=None)
+
+    return epochs
+
+
+def annotations_to_events(
+    *,
+    raw_paths: List[PathLike]
+) -> Dict[str, int]:
+    """Generate a unique event name -> event code mapping.
+
+    The mapping can that can be used across all passed raws.
+    """
+    event_names: List[str] = []
+    for raw_fname in raw_paths:
+        raw = mne.io.read_raw_fif(raw_fname)
+        _, event_id = mne.events_from_annotations(raw=raw)
+        for event_name in event_id.keys():
+            if event_name not in event_names:
+                event_names.append(event_name)
+
+    event_names = sorted(event_names)
+    event_name_to_code_map = {
+        name: code
+        for code, name in enumerate(event_names, start=1)
+    }
+
+    return event_name_to_code_map

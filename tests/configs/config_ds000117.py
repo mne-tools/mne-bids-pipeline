@@ -13,7 +13,7 @@ acq = None
 subjects = ['01']
 
 resample_sfreq = 125.
-crop = (0, 250)
+crop = (0, 350)
 
 find_flat_channels_meg = True
 find_noisy_channels_meg = True

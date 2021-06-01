@@ -42,7 +42,7 @@ authors:
 - Warn if using ICA and no EOG- or ECG-related ICs were detected.
   ({{ gh(351) }} by {{ authors.crsegerie }})
 - Check that the baseline interval is compatible with [epochs_tmin, epochs_tmax] in the user's configuration file.
-  ({{ gh(360) }} by {{ authors.crsegerie }})
+  ({{ gh(361) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

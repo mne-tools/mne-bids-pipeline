@@ -227,8 +227,8 @@ def load_data(bids_path):
 
     if subject != 'emptyroom':
         # Crop the data.
-        if config.crop is not None:
-            raw.crop(*config.crop)
+        if config.crop_runs is not None:
+            raw.crop(*config.crop_runs)
 
         # Rename events.
         if config.rename_events:

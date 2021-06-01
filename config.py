@@ -73,12 +73,6 @@ run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 """
 
-crop: Optional[Tuple[float, float]] = None
-"""
-Crop the raw data to the specified time interval ``[tmin, tmax]`` in seconds.
-If ``None``, do not crop the data.
-"""
-
 sessions: Union[List, Literal['all']] = 'all'
 """
 The sessions to process.
@@ -92,6 +86,13 @@ The task to process.
 runs: Union[Iterable, Literal['all']] = 'all'
 """
 The runs to process.
+"""
+
+crop_runs: Optional[Tuple[float, float]] = None
+"""
+Crop the raw data of each run to the specified time interval ``[tmin, tmax]``,
+in seconds. The runs will be cropped before Maxwell or frequency filtering is
+applied. If ``None``, do not crop the data.
 """
 
 acq: Optional[str] = None

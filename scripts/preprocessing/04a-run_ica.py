@@ -245,7 +245,7 @@ def run_ica(subject, session=None):
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
     raw_fnames = []
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         raw_fname.run = run
         if raw_fname.copy().update(split='01').fpath.exists():
             raw_fname.update(split='01')

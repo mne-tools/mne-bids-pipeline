@@ -1421,7 +1421,7 @@ def check_baseline(
             (baseline[1] is not None) and
             (baseline[0] >= baseline[1])):
         msg = (f'The end of the baseline period must occur after its start, '
-               f'but you set baseline={baseline}'
+               f'but you set baseline={baseline}')
         raise ValueError(msg)
 
 

@@ -54,10 +54,10 @@ def run_epochs(subject, session=None):
 
     # Now, generate epochs from each individual run.
     epochs_all_runs = []
-    for raw_fname in raw_fnames:
+    for run, raw_fname in zip(config.get_runs(), raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
@@ -66,6 +66,9 @@ def run_epochs(subject, session=None):
             if event_name not in raw.annotations.description:
                 del event_id[event_name]
 
+        msg = 'Creating task-related epochs …'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,

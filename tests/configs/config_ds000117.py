@@ -15,8 +15,8 @@ subjects = ['01']
 resample_sfreq = 125.
 crop = (0, 350)
 
-find_flat_channels_meg = True
-find_noisy_channels_meg = True
+find_flat_channels_meg = False
+find_noisy_channels_meg = False
 use_maxwell_filter = True
 
 mf_cal_fname = bids_root + '/derivatives/meg_derivatives/sss_cal.dat'

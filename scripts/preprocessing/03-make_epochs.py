@@ -36,7 +36,6 @@ def run_epochs(subject, session=None):
                          datatype=config.get_datatype(),
                          root=config.get_deriv_root())
 
-
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
     raw_fnames = []

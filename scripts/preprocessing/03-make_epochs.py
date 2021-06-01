@@ -18,7 +18,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import make_epochs, gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -26,7 +26,6 @@ logger = logging.getLogger('mne-bids-pipeline')
 @failsafe_run(on_error=on_error)
 def run_epochs(subject, session=None):
     """Extract epochs for one subject."""
-    raw_list = list()
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=config.get_task(),
@@ -37,67 +36,64 @@ def run_epochs(subject, session=None):
                          datatype=config.get_datatype(),
                          root=config.get_deriv_root())
 
+    # Generate a list of raw data paths (i.e., paths of individual runs)
+    # we want to create epochs from.
+    raw_fnames = []
     for run in config.get_runs():
-        # Prepare a name to save the data
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
 
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
 
-        msg = f'Loading filtered raw data from {raw_fname_in}'
+        raw_fnames.append(raw_fname_in)
+
+    # Generate a unique event name -> event code mapping that can be used
+    # across all runs.
+    event_name_to_code_map = config.annotations_to_events(raw_paths=raw_fnames)
+
+    # Now, generate epochs from each individual run.
+    epochs_all_runs = []
+    for run, raw_fname in zip(config.get_runs(), raw_fnames):
+        msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session, run=run))
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
-        raw = mne.io.read_raw_fif(raw_fname_in, preload=True)
-        raw_list.append(raw)
+        # Only keep the subset of the mapping that applies to the current run
+        event_id = event_name_to_code_map.copy()
+        for event_name in event_id.copy().keys():
+            if event_name not in raw.annotations.description:
+                del event_id[event_name]
 
-    msg = 'Concatenating runs'
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                session=session))
+        msg = 'Creating task-related epochs …'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
+        epochs = make_epochs(
+            raw=raw,
+            event_id=event_id,
+            tmin=config.epochs_tmin,
+            tmax=config.epochs_tmax,
+            metadata_tmin=config.epochs_metadata_tmin,
+            metadata_tmax=config.epochs_metadata_tmax,
+            metadata_keep_first=config.epochs_metadata_keep_first,
+            metadata_keep_last=config.epochs_metadata_keep_last,
+            event_repeated=config.event_repeated,
+            decim=config.decim
+        )
+        epochs_all_runs.append(epochs)
+        del raw  # free memory
 
-    if len(raw_list) == 1:  # avoid extra memory usage
-        raw = raw_list[0]
-    else:
-        raw = mne.concatenate_raws(raw_list)
-
-    events, event_id = mne.events_from_annotations(raw)
+    # Lastly, we can concatenate the epochs and set an EEG reference
+    epochs = mne.concatenate_epochs(epochs_all_runs)
     if "eeg" in config.ch_types:
         projection = True if config.eeg_reference == 'average' else False
-        raw.set_eeg_reference(config.eeg_reference, projection=projection)
+        epochs.set_eeg_reference(config.eeg_reference, projection=projection)
 
-    del raw_list
-
-    # Construct metadata from the epochs
-    if config.epochs_metadata_tmin is None:
-        epochs_metadata_tmin = config.epochs_tmin
-    else:
-        epochs_metadata_tmin = config.epochs_metadata_tmin
-
-    if config.epochs_metadata_tmax is None:
-        epochs_metadata_tmax = config.epochs_tmax
-    else:
-        epochs_metadata_tmax = config.epochs_metadata_tmax
-
-    metadata, _, _ = mne.epochs.make_metadata(
-        events=events, event_id=event_id,
-        tmin=epochs_metadata_tmin, tmax=epochs_metadata_tmax,
-        keep_first=config.epochs_metadata_keep_first,
-        keep_last=config.epochs_metadata_keep_last,
-        sfreq=raw.info['sfreq'])
-
-    # Epoch the data
-    # Do not reject based on peak-to-peak or flatness thresholds at this stage
-    msg = (f'Creating epochs with duration: '
-           f'[{config.epochs_tmin}, {config.epochs_tmax}] sec')
+    msg = (f'Created {len(epochs)} epochs with time interval: '
+           f'{epochs.tmin} – {epochs.tmax} sec')
     logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                 session=session))
-    epochs = mne.Epochs(raw, events=events, event_id=event_id,
-                        tmin=config.epochs_tmin, tmax=config.epochs_tmax,
-                        proj=False, baseline=None,
-                        preload=False, decim=config.decim,
-                        metadata=metadata,
-                        event_repeated=config.event_repeated)
 
     msg = 'Writing epochs to disk'
     logger.info(gen_log_message(message=msg, step=3, subject=subject,

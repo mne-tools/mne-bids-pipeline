@@ -15,9 +15,15 @@ authors:
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
 - An official [project governance](governance.md) structure has officially
   been adopted.
+- Drastically reduces memory usage when creating epochs from datasets with
+  multiple runs.
+  ({{ gh(355) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 
+- The [`conditions`][config.conditions] setting will now be `None` by default. 
+  It is a required setting so it will raise an error if left as `None`.
+  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
@@ -43,6 +49,10 @@ authors:
   ({{ gh(351) }} by {{ authors.crsegerie }})
 - Check that the baseline interval is compatible with [epochs_tmin, epochs_tmax] in the user's configuration file.
   ({{ gh(361) }} by {{ authors.crsegerie }})
+- `config.crop` has been renamed to the more explicit
+  [`config.crop_runs`][config.crop_runs], as it only applies to individual
+  runs and not the concatenated data.
+  ({{ gh(358) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

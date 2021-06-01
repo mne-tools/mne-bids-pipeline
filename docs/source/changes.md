@@ -15,6 +15,9 @@ authors:
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
 - An official [project governance](governance.md) structure has officially
   been adopted.
+- Drastically reduces memory usage when creating epochs from datasets with
+  multiple runs.
+  ({{ gh(355) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

@@ -41,7 +41,8 @@ authors:
   ({{ gh(322) }} by {{ authors.hoechenberger }})
 - Warn if using ICA and no EOG- or ECG-related ICs were detected.
   ({{ gh(351) }} by {{ authors.crsegerie }})
-- 
+- Check that the baseline interval is compatible with [epochs_tmin, epochs_tmax] in the user's configuration file.
+  ({{ gh(360) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 
@@ -72,5 +73,3 @@ authors:
   ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ authors.crsegerie }})
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config files.
   ({{ gh(340) }} by {{ authors.crsegerie }})
-- Check that the baseline interval is compatible with [epochs_tmin, epochs_tmax] in the user's configuration file.
-  ({{ gh(360) }} by {{ authors.crsegerie }})

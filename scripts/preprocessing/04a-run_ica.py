@@ -31,17 +31,23 @@ from config import make_epochs, gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def filter_for_ica(raw, subject, session) -> None:
+def filter_for_ica(
+    *,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: str,
+    run: Optional[str] = None
+) -> None:
     """Apply a high-pass filter if needed."""
     if config.ica_l_freq is None:
         msg = (f'Not applying high-pass filter (data is already filtered, '
                f'cutoff: {raw.info["highpass"]} Hz).')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
     else:
         msg = f'Applying high-pass filter with {config.ica_l_freq} Hz cutoff …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         raw.filter(l_freq=config.ica_l_freq, h_freq=None)
 
 
@@ -75,14 +81,15 @@ def make_ecg_epochs(
     *,
     raw: mne.io.BaseRaw,
     subject: str,
-    session: str
+    session: str,
+    run: Optional[str] = None
 ) -> Optional[mne.Epochs]:
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in config.ch_types or
             'mag' in config.ch_types):
         msg = 'Creating ECG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
 
         # Do not reject epochs based on amplitude.
         ecg_epochs = create_ecg_epochs(raw, reject=None,
@@ -93,13 +100,13 @@ def make_ecg_epochs(
             msg = ('No ECG events could be found. Not running ECG artifact '
                    'detection.')
             logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                        session=session))
+                                        session=session, run=run))
             ecg_epochs = None
     else:
         msg = ('No ECG or magnetometer channels are present. Cannot '
                'automate artifact detection for ECG')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         ecg_epochs = None
 
     return ecg_epochs
@@ -110,7 +117,8 @@ def make_eog_epochs(
     raw: mne.io.BaseRaw,
     eog_channels: Optional[Iterable[str]],
     subject: str,
-    session: str
+    session: str,
+    run: Optional[str] = None
 ) -> Optional[mne.Epochs]:
     if eog_channels:
         ch_names = eog_channels
@@ -124,7 +132,7 @@ def make_eog_epochs(
     if ch_names:
         msg = 'Creating EOG epochs …'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
 
         # Create the epochs. It's important not to reject epochs based on
         # amplitude!
@@ -136,13 +144,13 @@ def make_eog_epochs(
                    'detection.')
             logger.warning(gen_log_message(message=msg, step=4,
                                            subject=subject,
-                                           session=session))
+                                           session=session, run=run))
             eog_epochs = None
     else:
         msg = ('No EOG channel is present. Cannot automate IC detection '
                'for EOG')
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         eog_epochs = None
 
     return eog_epochs
@@ -253,20 +261,21 @@ def run_ica(subject, session=None):
     eog_epochs_all_runs = []
     ecg_epochs_all_runs = []
 
-    for raw_fname in raw_fnames:
+    for run, raw_fname in zip(config.get_runs(), raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # EOG epochs
         eog_epochs = make_eog_epochs(raw=raw, eog_channels=config.eog_channels,
-                                     subject=subject, session=session)
+                                     subject=subject, session=session, run=run)
         if eog_epochs is not None:
             eog_epochs_all_runs.append(eog_epochs)
 
         # ECG epochs
-        ecg_epochs = make_ecg_epochs(raw=raw, subject=subject, session=session)
+        ecg_epochs = make_ecg_epochs(raw=raw, subject=subject, session=session,
+                                     run=run)
         if ecg_epochs is not None:
             ecg_epochs_all_runs.append(ecg_epochs)
 
@@ -277,7 +286,7 @@ def run_ica(subject, session=None):
         if config.l_freq is not None:
             assert np.allclose(raw.info['highpass'], config.l_freq)
 
-        filter_for_ica(raw=raw, subject=subject, session=session)
+        filter_for_ica(raw=raw, subject=subject, session=session, run=run)
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()
@@ -285,6 +294,9 @@ def run_ica(subject, session=None):
             if event_name not in raw.annotations.description:
                 del event_id[event_name]
 
+        msg = 'Creating task-related epochs …'
+        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+                                    session=session, run=run))
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,

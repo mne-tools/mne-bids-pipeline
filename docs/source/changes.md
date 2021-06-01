@@ -15,6 +15,9 @@ authors:
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
 - An official [project governance](governance.md) structure has officially
   been adopted.
+- Drastically reduces memory usage when creating epochs from datasets with
+  multiple runs.
+  ({{ gh(355) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 
@@ -46,6 +49,10 @@ authors:
   ({{ gh(351) }} by {{ authors.crsegerie }})
 - Added the possibility to have different runs for different subjects.
   ({{ gh(353) }} by {{ authors.crsegerie }}))
+- `config.crop` has been renamed to the more explicit
+  [`config.crop_runs`][config.crop_runs], as it only applies to individual
+  runs and not the concatenated data.
+  ({{ gh(358) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

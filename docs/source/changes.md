@@ -47,6 +47,10 @@ authors:
   ({{ gh(322) }} by {{ authors.hoechenberger }})
 - Warn if using ICA and no EOG- or ECG-related ICs were detected.
   ({{ gh(351) }} by {{ authors.crsegerie }})
+- `config.crop` has been renamed to the more explicit
+  [`config.crop_runs`][config.crop_runs], as it only applies to individual
+  runs and not the concatenated data.
+  ({{ gh(358) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

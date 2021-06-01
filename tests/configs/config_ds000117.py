@@ -13,7 +13,7 @@ acq = None
 subjects = ['01']
 
 resample_sfreq = 125.
-crop = (0, 350)
+crop_runs = (0, 350)  # Reduce memory usage on CI system
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False

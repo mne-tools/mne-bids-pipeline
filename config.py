@@ -2,6 +2,7 @@
 but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
+import numbers
 import importlib
 import pathlib
 import functools
@@ -1376,18 +1377,21 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
 
-if baseline[0] and baseline[0] < epochs_tmin:
+
+if isinstance(baseline[0], numbers.Number) and baseline[0] < epochs_tmin:
     msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
            f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}.')
     raise ValueError(msg)
 
-if baseline[1] and baseline[1] > epochs_tmax:
+if isinstance(baseline[1], numbers.Number) and baseline[1] > epochs_tmax:
     msg = ('baseline should be contained in [epochs_tmin, epochs_tmax]. '
            f'But {baseline} in not contained in {[epochs_tmin, epochs_tmax]}.')
     raise ValueError(msg)
 
-if baseline[0] and baseline[1] and baseline[0] >= baseline[1]:
-    msg = (f'{baseline} is not a correct time-interval.')
+if (isinstance(baseline[0], numbers.Number) and
+    isinstance(baseline[1], numbers.Number) and
+        baseline[0] >= baseline[1]):
+    msg = f'{baseline} is not a correct time-interval.'
     raise ValueError(msg)
 
 

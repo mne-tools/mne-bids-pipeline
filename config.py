@@ -1506,9 +1506,13 @@ def get_sessions():
 
 
 def get_runs_all_subjects() -> dict:
-    '''Returns a dict of runs present in the bids_path
+    """Gives the mapping between subjects and their runs.
+
+    Returns
+    -------
+    a dict of runs present in the bids_path
     for each subject asked in the configuration file
-    (and not for each subject present in the bids_path).'''
+    (and not for each subject present in the bids_path)."""
     # We cannot use get_subjects() because if there is just one subject
     valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
 
@@ -1533,7 +1537,7 @@ def get_runs_all_subjects() -> dict:
 
 
 def get_intersect_run() -> list:
-    '''Returns the intersection of all the runs of all subjects.'''
+    """Returns the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects()
     return list(set.intersection(*map(set, subj_runs.values())))
 

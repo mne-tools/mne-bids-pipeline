@@ -1389,7 +1389,7 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 
 def check_baseline(
     *,
-    baseline: Tuple[Optional[float], Optional[float]],
+    baseline: Optional[Tuple[Optional[float], Optional[float]]],
     epochs_tmin: float,
     epochs_tmax: float
 ) -> None:
@@ -1410,6 +1410,9 @@ def check_baseline(
         if baseline not contained in [epochs_tmin, epochs_tmax].
         if baseline is not a correct time-interval.
     """
+    if baseline is None:
+        return
+
     if ((baseline[0] is not None and baseline[0] < epochs_tmin) or
             (baseline[1] is not None and baseline[1] > epochs_tmax)):
         msg = (f'baseline {baseline} outside of epochs interval '

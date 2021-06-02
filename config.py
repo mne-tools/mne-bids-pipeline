@@ -2,6 +2,7 @@
 but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
+
 import importlib
 import pathlib
 import functools
@@ -1384,6 +1385,48 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     msg = (f'Unknown bem_mri_images: {bem_mri_images}. Valid values '
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
+
+
+def check_baseline(
+    *,
+    baseline: Tuple[Optional[float], Optional[float]],
+    epochs_tmin: float,
+    epochs_tmax: float
+) -> None:
+    """Raises error if baseline not compatible with [epochs_tmin, epochs_tmax].
+
+    Parameters
+    ----------
+    baseline
+        Tuple indicating the beginning and end of the baseline interval.
+    epochs_tmin
+        Beginning of Epochs.
+    epochs_tmax
+        End of Epochs.
+
+    Raises
+    ------
+    ValueError
+        if baseline not contained in [epochs_tmin, epochs_tmax].
+        if baseline is not a correct time-interval.
+    """
+    if ((baseline[0] is not None and baseline[0] < epochs_tmin) or
+            (baseline[1] is not None and baseline[1] > epochs_tmax)):
+        msg = (f'baseline {baseline} outside of epochs interval '
+               f'{[epochs_tmin, epochs_tmax]}.')
+
+        raise ValueError(msg)
+
+    if ((baseline[0] is not None) and
+            (baseline[1] is not None) and
+            (baseline[0] >= baseline[1])):
+        msg = (f'The end of the baseline period must occur after its start, '
+               f'but you set baseline={baseline}')
+        raise ValueError(msg)
+
+
+check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
+               epochs_tmax=epochs_tmax)
 
 
 ###############################################################################

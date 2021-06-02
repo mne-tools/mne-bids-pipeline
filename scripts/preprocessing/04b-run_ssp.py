@@ -23,7 +23,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 @failsafe_run(on_error=on_error)
 def run_ssp(subject, session=None):
     # compute SSP on first run of raw
-    run = config.get_runs()[0]
+    run = config.get_runs(subject=subject)[0]
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=config.get_task(),

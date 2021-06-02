@@ -39,7 +39,7 @@ def run_epochs(subject, session=None):
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
     raw_fnames = []
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
 
@@ -54,7 +54,7 @@ def run_epochs(subject, session=None):
 
     # Now, generate epochs from each individual run.
     epochs_all_runs = []
-    for run, raw_fname in zip(config.get_runs(), raw_fnames):
+    for run, raw_fname in zip(config.get_runs(subject=subject), raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session, run=run))

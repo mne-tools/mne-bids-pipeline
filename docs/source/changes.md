@@ -47,6 +47,8 @@ authors:
   ({{ gh(322) }} by {{ authors.hoechenberger }})
 - Warn if using ICA and no EOG- or ECG-related ICs were detected.
   ({{ gh(351) }} by {{ authors.crsegerie }})
+- Added the possibility to have different runs for different subjects.
+  ({{ gh(353) }} by {{ authors.crsegerie }}))
 - Check that the baseline interval falls into `[epochs_tmin, epochs_tmax]`.
   ({{ gh(361) }} by {{ authors.crsegerie }})
 - `config.crop` has been renamed to the more explicit

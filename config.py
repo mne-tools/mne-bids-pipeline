@@ -1512,7 +1512,8 @@ def get_runs_all_subjects() -> dict:
     -------
     a dict of runs present in the bids_path
     for each subject asked in the configuration file
-    (and not for each subject present in the bids_path)."""
+    (and not for each subject present in the bids_path).
+    """
     # We cannot use get_subjects() because if there is just one subject
     valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
 

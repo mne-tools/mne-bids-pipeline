@@ -1009,8 +1009,6 @@ Maximum frequency for the time frequency analysis.
     ```
 """
 
-
-
 ###############################################################################
 # SOURCE ESTIMATION PARAMETERS
 # ----------------------------

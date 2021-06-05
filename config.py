@@ -991,6 +991,26 @@ The conditions to compute time-frequency decomposition on.
     ```
 """
 
+time_frequency_freq_min: Optional[float] = 10
+"""
+Minimum frequency for the time frequency analysis.
+???+ example "Example"
+    ```python
+    time_frequency_freq_min = 0.3  # 0.3 Hz
+    ```
+"""
+
+time_frequency_freq_max: Optional[float] = 40
+"""
+Maximum frequency for the time frequency analysis.
+???+ example "Example"
+    ```python
+    time_frequency_freq_max = 22.3  # 22.3 Hz
+    ```
+"""
+
+
+
 ###############################################################################
 # SOURCE ESTIMATION PARAMETERS
 # ----------------------------

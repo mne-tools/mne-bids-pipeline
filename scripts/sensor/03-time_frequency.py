@@ -23,7 +23,8 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-freqs = np.arange(10, 40)
+freqs = np.arange(config.time_frequency_freq_min,
+                  config.time_frequency_freq_max)
 n_cycles = freqs / 3.
 
 

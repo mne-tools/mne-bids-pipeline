@@ -158,7 +158,7 @@ corresponding to the processed experimental data will be retrieved
 automatically.
 """
 
-ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
+ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg', 'nirs']] = []
 """
 The channel types to consider.
 
@@ -178,7 +178,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[Literal['meg', 'eeg']] = None
+data_type: Optional[Literal['meg', 'eeg', 'nirs']] = None
 """
 The BIDS data type.
 
@@ -359,6 +359,32 @@ itself, nor to the source analysis stage.
     decoding, and time-frequency analysis:
     ```python
     analyze_channels = ['Pz']
+    ```
+"""
+
+###############################################################################
+# NIRS PROCESSING
+# ---------------
+
+nirs_only_long_channels: Optional[bool] = True
+"""
+Specifies if only long NIRS channels should be retained for processing.
+
+???+ example "Example"
+    ```python
+    nirs_only_long_channels = True  # processes only long channels 
+    nirs_only_long_channels = False  # process both long and short channels
+    ```
+"""
+
+nirs_short_channel_correction: Optional[bool] = True
+"""
+Specifies if short channel correction should be applied to fNIRS data.
+
+???+ example "Example"
+    ```python
+    nirs_short_channel_correction = True  # use short correction 
+    nirs_short_channel_correction = False  # do not use short correction
     ```
 """
 

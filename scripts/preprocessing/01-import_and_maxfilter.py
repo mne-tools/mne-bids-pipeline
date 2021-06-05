@@ -39,13 +39,11 @@ import json_tricks
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
+from mne.preprocessing.nirs import optical_density, beer_lambert_law
 from mne.parallel import parallel_func
-from mne.preprocessing.nirs import optical_density, beer_lambert_law, \
-    temporal_derivative_distribution_repair
 from mne_bids import BIDSPath, read_raw_bids
 
-from mne_nirs.signal_enhancement import (enhance_negative_correlation,
-                                         short_channel_regression)
+from mne_nirs.signal_enhancement import short_channel_regression
 from mne_nirs.channels import get_long_channels
 
 import config
@@ -248,12 +246,11 @@ def load_data(bids_path):
         if 'fnirs_cw_amplitude' in raw:
             raw = optical_density(raw)
         if 'fnirs_od' in raw:
-            if config.tddr:
-                raw = temporal_derivative_distribution_repair(raw)
-            if config.short_channel_correction:
+            if config.nirs_short_channel_correction:
                 raw = short_channel_regression(raw)
             raw = beer_lambert_law(raw)
-        raw = get_long_channels(raw, min_dist=0.01)
+        if config.nirs_only_long_channels:
+            raw = get_long_channels(raw, min_dist=0.01)
 
     montage_name = config.eeg_template_montage
     if config.get_datatype() == 'eeg' and montage_name:

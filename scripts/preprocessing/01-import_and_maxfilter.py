@@ -236,7 +236,7 @@ def load_data(bids_path):
 
         # Rename events.
         if config.rename_events:
-            rename_events(raw=raw, subject=subject, session=session)
+            renam:e_events(raw=raw, subject=subject, session=session)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):

@@ -372,7 +372,7 @@ Specifies if only long NIRS channels should be retained for processing.
 
 ???+ example "Example"
     ```python
-    nirs_only_long_channels = True  # processes only long channels 
+    nirs_only_long_channels = True  # processes only long channels
     nirs_only_long_channels = False  # process both long and short channels
     ```
 """
@@ -383,7 +383,7 @@ Specifies if short channel correction should be applied to fNIRS data.
 
 ???+ example "Example"
     ```python
-    nirs_short_channel_correction = True  # use short correction 
+    nirs_short_channel_correction = True  # use short correction
     nirs_short_channel_correction = False  # do not use short correction
     ```
 """

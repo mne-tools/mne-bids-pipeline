@@ -19,8 +19,8 @@ authors:
 - Drastically reduces memory usage when creating epochs from datasets with
   multiple runs.
   ({{ gh(355) }} by {{ authors.hoechenberger }})
-- Add time frequency plot to report.
-  ({{ gh(355) }} by {{ authors.robluke }})
+- Add time-frequency plot to report.
+  ({{ gh(367) }} by {{ authors.robluke }})
 
 ### Behavior changes
 

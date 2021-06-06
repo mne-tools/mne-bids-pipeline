@@ -280,7 +280,7 @@ def run_report(subject, session=None):
 
     ###########################################################################
     #
-    # Visualize TFR as topo.
+    # Visualize TFR as topography.
     #
     if isinstance(config.time_frequency_conditions, dict):
         conditions = list(config.time_frequency_conditions.keys())

@@ -5,6 +5,7 @@ scipy
 scikit-learn
 pandas
 json_tricks
+h5py
 matplotlib
 seaborn
 nibabel

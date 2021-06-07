@@ -22,7 +22,8 @@ authors:
   ({{ gh(355) }} by {{ authors.hoechenberger }})
 - Add time-frequency plot to report.
   ({{ gh(367) }} by {{ authors.robluke }})
-- Add the possibility to `exclude_runs`.
+- Add possibility to exclude runs from the analysis via the new
+  [`exclude_runs`][config.exclude_runs] setting.
   ({{ gh(370) }} by {{ authors.crsegerie }})
 
 ### Behavior changes

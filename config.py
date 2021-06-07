@@ -89,7 +89,7 @@ runs: Union[Iterable, Literal['all']] = 'all'
 The runs to process.
 """
 
-exclude_runs: Optional[dict[str, list[str]]] = None
+exclude_runs: Optional[Dict[str, List[str]]] = None
 """
 Specify runs to exclude from analysis.
 

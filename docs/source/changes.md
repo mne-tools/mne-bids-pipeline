@@ -5,6 +5,7 @@ authors:
   hoechenberger: "[Richard Höchenberger](https://github.com/hoechenberger)"
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
   robluke: "[Robert Luke](https://github.com/rob-luke)"
+  crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
 ---
 
 
@@ -21,6 +22,8 @@ authors:
   ({{ gh(355) }} by {{ authors.hoechenberger }})
 - Add time-frequency plot to report.
   ({{ gh(367) }} by {{ authors.robluke }})
+- Add the possibility to `exclude_runs`.
+  ({{ gh(370) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

@@ -10,6 +10,12 @@ _xvfb: &xvfb
   command: |
     /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
 
+_git: &git
+  name: Configure git
+  command: |
+    git config --global user.email "ci-build@mne.tools"
+    git config --global user.name "ci-build"
+
 _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
@@ -29,8 +35,6 @@ _bashenv: &bashenv
     echo "export XDG_RUNTIME_DIR=/tmp/runtime-circleci" >> $BASH_ENV
     wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
     source get_minimal_commands.sh
-    git config --global user.email "ci-build@mne.tools"
-    git config --global user.name "ci-build"
     mkdir -p ~/mne_data
 
 jobs:
@@ -49,6 +53,8 @@ jobs:
           <<: *bashenv
       - run:
           <<: *xvfb
+      - run:
+          <<: *git
       - add_ssh_keys:
           fingerprints:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
@@ -610,6 +616,8 @@ jobs:
             - ".git"
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *git
       - run:
           name: Install "gh-pages" CLI app
           command: |

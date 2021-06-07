@@ -959,15 +959,16 @@ Whether to perform decoding (MVPA) on the contrasts specified above as
 
 decoding_metric: str = 'roc_auc'
 """
-The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
-or any other metric supported by `scikit-learn`.
+The metric to use for estimating classification performance. It can be
+`'roc_auc'` or `'accuracy'` – or any other metric supported by `scikit-learn`.
 
-With AUC, chance level is the same regardless of class balance.
+With ROC AUC, chance level is the same regardless of class balance, that is,
+you don't need to be worried about **exactly** balancing class sizes.
 """
 
 decoding_n_splits: int = 5
 """
-The number of folds (a.k.a. splits) to use in the cross-validation.
+The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
 """
 
 n_boot: int = 5000

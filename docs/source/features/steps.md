@@ -25,7 +25,7 @@ Sensor-level analysis
 |:-------------------------------|:------------|
 | `sensor`                       | Run all sensor-level analysis scripts. |
 | `sensor/make_evoked`           | Extract evoked data for each condition. |
-| `sensor/sliding_estimator`     | Running a time-by-time decoder with sliding window. |
+| `sensor/sliding_estimator`     | Running a time-by-time decoder with sliding window. This is achieved by standardizing the "features" (i.e., the input data is centered and scaled to have a mean of zero and a standard deviation of 1), fitting a separate logistic-regression classifier for each time point, and estimating its [performance][config.decoding_metric] before moving to the next time point (hence the term "sliding estimator"). The returned scores are generated using a stratified [k-fold cross-validation scheme][config.decoding_n_splits]. The subject-level report presents the decoding performance across epochs. The `average`-subject report presents the mean performance across subjects. |
 | `sensor/time_frequency`        | Running a time-frequency analysis. |
 | `sensor/group_average_sensors` | Make a group average of the time domain data. |
 

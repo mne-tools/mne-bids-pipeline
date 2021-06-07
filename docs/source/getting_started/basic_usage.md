@@ -50,7 +50,7 @@ You need to **create a copy** of that configuration file and adjust all
 parameters that are relevant to your data processing and analysis.
 
 !!! warning "Avoid modifying the scripts"
-    You should **only** need to touch the configuration file.
+    You should **only** need to modify the copy of the configuration file.
     None of the scripts should be edited.
 
 Run the pipeline

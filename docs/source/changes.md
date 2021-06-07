@@ -4,6 +4,7 @@ authors:
   agramfort: "[Alex Gramfort](https://github.com/agramfort)"
   hoechenberger: "[Richard Höchenberger](https://github.com/hoechenberger)"
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
+  robluke: "[Robert Luke](https://github.com/rob-luke)"
 ---
 
 
@@ -18,6 +19,8 @@ authors:
 - Drastically reduces memory usage when creating epochs from datasets with
   multiple runs.
   ({{ gh(355) }} by {{ authors.hoechenberger }})
+- Add time-frequency plot to report.
+  ({{ gh(367) }} by {{ authors.robluke }})
 
 ### Behavior changes
 

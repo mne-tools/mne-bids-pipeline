@@ -1570,8 +1570,8 @@ def get_runs_all_subjects() -> dict:
             get_bids_root(), entity_key='run',
             ignore_subjects=ignore_subjects)
         if exclude_runs and subj in exclude_runs:
-            valid_runs_subj = [
-                r for r in valid_runs_subj if r not in exclude_runs[subj]]
+            valid_runs_subj = [r for r in valid_runs_subj
+                               if r not in exclude_runs[subj]]
         subj_runs[subj] = valid_runs_subj
 
     return subj_runs

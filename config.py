@@ -102,7 +102,7 @@ Specify runs to exclude from analysis.
 ???+ info "Good Practice / Advice"
     Keep track of the criteria leading you to exclude
     a run (e.g. too many movements, missing blocks, aborted experiment,
-    did not understand the instructions, etc, ...).
+    did not understand the instructions, etc.).
 """
 
 crop_runs: Optional[Tuple[float, float]] = None

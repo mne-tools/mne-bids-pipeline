@@ -91,7 +91,7 @@ The runs to process.
 
 exclude_runs: Optional[Dict[str, List[str]]] = None
 """
-Specify runs to exclude from analysis.
+Specify runs to exclude from analysis, for each participant invidiually.
 
 ???+ example "Example"
     ```python

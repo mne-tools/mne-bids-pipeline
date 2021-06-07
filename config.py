@@ -89,6 +89,22 @@ runs: Union[Iterable, Literal['all']] = 'all'
 The runs to process.
 """
 
+exclude_runs: Optional[Dict[str, List[str]]] = None
+"""
+Specify runs to exclude from analysis, for each participant individually.
+
+???+ example "Example"
+    ```python
+    exclude_runs = None  # Include all runs.
+    exclude_runs = {'01': ['02']}  # Exclude run 02 of subject 01.
+    ```
+
+???+ info "Good Practice / Advice"
+    Keep track of the criteria leading you to exclude
+    a run (e.g. too many movements, missing blocks, aborted experiment,
+    did not understand the instructions, etc.).
+"""
+
 crop_runs: Optional[Tuple[float, float]] = None
 """
 Crop the raw data of each run to the specified time interval ``[tmin, tmax]``,
@@ -1553,6 +1569,9 @@ def get_runs_all_subjects() -> dict:
         valid_runs_subj = get_entity_vals(
             get_bids_root(), entity_key='run',
             ignore_subjects=ignore_subjects)
+        if exclude_runs and subj in exclude_runs:
+            valid_runs_subj = [r for r in valid_runs_subj
+                               if r not in exclude_runs[subj]]
         subj_runs[subj] = valid_runs_subj
 
     return subj_runs

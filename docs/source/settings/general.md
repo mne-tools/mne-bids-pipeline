@@ -6,6 +6,7 @@
 ::: config.sessions
 ::: config.task
 ::: config.runs
+::: config.exclude_runs
 ::: config.crop_runs
 ::: config.acq
 ::: config.proc

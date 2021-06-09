@@ -246,11 +246,11 @@ def run_ica(subject, session=None):
     # we want to create epochs from.
     raw_fnames = []
     for run in config.get_runs(subject=subject):
-        raw_fname.run = run
+        raw_fname.update(run=run)
         if raw_fname.copy().update(split='01').fpath.exists():
             raw_fname.update(split='01')
 
-        raw_fnames.append(raw_fname)
+        raw_fnames.append(raw_fname.copy())
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.

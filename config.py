@@ -517,8 +517,8 @@ End time of the interpolation window in seconds.
 """
 
 ###############################################################################
-# FREQUENCY FILTERING
-# -------------------
+# FREQUENCY FILTERING & RESAMPLING
+# --------------------------------
 # done in 02-frequency_filter.py
 
 l_freq: Optional[float] = None
@@ -533,14 +533,10 @@ The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
 """
 
-###############################################################################
-# RESAMPLING
-# ----------
-
 resample_sfreq: Optional[float] = None
 """
 Specifies at which sampling frequency the data should be resampled.
-If None then no resampling will be done.
+If `None`, then no resampling will be done.
 
 ???+ example "Example"
     ```python
@@ -548,6 +544,24 @@ If None then no resampling will be done.
     resample_sfreq = 500  # resample to 500Hz
     ```
 """
+
+store_filtered_raw: bool = False
+"""
+Whether to save the frequency-filtered and possibly resampled continuous data
+to disk. Frequency filtering and decimation are very fast procedures that
+typically do not warrant saving the results to disk, as they can be recreated
+very easily whenever needed. If, however, you wish to save this data in a file,
+set this to `True`.
+
+???+ example "Example"
+    ```python
+    store_filtered_raw = True
+    ```
+"""
+
+###############################################################################
+# DECIMATION
+# ----------
 
 decim: int = 1
 """

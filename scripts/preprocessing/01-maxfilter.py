@@ -1,7 +1,7 @@
 """
-=============================
-01.MaxWell filter to MEG data
-=============================
+===========================
+01. MaxWell-filter MEG data
+===========================
 
 If you chose to run Maxwell filter (config.use_maxwell_filter = True),
 the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
@@ -102,8 +102,8 @@ def run_maxwell_filter(subject, session=None):
         # Save only the channel types we wish to analyze (including the
         # channels marked as "bad").
         # We do not run `raw_sss.pick()` here because it uses too much memory.
-        chs_to_include = config.get_channels_to_analyze(raw.info)
-        raw_sss.save(bids_path_out, picks=chs_to_include, split_naming='bids',
+        picks = config.get_channels_to_analyze(raw.info)
+        raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
                      overwrite=True)
         del raw_sss
 
@@ -165,7 +165,7 @@ def run_maxwell_filter(subject, session=None):
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).
-            raw_er_sss.save(raw_er_fname_out, picks=chs_to_include,
+            raw_er_sss.save(raw_er_fname_out, picks=picks,
                             overwrite=True, split_naming='bids')
             del raw_er_sss
 

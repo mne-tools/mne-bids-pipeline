@@ -16,6 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501
 
+from typing import Optional
 import itertools
 import logging
 import numpy as np
@@ -24,14 +25,80 @@ import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
 
-import config
 from config import gen_log_message, on_error, failsafe_run
+from common_functions import import_experimental_data
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_filter(subject, run=None, session=None):
+def filter(
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+    l_freq: Optional[float],
+    h_freq: Optional[float],
+    l_trans_bandwidth: Optional[float],
+    h_trans_bandwidth: Optional[float]
+) -> None:
+    """Filter data channels (MEG and EEG)."""
+    if l_freq is None and h_freq is None:
+        return
+
+    data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
+
+    if l_freq is not None and h_freq is None:
+        msg = (f'High-pass filtering {data_type} data; lower bound: '
+               f'{l_freq} Hz')
+    elif l_freq is None and h_freq is not None:
+        msg = (f'Low-pass filtering {data_type} data; upper bound: '
+               f'{h_freq} Hz')
+    elif l_freq is not None and h_freq is not None:
+        msg = (f'Band-pass filtering {data_type} data; range: '
+               f'{l_freq} – {h_freq} Hz')
+
+    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                session=session, run=run))
+
+    raw.filter(l_freq=l_freq, h_freq=h_freq,
+               l_trans_bandwidth=l_trans_bandwidth,
+               h_trans_bandwidth=h_trans_bandwidth,
+               filter_length='auto', phase='zero', fir_window='hamming',
+               fir_design='firwin')
+
+
+def resample(
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+    sfreq: Optional[float]
+) -> None:
+    if not sfreq:
+        return
+
+    data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
+    msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
+    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                session=session, run=run,))
+    raw.resample(sfreq, npad='auto')
+
+    # if config.process_er
+
+
+def filter_data(
+    subject: str,
+    run: Optional[str] = None,
+    session: Optional[str] = None,
+    l_freq: Optional[float],
+    h_freq: Optional[float],
+    l_trans_bandwidth: Optional[float],
+    h_trans_bandwidth: Optional[float],
+    resample_sfreq: Optional[float]
+) -> None:
     """Filter data from a single subject."""
+    if l_freq is None and h_freq is None:
+        return
 
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -51,91 +118,29 @@ def run_filter(subject, run=None, session=None):
                          root=config.get_deriv_root(),
                          check=False)
 
-    # Prepare a name to save the data
+    # Create paths for reading and writing the filtered data.
     raw_fname_in = bids_path.copy()
-    raw_er_fname_in = bids_path.copy().update(task='noise', run=None)
+    if raw_fname_in.copy().update(split='01').fpath.exists():
+        raw_fname_in.update(split='01')
 
     if config.use_maxwell_filter:
         raw_fname_in = raw_fname_in.update(processing='sss')
-        raw_er_fname_in = raw_er_fname_in.update(processing='sss')
-
-    if raw_fname_in.copy().update(split='01').fpath.exists():
-        raw_fname_in.update(split='01')
-    if raw_er_fname_in.copy().update(split='01').fpath.exists():
-        raw_er_fname_in.update(split='01')
+        raw = mne.io.read_raw_fif(raw_fname_in)
+    else:
+        raw = import_experimental_data(subject=subject, session=session,
+                                       run=run, save=False)
 
     raw_fname_out = bids_path.copy().update(processing='filt')
-    raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
-                                               task='noise')
-
-    read_raw = mne.io.read_raw_fif
-    ch_types = config.ch_types
-    if (not config.use_maxwell_filter and
-            not config.rename_events and
-            not (ch_types == ['eeg'] and config.find_flat_channels_meg) and
-            not (ch_types == ['eeg'] and config.find_noisy_channels_meg) and
-            not (ch_types == ['eeg'] and config.eeg_bipolar_channels) and
-            not config.drop_channels):
-        raw_fname_in.update(
-            root=config.get_bids_root(),
-            suffix=config.get_datatype(),
-            extension=None)
-        read_raw = read_raw_bids
-
     msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                session=session, run=run,))
-
-    raw = read_raw(raw_fname_in)
-    raw.load_data()
-
-    # Filter data channels (MEG and EEG)
-    if config.l_freq is not None and config.h_freq is None:
-        msg = f'High-pass filtering data; lower bound: {config.l_freq} Hz'
-    elif config.l_freq is None and config.h_freq is not None:
-        msg = f'Low-pass filtering data; upper bound: {config.h_freq} Hz'
-    elif config.l_freq is not None and config.h_freq is not None:
-        msg = (f'Band-pass filtering data; range: '
-               f'{config.l_freq} – {config.h_freq} Hz')
-    else:
-        msg = 'Not applying frequency filter.'
-
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run))
-    if config.l_freq is None and config.h_freq is None:
-        return
 
-    filter_kws = dict(l_freq=config.l_freq, h_freq=config.h_freq,
-                      l_trans_bandwidth=config.l_trans_bandwidth,
-                      h_trans_bandwidth=config.h_trans_bandwidth,
-                      filter_length='auto', phase='zero', fir_window='hamming',
-                      fir_design='firwin')
-    raw.filter(**filter_kws)
+    raw.load_data()
+    filter(raw=raw, subject=subject, session=session, run=run)
+    resample(raw=raw, subject=subject, session=session, run=run)
 
-    if config.process_er:
-        msg = (f'Filtering empty-room data between {config.l_freq} and '
-               f'{config.h_freq} Hz')
-        logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                    session=session, run=run,))
-        raw_er = read_raw(raw_er_fname_in)
-        raw_er.load_data()
-        raw_er.filter(**filter_kws)
-
-    if config.resample_sfreq:
-        msg = f'Resampling experimental data to {config.resample_sfreq:.1f} Hz'
-        logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                    session=session, run=run,))
-        raw.resample(config.resample_sfreq, npad='auto')
-
-        if config.process_er:
-            msg = 'Resampling empty-room recording.'
-            logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                        session=session, run=run,))
-            raw_er.resample(config.resample_sfreq, npad='auto')
-
-    raw.save(raw_fname_out, overwrite=True, split_naming='bids')
-    if config.process_er:
-        raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
+    if config.store_filtered_raw:
+        raw.save(raw_fname_out, overwrite=True, split_naming='bids')
 
     if config.interactive:
         # Plot raw data and power spectral density.
@@ -143,10 +148,31 @@ def run_filter(subject, run=None, session=None):
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-        if config.process_er:
-            raw_er.plot(n_channels=50, butterfly=True)
-            raw_er.plot_psd(fmax=fmax)
 
+
+def filter_emptyroom(
+    subject: str,
+    session: str
+) -> None:
+    bids_path = BIDSPath(subject=subject,
+                         run=config.get_runs()[0],
+                         session=session,
+                         task=config.get_task(),
+                         acquisition=config.acq,
+                         processing=config.proc,
+                         recording=config.rec,
+                         space=config.space,
+                         suffix='raw',
+                         extension='.fif',
+                         datatype=config.get_datatype(),
+                         root=config.get_deriv_root(),
+                         check=False)
+
+    raw_er_fname_in = bids_path.copy().update(task='noise', run=None)
+    raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
+                                               task='noise')
+
+    
 
 @failsafe_run(on_error=on_error)
 def main():
@@ -158,7 +184,9 @@ def main():
     parallel(run_func(subject, run, session) for subject, run, session in
              itertools.product(config.get_subjects(), config.get_runs(),
                                config.get_sessions()))
-
+    # if config.process_er:
+        # run_func(config.get_subjects(), config.get_runs()[0], task='noise',
+        #                             config.get_sessions()))
     msg = 'Completed 2: Frequency filtering'
     logger.info(gen_log_message(step=2, message=msg))
 

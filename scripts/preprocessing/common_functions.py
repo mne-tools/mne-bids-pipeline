@@ -16,7 +16,7 @@ to the WIP specification for common BIDS derivatives, see this PR:
 https://github.com/bids-standard/bids-specification/pull/265
 """  # noqa: E501
 
-import itertools
+from typing import Optional, List
 import logging
 
 import numpy as np
@@ -40,7 +40,7 @@ def rename_events(raw, subject, session) -> None:
 
     Modifies ``raw`` in-place.
     """
-    if not config.rename_events or subject == 'emptyroom':
+    if not config.rename_events:
         return
 
     # Check if the user requested to rename events that don't exist.
@@ -79,6 +79,9 @@ def find_bad_channels(raw, subject, session, task, run) -> None:
 
     Modifies ``raw`` in-place.
     """
+    if not (config.find_flat_channels_meg or config.find_noisy_channels_meg):
+        return
+
     if (config.find_flat_channels_meg and
             not config.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
@@ -183,16 +186,22 @@ def load_data(bids_path):
 
     raw = read_raw_bids(bids_path=bids_path)
 
+    # Save only the channel types we wish to analyze (including the
+    # channels marked as "bad").
+    # We do not run `raw.pick()` here because it uses too much memory.
+    # Note that we skip this bit if `use_maxwell_filter=True`, as
+    # we'll want to retain all channels for Maxwell filtering in that
+    # case. The Maxwell filtering script will do this channel type
+    # subsetting after Maxwell filtering is complete.
+    if not config.use_maxwell_filter:
+        picks = config.get_channels_to_analyze(raw.info)
+        raw.pick(picks)
+
     crop_data(raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
-
-    set_eeg_montage(raw=raw, subject=subject, session=session)
-    create_bipolar_channels(raw=raw, subject=subject, session=session)
-    drop_channels(raw=raw, subject=subject, session=session)
-    rename_events(raw=raw, subject=subject, session=session)
 
     return raw
 
@@ -271,20 +280,42 @@ def set_eeg_montage(raw, subject, session) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def fix_stim_artifact(raw: mne.io.BaseRaw) -> mne.io.BaseRaw:
+def fix_stim_artifact(raw: mne.io.BaseRaw) -> None:
     """Fix stimulation artifact in the data."""
+    if not config.fix_stim_artifact:
+        return
+
     events, _ = mne.events_from_annotations(raw)
-    raw = mne.preprocessing.fix_stim_artifact(
+    mne.preprocessing.fix_stim_artifact(
         raw, events=events, event_id=None,
         tmin=config.stim_artifact_tmin,
         tmax=config.stim_artifact_tmax,
         mode='linear')
-    return raw
 
 
-def run_import(subject, session=None):
+def import_experimental_data(
+    *,
+    subject: str,
+    session: Optional[str] = None,
+    run: Optional[str] = None,
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Run the data import.
+
+    Parameters
+    ----------
+    subject
+        The subject to import.
+    session
+        The session to import.
+    run
+        The run to import.
+    save
+        Whether to save the data to disk or not.
+    """
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
+                            run=run,
                             task=config.get_task(),
                             acquisition=config.acq,
                             processing=config.proc,
@@ -298,80 +329,77 @@ def run_import(subject, session=None):
                                                root=config.get_deriv_root(),
                                                check=False)
 
-    for run_idx, run in enumerate(config.get_runs()):
-        bids_path_in.update(run=run)
-        bids_path_out.update(run=run)
-        raw = load_data(bids_path_in)
+    raw = load_data(bids_path_in)
+    set_eeg_montage(raw=raw, subject=subject, session=session)
+    create_bipolar_channels(raw=raw, subject=subject, session=session)
+    drop_channels(raw=raw, subject=subject, session=session)
+    rename_events(raw=raw, subject=subject, session=session)
+    fix_stim_artifact(raw=raw)
+    find_bad_channels(raw=raw, subject=subject, session=session,
+                      task=config.get_task(), run=run)
 
-        # Fix stimulation artifact
-        if config.fix_stim_artifact:
-            raw = fix_stim_artifact(raw)
+    # Save the data.
+    if save:
+        raw.save(fname=bids_path_out, split_naming='bids', overwrite=True)
 
-        # Auto-detect bad channels.
-        if config.find_flat_channels_meg or config.find_noisy_channels_meg:
-            find_bad_channels(raw=raw, subject=subject, session=session,
-                              task=config.get_task(), run=run)
+    return raw
 
-        # Save the data.
-        kwargs = dict(fname=bids_path_out, split_naming='bids', overwrite=True)
-        if not config.use_maxwell_filter:
-            # Save only the channel types we wish to analyze (including the
-            # channels marked as "bad").
-            # We do not run `raw.pick()` here because it uses too much memory.
-            # Note that we skip this bit if `use_maxwell_filter=True`, as
-            # we'll want to retain all channels for Maxwell filtering in that
-            # case. The Maxwell filtering script will do this channel type
-            # subsetting after Maxwell filtering is complete.
-            kwargs['picks'] = config.get_channels_to_analyze(raw.info)
+def import_er_data(
+    *,
+    subject: str,
+    session: Optional[str] = None,
+    bads: Optional[List[str]] = None,
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Import empty-room data.
 
-        raw.save(**kwargs)
+    Parameters
+    ----------
+    subject
+        The subject for whom to import the empty-room data.
+    session
+        The session for which to import the empty-room data.
+    bads
+        The selection of bad channels from the corresponding experimental
+        recording.
+    save
+        Whether to save the data to disk or not.
+    """
+    bids_path_er_in = BIDSPath(
+        subject=subject,
+        session=session,
+        run=config.get_runs()[0],
+        task=config.get_task(),
+        acquisition=config.acq,
+        processing=config.proc,
+        recording=config.rec,
+        space=config.space,
+        suffix=config.get_datatype(),
+        datatype=config.get_datatype(),
+        root=config.get_bids_root()
+    ).find_empty_room()
 
-        # Empty-room processing.
-        if run_idx == 0 and config.process_er:
-            msg = 'Importing empty-room recording …'
-            logger.info(gen_log_message(step=0, subject=subject,
-                                        session=session, message=msg))
+    bids_path_er_out = (bids_path_er_in.copy()
+                        .update(task='noise',
+                                run=None,
+                                suffix='raw',
+                                extension='.fif',
+                                root=config.get_deriv_root(),
+                                check=False))
 
-            bids_path_er_in = bids_path_in.find_empty_room()
-            raw_er = load_data(bids_path_er_in)
-            raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
-                                   ch.startswith('MEG')]
+    if bads is None:
+        bads = []
 
-            raw_er_fname_out = bids_path_out.copy().update(task='noise',
-                                                           run=None)
+    raw_er = load_data(bids_path_er_in)
+    drop_channels(raw=raw_er, subject='emptyroom', session=session)
 
-            kwargs = dict(fname=raw_er_fname_out, split_naming='bids',
-                          overwrite=True)
-            if not config.use_maxwell_filter:
-                # Save only the channel types we wish to analyze
-                # (same as for experimental data above).
-                kwargs['picks'] = config.get_channels_to_analyze(raw_er.info)
+    # Set same set of bads as in the experimental run, but only for MEG
+    # channels (because we won't have any others in empty-room recordings)
+    raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
 
-            raw_er.save(**kwargs)
-            del raw_er
+    # Save the data.
+    if save:
+        raw_er.save(fname=bids_path_er_out, split_naming='bids',
+                    overwrite=True)
 
-
-@failsafe_run(on_error=on_error)
-def main():
-    """Import the data."""
-    msg = 'Running Step: Data import'
-    logger.info(gen_log_message(step=0, message=msg))
-
-    ch_types = config.ch_types
-    if (config.use_maxwell_filter or
-            config.rename_events or
-            config.drop_channels or
-            (ch_types != ['eeg'] and config.find_flat_channels_meg) or
-            (ch_types != ['eeg'] and config.find_noisy_channels_meg) or
-            (ch_types == ['eeg'] and config.eeg_bipolar_channels)):
-        parallel, run_func, _ = parallel_func(run_import, n_jobs=config.N_JOBS)
-        parallel(run_func(subject, session) for subject, session in
-                 itertools.product(config.get_subjects(),
-                                   config.get_sessions()))
-
-    msg = 'Completed Step: Data import'
-    logger.info(gen_log_message(step=0, message=msg))
-
-
-if __name__ == '__main__':
-    main()
+    return raw_er

@@ -182,8 +182,6 @@ def load_data(bids_path):
     # - sets raw.annotations using the BIDS events.tsv
 
     subject = bids_path.subject
-    session = bids_path.session
-
     raw = read_raw_bids(bids_path=bids_path)
 
     # Save only the channel types we wish to analyze (including the
@@ -368,7 +366,7 @@ def import_er_data(
     bids_path_er_in = BIDSPath(
         subject=subject,
         session=session,
-        run=config.get_runs()[0],
+        run=config.get_runs(subject=subject)[0],
         task=config.get_task(),
         acquisition=config.acq,
         processing=config.proc,

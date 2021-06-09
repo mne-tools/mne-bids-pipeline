@@ -27,7 +27,7 @@ from mne_bids import BIDSPath, read_raw_bids
 
 import config
 from config import gen_log_message, on_error, failsafe_run
-from common_functions import import_experimental_data
+from common_functions import import_experimental_data, import_er_data
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -92,6 +92,7 @@ def filter_data(
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
+    task: Optional[str] = None,
     l_freq: Optional[float],
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
@@ -106,10 +107,16 @@ def filter_data(
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
+    empty_room = False
+    if task is None:
+        task = config.get_task()
+    elif task is 'noise':
+        empty_room = True  # we're processing empty-room data
+
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,
-                         task=config.get_task(),
+                         task=task,
                          acquisition=config.acq,
                          processing=config.proc,
                          recording=config.rec,
@@ -128,12 +135,15 @@ def filter_data(
     if config.use_maxwell_filter:
         raw_fname_in = raw_fname_in.update(processing='sss')
         raw = mne.io.read_raw_fif(raw_fname_in)
+    elif empty_room:
+        raw = import_er_data(subject=subject, session=session, save=False)
     else:
         raw = import_experimental_data(subject=subject, session=session,
                                        run=run, save=False)
 
     raw_fname_out = bids_path.copy().update(processing='filt')
-    msg = f'Input: {raw_fname_in}, Output: {raw_fname_out}'
+
+    msg = f'Reading: {raw_fname_in}'
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run))
 
@@ -156,6 +166,7 @@ def filter_data(
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
+    return raw
 
 
 def filter_emptyroom(
@@ -163,7 +174,7 @@ def filter_emptyroom(
     session: str
 ) -> None:
     bids_path = BIDSPath(subject=subject,
-                         run=config.get_runs()[0],
+                         run=config.get_runs(subject=subject)[0],
                          session=session,
                          task=config.get_task(),
                          acquisition=config.acq,

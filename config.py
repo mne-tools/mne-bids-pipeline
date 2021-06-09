@@ -2,6 +2,7 @@
 but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
+
 import importlib
 import pathlib
 import functools
@@ -74,12 +75,6 @@ run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 """
 
-crop: Optional[Tuple[float, float]] = None
-"""
-Crop the raw data to the specified time interval ``[tmin, tmax]`` in seconds.
-If ``None``, do not crop the data.
-"""
-
 sessions: Union[List, Literal['all']] = 'all'
 """
 The sessions to process.
@@ -93,6 +88,29 @@ The task to process.
 runs: Union[Iterable, Literal['all']] = 'all'
 """
 The runs to process.
+"""
+
+exclude_runs: Optional[Dict[str, List[str]]] = None
+"""
+Specify runs to exclude from analysis, for each participant individually.
+
+???+ example "Example"
+    ```python
+    exclude_runs = None  # Include all runs.
+    exclude_runs = {'01': ['02']}  # Exclude run 02 of subject 01.
+    ```
+
+???+ info "Good Practice / Advice"
+    Keep track of the criteria leading you to exclude
+    a run (e.g. too many movements, missing blocks, aborted experiment,
+    did not understand the instructions, etc.).
+"""
+
+crop_runs: Optional[Tuple[float, float]] = None
+"""
+Crop the raw data of each run to the specified time interval ``[tmin, tmax]``,
+in seconds. The runs will be cropped before Maxwell or frequency filtering is
+applied. If ``None``, do not crop the data.
 """
 
 acq: Optional[str] = None
@@ -681,7 +699,7 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
-conditions: Union[Iterable[str], Dict[str, str]] = ['left', 'right']
+conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -692,6 +710,9 @@ for more information.
 
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
+
+This is a **required** parameter in the configuration file. If left as `None`,
+it will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -953,15 +974,16 @@ Whether to perform decoding (MVPA) on the contrasts specified above as
 
 decoding_metric: str = 'roc_auc'
 """
-The metric to use for cross-validation. It can be `'roc_auc'` or `'accuracy'`
-or any other metric supported by `scikit-learn`.
+The metric to use for estimating classification performance. It can be
+`'roc_auc'` or `'accuracy'` – or any other metric supported by `scikit-learn`.
 
-With AUC, chance level is the same regardless of class balance.
+With ROC AUC, chance level is the same regardless of class balance, that is,
+you don't need to be worried about **exactly** balancing class sizes.
 """
 
 decoding_n_splits: int = 5
 """
-The number of folds (a.k.a. splits) to use in the cross-validation.
+The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
 """
 
 n_boot: int = 5000
@@ -998,6 +1020,24 @@ The conditions to compute time-frequency decomposition on.
 ???+ example "Example"
     ```python
     time_frequency_conditions = ['left', 'right']
+    ```
+"""
+
+time_frequency_freq_min: Optional[float] = 10
+"""
+Minimum frequency for the time frequency analysis, in Hz.
+???+ example "Example"
+    ```python
+    time_frequency_freq_min = 0.3  # 0.3 Hz
+    ```
+"""
+
+time_frequency_freq_max: Optional[float] = 40
+"""
+Maximum frequency for the time frequency analysis, in Hz.
+???+ example "Example"
+    ```python
+    time_frequency_freq_max = 22.3  # 22.3 Hz
     ```
 """
 
@@ -1363,6 +1403,11 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
+if conditions is None and 'MKDOCS' not in os.environ:
+    msg = ('Please indicate the name of your conditions in your '
+           'configuration. Currently the `conditions` parameter is empty.')
+    raise ValueError(msg)
+
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
            f"but received: {on_error}.")
@@ -1390,6 +1435,51 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     msg = (f'Unknown bem_mri_images: {bem_mri_images}. Valid values '
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
+
+
+def check_baseline(
+    *,
+    baseline: Optional[Tuple[Optional[float], Optional[float]]],
+    epochs_tmin: float,
+    epochs_tmax: float
+) -> None:
+    """Raises error if baseline not compatible with [epochs_tmin, epochs_tmax].
+
+    Parameters
+    ----------
+    baseline
+        Tuple indicating the beginning and end of the baseline interval.
+    epochs_tmin
+        Beginning of Epochs.
+    epochs_tmax
+        End of Epochs.
+
+    Raises
+    ------
+    ValueError
+        if baseline not contained in [epochs_tmin, epochs_tmax].
+        if baseline is not a correct time-interval.
+    """
+    if baseline is None:
+        return
+
+    if ((baseline[0] is not None and baseline[0] < epochs_tmin) or
+            (baseline[1] is not None and baseline[1] > epochs_tmax)):
+        msg = (f'baseline {baseline} outside of epochs interval '
+               f'{[epochs_tmin, epochs_tmax]}.')
+
+        raise ValueError(msg)
+
+    if ((baseline[0] is not None) and
+            (baseline[1] is not None) and
+            (baseline[0] >= baseline[1])):
+        msg = (f'The end of the baseline period must occur after its start, '
+               f'but you set baseline={baseline}')
+        raise ValueError(msg)
+
+
+check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
+               epochs_tmax=epochs_tmax)
 
 
 ###############################################################################
@@ -1427,58 +1517,6 @@ def get_deriv_root() -> pathlib.Path:
                 .resolve())
 
 
-def get_sessions():
-    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
-
-    env = os.environ
-    if env.get('MNE_BIDS_STUDY_SESSION'):
-        sessions_ = env['MNE_BIDS_STUDY_SESSION']
-    elif sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='session')
-
-    if not sessions_:
-        return [None]
-    else:
-        return sessions_
-
-
-def get_runs() -> list:
-    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
-    valid_runs = get_entity_vals(get_bids_root(), entity_key='run')
-
-    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
-    if env_run and env_run not in valid_runs:
-        raise ValueError(
-            f'Invalid run. It can be {valid_runs} but '
-            f'got {env_run}')
-    elif env_run:
-        runs_ = [env_run]
-    elif runs_ == 'all':
-        runs_ = valid_runs
-
-    if not runs_:
-        return [None]
-    else:
-        return runs_
-
-
-# XXX This check should actually go into the CHECKS section, but it depends
-# XXX on get_runs(), which is defined after that section.
-if mf_reference_run is not None and mf_reference_run not in get_runs():
-    msg = (f'You set mf_reference_run={mf_reference_run}, but your dataset '
-           f'only contains the following runs: {get_runs()}')
-    raise ValueError(msg)
-
-
-def get_mf_reference_run() -> str:
-    # Retrieve to run identifier (number, name) of the reference run
-    if mf_reference_run is None:
-        # Use the first run
-        return get_runs()[0]
-    else:
-        return mf_reference_run
-
-
 def get_subjects() -> List[str]:
     global subjects
 
@@ -1503,6 +1541,144 @@ def get_subjects() -> List[str]:
     subjects = subjects - set(['emptyroom'])
 
     return sorted(subjects)
+
+
+def get_sessions():
+    sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
+
+    env = os.environ
+    if env.get('MNE_BIDS_STUDY_SESSION'):
+        sessions_ = env['MNE_BIDS_STUDY_SESSION']
+    elif sessions_ == 'all':
+        sessions_ = get_entity_vals(bids_root, entity_key='session')
+
+    if not sessions_:
+        return [None]
+    else:
+        return sessions_
+
+
+def get_runs_all_subjects() -> dict:
+    """Gives the mapping between subjects and their runs.
+
+    Returns
+    -------
+    a dict of runs present in the bids_path
+    for each subject asked in the configuration file
+    (and not for each subject present in the bids_path).
+    """
+    # We cannot use get_subjects() because if there is just one subject
+    valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
+
+    subj_runs = dict()
+    for subj in get_subjects():
+        # ignore all subject but the one considered
+        # We need to create the full list of ignore_subjects
+        # Not very elegant, but selecting one subject is not possible
+        # with the current api of get_entity_vals in mne-bids
+        ignore_subjects = valid_subs.copy()
+        if subj in ignore_subjects:
+            ignore_subjects.remove(subj)
+        else:
+            ValueError(f"{subj} not in {ignore_subjects}")
+
+        valid_runs_subj = get_entity_vals(
+            get_bids_root(), entity_key='run',
+            ignore_subjects=ignore_subjects)
+        if exclude_runs and subj in exclude_runs:
+            valid_runs_subj = [r for r in valid_runs_subj
+                               if r not in exclude_runs[subj]]
+        subj_runs[subj] = valid_runs_subj
+
+    return subj_runs
+
+
+def get_intersect_run() -> list:
+    """Returns the intersection of all the runs of all subjects."""
+    subj_runs = get_runs_all_subjects()
+    return list(set.intersection(*map(set, subj_runs.values())))
+
+
+def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]]:
+    """Returns a list of runs.
+
+    Parameters
+    ----------
+    subject
+        Returns a list of the runs of this subject.
+    verbose
+        Notify if different subjects do not share the same runs.
+
+    Returns
+    -------
+    The list of runs of the subject. If no BIDS `run` entity could be found,
+    returns `[None]`.
+    """
+    runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
+
+    subj_runs = get_runs_all_subjects()
+    valid_runs = subj_runs[subject]
+
+    if len(get_subjects()) > 1:
+        # Notify if different subjects do not share the same runs
+
+        same_runs = True
+        for runs_sub_i in subj_runs.values():
+            if set(runs_sub_i) != set(list(subj_runs.values())[0]):
+                same_runs = False
+
+        if not same_runs and verbose:
+            msg = ('Extracted all the runs. '
+                   'Beware, not all subjects share the same '
+                   'set of runs.')
+            logger.info(msg)
+
+    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
+    if env_run and env_run not in valid_runs:
+        raise ValueError(
+            f'Invalid run. It can be {valid_runs} but '
+            f'got {env_run}')
+    elif env_run:
+        runs_ = [env_run]
+    elif runs_ == 'all':
+        runs_ = valid_runs
+
+    if not runs_:
+        return [None]
+    else:
+        inclusion = set(runs_).issubset(set(valid_runs))
+        if not inclusion:
+            raise ValueError(
+                f'Invalid run. It can be a subset of {valid_runs} but '
+                f'got {runs_}')
+        return runs_
+
+
+# XXX This check should actually go into the CHECKS section, but it depends
+# XXX on get_runs(), which is defined after that section.
+if 'MKDOCS' not in os.environ:
+    inter_runs = get_intersect_run()
+    mf_ref_error = (
+        (mf_reference_run is not None) and
+        (mf_reference_run not in inter_runs))
+    if mf_ref_error:
+        msg = (f'You set mf_reference_run={mf_reference_run}, but your '
+               f'dataset only contains the following runs: {inter_runs}')
+        raise ValueError(msg)
+
+
+def get_mf_reference_run() -> str:
+    # Retrieve to run identifier (number, name) of the reference run
+    if mf_reference_run is None:
+        # Use the first run
+        if inter_runs:
+            return inter_runs[0]
+        else:
+            ValueError("The intersection of runs by subjects is empty. "
+                       "Check the list of runs: "
+                       f"{get_runs_all_subjects()}")
+    else:
+        return mf_reference_run
 
 
 def get_task() -> Optional[str]:
@@ -1741,7 +1917,7 @@ def get_mf_cal_fname(
             raise ValueError('Could not find Maxwell Filter Calibration '
                              'file.')
     else:
-        mf_cal_fpath = pathlib.Path(mf_cal_fname)
+        mf_cal_fpath = Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
                              f'file at {str(mf_cal_fpath)}.')
@@ -1764,9 +1940,84 @@ def get_mf_ctc_fname(
             raise ValueError('Could not find Maxwell Filter cross-talk '
                              'file.')
     else:
-        mf_ctc_fpath = pathlib.Path(mf_ctc_fname)
+        mf_ctc_fpath = Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter cross-talk '
                              f'file at {str(mf_ctc_fpath)}.')
 
     return mf_ctc_fpath
+
+
+def make_epochs(
+    *,
+    raw: mne.io.BaseRaw,
+    event_id: Optional[Dict[str, int]] = None,
+    tmin: float,
+    tmax: float,
+    metadata_tmin: Optional[float] = None,
+    metadata_tmax: Optional[float] = None,
+    metadata_keep_first: Optional[Iterable[str]] = None,
+    metadata_keep_last: Optional[Iterable[str]] = None,
+    event_repeated: Literal['error', 'drop', 'merge'],
+    decim: int
+) -> mne.Epochs:
+    """Generate Epochs from raw data.
+
+    No EEG reference will be set and no projectors will be applied. No
+    rejection thresholds will be applied. No baseline-correction will be
+    performed.
+    """
+    events, event_id_from_annotatins = mne.events_from_annotations(raw)
+    if event_id is None:
+        event_id = event_id_from_annotatins
+
+    # Construct metadata from the epochs
+    if metadata_tmin is None:
+        metadata_tmin = tmin
+
+    if metadata_tmax is None:
+        metadata_tmax = tmax
+
+    metadata, _, _ = mne.epochs.make_metadata(
+        events=events, event_id=event_id,
+        tmin=metadata_tmin, tmax=metadata_tmax,
+        keep_first=metadata_keep_first,
+        keep_last=metadata_keep_last,
+        sfreq=raw.info['sfreq'])
+
+    # Epoch the data
+    # Do not reject based on peak-to-peak or flatness thresholds at this stage
+    epochs = mne.Epochs(raw, events=events, event_id=event_id,
+                        tmin=tmin, tmax=tmax,
+                        proj=False, baseline=None,
+                        preload=False, decim=decim,
+                        metadata=metadata,
+                        event_repeated=event_repeated,
+                        reject=None)
+
+    return epochs
+
+
+def annotations_to_events(
+    *,
+    raw_paths: List[PathLike]
+) -> Dict[str, int]:
+    """Generate a unique event name -> event code mapping.
+
+    The mapping can that can be used across all passed raws.
+    """
+    event_names: List[str] = []
+    for raw_fname in raw_paths:
+        raw = mne.io.read_raw_fif(raw_fname)
+        _, event_id = mne.events_from_annotations(raw=raw)
+        for event_name in event_id.keys():
+            if event_name not in event_names:
+                event_names.append(event_name)
+
+    event_names = sorted(event_names)
+    event_name_to_code_map = {
+        name: code
+        for code, name in enumerate(event_names, start=1)
+    }
+
+    return event_name_to_code_map

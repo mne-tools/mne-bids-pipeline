@@ -211,8 +211,8 @@ def crop_data(raw, subject):
 
     Modifies ``raw`` in-place.
     """
-    if subject != 'emptyroom' and config.crop is not None:
-        raw.crop(*config.crop)
+    if subject != 'emptyroom' and config.crop_runs is not None:
+        raw.crop(*config.crop_runs)
 
 
 def drop_channels(raw, subject, session) -> None:

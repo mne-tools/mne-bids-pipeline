@@ -12,6 +12,8 @@ conditions = ['Auditory', 'Visual', 'Auditory/Left', 'Auditory/Right']
 contrasts = [('Visual', 'Auditory'),
              ('Auditory/Right', 'Auditory/Left')]
 
+time_frequency_conditions = ['Auditory', 'Visual']
+
 ch_types = ['meg']
 mf_reference_run = '01'
 find_flat_channels_meg = True

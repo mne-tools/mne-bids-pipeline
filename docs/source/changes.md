@@ -4,7 +4,8 @@ authors:
   agramfort: "[Alex Gramfort](https://github.com/agramfort)"
   hoechenberger: "[Richard Höchenberger](https://github.com/hoechenberger)"
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
-  crsegerie: "[Charbel-Raphael Segerie](https://github.com/crsegerie)"
+  robluke: "[Robert Luke](https://github.com/rob-luke)"
+  crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
 ---
 
 
@@ -17,9 +18,20 @@ authors:
 - The Maxwell filtering step can now be skipped if [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`. In that case, the temporal filtering script can directly start from the input files indicated by [`bids_root`][config.bids_root].
 - An official [project governance](governance.md) structure has officially
   been adopted.
+- Drastically reduces memory usage when creating epochs from datasets with
+  multiple runs.
+  ({{ gh(355) }} by {{ authors.hoechenberger }})
+- Add time-frequency plot to report.
+  ({{ gh(367) }} by {{ authors.robluke }})
+- Add possibility to exclude runs from the analysis via the new
+  [`exclude_runs`][config.exclude_runs] setting.
+  ({{ gh(370) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 
+- The [`conditions`][config.conditions] setting will now be `None` by default. 
+  It is a required setting so it will raise an error if left as `None`.
+  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
@@ -41,6 +53,16 @@ authors:
 - `bids_root` and `deriv_root` are now converted to absolute paths to avoid
   running into issues caused by relative path specifications.
   ({{ gh(322) }} by {{ authors.hoechenberger }})
+- Warn if using ICA and no EOG- or ECG-related ICs were detected.
+  ({{ gh(351) }} by {{ authors.crsegerie }})
+- Added the possibility to have different runs for different subjects.
+  ({{ gh(353) }} by {{ authors.crsegerie }}))
+- Check that the baseline interval falls into `[epochs_tmin, epochs_tmax]`.
+  ({{ gh(361) }} by {{ authors.crsegerie }})
+- `config.crop` has been renamed to the more explicit
+  [`config.crop_runs`][config.crop_runs], as it only applies to individual
+  runs and not the concatenated data.
+  ({{ gh(358) }} by {{ authors.hoechenberger }})
 
 ### Bug fixes
 

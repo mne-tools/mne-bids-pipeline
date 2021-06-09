@@ -6,14 +6,21 @@ study_name = 'ds000117'
 bids_root = '~/mne_data/ds000117'
 task = 'facerecognition'
 ch_types = ['meg']
-runs = ['01']
+runs = ['01', '02']
 sessions = ['meg']
 interactive = False
 acq = None
 subjects = ['01']
 
-# use_maxwell_filter = True
-# subjects_dir = op.join(bids_root, 'derivatives', 'freesurfer', 'subjects')
+resample_sfreq = 125.
+crop_runs = (0, 350)  # Reduce memory usage on CI system
+
+find_flat_channels_meg = False
+find_noisy_channels_meg = False
+use_maxwell_filter = True
+
+mf_cal_fname = bids_root + '/derivatives/meg_derivatives/sss_cal.dat'
+mf_ctc_fname = bids_root + '/derivatives/meg_derivatives/ct_sparse.fif'
 
 reject = {'grad': 4000e-13, 'mag': 4e-12}
 conditions = ['Famous', 'Unfamiliar', 'Scrambled']

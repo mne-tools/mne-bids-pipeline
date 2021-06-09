@@ -3,10 +3,11 @@
 ::: config.deriv_root
 ::: config.subjects_dir
 ::: config.interactive
-::: config.crop
 ::: config.sessions
 ::: config.task
 ::: config.runs
+::: config.exclude_runs
+::: config.crop_runs
 ::: config.acq
 ::: config.proc
 ::: config.rec

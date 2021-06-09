@@ -46,7 +46,7 @@ def plot_events(subject, session):
                          root=config.get_deriv_root(),
                          check=False)
 
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         this_raw_fname = raw_fname.copy().update(run=run)
 
         if this_raw_fname.copy().update(split='01').fpath.exists():
@@ -112,7 +112,7 @@ def plot_auto_scores(subject, session):
 
     all_figs = []
     all_captions = []
-    for run in config.get_runs():
+    for run in config.get_runs(subject=subject):
         with open(fname_scores.update(run=run), 'r') as f:
             auto_scores = json_tricks.load(f)
 
@@ -217,6 +217,8 @@ def run_report(subject, session=None):
     fname_decoding = fname_epo.copy().update(processing=None,
                                              suffix='decoding',
                                              extension='.mat')
+    fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
+                                            extension='.h5')
 
     fs_subject = config.get_fs_subject(subject)
     fs_subjects_dir = config.get_fs_subjects_dir()
@@ -275,6 +277,25 @@ def run_report(subject, session=None):
                      f'({len(ica.exclude)} ICs removed)',
             section='ICA'
         )
+
+    ###########################################################################
+    #
+    # Visualize TFR as topography.
+    #
+    if isinstance(config.time_frequency_conditions, dict):
+        conditions = list(config.time_frequency_conditions.keys())
+    else:
+        conditions = config.time_frequency_conditions.copy()
+
+    for condition in conditions:
+        cond = config.sanitize_cond_name(condition)
+        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
+                                                               f"+{cond}+")
+        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond)
+        fig = power[0].plot_topo(show=False, fig_facecolor='w', font_color='k',
+                                 border='k')
+        rep.add_figs_to_section(figs=fig, captions=f"TFR Power: {condition}",
+                                section="TFR")
 
     ###########################################################################
     #

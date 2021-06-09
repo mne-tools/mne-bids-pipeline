@@ -16,7 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501
 
-from typing import Optional
+from typing import Optional, Union, Literal
 import itertools
 import logging
 import numpy as np
@@ -25,6 +25,7 @@ import mne
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
 
+import config
 from config import gen_log_message, on_error, failsafe_run
 from common_functions import import_experimental_data
 
@@ -38,8 +39,8 @@ def filter(
     run: Optional[str],
     l_freq: Optional[float],
     h_freq: Optional[float],
-    l_trans_bandwidth: Optional[float],
-    h_trans_bandwidth: Optional[float]
+    l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
+    h_trans_bandwidth: Optional[Union[float, Literal['auto']]]
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is None and h_freq is None:
@@ -87,13 +88,14 @@ def resample(
 
 
 def filter_data(
+    *,
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
     l_freq: Optional[float],
     h_freq: Optional[float],
-    l_trans_bandwidth: Optional[float],
-    h_trans_bandwidth: Optional[float],
+    l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
+    h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
     resample_sfreq: Optional[float]
 ) -> None:
     """Filter data from a single subject."""
@@ -136,8 +138,14 @@ def filter_data(
                                 session=session, run=run))
 
     raw.load_data()
-    filter(raw=raw, subject=subject, session=session, run=run)
-    resample(raw=raw, subject=subject, session=session, run=run)
+    filter(raw=raw, subject=subject, session=session, run=run,
+           h_freq=h_freq, l_freq=l_freq,
+           h_trans_bandwidth=h_trans_bandwidth,
+           l_trans_bandwidth=l_trans_bandwidth
+)
+
+    resample(raw=raw, subject=subject, session=session, run=run,
+             sfreq=resample_sfreq)
 
     if config.store_filtered_raw:
         raw.save(raw_fname_out, overwrite=True, split_naming='bids')
@@ -171,7 +179,6 @@ def filter_emptyroom(
     raw_er_fname_in = bids_path.copy().update(task='noise', run=None)
     raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
                                                task='noise')
-
     
 
 @failsafe_run(on_error=on_error)
@@ -180,10 +187,29 @@ def main():
     msg = 'Running Step 2: Frequency filtering'
     logger.info(gen_log_message(step=2, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_filter, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, run, session) for subject, run, session in
-             itertools.product(config.get_subjects(), config.get_runs(),
-                               config.get_sessions()))
+    parallel, run_func, _ = parallel_func(filter_data, n_jobs=config.N_JOBS)
+
+    # Enabling different runs for different subjects
+    sub_run_ses = []
+    for subject in config.get_subjects():
+        sub_run_ses += list(itertools.product(
+            [subject],
+            config.get_runs(subject=subject),
+            config.get_sessions()))
+
+    parallel(
+        run_func(
+            subject=subject,
+            run=run,
+            session=session,
+            l_freq=config.l_freq,
+            h_freq=config.h_freq,
+            l_trans_bandwidth=config.l_trans_bandwidth,
+            h_trans_bandwidth=config.h_trans_bandwidth,
+            resample_sfreq=config.resample_sfreq
+        ) for subject, run, session in sub_run_ses
+    )
+
     # if config.process_er:
         # run_func(config.get_subjects(), config.get_runs()[0], task='noise',
         #                             config.get_sessions()))

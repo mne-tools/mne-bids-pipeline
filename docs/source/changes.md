@@ -26,9 +26,9 @@ authors:
   [`exclude_runs`][config.exclude_runs] setting.
   ({{ gh(370) }} by {{ authors.crsegerie }})
 - Add possibility to reject ECG/EOG epochs via the new
-  [`reject_ECG_epochs`][config.reject_ECG_epochs] and 
-  [`reject_EOG_epochs`][config.reject_EOG_epochs] settings.
-  ({{ gh(?) }} by {{ authors.crsegerie }})
+  [`reject_ecg_epochs`][config.reject_ecg_epochs] and 
+  [`reject_eog_epochs`][config.reject_eog_epochs] settings.
+  ({{ gh(373) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

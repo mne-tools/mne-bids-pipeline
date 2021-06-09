@@ -820,6 +820,38 @@ otherwise, ICA won't be able to "see" these artifacts.
     ```
 """
 
+reject_ecg_epochs: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to mark ECG epochs as bad. This allows you
+to remove epochs with strong transient artifacts.
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ example "Example"
+    ```python
+    reject_ecg_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject_ecg_epochs = {'eeg': 100e-6, 'eog': 250e-6}
+    reject_ecg_epochs = ica_reject # You can reuse the ica_reject param.
+    reject_ecg_epochs = None
+    ```
+"""
+
+reject_eog_epochs: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to mark EOG epochs as bad. This allows you
+to remove epochs with strong transient artifacts.
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ example "Example"
+    ```python
+    reject_eog_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject_eog_epochs = {'eeg': 100e-6, 'eog': 250e-6}
+    reject_eog_epochs = ica_reject # You can reuse the ica_reject param.
+    reject_eog_epochs = None
+    ```
+"""
+
 ica_algorithm: Literal['picard', 'fastica', 'extended_infomax'] = 'picard'
 """
 The ICA algorithm to use.
@@ -924,38 +956,6 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
     reject = {'eeg': 100e-6, 'eog': 250e-6}
     reject = None
-    ```
-"""
-
-reject_ecg_epochs: Optional[Dict[str, float]] = None
-"""
-Peak-to-peak amplitude limits to mark ECG epochs as bad. This allows you
-to remove epochs with strong transient artifacts.
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
-
-???+ example "Example"
-    ```python
-    reject_ecg_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject_ecg_epochs = {'eeg': 100e-6, 'eog': 250e-6}
-    reject_ecg_epochs = reject # You can use again the reject parameter.
-    reject_ecg_epochs = None
-    ```
-"""
-
-reject_eog_epochs: Optional[Dict[str, float]] = None
-"""
-Peak-to-peak amplitude limits to mark EOG epochs as bad. This allows you
-to remove epochs with strong transient artifacts.
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
-
-???+ example "Example"
-    ```python
-    reject_eog_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject_eog_epochs = {'eeg': 100e-6, 'eog': 250e-6}
-    reject_eog_epochs = reject # You can use again the reject parameter.
-    reject_eog_epochs = None
     ```
 """
 

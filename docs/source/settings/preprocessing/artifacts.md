@@ -5,7 +5,5 @@
     like.
 
 ::: config.reject
-::: config.reject_ecg_epochs
-::: config.reject_eog_epochs
 ::: config.reject_tmin
 ::: config.reject_tmax

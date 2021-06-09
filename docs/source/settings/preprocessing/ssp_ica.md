@@ -1,5 +1,7 @@
 ::: config.spatial_filter
 ::: config.ica_reject
+::: config.reject_ecg_epochs
+::: config.reject_eog_epochs
 ::: config.ica_algorithm
 ::: config.ica_l_freq
 ::: config.ica_max_iterations

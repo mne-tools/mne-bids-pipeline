@@ -927,7 +927,7 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     ```
 """
 
-reject_ECG_epochs: Optional[Dict[str, float]] = None
+reject_ecg_epochs: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to mark ECG epochs as bad. This allows you
 to remove epochs with strong transient artifacts.

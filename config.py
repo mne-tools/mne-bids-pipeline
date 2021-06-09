@@ -952,10 +952,10 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
 
 ???+ example "Example"
     ```python
-    reject_EOG_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject_EOG_epochs = {'eeg': 100e-6, 'eog': 250e-6}
-    reject_EOG_epochs = reject # You can use again the reject parameter.
-    reject_EOG_epochs = None
+    reject_eog_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject_eog_epochs = {'eeg': 100e-6, 'eog': 250e-6}
+    reject_eog_epochs = reject # You can use again the reject parameter.
+    reject_eog_epochs = None
     ```
 """
 

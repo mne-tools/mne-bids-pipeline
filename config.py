@@ -943,7 +943,7 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     ```
 """
 
-reject_EOG_epochs: Optional[Dict[str, float]] = None
+reject_eog_epochs: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to mark EOG epochs as bad. This allows you
 to remove epochs with strong transient artifacts.

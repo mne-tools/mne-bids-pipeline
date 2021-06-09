@@ -927,6 +927,38 @@ Pass ``None`` to avoid automated epoch rejection based on amplitude.
     ```
 """
 
+reject_ECG_epochs: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to mark ECG epochs as bad. This allows you
+to remove epochs with strong transient artifacts.
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ example "Example"
+    ```python
+    reject_ECG_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject_ECG_epochs = {'eeg': 100e-6, 'eog': 250e-6}
+    reject_ECG_epochs = reject # You can use again the reject parameter.
+    reject_ECG_epochs = None
+    ```
+"""
+
+reject_EOG_epochs: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to mark EOG epochs as bad. This allows you
+to remove epochs with strong transient artifacts.
+
+Pass ``None`` to avoid automated epoch rejection based on amplitude.
+
+???+ example "Example"
+    ```python
+    reject_EOG_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject_EOG_epochs = {'eeg': 100e-6, 'eog': 250e-6}
+    reject_EOG_epochs = reject # You can use again the reject parameter.
+    reject_EOG_epochs = None
+    ```
+"""
+
 reject_tmin: Optional[float] = None
 """
 Start of the time window used to reject epochs. If ``None``, the window will

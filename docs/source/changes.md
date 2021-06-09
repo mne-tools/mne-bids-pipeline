@@ -25,6 +25,10 @@ authors:
 - Add possibility to exclude runs from the analysis via the new
   [`exclude_runs`][config.exclude_runs] setting.
   ({{ gh(370) }} by {{ authors.crsegerie }})
+- Add possibility to reject ECG/EOG epochs via the new
+  [`reject_ECG_epochs`][config.reject_ECG_epochs] and 
+  [`reject_EOG_epochs`][config.reject_EOG_epochs] settings.
+  ({{ gh(?) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

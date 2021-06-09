@@ -91,8 +91,8 @@ def make_ecg_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # Do not reject epochs based on amplitude.
-        ecg_epochs = create_ecg_epochs(raw, reject=None,
+        # We will reject epochs only if reject_ECG_epochs was specified.
+        ecg_epochs = create_ecg_epochs(raw, reject=config.reject_ECG_epochs,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 
@@ -134,9 +134,9 @@ def make_eog_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # Create the epochs. It's important not to reject epochs based on
-        # amplitude!
+        # We will reject epochs only if reject_EOG_epochs was specified.
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
+                                       reject=config.reject_ECG_epochs,
                                        baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:

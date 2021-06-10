@@ -807,6 +807,8 @@ Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect ICA performance.
 
+This will also limit the peak-to-peak amplitude of ECG and EOG epochs.
+
 The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
 your data, and remove them. For this to work properly, it is recommended
 to **not** specify rejection thresholds for EOG and ECG channels here –
@@ -817,38 +819,6 @@ otherwise, ICA won't be able to "see" these artifacts.
     ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
     ica_reject = {'grad': 15e-10}
     ica_reject = None
-    ```
-"""
-
-reject_ecg_epochs: Optional[Dict[str, float]] = None
-"""
-Peak-to-peak amplitude limits to mark ECG epochs as bad. This allows you
-to remove epochs with strong transient artifacts.
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
-
-???+ example "Example"
-    ```python
-    reject_ecg_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject_ecg_epochs = {'eeg': 100e-6, 'eog': 250e-6}
-    reject_ecg_epochs = ica_reject # You can reuse the ica_reject param.
-    reject_ecg_epochs = None
-    ```
-"""
-
-reject_eog_epochs: Optional[Dict[str, float]] = None
-"""
-Peak-to-peak amplitude limits to mark EOG epochs as bad. This allows you
-to remove epochs with strong transient artifacts.
-
-Pass ``None`` to avoid automated epoch rejection based on amplitude.
-
-???+ example "Example"
-    ```python
-    reject_eog_epochs = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject_eog_epochs = {'eeg': 100e-6, 'eog': 250e-6}
-    reject_eog_epochs = ica_reject # You can reuse the ica_reject param.
-    reject_eog_epochs = None
     ```
 """
 

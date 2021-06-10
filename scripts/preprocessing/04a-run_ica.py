@@ -91,8 +91,8 @@ def make_ecg_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # We will reject epochs only if reject_ECG_epochs was specified.
-        ecg_epochs = create_ecg_epochs(raw, reject=config.reject_ecg_epochs,
+        # We will reject epochs only if ica_reject was specified.
+        ecg_epochs = create_ecg_epochs(raw, reject=config.ica_reject,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 
@@ -134,9 +134,9 @@ def make_eog_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # We will reject epochs only if reject_EOG_epochs was specified.
+        # We will reject epochs only if ica_reject was specified.
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
-                                       reject=config.reject_eog_epochs,
+                                       reject=config.ica_reject,
                                        baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:

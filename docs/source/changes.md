@@ -25,10 +25,6 @@ authors:
 - Add possibility to exclude runs from the analysis via the new
   [`exclude_runs`][config.exclude_runs] setting.
   ({{ gh(370) }} by {{ authors.crsegerie }})
-- Add possibility to reject ECG/EOG epochs via the new
-  [`reject_ecg_epochs`][config.reject_ecg_epochs] and 
-  [`reject_eog_epochs`][config.reject_eog_epochs] settings.
-  ({{ gh(373) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 
@@ -66,6 +62,8 @@ authors:
   [`config.crop_runs`][config.crop_runs], as it only applies to individual
   runs and not the concatenated data.
   ({{ gh(358) }} by {{ authors.hoechenberger }})
+- [`ica_reject`][config.ica_reject] now also rejects ECG/EOG epochs.
+  ({{ gh(373) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

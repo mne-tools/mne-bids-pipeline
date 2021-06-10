@@ -62,6 +62,8 @@ authors:
   [`config.crop_runs`][config.crop_runs], as it only applies to individual
   runs and not the concatenated data.
   ({{ gh(358) }} by {{ authors.hoechenberger }})
+- [`ica_reject`][config.ica_reject] now also applies to ECG and EOG epochs.
+  ({{ gh(373) }} by {{ authors.crsegerie }})
 
 ### Bug fixes
 

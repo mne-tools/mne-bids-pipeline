@@ -807,6 +807,8 @@ Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect ICA performance.
 
+This will also be applied to ECG and EOG epochs created during preprocessing.
+
 The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
 your data, and remove them. For this to work properly, it is recommended
 to **not** specify rejection thresholds for EOG and ECG channels here –

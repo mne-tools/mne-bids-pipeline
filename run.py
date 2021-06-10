@@ -149,6 +149,14 @@ def process(config: PathLike,
 
     assert isinstance(steps, tuple)
 
+    # Fire auto-detects the input parameter values, but this means e.g. that an
+    # unquoted subject ID "123" will be treated as an int. To avoid this, cast
+    # input values to str.
+    subject = str(subject)
+    session = str(session)
+    run = str(run)
+    task = str(task)
+
     processing_stages = []
     processing_steps = []
     for steps_ in steps:

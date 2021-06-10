@@ -134,63 +134,72 @@ def filter_data(
 
     if config.use_maxwell_filter:
         raw_fname_in = raw_fname_in.update(processing='sss')
+        msg = f'Reading: {raw_fname_in}'
+        logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                    session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
-    elif empty_room:
-        raw = import_er_data(subject=subject, session=session, save=False)
     else:
         raw = import_experimental_data(subject=subject, session=session,
                                        run=run, save=False)
 
     raw_fname_out = bids_path.copy().update(processing='filt')
 
-    msg = f'Reading: {raw_fname_in}'
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                session=session, run=run))
-
     raw.load_data()
     filter(raw=raw, subject=subject, session=session, run=run,
            h_freq=h_freq, l_freq=l_freq,
            h_trans_bandwidth=h_trans_bandwidth,
            l_trans_bandwidth=l_trans_bandwidth
-)
-
+    )
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=resample_sfreq)
 
-    if config.store_filtered_raw:
-        raw.save(raw_fname_out, overwrite=True, split_naming='bids')
-
+    raw.save(raw_fname_out, overwrite=True, split_naming='bids')
     if config.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-    return raw
+    if config.process_er:
+        # Ensure empty-room data has the same bad channel selection set as the
+        # experimental data
+        bads = raw.info['bads'].copy()
+        del raw  # free memory
 
+        bids_path_er = bids_path.copy().update(run=None, task='noise')
+        raw_er_fname_in = bids_path_er.copy()
+        if raw_er_fname_in.copy().update(split='01').fpath.exists():
+            raw_er_fname_in.update(split='01')
 
-def filter_emptyroom(
-    subject: str,
-    session: str
-) -> None:
-    bids_path = BIDSPath(subject=subject,
-                         run=config.get_runs(subject=subject)[0],
-                         session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
-                         processing=config.proc,
-                         recording=config.rec,
-                         space=config.space,
-                         suffix='raw',
-                         extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
-                         check=False)
+        if config.use_maxwell_filter:
+            raw_er_fname_in = raw_er_fname_in.update(processing='sss')
+            msg = f'Reading empty-room recording: {raw_er_fname_in}'
+            logger.info(gen_log_message(message=msg, step=2, subject=subject,
+                                        session=session, run=run))
+            raw_er = mne.io.read_raw_fif(raw_er_fname_in)
+            raw_er.info['bads'] = bads
+        else:
+            raw_er = import_er_data(subject=subject, session=session,
+                                    bads=bads, save=False)
 
-    raw_er_fname_in = bids_path.copy().update(task='noise', run=None)
-    raw_er_fname_out = bids_path.copy().update(run=None, processing='filt',
-                                               task='noise')
-    
+        raw_er_fname_out = bids_path.copy().update(processing='filt')
+
+        raw_er.load_data()
+        filter(raw=raw_er, subject=subject, session=session, run=run,
+            h_freq=h_freq, l_freq=l_freq,
+            h_trans_bandwidth=h_trans_bandwidth,
+            l_trans_bandwidth=l_trans_bandwidth
+        )
+        resample(raw=raw_er, subject=subject, session=session, run=run,
+                sfreq=resample_sfreq)
+
+        raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
+        if config.interactive:
+            # Plot raw data and power spectral density.
+            raw_er.plot(n_channels=50, butterfly=True)
+            fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+            raw_er.plot_psd(fmax=fmax)
+
 
 @failsafe_run(on_error=on_error)
 def main():

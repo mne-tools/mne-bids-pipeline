@@ -563,20 +563,6 @@ If `None`, then no resampling will be done.
     ```
 """
 
-store_filtered_raw: bool = False
-"""
-Whether to save the frequency-filtered and possibly resampled continuous data
-to disk. Frequency filtering and decimation are very fast procedures that
-typically do not warrant saving the results to disk, as they can be recreated
-very easily whenever needed. If, however, you wish to save this data in a file,
-set this to `True`.
-
-???+ example "Example"
-    ```python
-    store_filtered_raw = True
-    ```
-"""
-
 ###############################################################################
 # DECIMATION
 # ----------

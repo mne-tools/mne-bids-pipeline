@@ -346,7 +346,7 @@ def import_er_data(
     *,
     subject: str,
     session: Optional[str] = None,
-    bads: Optional[List[str]] = None,
+    bads: List[str],
     save: bool = False
 ) -> mne.io.BaseRaw:
     """Import empty-room data.

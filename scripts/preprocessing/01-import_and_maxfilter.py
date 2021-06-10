@@ -48,19 +48,19 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def get_mf_cal_fname(subject, session):
-    if config.mf_cal_fname is None:
+def get_mf_cal_fname(cfg, subject, session):
+    if cfg.mf_cal_fname is None:
         mf_cal_fpath = (BIDSPath(subject=subject,
                                  session=session,
                                  suffix='meg',
                                  datatype='meg',
-                                 root=config.get_bids_root())
+                                 root=cfg.bids_root)
                         .meg_calibration_fpath)
         if mf_cal_fpath is None:
             raise ValueError('Could not find Maxwell Filter Calibration '
                              'file.')
     else:
-        mf_cal_fpath = Path(config.mf_cal_fname).expanduser().absolute()
+        mf_cal_fpath = Path(cfg.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
                              f'file at {str(mf_cal_fpath)}.')
@@ -68,19 +68,19 @@ def get_mf_cal_fname(subject, session):
     return mf_cal_fpath
 
 
-def get_mf_ctc_fname(subject, session):
-    if config.mf_ctc_fname is None:
+def get_mf_ctc_fname(cfg, subject, session):
+    if cfg.mf_ctc_fname is None:
         mf_ctc_fpath = (BIDSPath(subject=subject,
                                  session=session,
                                  suffix='meg',
                                  datatype='meg',
-                                 root=config.get_bids_root())
+                                 root=cfg.bids_root)
                         .meg_crosstalk_fpath)
         if mf_ctc_fpath is None:
             raise ValueError('Could not find Maxwell Filter cross-talk '
                              'file.')
     else:
-        mf_ctc_fpath = Path(config.mf_ctc_fname).expanduser().absolute()
+        mf_ctc_fpath = Path(cfg.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter cross-talk '
                              f'file at {str(mf_ctc_fpath)}.')
@@ -88,17 +88,17 @@ def get_mf_ctc_fname(subject, session):
     return mf_ctc_fpath
 
 
-def rename_events(raw, subject, session):
+def rename_events(cfg, raw, subject, session):
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
     event_names_set = set(raw.annotations.description)
-    rename_events_set = set(config.rename_events.keys())
+    rename_events_set = set(cfg.rename_events.keys())
     events_not_in_raw = rename_events_set - event_names_set
     if events_not_in_raw:
         msg = (f'You requested to rename the following events, but '
                f'they are not present in the BIDS input data:\n'
                f'{", ".join(sorted(list(events_not_in_raw)))}')
-        if config.on_rename_missing_events == 'warn':
+        if cfg.on_rename_missing_events == 'warn':
             logger.warning(msg)
         else:
             raise ValueError(msg)
@@ -108,7 +108,7 @@ def rename_events(raw, subject, session):
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
     descriptions = list(raw.annotations.description)
-    for old_event_name, new_event_name in config.rename_events.items():
+    for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
         logger.info(gen_log_message(message=msg, step=1,
                                     subject=subject, session=session))
@@ -120,12 +120,12 @@ def rename_events(raw, subject, session):
     raw.annotations.description = descriptions
 
 
-def find_bad_channels(raw, subject, session, task, run):
-    if (config.find_flat_channels_meg and
-            not config.find_noisy_channels_meg):
+def find_bad_channels(cfg, raw, subject, session, task, run):
+    if (cfg.find_flat_channels_meg and
+            not cfg.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
-    elif (config.find_noisy_channels_meg and
-            not config.find_flat_channels_meg):
+    elif (cfg.find_noisy_channels_meg and
+            not cfg.find_flat_channels_meg):
         msg = 'Finding noisy channels using Maxwell filtering.'
     else:
         msg = ('Finding flat channels, and noisy channels using '
@@ -138,31 +138,31 @@ def find_bad_channels(raw, subject, session, task, run):
                          session=session,
                          task=task,
                          run=run,
-                         acquisition=config.acq,
-                         processing=config.proc,
-                         recording=config.rec,
-                         space=config.space,
-                         suffix=config.get_datatype(),
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root())
+                         acquisition=cfg.acq,
+                         processing=cfg.proc,
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         suffix=cfg.datatype,
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = find_bad_channels_maxwell(
         raw=raw,
-        calibration=get_mf_cal_fname(subject, session),
-        cross_talk=get_mf_ctc_fname(subject, session),
-        origin=config.mf_head_origin,
+        calibration=get_mf_cal_fname(cfg, subject, session),
+        cross_talk=get_mf_ctc_fname(cfg, subject, session),
+        origin=cfg.mf_head_origin,
         coord_frame='head',
         return_scores=True)
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()
 
-    if config.find_flat_channels_meg:
+    if cfg.find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
         logger.info(gen_log_message(message=msg, step=1,
                                     subject=subject, session=session))
         bads.extend(auto_flat_chs)
-    if config.find_noisy_channels_meg:
+    if cfg.find_noisy_channels_meg:
         msg = f'Found {len(auto_noisy_chs)} noisy channels.'
         logger.info(gen_log_message(message=msg, step=1,
                                     subject=subject, session=session))
@@ -174,14 +174,14 @@ def find_bad_channels(raw, subject, session, task, run):
     logger.info(gen_log_message(message=msg, step=1,
                                 subject=subject, session=session))
 
-    if config.find_noisy_channels_meg:
+    if cfg.find_noisy_channels_meg:
         auto_scores_fname = bids_path.copy().update(
             suffix='scores', extension='.json', check=False)
         with open(auto_scores_fname, 'w') as f:
             json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
 
-        if config.interactive:
+        if cfg.interactive:
             import matplotlib.pyplot as plt
             config.plot_auto_scores(auto_scores)
             plt.show()
@@ -193,12 +193,12 @@ def find_bad_channels(raw, subject, session, task, run):
     bads_for_tsv = []
     reasons = []
 
-    if config.find_flat_channels_meg:
+    if cfg.find_flat_channels_meg:
         bads_for_tsv.extend(auto_flat_chs)
         reasons.extend(['auto-flat'] * len(auto_flat_chs))
         preexisting_bads = set(preexisting_bads) - set(auto_flat_chs)
 
-    if config.find_noisy_channels_meg:
+    if cfg.find_noisy_channels_meg:
         bads_for_tsv.extend(auto_noisy_chs)
         reasons.extend(['auto-noisy'] * len(auto_noisy_chs))
         preexisting_bads = set(preexisting_bads) - set(auto_noisy_chs)
@@ -214,7 +214,7 @@ def find_bad_channels(raw, subject, session, task, run):
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 
-def load_data(bids_path):
+def load_data(cfg, bids_path):
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -227,19 +227,19 @@ def load_data(bids_path):
 
     if subject != 'emptyroom':
         # Crop the data.
-        if config.crop_runs is not None:
-            raw.crop(*config.crop_runs)
+        if cfg.crop_runs is not None:
+            raw.crop(*cfg.crop_runs)
 
         # Rename events.
-        if config.rename_events:
+        if cfg.rename_events:
             rename_events(raw=raw, subject=subject, session=session)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
-    montage_name = config.eeg_template_montage
-    if config.get_datatype() == 'eeg' and montage_name:
+    montage_name = cfg.eeg_template_montage
+    if cfg.datatype == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
@@ -290,30 +290,30 @@ def load_data(bids_path):
     return raw
 
 
-def run_maxwell_filter(subject, session=None):
-    if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
+def run_maxwell_filter(cfg, subject, session=None):
+    if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
-                         f' Got proc={config.proc}.')
+                         f' Got proc={cfg.proc}.')
 
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
-                            processing=config.proc,
-                            recording=config.rec,
-                            space=config.space,
-                            suffix=config.get_datatype(),
-                            datatype=config.get_datatype(),
-                            root=config.get_bids_root())
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            processing=cfg.proc,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix=cfg.datatype,
+                            datatype=cfg.datatype,
+                            root=cfg.bids_root)
     bids_path_out = bids_path_in.copy().update(suffix='raw',
-                                               root=config.get_deriv_root(),
+                                               root=cfg.deriv_root,
                                                check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
-    if config.use_maxwell_filter:
-        reference_run = config.get_mf_reference_run()
+    if cfg.use_maxwell_filter:
+        reference_run = cfg.mf_reference_run
         msg = f'Loading reference run: {reference_run}.'
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                     session=session))
@@ -323,28 +323,27 @@ def run_maxwell_filter(subject, session=None):
         dig = info['dig']
         del reference_run, info
 
-    for run_idx, run in enumerate(config.get_runs(subject=subject,
-                                                  verbose=True)):
+    for run_idx, run in enumerate(cfg.runs):
         bids_path_in.update(run=run)
         bids_path_out.update(run=run)
-        raw = load_data(bids_path_in)
+        raw = load_data(cfg, bids_path_in)
 
         # Fix stimulation artifact
-        if config.fix_stim_artifact:
+        if cfg.fix_stim_artifact:
             events, _ = mne.events_from_annotations(raw)
             raw = mne.preprocessing.fix_stim_artifact(
                 raw, events=events, event_id=None,
-                tmin=config.stim_artifact_tmin,
-                tmax=config.stim_artifact_tmax,
+                tmin=cfg.stim_artifact_tmin,
+                tmax=cfg.stim_artifact_tmax,
                 mode='linear')
 
         # Auto-detect bad channels.
-        if config.find_flat_channels_meg or config.find_noisy_channels_meg:
+        if cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg:
             find_bad_channels(raw=raw, subject=subject, session=session,
-                              task=config.get_task(), run=run)
+                              task=cfg.task, run=run)
 
         # Maxwell-filter experimental data.
-        if config.use_maxwell_filter:
+        if cfg.use_maxwell_filter:
             msg = 'Applying Maxwell filter to experimental data.'
             logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                         session=session, run=run))
@@ -356,7 +355,7 @@ def run_maxwell_filter(subject, session=None):
                                                step=1, session=session,
                                                run=run))
 
-            if config.mf_st_duration:
+            if cfg.mf_st_duration:
                 msg = '    st_duration=%d' % (config.mf_st_duration)
                 logger.info(gen_log_message(message=msg, step=1,
                                             subject=subject, session=session,
@@ -412,7 +411,7 @@ def run_maxwell_filter(subject, session=None):
                                         session=session, message=msg))
 
             bids_path_er_in = bids_path_in.find_empty_room()
-            raw_er = load_data(bids_path_er_in)
+            raw_er = load_data(cfg, bids_path_er_in)
             raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
                                    ch.startswith('MEG')]
 
@@ -463,6 +462,59 @@ def run_maxwell_filter(subject, session=None):
             del raw_er_out
 
 
+from dataclasses import dataclass
+
+@dataclass
+class Config:
+    mf_cal_fname: str
+    runs: list
+    use_maxwell_filter: bool
+    proc: str
+    task: str
+    datatype: str
+    session: str
+    acq: str
+    rec: str
+    space: str
+    bids_root: Path
+    deriv_root: Path
+    crop_runs: float
+    interactive: bool
+    rename_events: dict
+    eeg_template_montage: str
+    fix_stim_artifact: bool
+    find_flat_channels_meg: bool
+    find_noisy_channels_meg: bool
+    
+
+
+def get_config(subject, session):
+    cfg = Config(
+        mf_cal_fname=config.mf_cal_fname,
+        runs=config.get_runs(subject),
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        session=session,
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        crop_runs=config.crop_runs,
+        interactive=config.interactive,
+        rename_events=config.rename_events,
+        eeg_template_montage=config.eeg_template_montage,
+        fix_stim_artifact=config.fix_stim_artifact,
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+    )
+    print(cfg)
+    import ipdb; ipdb.set_trace()
+    return cfg
+
+
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
@@ -471,7 +523,7 @@ def main():
 
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                           n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
+    parallel(run_func(get_config(subject, session), subject, session) for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
     msg = 'Completed Step 1: Data import'

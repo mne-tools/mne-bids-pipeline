@@ -510,8 +510,6 @@ def get_config(subject, session):
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
     )
-    print(cfg)
-    import ipdb; ipdb.set_trace()
     return cfg
 
 

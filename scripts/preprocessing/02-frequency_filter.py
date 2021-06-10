@@ -23,11 +23,16 @@ import numpy as np
 
 import mne
 from mne.parallel import parallel_func
-from mne_bids import BIDSPath, read_raw_bids
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_message, on_error, failsafe_run
-from common_functions import import_experimental_data, import_er_data
+
+
+funcs = config.funcs['preprocessing']
+import_experimental_data = funcs['import_experimental_data']
+import_er_data = funcs['import_er_data']
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 

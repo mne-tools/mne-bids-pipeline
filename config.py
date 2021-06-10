@@ -4,6 +4,7 @@ alter for your specific analysis.
 """
 
 import importlib
+import runpy
 import pathlib
 import functools
 import os
@@ -13,7 +14,8 @@ import sys
 import copy
 import logging
 
-from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+from typing import (Optional, Union, Iterable, List, Tuple, Dict, Callable,
+                    TypedDict)
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -2007,3 +2009,21 @@ def annotations_to_events(
     }
 
     return event_name_to_code_map
+
+
+_preproc_funcs_path = (pathlib.Path(__file__).parent / 'scripts' /
+                       'preprocessing' / 'common_functions.py')
+_preproc_funcs = runpy.run_path(_preproc_funcs_path)
+_preproc_funcs = {
+    func_name: func
+    for func_name, func in _preproc_funcs.items()
+    if func in _preproc_funcs['exports']
+}
+
+class Funcs(TypedDict):
+    preprocessing: Dict[str, Callable]
+
+
+funcs = Funcs(
+    preprocessing=_preproc_funcs
+)

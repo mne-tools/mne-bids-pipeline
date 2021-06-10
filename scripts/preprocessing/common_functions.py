@@ -1,21 +1,3 @@
-"""
-====================================================================
-01. Import data, add or remove channels, detect bads, rename events.
-====================================================================
-
-The data are imported from the BIDS folder.
-
-Notes
------
-This is the first step of the pipeline, so it will also write a
-`dataset_description.json` file to the root of the pipeline derivatives, which
-are stored in bids_root/derivatives/PIPELINE_NAME. PIPELINE_NAME is defined in
-the config.py file. The `dataset_description.json` file is formatted according
-to the WIP specification for common BIDS derivatives, see this PR:
-
-https://github.com/bids-standard/bids-specification/pull/265
-"""  # noqa: E501
-
 from typing import Optional, List
 import logging
 
@@ -25,12 +7,10 @@ import json_tricks
 
 import mne
 from mne.preprocessing import find_bad_channels_maxwell
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath, read_raw_bids
 
 import config
-from config import (gen_log_message, on_error, failsafe_run, get_mf_cal_fname,
-                    get_mf_ctc_fname)
+from config import gen_log_message, get_mf_cal_fname, get_mf_ctc_fname
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -401,3 +381,9 @@ def import_er_data(
                     overwrite=True)
 
     return raw_er
+
+
+exports = [
+    import_experimental_data,
+    import_er_data,
+]

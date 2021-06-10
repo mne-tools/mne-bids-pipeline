@@ -65,7 +65,7 @@ def run_maxwell_filter(subject, session=None):
     dig = info['dig']
     del reference_run, info
 
-    for run_idx, run in enumerate(config.get_runs()):
+    for run_idx, run in enumerate(config.get_runs(subject=subject)):
         bids_path_in.update(run=run)
         bids_path_out.update(run=run)
         raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=True)

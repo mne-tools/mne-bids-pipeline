@@ -22,7 +22,6 @@ PathLike = Union[str, pathlib.Path]
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
 PREPROCESSING_SCRIPTS = (
-    '00-import.py',
     '01-maxfilter.py',
     '02-frequency_filter.py',
     '03-make_epochs.py',

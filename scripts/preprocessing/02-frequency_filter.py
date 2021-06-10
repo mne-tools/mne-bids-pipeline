@@ -187,7 +187,7 @@ def filter_data(
             raw_er = import_er_data(subject=subject, session=session,
                                     bads=bads, save=False)
 
-        raw_er_fname_out = bids_path.copy().update(processing='filt')
+        raw_er_fname_out = bids_path_er.copy().update(processing='filt')
 
         raw_er.load_data()
         filter(raw=raw_er, subject=subject, session=session, run=run,

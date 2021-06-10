@@ -92,5 +92,5 @@ authors:
   ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ authors.crsegerie }})
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config files.
   ({{ gh(340) }} by {{ authors.crsegerie }})
-- Passing subject, session, task, and run names that consist only of numbers to `run.py` doesn't throw an exception anymore, even if the names weren't double-quotes.
+- Passing subject, session, task, and run names that consist only of numbers to `run.py` doesn't throw an exception anymore, even if the values weren't double-quoted.
   ({{ gh(374) }} by {{ authors.hoechenberger }})

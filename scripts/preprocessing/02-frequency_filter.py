@@ -112,7 +112,7 @@ def filter_data(
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,
-                         task=config.get_task()[0],
+                         task=config.get_task(),
                          acquisition=config.acq,
                          processing=config.proc,
                          recording=config.rec,

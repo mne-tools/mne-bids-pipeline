@@ -24,6 +24,7 @@ noise_cov = 'emptyroom'
 
 bem_mri_images = 'FLASH'
 recreate_bem = True
+recreate_scalp_surface = True
 
 def mri_t1_path_generator(bids_path):
     # don't really do any modifications – just for testing!

@@ -89,15 +89,12 @@ def resample(
                                 session=session, run=run,))
     raw.resample(sfreq, npad='auto')
 
-    # if config.process_er
-
 
 def filter_data(
     *,
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
-    task: Optional[str] = None,
     l_freq: Optional[float],
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
@@ -112,16 +109,10 @@ def filter_data(
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    empty_room = False
-    if task is None:
-        task = config.get_task()
-    elif task is 'noise':
-        empty_room = True  # we're processing empty-room data
-
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,
-                         task=task,
+                         task=config.get_task()[0],
                          acquisition=config.acq,
                          processing=config.proc,
                          recording=config.rec,

@@ -810,6 +810,8 @@ Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect ICA performance.
 
+This will also be applied to ECG and EOG epochs created during preprocessing.
+
 The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
 your data, and remove them. For this to work properly, it is recommended
 to **not** specify rejection thresholds for EOG and ECG channels here –
@@ -1063,6 +1065,13 @@ recreate_bem: bool = False
 Whether to re-create the BEM surfaces, even if existing surfaces have been
 found. If ``False``, the BEM surfaces are only created if they do not exist
 already. ``True`` forces their recreation, overwriting existing BEM surfaces.
+"""
+
+recreate_scalp_surface: bool = False
+"""
+Whether to re-create the high-resolution scalp surface used for visualization
+of the coregistration in the report. If ``False``, the scalp surface is only
+created if it does not exist already. If ``True``, forces a re-computation.
 """
 
 mri_t1_path_generator: Optional[Callable] = None

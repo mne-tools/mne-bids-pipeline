@@ -65,7 +65,7 @@ def fit_ica(epochs, subject, session):
               n_components=config.ica_n_components, fit_params=fit_params,
               max_iter=config.ica_max_iterations)
 
-    ica.fit(epochs, decim=config.ica_decim, reject=config.get_ica_reject())
+    ica.fit(epochs, decim=config.ica_decim)
 
     explained_var = (ica.pca_explained_variance_[:ica.n_components_].sum() /
                      ica.pca_explained_variance_.sum())
@@ -91,8 +91,8 @@ def make_ecg_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # Do not reject epochs based on amplitude.
-        ecg_epochs = create_ecg_epochs(raw, reject=None,
+        # We will reject epochs only if ica_reject was specified.
+        ecg_epochs = create_ecg_epochs(raw, reject=config.ica_reject,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 
@@ -134,9 +134,9 @@ def make_eog_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # Create the epochs. It's important not to reject epochs based on
-        # amplitude!
+        # We will reject epochs only if ica_reject was specified.
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
+                                       reject=config.ica_reject,
                                        baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:
@@ -337,6 +337,8 @@ def run_ica(subject, session=None):
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
+
+    epochs.drop_bad(reject=config.get_ica_reject())
 
     ica = fit_ica(epochs, subject=subject, session=session)
 

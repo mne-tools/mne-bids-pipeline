@@ -1914,7 +1914,7 @@ def get_mf_cal_fname(
             raise ValueError('Could not find Maxwell Filter Calibration '
                              'file.')
     else:
-        mf_cal_fpath = Path(config.mf_cal_fname).expanduser().absolute()
+        mf_cal_fpath = pathlib.Path(mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
                              f'file at {str(mf_cal_fpath)}.')
@@ -1937,7 +1937,7 @@ def get_mf_ctc_fname(
             raise ValueError('Could not find Maxwell Filter cross-talk '
                              'file.')
     else:
-        mf_ctc_fpath = Path(config.mf_ctc_fname).expanduser().absolute()
+        mf_ctc_fpath = pathlib.Path(mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter cross-talk '
                              f'file at {str(mf_ctc_fpath)}.')
@@ -2028,6 +2028,7 @@ _preproc_funcs = {
     for func_name, func in _preproc_funcs.items()
     if func in _preproc_funcs['exports']
 }
+
 
 class Funcs(TypedDict):
     preprocessing: Dict[str, Callable]

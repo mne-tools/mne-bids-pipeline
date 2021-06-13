@@ -58,26 +58,26 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
-      # - restore_cache:
-      #     keys:
-      #       - pip-cache
-      # - restore_cache:
-      #     keys:
-      #       - user-install-bin-cache
+      - restore_cache:
+          keys:
+            - pip-cache
+      - restore_cache:
+          keys:
+            - user-install-bin-cache
       - run:
           name: Get Python running
           command: |
             python -m pip install --user --upgrade --progress-bar off pip setuptools
             python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
-      # - save_cache:
-      #     key: pip-cache
-      #     paths:
-      #       - ~/.cache/pip
-      # - save_cache:
-      #     key: user-install-bin-cache
-      #     paths:
-      #       - ~/.local/lib/python3.8/site-packages
-      #       - ~/.local/bin
+      - save_cache:
+          key: pip-cache
+          paths:
+            - ~/.cache/pip
+      - save_cache:
+          key: user-install-bin-cache
+          paths:
+            - ~/.local/lib/python3.8/site-packages
+            - ~/.local/bin
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

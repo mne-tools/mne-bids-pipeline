@@ -1064,6 +1064,13 @@ found. If ``False``, the BEM surfaces are only created if they do not exist
 already. ``True`` forces their recreation, overwriting existing BEM surfaces.
 """
 
+recreate_scalp_surface: bool = False
+"""
+Whether to re-create the high-resolution scalp surface used for visualization
+of the coregistration in the report. If ``False``, the scalp surface is only
+created if it does not exist already. If ``True``, forces a re-computation.
+"""
+
 mri_t1_path_generator: Optional[Callable] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a

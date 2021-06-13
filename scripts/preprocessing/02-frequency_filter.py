@@ -141,10 +141,11 @@ def filter_data(
     raw_fname_out = bids_path.copy().update(processing='filt')
 
     raw.load_data()
-    filter(raw=raw, subject=subject, session=session, run=run,
-           h_freq=h_freq, l_freq=l_freq,
-           h_trans_bandwidth=h_trans_bandwidth,
-           l_trans_bandwidth=l_trans_bandwidth
+    filter(
+        raw=raw, subject=subject, session=session, run=run,
+        h_freq=h_freq, l_freq=l_freq,
+        h_trans_bandwidth=h_trans_bandwidth,
+        l_trans_bandwidth=l_trans_bandwidth
     )
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=resample_sfreq)
@@ -181,13 +182,14 @@ def filter_data(
         raw_er_fname_out = bids_path_er.copy().update(processing='filt')
 
         raw_er.load_data()
-        filter(raw=raw_er, subject=subject, session=session, run=run,
+        filter(
+            raw=raw_er, subject=subject, session=session, run=run,
             h_freq=h_freq, l_freq=l_freq,
             h_trans_bandwidth=h_trans_bandwidth,
             l_trans_bandwidth=l_trans_bandwidth
         )
         resample(raw=raw_er, subject=subject, session=session, run=run,
-                sfreq=resample_sfreq)
+                 sfreq=resample_sfreq)
 
         raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
         if config.interactive:
@@ -226,9 +228,6 @@ def main():
         ) for subject, run, session in sub_run_ses
     )
 
-    # if config.process_er:
-        # run_func(config.get_subjects(), config.get_runs()[0], task='noise',
-        #                             config.get_sessions()))
     msg = 'Completed 2: Frequency filtering'
     logger.info(gen_log_message(step=2, message=msg))
 

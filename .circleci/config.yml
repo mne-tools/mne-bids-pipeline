@@ -16,6 +16,12 @@ _git: &git
     git config --global user.email "ci-build@mne.tools"
     git config --global user.name "ci-build"
 
+_ssh: &ssh
+  name: Add SSH keys
+  add_ssh_keys:
+    fingerprints:
+      - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
+
 _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
@@ -55,9 +61,8 @@ jobs:
           <<: *xvfb
       - run:
           <<: *git
-      - add_ssh_keys:
-          fingerprints:
-            - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
+      - run:
+          <<: *ssh
       # - restore_cache:
       #     keys:
       #       - pip-cache
@@ -618,6 +623,8 @@ jobs:
           at: ~/
       - run:
           <<: *git
+      - run:
+          <<: *ssh
       - run:
           name: Install "gh-pages" CLI app
           command: |

@@ -2354,7 +2354,7 @@ def import_er_data(
 
     Returns
     -------
-    raw
+    raw_er
         The imported data.
     """
     bids_path_er_in = BIDSPath(

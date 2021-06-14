@@ -2293,6 +2293,11 @@ def import_experimental_data(
         The run to import.
     save
         Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw
+        The imported data.
     """
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
@@ -2346,6 +2351,11 @@ def import_er_data(
         recording.
     save
         Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw
+        The imported data.
     """
     bids_path_er_in = BIDSPath(
         subject=subject,

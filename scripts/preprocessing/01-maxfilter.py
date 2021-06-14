@@ -23,6 +23,7 @@ import logging
 import numpy as np
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
@@ -34,7 +35,7 @@ from config import (gen_log_message, on_error, failsafe_run, get_mf_ctc_fname,
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_maxwell_filter(subject, session=None):
+def run_maxwell_filter(cfg, subject, session=None):
     if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
@@ -179,6 +180,31 @@ def run_maxwell_filter(subject, session=None):
             del raw_er_sss
 
 
+def get_config(subject, session):
+    cfg = BunchConst(
+        mf_cal_fname=config.mf_cal_fname,
+        runs=config.get_runs(subject),
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        session=session,
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        crop_runs=config.crop_runs,
+        interactive=config.interactive,
+        rename_events=config.rename_events,
+        eeg_template_montage=config.eeg_template_montage,
+        fix_stim_artifact=config.fix_stim_artifact,
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+    )
+    return cfg
+
+
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
@@ -188,7 +214,8 @@ def main():
     if config.use_maxwell_filter:
         parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                               n_jobs=config.N_JOBS)
-        parallel(run_func(subject, session) for subject, session in
+        parallel(run_func(get_config(subject, session), subject, session)
+                 for subject, session in
                  itertools.product(config.get_subjects(),
                                    config.get_sessions()))
 

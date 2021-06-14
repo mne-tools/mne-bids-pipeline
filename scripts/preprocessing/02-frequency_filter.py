@@ -210,6 +210,7 @@ def get_config(subject, session):
         crop_runs=config.crop_runs,
         interactive=config.interactive,
         rename_events=config.rename_events,
+        eeg_bipolar_channels=config.eeg_bipolar_channels,
         eeg_template_montage=config.eeg_template_montage,
         fix_stim_artifact=config.fix_stim_artifact,
         find_flat_channels_meg=config.find_flat_channels_meg,

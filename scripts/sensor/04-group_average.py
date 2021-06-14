@@ -185,6 +185,7 @@ def get_config(session):
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        proc=config.proc,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
         contrasts=config.contrasts,

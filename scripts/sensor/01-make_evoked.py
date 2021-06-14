@@ -100,7 +100,8 @@ def get_config(subject, session):
         space=config.space,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
-        contrasts=config.contrasts
+        contrasts=config.contrasts,
+        interactive=config.interactive
     )
     return cfg
 

@@ -75,6 +75,7 @@ def get_config(subject, session):
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        proc=config.proc,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
         subjects=config.get_subjects(),

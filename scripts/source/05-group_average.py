@@ -108,7 +108,7 @@ def main():
         run_func(get_config(subject, session), subject, session)
         for subject, session in
         itertools.product(cfg.subjects,
-                            cfg.sessions)
+                          cfg.sessions)
     )
     all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                         zip(all_morphed_stcs, cfg.subjects)]

@@ -22,6 +22,7 @@ import logging
 import numpy as np
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
@@ -91,14 +92,9 @@ def filter_data(
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
-    l_freq: Optional[float],
-    h_freq: Optional[float],
-    l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    resample_sfreq: Optional[float]
 ) -> None:
     """Filter data from a single subject."""
-    if l_freq is None and h_freq is None:
+    if cfg.l_freq is None and cfg.h_freq is None:
         return
 
     # Construct the basenames of the files we wish to load, and of the empty-
@@ -120,7 +116,7 @@ def filter_data(
                          check=False)
 
     # Create paths for reading and writing the filtered data.
-    if config.use_maxwell_filter:
+    if cfg.use_maxwell_filter:
         raw_fname_in = bids_path.copy().update(processing='sss')
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
@@ -138,28 +134,28 @@ def filter_data(
     raw.load_data()
     filter(
         raw=raw, subject=subject, session=session, run=run,
-        h_freq=h_freq, l_freq=l_freq,
-        h_trans_bandwidth=h_trans_bandwidth,
-        l_trans_bandwidth=l_trans_bandwidth
+        h_freq=cfg.h_freq, l_freq=cfg.l_freq,
+        h_trans_bandwidth=cfg.h_trans_bandwidth,
+        l_trans_bandwidth=cfg.l_trans_bandwidth
     )
     resample(raw=raw, subject=subject, session=session, run=run,
-             sfreq=resample_sfreq)
+             sfreq=cfg.resample_sfreq)
 
     raw.save(raw_fname_out, overwrite=True, split_naming='bids')
-    if config.interactive:
+    if cfg.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-    if config.process_er and run == config.get_runs(subject)[0]:
+    if cfg.process_er and run == cfg.runs[0]:
         # Ensure empty-room data has the same bad channel selection set as the
         # experimental data
         bads = raw.info['bads'].copy()
         del raw  # free memory
 
         bids_path_er = bids_path.copy().update(run=None, task='noise')
-        if config.use_maxwell_filter:
+        if cfg.use_maxwell_filter:
             raw_er_fname_in = bids_path_er.copy().update(processing='sss')
             if raw_er_fname_in.copy().update(split='01').fpath.exists():
                 raw_er_fname_in.update(split='01')
@@ -177,19 +173,51 @@ def filter_data(
         raw_er.load_data()
         filter(
             raw=raw_er, subject=subject, session=session, run=run,
-            h_freq=h_freq, l_freq=l_freq,
-            h_trans_bandwidth=h_trans_bandwidth,
-            l_trans_bandwidth=l_trans_bandwidth
+            h_freq=cfg.h_freq, l_freq=cfg.l_freq,
+            h_trans_bandwidth=cfg.h_trans_bandwidth,
+            l_trans_bandwidth=cfg.l_trans_bandwidth
         )
         resample(raw=raw_er, subject=subject, session=session, run=run,
-                 sfreq=resample_sfreq)
+                 sfreq=cfg.resample_sfreq)
 
         raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
-        if config.interactive:
+        if cfg.interactive:
             # Plot raw data and power spectral density.
             raw_er.plot(n_channels=50, butterfly=True)
-            fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+            fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
             raw_er.plot_psd(fmax=fmax)
+
+
+def get_config(subject, session):
+    cfg = BunchConst(
+        process_er=config.process_er,
+        runs=config.get_runs(subject),
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        session=session,
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        l_freq=config.l_freq,
+        h_freq=config.h_freq,
+        l_trans_bandwidth=config.l_trans_bandwidth,
+        h_trans_bandwidth=config.h_trans_bandwidth,
+        resample_sfreq=config.resample_sfreq,
+        # crop_runs=config.crop_runs,
+        interactive=config.interactive,
+        # rename_events=config.rename_events,
+        # eeg_template_montage=config.eeg_template_montage,
+        # fix_stim_artifact=config.fix_stim_artifact,
+        # find_flat_channels_meg=config.find_flat_channels_meg,
+        # find_noisy_channels_meg=config.find_noisy_channels_meg,
+        # reference_run=config.get_mf_reference_run(),
+        # drop_channels=config.drop_channels,
+    )
+    return cfg
 
 
 @failsafe_run(on_error=on_error)
@@ -210,14 +238,10 @@ def main():
 
     parallel(
         run_func(
+            cfg=get_config(subject, session),
             subject=subject,
             run=run,
             session=session,
-            l_freq=config.l_freq,
-            h_freq=config.h_freq,
-            l_trans_bandwidth=config.l_trans_bandwidth,
-            h_trans_bandwidth=config.h_trans_bandwidth,
-            resample_sfreq=config.resample_sfreq
         ) for subject, run, session in sub_run_ses
     )
 

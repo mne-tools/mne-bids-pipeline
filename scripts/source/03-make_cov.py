@@ -97,6 +97,7 @@ def get_config(subject, session):
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        proc=config.proc,
         noise_cov=config.noise_cov,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,

@@ -28,8 +28,8 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (gen_log_message, on_error, failsafe_run, get_mf_ctc_fname,
-                    get_mf_cal_fname, import_experimental_data, import_er_data,
+from config import (gen_log_message, on_error, failsafe_run,
+                    import_experimental_data, import_er_data,
                     get_reference_run_info)
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -56,7 +56,7 @@ def run_maxwell_filter(cfg, subject, session=None):
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
-    reference_run = config.get_mf_reference_run()
+    reference_run = cfg.reference_run
     msg = f'Loading reference run: {reference_run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
@@ -72,6 +72,7 @@ def run_maxwell_filter(cfg, subject, session=None):
         bids_path_out.update(run=run)
 
         raw = import_experimental_data(
+            cfg=cfg,
             subject=subject,
             session=session,
             run=run,
@@ -92,18 +93,18 @@ def run_maxwell_filter(cfg, subject, session=None):
             logger.warning(gen_log_message(message=msg, subject=subject,
                                            step=1, session=session))
 
-        if config.mf_st_duration:
-            msg = '    st_duration=%d' % (config.mf_st_duration)
+        if cfg.mf_st_duration:
+            msg = '    st_duration=%d' % (cfg.mf_st_duration)
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.
         common_mf_kws = dict(
-            calibration=get_mf_cal_fname(subject, session),
-            cross_talk=get_mf_ctc_fname(subject, session),
-            st_duration=config.mf_st_duration,
-            origin=config.mf_head_origin,
+            calibration=cfg.mf_cal_fname,
+            cross_talk=cfg.mf_ctc_fname,
+            st_duration=cfg.mf_st_duration,
+            origin=cfg.mf_head_origin,
             coord_frame='head',
             destination=dev_head_t
         )
@@ -118,19 +119,20 @@ def run_maxwell_filter(cfg, subject, session=None):
                      overwrite=True)
         del raw_sss
 
-        if config.interactive:
+        if cfg.interactive:
             # Load the data we have just written, because it contains only
             # the relevant channels.
             raw = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
-        if config.process_er and run == config.get_mf_reference_run():
+        if cfg.process_er and run == cfg.reference_run:
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
             raw_er = import_er_data(
+                cfg=cfg,
                 subject=subject,
                 session=session,
                 bads=bads,
@@ -182,7 +184,11 @@ def run_maxwell_filter(cfg, subject, session=None):
 
 def get_config(subject, session):
     cfg = BunchConst(
-        mf_cal_fname=config.mf_cal_fname,
+        mf_cal_fname=config.get_mf_cal_fname(subject, session),
+        mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
+        mf_st_duration=config.mf_st_duration,
+        mf_head_origin=config.mf_head_origin,
+        process_er=config.process_er,
         runs=config.get_runs(subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
@@ -201,6 +207,8 @@ def get_config(subject, session):
         fix_stim_artifact=config.fix_stim_artifact,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
+        reference_run=config.get_mf_reference_run(),
+        drop_channels=config.drop_channels,
     )
     return cfg
 

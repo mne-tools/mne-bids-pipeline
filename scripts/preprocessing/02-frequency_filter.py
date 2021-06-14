@@ -87,6 +87,7 @@ def resample(
 
 def filter_data(
     *,
+    cfg: dict,
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
@@ -107,15 +108,15 @@ def filter_data(
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
-                         processing=config.proc,
-                         recording=config.rec,
-                         space=config.space,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         processing=cfg.proc,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          suffix='raw',
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     # Create paths for reading and writing the filtered data.
@@ -128,7 +129,8 @@ def filter_data(
                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
-        raw = import_experimental_data(subject=subject, session=session,
+        raw = import_experimental_data(cfg=cfg,
+                                       subject=subject, session=session,
                                        run=run, save=False)
 
     raw_fname_out = bids_path.copy().update(processing='filt')

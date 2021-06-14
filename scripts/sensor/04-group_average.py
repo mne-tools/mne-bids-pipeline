@@ -16,6 +16,7 @@ import numpy as np
 from scipy.io import loadmat, savemat
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne_bids import BIDSPath
 
 import config
@@ -28,22 +29,22 @@ msg = 'Running Step 9: Grand-average sensor data'
 logger.info(gen_log_message(step=9, message=msg))
 
 
-def average_evokeds(session):
+def average_evokeds(cfg, session):
     # Container for all conditions:
     all_evokeds = defaultdict(list)
 
-    for subject in config.get_subjects():
+    for subject in cfg.subjects:
         fname_in = BIDSPath(subject=subject,
                             session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
                             run=None,
-                            recording=config.rec,
-                            space=config.space,
+                            recording=cfg.rec,
+                            space=cfg.space,
                             suffix='ave',
                             extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.get_deriv_root(),
+                            datatype=cfg.datatype,
+                            root=cfg.deriv_root,
                             check=False)
 
         msg = f'Input: {fname_in}'
@@ -56,22 +57,22 @@ def average_evokeds(session):
 
     for idx, evokeds in all_evokeds.items():
         all_evokeds[idx] = mne.grand_average(
-            evokeds, interpolate_bads=config.interpolate_bads_grand_average
+            evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
         )  # Combine subjects
 
     subject = 'average'
     fname_out = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
                          run=None,
-                         processing=config.proc,
-                         recording=config.rec,
-                         space=config.space,
+                         processing=cfg.proc,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          suffix='ave',
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     if not fname_out.fpath.parent.exists():
@@ -84,27 +85,27 @@ def average_evokeds(session):
     return list(all_evokeds.values())
 
 
-def average_decoding(session):
+def average_decoding(cfg, session):
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
-    fname_epo = BIDSPath(subject=config.get_subjects()[0],
+    fname_epo = BIDSPath(subject=cfg.subjects[0],
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
                          run=None,
-                         recording=config.rec,
-                         space=config.space,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          suffix='epo',
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
     epochs = mne.read_epochs(fname_epo)
     times = epochs.times
-    subjects = config.get_subjects()
+    subjects = cfg.subjects
     del epochs, fname_epo
 
-    for contrast in config.contrasts:
+    for contrast in cfg.contrasts:
         cond_1, cond_2 = contrast
         contrast_score_stats = {'cond_1': cond_1,
                                 'cond_2': cond_2,
@@ -118,7 +119,7 @@ def average_decoding(session):
                                 'mean_ci_upper': np.empty(len(times))}
 
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+{config.decoding_metric}'
+        processing = f'{a_vs_b}+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
 
         # Extract mean CV scores from all subjects.
@@ -126,16 +127,16 @@ def average_decoding(session):
         for sub_idx, subject in enumerate(subjects):
             fname_mat = BIDSPath(subject=subject,
                                  session=session,
-                                 task=config.get_task(),
-                                 acquisition=config.acq,
+                                 task=cfg.task,
+                                 acquisition=cfg.acq,
                                  run=None,
-                                 recording=config.rec,
-                                 space=config.space,
+                                 recording=cfg.rec,
+                                 space=cfg.space,
                                  processing=processing,
                                  suffix='decoding',
                                  extension='.mat',
-                                 datatype=config.get_datatype(),
-                                 root=config.get_deriv_root(),
+                                 datatype=cfg.datatype,
+                                 root=cfg.deriv_root,
                                  check=False)
 
             decoding_data = loadmat(fname_mat)
@@ -151,11 +152,11 @@ def average_decoding(session):
         # Finally, for each time point, bootstrap the mean, and calculate the
         # SD of the bootstrapped distribution: this is the standard error of
         # the mean. We also derive 95% confidence intervals.
-        rng = np.random.default_rng(seed=config.random_state)
+        rng = np.random.default_rng(seed=cfg.random_state)
 
         for time_idx in tqdm(range(len(times)), desc='Bootstrapping means'):
             scores_resampled = rng.choice(mean_scores[:, time_idx],
-                                          size=(config.n_boot, len(subjects)),
+                                          size=(cfg.n_boot, len(subjects)),
                                           replace=True)
             bootstrapped_means = scores_resampled.mean(axis=1)
 
@@ -175,19 +176,46 @@ def average_decoding(session):
         del contrast_score_stats, fname_out
 
 
+def get_config(session):
+    cfg = BunchConst(
+        subjects=config.get_subjects(),
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        session=session,
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        deriv_root=config.get_deriv_root(),
+        conditions=config.conditions,
+        contrasts=config.contrasts,
+        decoding_metric=config.decoding_metric,
+        decoding_n_splits=config.decoding_n_splits,
+        random_state=config.random_state,
+        n_boot=config.n_boot,
+        analyze_channels=config.analyze_channels,
+        interpolate_bads_grand_average=config.interpolate_bads_grand_average,
+        ch_types=config.ch_types,
+        eeg_reference=config.eeg_reference,
+        N_JOBS=config.N_JOBS
+    )
+    return cfg
+
+
 def main():
     sessions = config.get_sessions()
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        evokeds = average_evokeds(session)
+        cfg = get_config(session)
+
+        evokeds = average_evokeds(cfg, session)
         if config.interactive:
             for evoked in evokeds:
                 evoked.plot()
 
         if config.decode:
-            average_decoding(session)
+            average_decoding(cfg, session)
 
 
 if __name__ == '__main__':

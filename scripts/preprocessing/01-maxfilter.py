@@ -28,14 +28,8 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_message, on_error, failsafe_run, get_mf_ctc_fname,
-                    get_mf_cal_fname)
-
-
-funcs = config.funcs['preprocessing']
-import_experimental_data = funcs['import_experimental_data']
-import_er_data = funcs['import_er_data']
-get_reference_run_info = funcs['get_reference_run_info']
-
+                    get_mf_cal_fname, import_experimental_data, import_er_data,
+                    get_reference_run_info)
 
 logger = logging.getLogger('mne-bids-pipeline')
 

@@ -104,10 +104,12 @@ def main():
     mne.datasets.fetch_fsaverage(subjects_dir=cfg.fs_subjects_dir)
 
     parallel, run_func, _ = parallel_func(morph_stc, n_jobs=cfg.N_JOBS)
-    all_morphed_stcs = parallel(run_func(subject, session)
-                                for subject, session in
-                                itertools.product(cfg.subjects,
-                                                  cfg.sessions))
+    all_morphed_stcs = parallel(
+        run_func(get_config(subject, session), subject, session)
+        for subject, session in
+        itertools.product(cfg.subjects,
+                            cfg.sessions)
+    )
     all_morphed_stcs = [morphed_stcs for morphed_stcs, subject in
                         zip(all_morphed_stcs, cfg.subjects)]
     mean_morphed_stcs = map(sum, zip(*all_morphed_stcs))

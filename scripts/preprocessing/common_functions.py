@@ -385,7 +385,7 @@ def get_reference_run_info(
     session: Optional[str] = None,
     run: str
 ) -> mne.Info:
-    
+
     msg = f'Loading info for run: {run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))

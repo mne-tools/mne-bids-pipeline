@@ -130,7 +130,7 @@ def run_maxwell_filter(subject, session=None):
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
-        if config.process_er and run ==  config.get_mf_reference_run():
+        if config.process_er and run == config.get_mf_reference_run():
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))

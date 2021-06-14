@@ -124,12 +124,10 @@ def filter_data(
                          check=False)
 
     # Create paths for reading and writing the filtered data.
-    raw_fname_in = bids_path.copy()
-    if raw_fname_in.copy().update(split='01').fpath.exists():
-        raw_fname_in.update(split='01')
-
     if config.use_maxwell_filter:
-        raw_fname_in = raw_fname_in.update(processing='sss')
+        raw_fname_in = bids_path.copy().update(processing='sss')
+        if raw_fname_in.copy().update(split='01').fpath.exists():
+            raw_fname_in.update(split='01')
         msg = f'Reading: {raw_fname_in}'
         logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                     session=session, run=run))
@@ -157,19 +155,17 @@ def filter_data(
         fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-    if config.process_er:
+    if config.process_er and run == config.get_runs(subject)[0]:
         # Ensure empty-room data has the same bad channel selection set as the
         # experimental data
         bads = raw.info['bads'].copy()
         del raw  # free memory
 
         bids_path_er = bids_path.copy().update(run=None, task='noise')
-        raw_er_fname_in = bids_path_er.copy()
-        if raw_er_fname_in.copy().update(split='01').fpath.exists():
-            raw_er_fname_in.update(split='01')
-
         if config.use_maxwell_filter:
-            raw_er_fname_in = raw_er_fname_in.update(processing='sss')
+            raw_er_fname_in = bids_path_er.copy().update(processing='sss')
+            if raw_er_fname_in.copy().update(split='01').fpath.exists():
+                raw_er_fname_in.update(split='01')
             msg = f'Reading empty-room recording: {raw_er_fname_in}'
             logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                         session=session, run=run))

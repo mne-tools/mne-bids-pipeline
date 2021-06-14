@@ -30,6 +30,13 @@ import config
 from config import (gen_log_message, on_error, failsafe_run, get_mf_ctc_fname,
                     get_mf_cal_fname)
 
+
+funcs = config.funcs['preprocessing']
+import_experimental_data = funcs['import_experimental_data']
+import_er_data = funcs['import_er_data']
+get_reference_run_info = funcs['get_reference_run_info']
+
+
 logger = logging.getLogger('mne-bids-pipeline')
 
 
@@ -39,19 +46,18 @@ def run_maxwell_filter(subject, session=None):
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
-    bids_path_in = BIDSPath(subject=subject,
-                            session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
-                            processing=config.proc,
-                            recording=config.rec,
-                            space=config.space,
-                            suffix='raw',
-                            extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.get_deriv_root(),
-                            check=False)
-    bids_path_out = bids_path_in.copy().update(processing='sss')
+    bids_path_out = BIDSPath(subject=subject,
+                             session=session,
+                             task=config.get_task(),
+                             acquisition=config.acq,
+                             processing='sss',
+                             recording=config.rec,
+                             space=config.space,
+                             suffix='raw',
+                             extension='.fif',
+                             datatype=config.get_datatype(),
+                             root=config.get_deriv_root(),
+                             check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
@@ -59,16 +65,23 @@ def run_maxwell_filter(subject, session=None):
     msg = f'Loading reference run: {reference_run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
-    bids_path_in.update(run=reference_run)
-    info = mne.io.read_info(bids_path_in)
-    dev_head_t = info['dev_head_t']
-    dig = info['dig']
-    del reference_run, info
 
-    for run_idx, run in enumerate(config.get_runs(subject=subject)):
-        bids_path_in.update(run=run)
+    reference_run_info = get_reference_run_info(
+        subject=subject, session=session, run=reference_run
+    )
+    dev_head_t = reference_run_info['dev_head_t']
+    dig = reference_run_info['dig']
+    del reference_run, reference_run_info
+
+    for run in config.get_runs(subject=subject):
         bids_path_out.update(run=run)
-        raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=True)
+
+        raw = import_experimental_data(
+            subject=subject,
+            session=session,
+            run=run,
+            save=False
+        )
 
         # Maxwell-filter experimental data.
         msg = 'Applying Maxwell filter to experimental data.'
@@ -76,7 +89,10 @@ def run_maxwell_filter(subject, session=None):
                                     session=session))
 
         # Warn if no bad channels are set before Maxwell filter
-        if not raw.info['bads']:
+        # Create a copy, we'll need this later for setting the bads of the
+        # empty-room recording
+        bads = raw.info['bads'].copy()
+        if not bads:
             msg = '\nFound no bad channels. \n '
             logger.warning(gen_log_message(message=msg, subject=subject,
                                            step=1, session=session))
@@ -114,19 +130,17 @@ def run_maxwell_filter(subject, session=None):
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
-        #
-        # We pick the empty-room recording closest in time to the first run
-        # of the experimental session.
-        if run_idx == 0 and config.process_er:
+        if config.process_er and run ==  config.get_mf_reference_run():
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
-            bids_path_er_in = bids_path_in.copy().update(task='noise',
-                                                         run=None)
-            raw_er = mne.io.read_raw_fif(bids_path_er_in, allow_maxshield=True)
-            raw_er.info['bads'] = [ch for ch in raw.info['bads'] if
-                                   ch.startswith('MEG')]
+            raw_er = import_er_data(
+                subject=subject,
+                session=session,
+                bads=bads,
+                save=False
+            )
 
             # Maxwell-filter empty-room data.
             msg = 'Applying Maxwell filter to empty-room recording'
@@ -159,9 +173,10 @@ def run_maxwell_filter(subject, session=None):
                 raise RuntimeError(msg)
 
             raw_er_fname_out = bids_path_out.copy().update(
-                processing='sss')
-
-            raw_er_fname_out = raw_er_fname_out.update(task='noise', run=None)
+                task='noise',
+                run=None,
+                processing='sss'
+            )
 
             # Save only the channel types we wish to analyze
             # (same as for experimental data above).

@@ -166,11 +166,6 @@ def load_data(bids_path):
 
     # Save only the channel types we wish to analyze (including the
     # channels marked as "bad").
-    # We do not run `raw.pick()` here because it uses too much memory.
-    # Note that we skip this bit if `use_maxwell_filter=True`, as
-    # we'll want to retain all channels for Maxwell filtering in that
-    # case. The Maxwell filtering script will do this channel type
-    # subsetting after Maxwell filtering is complete.
     if not config.use_maxwell_filter:
         picks = config.get_channels_to_analyze(raw.info)
         raw.pick(picks)
@@ -384,7 +379,37 @@ def import_er_data(
     return raw_er
 
 
+def get_reference_run_info(
+    *,
+    subject: str,
+    session: Optional[str] = None,
+    run: str
+) -> mne.Info:
+    
+    msg = f'Loading info for run: {run}.'
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session))
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        run=run,
+        task=config.get_task(),
+        acquisition=config.acq,
+        recording=config.rec,
+        space=config.space,
+        suffix='meg',
+        extension='.fif',
+        datatype=config.get_datatype(),
+        root=config.get_bids_root(),
+    )
+
+    info = mne.io.read_info(bids_path)
+    return info
+
+
 exports = [
     import_experimental_data,
     import_er_data,
+    get_reference_run_info
 ]

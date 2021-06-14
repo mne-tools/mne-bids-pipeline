@@ -6,6 +6,7 @@ authors:
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
   robluke: "[Robert Luke](https://github.com/rob-luke)"
   crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
+  dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
 ---
 
 
@@ -15,7 +16,6 @@ authors:
 
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
   exclude epochs from the ICA fit based on peak-to-peak amplitude.
-- The Maxwell filtering step can now be skipped if [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`. In that case, the temporal filtering script can directly start from the input files indicated by [`bids_root`][config.bids_root].
 - An official [project governance](governance.md) structure has officially
   been adopted.
 - Drastically reduces memory usage when creating epochs from datasets with
@@ -31,12 +31,15 @@ authors:
   setting the new [`recreate_scalp_surface`][config.recreate_scalp_surface]
   to `True`.
   ({{ gh(378) }} by {{ authors.hoechenberger }})
-- When not applying Maxwell-filter (e.g., when processing EEG data), skip the
-  initial data import that would essentially just copy the input data to the
-  derivatives root without doing any processing. Now, in such situations we
-  skip the Maxwell-filtering step entirely and start with frequency filtering
-  right away. This speeds up processing by avoiding unncessary disk I/O and
-  can help preserve large quantities of storage space for big datasets.
+- When not applying Maxwell-filter (i.e., when
+  [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`, e.g.
+  when processing EEG data), we skip the initial data import that would
+  essentially just copy the input data to the derivatives root without doing
+  any processing. Now, in such situations the the Maxwell-filtering step is
+  skipped entirely and start with frequency filtering right away. This speeds
+  up processing by avoiding unncessary disk I/O and can help preserve large
+  quantities of storage space for big datasets.
+  ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 
 ### Behavior changes
 

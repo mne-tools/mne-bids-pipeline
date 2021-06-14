@@ -31,6 +31,12 @@ authors:
   setting the new [`recreate_scalp_surface`][config.recreate_scalp_surface]
   to `True`.
   ({{ gh(378) }} by {{ authors.hoechenberger }})
+- When not applying Maxwell-filter (e.g., when processing EEG data), skip the
+  initial data import that would essentially just copy the input data to the
+  derivatives root without doing any processing. Now, in such situations we
+  skip the Maxwell-filtering step entirely and start with frequency filtering
+  right away. This speeds up processing by avoiding unncessary disk I/O and
+  can help preserve large quantities of storage space for big datasets.
 
 ### Behavior changes
 

@@ -14,6 +14,7 @@ import itertools
 import logging
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
@@ -24,22 +25,22 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_epochs(subject, session=None):
+def run_epochs(cfg, subject, session=None):
     """Extract epochs for one subject."""
     bids_path = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
-                         recording=config.rec,
-                         space=config.space,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root())
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root)
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
     raw_fnames = []
-    for run in config.get_runs(subject=subject):
+    for run in cfg.runs:
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
 
@@ -54,7 +55,7 @@ def run_epochs(subject, session=None):
 
     # Now, generate epochs from each individual run.
     epochs_all_runs = []
-    for run, raw_fname in zip(config.get_runs(subject=subject), raw_fnames):
+    for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session, run=run))
@@ -72,14 +73,14 @@ def run_epochs(subject, session=None):
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,
-            tmin=config.epochs_tmin,
-            tmax=config.epochs_tmax,
-            metadata_tmin=config.epochs_metadata_tmin,
-            metadata_tmax=config.epochs_metadata_tmax,
-            metadata_keep_first=config.epochs_metadata_keep_first,
-            metadata_keep_last=config.epochs_metadata_keep_last,
-            event_repeated=config.event_repeated,
-            decim=config.decim
+            tmin=cfg.epochs_tmin,
+            tmax=cfg.epochs_tmax,
+            metadata_tmin=cfg.epochs_metadata_tmin,
+            metadata_tmax=cfg.epochs_metadata_tmax,
+            metadata_keep_first=cfg.epochs_metadata_keep_first,
+            metadata_keep_last=cfg.epochs_metadata_keep_last,
+            event_repeated=cfg.event_repeated,
+            decim=cfg.decim
         )
         epochs_all_runs.append(epochs)
         del raw  # free memory
@@ -106,6 +107,33 @@ def run_epochs(subject, session=None):
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
 
 
+def get_config(subject, session):
+    cfg = BunchConst(
+        process_er=config.process_er,
+        runs=config.get_runs(subject),
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        session=session,
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        interactive=config.interactive,
+        epochs_tmin=config.epochs_tmin,
+        epochs_tmax=config.epochs_tmax,
+        epochs_metadata_tmin=config.epochs_metadata_tmin,
+        epochs_metadata_tmax=config.epochs_metadata_tmax,
+        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
+        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
+        event_repeated=config.event_repeated,
+        decim=config.decim,
+    )
+    return cfg
+
+
 def main():
     """Run epochs."""
     msg = 'Running Step 3: Epoching'
@@ -114,7 +142,8 @@ def main():
     # Here we use fewer N_JOBS to prevent potential memory problems
     parallel, run_func, _ = parallel_func(run_epochs,
                                           n_jobs=max(config.N_JOBS // 4, 1))
-    parallel(run_func(subject, session) for subject, session in
+    parallel(run_func(get_config(subject, session), subject, session)
+             for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))
 
     msg = 'Completed Step 3: Epoching'

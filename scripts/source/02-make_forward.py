@@ -121,10 +121,12 @@ def get_config(subject, session):
         space=config.space,
         mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
+        spacing=config.spacing,
         ch_types=config.ch_types,
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
-        bids_root=config.get_bids_root()
+        bids_root=config.get_bids_root(),
+        N_JOBS=config.N_JOBS
     )
     return cfg
 

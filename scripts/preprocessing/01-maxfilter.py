@@ -43,15 +43,15 @@ def run_maxwell_filter(cfg, subject, session=None):
 
     bids_path_out = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
+                             task=cfg.task,
+                             acquisition=cfg.acq,
                              processing='sss',
-                             recording=config.rec,
-                             space=config.space,
+                             recording=cfg.rec,
+                             space=cfg.space,
                              suffix='raw',
                              extension='.fif',
-                             datatype=config.get_datatype(),
-                             root=config.get_deriv_root(),
+                             datatype=cfg.datatype,
+                             root=cfg.deriv_root,
                              check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.

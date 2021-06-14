@@ -35,10 +35,10 @@ authors:
   [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`, e.g.
   when processing EEG data), we skip the initial data import that would
   essentially just copy the input data to the derivatives root without doing
-  any processing. Now, in such situations the the Maxwell-filtering step is
-  skipped entirely and start with frequency filtering right away. This speeds
-  up processing by avoiding unncessary disk I/O and can help preserve large
-  quantities of storage space for big datasets.
+  any processing. Now, in such situations, the the Maxwell-filtering step is
+  skipped entirely, and we start with frequency filtering right away. This
+  speeds up processing by avoiding unncessary disk I/O and can help preserve
+  large quantities of storage space for big datasets.
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 
 ### Behavior changes

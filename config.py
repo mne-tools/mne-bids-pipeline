@@ -174,7 +174,7 @@ corresponding to the processed experimental data will be retrieved
 automatically.
 """
 
-ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
+ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg', 'nirs']] = []
 """
 The channel types to consider.
 
@@ -194,7 +194,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[Literal['meg', 'eeg']] = None
+data_type: Optional[Literal['meg', 'eeg', 'nirs']] = None
 """
 The BIDS data type.
 
@@ -375,6 +375,32 @@ itself, nor to the source analysis stage.
     decoding, and time-frequency analysis:
     ```python
     analyze_channels = ['Pz']
+    ```
+"""
+
+###############################################################################
+# NIRS PROCESSING
+# ---------------
+
+nirs_only_long_channels: Optional[bool] = True
+"""
+Specifies if only long NIRS channels should be retained for processing.
+
+???+ example "Example"
+    ```python
+    nirs_only_long_channels = True  # processes only long channels
+    nirs_only_long_channels = False  # process both long and short channels
+    ```
+"""
+
+nirs_short_channel_correction: Optional[bool] = True
+"""
+Specifies if short channel correction should be applied to fNIRS data.
+
+???+ example "Example"
+    ```python
+    nirs_short_channel_correction = True  # use short correction
+    nirs_short_channel_correction = False  # do not use short correction
     ```
 """
 
@@ -1385,7 +1411,7 @@ elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
     msg = ('EEG data can only be analyzed separately from other channel '
            'types. Please adjust `ch_types` in your configuration.')
     raise ValueError(msg)
-elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+elif any([ch_type not in ('meg', 'mag', 'grad', 'nirs') for ch_type in ch_types]):
     msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
            'configuration.')
     raise ValueError(msg)
@@ -1696,13 +1722,15 @@ def get_task() -> Optional[str]:
         return task
 
 
-def get_datatype() -> Literal['meg', 'eeg']:
+def get_datatype() -> Literal['meg', 'eeg', 'nirs']:
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
     if data_type is not None:
         return data_type
     elif data_type is None and ch_types == ['eeg']:
         return 'eeg'
+    elif data_type is None and ch_types == ['nirs']:
+        return 'nirs'
     elif data_type is None and any([t in ['meg', 'mag', 'grad']
                                     for t in ch_types]):
         return 'meg'
@@ -1871,6 +1899,9 @@ def get_channels_to_analyze(info) -> List[str]:
     elif ch_types == ['eeg']:
         pick_idx = mne.pick_types(info, meg=False, eeg=True, eog=True,
                                   ecg=True, exclude=[])
+    elif ch_types == ['nirs']:
+        pick_idx = mne.pick_types(info, meg=False, eeg=False, eog=False,
+                                  ecg=False, fnirs=True, exclude=[])
     else:
         raise RuntimeError('Something unexpected happened. Please contact '
                            'the mne-bids-pipeline developers. Thank you.')

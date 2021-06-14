@@ -25,3 +25,5 @@ coloredlogs
 openneuro-py
 https://api.github.com/repos/mne-tools/mne-python/zipball/main
 https://api.github.com/repos/mne-tools/mne-bids/zipball/main
+mne-nirs
+nilearn

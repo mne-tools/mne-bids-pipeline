@@ -2020,7 +2020,7 @@ def annotations_to_events(
     return event_name_to_code_map
 
 
-def rename_events_func(raw, subject, session) -> None:
+def _rename_events_func(raw, subject, session) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
 
     Modifies ``raw`` in-place.
@@ -2059,7 +2059,7 @@ def rename_events_func(raw, subject, session) -> None:
     raw.annotations.description = descriptions
 
 
-def find_bad_channels(raw, subject, session, task, run) -> None:
+def _find_bad_channels(raw, subject, session, task, run) -> None:
     """Find and mark bad MEG channels.
 
     Modifies ``raw`` in-place.
@@ -2162,7 +2162,7 @@ def find_bad_channels(raw, subject, session, task, run) -> None:
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 
-def load_data(bids_path):
+def _load_data(bids_path):
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -2177,7 +2177,7 @@ def load_data(bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    crop_data(raw=raw, subject=subject)
+    _crop_data(raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
@@ -2186,7 +2186,7 @@ def load_data(bids_path):
     return raw
 
 
-def crop_data(raw, subject):
+def _crop_data(raw, subject):
     """Crop the data to the desired duration.
 
     Modifies ``raw`` in-place.
@@ -2195,7 +2195,7 @@ def crop_data(raw, subject):
         raw.crop(*crop_runs)
 
 
-def drop_channels_func(raw, subject, session) -> None:
+def _drop_channels_func(raw, subject, session) -> None:
     """Drop channels from the data.
 
     Modifies ``raw`` in-place.
@@ -2207,7 +2207,7 @@ def drop_channels_func(raw, subject, session) -> None:
         raw.drop_channels(drop_channels)
 
 
-def create_bipolar_channels(raw, subject, session) -> None:
+def _create_bipolar_channels(raw, subject, session) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.
@@ -2245,7 +2245,7 @@ def create_bipolar_channels(raw, subject, session) -> None:
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
-def set_eeg_montage(raw, subject, session) -> None:
+def _set_eeg_montage(raw, subject, session) -> None:
     """Set an EEG template montage if requested.
 
     Modifies ``raw`` in-place.
@@ -2260,7 +2260,7 @@ def set_eeg_montage(raw, subject, session) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def fix_stim_artifact_func(raw: mne.io.BaseRaw) -> None:
+def _fix_stim_artifact_func(raw: mne.io.BaseRaw) -> None:
     """Fix stimulation artifact in the data."""
     if not fix_stim_artifact:
         return
@@ -2315,13 +2315,13 @@ def import_experimental_data(
                                                root=get_deriv_root(),
                                                check=False)
 
-    raw = load_data(bids_path_in)
-    set_eeg_montage(raw=raw, subject=subject, session=session)
-    create_bipolar_channels(raw=raw, subject=subject, session=session)
-    drop_channels_func(raw=raw, subject=subject, session=session)
-    rename_events_func(raw=raw, subject=subject, session=session)
-    fix_stim_artifact_func(raw=raw)
-    find_bad_channels(raw=raw, subject=subject, session=session,
+    raw = _load_data(bids_path_in)
+    _set_eeg_montage(raw=raw, subject=subject, session=session)
+    _create_bipolar_channels(raw=raw, subject=subject, session=session)
+    _drop_channels_func(raw=raw, subject=subject, session=session)
+    _rename_events_func(raw=raw, subject=subject, session=session)
+    _fix_stim_artifact_func(raw=raw)
+    _find_bad_channels(raw=raw, subject=subject, session=session,
                       task=get_task(), run=run)
 
     # Save the data.
@@ -2382,8 +2382,8 @@ def import_er_data(
     if bads is None:
         bads = []
 
-    raw_er = load_data(bids_path_er_in)
-    drop_channels_func(raw=raw_er, subject='emptyroom', session=session)
+    raw_er = _load_data(bids_path_er_in)
+    _drop_channels_func(raw=raw_er, subject='emptyroom', session=session)
 
     # Set same set of bads as in the experimental run, but only for MEG
     # channels (because we won't have any others in empty-room recordings)

@@ -2322,7 +2322,7 @@ def import_experimental_data(
     _rename_events_func(raw=raw, subject=subject, session=session)
     _fix_stim_artifact_func(raw=raw)
     _find_bad_channels(raw=raw, subject=subject, session=session,
-                      task=get_task(), run=run)
+                       task=get_task(), run=run)
 
     # Save the data.
     if save:

@@ -52,7 +52,7 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
     cov.save(cov_fname)
 
 
-def compute_cov_from_empty_room(cfg,subject, session):
+def compute_cov_from_empty_room(cfg, subject, session):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,

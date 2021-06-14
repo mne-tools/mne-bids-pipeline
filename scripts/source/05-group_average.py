@@ -58,7 +58,7 @@ def morph_stc(cfg, subject, session=None):
         stc = mne.read_source_estimate(fname_stc)
         morph = mne.compute_source_morph(
             stc, subject_from=fs_subject, subject_to='fsaverage',
-            subjects_dir=fs_subjects_dir)
+            subjects_dir=cfg.fs_subjects_dir)
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
         morphed_stcs.append(stc_fsaverage)

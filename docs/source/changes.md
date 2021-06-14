@@ -6,6 +6,7 @@ authors:
   guiomar: "[Julia Guiomar Niso Galán](https://github.com/guiomar)"
   robluke: "[Robert Luke](https://github.com/rob-luke)"
   crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
+  dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
 ---
 
 
@@ -30,6 +31,15 @@ authors:
   setting the new [`recreate_scalp_surface`][config.recreate_scalp_surface]
   to `True`.
   ({{ gh(378) }} by {{ authors.hoechenberger }})
+- When not applying Maxwell-filter (i.e., when
+  [`use_maxwell_filter`][config.use_maxwell_filter] is set to `False`, e.g.
+  when processing EEG data), we skip the initial data import that would
+  essentially just copy the input data to the derivatives root without doing
+  any processing. Now, in such situations, the Maxwell-filtering step is
+  skipped entirely, and we start with frequency filtering right away. This
+  speeds up processing by avoiding unncessary disk I/O and can help preserve
+  large quantities of storage space for big datasets.
+  ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 
 ### Behavior changes
 
@@ -95,7 +105,8 @@ authors:
 - The summary report didn't use the cleaned epochs for showing the effects of
   ICA.
   ({{ gh(320) }} by {{ authors.hoechenberger }})
-- The sanity check comparing the rank of the experimental data and the rank of the empty-room after Maxwell-filtering did not use the maxfiltered data.
+- The sanity check comparing the rank of the experimental data and the rank of
+   the empty-room after Maxwell-filtering did not use the maxfiltered data.
   ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ authors.crsegerie }})
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config files.
   ({{ gh(340) }} by {{ authors.crsegerie }})

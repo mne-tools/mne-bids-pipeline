@@ -145,7 +145,7 @@ def filter_data(
     if cfg.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
-        fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+        fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
     if cfg.process_er and run == cfg.runs[0]:

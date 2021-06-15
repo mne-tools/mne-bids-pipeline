@@ -234,8 +234,8 @@ def run_ica(cfg, subject, session=None):
                              acquisition=cfg.acq,
                              recording=cfg.rec,
                              space=cfg.space,
-                             datatype=cfg.get_datatype(),
-                             root=cfg.get_deriv_root(),
+                             datatype=cfg.datatype,
+                             root=cfg.deriv_root,
                              check=False)
 
     raw_fname = bids_basename.copy().update(processing='filt', suffix='raw')
@@ -438,11 +438,10 @@ def run_ica(cfg, subject, session=None):
                                 session=session))
 
 
-def get_config(subject, session):
+def get_config():
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -459,11 +458,13 @@ def get_config(subject, session):
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,
+        decim=config.decim,
         resample_sfreq=config.resample_sfreq,
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
         eeg_reference=config.eeg_reference,
+        eog_channels=config.eog_channels,
         spatial_filter=config.spatial_filter,
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),
@@ -478,12 +479,13 @@ def main():
     msg = 'Running Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))
 
+    cfg = get_config()
     if config.spatial_filter == 'ica':
         parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
-        parallel(run_func(get_config(subject, session), subject, session)
+        parallel(run_func(cfg, subject, session)
                  for subject, session in
-                 itertools.product(config.subjects,
-                                   config.sessions))
+                 itertools.product(cfg.subjects,
+                                   cfg.sessions))
 
     msg = 'Completed Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))

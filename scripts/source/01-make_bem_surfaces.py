@@ -102,6 +102,7 @@ def make_scalp_surface(cfg, subject):
 
 def get_config():
     cfg = BunchConst(
+        subjects=config.get_subjects(),
         run_source_estimation=config.run_source_estimation,
         fs_subjects_dir=config.get_fs_subjects_dir(),
         recreate_bem=config.recreate_bem,

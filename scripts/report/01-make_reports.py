@@ -17,6 +17,7 @@ from scipy.io import loadmat
 import matplotlib
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -31,19 +32,19 @@ logger = logging.getLogger('mne-bids-pipeline')
 Condition_T = Union[str, Tuple[str]]
 
 
-def plot_events(subject, session):
+def plot_events(cfg, subject, session):
     raws_filt = []
     raw_fname = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
-                         recording=config.rec,
-                         space=config.space,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          processing='filt',
                          suffix='raw',
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     for run in config.get_runs(subject=subject):
@@ -66,19 +67,19 @@ def plot_events(subject, session):
     return fig
 
 
-def plot_er_psd(subject, session):
+def plot_er_psd(cfg, subject, session):
     raw_fname = BIDSPath(subject=subject,
                          session=session,
-                         acquisition=config.acq,
+                         acquisition=cfg.acq,
                          run=None,
-                         recording=config.rec,
-                         space=config.space,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          task='noise',
                          processing='filt',
                          suffix='raw',
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     if raw_fname.copy().update(split='01').fpath.exists():
@@ -86,28 +87,28 @@ def plot_er_psd(subject, session):
 
     raw_er_filtered = mne.io.read_raw_fif(raw_fname, preload=True)
 
-    fmax = 1.5 * config.h_freq if config.h_freq is not None else np.inf
+    fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
     fig = raw_er_filtered.plot_psd(fmax=fmax, show=False)
     return fig
 
 
-def plot_auto_scores(subject, session):
+def plot_auto_scores(cfg, subject, session):
     """Plot automated bad channel detection scores.
     """
     import json_tricks
 
     fname_scores = BIDSPath(subject=subject,
                             session=session,
-                            task=config.get_task(),
-                            acquisition=config.acq,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
                             run=None,
-                            processing=config.proc,
-                            recording=config.rec,
-                            space=config.space,
+                            processing=cfg.proc,
+                            recording=cfg.rec,
+                            space=cfg.space,
                             suffix='scores',
                             extension='.json',
-                            datatype=config.get_datatype(),
-                            root=config.get_deriv_root(),
+                            datatype=cfg.datatype,
+                            root=cfg.deriv_root,
                             check=False)
 
     all_figs = []
@@ -155,7 +156,7 @@ def plot_decoding_scores(times, cross_val_scores, metric):
     return fig
 
 
-def plot_decoding_scores_gavg(decoding_data):
+def plot_decoding_scores_gavg(cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt
@@ -167,7 +168,7 @@ def plot_decoding_scores_gavg(decoding_data):
     se_upper = mean_scores + decoding_data['mean_se'].squeeze()
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
-    metric = config.decoding_metric
+    metric = cfg.decoding_metric
 
     fig, ax = plt.subplots()
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
@@ -195,18 +196,17 @@ def plot_decoding_scores_gavg(decoding_data):
     return fig
 
 
-def run_report(subject, session=None):
-    task = config.get_task()
+def run_report(cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
-                         task=task,
-                         acquisition=config.acq,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
                          run=None,
-                         recording=config.rec,
-                         space=config.space,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
@@ -221,18 +221,17 @@ def run_report(subject, session=None):
                                             extension='.h5')
 
     fs_subject = config.get_fs_subject(subject)
-    fs_subjects_dir = config.get_fs_subjects_dir()
 
     title = f'sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
-    if task is not None:
-        title += f', task-{task}'
+    if cfg.task is not None:
+        title += f', task-{cfg.task}'
 
     params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
                                   subject=fs_subject, title=title)
     if op.exists(fname_trans):
-        params['subjects_dir'] = fs_subjects_dir
+        params['subjects_dir'] = cfg.fs_subjects_dir
 
     rep = mne.Report(**params)
     rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
@@ -240,9 +239,8 @@ def run_report(subject, session=None):
     if not op.exists(fname_trans):
         rep_kwargs['render_bem'] = False
 
-    task = config.get_task()
-    if task is not None:
-        rep_kwargs['pattern'] = f'*_task-{task}*'
+    if cfg.task is not None:
+        rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
     if mne.viz.get_3d_backend() is not None:
         with mne.viz.use_3d_backend('pyvista'):
             rep.parse_folder(**rep_kwargs)
@@ -250,14 +248,15 @@ def run_report(subject, session=None):
         rep.parse_folder(**rep_kwargs)
 
     # Visualize automated noisy channel detection.
-    if config.find_noisy_channels_meg:
-        figs, captions = plot_auto_scores(subject=subject, session=session)
+    if cfg.find_noisy_channels_meg:
+        figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
+                                          session=session)
         rep.add_figs_to_section(figs=figs,
                                 captions=captions,
                                 section='Data Quality')
 
     # Visualize events.
-    events_fig = plot_events(subject=subject, session=session)
+    events_fig = plot_events(cfg=cfg, subject=subject, session=session)
     rep.add_figs_to_section(figs=events_fig,
                             captions='Events in filtered continuous data',
                             section='Events')
@@ -266,7 +265,7 @@ def run_report(subject, session=None):
     #
     # Visualize effect of ICA artifact rejection.
     #
-    if config.spatial_filter == 'ica':
+    if cfg.spatial_filter == 'ica':
         epochs = mne.read_epochs(fname_epo)
         ica = mne.preprocessing.read_ica(fname_ica)
         fig = ica.plot_overlay(epochs.average(), show=False)
@@ -282,10 +281,10 @@ def run_report(subject, session=None):
     #
     # Visualize TFR as topography.
     #
-    if isinstance(config.time_frequency_conditions, dict):
-        conditions = list(config.time_frequency_conditions.keys())
+    if isinstance(cfg.time_frequency_conditions, dict):
+        conditions = list(cfg.time_frequency_conditions.keys())
     else:
-        conditions = config.time_frequency_conditions.copy()
+        conditions = cfg.time_frequency_conditions.copy()
 
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)
@@ -301,19 +300,19 @@ def run_report(subject, session=None):
     #
     # Visualize evoked responses.
     #
-    if isinstance(config.conditions, dict):
-        conditions = list(config.conditions.keys())
+    if isinstance(cfg.conditions, dict):
+        conditions = list(cfg.conditions.keys())
     else:
-        conditions = config.conditions.copy()
+        conditions = cfg.conditions.copy()
 
-    conditions.extend(config.contrasts)
+    conditions.extend(cfg.contrasts)
     evokeds = mne.read_evokeds(fname_ave)
-    if config.analyze_channels:
+    if cfg.analyze_channels:
         for evoked in evokeds:
-            evoked.pick(config.analyze_channels)
+            evoked.pick(cfg.analyze_channels)
 
     for condition, evoked in zip(conditions, evokeds):
-        if condition in config.conditions:
+        if condition in cfg.conditions:
             caption = f'Condition: {condition}'
             section = 'Evoked'
         else:  # It's a contrast of two conditions.
@@ -328,13 +327,13 @@ def run_report(subject, session=None):
     #
     # Visualize decoding results.
     #
-    if config.decode:
+    if cfg.decode:
         epochs = mne.read_epochs(fname_epo)
 
-        for contrast in config.contrasts:
+        for contrast in cfg.contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{config.decoding_metric}'
+            processing = f'{a_vs_b}+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding_ = (fname_decoding.copy()
                                .update(processing=processing))
@@ -344,7 +343,7 @@ def run_report(subject, session=None):
             fig = plot_decoding_scores(
                 times=epochs.times,
                 cross_val_scores=decoding_data['scores'],
-                metric=config.decoding_metric)
+                metric=cfg.decoding_metric)
 
             caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
             comment = (f'{len(epochs[cond_1])} × {cond_1} ./. '
@@ -367,7 +366,7 @@ def run_report(subject, session=None):
         if mne.viz.get_3d_backend() is not None:
             fig = mne.viz.plot_alignment(evoked.info, fname_trans,
                                          subject=fs_subject,
-                                         subjects_dir=fs_subjects_dir,
+                                         subjects_dir=cfg.fs_subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(figs=fig, captions='Coregistration',
                                     section='Coregistration')
@@ -382,7 +381,7 @@ def run_report(subject, session=None):
             logger.info(gen_log_message(message=msg, step=99,
                                         subject=subject, session=session))
 
-            if condition in config.conditions:
+            if condition in cfg.conditions:
                 full_condition = config.sanitize_cond_name(evoked.comment)
                 caption = f'Condition: {full_condition}'
                 del full_condition
@@ -390,7 +389,7 @@ def run_report(subject, session=None):
                 # XXX Will change once we process contrasts here too
                 continue
 
-            method = config.inverse_method
+            method = cfg.inverse_method
             cond_str = config.sanitize_cond_name(condition)
             inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
@@ -412,7 +411,7 @@ def run_report(subject, session=None):
                     brain = stc.plot(views=['lat'], hemi='split',
                                      initial_time=peak_time, backend='pyvista',
                                      time_viewer=True,
-                                     subjects_dir=fs_subjects_dir)
+                                     subjects_dir=cfg.fs_subjects_dir)
                     brain.toggle_interface()
                     brain._renderer.plotter.reset_camera()
                     brain._renderer.plotter.subplot(0, 0)
@@ -429,11 +428,11 @@ def run_report(subject, session=None):
                     brain_lh = stc.plot(views='lat', hemi='lh',
                                         initial_time=peak_time,
                                         backend='matplotlib',
-                                        subjects_dir=fs_subjects_dir,
+                                        subjects_dir=cfg.fs_subjects_dir,
                                         figure=fig_lh)
                     brain_rh = stc.plot(views='lat', hemi='rh',
                                         initial_time=peak_time,
-                                        subjects_dir=fs_subjects_dir,
+                                        subjects_dir=cfg.fs_subjects_dir,
                                         backend='matplotlib',
                                         figure=fig_rh)
                     figs = [brain_lh, brain_rh]
@@ -448,8 +447,8 @@ def run_report(subject, session=None):
                                         section='Sources')
                 del peak_time
 
-    if config.process_er:
-        fig_er_psd = plot_er_psd(subject=subject, session=session)
+    if cfg.process_er:
+        fig_er_psd = plot_er_psd(cfg=cfg, subject=subject, session=session)
         rep.add_figs_to_section(figs=fig_er_psd,
                                 captions='Empty-Room Power Spectral Density '
                                          '(after filtering)',
@@ -462,10 +461,11 @@ def run_report(subject, session=None):
 
 
 def add_event_counts(*,
+                     cfg,
                      session: str,
                      report: mne.Report) -> None:
     try:
-        df_events = count_events(BIDSPath(root=config.get_bids_root(),
+        df_events = count_events(BIDSPath(root=cfg.bids_root,
                                           session=session))
     except ValueError:
         logger.warning('Could not read events.')
@@ -500,15 +500,15 @@ def add_event_counts(*,
 #                          report: mne.Report) -> None:
 
 #     epochs_fname = BIDSPath(session=session,
-#                             task=config.get_task(),
-#                             acquisition=config.acq,
+#                             task=cfg.task,
+#                             acquisition=cfg.acq,
 #                             run=None,
-#                             recording=config.rec,
-#                             space=config.space,
+#                             recording=cfg.rec,
+#                             space=cfg.space,
 #                             suffix='epo',
 #                             extension='.fif',
-#                             datatype=config.get_datatype(),
-#                             root=config.get_deriv_root(),
+#                             datatype=cfg.datatype,
+#                             root=cfg.deriv_root,
 #                             check=False)
 
 #     for subject in config.get_subjects():
@@ -516,65 +516,62 @@ def add_event_counts(*,
 #         epochs = mne.read_epochs(fname_epochs)
 
 
-def run_report_average(session: str) -> None:
+def run_report_average(cfg, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     subject = 'average'
-    task = config.get_task()
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
-                            task=task,
-                            acquisition=config.acq,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
                             run=None,
-                            recording=config.rec,
-                            space=config.space,
+                            recording=cfg.rec,
+                            space=cfg.space,
                             suffix='ave',
                             extension='.fif',
-                            datatype=config.get_datatype(),
-                            root=config.get_deriv_root(),
+                            datatype=cfg.datatype,
+                            root=cfg.deriv_root,
                             check=False)
 
     title = f'sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
-    if task is not None:
-        title += f', task-{task}'
+    if cfg.task is not None:
+        title += f', task-{cfg.task}'
 
     rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=config.get_fs_subjects_dir(),
+                     subjects_dir=cfg.fs_subjects_dir,
                      title=title)
     evokeds = mne.read_evokeds(evoked_fname)
-    if config.analyze_channels:
+    if cfg.analyze_channels:
         for evoked in evokeds:
-            evoked.pick(config.analyze_channels)
+            evoked.pick(cfg.analyze_channels)
 
-    fs_subjects_dir = config.get_fs_subjects_dir()
-
-    method = config.inverse_method
+    method = cfg.inverse_method
     inverse_str = method
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
 
-    if isinstance(config.conditions, dict):
-        conditions = list(config.conditions.keys())
+    if isinstance(cfg.conditions, dict):
+        conditions = list(cfg.conditions.keys())
     else:
-        conditions = config.conditions.copy()
+        conditions = cfg.conditions.copy()
 
-    conditions.extend(config.contrasts)
+    conditions.extend(cfg.contrasts)
 
     ###########################################################################
     #
     # Add events end epochs drop log stats.
     #
-    add_event_counts(report=rep, session=session)
+    add_event_counts(cfg=cfg, report=rep, session=session)
 
     ###########################################################################
     #
     # Visualize evoked responses.
     #
     for condition, evoked in zip(conditions, evokeds):
-        if condition in config.conditions:
+        if condition in cfg.conditions:
             caption = f'Average: {condition}'
             section = 'Evoked'
         else:  # It's a contrast of two conditions.
@@ -589,11 +586,11 @@ def run_report_average(session: str) -> None:
     #
     # Visualize decoding results.
     #
-    if config.decode:
-        for contrast in config.contrasts:
+    if cfg.decode:
+        for contrast in cfg.contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{config.decoding_metric}'
+            processing = f'{a_vs_b}+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding_ = (evoked_fname.copy()
                                .update(processing=processing,
@@ -602,11 +599,12 @@ def run_report_average(session: str) -> None:
             decoding_data = loadmat(fname_decoding_)
             del fname_decoding_, processing, a_vs_b
 
-            fig = plot_decoding_scores_gavg(decoding_data)
+            fig = plot_decoding_scores_gavg(cfg=cfg,
+                                            decoding_data=decoding_data)
             caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
             comment = (f'Based on N={decoding_data["N"].squeeze()} subjects. '
                        f'Standard error and confidence interval of the mean '
-                       f'were bootstrapped with {config.n_boot} resamples.')
+                       f'were bootstrapped with {cfg.n_boot} resamples.')
             rep.add_figs_to_section(figs=fig, captions=caption,
                                     comments=comment,
                                     section='Decoding')
@@ -617,7 +615,7 @@ def run_report_average(session: str) -> None:
     # Visualize inverse solutions.
     #
     for condition, evoked in zip(conditions, evokeds):
-        if condition in config.conditions:
+        if condition in cfg.conditions:
             caption = f'Average: {condition}'
             cond_str = config.sanitize_cond_name(condition)
         else:  # It's a contrast of two conditions.
@@ -640,7 +638,7 @@ def run_report_average(session: str) -> None:
                                  initial_time=peak_time, backend='pyvista',
                                  time_viewer=True,
                                  show_traces=True,
-                                 subjects_dir=fs_subjects_dir)
+                                 subjects_dir=cfg.fs_subjects_dir)
                 brain.toggle_interface()
                 figs = brain._renderer.figure
                 captions = caption
@@ -651,11 +649,11 @@ def run_report_average(session: str) -> None:
                 brain_lh = stc.plot(views='lat', hemi='lh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_lh,
-                                    subjects_dir=fs_subjects_dir)
+                                    subjects_dir=cfg.fs_subjects_dir)
                 brain_rh = stc.plot(views='lat', hemi='rh',
                                     initial_time=peak_time,
                                     backend='matplotlib', figure=fig_rh,
-                                    subjects_dir=fs_subjects_dir)
+                                    subjects_dir=cfg.fs_subjects_dir)
                 figs = [brain_lh, brain_rh]
                 captions = [f'{caption} - left',
                             f'{caption} - right']
@@ -666,12 +664,41 @@ def run_report_average(session: str) -> None:
             del peak_time
 
     fname_report = evoked_fname.copy().update(
-        task=config.get_task(), suffix='report', extension='.html')
+        task=cfg.task, suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
     plt.close('all')  # close all figures to save memory
+
+
+def get_config():
+    cfg = BunchConst(
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        analyze_channels=config.analyze_channels,
+        process_er=config.process_er,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        h_freq=config.h_freq,
+        spatial_filter=config.spatial_filter,
+        conditions=config.conditions,
+        contrasts=config.contrasts,
+        time_frequency_conditions=config.time_frequency_conditions,
+        decode=config.decode,
+        decoding_metric=config.decoding_metric,
+        n_boot=config.n_boot,
+        inverse_method=config.inverse_method,
+        fs_subjects_dir=config.get_fs_subjects_dir(),
+        deriv_root=config.get_deriv_root(),
+        bids_root=config.get_bids_root(),
+        N_JOBS=config.N_JOBS
+    )
+    return cfg
 
 
 @failsafe_run(on_error=on_error)
@@ -680,16 +707,17 @@ def main():
     msg = 'Running Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    cfg = get_config()
+    parallel, run_func, _ = parallel_func(run_report, n_jobs=cfg.N_JOBS)
+    parallel(run_func(cfg, subject, session) for subject, session in
+             itertools.product(cfg.subjects, cfg.sessions))
 
-    sessions = config.get_sessions()
+    sessions = cfg.sessions
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        run_report_average(session)
+        run_report_average(cfg=cfg, session=session)
 
 
 if __name__ == '__main__':

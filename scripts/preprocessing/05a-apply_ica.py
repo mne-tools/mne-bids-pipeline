@@ -20,6 +20,7 @@ import logging
 import pandas as pd
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
 from mne.report import Report
@@ -33,17 +34,16 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def apply_ica(subject, session):
-    task = config.get_task()
+def apply_ica(cfg, subject, session):
     bids_basename = BIDSPath(subject=subject,
                              session=session,
-                             task=task,
-                             acquisition=config.acq,
+                             task=cfg.task,
+                             acquisition=cfg.acq,
                              run=None,
-                             recording=config.rec,
-                             space=config.space,
-                             datatype=config.get_datatype(),
-                             root=config.get_deriv_root(),
+                             recording=cfg.rec,
+                             space=cfg.space,
+                             datatype=cfg.datatype,
+                             root=cfg.deriv_root,
                              check=False)
 
     fname_epo_in = bids_basename.copy().update(suffix='epo', extension='.fif')
@@ -67,8 +67,8 @@ def apply_ica(subject, session):
     title = f'ICA artifact removal – sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
-    if task is not None:
-        title += f', task-{task}'
+    if cfg.task is not None:
+        title += f', task-{cfg.task}'
     report = Report(report_fname, title=title, verbose=False)
 
     # Load ICA.
@@ -94,15 +94,15 @@ def apply_ica(subject, session):
     # ICA easier to see. Otherwise, individual channels might just have
     # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
     # going on!
-    evoked = epochs.average().apply_baseline(config.baseline)
+    evoked = epochs.average().apply_baseline(cfg.baseline)
 
     # Plot source time course
-    fig = ica.plot_sources(evoked, show=config.interactive)
+    fig = ica.plot_sources(evoked, show=cfg.interactive)
     report.add_figs_to_section(figs=fig,
                                captions='All ICs - Source time course')
 
     # Plot original & corrected data
-    fig = ica.plot_overlay(evoked, show=config.interactive)
+    fig = ica.plot_overlay(evoked, show=cfg.interactive)
     report.add_figs_to_section(figs=fig,
                                captions=f'Evoked response (across all epochs) '
                                         f'before and after cleaning via ICA '
@@ -110,7 +110,7 @@ def apply_ica(subject, session):
     report.save(report_fname, overwrite=True, open_browser=False)
 
     # Now actually reject the components.
-    msg = f'Rejecting ICs: {ica.exclude}'
+    msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
@@ -120,21 +120,43 @@ def apply_ica(subject, session):
                                 session=session))
     epochs_cleaned.save(fname_epo_out, overwrite=True)
 
-    if config.interactive:
+    if cfg.interactive:
         epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
+
+
+def get_config():
+    cfg = BunchConst(
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        deriv_root=config.get_deriv_root(),
+        interactive=config.interactive,
+        baseline=config.baseline,
+        spatial_filter=config.spatial_filter,
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
+        N_JOBS=config.N_JOBS
+    )
+    return cfg
 
 
 def main():
     """Apply ICA."""
+
     if not config.spatial_filter == 'ica':
         return
 
     msg = 'Running Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))
 
+    cfg = get_config()
+
     parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    parallel(run_func(cfg, subject, session)
+             for subject, session in
+             itertools.product(cfg.subjects, cfg.sessions))
 
     msg = 'Completed Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))

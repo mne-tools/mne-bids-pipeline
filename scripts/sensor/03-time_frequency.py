@@ -24,7 +24,6 @@ from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-
 @failsafe_run(on_error=on_error)
 def run_time_frequency(cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
@@ -60,7 +59,7 @@ def run_time_frequency(cfg, subject, session=None):
         epochs.pick(cfg.analyze_channels)
 
     freqs = np.arange(config.time_frequency_freq_min,
-                    config.time_frequency_freq_max)
+                      config.time_frequency_freq_max)
     n_cycles = freqs / 3.
 
     for condition in cfg.time_frequency_conditions:

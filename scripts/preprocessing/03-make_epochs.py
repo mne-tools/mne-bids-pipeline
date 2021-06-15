@@ -87,9 +87,9 @@ def run_epochs(cfg, subject, session=None):
 
     # Lastly, we can concatenate the epochs and set an EEG reference
     epochs = mne.concatenate_epochs(epochs_all_runs)
-    if "eeg" in config.ch_types:
-        projection = True if config.eeg_reference == 'average' else False
-        epochs.set_eeg_reference(config.eeg_reference, projection=projection)
+    if "eeg" in cfg.ch_types:
+        projection = True if cfg.eeg_reference == 'average' else False
+        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     msg = (f'Created {len(epochs)} epochs with time interval: '
            f'{epochs.tmin} – {epochs.tmax} sec')
@@ -102,7 +102,7 @@ def run_epochs(cfg, subject, session=None):
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
     epochs.save(epochs_fname, overwrite=True)
 
-    if config.interactive:
+    if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
 
@@ -130,6 +130,8 @@ def get_config(subject, session):
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         event_repeated=config.event_repeated,
         decim=config.decim,
+        ch_types=config.ch_types,
+        eeg_reference=config.eeg_reference
     )
     return cfg
 

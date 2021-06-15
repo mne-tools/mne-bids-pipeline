@@ -176,12 +176,12 @@ def average_decoding(cfg, session):
         del contrast_score_stats, fname_out
 
 
-def get_config(session):
+def get_config():
     cfg = BunchConst(
         subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -189,6 +189,7 @@ def get_config(session):
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
         contrasts=config.contrasts,
+        decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         random_state=config.random_state,
@@ -197,25 +198,25 @@ def get_config(session):
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
         eeg_reference=config.eeg_reference,
+        interactive=config.interactive,
         N_JOBS=config.N_JOBS
     )
     return cfg
 
 
 def main():
-    sessions = config.get_sessions()
+    cfg = get_config()
+    sessions = cfg.sessions
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        cfg = get_config(session)
-
         evokeds = average_evokeds(cfg, session)
-        if config.interactive:
+        if cfg.interactive:
             for evoked in evokeds:
                 evoked.plot()
 
-        if config.decode:
+        if cfg.decode:
             average_decoding(cfg, session)
 
 

@@ -480,8 +480,8 @@ def main():
     logger.info(gen_log_message(step=4, message=msg))
 
     cfg = get_config()
-    if config.spatial_filter == 'ica':
-        parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
+    if cfg.spatial_filter == 'ica':
+        parallel, run_func, _ = parallel_func(run_ica, n_jobs=cfg.N_JOBS)
         parallel(run_func(cfg, subject, session)
                  for subject, session in
                  itertools.product(cfg.subjects,

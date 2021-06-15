@@ -80,13 +80,14 @@ def get_config():
 
 def main():
     """Apply ssp."""
-    if not config.spatial_filter == 'ssp':
+    cfg = get_config()
+
+    if not cfg.spatial_filter == 'ssp':
         return
 
     msg = 'Running Step 5: Apply SSP'
     logger.info(gen_log_message(step=5, message=msg))
 
-    cfg = get_config()
     parallel, run_func, _ = parallel_func(apply_ssp, n_jobs=cfg.N_JOBS)
     parallel(run_func(cfg, subject, session) for subject, session in
              itertools.product(cfg.subjects, cfg.sessions))

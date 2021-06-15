@@ -144,16 +144,15 @@ def get_config():
 
 def main():
     """Apply ICA."""
+    cfg = get_config()
 
-    if not config.spatial_filter == 'ica':
+    if not cfg.spatial_filter == 'ica':
         return
 
     msg = 'Running Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))
 
-    cfg = get_config()
-
-    parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(apply_ica, n_jobs=cfg.N_JOBS)
     parallel(run_func(cfg, subject, session)
              for subject, session in
              itertools.product(cfg.subjects, cfg.sessions))

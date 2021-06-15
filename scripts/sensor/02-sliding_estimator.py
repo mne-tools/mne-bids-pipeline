@@ -113,17 +113,19 @@ def run_time_decoding(cfg, subject, condition1, condition2, session=None):
     tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
-def get_config(subject, session):
+def get_config():
     cfg = BunchConst(
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
         contrasts=config.contrasts,
+        decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         random_state=config.random_state,
@@ -141,12 +143,14 @@ def main():
     msg = 'Running Step 7: Sliding estimator'
     logger.info(gen_log_message(step=7, message=msg))
 
-    if not config.contrasts:
+    cfg = get_config()
+
+    if not cfg.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(gen_log_message(step=7, message=msg))
         return
 
-    if not config.decode:
+    if not cfg.decode:
         msg = 'No decoding requested by user.'
         logger.info(gen_log_message(step=7, message=msg))
         return
@@ -154,10 +158,9 @@ def main():
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
 
-    for subject in config.get_subjects():
-        for session in config.get_sessions():
-            cfg = get_config(subject, session)
-            for contrast in config.contrasts:
+    for subject in cfg.subjects:
+        for session in cfg.sessions:
+            for contrast in cfg.contrasts:
                 cond_1, cond_2 = contrast
                 run_time_decoding(cfg=cfg, subject=subject, condition1=cond_1,
                                   condition2=cond_2, session=session)

@@ -97,7 +97,7 @@ def main():
 
     cfg = get_config()
     parallel, run_func, _ = parallel_func(drop_ptp,
-                                          n_jobs=config.N_JOBS)
+                                          n_jobs=cfg.N_JOBS)
     parallel(run_func(cfg, subject, session) for subject, session in
              itertools.product(cfg.subjects, cfg.sessions))
 

@@ -88,7 +88,7 @@ def resample(
 
 def filter_data(
     *,
-    cfg: dict,
+    cfg,
     subject: str,
     run: Optional[str] = None,
     session: Optional[str] = None,
@@ -188,7 +188,7 @@ def filter_data(
             raw_er.plot_psd(fmax=fmax)
 
 
-def get_config(subject, session):
+def get_config(subject):
     cfg = BunchConst(
         process_er=config.process_er,
         runs=config.get_runs(subject),
@@ -196,7 +196,6 @@ def get_config(subject, session):
         proc=config.proc,
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -239,10 +238,10 @@ def main():
 
     parallel(
         run_func(
-            cfg=get_config(subject, session),
+            cfg=get_config(subject),
             subject=subject,
             run=run,
-            session=session,
+            session=session
         ) for subject, run, session in sub_run_ses
     )
 

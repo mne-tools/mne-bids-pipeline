@@ -90,18 +90,20 @@ def run_evoked(cfg, subject, session=None):
         #                       topomap_args=topomap_args)
 
 
-def get_config(subject, session):
+def get_config():
     cfg = BunchConst(
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
         contrasts=config.contrasts,
-        interactive=config.interactive
+        interactive=config.interactive,
+        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -111,11 +113,12 @@ def main():
     msg = 'Running Step 6: Create evoked data'
     logger.info(gen_log_message(step=6, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(subject, session), subject, session)
+    cfg = get_config()
+    parallel, run_func, _ = parallel_func(run_evoked, n_jobs=cfg.N_JOBS)
+    parallel(run_func(cfg, subject, session)
              for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+             itertools.product(cfg.subjects,
+                               cfg.sessions))
 
     msg = 'Completed Step 6: Create evoked data'
     logger.info(gen_log_message(step=6, message=msg))

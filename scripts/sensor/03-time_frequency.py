@@ -24,10 +24,6 @@ from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-freqs = np.arange(config.time_frequency_freq_min,
-                  config.time_frequency_freq_max)
-n_cycles = freqs / 3.
-
 
 @failsafe_run(on_error=on_error)
 def run_time_frequency(cfg, subject, session=None):
@@ -63,10 +59,15 @@ def run_time_frequency(cfg, subject, session=None):
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
 
+    freqs = np.arange(config.time_frequency_freq_min,
+                    config.time_frequency_freq_max)
+    n_cycles = freqs / 3.
+
     for condition in cfg.time_frequency_conditions:
         this_epochs = epochs[condition]
         power, itc = mne.time_frequency.tfr_morlet(
-            this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles)
+            this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles
+        )
 
         condition_str = sanitize_cond_name(condition)
         power_fname_out = bids_path.copy().update(
@@ -78,11 +79,12 @@ def run_time_frequency(cfg, subject, session=None):
         itc.save(itc_fname_out, overwrite=True)
 
 
-def get_config(subject, session):
+def get_config():
     cfg = BunchConst(
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -102,12 +104,14 @@ def main():
     msg = 'Running Step 8: Time-frequency decomposition'
     logger.info(gen_log_message(message=msg, step=8))
 
+    cfg = get_config()
+
     parallel, run_func, _ = parallel_func(run_time_frequency,
-                                          n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(subject, session), subject, session)
+                                          n_jobs=cfg.N_JOBS)
+    parallel(run_func(cfg, subject, session)
              for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+             itertools.product(cfg.subjects,
+                               cfg.sessions))
 
     msg = 'Completed Step 8: Time-frequency decomposition'
     logger.info(gen_log_message(message=msg, step=8))

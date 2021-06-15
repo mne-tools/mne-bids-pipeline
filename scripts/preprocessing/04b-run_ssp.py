@@ -97,6 +97,7 @@ def get_config():
         space=config.space,
         eog_channels=config.eog_channels,
         deriv_root=config.get_deriv_root(),
+        spatial_filter=config.spatial_filter,
         N_JOBS=config.N_JOBS
     )
     return cfg
@@ -104,13 +105,14 @@ def get_config():
 
 def main():
     """Run SSP."""
-    if not config.spatial_filter == 'ssp':
+    cfg = get_config()
+
+    if not cfg.spatial_filter == 'ssp':
         return
 
     msg = 'Running Step 4: SSP'
     logger.info(gen_log_message(step=4, message=msg))
 
-    cfg = get_config()
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=cfg.N_JOBS)
     parallel(run_func(cfg, subject, session) for subject, session in
              itertools.product(cfg.subjects, cfg.sessions))

@@ -36,7 +36,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 def run_maxwell_filter(cfg, subject, session=None):
-    if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
+    if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
@@ -194,7 +194,6 @@ def get_config(subject, session):
         proc=config.proc,
         task=config.get_task(),
         datatype=config.get_datatype(),
-        session=session,
         acq=config.acq,
         rec=config.rec,
         space=config.space,

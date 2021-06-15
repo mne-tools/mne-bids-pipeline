@@ -100,13 +100,15 @@ def make_scalp_surface(cfg, subject):
     )
 
 
-def get_config(subject):
+def get_config():
     cfg = BunchConst(
+        run_source_estimation=config.run_source_estimation,
         fs_subjects_dir=config.get_fs_subjects_dir(),
         recreate_bem=config.recreate_bem,
         bem_mri_images=config.bem_mri_images,
         recreate_scalp_surface=config.recreate_scalp_surface,
-        interactive=config.interactive
+        interactive=config.interactive,
+        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -116,19 +118,21 @@ def main():
     msg = 'Running Step 10: Create BEM & high-resolution scalp surface'
     logger.info(gen_log_message(step=10, message=msg))
 
-    if not config.run_source_estimation:
+    cfg = get_config()
+
+    if not cfg.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(gen_log_message(step=10, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(make_bem, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(subject), subject)
-             for subject in config.get_subjects())
+    parallel, run_func, _ = parallel_func(make_bem, n_jobs=cfg.N_JOBS)
+    parallel(run_func(get_config(), subject)
+             for subject in cfg.subjects)
 
     parallel, run_func, _ = parallel_func(make_scalp_surface,
-                                          n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(subject), subject)
-             for subject in config.get_subjects())
+                                          n_jobs=cfg.N_JOBS)
+    parallel(run_func(get_config(), subject)
+             for subject in cfg.subjects)
 
     msg = 'Completed Step 10: Create BEM & high-resolution scalp surface'
     logger.info(gen_log_message(step=10, message=msg))

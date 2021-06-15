@@ -12,6 +12,7 @@ To save space, the epoch data can be decimated.
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -107,7 +108,10 @@ def run_epochs(cfg, subject, session=None):
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
 
 
-def get_config(subject, session):
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),

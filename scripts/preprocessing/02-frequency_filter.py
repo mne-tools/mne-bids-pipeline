@@ -188,7 +188,10 @@ def filter_data(
             raw_er.plot_psd(fmax=fmax)
 
 
-def get_config(subject):
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),

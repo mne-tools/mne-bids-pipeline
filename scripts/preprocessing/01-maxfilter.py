@@ -57,19 +57,18 @@ def run_maxwell_filter(cfg, subject, session=None):
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
-    reference_run = cfg.reference_run
-    msg = f'Loading reference run: {reference_run}.'
+    msg = f'Loading reference run: {cfg.mf_reference_run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
 
     reference_run_info = get_reference_run_info(
-        subject=subject, session=session, run=reference_run
+        subject=subject, session=session, run=cfg.mf_reference_run
     )
     dev_head_t = reference_run_info['dev_head_t']
     dig = reference_run_info['dig']
-    del reference_run, reference_run_info
+    del reference_run_info
 
-    for run in config.get_runs(subject=subject):
+    for run in cfg.runs:
         bids_path_out.update(run=run)
 
         raw = import_experimental_data(
@@ -210,7 +209,7 @@ def get_config(
         fix_stim_artifact=config.fix_stim_artifact,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
-        reference_run=config.get_mf_reference_run(),
+        mf_reference_run=config.get_mf_reference_run(),
         drop_channels=config.drop_channels,
     )
     return cfg

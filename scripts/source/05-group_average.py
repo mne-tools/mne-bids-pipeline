@@ -8,6 +8,7 @@ Source estimates are morphed to the ``fsaverage`` brain.
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -68,7 +69,10 @@ def morph_stc(cfg, subject, session=None):
     return morphed_stcs
 
 
-def get_config(subject, session):
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),

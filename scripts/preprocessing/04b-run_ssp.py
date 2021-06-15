@@ -97,7 +97,6 @@ def get_config():
         space=config.space,
         eog_channels=config.eog_channels,
         deriv_root=config.get_deriv_root(),
-        interactive=config.interactive,
         N_JOBS=config.N_JOBS
     )
     return cfg

@@ -1590,7 +1590,7 @@ def get_runs_all_subjects() -> dict:
     return subj_runs
 
 
-def get_intersect_run() -> list:
+def get_intersect_run() -> List[str]:
     """Returns the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects()
     return list(set.intersection(*map(set, subj_runs.values())))
@@ -1657,7 +1657,8 @@ if 'MKDOCS' not in os.environ:
     inter_runs = get_intersect_run()
     mf_ref_error = (
         (mf_reference_run is not None) and
-        (mf_reference_run not in inter_runs))
+        (mf_reference_run not in inter_runs)
+    )
     if mf_ref_error:
         msg = (f'You set mf_reference_run={mf_reference_run}, but your '
                f'dataset only contains the following runs: {inter_runs}')

@@ -10,6 +10,7 @@ import itertools
 import logging
 
 import mne
+from mne.utils._bunch import BunchConst
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
@@ -21,19 +22,19 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_ssp(subject, session=None):
+def run_ssp(cfg, subject, session=None):
     # compute SSP on first run of raw
     run = config.get_runs(subject=subject)[0]
     bids_path = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
                          run=run,
-                         recording=config.rec,
-                         space=config.space,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root())
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root)
 
     # Prepare a name to save the data
     raw_fname_in = bids_path.copy().update(processing='filt', suffix='raw',
@@ -66,8 +67,8 @@ def run_ssp(subject, session=None):
     msg = 'Computing SSPs for EOG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    if config.eog_channels:
-        ch_names = config.eog_channels
+    if cfg.eog_channels:
+        ch_names = cfg.eog_channels
         assert all([ch_name in raw.ch_names
                     for ch_name in ch_names])
     else:
@@ -85,6 +86,23 @@ def run_ssp(subject, session=None):
     mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
 
 
+def get_config():
+    cfg = BunchConst(
+        subjects=config.get_subjects(),
+        sessions=config.get_sessions(),
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        eog_channels=config.eog_channels,
+        deriv_root=config.get_deriv_root(),
+        interactive=config.interactive,
+        N_JOBS=config.N_JOBS
+    )
+    return cfg
+
+
 def main():
     """Run SSP."""
     if not config.spatial_filter == 'ssp':
@@ -93,9 +111,10 @@ def main():
     msg = 'Running Step 4: SSP'
     logger.info(gen_log_message(step=4, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    cfg = get_config()
+    parallel, run_func, _ = parallel_func(run_ssp, n_jobs=cfg.N_JOBS)
+    parallel(run_func(cfg, subject, session) for subject, session in
+             itertools.product(cfg.subjects, cfg.sessions))
 
     msg = 'Completed Step 4: SSP'
     logger.info(gen_log_message(step=4, message=msg))

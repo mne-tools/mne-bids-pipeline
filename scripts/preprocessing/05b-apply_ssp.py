@@ -72,6 +72,7 @@ def get_config():
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        spatial_filter=config.spatial_filter,
         deriv_root=config.get_deriv_root(),
         N_JOBS=config.N_JOBS
     )

@@ -16,7 +16,7 @@ import numpy as np
 from scipy.io import loadmat, savemat
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config

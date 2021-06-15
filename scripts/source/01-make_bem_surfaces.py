@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne.parallel import parallel_func
 
 import config

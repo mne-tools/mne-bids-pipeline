@@ -20,7 +20,7 @@ import logging
 import pandas as pd
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
 from mne.report import Report

@@ -22,7 +22,7 @@ import logging
 import numpy as np
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 

@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne.parallel import parallel_func

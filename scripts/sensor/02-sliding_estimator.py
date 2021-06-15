@@ -18,7 +18,7 @@ import pandas as pd
 from scipy.io import savemat
 
 import mne
-from mne.utils._bunch import BunchConst
+from mne.utils import BunchConst
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
 from mne_bids import BIDSPath

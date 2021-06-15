@@ -9,6 +9,7 @@ The average power and inter-trial coherence are computed and saved to disk.
 
 import itertools
 import logging
+from typing import Optional
 
 import numpy as np
 
@@ -78,7 +79,10 @@ def run_time_frequency(cfg, subject, session=None):
         itc.save(itc_fname_out, overwrite=True)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

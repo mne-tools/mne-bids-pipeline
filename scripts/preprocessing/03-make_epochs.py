@@ -110,7 +110,7 @@ def run_epochs(cfg, subject, session=None):
 def get_config(subject, session):
     cfg = BunchConst(
         process_er=config.process_er,
-        runs=config.get_runs(subject),
+        runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),

@@ -438,7 +438,10 @@ def run_ica(cfg, subject, session=None):
                                 session=session))
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),

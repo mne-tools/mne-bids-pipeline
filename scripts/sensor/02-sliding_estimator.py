@@ -12,6 +12,7 @@ The end result is an averaging effect across sensors.
 
 import os.path as op
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -113,7 +114,10 @@ def run_time_decoding(cfg, subject, condition1, condition2, session=None):
     tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

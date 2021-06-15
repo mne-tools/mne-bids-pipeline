@@ -8,6 +8,7 @@ Covariance matrices are computed and saved.
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -89,7 +90,10 @@ def run_covariance(cfg, subject, session=None):
                                 tmin=tmin, tmax=tmax)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

@@ -10,7 +10,7 @@ plots.
 import os.path as op
 import itertools
 import logging
-from typing import Dict, Any, Tuple, Union
+from typing import Dict, Any, Tuple, Union, Optional
 
 import numpy as np
 from scipy.io import loadmat
@@ -672,7 +672,10 @@ def run_report_average(cfg, session: str) -> None:
     plt.close('all')  # close all figures to save memory
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

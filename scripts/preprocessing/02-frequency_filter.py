@@ -165,7 +165,7 @@ def filter_data(
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
             raw_er.info['bads'] = bads
         else:
-            raw_er = import_er_data(subject=subject, session=session,
+            raw_er = import_er_data(cfg=cfg, subject=subject, session=session,
                                     bads=bads, save=False)
 
         raw_er_fname_out = bids_path_er.copy().update(processing='filt')
@@ -191,7 +191,7 @@ def filter_data(
 def get_config(subject):
     cfg = BunchConst(
         process_er=config.process_er,
-        runs=config.get_runs(subject),
+        runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),

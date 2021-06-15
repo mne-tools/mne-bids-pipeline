@@ -54,7 +54,10 @@ def init_subject_dirs(
     out_dir.mkdir(exist_ok=True, parents=True)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         datatype=config.get_datatype(),
         subjects=config.get_subjects(),

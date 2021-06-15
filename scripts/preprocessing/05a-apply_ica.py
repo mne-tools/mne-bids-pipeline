@@ -16,6 +16,7 @@ order might differ).
 
 import itertools
 import logging
+from typing import Optional
 
 import pandas as pd
 
@@ -124,7 +125,10 @@ def apply_ica(cfg, subject, session):
         epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),

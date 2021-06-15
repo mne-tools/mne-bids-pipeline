@@ -10,8 +10,9 @@ import os
 import os.path as op
 from collections import defaultdict
 import logging
-from tqdm import tqdm
+from typing import Optional
 
+from tqdm import tqdm
 import numpy as np
 from scipy.io import loadmat, savemat
 
@@ -176,7 +177,10 @@ def average_decoding(cfg, session):
         del contrast_score_stats, fname_out
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

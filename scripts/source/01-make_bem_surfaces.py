@@ -12,6 +12,7 @@ be used for visualization of the sensor alignment (coregistration).
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -100,7 +101,10 @@ def make_scalp_surface(cfg, subject):
     )
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         run_source_estimation=config.run_source_estimation,

@@ -8,6 +8,7 @@ The evoked data sets are created by averaging different conditions.
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -90,7 +91,10 @@ def run_evoked(cfg, subject, session=None):
         #                       topomap_args=topomap_args)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

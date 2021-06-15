@@ -8,6 +8,7 @@ Compute Signal Suspace Projections (SSP).
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
 from mne.utils import BunchConst
@@ -86,7 +87,10 @@ def run_ssp(cfg, subject, session=None):
     mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
 
 
-def get_config():
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         subjects=config.get_subjects(),
         sessions=config.get_sessions(),

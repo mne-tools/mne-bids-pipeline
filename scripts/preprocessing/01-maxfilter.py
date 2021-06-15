@@ -19,6 +19,7 @@ The function loads machine-specific calibration files.
 
 import itertools
 import logging
+from typing import Optional
 
 import numpy as np
 
@@ -182,14 +183,17 @@ def run_maxwell_filter(cfg, subject, session=None):
             del raw_er_sss
 
 
-def get_config(subject, session):
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
     cfg = BunchConst(
         mf_cal_fname=config.get_mf_cal_fname(subject, session),
         mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
         mf_st_duration=config.mf_st_duration,
         mf_head_origin=config.mf_head_origin,
         process_er=config.process_er,
-        runs=config.get_runs(subject),
+        runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),

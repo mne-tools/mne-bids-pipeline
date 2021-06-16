@@ -22,6 +22,8 @@ use_maxwell_filter = True
 process_er = True
 noise_cov = 'emptyroom'
 
+spatial_filter = 'ssp'
+
 bem_mri_images = 'FLASH'
 recreate_bem = True
 recreate_scalp_surface = True

@@ -43,7 +43,7 @@ authors:
 
 ### Behavior changes
 
-- The [`conditions`][config.conditions] setting will now be `None` by default. 
+- The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
   ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
@@ -80,6 +80,13 @@ authors:
 - [`ica_reject`][config.ica_reject] now also applies to ECG and EOG epochs.
   ({{ gh(373) }} by {{ authors.crsegerie }})
 
+### Code health
+
+- Each processing script now extracts the required subset of configuration
+  options from the user config and operates solely on these. This helps make it
+  clear which settings an individual script depends on.
+  ({{ gh(383) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
+
 ### Bug fixes
 
 - The FreeSurfer script could only be run if `--n_jobs` was passed explicitly
@@ -95,7 +102,8 @@ authors:
 - Added instructions on how to handle `FileNotFoundError` when loading the BEM
   model in the source steps ({{ gh(304) }}  by {{ authors.MerlinDumeur }})
 - When using [`find_noisy_channels_meg`][config.find_noisy_channels_meg] or
-  [`find_flat_channels_meg`][config.find_flat_channels_meg], we now pass [`mf_head_origin`][config.mf_head_origin] to the respective bad channel
+  [`find_flat_channels_meg`][config.find_flat_channels_meg], we now pass
+  [`mf_head_origin`][config.mf_head_origin] to the respective bad channel
   detection algorithm to achieve better performance
   ({{ gh(319) }} by {{ authors.agramfort }})
 - Baseline was not applied to epochs if neither ICA nor SSP was used
@@ -107,6 +115,8 @@ authors:
   ({{ gh(320) }} by {{ authors.hoechenberger }})
 - The sanity check comparing the rank of the experimental data and the rank of
    the empty-room after Maxwell-filtering did not use the maxfiltered data.
-  ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }}, and {{ authors.crsegerie }})
-- `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config files.
+  ({{ gh(336) }} by {{ authors.agramfort }}, {{ authors.hoechenberger }},
+  and {{ authors.crsegerie }})
+- `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config
+  files.
   ({{ gh(340) }} by {{ authors.crsegerie }})

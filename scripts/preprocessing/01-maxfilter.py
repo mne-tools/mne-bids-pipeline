@@ -19,58 +19,60 @@ The function loads machine-specific calibration files.
 
 import itertools
 import logging
+from typing import Optional
 
 import numpy as np
 
 import mne
+from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (gen_log_message, on_error, failsafe_run, get_mf_ctc_fname,
-                    get_mf_cal_fname, import_experimental_data, import_er_data,
+from config import (gen_log_message, on_error, failsafe_run,
+                    import_experimental_data, import_er_data,
                     get_reference_run_info)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_maxwell_filter(subject, session=None):
-    if config.proc and 'sss' in config.proc and config.use_maxwell_filter:
+def run_maxwell_filter(cfg, subject, session=None):
+    if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
     bids_path_out = BIDSPath(subject=subject,
                              session=session,
-                             task=config.get_task(),
-                             acquisition=config.acq,
+                             task=cfg.task,
+                             acquisition=cfg.acq,
                              processing='sss',
-                             recording=config.rec,
-                             space=config.space,
+                             recording=cfg.rec,
+                             space=cfg.space,
                              suffix='raw',
                              extension='.fif',
-                             datatype=config.get_datatype(),
-                             root=config.get_deriv_root(),
+                             datatype=cfg.datatype,
+                             root=cfg.deriv_root,
                              check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
-    reference_run = config.get_mf_reference_run()
-    msg = f'Loading reference run: {reference_run}.'
+    msg = f'Loading reference run: {cfg.mf_reference_run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
                                 session=session))
 
     reference_run_info = get_reference_run_info(
-        subject=subject, session=session, run=reference_run
+        subject=subject, session=session, run=cfg.mf_reference_run
     )
     dev_head_t = reference_run_info['dev_head_t']
     dig = reference_run_info['dig']
-    del reference_run, reference_run_info
+    del reference_run_info
 
-    for run in config.get_runs(subject=subject):
+    for run in cfg.runs:
         bids_path_out.update(run=run)
 
         raw = import_experimental_data(
+            cfg=cfg,
             subject=subject,
             session=session,
             run=run,
@@ -91,18 +93,18 @@ def run_maxwell_filter(subject, session=None):
             logger.warning(gen_log_message(message=msg, subject=subject,
                                            step=1, session=session))
 
-        if config.mf_st_duration:
-            msg = '    st_duration=%d' % (config.mf_st_duration)
+        if cfg.mf_st_duration:
+            msg = '    st_duration=%d' % (cfg.mf_st_duration)
             logger.info(gen_log_message(message=msg, step=1,
                                         subject=subject, session=session))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.
         common_mf_kws = dict(
-            calibration=get_mf_cal_fname(subject, session),
-            cross_talk=get_mf_ctc_fname(subject, session),
-            st_duration=config.mf_st_duration,
-            origin=config.mf_head_origin,
+            calibration=cfg.mf_cal_fname,
+            cross_talk=cfg.mf_ctc_fname,
+            st_duration=cfg.mf_st_duration,
+            origin=cfg.mf_head_origin,
             coord_frame='head',
             destination=dev_head_t
         )
@@ -117,19 +119,20 @@ def run_maxwell_filter(subject, session=None):
                      overwrite=True)
         del raw_sss
 
-        if config.interactive:
+        if cfg.interactive:
             # Load the data we have just written, because it contains only
             # the relevant channels.
             raw = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
-        if config.process_er and run == config.get_mf_reference_run():
+        if cfg.process_er and run == cfg.mf_reference_run:
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,
                                         session=session, message=msg))
 
             raw_er = import_er_data(
+                cfg=cfg,
                 subject=subject,
                 session=session,
                 bads=bads,
@@ -179,6 +182,39 @@ def run_maxwell_filter(subject, session=None):
             del raw_er_sss
 
 
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
+    cfg = BunchConst(
+        mf_cal_fname=config.get_mf_cal_fname(subject, session),
+        mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
+        mf_st_duration=config.mf_st_duration,
+        mf_head_origin=config.mf_head_origin,
+        process_er=config.process_er,
+        runs=config.get_runs(subject=subject),  # XXX needs to accept session!
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        crop_runs=config.crop_runs,
+        interactive=config.interactive,
+        rename_events=config.rename_events,
+        eeg_template_montage=config.eeg_template_montage,
+        fix_stim_artifact=config.fix_stim_artifact,
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        mf_reference_run=config.get_mf_reference_run(),
+        drop_channels=config.drop_channels,
+    )
+    return cfg
+
+
 @failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
@@ -188,7 +224,8 @@ def main():
     if config.use_maxwell_filter:
         parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                               n_jobs=config.N_JOBS)
-        parallel(run_func(subject, session) for subject, session in
+        parallel(run_func(get_config(subject, session), subject, session)
+                 for subject, session in
                  itertools.product(config.get_subjects(),
                                    config.get_sessions()))
 

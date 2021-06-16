@@ -1590,14 +1590,18 @@ def get_runs_all_subjects() -> dict:
     return subj_runs
 
 
-def get_intersect_run() -> list:
+def get_intersect_run() -> List[str]:
     """Returns the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects()
     return list(set.intersection(*map(set, subj_runs.values())))
 
 
-def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]]:
-    """Returns a list of runs.
+def get_runs(
+    *,
+    subject: str,
+    verbose: bool = False
+) -> Union[List[str], List[None]]:
+    """Returns a list of runs in the BIDS input data.
 
     Parameters
     ----------
@@ -1611,6 +1615,9 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
     The list of runs of the subject. If no BIDS `run` entity could be found,
     returns `[None]`.
     """
+    if subject == 'average':  # Used when creating the report
+        return [None]
+
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 
     subj_runs = get_runs_all_subjects()
@@ -1657,7 +1664,8 @@ if 'MKDOCS' not in os.environ:
     inter_runs = get_intersect_run()
     mf_ref_error = (
         (mf_reference_run is not None) and
-        (mf_reference_run not in inter_runs))
+        (mf_reference_run not in inter_runs)
+    )
     if mf_ref_error:
         msg = (f'You set mf_reference_run={mf_reference_run}, but your '
                f'dataset only contains the following runs: {inter_runs}')
@@ -2020,18 +2028,18 @@ def annotations_to_events(
     return event_name_to_code_map
 
 
-def _rename_events_func(raw, subject, session) -> None:
+def _rename_events_func(cfg, raw, subject, session) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
 
     Modifies ``raw`` in-place.
     """
-    if not rename_events:
+    if not cfg.rename_events:
         return
 
     # Check if the user requested to rename events that don't exist.
     # We don't want this to go unnoticed.
     event_names_set = set(raw.annotations.description)
-    rename_events_set = set(rename_events.keys())
+    rename_events_set = set(cfg.rename_events.keys())
     events_not_in_raw = rename_events_set - event_names_set
     if events_not_in_raw:
         msg = (f'You requested to rename the following events, but '
@@ -2047,7 +2055,7 @@ def _rename_events_func(raw, subject, session) -> None:
     logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                 session=session))
     descriptions = list(raw.annotations.description)
-    for old_event_name, new_event_name in rename_events.items():
+    for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
         logger.info(gen_log_message(message=msg, step=0,
                                     subject=subject, session=session))
@@ -2059,19 +2067,19 @@ def _rename_events_func(raw, subject, session) -> None:
     raw.annotations.description = descriptions
 
 
-def _find_bad_channels(raw, subject, session, task, run) -> None:
+def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     """Find and mark bad MEG channels.
 
     Modifies ``raw`` in-place.
     """
-    if not (find_flat_channels_meg or find_noisy_channels_meg):
+    if not (cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg):
         return
 
-    if (find_flat_channels_meg and
-            not find_noisy_channels_meg):
+    if (cfg.find_flat_channels_meg and
+            not cfg.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
-    elif (find_noisy_channels_meg and
-            not find_flat_channels_meg):
+    elif (cfg.find_noisy_channels_meg and
+            not cfg.find_flat_channels_meg):
         msg = 'Finding noisy channels using Maxwell filtering.'
     else:
         msg = ('Finding flat channels, and noisy channels using '
@@ -2085,18 +2093,18 @@ def _find_bad_channels(raw, subject, session, task, run) -> None:
                          task=task,
                          run=run,
                          acquisition=acq,
-                         processing=proc,
-                         recording=rec,
-                         space=space,
-                         suffix=get_datatype(),
-                         datatype=get_datatype(),
-                         root=get_deriv_root())
+                         processing=proc,  # XXX : what is proc?
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         suffix=cfg.datatype,
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = \
         mne.preprocessing.find_bad_channels_maxwell(
             raw=raw,
-            calibration=get_mf_cal_fname(subject, session),
-            cross_talk=get_mf_ctc_fname(subject, session),
+            calibration=cfg.mf_cal_fname,
+            cross_talk=cfg.mf_ctc_fname,
             origin=mf_head_origin,
             coord_frame='head',
             return_scores=True
@@ -2162,7 +2170,7 @@ def _find_bad_channels(raw, subject, session, task, run) -> None:
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 
-def _load_data(bids_path):
+def _load_data(cfg, bids_path):
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -2177,7 +2185,7 @@ def _load_data(bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    _crop_data(raw=raw, subject=subject)
+    _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
@@ -2186,38 +2194,38 @@ def _load_data(bids_path):
     return raw
 
 
-def _crop_data(raw, subject):
+def _crop_data(cfg, raw, subject):
     """Crop the data to the desired duration.
 
     Modifies ``raw`` in-place.
     """
-    if subject != 'emptyroom' and crop_runs is not None:
+    if subject != 'emptyroom' and cfg.crop_runs is not None:
         raw.crop(*crop_runs)
 
 
-def _drop_channels_func(raw, subject, session) -> None:
+def _drop_channels_func(cfg, raw, subject, session) -> None:
     """Drop channels from the data.
 
     Modifies ``raw`` in-place.
     """
-    if drop_channels:
-        msg = f'Dropping channels: {", ".join(drop_channels)}'
+    if cfg.drop_channels:
+        msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
-        raw.drop_channels(drop_channels)
+        raw.drop_channels(cfg.drop_channels)
 
 
-def _create_bipolar_channels(raw, subject, session) -> None:
+def _create_bipolar_channels(cfg, raw, subject, session) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.
     """
-    if ch_types == ['eeg'] and eeg_bipolar_channels:
+    if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
         raw.load_data()
-        for ch_name, (anode, cathode) in eeg_bipolar_channels.items():
+        for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
             logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                         session=session))
@@ -2231,13 +2239,13 @@ def _create_bipolar_channels(raw, subject, session) -> None:
         # channel would influence e.g. in GFP calculations, but not appear on
         # topographic maps.
         if (eog_channels and
-                any([eog_ch_name in eeg_bipolar_channels
+                any([eog_ch_name in cfg.eeg_bipolar_channels
                      for eog_ch_name in eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
             logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                         session=session))
         for eog_ch_name in eog_channels:
-            if eog_ch_name in eeg_bipolar_channels:
+            if eog_ch_name in cfg.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
                 logger.info(gen_log_message(message=msg, step=0,
                                             subject=subject,
@@ -2245,13 +2253,13 @@ def _create_bipolar_channels(raw, subject, session) -> None:
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
-def _set_eeg_montage(raw, subject, session) -> None:
+def _set_eeg_montage(cfg, raw, subject, session) -> None:
     """Set an EEG template montage if requested.
 
     Modifies ``raw`` in-place.
     """
-    montage_name = eeg_template_montage
-    if get_datatype() == 'eeg' and montage_name:
+    montage_name = cfg.eeg_template_montage
+    if cfg.datatype == 'eeg' and montage_name:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage_name}.')
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
@@ -2260,22 +2268,23 @@ def _set_eeg_montage(raw, subject, session) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def _fix_stim_artifact_func(raw: mne.io.BaseRaw) -> None:
+def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
     """Fix stimulation artifact in the data."""
-    if not fix_stim_artifact:
+    if not cfg.fix_stim_artifact:
         return
 
     events, _ = mne.events_from_annotations(raw)
     mne.preprocessing.fix_stim_artifact(
         raw, events=events, event_id=None,
-        tmin=stim_artifact_tmin,
-        tmax=stim_artifact_tmax,
+        tmin=cfg.stim_artifact_tmin,
+        tmax=cfg.stim_artifact_tmax,
         mode='linear'
     )
 
 
 def import_experimental_data(
     *,
+    cfg: dict,
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None,
@@ -2285,13 +2294,15 @@ def import_experimental_data(
 
     Parameters
     ----------
-    subject
+    cfg : Bunch
+        The local configuration.
+    subject : str
         The subject to import.
-    session
+    session : str
         The session to import.
-    run
+    run : str
         The run to import.
-    save
+    save : bool
         Whether to save the data to disk or not.
 
     Returns
@@ -2302,26 +2313,26 @@ def import_experimental_data(
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
                             run=run,
-                            task=get_task(),
-                            acquisition=acq,
-                            processing=proc,
-                            recording=rec,
-                            space=space,
-                            suffix=get_datatype(),
-                            datatype=get_datatype(),
-                            root=get_bids_root())
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            processing=cfg.proc,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix=cfg.datatype,
+                            datatype=cfg.datatype,
+                            root=cfg.bids_root)
     bids_path_out = bids_path_in.copy().update(suffix='raw',
                                                extension='.fif',
-                                               root=get_deriv_root(),
+                                               root=cfg.deriv_root,
                                                check=False)
 
-    raw = _load_data(bids_path_in)
-    _set_eeg_montage(raw=raw, subject=subject, session=session)
-    _create_bipolar_channels(raw=raw, subject=subject, session=session)
-    _drop_channels_func(raw=raw, subject=subject, session=session)
-    _rename_events_func(raw=raw, subject=subject, session=session)
-    _fix_stim_artifact_func(raw=raw)
-    _find_bad_channels(raw=raw, subject=subject, session=session,
+    raw = _load_data(cfg=cfg, bids_path=bids_path_in)
+    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session)
+    _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject, session=session)
+    _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _fix_stim_artifact_func(cfg=cfg, raw=raw)
+    _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
                        task=get_task(), run=run)
 
     # Save the data.
@@ -2333,6 +2344,7 @@ def import_experimental_data(
 
 def import_er_data(
     *,
+    cfg: dict,
     subject: str,
     session: Optional[str] = None,
     bads: List[str],
@@ -2342,6 +2354,8 @@ def import_er_data(
 
     Parameters
     ----------
+    cfg : Bunch
+        The local configuration.
     subject
         The subject for whom to import the empty-room data.
     session
@@ -2360,15 +2374,15 @@ def import_er_data(
     bids_path_er_in = BIDSPath(
         subject=subject,
         session=session,
-        run=get_runs(subject=subject)[0],
-        task=get_task(),
-        acquisition=acq,
-        processing=proc,
-        recording=rec,
-        space=space,
-        suffix=get_datatype(),
-        datatype=get_datatype(),
-        root=get_bids_root()
+        run=cfg.runs[0],
+        task=cfg.task,
+        acquisition=cfg.acq,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix=cfg.datatype,
+        datatype=cfg.datatype,
+        root=cfg.bids_root
     ).find_empty_room()
 
     bids_path_er_out = (bids_path_er_in.copy()
@@ -2376,14 +2390,14 @@ def import_er_data(
                                 run=None,
                                 suffix='raw',
                                 extension='.fif',
-                                root=get_deriv_root(),
+                                root=cfg.deriv_root,
                                 check=False))
 
     if bads is None:
         bads = []
 
-    raw_er = _load_data(bids_path_er_in)
-    _drop_channels_func(raw=raw_er, subject='emptyroom', session=session)
+    raw_er = _load_data(cfg, bids_path_er_in)
+    _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Set same set of bads as in the experimental run, but only for MEG
     # channels (because we won't have any others in empty-room recordings)

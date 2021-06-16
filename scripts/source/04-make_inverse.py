@@ -8,31 +8,33 @@ Compute and apply an inverse solution for each evoked data set.
 
 import itertools
 import logging
+from typing import Optional
 
 import mne
+from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_inverse(subject, session=None):
+def run_inverse(cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
-                         task=config.get_task(),
-                         acquisition=config.acq,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
                          run=None,
-                         recording=config.rec,
-                         space=config.space,
+                         recording=cfg.rec,
+                         space=cfg.space,
                          extension='.fif',
-                         datatype=config.get_datatype(),
-                         root=config.get_deriv_root(),
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
@@ -52,29 +54,47 @@ def run_inverse(subject, session=None):
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
 
-    if isinstance(config.conditions, dict):
-        conditions = list(config.conditions.keys())
+    if isinstance(cfg.conditions, dict):
+        conditions = list(cfg.conditions.keys())
     else:
-        conditions = config.conditions
+        conditions = cfg.conditions
 
     for condition, evoked in zip(conditions, evokeds):
-        method = config.inverse_method
+        method = cfg.inverse_method
         pick_ori = None
 
-        cond_str = config.sanitize_cond_name(condition)
+        cond_str = sanitize_cond_name(condition)
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
         fname_stc = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
             extension=None)
 
-        if "eeg" in config.ch_types:
+        if "eeg" in cfg.ch_types:
             evoked.set_eeg_reference('average', projection=True)
 
         stc = apply_inverse(evoked=evoked,
                             inverse_operator=inverse_operator,
                             lambda2=lambda2, method=method, pick_ori=pick_ori)
         stc.save(fname_stc)
+
+
+def get_config(
+    subject: Optional[str] = None,
+    session: Optional[str] = None
+) -> BunchConst:
+    cfg = BunchConst(
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        ch_types=config.ch_types,
+        conditions=config.conditions,
+        inverse_method=config.inverse_method,
+        deriv_root=config.get_deriv_root(),
+    )
+    return cfg
 
 
 def main():
@@ -88,8 +108,10 @@ def main():
         return
 
     parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
-    parallel(run_func(subject, session) for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    parallel(run_func(get_config(), subject, session)
+             for subject, session in
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 12: Compute and apply inverse solution'
     logger.info(gen_log_message(step=12, message=msg))

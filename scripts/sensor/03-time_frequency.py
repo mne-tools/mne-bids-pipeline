@@ -59,8 +59,8 @@ def run_time_frequency(cfg, subject, session=None):
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
 
-    freqs = np.arange(config.time_frequency_freq_min,
-                      config.time_frequency_freq_max)
+    freqs = np.arange(cfg.time_frequency_freq_min,
+                      cfg.time_frequency_freq_max)
     n_cycles = freqs / 3.
 
     for condition in cfg.time_frequency_conditions:
@@ -94,7 +94,9 @@ def get_config(
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference
+        eeg_reference=config.eeg_reference,
+        time_frequency_freq_min=config.time_frequency_freq_min,
+        time_frequency_freq_max=config.time_frequency_freq_max
     )
     return cfg
 

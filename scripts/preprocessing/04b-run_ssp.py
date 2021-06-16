@@ -91,7 +91,7 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        runs=config.get_runs(subject=subject)
+        runs=config.get_runs(subject=subject),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

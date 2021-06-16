@@ -128,7 +128,7 @@ def get_config(
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
-        N_JOBS=N_JOBS
+        N_JOBS=config.N_JOBS
     )
     return cfg
 

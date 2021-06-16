@@ -84,6 +84,7 @@ def get_config(
         reject=config.get_reject(),
         reject_tmin=config.reject_tmin,
         reject_tmax=config.reject_tmax,
+        spatial_filter=config.spatial_filter,
         deriv_root=config.get_deriv_root(),
     )
     return cfg

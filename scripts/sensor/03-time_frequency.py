@@ -94,7 +94,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference,
+        eeg_reference=config.eeg_reference
     )
     return cfg
 

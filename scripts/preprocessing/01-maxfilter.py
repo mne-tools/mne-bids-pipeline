@@ -192,7 +192,7 @@ def get_config(
         mf_st_duration=config.mf_st_duration,
         mf_head_origin=config.mf_head_origin,
         process_er=config.process_er,
-        runs=config.get_runs(subject=subject),  # XXX needs to accept session too!
+        runs=config.get_runs(subject=subject),  # XXX needs to accept session!
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),

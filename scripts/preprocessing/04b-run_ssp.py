@@ -91,6 +91,7 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
+        runs=config.get_runs(subject=subject)
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -111,7 +112,8 @@ def main():
     logger.info(gen_log_message(step=4, message=msg))
 
     parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject, session) for subject, session in
+    parallel(run_func(get_config(subject=subject), subject, session)
+             for subject, session in
              itertools.product(config.get_subjects(),
                                config.get_sessions()))
 

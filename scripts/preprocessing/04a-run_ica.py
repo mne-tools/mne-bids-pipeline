@@ -445,7 +445,7 @@ def get_config(
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),
-        runs=config.get_runs(subject),
+        runs=config.get_runs(subject=subject),
         acq=config.acq,
         rec=config.rec,
         space=config.space,

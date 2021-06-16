@@ -694,7 +694,7 @@ def get_config(
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
         inverse_method=config.inverse_method,
-        fs_subject=config.get_fs_subject(subject),
+        fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),

@@ -127,7 +127,7 @@ def main():
         return
 
     parallel, run_func, _ = parallel_func(make_bem, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject)
+    parallel(run_func(get_config(subject=subject), subject)
              for subject in config.get_subjects())
 
     parallel, run_func, _ = parallel_func(make_scalp_surface,

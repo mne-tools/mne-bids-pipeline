@@ -182,6 +182,7 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
+        subjects=config.get_subjects(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

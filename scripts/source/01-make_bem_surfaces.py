@@ -132,7 +132,7 @@ def main():
 
     parallel, run_func, _ = parallel_func(make_scalp_surface,
                                           n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject)
+    parallel(run_func(get_config(subject=subject), subject)
              for subject in config.get_subjects())
 
     msg = 'Completed Step 10: Create BEM & high-resolution scalp surface'

@@ -143,7 +143,7 @@ def main():
         return
 
     parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject, session)
+    parallel(run_func(get_config(subject=subject), subject, session)
              for subject, session in
              itertools.product(config.get_subjects(),
                                config.get_sessions()))

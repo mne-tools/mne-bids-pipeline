@@ -60,10 +60,7 @@ def get_config(
 ) -> BunchConst:
     cfg = BunchConst(
         datatype=config.get_datatype(),
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         deriv_root=config.get_deriv_root(),
-        N_JOBS=config.N_JOBS,
         PIPELINE_NAME=config.PIPELINE_NAME,
         VERSION=config.VERSION,
         CODE_URL=config.CODE_URL
@@ -77,15 +74,13 @@ def main():
     msg = 'Running: Initializing output directories.'
     logger.info(gen_log_message(step=1, message=msg))
 
-    cfg = get_config()
-
-    init_dataset(cfg=cfg)
+    init_dataset(cfg=get_config())
     parallel, run_func, _ = parallel_func(init_subject_dirs,
-                                          n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg=cfg, subject=subject, session=session)
+                                          n_jobs=config.N_JOBS)
+    parallel(run_func(cfg=get_config(), subject=subject, session=session)
              for subject, session in
-             itertools.product(cfg.subjects,
-                               cfg.sessions))
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed: Initializing output directories.'
     logger.info(gen_log_message(step=1, message=msg))

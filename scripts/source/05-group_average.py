@@ -148,7 +148,7 @@ def main():
         session = None
 
     run_average(
-        cfg=get_config(session=session),
+        cfg=get_config(subject='average', session=session),
         session=session,
         mean_morphed_stcs=mean_morphed_stcs
     )

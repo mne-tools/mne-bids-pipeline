@@ -514,11 +514,10 @@ def add_event_counts(*,
 #         epochs = mne.read_epochs(fname_epochs)
 
 
-def run_report_average(cfg, session: str) -> None:
+def run_report_average(cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
-    subject = 'average'
     evoked_fname = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -709,16 +708,21 @@ def main():
     logger.info(gen_log_message(step=99, message=msg))
 
     parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject, session) for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    parallel(
+        run_func(get_config(subject=subject), subject, session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                        config.get_sessions())
+    )
 
     sessions = config.get_sessions()
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        run_report_average(cfg=get_config(), session=session)
+        run_report_average(cfg=get_config(subject='average'),
+                           subject='average',
+                           session=session)
 
 
 if __name__ == '__main__':

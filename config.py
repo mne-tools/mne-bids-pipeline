@@ -1601,7 +1601,7 @@ def get_runs(
     subject: str,
     verbose: bool = False
 ) -> Union[List[str], List[None]]:
-    """Returns a list of runs.
+    """Returns a list of runs in the BIDS input data.
 
     Parameters
     ----------
@@ -1615,6 +1615,9 @@ def get_runs(
     The list of runs of the subject. If no BIDS `run` entity could be found,
     returns `[None]`.
     """
+    if subject == 'average':  # Used when creating the report
+        return [None]
+
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 
     subj_runs = get_runs_all_subjects()

@@ -19,14 +19,14 @@ from mne.utils import BunchConst
 from mne.parallel import parallel_func
 
 import config
-from config import gen_log_message, on_error, failsafe_run, get_fs_subject
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
 def make_bem(cfg, subject):
-    fs_subject = get_fs_subject(subject)
+    fs_subject = cfg.fs_subject
     mri_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'mri'
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
     watershed_bem_dir = bem_dir / 'watershed'
@@ -72,7 +72,7 @@ def make_bem(cfg, subject):
 
 @failsafe_run(on_error=on_error)
 def make_scalp_surface(cfg, subject):
-    fs_subject = get_fs_subject(subject)
+    fs_subject = cfg.fs_subject
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
 
     generate_surface = cfg.recreate_scalp_surface
@@ -106,14 +106,12 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        run_source_estimation=config.run_source_estimation,
+        fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         recreate_bem=config.recreate_bem,
         bem_mri_images=config.bem_mri_images,
         recreate_scalp_surface=config.recreate_scalp_surface,
         interactive=config.interactive,
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -123,21 +121,19 @@ def main():
     msg = 'Running Step 10: Create BEM & high-resolution scalp surface'
     logger.info(gen_log_message(step=10, message=msg))
 
-    cfg = get_config()
-
-    if not cfg.run_source_estimation:
+    if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(gen_log_message(step=10, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(make_bem, n_jobs=cfg.N_JOBS)
+    parallel, run_func, _ = parallel_func(make_bem, n_jobs=config.N_JOBS)
     parallel(run_func(get_config(), subject)
-             for subject in cfg.subjects)
+             for subject in config.get_subjects())
 
     parallel, run_func, _ = parallel_func(make_scalp_surface,
-                                          n_jobs=cfg.N_JOBS)
+                                          n_jobs=config.N_JOBS)
     parallel(run_func(get_config(), subject)
-             for subject in cfg.subjects)
+             for subject in config.get_subjects())
 
     msg = 'Completed Step 10: Create BEM & high-resolution scalp surface'
     logger.info(gen_log_message(step=10, message=msg))

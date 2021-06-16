@@ -182,8 +182,6 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -202,26 +200,24 @@ def get_config(
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
         eeg_reference=config.eeg_reference,
-        interactive=config.interactive,
-        N_JOBS=config.N_JOBS
+        interactive=config.interactive
     )
     return cfg
 
 
 def main():
-    cfg = get_config()
-    sessions = cfg.sessions
+    sessions = config.get_sessions()
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        evokeds = average_evokeds(cfg, session)
-        if cfg.interactive:
+        evokeds = average_evokeds(get_config(), session)
+        if config.interactive:
             for evoked in evokeds:
                 evoked.plot()
 
-        if cfg.decode:
-            average_decoding(cfg, session)
+        if config.decode:
+            average_decoding(get_config(), session)
 
 
 if __name__ == '__main__':

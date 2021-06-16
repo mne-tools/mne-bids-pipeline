@@ -25,12 +25,11 @@ logger = logging.getLogger('mne-bids-pipeline')
 @failsafe_run(on_error=on_error)
 def run_ssp(cfg, subject, session=None):
     # compute SSP on first run of raw
-    run = config.get_runs(subject=subject)[0]
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
                          acquisition=cfg.acq,
-                         run=run,
+                         run=cfg.runs[0],
                          recording=cfg.rec,
                          space=cfg.space,
                          extension='.fif',
@@ -92,8 +91,6 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -101,25 +98,22 @@ def get_config(
         space=config.space,
         eog_channels=config.eog_channels,
         deriv_root=config.get_deriv_root(),
-        spatial_filter=config.spatial_filter,
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
 
 def main():
     """Run SSP."""
-    cfg = get_config()
-
-    if not cfg.spatial_filter == 'ssp':
+    if not config.spatial_filter == 'ssp':
         return
 
     msg = 'Running Step 4: SSP'
     logger.info(gen_log_message(step=4, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_ssp, n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg, subject, session) for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+    parallel, run_func, _ = parallel_func(run_ssp, n_jobs=config.N_JOBS)
+    parallel(run_func(get_config(), subject, session) for subject, session in
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 4: SSP'
     logger.info(gen_log_message(step=4, message=msg))

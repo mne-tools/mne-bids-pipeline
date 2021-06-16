@@ -28,7 +28,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (make_epochs, gen_log_message, on_error, failsafe_run,
-                    get_runs, annotations_to_events)
+                    annotations_to_events)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -250,7 +250,7 @@ def run_ica(cfg, subject, session=None):
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
     raw_fnames = []
-    for run in get_runs(subject=subject):
+    for run in cfg.runs:
         raw_fname.update(run=run)
         if raw_fname.copy().update(split='01').fpath.exists():
             raw_fname.update(split='01')
@@ -266,7 +266,7 @@ def run_ica(cfg, subject, session=None):
     eog_epochs_all_runs = []
     ecg_epochs_all_runs = []
 
-    for run, raw_fname in zip(get_runs(subject=subject), raw_fnames):
+    for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,
                                     session=session, run=run))
@@ -445,6 +445,7 @@ def get_config(
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),
+        runs=config.get_runs(subject),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -467,11 +468,7 @@ def get_config(
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
         eeg_reference=config.eeg_reference,
-        eog_channels=config.eog_channels,
-        spatial_filter=config.spatial_filter,
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
-        N_JOBS=config.N_JOBS
+        eog_channels=config.eog_channels
     )
     return cfg
 
@@ -482,13 +479,12 @@ def main():
     msg = 'Running Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))
 
-    cfg = get_config()
-    if cfg.spatial_filter == 'ica':
-        parallel, run_func, _ = parallel_func(run_ica, n_jobs=cfg.N_JOBS)
-        parallel(run_func(cfg, subject, session)
+    if config.spatial_filter == 'ica':
+        parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
+        parallel(run_func(get_config(subject=subject), subject, session)
                  for subject, session in
-                 itertools.product(cfg.subjects,
-                                   cfg.sessions))
+                 itertools.product(config.get_subjects(),
+                                   config.get_sessions()))
 
     msg = 'Completed Step 4: Compute ICA'
     logger.info(gen_log_message(step=4, message=msg))

@@ -47,7 +47,7 @@ def plot_events(cfg, subject, session):
                          root=cfg.deriv_root,
                          check=False)
 
-    for run in config.get_runs(subject=subject):
+    for run in cfg.runs:
         this_raw_fname = raw_fname.copy().update(run=run)
 
         if this_raw_fname.copy().update(split='01').fpath.exists():
@@ -113,7 +113,7 @@ def plot_auto_scores(cfg, subject, session):
 
     all_figs = []
     all_captions = []
-    for run in config.get_runs(subject=subject):
+    for run in cfg.runs:
         with open(fname_scores.update(run=run), 'r') as f:
             auto_scores = json_tricks.load(f)
 
@@ -220,8 +220,6 @@ def run_report(cfg, subject, session=None):
     fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
                                             extension='.h5')
 
-    fs_subject = config.get_fs_subject(subject)
-
     title = f'sub-{subject}'
     if session is not None:
         title += f', ses-{session}'
@@ -229,7 +227,7 @@ def run_report(cfg, subject, session=None):
         title += f', task-{cfg.task}'
 
     params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
-                                  subject=fs_subject, title=title)
+                                  subject=cfg.fs_subject, title=title)
     if op.exists(fname_trans):
         params['subjects_dir'] = cfg.fs_subjects_dir
 
@@ -365,7 +363,7 @@ def run_report(cfg, subject, session=None):
         # We can only plot the coregistration if we have a valid 3d backend.
         if mne.viz.get_3d_backend() is not None:
             fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                         subject=fs_subject,
+                                         subject=cfg.fs_subject,
                                          subjects_dir=cfg.fs_subjects_dir,
                                          meg=True, dig=True, eeg=True)
             rep.add_figs_to_section(figs=fig, captions='Coregistration',
@@ -400,7 +398,7 @@ def run_report(cfg, subject, session=None):
 
             if op.exists(str(fname_stc) + "-lh.stc"):
                 stc = mne.read_source_estimate(fname_stc,
-                                               subject=fs_subject)
+                                               subject=cfg.fs_subject)
                 _, peak_time = stc.get_peak()
 
                 # Plot using 3d backend if available, and use Matplotlib
@@ -677,9 +675,8 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
+        runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
@@ -697,10 +694,10 @@ def get_config(
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
         inverse_method=config.inverse_method,
+        fs_subject=config.get_fs_subject(subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -711,17 +708,17 @@ def main():
     msg = 'Running Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
 
-    cfg = get_config()
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg, subject, session) for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+    parallel(run_func(get_config(), subject, session) for subject, session in
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
-    sessions = cfg.sessions
+    sessions = config.get_sessions()
     if not sessions:
         sessions = [None]
 
     for session in sessions:
-        run_report_average(cfg=cfg, session=session)
+        run_report_average(cfg=get_config(), session=session)
 
 
 if __name__ == '__main__':

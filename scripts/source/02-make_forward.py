@@ -16,8 +16,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
-from config import (gen_log_message, on_error, failsafe_run, get_runs,
-                    get_fs_subject)
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -60,18 +59,16 @@ def run_forward(cfg, subject, session=None):
                                 session=session))
 
     trans = get_head_mri_trans(
-        bids_path.copy().update(run=get_runs(subject=subject)[0],
+        bids_path.copy().update(run=cfg.runs[0],
                                 root=cfg.bids_root),
         t1_bids_path=t1_bids_path)
     mne.write_trans(fname_trans, trans)
-
-    fs_subject = get_fs_subject(subject)
 
     # Create the source space.
     msg = 'Creating source space'
     logger.info(gen_log_message(message=msg, step=10, subject=subject,
                                 session=session))
-    src = mne.setup_source_space(subject=fs_subject,
+    src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
                                  add_dist=False,
@@ -89,7 +86,7 @@ def run_forward(cfg, subject, session=None):
         conductivity = (0.3,)
 
     try:
-        bem_model = mne.make_bem_model(subject=fs_subject,
+        bem_model = mne.make_bem_model(subject=cfg.fs_subject,
                                        subjects_dir=cfg.fs_subjects_dir,
                                        ico=4, conductivity=conductivity)
     except FileNotFoundError:
@@ -117,22 +114,20 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
+        runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        run_source_estimation=config.run_source_estimation,
         mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
         spacing=config.spacing,
         ch_types=config.ch_types,
+        fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -142,17 +137,16 @@ def main():
     msg = 'Running Step 10: Create forward solution'
     logger.info(gen_log_message(step=10, message=msg))
 
-    cfg = get_config()
-
-    if not cfg.run_source_estimation:
+    if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(gen_log_message(step=10, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_forward, n_jobs=cfg.N_JOBS)
+    parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
     parallel(run_func(get_config(), subject, session)
              for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 10: Create forward solution'
     logger.info(gen_log_message(step=10, message=msg))

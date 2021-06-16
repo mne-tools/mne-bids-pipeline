@@ -95,20 +95,16 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         proc=config.proc,
-        run_source_estimation=config.run_source_estimation,
         noise_cov=config.noise_cov,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
         deriv_root=config.get_deriv_root(),
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -118,17 +114,16 @@ def main():
     msg = 'Running Step 11: Estimate noise covariance'
     logger.info(gen_log_message(step=11, message=msg))
 
-    cfg = get_config()
-
-    if not cfg.run_source_estimation:
+    if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(gen_log_message(step=11, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_covariance, n_jobs=cfg.N_JOBS)
+    parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
     parallel(run_func(get_config(), subject, session)
              for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 11: Estimate noise covariance'
     logger.info(gen_log_message(step=11, message=msg))

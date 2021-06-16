@@ -119,8 +119,6 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -136,7 +134,6 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=config.eeg_reference,
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -147,14 +144,12 @@ def main():
     msg = 'Running Step 7: Sliding estimator'
     logger.info(gen_log_message(step=7, message=msg))
 
-    cfg = get_config()
-
-    if not cfg.contrasts:
+    if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(gen_log_message(step=7, message=msg))
         return
 
-    if not cfg.decode:
+    if not config.decode:
         msg = 'No decoding requested by user.'
         logger.info(gen_log_message(step=7, message=msg))
         return
@@ -162,12 +157,13 @@ def main():
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
 
-    for subject in cfg.subjects:
-        for session in cfg.sessions:
-            for contrast in cfg.contrasts:
+    for subject in config.get_subjects():
+        for session in config.get_sessions():
+            for contrast in config.contrasts:
                 cond_1, cond_2 = contrast
-                run_time_decoding(cfg=cfg, subject=subject, condition1=cond_1,
-                                  condition2=cond_2, session=session)
+                run_time_decoding(cfg=get_config(), subject=subject,
+                                  condition1=cond_1, condition2=cond_2,
+                                  session=session)
 
     msg = 'Completed Step 7: Sliding estimator'
     logger.info(gen_log_message(step=7, message=msg))

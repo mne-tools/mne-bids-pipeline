@@ -84,8 +84,6 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -97,7 +95,6 @@ def get_config(
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
         eeg_reference=config.eeg_reference,
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -107,14 +104,12 @@ def main():
     msg = 'Running Step 8: Time-frequency decomposition'
     logger.info(gen_log_message(message=msg, step=8))
 
-    cfg = get_config()
-
     parallel, run_func, _ = parallel_func(run_time_frequency,
-                                          n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg, subject, session)
+                                          n_jobs=config.N_JOBS)
+    parallel(run_func(get_config(), subject, session)
              for subject, session in
-             itertools.product(cfg.subjects,
-                               cfg.sessions))
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 8: Time-frequency decomposition'
     logger.info(gen_log_message(message=msg, step=8))

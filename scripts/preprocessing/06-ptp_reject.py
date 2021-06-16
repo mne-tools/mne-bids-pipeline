@@ -75,8 +75,6 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -86,9 +84,7 @@ def get_config(
         reject=config.get_reject(),
         reject_tmin=config.reject_tmin,
         reject_tmax=config.reject_tmax,
-        spatial_filter=config.spatial_filter,
         deriv_root=config.get_deriv_root(),
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
@@ -99,11 +95,10 @@ def main():
     msg = 'Running Step 6: Reject epochs based on peak-to-peak amplitude'
     logger.info(gen_log_message(step=6, message=msg))
 
-    cfg = get_config()
-    parallel, run_func, _ = parallel_func(drop_ptp,
-                                          n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg, subject, session) for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+    parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.N_JOBS)
+    parallel(run_func(get_config(), subject, session) for subject, session in
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 6: Reject epochs based on peak-to-peak amplitude'
     logger.info(gen_log_message(step=6, message=msg))

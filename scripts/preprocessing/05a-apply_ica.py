@@ -138,28 +138,23 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
-        spatial_filter=config.spatial_filter,
-        subjects=config.get_subjects(),
-        sessions=config.get_sessions(),
-        N_JOBS=config.N_JOBS
     )
     return cfg
 
 
 def main():
     """Apply ICA."""
-    cfg = get_config()
-
-    if not cfg.spatial_filter == 'ica':
+    if not config.spatial_filter == 'ica':
         return
 
     msg = 'Running Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))
 
-    parallel, run_func, _ = parallel_func(apply_ica, n_jobs=cfg.N_JOBS)
-    parallel(run_func(cfg, subject, session)
+    parallel, run_func, _ = parallel_func(apply_ica, n_jobs=config.N_JOBS)
+    parallel(run_func(get_config(), subject, session)
              for subject, session in
-             itertools.product(cfg.subjects, cfg.sessions))
+             itertools.product(config.get_subjects(),
+                               config.get_sessions()))
 
     msg = 'Completed Step 5: Apply ICA'
     logger.info(gen_log_message(step=5, message=msg))

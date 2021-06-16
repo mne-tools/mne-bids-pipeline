@@ -712,7 +712,7 @@ def main():
         run_func(get_config(subject=subject), subject, session)
         for subject, session in
         itertools.product(config.get_subjects(),
-                        config.get_sessions())
+                          config.get_sessions())
     )
 
     sessions = config.get_sessions()

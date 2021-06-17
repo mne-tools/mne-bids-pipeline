@@ -19,9 +19,8 @@ conditions = ['Auditory/Left',
 epochs_tmin = -0.2
 epochs_tmax = 0.5
 baseline = (None, 0)
-reject = dict(mag=3000e-15,
-              grad=3000e-13)
-
+ica_reject = dict(mag=3000e-15,
+                  grad=3000e-13)
 
 spatial_filter = 'ica'
 ica_algorithm = 'extended_infomax'

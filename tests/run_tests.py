@@ -70,6 +70,12 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'steps': ('source/make_bem_surfaces',),
         'env': {}
     },
+    'ds000248_no_mri': {
+        'dataset': 'ds000248_no_mri',
+        'config': 'config_ds000248_no_mri.py',
+        'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'env': {}
+    },
     'ds001810': {
         'dataset': 'ds001810',
         'config': 'config_ds001810.py',

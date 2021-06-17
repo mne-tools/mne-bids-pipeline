@@ -150,6 +150,7 @@ jobs:
             python ~/project/tests/download_test_data.py -d ds000248_ica
             python ~/project/tests/download_test_data.py -d ds000248_FLASH_BEM
             python ~/project/tests/download_test_data.py -d ds000248_T1_BEM
+            python ~/project/tests/download_test_data.py -d ds000248_no_mri
       - save_cache:
           key: data-cache-ds000248-{{ .Revision }}
           paths:
@@ -157,6 +158,7 @@ jobs:
             - ~/mne_data/ds000248_ica
             - ~/mne_data/ds000248_T1_BEM
             - ~/mne_data/ds000248_FLASH_BEM
+            - ~/mne_data/ds000248_no_mri
 
   cache_ds001810:
     <<: *imageconfig
@@ -404,6 +406,23 @@ jobs:
             python tests/run_tests.py --download=0 ds000248_T1_BEM
           no_output_timeout: 20m
 
+  test_ds000248_no_mri:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-{{ .Revision }}
+      - run:
+          name: test with template MRI
+          command: |
+            python tests/run_tests.py --download=0 ds000248_no_mri
+  
   test_ds001810:
     <<: *imageconfig
     steps:

@@ -109,6 +109,14 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
         ],
     },
+    'ds000248_no_mri': {
+        'git': '',
+        'openneuro': 'ds000248',
+        'osf': '',
+        'web': '',
+        'include': ['derivatives/freesurfer/subjects/sub-01'],
+        'exclude': ['derivatives/freesurfer'],
+    },
     'ds000117': {
         'git': '',
         'openneuro': 'ds000117',

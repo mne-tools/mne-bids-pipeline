@@ -120,3 +120,7 @@ authors:
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config
   files.
   ({{ gh(340) }} by {{ authors.crsegerie }})
+- We now reject bad epochs trespassing `ica_reject` before plotting the 
+  figures in the `proc-ica_report`.
+  ({{ gh(?) }} by {{ authors.hoechenberger }}), {{ authors.agramfort }} and 
+  {{ authors.crsegerie }})

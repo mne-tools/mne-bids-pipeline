@@ -57,6 +57,8 @@ def apply_ica(cfg, subject, session):
     # Load epochs to reject ICA components.
     epochs = mne.read_epochs(fname_epo_in, preload=True)
 
+    epochs.drop_bad(cfg.ica_reject)
+
     msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
     logger.info(gen_log_message(message=msg, step=5, subject=subject,
                                 session=session))
@@ -138,6 +140,7 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
+        ica_reject=config.ica_reject,
     )
     return cfg
 

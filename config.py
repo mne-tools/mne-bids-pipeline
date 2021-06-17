@@ -459,7 +459,7 @@ period as bad.
 
 t_break_annot_stop_before_next_event: float = 5.
 """
-Similarly to how 
+Similarly to how
 [`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
 controls the "gap" between beginning of the break period and `BAD_break`
 annotation onset,  this parameter controls how far the annotation should extend
@@ -2576,7 +2576,6 @@ def _find_breaks_func(
                                 session=session, run=run))
 
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
-
 
 
 # # Leave this here for reference for now

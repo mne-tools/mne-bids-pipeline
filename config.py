@@ -1361,10 +1361,11 @@ mne_log_level: Literal['info', 'error'] = 'error'
 Set the MNE-Python logging verbosity.
 """
 
-on_error: Literal['continue', 'abort'] = 'abort'
+on_error: Literal['continue', 'abort', 'debug'] = 'abort'
 """
-Whether to abort processing as soon as an error occurs, or whether to
-continue with all other processing steps for as long as possible.
+Whether to abort processing as soon as an error occurs, continue with all other
+processing steps for as long as possible, or drop you into a debugger in case
+of an error.
 """
 
 ###############################################################################

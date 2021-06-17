@@ -1041,7 +1041,7 @@ run_source_estimation: bool = True
 Whether to run source estimation processing steps if not explicitly requested.
 """
 
-use_mri_template: bool = False
+use_template_mri: bool = False
 """
 Whether to use FreeSurfer's `fsaverage` subject as MRI template. This may
 come in handy if you don't haver individual MR scans of your participants, as
@@ -1900,7 +1900,7 @@ def get_channels_to_analyze(info) -> List[str]:
 def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
 
-    if use_mri_template:
+    if use_template_mri:
         return 'fsaverage'
 
     if (pathlib.Path(subjects_dir) / subject).exists():

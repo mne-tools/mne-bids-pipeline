@@ -119,7 +119,7 @@ def run_forward(cfg, subject, session=None):
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_fwd = bids_path.copy().update(suffix='fwd')
 
-    if cfg.use_mri_template:
+    if cfg.use_template_mri:
         src, trans, bem_sol = _prepare_forward_fsaverage(cfg)
     else:
         src, trans, bem_sol = _prepare_forward(cfg, bids_path, fname_trans)
@@ -150,7 +150,7 @@ def get_config(
         mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
         spacing=config.spacing,
-        use_mri_template=config.use_mri_template,
+        use_template_mri=config.use_template_mri,
         ch_types=config.ch_types,
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),

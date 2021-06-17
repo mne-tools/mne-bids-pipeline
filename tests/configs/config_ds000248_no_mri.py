@@ -15,4 +15,4 @@ ch_types = ['meg']
 use_maxwell_filter = False
 process_er = False
 
-use_mri_template = True
+use_template_mri = True

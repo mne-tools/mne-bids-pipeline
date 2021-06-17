@@ -126,7 +126,7 @@ def main():
         logger.info(gen_log_message(step=10, message=msg))
         return
 
-    if config.use_mri_template:
+    if config.use_template_mri:
         msg = '    … skipping BEM computating when using MRI template.'
         logger.info(gen_log_message(step=10, message=msg))
         return

@@ -210,7 +210,7 @@ def run_report(cfg, subject, session=None):
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
-    if cfg.use_mri_template:
+    if cfg.use_template_mri:
         fname_trans = 'fsaverage'
         has_trans = True
     else:
@@ -702,7 +702,7 @@ def get_config(
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
-        use_mri_template=config.use_mri_template,
+        use_template_mri=config.use_template_mri,
     )
     return cfg
 

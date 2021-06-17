@@ -52,6 +52,9 @@ decode = True
 
 ica_reject = dict(eeg=350e-6, eog=500e-6)
 reject = dict(eeg=150e-6)
+# Work around https://github.com/mne-tools/mne-python/issues/9483
+# Once resolved, remove the following line
+reject['eog'] = ica_reject['eog']
 
 spatial_filter = 'ica'
 ica_max_iterations = 1000

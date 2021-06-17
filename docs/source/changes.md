@@ -122,5 +122,5 @@ authors:
   ({{ gh(340) }} by {{ authors.crsegerie }})
 - We now reject bad epochs by using [`ica_reject`][config.ica_reject] before 
   producing the "overlay" plots that show the evoked data before and after 
-  ICA cleaning. in the `proc-ica_report`.
+  ICA cleaning in the `proc-ica_report`.
   ({{ gh(385) }} by {{ authors.crsegerie }}).

@@ -1043,7 +1043,9 @@ Whether to run source estimation processing steps if not explicitly requested.
 
 use_mri_template: bool = False
 """
-Whether to use fsaverage subject as MRI template.
+Whether to use FreeSurfer's `fsaverage` subject as MRI template. This may
+come in handy if you don't haver individual MR scans of your participants, as
+is often the case in EEG studies.
 """
 
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'

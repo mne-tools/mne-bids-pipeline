@@ -1,10 +1,9 @@
 """
-MNE Sample Data
+MNE Sample Data: Using the `fsaverage` template MRI.
 """
 
 study_name = 'ds000248'
-bids_root = '~/mne_data/ds000248'
-deriv_root = '~/mne_data/ds000248/derivatives/mne-bids-pipeline-no-mri'
+bids_root = '~/mne_data/ds000248_no_mri'
 
 subjects = ['01']
 rename_events = {'Smiley': 'Emoji',

@@ -219,6 +219,10 @@ def get_config(
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         reference_run=config.get_mf_reference_run(),
         drop_channels=config.drop_channels,
+        find_breaks=config.find_breaks,
+        min_break_duration=config.min_break_duration,
+        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,
+        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,
     )
     return cfg
 

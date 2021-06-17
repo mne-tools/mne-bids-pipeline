@@ -114,8 +114,8 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000248',
         'osf': '',
         'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': ['derivatives/freesurfer'],
+        'include': ['derivatives/freesurfer'],
+        'exclude': [],
     },
     'ds000117': {
         'git': '',

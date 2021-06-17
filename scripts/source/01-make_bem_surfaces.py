@@ -126,6 +126,11 @@ def main():
         logger.info(gen_log_message(step=10, message=msg))
         return
 
+    if config.use_mri_template:
+        msg = '    … skipping BEM computating when using MRI template.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(make_bem, n_jobs=config.N_JOBS)
     parallel(run_func(get_config(subject=subject), subject)
              for subject in config.get_subjects())

@@ -1041,6 +1041,11 @@ run_source_estimation: bool = True
 Whether to run source estimation processing steps if not explicitly requested.
 """
 
+use_mri_template: bool = False
+"""
+Whether to use fsaverage subject as MRI template.
+"""
+
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
 """
 Which types of MRI images to use when creating the BEM model.
@@ -1892,6 +1897,9 @@ def get_channels_to_analyze(info) -> List[str]:
 
 def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
+
+    if use_mri_template:
+        return 'fsaverage'
 
     if (pathlib.Path(subjects_dir) / subject).exists():
         return subject

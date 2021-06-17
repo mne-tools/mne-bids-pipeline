@@ -13,6 +13,7 @@ from typing import Optional
 import mne
 from mne.utils import BunchConst
 from mne.parallel import parallel_func
+from mne.datasets import fetch_fsaverage
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
@@ -21,32 +22,32 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
-def run_forward(cfg, subject, session=None):
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+def _prepare_forward_fsaverage(cfg):
+    assert cfg.fs_subject == 'fsaverage'
+    trans = 'fsaverage'  # MNE has a built-in fsaverage transformation
+    src = mne.setup_source_space(subject='fsaverage',
+                                 subjects_dir=cfg.fs_subjects_dir,
+                                 spacing=cfg.spacing,
+                                 add_dist=False,
+                                 n_jobs=cfg.N_JOBS)
+    bem_sol = cfg.fs_subjects_dir / 'fsaverage' / \
+        'bem' / 'fsaverage-5120-5120-5120-bem-sol.fif'
+    if not bem_sol.exists():
+        fetch_fsaverage(cfg.fs_subjects_dir)
+    return src, trans, str(bem_sol)
 
-    fname_evoked = bids_path.copy().update(suffix='ave')
-    fname_trans = bids_path.copy().update(suffix='trans')
-    fname_fwd = bids_path.copy().update(suffix='fwd')
 
+def _prepare_forward(cfg, bids_path, fname_trans):
     # Generate a head ↔ MRI transformation matrix from the
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
+    subject, session = bids_path.subject, bids_path.session
+
     if cfg.mri_t1_path_generator is None:
         t1_bids_path = None
     else:
-        t1_bids_path = BIDSPath(subject=bids_path.subject,
-                                session=bids_path.session,
+        t1_bids_path = BIDSPath(subject=subject,
+                                session=session,
                                 root=cfg.bids_root)
         t1_bids_path = cfg.mri_t1_path_generator(t1_bids_path.copy())
         if t1_bids_path.suffix is None:
@@ -98,6 +99,31 @@ def run_forward(cfg, subject, session=None):
         raise FileNotFoundError(message)
 
     bem_sol = mne.make_bem_solution(bem_model)
+    return src, trans, bem_sol
+
+
+@failsafe_run(on_error=on_error)
+def run_forward(cfg, subject, session=None):
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         run=None,
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         extension='.fif',
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
+                         check=False)
+
+    fname_evoked = bids_path.copy().update(suffix='ave')
+    fname_trans = bids_path.copy().update(suffix='trans')
+    fname_fwd = bids_path.copy().update(suffix='fwd')
+
+    if cfg.use_mri_template:
+        src, trans, bem_sol = _prepare_forward_fsaverage(cfg)
+    else:
+        src, trans, bem_sol = _prepare_forward(cfg, bids_path, fname_trans)
 
     # Finally, calculate and save the forward solution.
     msg = 'Calculating forward solution'
@@ -123,6 +149,7 @@ def get_config(
         mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
         spacing=config.spacing,
+        use_mri_template=config.use_mri_template,
         ch_types=config.ch_types,
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),

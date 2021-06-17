@@ -63,7 +63,6 @@ def _prepare_forward(cfg, bids_path, fname_trans):
         bids_path.copy().update(run=cfg.runs[0],
                                 root=cfg.bids_root),
         t1_bids_path=t1_bids_path)
-    mne.write_trans(fname_trans, trans)
 
     # Create the source space.
     msg = 'Creating source space'
@@ -132,6 +131,8 @@ def run_forward(cfg, subject, session=None):
     info = mne.io.read_info(fname_evoked)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=cfg.mindist)
+
+    mne.write_trans(fname_trans, fwd['mri_head_t'])
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
 
 

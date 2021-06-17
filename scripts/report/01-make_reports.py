@@ -239,7 +239,7 @@ def run_report(cfg, subject, session=None):
     rep = mne.Report(**params)
     rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
                                       verbose=False)
-    if has_trans:
+    if not has_trans:
         rep_kwargs['render_bem'] = False
 
     if cfg.task is not None:

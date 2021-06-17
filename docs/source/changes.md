@@ -122,5 +122,4 @@ authors:
   ({{ gh(340) }} by {{ authors.crsegerie }})
 - We now reject bad epochs by using `ica_reject` before plotting the 
   figures in the `proc-ica_report`.
-  ({{ gh(?) }} by {{ authors.hoechenberger }}), {{ authors.agramfort }} and 
-  {{ authors.crsegerie }})
+  ({{ gh(385) }} by {{ authors.crsegerie }})

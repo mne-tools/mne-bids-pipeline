@@ -81,6 +81,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'dataset': 'ds000248_no_mri',
         'config': 'config_ds000248_no_mri.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'task': None,
         'env': {}
     },
     'ds001810': {

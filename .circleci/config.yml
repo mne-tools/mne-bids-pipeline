@@ -421,8 +421,20 @@ jobs:
       - run:
           name: test with template MRI
           command: |
-            python tests/run_tests.py --download=0 ds000248_no_mri
-  
+            export DS=ds000248_no_mri
+            python tests/run_tests.py --download=0 ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
+        - store_artifacts:
+          path: /home/circleci/reports/ds000248_no_mri
+          destination: reports/ds000248_no_mri
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/ds000248_no_mri/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000248_no_mri/derivatives/mne-bids-pipeline/*/*/*.tsv
+
   test_ds001810:
     <<: *imageconfig
     steps:

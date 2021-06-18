@@ -21,7 +21,10 @@ else:
 
 import coloredlogs
 import numpy as np
+import pandas as pd
+import json_tricks
 import mne
+from mne_bids import BIDSPath, read_raw_bids
 from mne_bids.path import get_entity_vals
 
 PathLike = Union[str, pathlib.Path]
@@ -379,6 +382,106 @@ itself, nor to the source analysis stage.
 """
 
 ###############################################################################
+# BREAK DETECTION
+# ---------------
+
+find_breaks: bool = True
+"""
+During an experimental run, the recording might be interrupted by breaks of
+various durations, e.g. to allow the participant to stretch, blink, and swallow
+freely. During these periods, large-scale artifacts are often picked up by the
+recording system. These artifacts can impair certain stages of processing, e.g.
+the peak-detection algorithms we use to find EOG and ECG activity. In some
+cases, even the bad channel detection algorithms might not function optimally.
+It is therefore advisable to mark such break periods for exclusion at early
+processing stages.
+
+If `True`, try to mark breaks by finding segments of the data where no
+exprimental events have occurred. This will then add annotations with the
+description `BAD_break` to the continuous data, causing these segments to be
+ignored in all following processing steps.
+
+???+ example "Example"
+    Automatically find break periods, and annotate them as `BAD_break`.
+    ```python
+    find_breaks = True
+    ```
+
+    Disable break detection.
+    ```python
+    find_breaks = False
+    ```
+"""
+
+min_break_duration: float = 15.
+"""
+The minimal duration (in seconds) of a data segment without any experimental
+events for it to be considered a "break". Note that the minimal duration of the
+generated `BAD_break` annotation will typically be smaller than this, as by
+default, the annotation will not extend across the entire break.
+See [`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
+and [`t_break_annot_stop_before_next_event`][config.t_break_annot_stop_before_next_event]
+to control this behavior.
+
+???+ example "Example"
+    Periods between two consecutive experimental events must span at least
+    `15` seconds for this period to be considered a "break".
+    ```python
+    min_break_duration = 15.
+    ```
+"""
+
+t_break_annot_start_after_previous_event: float = 5.
+"""
+Once a break of at least [`min_break_duration`][configmin_break_duration]
+seconds has been discovered, we generate a `BAD_break` annotation that does not
+necessarily span the entire break period. Instead, you will typically want to
+start it some time after the last event before the break period, as to not
+unnecessarily discard brain activity immediately following that event.
+
+This parameter controls how much time (in seconds) should pass after the last
+pre-break event before we start annotating the following segment of the break
+period as bad.
+
+???+ example "Example"
+    Once a break period has been detected, add a `BAD_break` annotation to it,
+    starting `5` seconds after the latest pre-break event.
+    ```python
+    t_break_annot_start_after_previous_event = 5.
+    ```
+
+    Start the `BAD_break` annotation immediately after the last pre-break
+    event.
+    ```python
+    t_break_annot_start_after_previous_event = 0.
+    ```
+"""
+
+t_break_annot_stop_before_next_event: float = 5.
+"""
+Similarly to how
+[`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
+controls the "gap" between beginning of the break period and `BAD_break`
+annotation onset,  this parameter controls how far the annotation should extend
+toward the first experimental event immediately following the break period
+(in seconds). This can help not to waste a post-break trial by marking its
+pre-stimulus period as bad.
+
+???+ example "Example"
+    Once a break period has been detected, add a `BAD_break` annotation to it,
+    starting `5` seconds after the latest pre-break event.
+    ```python
+    t_break_annot_start_after_previous_event = 5.
+    ```
+
+    Start the `BAD_break` annotation immediately after the last pre-break
+    event.
+    ```python
+    t_break_annot_start_after_previous_event = 0.
+    ```
+"""
+
+###############################################################################
 # MAXWELL FILTER PARAMETERS
 # -------------------------
 # done in 01-import_and_maxfilter.py
@@ -534,8 +637,8 @@ End time of the interpolation window in seconds.
 """
 
 ###############################################################################
-# FREQUENCY FILTERING
-# -------------------
+# FREQUENCY FILTERING & RESAMPLING
+# --------------------------------
 # done in 02-frequency_filter.py
 
 l_freq: Optional[float] = None
@@ -550,14 +653,10 @@ The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
 """
 
-###############################################################################
-# RESAMPLING
-# ----------
-
 resample_sfreq: Optional[float] = None
 """
 Specifies at which sampling frequency the data should be resampled.
-If None then no resampling will be done.
+If `None`, then no resampling will be done.
 
 ???+ example "Example"
     ```python
@@ -565,6 +664,10 @@ If None then no resampling will be done.
     resample_sfreq = 500  # resample to 500Hz
     ```
 """
+
+###############################################################################
+# DECIMATION
+# ----------
 
 decim: int = 1
 """
@@ -806,6 +909,8 @@ Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
 This allows you to remove strong transient artifacts, which could negatively
 affect ICA performance.
+
+This will also be applied to ECG and EOG epochs created during preprocessing.
 
 The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
 your data, and remove them. For this to work properly, it is recommended
@@ -1062,6 +1167,13 @@ found. If ``False``, the BEM surfaces are only created if they do not exist
 already. ``True`` forces their recreation, overwriting existing BEM surfaces.
 """
 
+recreate_scalp_surface: bool = False
+"""
+Whether to re-create the high-resolution scalp surface used for visualization
+of the coregistration in the report. If ``False``, the scalp surface is only
+created if it does not exist already. If ``True``, forces a re-computation.
+"""
+
 mri_t1_path_generator: Optional[Callable] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
@@ -1249,10 +1361,11 @@ mne_log_level: Literal['info', 'error'] = 'error'
 Set the MNE-Python logging verbosity.
 """
 
-on_error: Literal['continue', 'abort'] = 'abort'
+on_error: Literal['continue', 'abort', 'debug'] = 'abort'
 """
-Whether to abort processing as soon as an error occurs, or whether to
-continue with all other processing steps for as long as possible.
+Whether to abort processing as soon as an error occurs, continue with all other
+processing steps for as long as possible, or drop you into a debugger in case
+of an error.
 """
 
 ###############################################################################
@@ -1578,14 +1691,18 @@ def get_runs_all_subjects() -> dict:
     return subj_runs
 
 
-def get_intersect_run() -> list:
+def get_intersect_run() -> List[str]:
     """Returns the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects()
     return list(set.intersection(*map(set, subj_runs.values())))
 
 
-def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]]:
-    """Returns a list of runs.
+def get_runs(
+    *,
+    subject: str,
+    verbose: bool = False
+) -> Union[List[str], List[None]]:
+    """Returns a list of runs in the BIDS input data.
 
     Parameters
     ----------
@@ -1599,6 +1716,9 @@ def get_runs(subject: str, verbose: bool = False) -> Union[List[str], List[None]
     The list of runs of the subject. If no BIDS `run` entity could be found,
     returns `[None]`.
     """
+    if subject == 'average':  # Used when creating the report
+        return [None]
+
     runs_ = copy.deepcopy(runs)  # Avoid clash with global variable.
 
     subj_runs = get_runs_all_subjects()
@@ -1645,7 +1765,8 @@ if 'MKDOCS' not in os.environ:
     inter_runs = get_intersect_run()
     mf_ref_error = (
         (mf_reference_run is not None) and
-        (mf_reference_run not in inter_runs))
+        (mf_reference_run not in inter_runs)
+    )
     if mf_ref_error:
         msg = (f'You set mf_reference_run={mf_reference_run}, but your '
                f'dataset only contains the following runs: {inter_runs}')
@@ -1887,6 +2008,52 @@ def sanitize_cond_name(cond: str) -> str:
     return cond
 
 
+def get_mf_cal_fname(
+    subject: str,
+    session: str
+) -> pathlib.Path:
+    if mf_cal_fname is None:
+        mf_cal_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=get_bids_root())
+                        .meg_calibration_fpath)
+        if mf_cal_fpath is None:
+            raise ValueError('Could not find Maxwell Filter Calibration '
+                             'file.')
+    else:
+        mf_cal_fpath = pathlib.Path(mf_cal_fname).expanduser().absolute()
+        if not mf_cal_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter Calibration '
+                             f'file at {str(mf_cal_fpath)}.')
+
+    return mf_cal_fpath
+
+
+def get_mf_ctc_fname(
+    subject: str,
+    session: str
+) -> pathlib.Path:
+    if mf_ctc_fname is None:
+        mf_ctc_fpath = (BIDSPath(subject=subject,
+                                 session=session,
+                                 suffix='meg',
+                                 datatype='meg',
+                                 root=get_bids_root())
+                        .meg_crosstalk_fpath)
+        if mf_ctc_fpath is None:
+            raise ValueError('Could not find Maxwell Filter cross-talk '
+                             'file.')
+    else:
+        mf_ctc_fpath = pathlib.Path(mf_ctc_fname).expanduser().absolute()
+        if not mf_ctc_fpath.exists():
+            raise ValueError(f'Could not find Maxwell Filter cross-talk '
+                             f'file at {str(mf_ctc_fpath)}.')
+
+    return mf_ctc_fpath
+
+
 def make_epochs(
     *,
     raw: mne.io.BaseRaw,
@@ -1960,3 +2127,473 @@ def annotations_to_events(
     }
 
     return event_name_to_code_map
+
+
+def _rename_events_func(cfg, raw, subject, session) -> None:
+    """Rename events (actually, annotations descriptions) in ``raw``.
+
+    Modifies ``raw`` in-place.
+    """
+    if not cfg.rename_events:
+        return
+
+    # Check if the user requested to rename events that don't exist.
+    # We don't want this to go unnoticed.
+    event_names_set = set(raw.annotations.description)
+    rename_events_set = set(cfg.rename_events.keys())
+    events_not_in_raw = rename_events_set - event_names_set
+    if events_not_in_raw:
+        msg = (f'You requested to rename the following events, but '
+               f'they are not present in the BIDS input data:\n'
+               f'{", ".join(sorted(list(events_not_in_raw)))}')
+        if on_rename_missing_events == 'warn':
+            logger.warning(msg)
+        else:
+            raise ValueError(msg)
+
+    # Do the actual event renaming.
+    msg = 'Renaming events …'
+    logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                session=session))
+    descriptions = list(raw.annotations.description)
+    for old_event_name, new_event_name in cfg.rename_events.items():
+        msg = f'… {old_event_name} -> {new_event_name}'
+        logger.info(gen_log_message(message=msg, step=0,
+                                    subject=subject, session=session))
+        for idx, description in enumerate(descriptions.copy()):
+            if description == old_event_name:
+                descriptions[idx] = new_event_name
+
+    descriptions = np.asarray(descriptions, dtype=str)
+    raw.annotations.description = descriptions
+
+
+def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
+    """Find and mark bad MEG channels.
+
+    Modifies ``raw`` in-place.
+    """
+    if not (cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg):
+        return
+
+    if (cfg.find_flat_channels_meg and
+            not cfg.find_noisy_channels_meg):
+        msg = 'Finding flat channels.'
+    elif (cfg.find_noisy_channels_meg and
+            not cfg.find_flat_channels_meg):
+        msg = 'Finding noisy channels using Maxwell filtering.'
+    else:
+        msg = ('Finding flat channels, and noisy channels using '
+               'Maxwell filtering.')
+
+    logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                session=session))
+
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=task,
+                         run=run,
+                         acquisition=acq,
+                         processing=proc,  # XXX : what is proc?
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         suffix=cfg.datatype,
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root)
+
+    auto_noisy_chs, auto_flat_chs, auto_scores = \
+        mne.preprocessing.find_bad_channels_maxwell(
+            raw=raw,
+            calibration=cfg.mf_cal_fname,
+            cross_talk=cfg.mf_ctc_fname,
+            origin=mf_head_origin,
+            coord_frame='head',
+            return_scores=True
+        )
+
+    preexisting_bads = raw.info['bads'].copy()
+    bads = preexisting_bads.copy()
+
+    if find_flat_channels_meg:
+        msg = f'Found {len(auto_flat_chs)} flat channels.'
+        logger.info(gen_log_message(message=msg, step=0,
+                                    subject=subject, session=session))
+        bads.extend(auto_flat_chs)
+    if find_noisy_channels_meg:
+        msg = f'Found {len(auto_noisy_chs)} noisy channels.'
+        logger.info(gen_log_message(message=msg, step=0,
+                                    subject=subject, session=session))
+        bads.extend(auto_noisy_chs)
+
+    bads = sorted(set(bads))
+    raw.info['bads'] = bads
+    msg = f'Marked {len(raw.info["bads"])} channels as bad.'
+    logger.info(gen_log_message(message=msg, step=0,
+                                subject=subject, session=session))
+
+    if find_noisy_channels_meg:
+        auto_scores_fname = bids_path.copy().update(
+            suffix='scores', extension='.json', check=False)
+        with open(auto_scores_fname, 'w') as f:
+            json_tricks.dump(auto_scores, fp=f, allow_nan=True,
+                             sort_keys=False)
+
+        if interactive:
+            import matplotlib.pyplot as plt
+            plot_auto_scores(auto_scores)
+            plt.show()
+
+    # Write the bad channels to disk.
+    bads_tsv_fname = bids_path.copy().update(suffix='bads',
+                                             extension='.tsv',
+                                             check=False)
+    bads_for_tsv = []
+    reasons = []
+
+    if find_flat_channels_meg:
+        bads_for_tsv.extend(auto_flat_chs)
+        reasons.extend(['auto-flat'] * len(auto_flat_chs))
+        preexisting_bads = set(preexisting_bads) - set(auto_flat_chs)
+
+    if find_noisy_channels_meg:
+        bads_for_tsv.extend(auto_noisy_chs)
+        reasons.extend(['auto-noisy'] * len(auto_noisy_chs))
+        preexisting_bads = set(preexisting_bads) - set(auto_noisy_chs)
+
+    preexisting_bads = list(preexisting_bads)
+    if preexisting_bads:
+        bads_for_tsv.extend(preexisting_bads)
+        reasons.extend(['pre-existing (before MNE-BIDS-pipeline was run)'] *
+                       len(preexisting_bads))
+
+    tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
+    tsv_data = tsv_data.sort_values(by='name')
+    tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
+
+
+def _load_data(cfg, bids_path):
+    # read_raw_bids automatically
+    # - populates bad channels using the BIDS channels.tsv
+    # - sets channels types according to BIDS channels.tsv `type` column
+    # - sets raw.annotations using the BIDS events.tsv
+
+    subject = bids_path.subject
+    raw = read_raw_bids(bids_path=bids_path)
+
+    # Save only the channel types we wish to analyze (including the
+    # channels marked as "bad").
+    if not use_maxwell_filter:
+        picks = get_channels_to_analyze(raw.info)
+        raw.pick(picks)
+
+    _crop_data(cfg, raw=raw, subject=subject)
+
+    raw.load_data()
+    if hasattr(raw, 'fix_mag_coil_types'):
+        raw.fix_mag_coil_types()
+
+    return raw
+
+
+def _crop_data(cfg, raw, subject):
+    """Crop the data to the desired duration.
+
+    Modifies ``raw`` in-place.
+    """
+    if subject != 'emptyroom' and cfg.crop_runs is not None:
+        raw.crop(*crop_runs)
+
+
+def _drop_channels_func(cfg, raw, subject, session) -> None:
+    """Drop channels from the data.
+
+    Modifies ``raw`` in-place.
+    """
+    if cfg.drop_channels:
+        msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                    session=session))
+        raw.drop_channels(cfg.drop_channels)
+
+
+def _create_bipolar_channels(cfg, raw, subject, session) -> None:
+    """Create a channel from a bipolar referencing scheme..
+
+    Modifies ``raw`` in-place.
+    """
+    if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
+        msg = 'Creating bipolar channels …'
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                    session=session))
+        raw.load_data()
+        for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
+            msg = f'    {anode} – {cathode} -> {ch_name}'
+            logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                        session=session))
+            mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
+                                      ch_name=ch_name, drop_refs=False,
+                                      copy=False)
+        # If we created a new bipolar channel that the user wishes to
+        # # use as an EOG channel, it is probably a good idea to set its
+        # channel type to 'eog'. Bipolar channels, by default, don't have a
+        # location, so one might get unexpected results otherwise, as the
+        # channel would influence e.g. in GFP calculations, but not appear on
+        # topographic maps.
+        if (eog_channels and
+                any([eog_ch_name in cfg.eeg_bipolar_channels
+                     for eog_ch_name in eog_channels])):
+            msg = 'Setting channel type of new bipolar EOG channel(s) …'
+            logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                        session=session))
+        for eog_ch_name in eog_channels:
+            if eog_ch_name in cfg.eeg_bipolar_channels:
+                msg = f'    {eog_ch_name} -> eog'
+                logger.info(gen_log_message(message=msg, step=0,
+                                            subject=subject,
+                                            session=session))
+                raw.set_channel_types({eog_ch_name: 'eog'})
+
+
+def _set_eeg_montage(cfg, raw, subject, session) -> None:
+    """Set an EEG template montage if requested.
+
+    Modifies ``raw`` in-place.
+    """
+    montage_name = cfg.eeg_template_montage
+    if cfg.datatype == 'eeg' and montage_name:
+        msg = (f'Setting EEG channel locations to template montage: '
+               f'{montage_name}.')
+        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+                                    session=session))
+        montage = mne.channels.make_standard_montage(montage_name)
+        raw.set_montage(montage, match_case=False, on_missing='warn')
+
+
+def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
+    """Fix stimulation artifact in the data."""
+    if not cfg.fix_stim_artifact:
+        return
+
+    events, _ = mne.events_from_annotations(raw)
+    mne.preprocessing.fix_stim_artifact(
+        raw, events=events, event_id=None,
+        tmin=cfg.stim_artifact_tmin,
+        tmax=cfg.stim_artifact_tmax,
+        mode='linear'
+    )
+
+
+def import_experimental_data(
+    *,
+    cfg: dict,
+    subject: str,
+    session: Optional[str] = None,
+    run: Optional[str] = None,
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Run the data import.
+
+    Parameters
+    ----------
+    cfg : Bunch
+        The local configuration.
+    subject : str
+        The subject to import.
+    session : str | None
+        The session to import.
+    run : str | None
+        The run to import.
+    save : bool
+        Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw
+        The imported data.
+    """
+    bids_path_in = BIDSPath(subject=subject,
+                            session=session,
+                            run=run,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            processing=cfg.proc,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix=cfg.datatype,
+                            datatype=cfg.datatype,
+                            root=cfg.bids_root)
+    bids_path_out = bids_path_in.copy().update(suffix='raw',
+                                               extension='.fif',
+                                               root=cfg.deriv_root,
+                                               check=False)
+
+    raw = _load_data(cfg=cfg, bids_path=bids_path_in)
+    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session)
+    _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
+                             session=session)
+    _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
+                      run=run)
+    _fix_stim_artifact_func(cfg=cfg, raw=raw)
+    _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
+                       task=get_task(), run=run)
+
+    # Save the data.
+    if save:
+        raw.save(fname=bids_path_out, split_naming='bids', overwrite=True)
+
+    return raw
+
+
+def import_er_data(
+    *,
+    cfg: dict,
+    subject: str,
+    session: Optional[str] = None,
+    bads: List[str],
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Import empty-room data.
+
+    Parameters
+    ----------
+    cfg : Bunch
+        The local configuration.
+    subject
+        The subject for whom to import the empty-room data.
+    session
+        The session for which to import the empty-room data.
+    bads
+        The selection of bad channels from the corresponding experimental
+        recording.
+    save
+        Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw_er
+        The imported data.
+    """
+    bids_path_er_in = BIDSPath(
+        subject=subject,
+        session=session,
+        run=cfg.runs[0],
+        task=cfg.task,
+        acquisition=cfg.acq,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix=cfg.datatype,
+        datatype=cfg.datatype,
+        root=cfg.bids_root
+    ).find_empty_room()
+
+    bids_path_er_out = (bids_path_er_in.copy()
+                        .update(task='noise',
+                                run=None,
+                                suffix='raw',
+                                extension='.fif',
+                                root=cfg.deriv_root,
+                                check=False))
+
+    if bads is None:
+        bads = []
+
+    raw_er = _load_data(cfg, bids_path_er_in)
+    _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
+
+    # Set same set of bads as in the experimental run, but only for MEG
+    # channels (because we won't have any others in empty-room recordings)
+    raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
+
+    # Save the data.
+    if save:
+        raw_er.save(fname=bids_path_er_out, split_naming='bids',
+                    overwrite=True)
+
+    return raw_er
+
+
+def get_reference_run_info(
+    *,
+    subject: str,
+    session: Optional[str] = None,
+    run: str
+) -> mne.Info:
+
+    msg = f'Loading info for run: {run}.'
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session, run=run))
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        run=run,
+        task=get_task(),
+        acquisition=acq,
+        recording=rec,
+        space=space,
+        suffix='meg',
+        extension='.fif',
+        datatype=get_datatype(),
+        root=get_bids_root(),
+    )
+
+    info = mne.io.read_info(bids_path)
+    return info
+
+
+def _find_breaks_func(
+    *,
+    cfg,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+) -> None:
+    if not cfg.find_breaks:
+        msg = 'Finding breaks has been disabled by the user.'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session, run=run))
+        return
+
+    msg = (f'Finding breaks with a mininum duration of '
+           f'{cfg.min_break_duration} seconds.')
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session, run=run))
+
+    break_annots = mne.preprocessing.annotate_break(
+        raw=raw,
+        min_break_duration=cfg.min_break_duration,
+        t_start_after_previous=cfg.t_break_annot_start_after_previous_event,
+        t_stop_before_next=cfg.t_break_annot_stop_before_next_event
+    )
+
+    msg = (f'Found and annotated '
+           f'{len(break_annots) if break_annots else "no"} break periods.')
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session, run=run))
+
+    raw.set_annotations(raw.annotations + break_annots)  # add to existing
+
+
+# # Leave this here for reference for now
+#
+# _preproc_funcs_path = (pathlib.Path(__file__).parent / 'scripts' /
+#                        'preprocessing' / 'common_functions.py')
+# _preproc_funcs = runpy.run_path(_preproc_funcs_path)
+# _preproc_funcs = {
+#     func_name: func
+#     for func_name, func in _preproc_funcs.items()
+#     if func in _preproc_funcs['exports']
+# }
+#
+#
+# class Funcs(TypedDict):
+#     preprocessing: Dict[str, Callable]
+#
+#
+# funcs = Funcs(
+#     preprocessing=_preproc_funcs
+# )

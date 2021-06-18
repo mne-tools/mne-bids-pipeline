@@ -40,6 +40,7 @@ nav:
     - Configuration Options:
         - General settings: settings/general.md
         - Preprocessing:
+            - Break detection: settings/preprocessing/breaks.md
             - Bad channel detection: settings/preprocessing/autobads.md
             - Maxwell filter: settings/preprocessing/maxfilter.md
             - Filtering & resampling:

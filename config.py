@@ -382,6 +382,106 @@ itself, nor to the source analysis stage.
 """
 
 ###############################################################################
+# BREAK DETECTION
+# ---------------
+
+find_breaks: bool = True
+"""
+During an experimental run, the recording might be interrupted by breaks of
+various durations, e.g. to allow the participant to stretch, blink, and swallow
+freely. During these periods, large-scale artifacts are often picked up by the
+recording system. These artifacts can impair certain stages of processing, e.g.
+the peak-detection algorithms we use to find EOG and ECG activity. In some
+cases, even the bad channel detection algorithms might not function optimally.
+It is therefore advisable to mark such break periods for exclusion at early
+processing stages.
+
+If `True`, try to mark breaks by finding segments of the data where no
+exprimental events have occurred. This will then add annotations with the
+description `BAD_break` to the continuous data, causing these segments to be
+ignored in all following processing steps.
+
+???+ example "Example"
+    Automatically find break periods, and annotate them as `BAD_break`.
+    ```python
+    find_breaks = True
+    ```
+
+    Disable break detection.
+    ```python
+    find_breaks = False
+    ```
+"""
+
+min_break_duration: float = 15.
+"""
+The minimal duration (in seconds) of a data segment without any experimental
+events for it to be considered a "break". Note that the minimal duration of the
+generated `BAD_break` annotation will typically be smaller than this, as by
+default, the annotation will not extend across the entire break.
+See [`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
+and [`t_break_annot_stop_before_next_event`][config.t_break_annot_stop_before_next_event]
+to control this behavior.
+
+???+ example "Example"
+    Periods between two consecutive experimental events must span at least
+    `15` seconds for this period to be considered a "break".
+    ```python
+    min_break_duration = 15.
+    ```
+"""
+
+t_break_annot_start_after_previous_event: float = 5.
+"""
+Once a break of at least [`min_break_duration`][configmin_break_duration]
+seconds has been discovered, we generate a `BAD_break` annotation that does not
+necessarily span the entire break period. Instead, you will typically want to
+start it some time after the last event before the break period, as to not
+unnecessarily discard brain activity immediately following that event.
+
+This parameter controls how much time (in seconds) should pass after the last
+pre-break event before we start annotating the following segment of the break
+period as bad.
+
+???+ example "Example"
+    Once a break period has been detected, add a `BAD_break` annotation to it,
+    starting `5` seconds after the latest pre-break event.
+    ```python
+    t_break_annot_start_after_previous_event = 5.
+    ```
+
+    Start the `BAD_break` annotation immediately after the last pre-break
+    event.
+    ```python
+    t_break_annot_start_after_previous_event = 0.
+    ```
+"""
+
+t_break_annot_stop_before_next_event: float = 5.
+"""
+Similarly to how
+[`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
+controls the "gap" between beginning of the break period and `BAD_break`
+annotation onset,  this parameter controls how far the annotation should extend
+toward the first experimental event immediately following the break period
+(in seconds). This can help not to waste a post-break trial by marking its
+pre-stimulus period as bad.
+
+???+ example "Example"
+    Once a break period has been detected, add a `BAD_break` annotation to it,
+    starting `5` seconds after the latest pre-break event.
+    ```python
+    t_break_annot_start_after_previous_event = 5.
+    ```
+
+    Start the `BAD_break` annotation immediately after the last pre-break
+    event.
+    ```python
+    t_break_annot_start_after_previous_event = 0.
+    ```
+"""
+
+###############################################################################
 # MAXWELL FILTER PARAMETERS
 # -------------------------
 # done in 01-import_and_maxfilter.py
@@ -1268,10 +1368,11 @@ mne_log_level: Literal['info', 'error'] = 'error'
 Set the MNE-Python logging verbosity.
 """
 
-on_error: Literal['continue', 'abort'] = 'abort'
+on_error: Literal['continue', 'abort', 'debug'] = 'abort'
 """
-Whether to abort processing as soon as an error occurs, or whether to
-continue with all other processing steps for as long as possible.
+Whether to abort processing as soon as an error occurs, continue with all other
+processing steps for as long as possible, or drop you into a debugger in case
+of an error.
 """
 
 ###############################################################################
@@ -2308,9 +2409,9 @@ def import_experimental_data(
         The local configuration.
     subject : str
         The subject to import.
-    session : str
+    session : str | None
         The session to import.
-    run : str
+    run : str | None
         The run to import.
     save : bool
         Whether to save the data to disk or not.
@@ -2338,9 +2439,12 @@ def import_experimental_data(
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
     _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session)
-    _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject, session=session)
+    _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
+                             session=session)
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
     _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
+                      run=run)
     _fix_stim_artifact_func(cfg=cfg, raw=raw)
     _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
                        task=get_task(), run=run)
@@ -2430,7 +2534,7 @@ def get_reference_run_info(
 
     msg = f'Loading info for run: {run}.'
     logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                session=session))
+                                session=session, run=run))
 
     bids_path = BIDSPath(
         subject=subject,
@@ -2448,6 +2552,40 @@ def get_reference_run_info(
 
     info = mne.io.read_info(bids_path)
     return info
+
+
+def _find_breaks_func(
+    *,
+    cfg,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+) -> None:
+    if not cfg.find_breaks:
+        msg = 'Finding breaks has been disabled by the user.'
+        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                    session=session, run=run))
+        return
+
+    msg = (f'Finding breaks with a mininum duration of '
+           f'{cfg.min_break_duration} seconds.')
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session, run=run))
+
+    break_annots = mne.preprocessing.annotate_break(
+        raw=raw,
+        min_break_duration=cfg.min_break_duration,
+        t_start_after_previous=cfg.t_break_annot_start_after_previous_event,
+        t_stop_before_next=cfg.t_break_annot_stop_before_next_event
+    )
+
+    msg = (f'Found and annotated '
+           f'{len(break_annots) if break_annots else "no"} break periods.')
+    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+                                session=session, run=run))
+
+    raw.set_annotations(raw.annotations + break_annots)  # add to existing
 
 
 # # Leave this here for reference for now

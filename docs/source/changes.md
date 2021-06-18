@@ -40,6 +40,11 @@ authors:
   speeds up processing by avoiding unncessary disk I/O and can help preserve
   large quantities of storage space for big datasets.
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
+- Break periods in the continuous data can now be automatically detected and
+  annotated as "bad" segments, which will be ignored during subsequent
+  processing. This feature is enabled by default and can be switched off via
+  the [`find_breaks`][config.find_breaks] setting.
+  ({{ gh(386) }} by {{ authors.hoechenberger }})
 - You can now use the FreeSurfer `fsaverage` template MRI for source estimation
   in cases where you don't have participant-specific MR scans available, as is
   often the case in EEG studies. The behavior can be enabled using the new
@@ -50,7 +55,7 @@ authors:
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
-  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
+  ({{ gh(348) }} by {{ authors.guiomar }} and {{ authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
@@ -125,3 +130,7 @@ authors:
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config
   files.
   ({{ gh(340) }} by {{ authors.crsegerie }})
+- We now reject bad epochs by using [`ica_reject`][config.ica_reject] before 
+  producing the "overlay" plots that show the evoked data before and after 
+  ICA cleaning in the `proc-ica_report`.
+  ({{ gh(385) }} by {{ authors.crsegerie }}).

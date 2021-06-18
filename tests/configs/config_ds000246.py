@@ -15,4 +15,4 @@ reject = dict(mag=4e-12, eog=250e-6)
 conditions = ['standard', 'deviant', 'button']
 contrasts = [('deviant', 'standard')]
 decode = True
-on_error = 'debug'
+on_error = 'abort'

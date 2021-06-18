@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import argparse
 import runpy
-from typing import Collection, Dict
+from typing import Collection, Dict, Optional
 if sys.version_info >= (3, 8):
     from typing import TypedDict
 else:
@@ -29,6 +29,7 @@ class TestOptionsT(TypedDict):
     dataset: str
     config: str
     steps: Collection[str]
+    task: Optional[str]
     env: Dict[str, str]
 
 TEST_SUITE: Dict[str, TestOptionsT] = {
@@ -36,105 +37,122 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'dataset': 'ds003392',
         'config': 'config_ds003392.py',
         'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'ds000246': {
         'dataset': 'ds000246',
-        'config':'config_ds000246.py',
+        'config': 'config_ds000246.py',
         'steps': ('preprocessing',
                   'preprocessing/make_epochs',  # Test the group/step syntax
                   'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'ds000248': {
         'dataset': 'ds000248',
         'config': 'config_ds000248.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'task': None,
         'env': {}
     },
     'ds000248_ica': {
         'dataset': 'ds000248_ica',
         'config': 'config_ds000248_ica.py',
         'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'ds000248_T1_BEM': {
         'dataset': 'ds000248_T1_BEM',
         'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
+        'task': None,
         'env': {}
     },
     'ds000248_FLASH_BEM': {
         'dataset': 'ds000248_FLASH_BEM',
         'config': 'config_ds000248_FLASH_BEM.py',
         'steps': ('source/make_bem_surfaces',),
+        'task': None,
         'env': {}
     },
     'ds001810': {
         'dataset': 'ds001810',
         'config': 'config_ds001810.py',
         'steps': ('preprocessing', 'preprocessing', 'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'eeg_matchingpennies': {
         'dataset': 'eeg_matchingpennies',
         'config': 'config_eeg_matchingpennies.py',
         'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'ds003104': {
         'dataset': 'ds003104',
         'config': 'config_ds003104.py',
         'steps': ('preprocessing', 'sensor',  'source', 'report'),
+        'task': None,
         'env': {}
     },
     'ds000117': {
         'dataset': 'ds000117',
         'config': 'config_ds000117.py',
         'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
         'env': {}
     },
     'ERP_CORE_N400': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'N400'}
+        'task': 'N400',
+        'env': {}
     },
     'ERP_CORE_ERN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'ERN'}
+        'task': 'ERN',
+        'env': {}
     },
     'ERP_CORE_LRP': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'LRP'}
+        'task': 'LRP',
+        'env': {}
     },
     'ERP_CORE_MMN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'MMN'}
+        'task': 'MMN',
+        'env': {}
     },
     'ERP_CORE_N2pc': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'N2pc'}
+        'task': 'N2pc',
+        'env': {}
     },
     'ERP_CORE_N170': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'N170'}
+        'task': 'N170',
+        'env': {}
     },
     'ERP_CORE_P3': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
         'steps': ('preprocessing', 'sensor', 'report'),
-        'env': {'MNE_BIDS_STUDY_TASK': 'P3'}
+        'task': 'P3',
+        'env': {}
     }
 }
 
@@ -171,14 +189,19 @@ def run_tests(test_suite, download):
 
         # Run the tests.
         steps = test_options['steps']
+        task = test_options['task']
+
         run_script = study_template_dir / 'run.py'
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.
         argv_orig = sys.argv.copy()
         for step in steps:
-            sys.argv = [sys.argv[0],
-                        f'{step}',
-                        f'--config={config_path}']
+            sys.argv = [
+                sys.argv[0],
+                f'{step}',
+                f'--config={config_path}',
+                f'--task={task}' if task else ''
+            ]
             # We have to use run_path because run_module doesn't allow
             # relative imports.
             runpy.run_path(run_script, run_name='__main__')

@@ -10,6 +10,7 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
+import json
 import itertools
 import logging
 from typing import List, Optional, Iterable, Literal
@@ -53,7 +54,13 @@ def filter_for_ica(
         raw.filter(l_freq=cfg.ica_l_freq, h_freq=None)
 
 
-def fit_ica(cfg, epochs, subject, session):
+def fit_ica(
+    *,
+    cfg,
+    epochs: mne.BaseEpochs,
+    subject: str,
+    session: str,
+) -> mne.preprocessing.ICA:
     algorithm = cfg.ica_algorithm
     fit_params = None
 
@@ -86,7 +93,7 @@ def make_ecg_epochs(
     subject: str,
     session: str,
     run: Optional[str] = None
-) -> Optional[mne.Epochs]:
+) -> Optional[mne.BaseEpochs]:
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
     if ('ecg' in raw.get_channel_types() or 'meg' in cfg.ch_types or
             'mag' in cfg.ch_types):
@@ -94,8 +101,7 @@ def make_ecg_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # We will reject epochs only if ica_reject was specified.
-        ecg_epochs = create_ecg_epochs(raw, reject=cfg.ica_reject,
+        ecg_epochs = create_ecg_epochs(raw,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
 
@@ -117,13 +123,14 @@ def make_ecg_epochs(
 
 def make_eog_epochs(
     *,
-    cfg,
     raw: mne.io.BaseRaw,
     eog_channels: Optional[Iterable[str]],
     subject: str,
     session: str,
     run: Optional[str] = None
 ) -> Optional[mne.Epochs]:
+    """Create EOG epochs. No rejection thresholds will be applied.
+    """
     if eog_channels:
         ch_names = eog_channels
         assert all([ch_name in raw.ch_names
@@ -138,9 +145,7 @@ def make_eog_epochs(
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
 
-        # We will reject epochs only if ica_reject was specified.
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
-                                       reject=cfg.ica_reject,
                                        baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:
@@ -239,6 +244,9 @@ def run_ica(cfg, subject, session=None):
 
     raw_fname = bids_basename.copy().update(processing='filt', suffix='raw')
     ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')
+    ica_reject_fname = bids_basename.copy().update(processing='ica',
+                                                   suffix='ptp',
+                                                   extension='.json')
     ica_components_fname = bids_basename.copy().update(processing='ica',
                                                        suffix='components',
                                                        extension='.tsv')
@@ -273,7 +281,7 @@ def run_ica(cfg, subject, session=None):
 
         # EOG epochs
         eog_epochs = make_eog_epochs(
-            cfg=cfg, raw=raw, eog_channels=cfg.eog_channels,
+            raw=raw, eog_channels=cfg.eog_channels,
             subject=subject, session=session, run=run
         )
         if eog_epochs is not None:
@@ -338,17 +346,22 @@ def run_ica(cfg, subject, session=None):
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    # Reject epochs based on peak-to-peak amplitude
+    # Retrieve and store peak-to-peak rejection thresholds
     reject = config.get_ica_reject(epochs=epochs)
+    with ica_reject_fname.fpath.open('w', encoding='utf-8') as f:
+        json.dump(reject, f, indent=2)
+
+    # Reject epochs based on peak-to-peak amplitude
     epochs.drop_bad(reject=reject)
-    epochs_eog.drop_bad(reject=reject)
-    epochs_ecg.drop_bad(reject=reject)
+    if epochs_eog is not None:
+        epochs_eog.drop_bad(reject=reject)
+    if epochs_ecg is not None:
+        epochs_ecg.drop_bad(reject=reject)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-
     ica = fit_ica(cfg=cfg, epochs=epochs, subject=subject, session=session)
 
     # Start a report
@@ -415,9 +428,7 @@ def run_ica(cfg, subject, session=None):
 
     # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
     # for manual inspection.
-
-    epochs_fit = epochs.copy().drop_bad(reject=ica.reject_)
-    fig = epochs_fit.plot_drop_log()
+    fig = epochs.plot_drop_log(show=cfg.interactive)
     caption = 'Dropped epochs before fit'
     report.add_figs_to_section(fig, section=f'sub-{subject}',
                                captions=caption)

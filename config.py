@@ -906,7 +906,7 @@ ways using the configuration options you can find below.
 ica_reject: Optional[
     Union[Dict[str, float],
           Literal['autoreject_global']]
-    ] = None
+] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
@@ -1033,7 +1033,7 @@ false-alarm rate increases dramatically.
 reject: Optional[
     Union[Dict[str, float],
           Literal['autoreject_global']]
-    ] = None
+] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
@@ -1882,7 +1882,8 @@ def _get_reject(
         msg = 'Generating rejection thresholds using autoreject …'
         logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
-        reject = autoreject.get_rejection_threshold(epochs=epochs, decim=decim)
+        reject = autoreject.get_rejection_threshold(epochs=epochs, decim=decim,
+                                                    verbose=False)
         return reject
 
     # Only keep thresholds for channel types of interest

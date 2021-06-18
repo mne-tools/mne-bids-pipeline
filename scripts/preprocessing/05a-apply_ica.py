@@ -14,6 +14,7 @@ order might differ).
 
 """
 
+import json
 import itertools
 import logging
 from typing import Optional
@@ -51,17 +52,11 @@ def apply_ica(cfg, subject, session):
     fname_epo_out = bids_basename.copy().update(
         processing='ica', suffix='epo', extension='.fif')
     fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
+    fname_ica_reject = bids_basename.copy().update(processing='ica',
+                                                   suffix='ptp',
+                                                   extension='.json')
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
-
-    # Load epochs to reject ICA components.
-    epochs = mne.read_epochs(fname_epo_in, preload=True)
-
-    epochs.drop_bad(cfg.ica_reject)
-
-    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
-                                session=session))
 
     report_fname = (bids_basename.copy()
                     .update(processing='ica', suffix='report',
@@ -85,6 +80,16 @@ def apply_ica(cfg, subject, session):
     ica.exclude = (tsv_data
                    .loc[tsv_data['status'] == 'bad', 'component']
                    .to_list())
+
+    # Load epochs to reject ICA components.
+    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
+    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                session=session))
+
+    epochs = mne.read_epochs(fname_epo_in, preload=True)
+    with fname_ica_reject.fpath.open('r', encoding='utf-8') as f:
+        reject = json.load(f)
+    epochs.drop_bad(reject)
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on

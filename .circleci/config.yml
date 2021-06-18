@@ -426,9 +426,9 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
-        - store_artifacts:
-          path: /home/circleci/reports/ds000248_no_mri
-          destination: reports/ds000248_no_mri
+      - store_artifacts:
+        path: /home/circleci/reports/ds000248_no_mri
+        destination: reports/ds000248_no_mri
       - persist_to_workspace:
           root: ~/
           paths:

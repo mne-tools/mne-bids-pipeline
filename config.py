@@ -1875,7 +1875,8 @@ def _get_reject(
         return reject
 
     if reject == 'autoreject_global':
-        # reject = autoreject.get_rejection_threshold(epochs)
+        # reject = autoreject.get_rejection_threshold(epochs=epochs,
+        # decim=decim)
         return {}  # XXX
 
     reject = reject.copy()

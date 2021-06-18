@@ -50,8 +50,11 @@ def drop_ptp(cfg, subject, session=None):
     epochs = mne.read_epochs(fname_in, preload=True)
 
     reject = config.get_reject()
-    if reject == 'auto':
-        reject = autoreject.get_rejection_threshold(epochs)
+    if reject == 'autoreject_global':
+        reject = autoreject.get_rejection_threshold(
+            epochs=epochs,
+            decim=cfg.decim
+        )
 
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = cfg.reject_tmin
@@ -92,6 +95,7 @@ def get_config(
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,
         deriv_root=config.get_deriv_root(),
+        decim=config.decim
     )
     return cfg
 

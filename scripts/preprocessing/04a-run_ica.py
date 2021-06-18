@@ -357,10 +357,10 @@ def run_ica(cfg, subject, session=None):
 
     # Reject epochs based on peak-to-peak amplitude
     epochs.drop_bad(reject=reject)
-    if epochs_eog is not None:
-        epochs_eog.drop_bad(reject=reject)
-    if epochs_ecg is not None:
-        epochs_ecg.drop_bad(reject=reject)
+    # if epochs_eog is not None:
+    #     epochs_eog.drop_bad(reject=reject)
+    # if epochs_ecg is not None:
+    #     epochs_ecg.drop_bad(reject=reject)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'

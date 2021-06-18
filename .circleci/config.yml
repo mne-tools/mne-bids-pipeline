@@ -417,7 +417,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248_no_mri-{{ .Revision }}
+            - data-cache-ds000248-{{ .Revision }}
       - run:
           name: test ds000248_no_mri
           command: |

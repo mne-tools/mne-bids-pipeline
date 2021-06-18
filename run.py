@@ -152,10 +152,17 @@ def process(config: PathLike,
     # Fire auto-detects the input parameter values, but this means e.g. that an
     # unquoted subject ID "123" will be treated as an int. To avoid this, cast
     # input values to str.
-    subject = str(subject)
-    session = str(session)
-    run = str(run)
-    task = str(task)
+    # Note that parameters values starting with a zero padding are
+    # automatically treated as strings by Fire, and are not affected by the
+    # following block of type casts. 
+    if subject is not None:
+        subject = str(subject)
+    if session is not None:
+        session = str(session)
+    if run is not None:
+        run = str(run)
+    if task is not None:
+        task = str(task)
 
     processing_stages = []
     processing_steps = []

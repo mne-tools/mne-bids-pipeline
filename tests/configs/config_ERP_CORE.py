@@ -28,7 +28,7 @@ import os
 study_name = 'ERP-CORE'
 bids_root = '~/mne_data/ERP_CORE'
 
-task =  os.environ.get('MNE_BIDS_STUDY_TASK')
+task = os.environ.get('MNE_BIDS_STUDY_TASK')
 sessions = [task]
 
 subjects = ['015', '016', '017', '018', '019']
@@ -95,9 +95,9 @@ if task == 'N400':
 
     conditions = {
         'related': '`first_stimulus/target` == "related" and '
-                'first_response == "correct"',
+                   'first_response == "correct"',
         'unrelated': '`first_stimulus/target` == "unrelated" and '
-                    'first_response == "correct"'
+                     'first_response == "correct"'
     }
 
     contrasts = [('unrelated', 'related')]
@@ -196,13 +196,13 @@ elif task == 'N170':
         orig_name = f'stimulus/{i}'
 
         if 1 <= i <= 40:
-            new_name = f'stimulus/face/normal'
+            new_name = 'stimulus/face/normal'
         elif 41 <= i <= 80:
-            new_name = f'stimulus/car/normal'
+            new_name = 'stimulus/car/normal'
         elif 101 <= i <= 140:
-            new_name = f'stimulus/face/scrambled'
+            new_name = 'stimulus/face/scrambled'
         elif 141 <= i <= 180:
-            new_name = f'stimulus/car/scrambled'
+            new_name = 'stimulus/car/scrambled'
         else:
             continue
 

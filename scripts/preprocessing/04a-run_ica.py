@@ -408,7 +408,15 @@ def run_ica(cfg, subject, session=None):
 
     tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
 
-    # Lastly, plot all ICs, and add them to the report for manual inspection.
+    # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
+    # for manual inspection.
+
+    epochs_fit = epochs.copy().drop_bad(reject=ica.reject_)
+    fig = epochs_fit.plot_drop_log()
+    caption = 'Dropped epochs before fit'
+    report.add_figs_to_section(fig, section=f'sub-{subject}',
+                               captions=caption)
+
     msg = 'Adding diagnostic plots for all ICs to the HTML report …'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))

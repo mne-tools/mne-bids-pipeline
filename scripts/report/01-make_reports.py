@@ -365,19 +365,23 @@ def run_report(cfg, subject, session=None):
     evokeds = mne.read_evokeds(fname_ave)
 
     if has_trans:
-        # We can only plot the coregistration if we have a valid 3d backend.
-        if mne.viz.get_3d_backend() is not None:
-            fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                         subject=cfg.fs_subject,
-                                         subjects_dir=cfg.fs_subjects_dir,
-                                         meg=True, dig=True, eeg=True)
-            rep.add_figs_to_section(figs=fig, captions='Coregistration',
-                                    section='Coregistration')
-        else:
-            msg = ('Cannot render sensor alignment (coregistration) because '
-                   'no usable 3d backend was found.')
-            logger.warning(gen_log_message(message=msg, step=99,
-                                           subject=subject, session=session))
+        # Omit our custom coreg plot here – this is now handled through
+        # parse_folder() automatically. Keep the following code around for
+        # future reference.
+        #
+        # # We can only plot the coregistration if we have a valid 3d backend.
+        # if mne.viz.get_3d_backend() is not None:
+        #     fig = mne.viz.plot_alignment(evoked.info, fname_trans,
+        #                                  subject=cfg.fs_subject,
+        #                                  subjects_dir=cfg.fs_subjects_dir,
+        #                                  meg=True, dig=True, eeg=True)
+        #     rep.add_figs_to_section(figs=fig, captions='Coregistration',
+        #                             section='Coregistration')
+        # else:
+        #     msg = ('Cannot render sensor alignment (coregistration) because '
+        #            'no usable 3d backend was found.')
+        #     logger.warning(gen_log_message(message=msg, step=99,
+        #                                    subject=subject, session=session))
 
         for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'

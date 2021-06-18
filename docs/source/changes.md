@@ -134,3 +134,8 @@ authors:
   producing the "overlay" plots that show the evoked data before and after 
   ICA cleaning in the `proc-ica_report`.
   ({{ gh(385) }} by {{ authors.crsegerie }}).
+- Passing subject, session, task, and run names to `run.py` the consist only of
+  numbers doesn't throw an exception anymore, even if the values weren't
+  double-quoted and hence converted to strings by the command-line interface
+  toolkit we are using, Fire.
+  ({{ gh(375) }} by {{ authors.hoechenberger }})

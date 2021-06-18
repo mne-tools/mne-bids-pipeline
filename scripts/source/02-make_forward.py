@@ -25,15 +25,15 @@ logger = logging.getLogger('mne-bids-pipeline')
 def _prepare_forward_fsaverage(cfg):
     assert cfg.fs_subject == 'fsaverage'
     trans = 'fsaverage'  # MNE has a built-in fsaverage transformation
+    bem_sol = cfg.fs_subjects_dir / 'fsaverage' / \
+        'bem' / 'fsaverage-5120-5120-5120-bem-sol.fif'
+    if not bem_sol.exists():
+        fetch_fsaverage(cfg.fs_subjects_dir)
     src = mne.setup_source_space(subject='fsaverage',
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
                                  add_dist=False,
                                  n_jobs=cfg.N_JOBS)
-    bem_sol = cfg.fs_subjects_dir / 'fsaverage' / \
-        'bem' / 'fsaverage-5120-5120-5120-bem-sol.fif'
-    if not bem_sol.exists():
-        fetch_fsaverage(cfg.fs_subjects_dir)
     return src, trans, str(bem_sol)
 
 

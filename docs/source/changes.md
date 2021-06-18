@@ -40,12 +40,17 @@ authors:
   speeds up processing by avoiding unncessary disk I/O and can help preserve
   large quantities of storage space for big datasets.
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
+- Break periods in the continuous data can now be automatically detected and
+  annotated as "bad" segments, which will be ignored during subsequent
+  processing. This feature is enabled by default and can be switched off via
+  the [`find_breaks`][config.find_breaks] setting.
+  ({{ gh(386) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
-  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
+  ({{ gh(348) }} by {{ authors.guiomar }} and {{ authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA

@@ -16,7 +16,6 @@ import mne
 from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
-import autoreject
 
 import config
 from config import gen_log_message, on_error, failsafe_run
@@ -48,18 +47,12 @@ def drop_ptp(cfg, subject, session=None):
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(fname_in, preload=True)
-
-    reject = config.get_reject()
-    if reject == 'autoreject_global':
-        reject = autoreject.get_rejection_threshold(
-            epochs=epochs,
-            decim=cfg.decim
-        )
+    reject = config.get_ica_reject(epochs=epochs)
 
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = cfg.reject_tmin
     epochs.reject_tmax = cfg.reject_tmax
-    epochs.drop_bad(reject=cfg.reject)
+    epochs.drop_bad(reject=reject)
     n_epochs_after_reject = len(epochs)
 
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
@@ -90,7 +83,6 @@ def get_config(
         rec=config.rec,
         space=config.space,
         baseline=config.baseline,
-        reject=config.get_reject(),
         reject_tmin=config.reject_tmin,
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,

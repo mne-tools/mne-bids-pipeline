@@ -24,7 +24,6 @@ from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
-# import autoreject
 
 import config
 from config import (make_epochs, gen_log_message, on_error, failsafe_run,
@@ -339,12 +338,16 @@ def run_ica(cfg, subject, session=None):
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
+    # Reject epochs based on peak-to-peak amplitude
+    reject = config.get_ica_reject(epochs=epochs)
+    epochs.drop_bad(reject=reject)
+    epochs_eog.drop_bad(reject=reject)
+    epochs_ecg.drop_bad(reject=reject)
+
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
-
-    epochs.drop_bad(reject=cfg.ica_reject)
 
     ica = fit_ica(cfg=cfg, epochs=epochs, subject=subject, session=session)
 
@@ -362,7 +365,8 @@ def run_ica(cfg, subject, session=None):
         ecg_ics = detect_bad_components(
             cfg=cfg, which='ecg', epochs=epochs_ecg,
             ica=ica,
-            subject=subject, session=session,
+            subject=subject,
+            session=session,
             report=report
         )
     else:
@@ -372,7 +376,8 @@ def run_ica(cfg, subject, session=None):
         eog_ics = detect_bad_components(
             cfg=cfg, which='eog', epochs=epochs_eog,
             ica=ica,
-            subject=subject, session=session,
+            subject=subject,
+            session=session,
             report=report
         )
     else:
@@ -462,7 +467,6 @@ def get_config(
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
-        ica_reject=config.get_ica_reject(),
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
         ica_eog_threshold=config.ica_eog_threshold,

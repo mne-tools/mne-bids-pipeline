@@ -1865,22 +1865,28 @@ def get_datatype() -> Literal['meg', 'eeg']:
 
 
 def _get_reject(
+    *,
+    subject: Optional[str] = None,
+    session: Optional[str] = None,
     reject: Optional[Union[Dict[str, float], Literal['autoreject_global']]],
     ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']],
-    epochs: Optional[mne.Epochs] = None
-) -> Union[Dict[str, float], Literal['autoreject_global']]:
+    epochs: Optional[mne.BaseEpochs] = None
+) -> Dict[str, float]:
     if reject is None:
         return dict()
-    elif reject == 'auto':
-        return reject
 
     if reject == 'autoreject_global':
-        # reject = autoreject.get_rejection_threshold(epochs=epochs,
-        # decim=decim)
-        return {}  # XXX
+        # Automated threshold calculation requested
+        import autoreject
 
+        msg = 'Generating rejection thresholds using autoreject …'
+        logger.info(gen_log_message(message=msg, subject=subject,
+                                    session=session))
+        reject = autoreject.get_rejection_threshold(epochs=epochs, decim=decim)
+        return reject
+
+    # Only keep thresholds for channel types of interest
     reject = reject.copy()
-
     if ch_types == ['eeg']:
         ch_types_to_remove = ('mag', 'grad')
     else:
@@ -1897,15 +1903,15 @@ def _get_reject(
 
 def get_reject(
     *,
-    epochs: Optional[mne.Epochs] = None
-) -> Union[Dict[str, float], Literal['autoreject_global']]:
+    epochs: Optional[mne.BaseEpochs] = None
+) -> Dict[str, float]:
     return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 
 def get_ica_reject(
     *,
-    epochs: Optional[mne.Epochs] = None
-) -> Union[Dict[str, float], Literal['autoreject_global']]:
+    epochs: Optional[mne.BaseEpochs] = None
+) -> Dict[str, float]:
     return _get_reject(reject=ica_reject, ch_types=ch_types, epochs=epochs)
 
 

@@ -1141,6 +1141,13 @@ run_source_estimation: bool = True
 Whether to run source estimation processing steps if not explicitly requested.
 """
 
+use_template_mri: bool = False
+"""
+Whether to use FreeSurfer's `fsaverage` subject as MRI template. This may
+come in handy if you don't haver individual MR scans of your participants, as
+is often the case in EEG studies.
+"""
+
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
 """
 Which types of MRI images to use when creating the BEM model.
@@ -1993,6 +2000,9 @@ def get_channels_to_analyze(info) -> List[str]:
 
 def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
+
+    if use_template_mri:
+        return 'fsaverage'
 
     if (pathlib.Path(subjects_dir) / subject).exists():
         return subject

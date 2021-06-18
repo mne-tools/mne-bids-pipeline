@@ -54,6 +54,7 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
                  f'{_bool_to_icon(config["time_frequency_conditions"])}')
     funcs.append(f'BEM surface creation | '
                  f'{_bool_to_icon(config["recreate_bem"])}')
+    funcs.append(f'Template MRI | {_bool_to_icon(config["use_template_mri"])}')
 
     funcs = '\n'.join(funcs) + '\n'
     return funcs

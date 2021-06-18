@@ -681,6 +681,9 @@ workflows:
       - test_ds000248_T1_BEM:
           requires:
             - cache_ds000248
+      - test_ds000248_no_mri:
+          requires:
+            - cache_ds000248
 
       - cache_ds001810:
           requires:
@@ -723,6 +726,7 @@ workflows:
             - test_ds000246
             - test_ds000248
             - test_ds000248_ica
+            - test_ds000248_no_mri
             - test_ds001810
             - test_ds003104
             - test_ds003392

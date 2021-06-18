@@ -154,7 +154,7 @@ def process(config: PathLike,
     # input values to str.
     # Note that parameters values starting with a zero padding are
     # automatically treated as strings by Fire, and are not affected by the
-    # following block of type casts. 
+    # following block of type casts.
     if subject is not None:
         subject = str(subject)
     if session is not None:

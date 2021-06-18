@@ -47,7 +47,10 @@ def drop_ptp(cfg, subject, session=None):
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(fname_in, preload=True)
-    reject = config.get_ica_reject(epochs=epochs)
+    reject = config.get_reject(epochs=epochs)
+    msg = f'Using PTP rejection thresholds: {reject}'
+    logger.info(gen_log_message(message=msg, step=6, subject=subject,
+                                session=session))
 
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = cfg.reject_tmin

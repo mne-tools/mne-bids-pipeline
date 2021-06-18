@@ -275,7 +275,7 @@ def run_ica(cfg, subject, session=None):
 
     for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
@@ -312,7 +312,7 @@ def run_ica(cfg, subject, session=None):
                 del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+        logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                     session=session, run=run))
         epochs = make_epochs(
             raw=raw,
@@ -348,6 +348,10 @@ def run_ica(cfg, subject, session=None):
 
     # Retrieve and store peak-to-peak rejection thresholds
     reject = config.get_ica_reject(epochs=epochs)
+    msg = f'Using PTP rejection thresholds: {reject}'
+    logger.info(gen_log_message(message=msg, step=4, subject=subject,
+                                session=session))
+
     with ica_reject_fname.fpath.open('w', encoding='utf-8') as f:
         json.dump(reject, f, indent=2)
 

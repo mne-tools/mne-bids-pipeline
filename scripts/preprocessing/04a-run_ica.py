@@ -428,7 +428,7 @@ def run_ica(cfg, subject, session=None):
 
     # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
     # for manual inspection.
-    fig = epochs.plot_drop_log(show=cfg.interactive)
+    fig = epochs.plot_drop_log(subject=subject, show=cfg.interactive)
     caption = 'Dropped epochs before fit'
     report.add_figs_to_section(fig, section=f'sub-{subject}',
                                captions=caption)

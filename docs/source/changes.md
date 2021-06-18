@@ -50,7 +50,7 @@ authors:
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
-  ({{ gh(348) }} by {{ authors.guiomar, authors.hoechenberger }})
+  ({{ gh(348) }} by {{ authors.guiomar }} and {{ authors.hoechenberger }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA

@@ -200,7 +200,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference,
+        eeg_reference=config.get_eeg_reference(),
         interactive=config.interactive
     )
     return cfg

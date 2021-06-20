@@ -139,3 +139,6 @@ authors:
   double-quoted and hence converted to strings by the command-line interface
   toolkit we are using, Fire.
   ({{ gh(375) }} by {{ authors.hoechenberger }})
+- Setting [`eeg_reference`][config.eeg_reference] to a string (name of the
+  reference channel) caused us to crash.
+  ({{ gh(391) }} by {{ authors.hoechenberger }})

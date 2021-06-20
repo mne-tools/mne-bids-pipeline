@@ -94,7 +94,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference,
+        eeg_reference=config.get_eeg_reference(),
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max
     )

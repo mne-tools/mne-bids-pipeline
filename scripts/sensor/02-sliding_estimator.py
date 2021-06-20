@@ -133,7 +133,7 @@ def get_config(
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference,
+        eeg_reference=config.get_eeg_reference(),
         N_JOBS=config.N_JOBS
     )
     return cfg

@@ -140,5 +140,5 @@ authors:
   toolkit we are using, Fire.
   ({{ gh(375) }} by {{ authors.hoechenberger }})
 - Setting [`eeg_reference`][config.eeg_reference] to a string (name of the
-  reference channel) didn't work.
+  reference channel) caused us to crash.
   ({{ gh(391) }} by {{ authors.hoechenberger }})

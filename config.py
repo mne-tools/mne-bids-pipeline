@@ -2588,6 +2588,15 @@ def _find_breaks_func(
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
 
 
+def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
+    if eeg_reference == 'average':
+        return eeg_reference
+    elif isinstance(eeg_reference, str):
+        return [eeg_reference]
+    else:
+        return eeg_reference
+
+
 # # Leave this here for reference for now
 #
 # _preproc_funcs_path = (pathlib.Path(__file__).parent / 'scripts' /

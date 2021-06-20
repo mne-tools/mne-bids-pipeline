@@ -928,7 +928,7 @@ will generate a dictionary with (hopefully!) optimal thresholds for each
 channel type. Note that using `autoreject` can be a time-consuming process.
 
 Note: Note
-      `autoreject` basically offers to modes of operation: "global" and
+      `autoreject` basically offers two modes of operation: "global" and
       "local". In "global" mode, it will try to estimate one rejection
       threshold **per channel type.** In "local" mode, it will generate
       thresholds **for each individual channel.** Currently, the BIDS Pipeline
@@ -1058,7 +1058,7 @@ a dictionary with (hopefully!) optimal thresholds for each channel type. Note
 that using `autoreject` can be a time-consuming process.
 
 Note: Note
-      `autoreject` basically offers to modes of operation: "global" and
+      `autoreject` basically offers two modes of operation: "global" and
       "local". In "global" mode, it will try to estimate one rejection
       threshold **per channel type.** In "local" mode, it will generate
       thresholds **for each individual channel.** Currently, the BIDS Pipeline

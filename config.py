@@ -932,15 +932,15 @@ ssp_reject_ecg: Optional[Dict[str, float]] = None
 Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect SSP performance.
-The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
-your data, and remove them. For this to work properly, it is recommended
-to **not** specify rejection thresholds for EOG and ECG channels here –
+The pipeline will automatically try to detect ECG artifacts in
+your data, and remove them via SSP. For this to work properly, it is
+recommended to **not** specify rejection thresholds for ECG channels here –
 otherwise, SSP won't be able to "see" these artifacts.
 ???+ example "Example"
     ```python
     ssp_reject_ecg = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
     ssp_reject_ecg = {'grad': 15e-10}
-    ssp_reject_eog = None
+    ssp_reject_ecg = None
     ```
 """
 
@@ -949,9 +949,9 @@ ssp_reject_eog: Union[Dict[str, float]] = None
 Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect SSP performance.
-The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
-your data, and remove them. For this to work properly, it is recommended
-to **not** specify rejection thresholds for EOG and ECG channels here –
+The pipeline will automatically try to detect EOG artifacts in
+your data, and remove them via SSP. For this to work properly, it is
+recommended to **not** specify rejection thresholds for EOG channels here –
 otherwise, SSP won't be able to "see" these artifacts.
 ???+ example "Example"
     ```python

@@ -55,7 +55,7 @@ min_break_duration = 10
 t_break_annot_start_after_previous_event = 3.0
 t_break_annot_stop_before_next_event = 1.5
 
-ica_reject = 'autoreject_global'
+ica_reject = dict(eeg=350e-6, eog=500e-6)
 reject = 'autoreject_global'
 
 spatial_filter = 'ica'

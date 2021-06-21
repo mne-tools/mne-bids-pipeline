@@ -919,13 +919,13 @@ Number of SSP vectors to create for ECG artifacts for each channel type.
 
 ecg_proj_from: Literal['epochs', 'evoked'] = 'evoked'
 """
-Whether to calculate the ECG proejction vectors based on the evoked ECG signal
+Whether to calculate the ECG projection vectors based on the evoked ECG signal
 (i.e., the averaged ECG epochs), or on the ECG epochs.
 """
 
 eog_proj_from: Literal['epochs', 'evoked'] = 'evoked'
 """
-Whether to calculate the EOG proejction vectors based on the evoked EOG signal
+Whether to calculate the EOG projection vectors based on the evoked EOG signal
 (i.e., the averaged EOG epochs), or on the EOG epochs.
 """
 
@@ -1685,11 +1685,11 @@ check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
 
 # SSP projectors baswed on evoked or epochs
 if ecg_proj_from not in ('evoked', 'epochs'):
-    raise ValueError(f'ecg_proj_from must be one of: evoked, epochs; but got: '
+    raise ValueError(f'ecg_proj_from must be one of: "evoked", "epochs"; but got: '
                      f'{ecg_proj_from} instead.')
 
 if eog_proj_from not in ('evoked', 'epochs'):
-    raise ValueError(f'eog_proj_from must be one of: evoked, epochs; but got: '
+    raise ValueError(f'eog_proj_from must be one of: "evoked", "epochs"; but got: '
                      f'{eog_proj_from} instead.')
 
 # check PTP rejection thresholds

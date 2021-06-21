@@ -14,10 +14,16 @@ authors:
 
 ### New features & enhancements
 
-- The new configuration option [`ica_reject`][config.ica_reject] allows to
-  exclude epochs from the ICA fit based on peak-to-peak amplitude.
 - An official [project governance](governance.md) structure has officially
   been adopted.
+- The peak-to-peak (PTP) amplitude rejection thresholds for epochs can now
+  optionally be determined automatically using
+  [`autoreject`](https://autoreject.github.io) by setting the
+  [`reject`][config.reject] parameter to `'autoreject_global'`.
+  ({{ gh(306) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
+- The new configuration option [`ica_reject`][config.ica_reject] allows to
+  exclude epochs from the ICA fit based on peak-to-peak (PTP) amplitude.
+  ({{ gh(302) }} by {{ authors.hoechenberger }})
 - Drastically reduces memory usage when creating epochs from datasets with
   multiple runs.
   ({{ gh(355) }} by {{ authors.hoechenberger }})
@@ -63,7 +69,7 @@ authors:
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA
-  and SSP. The exclude epochs from ICA fitting, use the new
+  and SSP. To exclude epochs from ICA fitting, use the new
   [`ica_reject`][config.ica_reject] setting.
 - We don't apply SSP by default anymore.
   ({{ gh(315) }} by {{ authors.hoechenberger }})
@@ -134,8 +140,8 @@ authors:
 - `epochs_tmin` and `epochs_tmax` were named incorrectly in some test config
   files.
   ({{ gh(340) }} by {{ authors.crsegerie }})
-- We now reject bad epochs by using [`ica_reject`][config.ica_reject] before 
-  producing the "overlay" plots that show the evoked data before and after 
+- We now reject bad epochs by using [`ica_reject`][config.ica_reject] before
+  producing the "overlay" plots that show the evoked data before and after
   ICA cleaning in the `proc-ica_report`.
   ({{ gh(385) }} by {{ authors.crsegerie }}).
 - Passing subject, session, task, and run names to `run.py` the consist only of

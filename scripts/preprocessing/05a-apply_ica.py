@@ -54,15 +54,6 @@ def apply_ica(cfg, subject, session):
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
 
-    # Load epochs to reject ICA components.
-    epochs = mne.read_epochs(fname_epo_in, preload=True)
-
-    epochs.drop_bad(cfg.ica_reject)
-
-    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
-                                session=session))
-
     report_fname = (bids_basename.copy()
                     .update(processing='ica', suffix='report',
                             extension='.html'))
@@ -85,6 +76,14 @@ def apply_ica(cfg, subject, session):
     ica.exclude = (tsv_data
                    .loc[tsv_data['status'] == 'bad', 'component']
                    .to_list())
+
+    # Load epochs to reject ICA components.
+    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
+    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+                                session=session))
+
+    epochs = mne.read_epochs(fname_epo_in, preload=True)
+    epochs.drop_bad(cfg.ica_reject)
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on
@@ -140,7 +139,7 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
-        ica_reject=config.ica_reject,
+        ica_reject=config.get_ica_reject()
     )
     return cfg
 

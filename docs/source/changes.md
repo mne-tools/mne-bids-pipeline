@@ -48,7 +48,7 @@ authors:
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 - Break periods in the continuous data can now be automatically detected and
   annotated as "bad" segments, which will be ignored during subsequent
-  processing. This feature is enabled by default and can be switched off via
+  processing. This feature is disabled by default and can be switched on via
   the [`find_breaks`][config.find_breaks] setting.
   ({{ gh(386) }} by {{ authors.hoechenberger }})
 - You can now use the FreeSurfer `fsaverage` template MRI for source estimation

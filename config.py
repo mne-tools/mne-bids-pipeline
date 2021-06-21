@@ -1867,8 +1867,9 @@ def _get_reject(
         msg = 'Generating rejection thresholds using autoreject …'
         logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
-        reject = autoreject.get_rejection_threshold(epochs=epochs, decim=decim,
-                                                    verbose=False)
+        reject = autoreject.get_rejection_threshold(
+            epochs=epochs, ch_types=ch_types, decim=decim, verbose=False
+        )
         return reject
 
     # Only keep thresholds for channel types of interest

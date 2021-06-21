@@ -25,12 +25,14 @@ def fetch(dataset=None):
 # Where to download the data to
 DATA_DIR = Path('~/mne_data').expanduser()
 
+
 class TestOptionsT(TypedDict):
     dataset: str
     config: str
     steps: Collection[str]
     task: Optional[str]
     env: Dict[str, str]
+
 
 TEST_SUITE: Dict[str, TestOptionsT] = {
     'ds003392': {

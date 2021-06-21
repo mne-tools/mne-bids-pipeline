@@ -57,9 +57,8 @@ def run_ssp(cfg, subject, session=None):
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
 
-    average = cfg.ecg_proj_from == 'average'
     ecg_projs, _ = compute_proj_ecg(raw,
-                                    average=average,
+                                    average=cfg.ecg_proj_from_average,
                                     reject=cfg.ssp_reject_ecg,
                                     **cfg.n_proj_ecg)
     if not ecg_projs:
@@ -76,9 +75,8 @@ def run_ssp(cfg, subject, session=None):
     else:
         ch_names = None
 
-    average = cfg.eog_proj_from == 'average'
     eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
-                                    average=average,
+                                    average=cfg.eog_proj_from_average,
                                     reject=cfg.ssp_reject_eog,
                                     **cfg.n_proj_eog)
 
@@ -104,9 +102,9 @@ def get_config(
         eog_channels=config.eog_channels,
         deriv_root=config.get_deriv_root(),
         ssp_reject_ecg=config.ssp_reject_ecg,
-        ecg_proj_from=config.ecg_proj_from,
+        ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
-        eog_proj_from=config.eog_proj_from,
+        eog_proj_from_average=config.eog_proj_from_average,
         n_proj_eog=config.n_proj_eog,
         n_proj_ecg=config.n_proj_ecg,
     )

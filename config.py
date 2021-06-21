@@ -917,16 +917,16 @@ n_proj_ecg: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 Number of SSP vectors to create for ECG artifacts for each channel type.
 """
 
-ecg_proj_from: Literal['epochs', 'average'] = 'average'
+ecg_proj_from_average: bool = True
 """
-Whether to calculate the ECG projection vectors based on the the individual
-ECG epochs, or whether to average the epochs first.
+Whether to calculate the ECG projection vectors based on the the averaged or
+on individual ECG epochs.
 """
 
-eog_proj_from: Literal['epochs', 'average'] = 'average'
+eog_proj_from_average: bool = True
 """
-Whether to calculate the EOG projection vectors based on the the individual
-EOG epochs, or whether to average the epochs first.
+Whether to calculate the EOG projection vectors based on the the averaged or
+on individual EOG epochs.
 """
 
 ssp_reject_ecg: Optional[Dict[str, float]] = None
@@ -1683,14 +1683,6 @@ def check_baseline(
 check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
                epochs_tmax=epochs_tmax)
 
-# SSP projectors baswed on evoked or epochs
-if ecg_proj_from not in ('evoked', 'average'):
-    raise ValueError(f'ecg_proj_from must be one of: "evoked", "epochs"; but got: '
-                     f'{ecg_proj_from} instead.')
-
-if eog_proj_from not in ('evoked', 'average'):
-    raise ValueError(f'eog_proj_from must be one of: "evoked", "epochs"; but got: '
-                     f'{eog_proj_from} instead.')
 
 # check PTP rejection thresholds
 if (spatial_filter == 'ica' and

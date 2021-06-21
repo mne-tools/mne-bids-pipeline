@@ -1616,7 +1616,7 @@ def check_baseline(
 check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
                epochs_tmax=epochs_tmax)
 
-# PTP ejection threshols
+# check PTP rejection thresholds
 if (spatial_filter == 'ica' and
         ica_reject is not None and
         reject is not None and

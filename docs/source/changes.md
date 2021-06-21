@@ -49,7 +49,13 @@ authors:
   in cases where you don't have participant-specific MR scans available, as is
   often the case in EEG studies. The behavior can be enabled using the new
   configuration option [`use_template_mri`][config.use_template_mri].
-  ({{ gh(387) }} by {{ authors.agramfort }} and {{authors.hoechenberger }})
+  ({{ gh(387) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
+- You can now specify rejection parameters and the number of projection
+  vectors per channel type for SSP via
+  [`n_proj_eog`][config.n_proj_eog], [`n_proj_ecg`][config.n_proj_ecg],
+  [`ssp_reject_eog`][config.ssp_reject_eog] and
+  [`ssp_reject_ecg`][config.ssp_reject_ecg].
+  ({{ gh(392) }} by {{ authors.agramfort }} and {{ authors.dengemann }})
 
 ### Behavior changes
 

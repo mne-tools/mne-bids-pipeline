@@ -50,6 +50,11 @@ authors:
   processing. This feature is enabled by default and can be switched off via
   the [`find_breaks`][config.find_breaks] setting.
   ({{ gh(386) }} by {{ authors.hoechenberger }})
+- You can now use the FreeSurfer `fsaverage` template MRI for source estimation
+  in cases where you don't have participant-specific MR scans available, as is
+  often the case in EEG studies. The behavior can be enabled using the new
+  configuration option [`use_template_mri`][config.use_template_mri].
+  ({{ gh(387) }} by {{ authors.agramfort }} and {{authors.hoechenberger }})
 
 ### Behavior changes
 
@@ -139,3 +144,6 @@ authors:
   double-quoted and hence converted to strings by the command-line interface
   toolkit we are using, Fire.
   ({{ gh(375) }} by {{ authors.hoechenberger }})
+- Setting [`eeg_reference`][config.eeg_reference] to a string (name of the
+  reference channel) caused us to crash.
+  ({{ gh(391) }} by {{ authors.hoechenberger }})

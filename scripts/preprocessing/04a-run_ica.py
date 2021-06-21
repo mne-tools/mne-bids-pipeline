@@ -487,7 +487,7 @@ def get_config(
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
-        eeg_reference=config.eeg_reference,
+        eeg_reference=config.get_eeg_reference(),
         eog_channels=config.eog_channels
     )
     return cfg

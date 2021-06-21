@@ -210,9 +210,14 @@ def run_report(cfg, subject, session=None):
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
-    fname_trans = bids_path.copy().update(suffix='trans')
+    if cfg.use_template_mri:
+        fname_trans = 'fsaverage'
+        has_trans = True
+    else:
+        fname_trans = bids_path.copy().update(suffix='trans')
+        has_trans = op.exists(fname_trans)
+
     fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
-    fname_trans = bids_path.copy().update(suffix='trans')
     fname_ica = bids_path.copy().update(suffix='ica')
     fname_decoding = fname_epo.copy().update(processing=None,
                                              suffix='decoding',
@@ -228,13 +233,13 @@ def run_report(cfg, subject, session=None):
 
     params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
                                   subject=cfg.fs_subject, title=title)
-    if op.exists(fname_trans):
+    if has_trans:
         params['subjects_dir'] = cfg.fs_subjects_dir
 
     rep = mne.Report(**params)
     rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
                                       verbose=False)
-    if not op.exists(fname_trans):
+    if not has_trans:
         rep_kwargs['render_bem'] = False
 
     if cfg.task is not None:
@@ -359,20 +364,24 @@ def run_report(cfg, subject, session=None):
     #
     evokeds = mne.read_evokeds(fname_ave)
 
-    if op.exists(fname_trans):
-        # We can only plot the coregistration if we have a valid 3d backend.
-        if mne.viz.get_3d_backend() is not None:
-            fig = mne.viz.plot_alignment(evoked.info, fname_trans,
-                                         subject=cfg.fs_subject,
-                                         subjects_dir=cfg.fs_subjects_dir,
-                                         meg=True, dig=True, eeg=True)
-            rep.add_figs_to_section(figs=fig, captions='Coregistration',
-                                    section='Coregistration')
-        else:
-            msg = ('Cannot render sensor alignment (coregistration) because '
-                   'no usable 3d backend was found.')
-            logger.warning(gen_log_message(message=msg, step=99,
-                                           subject=subject, session=session))
+    if has_trans:
+        # Omit our custom coreg plot here – this is now handled through
+        # parse_folder() automatically. Keep the following code around for
+        # future reference.
+        #
+        # # We can only plot the coregistration if we have a valid 3d backend.
+        # if mne.viz.get_3d_backend() is not None:
+        #     fig = mne.viz.plot_alignment(evoked.info, fname_trans,
+        #                                  subject=cfg.fs_subject,
+        #                                  subjects_dir=cfg.fs_subjects_dir,
+        #                                  meg=True, dig=True, eeg=True)
+        #     rep.add_figs_to_section(figs=fig, captions='Coregistration',
+        #                             section='Coregistration')
+        # else:
+        #     msg = ('Cannot render sensor alignment (coregistration) because '
+        #            'no usable 3d backend was found.')
+        #     logger.warning(gen_log_message(message=msg, step=99,
+        #                                    subject=subject, session=session))
 
         for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'
@@ -697,6 +706,7 @@ def get_config(
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
+        use_template_mri=config.use_template_mri,
     )
     return cfg
 

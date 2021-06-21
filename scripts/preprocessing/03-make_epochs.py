@@ -135,7 +135,7 @@ def get_config(
         event_repeated=config.event_repeated,
         decim=config.decim,
         ch_types=config.ch_types,
-        eeg_reference=config.eeg_reference
+        eeg_reference=config.get_eeg_reference()
     )
     return cfg
 

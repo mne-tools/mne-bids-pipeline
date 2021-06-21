@@ -52,7 +52,7 @@ def run_epochs(cfg, subject, session=None):
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
-    if config.get_task() != "rest":
+    if cfg.task != "rest":
         event_name_to_code_map = config.annotations_to_events(
             raw_paths=raw_fnames)
 
@@ -65,7 +65,7 @@ def run_epochs(cfg, subject, session=None):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
-        if config.get_task() == "rest":
+        if cfg.task == "rest":
             event_id = None  # make_epochs takes care of it.
         else:
             event_id = event_name_to_code_map.copy()

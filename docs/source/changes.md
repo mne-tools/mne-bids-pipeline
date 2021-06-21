@@ -14,15 +14,16 @@ authors:
 
 ### New features & enhancements
 
+- An official [project governance](governance.md) structure has officially
+  been adopted.
 - The peak-to-peak (PTP) amplitude rejection thresholds for epochs can now
   optionally be determined automatically using
   [`autoreject`](https://autoreject.github.io) by setting the
   [`reject`][config.reject] parameter to `'autoreject_global'`.
+  ({{ gh(306) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
 - The new configuration option [`ica_reject`][config.ica_reject] allows to
   exclude epochs from the ICA fit based on peak-to-peak (PTP) amplitude.
   ({{ gh(302) }} by {{ authors.hoechenberger }})
-- An official [project governance](governance.md) structure has officially
-  been adopted.
 - Drastically reduces memory usage when creating epochs from datasets with
   multiple runs.
   ({{ gh(355) }} by {{ authors.hoechenberger }})

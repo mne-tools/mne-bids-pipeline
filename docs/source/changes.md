@@ -61,7 +61,8 @@ authors:
   [`n_proj_eog`][config.n_proj_eog], [`n_proj_ecg`][config.n_proj_ecg],
   [`ssp_reject_eog`][config.ssp_reject_eog] and
   [`ssp_reject_ecg`][config.ssp_reject_ecg].
-  ({{ gh(392) }} by {{ authors.agramfort }} and {{ authors.dengemann }})
+  ({{ gh(392) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
+   {{ authors.hoechenberger }})
 
 ### Behavior changes
 

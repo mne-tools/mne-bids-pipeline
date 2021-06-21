@@ -133,6 +133,25 @@ jobs:
           paths:
             - ~/mne_data/ds000246
 
+  cache_ds000247:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds000247
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds000247
+          command: |
+            python ~/project/tests/download_test_data.py -d ds000247
+      - save_cache:
+          key: data-cache-ds000247-{{ .Revision }}
+          paths:
+            - ~/mne_data/ds000247
+
   cache_ds000248:
     <<: *imageconfig
     steps:
@@ -310,6 +329,35 @@ jobs:
           paths:
             - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.html
             - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.tsv
+
+  test_ds000247:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000247-{{ .Revision }}
+      - run:
+          name: test ds000247
+          command: |
+            export DS=ds000247
+            python tests/run_tests.py --download=0 ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds000247
+          destination: reports/ds000247
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_ds000248:
     <<: *imageconfig
@@ -676,6 +724,13 @@ workflows:
           requires:
             - cache_ds000246
 
+      - cache_ds000247:
+          requires:
+            - setup_env
+      - test_ds000247:
+          requires:
+            - cache_ds000247
+
       - cache_ds000248:
           requires:
             - setup_env
@@ -734,6 +789,7 @@ workflows:
           requires:
             - test_ds000117
             - test_ds000246
+            - test_ds000247
             - test_ds000248
             - test_ds000248_ica
             - test_ds000248_no_mri

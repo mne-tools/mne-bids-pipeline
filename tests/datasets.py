@@ -57,6 +57,14 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
                     'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'],
         'exclude': []
     },
+    'ds000247': {
+        'git': '',
+        'openneuro': 'ds000247',
+        'osf': '',
+        'web': '',
+        'include': ['sub-0002/ses-0001/meg'],
+        'exclude': []
+    },
     'ds000248': {
         'git': '',
         'openneuro': 'ds000248',

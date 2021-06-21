@@ -10,7 +10,6 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-import json
 import itertools
 import logging
 from typing import List, Optional, Iterable, Literal
@@ -244,9 +243,6 @@ def run_ica(cfg, subject, session=None):
 
     raw_fname = bids_basename.copy().update(processing='filt', suffix='raw')
     ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')
-    ica_reject_fname = bids_basename.copy().update(processing='ica',
-                                                   suffix='ptp',
-                                                   extension='.json')
     ica_components_fname = bids_basename.copy().update(processing='ica',
                                                        suffix='components',
                                                        extension='.tsv')
@@ -342,25 +338,21 @@ def run_ica(cfg, subject, session=None):
     del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs
 
     epochs.load_data()
-    if "eeg" in cfg.ch_types:
+    if 'eeg' in cfg.ch_types:
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    # Retrieve and store peak-to-peak rejection thresholds
-    reject = config.get_ica_reject(epochs=epochs)
-    msg = f'Using PTP rejection thresholds: {reject}'
+    # Reject epochs based on peak-to-peak rejection thresholds
+    msg = f'Using PTP rejection thresholds: {cfg.ica_reject}'
     logger.info(gen_log_message(message=msg, step=4, subject=subject,
                                 session=session))
 
-    with ica_reject_fname.fpath.open('w', encoding='utf-8') as f:
-        json.dump(reject, f, indent=2)
-
     # Reject epochs based on peak-to-peak amplitude
-    epochs.drop_bad(reject=reject)
+    epochs.drop_bad(reject=cfg.ica_reject)
     if epochs_eog is not None:
-        epochs_eog.drop_bad(reject=reject)
+        epochs_eog.drop_bad(reject=cfg.ica_reject)
     if epochs_ecg is not None:
-        epochs_ecg.drop_bad(reject=reject)
+        epochs_ecg.drop_bad(reject=cfg.ica_reject)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
@@ -484,6 +476,7 @@ def get_config(
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
+        ica_reject=config.get_ica_reject(),
         ica_eog_threshold=config.ica_eog_threshold,
         ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
         random_state=config.random_state,

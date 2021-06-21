@@ -903,10 +903,7 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
-ica_reject: Optional[
-    Union[Dict[str, float],
-          Literal['autoreject_global']]
-] = None
+ica_reject: Optional[Union[Dict[str, float]]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
@@ -921,22 +918,10 @@ to **not** specify rejection thresholds for EOG and ECG channels here –
 otherwise, ICA won't be able to "see" these artifacts.
 
 If `None` (default), do not apply artifact rejection. If a dictionary,
-manually specify rejection thresholds (see examples).  If
-`'autoreject_global'`, use [`autoreject`](https://autoreject.github.io) to find
-suitable "global" rejection thresholds for each channel type, i.e. `autoreject`
-will generate a dictionary with (hopefully!) optimal thresholds for each
-channel type. Note that using `autoreject` can be a time-consuming process.
-
-Note: Note
-      `autoreject` basically offers two modes of operation: "global" and
-      "local". In "global" mode, it will try to estimate one rejection
-      threshold **per channel type.** In "local" mode, it will generate
-      thresholds **for each individual channel.** Currently, the BIDS Pipeline
-      only supports the "global" mode.
+manually specify rejection thresholds (see examples).
 
 ???+ example "Example"
     ```python
-    ica_reject = 'autoreject_global'  # use autoreject to determine thresholds
     ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
     ica_reject = {'grad': 15e-10}
     ica_reject = None  # no rejection
@@ -1909,11 +1894,8 @@ def get_reject(
     return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 
-def get_ica_reject(
-    *,
-    epochs: Optional[mne.BaseEpochs] = None
-) -> Dict[str, float]:
-    return _get_reject(reject=ica_reject, ch_types=ch_types, epochs=epochs)
+def get_ica_reject() -> Dict[str, float]:
+    return _get_reject(reject=ica_reject, ch_types=ch_types)
 
 
 def get_fs_subjects_dir():

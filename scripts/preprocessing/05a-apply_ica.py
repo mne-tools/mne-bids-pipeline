@@ -14,7 +14,6 @@ order might differ).
 
 """
 
-import json
 import itertools
 import logging
 from typing import Optional
@@ -52,9 +51,6 @@ def apply_ica(cfg, subject, session):
     fname_epo_out = bids_basename.copy().update(
         processing='ica', suffix='epo', extension='.fif')
     fname_ica = bids_basename.copy().update(suffix='ica', extension='.fif')
-    fname_ica_reject = bids_basename.copy().update(processing='ica',
-                                                   suffix='ptp',
-                                                   extension='.json')
     fname_ica_components = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
 
@@ -87,9 +83,7 @@ def apply_ica(cfg, subject, session):
                                 session=session))
 
     epochs = mne.read_epochs(fname_epo_in, preload=True)
-    with fname_ica_reject.fpath.open('r', encoding='utf-8') as f:
-        reject = json.load(f)
-    epochs.drop_bad(reject)
+    epochs.drop_bad(cfg.ica_reject)
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on
@@ -145,7 +139,7 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
-        ica_reject=config.ica_reject,
+        ica_reject=config.get_ica_reject()
     )
     return cfg
 

@@ -799,8 +799,9 @@ for more information.
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
-This is a **required** parameter in the configuration file. If left as `None`,
-it will raise an error.
+This is a **required** parameter in the configuration file, unless you are
+processing resting-state data. If left as `None` and [`task`][config.tast]
+is not `'rest'`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -810,6 +811,7 @@ it will raise an error.
     conditions = ['auditory']  # All "auditory" conditions (left AND right)
     conditions = ['auditory', 'visual']
     conditions = ['left', 'right']
+    conditions = None  # for a resting-state analysis
     ```
     Pass a dictionary to define a mapping:
     ```python
@@ -1549,10 +1551,6 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
-if conditions is None and 'MKDOCS' not in os.environ:
-    msg = ('Please indicate the name of your conditions in your '
-           'configuration. Currently the `conditions` parameter is empty.')
-    raise ValueError(msg)
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
@@ -2158,7 +2156,7 @@ def make_epochs(
     rejection thresholds will be applied. No baseline-correction will be
     performed.
     """
-    if get_task() == 'rest':
+    if get_task().lower() == 'rest':
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -2683,6 +2681,16 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+# Another check that depends on some of the functions defined above
+if (get_task().lower() != 'rest' and
+        conditions is None and
+        'MKDOCS' not in os.environ):
+    msg = ('Please indicate the name of your conditions in your '
+           'configuration. Currently the `conditions` parameter is empty. '
+           'This is only allowed for resting-state analysis.')
+    raise ValueError(msg)
 
 
 # # Leave this here for reference for now

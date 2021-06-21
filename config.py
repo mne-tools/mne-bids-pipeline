@@ -903,7 +903,7 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
-ica_reject: Optional[Union[Dict[str, float]]] = None
+ica_reject: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
 
@@ -918,7 +918,7 @@ to **not** specify rejection thresholds for EOG and ECG channels here –
 otherwise, ICA won't be able to "see" these artifacts.
 
 If `None` (default), do not apply artifact rejection. If a dictionary,
-manually specify rejection thresholds (see examples).
+manually specify peak-to-peak rejection thresholds (see examples).
 
 ???+ example "Example"
     ```python
@@ -1051,7 +1051,6 @@ Note: Note
 
 ???+ example "Example"
     ```python
-    ica_reject = 'auto'  # use autoreject to determine thresholds
     reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
     reject = {'eeg': 100e-6, 'eog': 250e-6}
     reject = None  # no rejection based on PTP amplitude

@@ -907,31 +907,34 @@ ways using the configuration options you can find below.
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 
-n_proj_eog: Optional[Dict[str, float]] = dict(n_mag=1, n_grad=1, n_eeg=1)
+n_proj_eog: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
-Number of SSP vectors for EOG artifacts by channel type.
-"""
-
-n_proj_ecg: Optional[Dict[str, float]] = dict(n_mag=1, n_grad=1, n_eeg=1)
-"""
-Number of SSP vectors for ECG artifacts by channel type.
+Number of SSP vectors to create for EOG artifacts for each channel type.
 """
 
-average_ecg_projs: Optional[bool] = True
+n_proj_ecg: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
-Whether to average ECG proejction vectors or not.
+Number of SSP vectors to create for ECG artifacts for each channel type.
 """
 
-average_eog_projs: Optional[bool] = True
+ecg_proj_from: Literal['epochs', 'evoked'] = 'evoked'
 """
-Whether to average EOG proejction vectors or not.
+Whether to calculate the ECG proejction vectors based on the evoked ECG signal
+(i.e., the averaged ECG epochs), or on the ECG epochs.
+"""
+
+eog_proj_from: Literal['epochs', 'evoked'] = 'evoked'
+"""
+Whether to calculate the EOG proejction vectors based on the evoked EOG signal
+(i.e., the averaged EOG epochs), or on the EOG epochs.
 """
 
 ssp_reject_ecg: Optional[Dict[str, float]] = None
 """
-Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect SSP performance.
+
 The pipeline will automatically try to detect ECG artifacts in
 your data, and remove them via SSP. For this to work properly, it is
 recommended to **not** specify rejection thresholds for ECG channels here –
@@ -944,11 +947,12 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Union[Dict[str, float]] = None
+ssp_reject_eog: Optional[Dict[str, float]] = None
 """
-Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
 affect SSP performance.
+
 The pipeline will automatically try to detect EOG artifacts in
 your data, and remove them via SSP. For this to work properly, it is
 recommended to **not** specify rejection thresholds for EOG channels here –
@@ -1649,6 +1653,13 @@ def check_baseline(
 check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
                epochs_tmax=epochs_tmax)
 
+if ecg_proj_from not in ('evoked', 'epochs'):
+    raise ValueError(f'ecg_proj_from must be one of: evoked, epochs; but got: '
+                     f'{ecg_proj_from} instead.')
+
+if eog_proj_from not in ('evoked', 'epochs'):
+    raise ValueError(f'eog_proj_from must be one of: evoked, epochs; but got: '
+                     f'{eog_proj_from} instead.')
 
 ###############################################################################
 # Helper functions

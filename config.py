@@ -837,6 +837,17 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
+fixed_length_epochs_duration: Optional[float] = None
+"""
+Duration of epochs in seconds.
+"""
+
+fixed_length_epochs_overlap: Optional[float] = None
+"""
+Overlap between epochs in seconds. This is used if the task is ``'rest'``
+and when the annotations do not contain any stimulation or behavior events.
+"""
+
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
@@ -2083,9 +2094,22 @@ def make_epochs(
     rejection thresholds will be applied. No baseline-correction will be
     performed.
     """
-    events, event_id_from_annotatins = mne.events_from_annotations(raw)
+    if get_task() == 'rest':
+        stop = raw.times[-1] - fixed_length_epochs_duration
+        assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
+        assert fixed_length_epochs_overlap is not None, \
+            "epochs_overlap cannot be None for rest"
+        events = mne.make_fixed_length_events(
+            raw, id=3000, start=0,
+            duration=fixed_length_epochs_duration,
+            overlap=fixed_length_epochs_overlap,
+            stop=stop)
+        event_id = dict(rest=3000)
+    else:  # Events for task runs
+        events, event_id_from_annotations = mne.events_from_annotations(raw)
+
     if event_id is None:
-        event_id = event_id_from_annotatins
+        event_id = event_id_from_annotations
 
     # Construct metadata from the epochs
     if metadata_tmin is None:

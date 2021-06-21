@@ -52,7 +52,9 @@ def run_epochs(cfg, subject, session=None):
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
-    event_name_to_code_map = config.annotations_to_events(raw_paths=raw_fnames)
+    if config.get_task() != "rest":
+        event_name_to_code_map = config.annotations_to_events(
+            raw_paths=raw_fnames)
 
     # Now, generate epochs from each individual run.
     epochs_all_runs = []
@@ -63,10 +65,13 @@ def run_epochs(cfg, subject, session=None):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
-        event_id = event_name_to_code_map.copy()
-        for event_name in event_id.copy().keys():
-            if event_name not in raw.annotations.description:
-                del event_id[event_name]
+        if config.get_task() == "rest":
+            event_id = None  # make_epochs takes care of it.
+        else:
+            event_id = event_name_to_code_map.copy()
+            for event_name in event_id.copy().keys():
+                if event_name not in raw.annotations.description:
+                    del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
         logger.info(gen_log_message(message=msg, step=3, subject=subject,

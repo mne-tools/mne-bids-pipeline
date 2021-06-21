@@ -1028,7 +1028,12 @@ manually specify rejection thresholds (see examples).  If
 `'autoreject_global'`, use [`autoreject`](https://autoreject.github.io) to find
 suitable "global" rejection thresholds for each channel type, i.e. `autoreject`
 will generate a dictionary with (hopefully!) optimal thresholds for each
-channel type. Note that using `autoreject` can be a time-consuming process.
+channel type.
+
+The thresholds provided here must be at least as stringent as those in
+[`ica_reject`][config.ica_reject] if using ICA. In case of
+`'autoreject_global'`, thresholds for any channel that do not meet this
+requirement will be automatically replaced with those used in `ica_reject`.
 
 Note: Note
       The rejection is performed **after** SSP or ICA, if any of those methods
@@ -1611,10 +1616,25 @@ def check_baseline(
 check_baseline(baseline=baseline, epochs_tmin=epochs_tmin,
                epochs_tmax=epochs_tmax)
 
+# PTP ejection threshols
+if (spatial_filter == 'ica' and
+        ica_reject is not None and
+        reject is not None and
+        reject != 'autoreject_global'):
+    for ch_type in reject:
+        if (ch_type in ica_reject and
+                reject[ch_type] > ica_reject[ch_type]):
+            raise ValueError(
+                f'Rejection threshold in '
+                f'reject["{ch_type}"] ({reject[ch_type]}) must be at least as '
+                f'stringent as that in '
+                f'ica_reject["{ch_type}"] ({ica_reject[ch_type]})'
+            )
 
 ###############################################################################
 # Helper functions
 # ----------------
+
 
 def get_bids_root() -> pathlib.Path:
     # BIDS_ROOT environment variable takes precedence over any configuration file

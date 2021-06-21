@@ -48,6 +48,20 @@ def drop_ptp(cfg, subject, session=None):
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(fname_in, preload=True)
     reject = config.get_reject(epochs=epochs)
+
+    if cfg.ica_reject is not None:
+        for ch_type, threshold in cfg.ica_reject.items():
+            if (ch_type in reject and
+                    threshold < reject[ch_type]):
+                # This can only ever happen in case of
+                # reject = 'autoreject_global'
+                msg = (f'Adjusting PTP rejection threshold proposed by '
+                       f'autoreject, as it is greater than ica_reject: '
+                       f'{ch_type}: {reject[ch_type]} -> {threshold}')
+                logger.info(gen_log_message(message=msg, step=6,
+                                            subject=subject, session=session))
+                reject[ch_type] = threshold
+
     msg = f'Using PTP rejection thresholds: {reject}'
     logger.info(gen_log_message(message=msg, step=6, subject=subject,
                                 session=session))
@@ -87,6 +101,7 @@ def get_config(
         reject_tmin=config.reject_tmin,
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,
+        ica_reject=config.get_ica_reject(),
         deriv_root=config.get_deriv_root(),
         decim=config.decim
     )

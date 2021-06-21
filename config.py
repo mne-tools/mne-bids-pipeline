@@ -907,12 +907,12 @@ ways using the configuration options you can find below.
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 
-n_proj_eog: Optional[Dict[str, float]] = dict(mag=1, grad=1, eeg=1)
+n_proj_eog: Optional[Dict[str, float]] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors for EOG artifacts by channel type.
 """
 
-n_proj_ecg: Optional[Dict[str, float]] = dict(mag=1, grad=1, eeg=1)
+n_proj_ecg: Optional[Dict[str, float]] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors for ECG artifacts by channel type.
 """

@@ -25,7 +25,7 @@ noise_cov = 'emptyroom'
 spatial_filter = 'ssp'
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=1)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
-ecg_proj_from = 'evoked'
+ecg_proj_from = 'average'
 eog_proj_from = 'epochs'
 
 bem_mri_images = 'FLASH'

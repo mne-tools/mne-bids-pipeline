@@ -837,12 +837,12 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-fixed_length_epochs_duration: Optional[float] = None
+rest_epochs_duration: Optional[float] = None
 """
 Duration of epochs in seconds.
 """
 
-fixed_length_epochs_overlap: Optional[float] = None
+rest_epochs_overlap: Optional[float] = None
 """
 Overlap between epochs in seconds. This is used if the task is ``'rest'``
 and when the annotations do not contain any stimulation or behavior events.
@@ -2095,14 +2095,14 @@ def make_epochs(
     performed.
     """
     if get_task() == 'rest':
-        stop = raw.times[-1] - fixed_length_epochs_duration
+        stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
-        assert fixed_length_epochs_overlap is not None, \
+        assert rest_epochs_overlap is not None, \
             "epochs_overlap cannot be None for rest"
         events = mne.make_fixed_length_events(
             raw, id=3000, start=0,
-            duration=fixed_length_epochs_duration,
-            overlap=fixed_length_epochs_overlap,
+            duration=rest_epochs_duration,
+            overlap=rest_epochs_overlap,
             stop=stop)
         event_id = dict(rest=3000)
     else:  # Events for task runs

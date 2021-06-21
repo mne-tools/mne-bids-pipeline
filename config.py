@@ -903,6 +903,69 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
+# Rejection based on SSP
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+
+n_proj_eog: Optional[Dict[str, float]] = dict(mag=1, grad=1, eeg=1)
+"""
+Number of SSP vectors for EOG artifacts by channel type.
+"""
+
+n_proj_ecg: Optional[Dict[str, float]] = dict(mag=1, grad=1, eeg=1)
+"""
+Number of SSP vectors for ECG artifacts by channel type.
+"""
+
+average_ecg_projs: Optional[bool] = True
+"""
+Whether to average ECG proejction vectors or not.
+"""
+
+average_eog_projs: Optional[bool] = True
+"""
+Whether to average EOG proejction vectors or not.
+"""
+
+ssp_reject_ecg: Optional[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.
+The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to **not** specify rejection thresholds for EOG and ECG channels here –
+otherwise, SSP won't be able to "see" these artifacts.
+???+ example "Example"
+    ```python
+    ssp_reject_ecg = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ssp_reject_ecg = {'grad': 15e-10}
+    ssp_reject_eog = None
+    ```
+"""
+
+ssp_reject_eog: Union[Dict[str, float]] = None
+"""
+Peak-to-peak amplitude limits to exclude epochs from SSP fitting.
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.
+The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to **not** specify rejection thresholds for EOG and ECG channels here –
+otherwise, SSP won't be able to "see" these artifacts.
+???+ example "Example"
+    ```python
+    ssp_reject_eog = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
+    ssp_reject_eog = {'grad': 15e-10}
+    ssp_reject_eog = None
+    ```
+"""
+
+
+# Rejection based on ICA
+# ~~~~~~~~~~~~~~~~~~~~~~
+
+
 ica_reject: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.

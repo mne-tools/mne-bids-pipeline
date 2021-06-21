@@ -56,9 +56,10 @@ def run_ssp(cfg, subject, session=None):
     msg = 'Computing SSPs for ECG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
-    ecg_projs, _ = compute_proj_ecg(raw, n_grad=1, n_mag=1, n_eeg=0,
-                                    average=True)
 
+    reject_ecg_ = config.ssp_reject_ecg
+    ecg_projs, _ = compute_proj_ecg(raw, average=config.average_ecg_projs,
+                                    reject=reject_ecg_, **config.n_proj_ecg)
     if not ecg_projs:
         msg = 'No ECG events could be found. No ECG projectors computed.'
         logger.info(gen_log_message(message=msg, step=4, subject=subject,
@@ -69,14 +70,14 @@ def run_ssp(cfg, subject, session=None):
                                  session=session))
     if cfg.eog_channels:
         ch_names = cfg.eog_channels
-        assert all([ch_name in raw.ch_names
-                    for ch_name in ch_names])
+        assert all([ch_name in raw.ch_names for ch_name in ch_names])
     else:
         ch_names = None
 
+    reject_eog_ = config.ssp_reject_eog
     eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
-                                    n_grad=1, n_mag=1, n_eeg=1,
-                                    average=True)
+                                    average=config.average_eog_projs,
+                                    reject=reject_eog_, **config.n_proj_eog)
 
     if not eog_projs:
         msg = 'No EOG events could be found. No EOG projectors computed.'

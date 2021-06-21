@@ -385,7 +385,7 @@ itself, nor to the source analysis stage.
 # BREAK DETECTION
 # ---------------
 
-find_breaks: bool = True
+find_breaks: bool = False
 """
 During an experimental run, the recording might be interrupted by breaks of
 various durations, e.g. to allow the participant to stretch, blink, and swallow

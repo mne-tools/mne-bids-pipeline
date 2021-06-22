@@ -643,7 +643,7 @@ def run_report_average(cfg, subject: str, session: str) -> None:
 
         if op.exists(str(fname_stc_avg) + "-lh.stc"):
             stc = mne.read_source_estimate(fname_stc_avg,
-                                            subject='fsaverage')
+                                           subject='fsaverage')
             _, peak_time = stc.get_peak()
 
             # Plot using 3d backend if available, and use Matplotlib

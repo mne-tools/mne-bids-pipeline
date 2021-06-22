@@ -259,10 +259,11 @@ def run_report(cfg, subject, session=None):
                                 section='Data Quality')
 
     # Visualize events.
-    events_fig = plot_events(cfg=cfg, subject=subject, session=session)
-    rep.add_figs_to_section(figs=events_fig,
-                            captions='Events in filtered continuous data',
-                            section='Events')
+    if cfg.task.lower() != 'rest':
+        events_fig = plot_events(cfg=cfg, subject=subject, session=session)
+        rep.add_figs_to_section(figs=events_fig,
+                                captions='Events in filtered continuous data',
+                                section='Events')
 
     ###########################################################################
     #
@@ -303,34 +304,35 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize evoked responses.
     #
-    if isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
-    else:
-        conditions = cfg.conditions.copy()
+    if cfg.task.lower() != 'rest':
+        if isinstance(cfg.conditions, dict):
+            conditions = list(cfg.conditions.keys())
+        else:
+            conditions = cfg.conditions.copy()
 
-    conditions.extend(cfg.contrasts)
-    evokeds = mne.read_evokeds(fname_ave)
-    if cfg.analyze_channels:
-        for evoked in evokeds:
-            evoked.pick(cfg.analyze_channels)
+        conditions.extend(cfg.contrasts)
+        evokeds = mne.read_evokeds(fname_ave)
+        if cfg.analyze_channels:
+            for evoked in evokeds:
+                evoked.pick(cfg.analyze_channels)
 
-    for condition, evoked in zip(conditions, evokeds):
-        if condition in cfg.conditions:
-            caption = f'Condition: {condition}'
-            section = 'Evoked'
-        else:  # It's a contrast of two conditions.
-            caption = f'Contrast: {condition[0]} – {condition[1]}'
-            section = 'Contrast'
+        for condition, evoked in zip(conditions, evokeds):
+            if condition in cfg.conditions:
+                caption = f'Condition: {condition}'
+                section = 'Evoked'
+            else:  # It's a contrast of two conditions.
+                caption = f'Contrast: {condition[0]} – {condition[1]}'
+                section = 'Contrast'
 
-        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-        rep.add_figs_to_section(figs=fig, captions=caption,
-                                comments=evoked.comment, section=section)
+            fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
+            rep.add_figs_to_section(figs=fig, captions=caption,
+                                    comments=evoked.comment, section=section)
 
     ###########################################################################
     #
     # Visualize decoding results.
     #
-    if cfg.decode:
+    if cfg.decode and cfg.task.lower() != 'rest':
         epochs = mne.read_epochs(fname_epo)
 
         for contrast in cfg.contrasts:
@@ -559,115 +561,118 @@ def run_report_average(cfg, subject: str, session: str) -> None:
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
 
-    if isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
-    else:
-        conditions = cfg.conditions.copy()
+    if cfg.task.lower() != 'rest':
+        if isinstance(cfg.conditions, dict):
+            conditions = list(cfg.conditions.keys())
+        else:
+            conditions = cfg.conditions.copy()
 
-    conditions.extend(cfg.contrasts)
+        conditions.extend(cfg.contrasts)
 
-    ###########################################################################
-    #
-    # Add events end epochs drop log stats.
-    #
-    add_event_counts(cfg=cfg, report=rep, session=session)
+        #######################################################################
+        #
+        # Add events end epochs drop log stats.
+        #
+        add_event_counts(cfg=cfg, report=rep, session=session)
 
-    ###########################################################################
-    #
-    # Visualize evoked responses.
-    #
-    for condition, evoked in zip(conditions, evokeds):
-        if condition in cfg.conditions:
-            caption = f'Average: {condition}'
-            section = 'Evoked'
-        else:  # It's a contrast of two conditions.
-            caption = f'Average Contrast: {condition[0]} – {condition[1]}'
-            section = 'Contrast'
+        #######################################################################
+        #
+        # Visualize evoked responses.
+        #
+        for condition, evoked in zip(conditions, evokeds):
+            if condition in cfg.conditions:
+                caption = f'Average: {condition}'
+                section = 'Evoked'
+            else:  # It's a contrast of two conditions.
+                caption = f'Average Contrast: {condition[0]} – {condition[1]}'
+                section = 'Contrast'
 
-        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-        rep.add_figs_to_section(figs=fig, captions=caption,
-                                comments=evoked.comment, section=section)
-
-    ###########################################################################
-    #
-    # Visualize decoding results.
-    #
-    if cfg.decode:
-        for contrast in cfg.contrasts:
-            cond_1, cond_2 = contrast
-            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{cfg.decoding_metric}'
-            processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = (evoked_fname.copy()
-                               .update(processing=processing,
-                                       suffix='decoding',
-                                       extension='.mat'))
-            decoding_data = loadmat(fname_decoding_)
-            del fname_decoding_, processing, a_vs_b
-
-            fig = plot_decoding_scores_gavg(cfg=cfg,
-                                            decoding_data=decoding_data)
-            caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-            comment = (f'Based on N={decoding_data["N"].squeeze()} subjects. '
-                       f'Standard error and confidence interval of the mean '
-                       f'were bootstrapped with {cfg.n_boot} resamples.')
+            fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
             rep.add_figs_to_section(figs=fig, captions=caption,
-                                    comments=comment,
-                                    section='Decoding')
-            del decoding_data, cond_1, cond_2, caption, comment
+                                    comments=evoked.comment, section=section)
 
-    ###########################################################################
-    #
-    # Visualize inverse solutions.
-    #
-    for condition, evoked in zip(conditions, evokeds):
-        if condition in cfg.conditions:
-            caption = f'Average: {condition}'
-            cond_str = config.sanitize_cond_name(condition)
-        else:  # It's a contrast of two conditions.
-            # XXX Will change once we process contrasts here too
-            continue
+        #######################################################################
+        #
+        # Visualize decoding results.
+        #
+        if cfg.decode:
+            for contrast in cfg.contrasts:
+                cond_1, cond_2 = contrast
+                a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+                processing = f'{a_vs_b}+{cfg.decoding_metric}'
+                processing = processing.replace('_', '-').replace('-', '')
+                fname_decoding_ = (evoked_fname.copy()
+                                .update(processing=processing,
+                                        suffix='decoding',
+                                        extension='.mat'))
+                decoding_data = loadmat(fname_decoding_)
+                del fname_decoding_, processing, a_vs_b
 
-        section = 'Source'
-        fname_stc_avg = evoked_fname.copy().update(
-            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
-            extension=None)
+                fig = plot_decoding_scores_gavg(cfg=cfg,
+                                                decoding_data=decoding_data)
+                caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
+                comment = (f'Based on N={decoding_data["N"].squeeze()} '
+                           f'subjects. Standard error and confidence interval '
+                           f'of the mean were bootstrapped with {cfg.n_boot} '
+                           f'resamples.')
+                rep.add_figs_to_section(figs=fig, captions=caption,
+                                        comments=comment,
+                                        section='Decoding')
+                del decoding_data, cond_1, cond_2, caption, comment
 
-        if op.exists(str(fname_stc_avg) + "-lh.stc"):
-            stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
-            _, peak_time = stc.get_peak()
+        #######################################################################
+        #
+        # Visualize inverse solutions.
+        #
+        for condition, evoked in zip(conditions, evokeds):
+            if condition in cfg.conditions:
+                caption = f'Average: {condition}'
+                cond_str = config.sanitize_cond_name(condition)
+            else:  # It's a contrast of two conditions.
+                # XXX Will change once we process contrasts here too
+                continue
 
-            # Plot using 3d backend if available, and use Matplotlib
-            # otherwise.
-            if mne.viz.get_3d_backend() is not None:
-                brain = stc.plot(views=['lat'], hemi='both',
-                                 initial_time=peak_time, backend='pyvista',
-                                 time_viewer=True,
-                                 show_traces=True,
-                                 subjects_dir=cfg.fs_subjects_dir)
-                brain.toggle_interface()
-                figs = brain._renderer.figure
-                captions = caption
-            else:
-                fig_lh = plt.figure()
-                fig_rh = plt.figure()
+            section = 'Source'
+            fname_stc_avg = evoked_fname.copy().update(
+                suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
+                extension=None)
 
-                brain_lh = stc.plot(views='lat', hemi='lh',
-                                    initial_time=peak_time,
-                                    backend='matplotlib', figure=fig_lh,
-                                    subjects_dir=cfg.fs_subjects_dir)
-                brain_rh = stc.plot(views='lat', hemi='rh',
-                                    initial_time=peak_time,
-                                    backend='matplotlib', figure=fig_rh,
-                                    subjects_dir=cfg.fs_subjects_dir)
-                figs = [brain_lh, brain_rh]
-                captions = [f'{caption} - left',
-                            f'{caption} - right']
+            if op.exists(str(fname_stc_avg) + "-lh.stc"):
+                stc = mne.read_source_estimate(fname_stc_avg,
+                                               subject='fsaverage')
+                _, peak_time = stc.get_peak()
 
-            rep.add_figs_to_section(figs=figs, captions=captions,
-                                    section='Sources')
+                # Plot using 3d backend if available, and use Matplotlib
+                # otherwise.
+                if mne.viz.get_3d_backend() is not None:
+                    brain = stc.plot(views=['lat'], hemi='both',
+                                     initial_time=peak_time, backend='pyvista',
+                                     time_viewer=True,
+                                     show_traces=True,
+                                     subjects_dir=cfg.fs_subjects_dir)
+                    brain.toggle_interface()
+                    figs = brain._renderer.figure
+                    captions = caption
+                else:
+                    fig_lh = plt.figure()
+                    fig_rh = plt.figure()
 
-            del peak_time
+                    brain_lh = stc.plot(views='lat', hemi='lh',
+                                        initial_time=peak_time,
+                                        backend='matplotlib', figure=fig_lh,
+                                        subjects_dir=cfg.fs_subjects_dir)
+                    brain_rh = stc.plot(views='lat', hemi='rh',
+                                        initial_time=peak_time,
+                                        backend='matplotlib', figure=fig_rh,
+                                        subjects_dir=cfg.fs_subjects_dir)
+                    figs = [brain_lh, brain_rh]
+                    captions = [f'{caption} - left',
+                                f'{caption} - right']
+
+                rep.add_figs_to_section(figs=figs, captions=captions,
+                                        section='Sources')
+
+                del peak_time
 
     fname_report = evoked_fname.copy().update(
         task=cfg.task, suffix='report', extension='.html')

@@ -800,7 +800,7 @@ Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
 This is a **required** parameter in the configuration file, unless you are
-processing resting-state data. If left as `None` and [`task`][config.tast]
+processing resting-state data. If left as `None` and [`task`][config.task]
 is not `'rest'`, we will raise an error.
 
 ???+ example "Example"

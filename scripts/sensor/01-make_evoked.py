@@ -58,6 +58,10 @@ def run_evoked(cfg, subject, session=None):
             evoked.comment = evoked.comment.replace(orig_cond_name,
                                                     new_cond_name)
             all_evoked[new_cond_name] = evoked
+    elif cfg.conditions is None:
+        # Handle resting-state
+        evoked = epochs.average()
+        all_evoked['rest'] = evoked
     else:
         for condition in cfg.conditions:
             evoked = epochs[condition].average()

@@ -9,6 +9,8 @@ subjects = ['0002']
 sessions = ['0001']
 task = 'rest'
 
+crop_runs = (0, 100)  # to speed up computations
+
 ch_types = ['meg']
 spatial_filter = 'ssp'
 

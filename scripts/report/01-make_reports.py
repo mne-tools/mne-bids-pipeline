@@ -210,6 +210,7 @@ def run_report(cfg, subject, session=None):
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
+    fname_epo = bids_path.copy().update(suffix='epo')
     if cfg.use_template_mri:
         fname_trans = 'fsaverage'
         has_trans = True
@@ -231,7 +232,7 @@ def run_report(cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
+    params: Dict[str, Any] = dict(info_fname=fname_epo, raw_psd=True,
                                   subject=cfg.fs_subject, title=title)
     if has_trans:
         params['subjects_dir'] = cfg.fs_subjects_dir
@@ -285,7 +286,9 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize TFR as topography.
     #
-    if isinstance(cfg.time_frequency_conditions, dict):
+    if cfg.time_frequency_conditions is None:
+        conditions = []
+    elif isinstance(cfg.time_frequency_conditions, dict):
         conditions = list(cfg.time_frequency_conditions.keys())
     else:
         conditions = cfg.time_frequency_conditions.copy()
@@ -304,35 +307,36 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize evoked responses.
     #
-    if cfg.task.lower() != 'rest':
-        if isinstance(cfg.conditions, dict):
-            conditions = list(cfg.conditions.keys())
-        else:
-            conditions = cfg.conditions.copy()
+    if cfg.conditions is None:
+        conditions = []
+    elif isinstance(cfg.conditions, dict):
+        conditions = list(cfg.conditions.keys())
+    else:
+        conditions = cfg.conditions.copy()
 
-        conditions.extend(cfg.contrasts)
-        evokeds = mne.read_evokeds(fname_ave)
+    conditions.extend(cfg.contrasts)
+
+    for condition in conditions:
+        evoked = mne.read_evokeds(fname_ave, condition=condition)
         if cfg.analyze_channels:
-            for evoked in evokeds:
-                evoked.pick(cfg.analyze_channels)
+            evoked.pick(cfg.analyze_channels)
 
-        for condition, evoked in zip(conditions, evokeds):
-            if condition in cfg.conditions:
-                caption = f'Condition: {condition}'
-                section = 'Evoked'
-            else:  # It's a contrast of two conditions.
-                caption = f'Contrast: {condition[0]} – {condition[1]}'
-                section = 'Contrast'
+        if condition in cfg.conditions:
+            caption = f'Condition: {condition}'
+            section = 'Evoked'
+        else:  # It's a contrast of two conditions.
+            caption = f'Contrast: {condition[0]} – {condition[1]}'
+            section = 'Contrast'
 
-            fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-            rep.add_figs_to_section(figs=fig, captions=caption,
-                                    comments=evoked.comment, section=section)
+        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
+        rep.add_figs_to_section(figs=fig, captions=caption,
+                                comments=evoked.comment, section=section)
 
     ###########################################################################
     #
     # Visualize decoding results.
     #
-    if cfg.decode and cfg.task.lower() != 'rest':
+    if cfg.decode:
         epochs = mne.read_epochs(fname_epo)
 
         for contrast in cfg.contrasts:
@@ -364,9 +368,9 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize the coregistration & inverse solutions.
     #
-    evokeds = mne.read_evokeds(fname_ave)
-
     if has_trans:
+        evokeds = mne.read_evokeds(fname_ave)
+
         # Omit our custom coreg plot here – this is now handled through
         # parse_folder() automatically. Keep the following code around for
         # future reference.

@@ -929,8 +929,12 @@ Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
 """
 
-ssp_reject_ecg: Union[Optional[Dict[str, float]],
-                      Optional[Literal['autoreject_global']]] = None
+ssp_reject_ecg: Optional[
+    Union[
+        Dict[str, float],
+        Literal['autoreject_global']
+    ]
+] = None
 """
 Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively

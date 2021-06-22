@@ -952,8 +952,12 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Optional[Union[Dict[str, float],
-                               Literal['autoreject_global']]] = None
+ssp_reject_eog: Optional[
+    Union[
+        Dict[str, float],
+        Literal['autoreject_global']
+    ]
+] = None
 """
 Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively

@@ -1,5 +1,5 @@
 """
-MNE Sample Data
+OMEGA Resting State Sample Data
 """
 
 study_name = 'ds000247'
@@ -12,8 +12,11 @@ task = 'rest'
 ch_types = ['meg']
 spatial_filter = 'ssp'
 
-l_freq = 0.5
+l_freq = 1.0
 h_freq = 40.0
 
 rest_epochs_duration = 10
 rest_epochs_overlap = 0
+
+epochs_tmin = 0
+baseline = None

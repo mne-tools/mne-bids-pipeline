@@ -210,6 +210,7 @@ def run_report(cfg, subject, session=None):
                          check=False)
 
     fname_ave = bids_path.copy().update(suffix='ave')
+    fname_epo = bids_path.copy().update(suffix='epo')
     if cfg.use_template_mri:
         fname_trans = 'fsaverage'
         has_trans = True
@@ -231,7 +232,7 @@ def run_report(cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    params: Dict[str, Any] = dict(info_fname=fname_ave, raw_psd=True,
+    params: Dict[str, Any] = dict(info_fname=fname_epo, raw_psd=True,
                                   subject=cfg.fs_subject, title=title)
     if has_trans:
         params['subjects_dir'] = cfg.fs_subjects_dir
@@ -259,10 +260,11 @@ def run_report(cfg, subject, session=None):
                                 section='Data Quality')
 
     # Visualize events.
-    events_fig = plot_events(cfg=cfg, subject=subject, session=session)
-    rep.add_figs_to_section(figs=events_fig,
-                            captions='Events in filtered continuous data',
-                            section='Events')
+    if cfg.task.lower() != 'rest':
+        events_fig = plot_events(cfg=cfg, subject=subject, session=session)
+        rep.add_figs_to_section(figs=events_fig,
+                                captions='Events in filtered continuous data',
+                                section='Events')
 
     ###########################################################################
     #
@@ -284,7 +286,9 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize TFR as topography.
     #
-    if isinstance(cfg.time_frequency_conditions, dict):
+    if cfg.time_frequency_conditions is None:
+        conditions = []
+    elif isinstance(cfg.time_frequency_conditions, dict):
         conditions = list(cfg.time_frequency_conditions.keys())
     else:
         conditions = cfg.time_frequency_conditions.copy()
@@ -303,18 +307,24 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize evoked responses.
     #
-    if isinstance(cfg.conditions, dict):
+    if cfg.conditions is None:
+        conditions = []
+    elif isinstance(cfg.conditions, dict):
         conditions = list(cfg.conditions.keys())
     else:
         conditions = cfg.conditions.copy()
 
     conditions.extend(cfg.contrasts)
-    evokeds = mne.read_evokeds(fname_ave)
-    if cfg.analyze_channels:
-        for evoked in evokeds:
-            evoked.pick(cfg.analyze_channels)
+
+    if conditions:
+        evokeds = mne.read_evokeds(fname_ave)
+    else:
+        evokeds = []
 
     for condition, evoked in zip(conditions, evokeds):
+        if cfg.analyze_channels:
+            evoked.pick(cfg.analyze_channels)
+
         if condition in cfg.conditions:
             caption = f'Condition: {condition}'
             section = 'Evoked'
@@ -362,9 +372,9 @@ def run_report(cfg, subject, session=None):
     #
     # Visualize the coregistration & inverse solutions.
     #
-    evokeds = mne.read_evokeds(fname_ave)
-
     if has_trans:
+        evokeds = mne.read_evokeds(fname_ave)
+
         # Omit our custom coreg plot here – this is now handled through
         # parse_folder() automatically. Keep the following code around for
         # future reference.
@@ -566,13 +576,13 @@ def run_report_average(cfg, subject: str, session: str) -> None:
 
     conditions.extend(cfg.contrasts)
 
-    ###########################################################################
+    #######################################################################
     #
     # Add events end epochs drop log stats.
     #
     add_event_counts(cfg=cfg, report=rep, session=session)
 
-    ###########################################################################
+    #######################################################################
     #
     # Visualize evoked responses.
     #
@@ -588,7 +598,7 @@ def run_report_average(cfg, subject: str, session: str) -> None:
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
 
-    ###########################################################################
+    #######################################################################
     #
     # Visualize decoding results.
     #
@@ -598,25 +608,27 @@ def run_report_average(cfg, subject: str, session: str) -> None:
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = (evoked_fname.copy()
-                               .update(processing=processing,
-                                       suffix='decoding',
-                                       extension='.mat'))
+            fname_decoding_ = evoked_fname.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
             decoding_data = loadmat(fname_decoding_)
             del fname_decoding_, processing, a_vs_b
 
             fig = plot_decoding_scores_gavg(cfg=cfg,
                                             decoding_data=decoding_data)
             caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-            comment = (f'Based on N={decoding_data["N"].squeeze()} subjects. '
-                       f'Standard error and confidence interval of the mean '
-                       f'were bootstrapped with {cfg.n_boot} resamples.')
+            comment = (f'Based on N={decoding_data["N"].squeeze()} '
+                       f'subjects. Standard error and confidence interval '
+                       f'of the mean were bootstrapped with {cfg.n_boot} '
+                       f'resamples.')
             rep.add_figs_to_section(figs=fig, captions=caption,
                                     comments=comment,
                                     section='Decoding')
             del decoding_data, cond_1, cond_2, caption, comment
 
-    ###########################################################################
+    #######################################################################
     #
     # Visualize inverse solutions.
     #
@@ -634,7 +646,8 @@ def run_report_average(cfg, subject: str, session: str) -> None:
             extension=None)
 
         if op.exists(str(fname_stc_avg) + "-lh.stc"):
-            stc = mne.read_source_estimate(fname_stc_avg, subject='fsaverage')
+            stc = mne.read_source_estimate(fname_stc_avg,
+                                           subject='fsaverage')
             _, peak_time = stc.get_peak()
 
             # Plot using 3d backend if available, and use Matplotlib
@@ -728,6 +741,12 @@ def main():
     sessions = config.get_sessions()
     if not sessions:
         sessions = [None]
+
+    if (config.get_task() is not None and
+            config.get_task().lower() == 'rest'):
+        msg = '    … skipping "average" report for "rest" task.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
 
     for session in sessions:
         run_report_average(cfg=get_config(subject='average'),

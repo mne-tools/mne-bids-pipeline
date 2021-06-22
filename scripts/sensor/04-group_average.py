@@ -207,6 +207,11 @@ def get_config(
 
 
 def main():
+    if config.get_task().lower() == 'rest':
+        msg = '    … skipping: for "rest" task.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
+
     sessions = config.get_sessions()
     if not sessions:
         sessions = [None]

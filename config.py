@@ -799,8 +799,9 @@ for more information.
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
-This is a **required** parameter in the configuration file. If left as `None`,
-it will raise an error.
+This is a **required** parameter in the configuration file, unless you are
+processing resting-state data. If left as `None` and [`task`][config.task]
+is not `'rest'`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -810,6 +811,7 @@ it will raise an error.
     conditions = ['auditory']  # All "auditory" conditions (left AND right)
     conditions = ['auditory', 'visual']
     conditions = ['left', 'right']
+    conditions = None  # for a resting-state analysis
     ```
     Pass a dictionary to define a mapping:
     ```python
@@ -835,6 +837,17 @@ The end of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
     ```
+"""
+
+rest_epochs_duration: Optional[float] = None
+"""
+Duration of epochs in seconds.
+"""
+
+rest_epochs_overlap: Optional[float] = None
+"""
+Overlap between epochs in seconds. This is used if the task is ``'rest'``
+and when the annotations do not contain any stimulation or behavior events.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
@@ -1615,10 +1628,6 @@ if 'eeg' in ch_types:
                "instead by setting spatial_filter='ica'.")
         raise ValueError(msg)
 
-if conditions is None and 'MKDOCS' not in os.environ:
-    msg = ('Please indicate the name of your conditions in your '
-           'configuration. Currently the `conditions` parameter is empty.')
-    raise ValueError(msg)
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
@@ -2239,9 +2248,22 @@ def make_epochs(
     rejection thresholds will be applied. No baseline-correction will be
     performed.
     """
-    events, event_id_from_annotatins = mne.events_from_annotations(raw)
+    if get_task().lower() == 'rest':
+        stop = raw.times[-1] - rest_epochs_duration
+        assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
+        assert rest_epochs_overlap is not None, \
+            "epochs_overlap cannot be None for rest"
+        events = mne.make_fixed_length_events(
+            raw, id=3000, start=0,
+            duration=rest_epochs_duration,
+            overlap=rest_epochs_overlap,
+            stop=stop)
+        event_id = dict(rest=3000)
+    else:  # Events for task runs
+        events, event_id_from_annotations = mne.events_from_annotations(raw)
+
     if event_id is None:
-        event_id = event_id_from_annotatins
+        event_id = event_id_from_annotations
 
     # Construct metadata from the epochs
     if metadata_tmin is None:
@@ -2751,6 +2773,17 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+# Another check that depends on some of the functions defined above
+if (get_task() is not None and
+        get_task().lower() != 'rest' and
+        conditions is None and
+        'MKDOCS' not in os.environ):
+    msg = ('Please indicate the name of your conditions in your '
+           'configuration. Currently the `conditions` parameter is empty. '
+           'This is only allowed for resting-state analysis.')
+    raise ValueError(msg)
 
 
 # # Leave this here for reference for now

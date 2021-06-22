@@ -1,5 +1,6 @@
 """Download test data and run a test suite."""
 import sys
+import shutil
 import os
 from pathlib import Path
 import argparse
@@ -49,6 +50,13 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
                   'preprocessing/make_epochs',  # Test the group/step syntax
                   'sensor', 'report'),
         'task': None,
+        'env': {}
+    },
+    'ds000247': {
+        'dataset': 'ds000247',
+        'config': 'config_ds000247.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'task': 'rest',
         'env': {}
     },
     'ds000248': {
@@ -195,6 +203,15 @@ def run_tests(test_suite, download):
         # Fetch the data.
         if download:
             fetch(test_options['dataset'])
+
+        # XXX Workaround for buggy date in ds000247. Remove this and the
+        # XXX file referenced here once fixed!!!
+        if dataset == 'ds000247':
+            shutil.copy(
+                src=Path(__file__).parent / 'ds000247_scans.tsv',
+                dst=Path('~/mne_data/ds000247/sub-0002/ses-0001/'
+                         'sub-0002_ses-0001_scans.tsv').expanduser()
+            )
 
         # Run the tests.
         steps = test_options['steps']

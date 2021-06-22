@@ -58,10 +58,6 @@ def run_evoked(cfg, subject, session=None):
             evoked.comment = evoked.comment.replace(orig_cond_name,
                                                     new_cond_name)
             all_evoked[new_cond_name] = evoked
-    elif cfg.conditions is None:
-        # Handle resting-state
-        evoked = epochs.average()
-        all_evoked['rest'] = evoked
     else:
         for condition in cfg.conditions:
             evoked = epochs[condition].average()
@@ -117,6 +113,11 @@ def main():
     """Run evoked."""
     msg = 'Running Step 6: Create evoked data'
     logger.info(gen_log_message(step=6, message=msg))
+
+    if config.get_task().lower() == 'rest':
+        msg = '    … skipping: for "rest" task.'
+        logger.info(gen_log_message(step=10, message=msg))
+        return
 
     parallel, run_func, _ = parallel_func(run_evoked, n_jobs=config.N_JOBS)
     parallel(run_func(get_config(), subject, session)

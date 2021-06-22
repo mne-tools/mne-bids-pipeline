@@ -2752,7 +2752,8 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
 
 
 # Another check that depends on some of the functions defined above
-if (get_task().lower() != 'rest' and
+if (get_task() is not None and
+        get_task().lower() != 'rest' and
         conditions is None and
         'MKDOCS' not in os.environ):
     msg = ('Please indicate the name of your conditions in your '

@@ -742,7 +742,8 @@ def main():
     if not sessions:
         sessions = [None]
 
-    if config.get_task().lower() == 'rest':
+    if (config.get_task() is not None and
+            config.get_task().lower() == 'rest'):
         msg = '    … skipping "average" report for "rest" task.'
         logger.info(gen_log_message(step=10, message=msg))
         return

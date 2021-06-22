@@ -349,7 +349,6 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000247
           destination: reports/ds000247
@@ -357,7 +356,6 @@ jobs:
           root: ~/
           paths:
             - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*.html
-            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*.tsv
 
   test_ds000248:
     <<: *imageconfig

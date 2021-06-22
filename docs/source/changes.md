@@ -69,6 +69,10 @@ authors:
   [`ssp_reject_ecg`][config.ssp_reject_ecg].
   ({{ gh(392) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
    {{ authors.hoechenberger }})
+- You can now use autoreject for exclusing artifacts before SSP estimation via the `autoreject_global` option in [`ssp_reject_eog`][config.ssp_reject_eog] and
+  [`ssp_reject_ecg`][config.ssp_reject_ecg].
+  ({{ gh(396) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
+   {{ authors.hoechenberger }})
 
 ### Behavior changes
 

@@ -16,10 +16,15 @@ If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501
 
-from typing import Optional, Union, Literal
+import sys
 import itertools
 import logging
 import numpy as np
+from typing import Optional, Union
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 import mne
 from mne.utils import BunchConst

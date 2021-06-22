@@ -942,7 +942,12 @@ Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
 """
 
-ssp_reject_ecg: Optional[Dict[str, float]] = None
+ssp_reject_ecg: Optional[
+    Union[
+        Dict[str, float],
+        Literal['autoreject_global']
+    ]
+] = None
 """
 Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -960,7 +965,12 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Optional[Dict[str, float]] = None
+ssp_reject_eog: Optional[
+    Union[
+        Dict[str, float],
+        Literal['autoreject_global']
+    ]
+] = None
 """
 Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1995,6 +2005,20 @@ def get_reject(
     *,
     epochs: Optional[mne.BaseEpochs] = None
 ) -> Dict[str, float]:
+    return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
+
+
+def get_ssp_reject(
+    *,
+    ssp_type: Literal['ecg', 'eog'],
+    epochs: mne.BaseEpochs
+) -> Dict[str, float]:
+    if ssp_type == 'ecg':
+        reject = ssp_reject_ecg
+    elif ssp_type == 'eog':
+        reject = ssp_reject_eog
+    else:
+        raise ValueError("Only 'eog' and 'ecg' are supported.")
     return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 

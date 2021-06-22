@@ -12,6 +12,7 @@ from typing import Optional
 
 import mne
 from mne.utils import BunchConst
+from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
@@ -52,14 +53,17 @@ def run_ssp(cfg, subject, session=None):
         raw_fname_in.update(split='01')
 
     raw = mne.io.read_raw_fif(raw_fname_in)
-    # XXX : n_xxx should be options in config
     msg = 'Computing SSPs for ECG'
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
 
+    reject_ecg_ = config.get_ssp_reject(
+        ssp_type='ecg',
+        epochs=(create_ecg_epochs(raw)
+                if cfg.ssp_reject_ecg == 'autoreject_global' else None))
     ecg_projs, _ = compute_proj_ecg(raw,
                                     average=cfg.ecg_proj_from_average,
-                                    reject=cfg.ssp_reject_ecg,
+                                    reject=reject_ecg_,
                                     **cfg.n_proj_ecg)
     if not ecg_projs:
         msg = 'No ECG events could be found. No ECG projectors computed.'
@@ -75,9 +79,13 @@ def run_ssp(cfg, subject, session=None):
     else:
         ch_names = None
 
+    reject_eog_ = config.get_ssp_reject(
+        ssp_type='eog',
+        epochs=(create_eog_epochs(raw)
+                if cfg.ssp_reject_eog == 'autoreject_global' else None))
     eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
                                     average=cfg.eog_proj_from_average,
-                                    reject=cfg.ssp_reject_eog,
+                                    reject=reject_eog_,
                                     **cfg.n_proj_eog)
 
     if not eog_projs:

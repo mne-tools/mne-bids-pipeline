@@ -10,9 +10,14 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
+import sys
 import itertools
 import logging
-from typing import List, Optional, Iterable, Literal
+from typing import List, Optional, Iterable
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 from tqdm import tqdm
 import pandas as pd

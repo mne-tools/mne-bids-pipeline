@@ -62,8 +62,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000247',
         'osf': '',
         'web': '',
-        'include': ['sub-0002/ses-0001/meg',
-                    'sub-0002/ses-0001/*_scans.tsv'],
+        'include': ['sub-0002/ses-0001/meg'],
         'exclude': []
     },
     'ds000248': {

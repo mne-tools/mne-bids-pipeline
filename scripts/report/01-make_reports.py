@@ -602,9 +602,9 @@ def run_report_average(cfg, subject: str, session: str) -> None:
                 processing = f'{a_vs_b}+{cfg.decoding_metric}'
                 processing = processing.replace('_', '-').replace('-', '')
                 fname_decoding_ = (evoked_fname.copy()
-                                .update(processing=processing,
-                                        suffix='decoding',
-                                        extension='.mat'))
+                                   .update(processing=processing,
+                                           suffix='decoding',
+                                           extension='.mat'))
                 decoding_data = loadmat(fname_decoding_)
                 del fname_decoding_, processing, a_vs_b
 

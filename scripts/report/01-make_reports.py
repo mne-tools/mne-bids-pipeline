@@ -649,10 +649,10 @@ def run_report_average(cfg, subject: str, session: str) -> None:
             # otherwise.
             if mne.viz.get_3d_backend() is not None:
                 brain = stc.plot(views=['lat'], hemi='both',
-                                    initial_time=peak_time, backend='pyvista',
-                                    time_viewer=True,
-                                    show_traces=True,
-                                    subjects_dir=cfg.fs_subjects_dir)
+                                 initial_time=peak_time, backend='pyvista',
+                                 time_viewer=True,
+                                 show_traces=True,
+                                 subjects_dir=cfg.fs_subjects_dir)
                 brain.toggle_interface()
                 figs = brain._renderer.figure
                 captions = caption

@@ -57,8 +57,8 @@ def run_ssp(cfg, subject, session=None):
     logger.debug(gen_log_message(message=msg, step=4, subject=subject,
                                  session=session))
 
-    reject_ecg_ = cfg._get_reject(
-        reject=cfg.ssp_reject_ecg,
+    reject_ecg_ = cfg.get_ssp_reject(
+        ssp_type='ecg',
         epochs=(create_ecg_epochs(raw)
                 if cfg.ssp_reject_ecg == 'autoreject_global' else None))
     ecg_projs, _ = compute_proj_ecg(raw,
@@ -79,8 +79,8 @@ def run_ssp(cfg, subject, session=None):
     else:
         ch_names = None
 
-    reject_eog_ = cfg._get_reject(
-        reject=cfg.ssp_reject_eog,
+    reject_eog_ = cfg.get_ssp_reject(
+        ssp_type='eog',
         epochs=(create_eog_epochs(raw)
                 if cfg.ssp_reject_eog == 'autoreject_global' else None))
     eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,

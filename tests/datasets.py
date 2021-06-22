@@ -63,7 +63,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': ['sub-0002/ses-0001/meg',
-                    'sub-0002/ses-0001/scants.tsv'],
+                    'sub-0002/ses-0001/*_scans.tsv'],
         'exclude': []
     },
     'ds000248': {

@@ -1999,13 +1999,17 @@ def get_reject(
     return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 
-def get_ssp_reject(ssp_type, epochs) -> Dict[str, float]:
+def get_ssp_reject(
+    *,
+    ssp_type: Literal['ecg', 'eog'],
+    epochs: mne.BaseEpochs
+) -> Dict[str, float]:
     if ssp_type == 'ecg':
         reject = ssp_reject_ecg
     elif ssp_type == 'eog':
         reject = ssp_reject_eog
     else:
-        raise ValueError("Only 'eog'and 'ecg' are supported.")
+        raise ValueError("Only 'eog' and 'ecg' are supported.")
     return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
 
 

@@ -355,7 +355,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*/*.html
 
   test_ds000248:
     <<: *imageconfig

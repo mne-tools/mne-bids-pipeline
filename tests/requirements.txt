@@ -25,5 +25,4 @@ coloredlogs
 openneuro-py
 autoreject
 https://api.github.com/repos/mne-tools/mne-python/zipball/main
-# https://api.github.com/repos/mne-tools/mne-bids/zipball/main
-https://github.com/hoechenberger/mne-bids/archive/refs/heads/scans.zip  # XXX
+https://api.github.com/repos/mne-tools/mne-bids/zipball/main

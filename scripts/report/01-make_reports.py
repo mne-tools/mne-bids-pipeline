@@ -318,6 +318,8 @@ def run_report(cfg, subject, session=None):
 
     if conditions:
         evokeds = mne.read_evokeds(fname_ave)
+    else:
+        evokeds = []
 
     for condition, evoked in zip(conditions, evokeds):
         if cfg.analyze_channels:

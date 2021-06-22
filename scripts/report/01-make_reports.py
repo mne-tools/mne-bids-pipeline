@@ -604,10 +604,11 @@ def run_report_average(cfg, subject: str, session: str) -> None:
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = (evoked_fname.copy()
-                                .update(processing=processing,
-                                        suffix='decoding',
-                                        extension='.mat'))
+            fname_decoding_ = evoked_fname.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
             decoding_data = loadmat(fname_decoding_)
             del fname_decoding_, processing, a_vs_b
 
@@ -615,9 +616,9 @@ def run_report_average(cfg, subject: str, session: str) -> None:
                                             decoding_data=decoding_data)
             caption = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
             comment = (f'Based on N={decoding_data["N"].squeeze()} '
-                        f'subjects. Standard error and confidence interval '
-                        f'of the mean were bootstrapped with {cfg.n_boot} '
-                        f'resamples.')
+                       f'subjects. Standard error and confidence interval '
+                       f'of the mean were bootstrapped with {cfg.n_boot} '
+                       f'resamples.')
             rep.add_figs_to_section(figs=fig, captions=caption,
                                     comments=comment,
                                     section='Decoding')

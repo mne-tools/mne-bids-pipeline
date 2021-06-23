@@ -1758,7 +1758,7 @@ def get_subjects() -> List[str]:
     global subjects
 
     all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
     valid_subjects = get_entity_vals(root=get_bids_root(),
                                      entity_key='subject',
                                      ignore_datatypes=ignore_datatypes)
@@ -1787,7 +1787,7 @@ def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
     all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
 
     env = os.environ
     if env.get('MNE_BIDS_STUDY_SESSION'):
@@ -1813,7 +1813,7 @@ def get_runs_all_subjects() -> dict:
     """
     # We cannot use get_subjects() because if there is just one subject
     all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
     valid_subs = get_entity_vals(get_bids_root(), entity_key='subject',
                                  ignore_datatypes=ignore_datatypes)
     subj_runs = dict()
@@ -1927,7 +1927,7 @@ def get_task() -> Optional[str]:
     global task
 
     all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
     valid_tasks = get_entity_vals(get_bids_root(), entity_key='task',
                                   ignore_datatypes=ignore_datatypes)
 

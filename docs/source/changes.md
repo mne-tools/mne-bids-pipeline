@@ -165,3 +165,6 @@ authors:
 - Setting [`eeg_reference`][config.eeg_reference] to a string (name of the
   reference channel) caused us to crash.
   ({{ gh(391) }} by {{ authors.hoechenberger }})
+- Parameters retrieved from the BIDS dataset were not limited to the modality
+  ("data type") we meant to process, sometimes leading to crashes.
+  ({{ gh(391) }} by {{ authors.hoechenberger }})

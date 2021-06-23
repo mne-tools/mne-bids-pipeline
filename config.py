@@ -24,8 +24,8 @@ import numpy as np
 import pandas as pd
 import json_tricks
 import mne
-from mne_bids import BIDSPath, read_raw_bids
-from mne_bids.path import get_entity_vals
+import mne_bids
+from mne_bids import BIDSPath, read_raw_bids, get_entity_vals
 
 PathLike = Union[str, pathlib.Path]
 
@@ -1757,10 +1757,13 @@ def get_deriv_root() -> pathlib.Path:
 def get_subjects() -> List[str]:
     global subjects
 
+    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    valid_subjects = get_entity_vals(root=get_bids_root(),
+                                     entity_key='subject',
+                                     ignore_datatypes=ignore_datatypes)
+
     env = os.environ
-
-    valid_subjects = get_entity_vals(get_bids_root(), entity_key='subject')
-
     if env.get('MNE_BIDS_STUDY_SUBJECT'):
         env_subject = env['MNE_BIDS_STUDY_SUBJECT']
         if env_subject not in valid_subjects:
@@ -1783,11 +1786,15 @@ def get_subjects() -> List[str]:
 def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
+    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+
     env = os.environ
     if env.get('MNE_BIDS_STUDY_SESSION'):
         sessions_ = env['MNE_BIDS_STUDY_SESSION']
     elif sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='session')
+        sessions_ = get_entity_vals(bids_root, entity_key='session',
+                                    ignore_datatypes=ignore_datatypes)
 
     if not sessions_:
         return [None]
@@ -1805,8 +1812,10 @@ def get_runs_all_subjects() -> dict:
     (and not for each subject present in the bids_path).
     """
     # We cannot use get_subjects() because if there is just one subject
-    valid_subs = get_entity_vals(get_bids_root(), entity_key='subject')
-
+    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    valid_subs = get_entity_vals(get_bids_root(), entity_key='subject',
+                                 ignore_datatypes=ignore_datatypes)
     subj_runs = dict()
     for subj in get_subjects():
         # ignore all subject but the one considered
@@ -1821,7 +1830,9 @@ def get_runs_all_subjects() -> dict:
 
         valid_runs_subj = get_entity_vals(
             get_bids_root(), entity_key='run',
-            ignore_subjects=ignore_subjects)
+            ignore_subjects=ignore_subjects,
+            ignore_datatypes=ignore_datatypes
+        )
         if exclude_runs and subj in exclude_runs:
             valid_runs_subj = [r for r in valid_runs_subj
                                if r not in exclude_runs[subj]]
@@ -1898,20 +1909,6 @@ def get_runs(
         return runs_
 
 
-# XXX This check should actually go into the CHECKS section, but it depends
-# XXX on get_runs(), which is defined after that section.
-if 'MKDOCS' not in os.environ:
-    inter_runs = get_intersect_run()
-    mf_ref_error = (
-        (mf_reference_run is not None) and
-        (mf_reference_run not in inter_runs)
-    )
-    if mf_ref_error:
-        msg = (f'You set mf_reference_run={mf_reference_run}, but your '
-               f'dataset only contains the following runs: {inter_runs}')
-        raise ValueError(msg)
-
-
 def get_mf_reference_run() -> str:
     # Retrieve to run identifier (number, name) of the reference run
     if mf_reference_run is None:
@@ -1929,9 +1926,12 @@ def get_mf_reference_run() -> str:
 def get_task() -> Optional[str]:
     global task
 
-    env = os.environ
-    valid_tasks = get_entity_vals(get_bids_root(), entity_key='task')
+    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+    ignore_datatypes = set(all_datatypes) - set(get_datatype())
+    valid_tasks = get_entity_vals(get_bids_root(), entity_key='task',
+                                  ignore_datatypes=ignore_datatypes)
 
+    env = os.environ
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
         if task not in valid_tasks:
@@ -2773,6 +2773,20 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+# XXX This check should actually go into the CHECKS section, but it depends
+# XXX on get_runs(), which is defined after that section.
+if 'MKDOCS' not in os.environ:
+    inter_runs = get_intersect_run()
+    mf_ref_error = (
+        (mf_reference_run is not None) and
+        (mf_reference_run not in inter_runs)
+    )
+    if mf_ref_error:
+        msg = (f'You set mf_reference_run={mf_reference_run}, but your '
+               f'dataset only contains the following runs: {inter_runs}')
+        raise ValueError(msg)
 
 
 # Another check that depends on some of the functions defined above

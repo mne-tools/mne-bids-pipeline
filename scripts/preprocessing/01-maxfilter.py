@@ -82,21 +82,22 @@ def run_maxwell_filter(cfg, subject, session=None):
         # Maxwell-filter experimental data.
         msg = 'Applying Maxwell filter to experimental data.'
         logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                    session=session))
+                                    session=session, run=run))
 
         # Warn if no bad channels are set before Maxwell filter
         # Create a copy, we'll need this later for setting the bads of the
         # empty-room recording
         bads = raw.info['bads'].copy()
         if not bads:
-            msg = '\nFound no bad channels. \n '
+            msg = 'Found no bad channels.'
             logger.warning(gen_log_message(message=msg, subject=subject,
-                                           step=1, session=session))
+                                           step=1, session=session, run=run))
 
         if cfg.mf_st_duration:
             msg = '    st_duration=%d' % (cfg.mf_st_duration)
             logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session))
+                                        subject=subject, session=session,
+                                        run=run))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.
@@ -126,6 +127,10 @@ def run_maxwell_filter(cfg, subject, session=None):
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
+        # Only process empty-room data once – we ensure this by simply checking
+        # if the current run is the reference run, and only then initiate
+        # empty-room processing. No sophisticated logic behind this – it's just
+        # convenient to code it this way.
         if cfg.process_er and run == cfg.mf_reference_run:
             msg = 'Processing empty-room recording …'
             logger.info(gen_log_message(step=1, subject=subject,

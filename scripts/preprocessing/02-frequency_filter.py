@@ -177,12 +177,12 @@ def filter_data(
 
         raw_er.load_data()
         filter(
-            raw=raw_er, subject=subject, session=session, run=run,
+            raw=raw_er, subject='emptyroom', session=session, run=run,
             h_freq=cfg.h_freq, l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth
         )
-        resample(raw=raw_er, subject=subject, session=session, run=run,
+        resample(raw=raw_er, subject='emptyroom', session=session, run=run,
                  sfreq=cfg.resample_sfreq)
 
         raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')

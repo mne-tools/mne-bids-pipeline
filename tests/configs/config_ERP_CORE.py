@@ -24,6 +24,7 @@ components from a total of 6 experimental tasks:
                 [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
 import os
+import mne
 
 study_name = 'ERP-CORE'
 bids_root = '~/mne_data/ERP_CORE'
@@ -39,7 +40,7 @@ interactive = False
 
 resample_sfreq = 256
 
-eeg_template_montage = 'standard_1005'
+eeg_template_montage = mne.channels.make_standard_montage('standard_1005')
 eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
                         'VEOG': ('VEOG_lower', 'FP2')}
 drop_channels = ['HEOG_left', 'HEOG_right', 'VEOG_lower']

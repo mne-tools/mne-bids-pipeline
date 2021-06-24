@@ -1717,9 +1717,11 @@ if (spatial_filter == 'ica' and
                 f'ica_reject["{ch_type}"] ({ica_reject[ch_type]})'
             )
 
+
 ###############################################################################
 # Helper functions
 # ----------------
+
 
 @functools.lru_cache(maxsize=None)
 def _get_entity_vals_cached(*args, **kwargs):
@@ -1746,6 +1748,7 @@ def get_bids_root() -> pathlib.Path:
     return (pathlib.Path(bids_root)
             .expanduser()
             .resolve(strict=True))
+
 
 def get_datatype() -> Literal['meg', 'eeg']:
     # Content of ch_types should be sanitized already, so we don't need any
@@ -1774,6 +1777,12 @@ _valid_tasks = _get_entity_vals_cached(
 _valid_subjects = _get_entity_vals_cached(
     root=get_bids_root(),
     entity_key='subject',
+    ignore_datatypes=tuple(_ignore_datatypes)
+)
+
+_all_sessions = _get_entity_vals_cached(
+    bids_root,
+    entity_key='session',
     ignore_datatypes=tuple(_ignore_datatypes)
 )
 
@@ -1817,11 +1826,7 @@ def get_sessions():
     if env.get('MNE_BIDS_STUDY_SESSION'):
         sessions_ = env['MNE_BIDS_STUDY_SESSION']
     elif sessions_ == 'all':
-        sessions_ = _get_entity_vals_cached(
-            bids_root,
-            entity_key='session',
-            ignore_datatypes=tuple(_ignore_datatypes)
-        )
+        sessions_ = _all_sessions
 
     if not sessions_:
         return [None]
@@ -1840,26 +1845,16 @@ def get_runs_all_subjects() -> dict:
     """
     # We cannot use get_subjects() because if there is just one subject
     subj_runs = dict()
-    for subj in get_subjects():
-        # ignore all subject but the one considered
-        # We need to create the full list of ignore_subjects
-        # Not very elegant, but selecting one subject is not possible
-        # with the current api of get_entity_vals in mne-bids
-        ignore_subjects = _valid_subjects.copy()
-        if subj in ignore_subjects:
-            ignore_subjects.remove(subj)
-        else:
-            ValueError(f"{subj} not in {ignore_subjects}")
-
+    for subject in get_subjects():
+        # Only traverse through the current subject's directory
         valid_runs_subj = _get_entity_vals_cached(
-            get_bids_root(), entity_key='run',
-            ignore_subjects=tuple(ignore_subjects),
+            get_bids_root() / f'sub-{subject}', entity_key='run',
             ignore_datatypes=tuple(_ignore_datatypes)
         )
-        if exclude_runs and subj in exclude_runs:
+        if exclude_runs and subject in exclude_runs:
             valid_runs_subj = [r for r in valid_runs_subj
-                               if r not in exclude_runs[subj]]
-        subj_runs[subj] = valid_runs_subj
+                               if r not in exclude_runs[subject]]
+        subj_runs[subject] = valid_runs_subj
 
     return subj_runs
 

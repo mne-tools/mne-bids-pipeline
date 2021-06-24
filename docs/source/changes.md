@@ -73,6 +73,8 @@ authors:
   [`ssp_reject_ecg`][config.ssp_reject_ecg].
   ({{ gh(396) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
    {{ authors.hoechenberger }})
+- You can now specify a custom [`eeg_template_montage`][config.eeg_template_montage] from any `mne.channels.montage.DigMontage` object.
+  ({{ gh(407) }} by {{ authors.dengemann }}, {{ authors.hoechenberger }} and {{ authors.agramfort }})
 
 ### Behavior changes
 

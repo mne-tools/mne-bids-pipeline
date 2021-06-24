@@ -69,10 +69,15 @@ authors:
   [`ssp_reject_ecg`][config.ssp_reject_ecg].
   ({{ gh(392) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
    {{ authors.hoechenberger }})
-- You can now use autoreject for exclusing artifacts before SSP estimation via the `autoreject_global` option in [`ssp_reject_eog`][config.ssp_reject_eog] and
-  [`ssp_reject_ecg`][config.ssp_reject_ecg].
+- You can now use autoreject for exclusing artifacts before SSP estimation via
+  the `autoreject_global` option in [`ssp_reject_eog`][config.ssp_reject_eog]
+  and [`ssp_reject_ecg`][config.ssp_reject_ecg].
   ({{ gh(396) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, and
    {{ authors.hoechenberger }})
+- Certain BIDS file system operations are now being cached, which should
+  significantly reduce start-up times in situations where many participants
+  are being processed with data from a network-attached storage (NAS).
+  ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
 
 ### Behavior changes
 

@@ -12,7 +12,6 @@ import traceback
 import sys
 import copy
 import logging
-
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -25,7 +24,7 @@ import pandas as pd
 import json_tricks
 import mne
 import mne_bids
-from mne_bids import BIDSPath, read_raw_bids, get_entity_vals
+from mne_bids import BIDSPath, read_raw_bids
 
 PathLike = Union[str, pathlib.Path]
 
@@ -1722,6 +1721,10 @@ if (spatial_filter == 'ica' and
 # Helper functions
 # ----------------
 
+@functools.lru_cache(maxsize=None)
+def _get_entity_vals_cached(*args, **kwargs):
+    return mne_bids.get_entity_vals(*args, **kwargs)
+
 
 def get_bids_root() -> pathlib.Path:
     # BIDS_ROOT environment variable takes precedence over any configuration file
@@ -1744,6 +1747,36 @@ def get_bids_root() -> pathlib.Path:
             .expanduser()
             .resolve(strict=True))
 
+def get_datatype() -> Literal['meg', 'eeg']:
+    # Content of ch_types should be sanitized already, so we don't need any
+    # extra sanity checks here.
+    if data_type is not None:
+        return data_type
+    elif data_type is None and ch_types == ['eeg']:
+        return 'eeg'
+    elif data_type is None and any([t in ['meg', 'mag', 'grad']
+                                    for t in ch_types]):
+        return 'meg'
+    else:
+        raise RuntimeError("This probably shouldn't happen. Please contact "
+                           "the MNE-BIDS-pipeline developers. Thank you.")
+
+
+_all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+_ignore_datatypes = set(_all_datatypes) - set([get_datatype()])
+
+_valid_tasks = _get_entity_vals_cached(
+    root=get_bids_root(),
+    entity_key='task',
+    ignore_datatypes=tuple(_ignore_datatypes)
+)
+
+_valid_subjects = _get_entity_vals_cached(
+    root=get_bids_root(),
+    entity_key='subject',
+    ignore_datatypes=tuple(_ignore_datatypes)
+)
+
 
 def get_deriv_root() -> pathlib.Path:
     if deriv_root is None:
@@ -1757,22 +1790,16 @@ def get_deriv_root() -> pathlib.Path:
 def get_subjects() -> List[str]:
     global subjects
 
-    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
-    valid_subjects = get_entity_vals(root=get_bids_root(),
-                                     entity_key='subject',
-                                     ignore_datatypes=ignore_datatypes)
-
     env = os.environ
     if env.get('MNE_BIDS_STUDY_SUBJECT'):
         env_subject = env['MNE_BIDS_STUDY_SUBJECT']
-        if env_subject not in valid_subjects:
+        if env_subject not in _valid_subjects:
             raise ValueError(
-                f'Invalid subject. It can be {valid_subjects} but '
+                f'Invalid subject. It can be {_valid_subjects} but '
                 f'got {env_subject}')
         s = [env_subject]
     elif subjects == 'all':
-        s = valid_subjects
+        s = _valid_subjects
     else:
         s = subjects
 
@@ -1786,15 +1813,15 @@ def get_subjects() -> List[str]:
 def get_sessions():
     sessions_ = copy.deepcopy(sessions)  # Avoid clash with global variable.
 
-    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
-
     env = os.environ
     if env.get('MNE_BIDS_STUDY_SESSION'):
         sessions_ = env['MNE_BIDS_STUDY_SESSION']
     elif sessions_ == 'all':
-        sessions_ = get_entity_vals(bids_root, entity_key='session',
-                                    ignore_datatypes=ignore_datatypes)
+        sessions_ = _get_entity_vals_cached(
+            bids_root,
+            entity_key='session',
+            ignore_datatypes=tuple(_ignore_datatypes)
+        )
 
     if not sessions_:
         return [None]
@@ -1812,26 +1839,22 @@ def get_runs_all_subjects() -> dict:
     (and not for each subject present in the bids_path).
     """
     # We cannot use get_subjects() because if there is just one subject
-    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
-    valid_subs = get_entity_vals(get_bids_root(), entity_key='subject',
-                                 ignore_datatypes=ignore_datatypes)
     subj_runs = dict()
     for subj in get_subjects():
         # ignore all subject but the one considered
         # We need to create the full list of ignore_subjects
         # Not very elegant, but selecting one subject is not possible
         # with the current api of get_entity_vals in mne-bids
-        ignore_subjects = valid_subs.copy()
+        ignore_subjects = _valid_subjects.copy()
         if subj in ignore_subjects:
             ignore_subjects.remove(subj)
         else:
             ValueError(f"{subj} not in {ignore_subjects}")
 
-        valid_runs_subj = get_entity_vals(
+        valid_runs_subj = _get_entity_vals_cached(
             get_bids_root(), entity_key='run',
-            ignore_subjects=ignore_subjects,
-            ignore_datatypes=ignore_datatypes
+            ignore_subjects=tuple(ignore_subjects),
+            ignore_datatypes=tuple(_ignore_datatypes)
         )
         if exclude_runs and subj in exclude_runs:
             valid_runs_subj = [r for r in valid_runs_subj
@@ -1926,40 +1949,20 @@ def get_mf_reference_run() -> str:
 def get_task() -> Optional[str]:
     global task
 
-    all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
-    ignore_datatypes = set(all_datatypes) - set([get_datatype()])
-    valid_tasks = get_entity_vals(get_bids_root(), entity_key='task',
-                                  ignore_datatypes=ignore_datatypes)
-
     env = os.environ
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
-        if task not in valid_tasks:
+        if task not in _valid_tasks:
             raise ValueError(f'Invalid task. It can be: '
-                             f'{", ".join(valid_tasks)} but got: {task}')
+                             f'{", ".join(_valid_tasks)} but got: {task}')
 
     if not task:
-        if not valid_tasks:
+        if not _valid_tasks:
             return None
         else:
-            return valid_tasks[0]
+            return _valid_tasks[0]
     else:
         return task
-
-
-def get_datatype() -> Literal['meg', 'eeg']:
-    # Content of ch_types should be sanitized already, so we don't need any
-    # extra sanity checks here.
-    if data_type is not None:
-        return data_type
-    elif data_type is None and ch_types == ['eeg']:
-        return 'eeg'
-    elif data_type is None and any([t in ['meg', 'mag', 'grad']
-                                    for t in ch_types]):
-        return 'meg'
-    else:
-        raise RuntimeError("This probably shouldn't happen. Please contact "
-                           "the MNE-BIDS-pipeline developers. Thank you.")
 
 
 def _get_reject(

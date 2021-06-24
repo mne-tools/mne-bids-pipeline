@@ -2547,13 +2547,17 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
 
     Modifies ``raw`` in-place.
     """
-    montage_name = cfg.eeg_template_montage
-    if cfg.datatype == 'eeg' and montage_name:
+    montage = cfg.eeg_template_montage
+    is_mne_montage = isinstance(montage,
+                                mne.channels.montage.DigMontage)
+    montage_name = 'custom_montage' if is_mne_montage else montage
+    if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
-               f'{montage_name}.')
+               f'{montage}.')
         logger.info(gen_log_message(message=msg, step=0, subject=subject,
                                     session=session))
-        montage = mne.channels.make_standard_montage(montage_name)
+        if not is_mne_montage:
+            montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 

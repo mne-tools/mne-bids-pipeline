@@ -2550,7 +2550,7 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
     montage = cfg.eeg_template_montage
     is_mne_montage = isinstance(montage,
                                 mne.channels.montage.DigMontage)
-    montage_name = ('custom_montage' if is_mne_montage else montage)
+    montage_name = 'custom_montage' if is_mne_montage else montage
     if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage}.')

@@ -83,6 +83,8 @@ authors:
   significantly reduce start-up times in situations where many participants
   are being processed with data from a network-attached storage (NAS).
   ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
+- Files docstrings in the preprocessing steps were updated.
+  ({{ gh(409) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

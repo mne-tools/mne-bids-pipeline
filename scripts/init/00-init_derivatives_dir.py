@@ -1,3 +1,11 @@
+"""
+========================
+00. Init derivatives_dir
+========================
+
+We initialize the derivatives directory.
+"""
+
 import logging
 import itertools
 from typing import Optional

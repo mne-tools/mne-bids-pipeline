@@ -3,7 +3,7 @@
 04. Run SSP
 ===========
 
-Compute Signal Suspace Projections (SSP).
+Compute Signal Subspace Projections (SSP).
 """
 
 import itertools

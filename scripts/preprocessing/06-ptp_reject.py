@@ -3,9 +3,12 @@
 06. Remove epochs based on peak-to-peak (PTP) amplitudes
 ========================================================
 
-Blinks and ECG artifacts are automatically detected and the corresponding SSP
-projections components are removed from the data.
+Epochs containing peak-to-peak above the thresholds defined
+in the 'reject' parameter are removed from the data.
 
+This step will drop epochs containing non-biological artifacts
+but also epochs containing biological artifacts not sufficiently
+corrected by the ICA or the SSP processing.
 """
 
 import itertools

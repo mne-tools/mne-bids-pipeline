@@ -6,6 +6,9 @@ This fits ICA on epoched data filtered with 1 Hz highpass,
 for this purpose only using fastICA. Separate ICAs are fitted and stored for
 MEG and EEG data.
 
+Before performing ICA, we reject epochs based on peak-to-peak amplitude above
+the 'ica_reject' to filter massive non-biological artifacts.
+
 To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """

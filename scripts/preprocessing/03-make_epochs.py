@@ -5,8 +5,8 @@
 
 The epochs are constructed by using the events created in script 03. MNE
 supports hierarchical events that allows selection to different groups more
-easily (see config.event_id). Automatic rejection is applied to the epochs.
-Finally the epochs are saved to disk.
+easily (see config.event_id).
+Finally the epochs are saved to disk. For the moment, no rejection is applied.
 To save space, the epoch data can be decimated.
 """
 

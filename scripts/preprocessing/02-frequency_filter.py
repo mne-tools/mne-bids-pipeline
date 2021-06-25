@@ -12,6 +12,8 @@ The transition bandwidth is automatically defined. See
 for more. The filtered data are saved to separate files to the subject's 'MEG'
 directory.
 
+To save space, the raw data can be resampled.
+
 If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501

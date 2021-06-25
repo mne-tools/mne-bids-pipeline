@@ -67,14 +67,22 @@ authors:
   [`n_proj_eog`][config.n_proj_eog], [`n_proj_ecg`][config.n_proj_ecg],
   [`ssp_reject_eog`][config.ssp_reject_eog] and
   [`ssp_reject_ecg`][config.ssp_reject_ecg].
-  ({{ gh(392) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, {{ authors.apmellot }} and
-   {{ authors.hoechenberger }})
-- You can now use autoreject for exclusing artifacts before SSP estimation via the `autoreject_global` option in [`ssp_reject_eog`][config.ssp_reject_eog] and
-  [`ssp_reject_ecg`][config.ssp_reject_ecg].
-  ({{ gh(396) }} by {{ authors.agramfort }}, {{ authors.dengemann }}, {{ authors.apmellot }} and
-   {{ authors.hoechenberger }})
-- You can now specify a custom [`eeg_template_montage`][config.eeg_template_montage] from any `mne.channels.montage.DigMontage` object.
-  ({{ gh(407) }} by {{ authors.dengemann }}, {{ authors.hoechenberger }} and {{ authors.agramfort }})
+  ({{ gh(392) }} by {{ authors.agramfort }}, {{ authors.dengemann }},
+   {{ authors.apmellot }} and {{ authors.hoechenberger }})
+- You can now use autoreject for exclusing artifacts before SSP estimation via
+  the `autoreject_global` option in [`ssp_reject_eog`][config.ssp_reject_eog]
+  and [`ssp_reject_ecg`][config.ssp_reject_ecg].
+  ({{ gh(396) }} by {{ authors.agramfort }}, {{ authors.dengemann }},
+   {{ authors.apmellot }} and {{ authors.hoechenberger }})
+- You can now specify a custom
+  [`eeg_template_montage`][config.eeg_template_montage] from any
+  `mne.channels.montage.DigMontage` object.
+  ({{ gh(407) }} by {{ authors.dengemann }}, {{ authors.hoechenberger }} and
+   {{ authors.agramfort }})
+- Certain BIDS file system operations are now being cached, which should
+  significantly reduce start-up times in situations where many participants
+  are being processed with data from a network-attached storage (NAS).
+  ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
 
 ### Behavior changes
 

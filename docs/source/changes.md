@@ -84,7 +84,7 @@ authors:
   are being processed with data from a network-attached storage (NAS).
   ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
 - Files docstrings in the preprocessing steps were updated.
-  ({{ gh(?) }} by {{ authors.crsegerie }})
+  ({{ gh(409) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

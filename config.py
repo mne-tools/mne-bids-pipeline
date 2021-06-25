@@ -432,7 +432,7 @@ to control this behavior.
 
 t_break_annot_start_after_previous_event: float = 5.
 """
-Once a break of at least [`min_break_duration`][configmin_break_duration]
+Once a break of at least [`min_break_duration`][config.min_break_duration]
 seconds has been discovered, we generate a `BAD_break` annotation that does not
 necessarily span the entire break period. Instead, you will typically want to
 start it some time after the last event before the break period, as to not
@@ -1947,7 +1947,7 @@ def get_task() -> Optional[str]:
     env = os.environ
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
-        if task not in _valid_tasks:
+        if task not in _valid_tasks and 'MKDOCS' not in os.environ:
             raise ValueError(f'Invalid task. It can be: '
                              f'{", ".join(_valid_tasks)} but got: {task}')
 

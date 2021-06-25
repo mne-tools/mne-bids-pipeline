@@ -5,7 +5,7 @@
 ::: config.ssp_reject_ecg
 ::: config.ica_reject
 ::: config.ica_algorithm
-::: config.ica_l_freq\
+::: config.ica_l_freq
 ::: config.ica_max_iterations
 ::: config.ica_n_components
 ::: config.ica_decim

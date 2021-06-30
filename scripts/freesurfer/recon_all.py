@@ -17,18 +17,11 @@ logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
-def _get_subjects_dir(root_dir) -> Path:
-    subjects_dir = \
-        Path(root_dir) / "derivatives" / "freesurfer" / "subjects"
-    assert subjects_dir.is_absolute()
-    return subjects_dir
-
-
 def run_recon(root_dir, subject, fs_bids_app) -> None:
     logger.info(f"Running recon-all on subject {subject}. This will take "
                 f"a LONG time – it's a good idea to let it run over night.")
 
-    subjects_dir = _get_subjects_dir(root_dir)
+    subjects_dir = Path(config.get_fs_subjects_dir())
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
@@ -86,7 +79,7 @@ def main() -> None:
 
     subjects = config.get_subjects()
     root_dir = config.get_bids_root()
-    subjects_dir = _get_subjects_dir(root_dir)
+    subjects_dir = Path(config.get_fs_subjects_dir())
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
     n_jobs = config.N_JOBS

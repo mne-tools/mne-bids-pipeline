@@ -211,6 +211,13 @@ def run_report(cfg, subject, session=None):
 
     fname_ave = bids_path.copy().update(suffix='ave')
     fname_epo = bids_path.copy().update(suffix='epo')
+    fname_epo_clean = fname_epo.copy().update(processing='clean')
+    fname_ica = bids_path.copy().update(suffix='ica')
+    fname_decoding = fname_epo.copy().update(processing=None,
+                                             suffix='decoding',
+                                             extension='.mat')
+    fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
+                                            extension='.h5')
     if cfg.use_template_mri:
         fname_trans = 'fsaverage'
         has_trans = True
@@ -218,13 +225,7 @@ def run_report(cfg, subject, session=None):
         fname_trans = bids_path.copy().update(suffix='trans')
         has_trans = op.exists(fname_trans)
 
-    fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
-    fname_ica = bids_path.copy().update(suffix='ica')
-    fname_decoding = fname_epo.copy().update(processing=None,
-                                             suffix='decoding',
-                                             extension='.mat')
-    fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
-                                            extension='.h5')
+    image_format = 'png'
 
     title = f'sub-{subject}'
     if session is not None:
@@ -232,24 +233,44 @@ def run_report(cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    params: Dict[str, Any] = dict(info_fname=fname_epo, raw_psd=True,
-                                  subject=cfg.fs_subject, title=title)
+    params = dict(info_fname=fname_epo, raw_psd=True,
+                  subject=cfg.fs_subject, title=title,
+                  image_format=image_format)
     if has_trans:
         params['subjects_dir'] = cfg.fs_subjects_dir
 
     rep = mne.Report(**params)
-    rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
-                                      verbose=False)
-    if not has_trans:
-        rep_kwargs['render_bem'] = False
+    rep.data_path = str(fname_epo.fpath.parent)
+    # rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
+    #                                   verbose=False)
+    # if not has_trans:
+    #     rep_kwargs['render_bem'] = False
+    # 
+    # if cfg.task is not None:
+    #     rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
+    # if mne.viz.get_3d_backend() is not None:
+    #     with mne.viz.use_3d_backend('pyvista'):
+    #         rep.parse_folder(**rep_kwargs)
+    # else:
+    #     rep.parse_folder(**rep_kwargs)
 
-    if cfg.task is not None:
-        rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
-    if mne.viz.get_3d_backend() is not None:
-        with mne.viz.use_3d_backend('pyvista'):
-            rep.parse_folder(**rep_kwargs)
-    else:
-        rep.parse_folder(**rep_kwargs)
+    # Render cleaned epochs
+    # epo = mne.read_epochs(fname_epo_clean)
+    # html = epo._repr_html_()
+    # fig = epo.plot_drop_log(show=False)
+    # rep.add_htmls_to_section(htmls=html, captions='Cleaned epochs', section='Epochs')
+    # rep.add_figs_to_section(figs=fig, captions='Cleaned epochs/Dropped epochs',
+    #                         section='Epochs')
+    # rep.parse_folder(data_path=fname_epo_clean.fpath.parent, pattern=fname_epo_clean.fpath.name)
+
+    # rep.parse_folder(data_path=fname_epo_clean.fpath.parent, pattern=fname_epo.fpath.name)
+
+    # html = rep._render_epochs(
+    #     epo_fname=fname_epo_clean,
+    #     image_format=rep.image_format,
+    #     data_path=rep.data_path
+    # )
+    # rep.add_htmls_to_section(htmls=html, section='Epochs', captions='Cleaned')
 
     # Visualize automated noisy channel detection.
     if cfg.find_noisy_channels_meg:
@@ -266,75 +287,85 @@ def run_report(cfg, subject, session=None):
                                 captions='Events in filtered continuous data',
                                 section='Events')
 
-    ###########################################################################
-    #
-    # Visualize effect of ICA artifact rejection.
-    #
-    if cfg.spatial_filter == 'ica':
-        epochs = mne.read_epochs(fname_epo)
-        ica = mne.preprocessing.read_ica(fname_ica)
-        fig = ica.plot_overlay(epochs.average(), show=False)
-        rep.add_figs_to_section(
-            fig,
-            captions=f'Evoked response (across all epochs) '
-                     f'before and after ICA '
-                     f'({len(ica.exclude)} ICs removed)',
-            section='ICA'
-        )
+    rep.add_epochs_to_section(epochs=fname_epo_clean.fpath,
+                              captions='Cleaned epochs')
 
-    ###########################################################################
-    #
-    # Visualize TFR as topography.
-    #
-    if cfg.time_frequency_conditions is None:
-        conditions = []
-    elif isinstance(cfg.time_frequency_conditions, dict):
-        conditions = list(cfg.time_frequency_conditions.keys())
-    else:
-        conditions = cfg.time_frequency_conditions.copy()
+    evoked_captions = [
+        *cfg.conditions,
+        *[f'{a} – {b}' for a, b in cfg.contrasts]
+    ]
+    rep.add_evokeds_to_section(evokeds=fname_ave.fpath,
+                               captions=evoked_captions)
 
-    for condition in conditions:
-        cond = config.sanitize_cond_name(condition)
-        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
-                                                               f"+{cond}+")
-        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond)
-        fig = power[0].plot_topo(show=False, fig_facecolor='w', font_color='k',
-                                 border='k')
-        rep.add_figs_to_section(figs=fig, captions=f"TFR Power: {condition}",
-                                section="TFR")
+    # ###########################################################################
+    # #
+    # # Visualize effect of ICA artifact rejection.
+    # #
+    # if cfg.spatial_filter == 'ica':
+    #     epochs = mne.read_epochs(fname_epo)
+    #     ica = mne.preprocessing.read_ica(fname_ica)
+    #     fig = ica.plot_overlay(epochs.average(), show=False)
+    #     rep.add_figs_to_section(
+    #         fig,
+    #         captions=f'Evoked response (across all epochs) '
+    #                  f'before and after ICA '
+    #                  f'({len(ica.exclude)} ICs removed)',
+    #         section='ICA'
+    #     )
 
-    ###########################################################################
-    #
-    # Visualize evoked responses.
-    #
-    if cfg.conditions is None:
-        conditions = []
-    elif isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
-    else:
-        conditions = cfg.conditions.copy()
+    # ###########################################################################
+    # #
+    # # Visualize TFR as topography.
+    # #
+    # if cfg.time_frequency_conditions is None:
+    #     conditions = []
+    # elif isinstance(cfg.time_frequency_conditions, dict):
+    #     conditions = list(cfg.time_frequency_conditions.keys())
+    # else:
+    #     conditions = cfg.time_frequency_conditions.copy()
 
-    conditions.extend(cfg.contrasts)
+    # for condition in conditions:
+    #     cond = config.sanitize_cond_name(condition)
+    #     fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
+    #                                                            f"+{cond}+")
+    #     power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond)
+    #     fig = power[0].plot_topo(show=False, fig_facecolor='w', font_color='k',
+    #                              border='k')
+    #     rep.add_figs_to_section(figs=fig, captions=f"TFR Power: {condition}",
+    #                             section="TFR")
 
-    if conditions:
-        evokeds = mne.read_evokeds(fname_ave)
-    else:
-        evokeds = []
+    # ###########################################################################
+    # #
+    # # Visualize evoked responses.
+    # #
+    # if cfg.conditions is None:
+    #     conditions = []
+    # elif isinstance(cfg.conditions, dict):
+    #     conditions = list(cfg.conditions.keys())
+    # else:
+    #     conditions = cfg.conditions.copy()
 
-    for condition, evoked in zip(conditions, evokeds):
-        if cfg.analyze_channels:
-            evoked.pick(cfg.analyze_channels)
+    # conditions.extend(cfg.contrasts)
 
-        if condition in cfg.conditions:
-            caption = f'Condition: {condition}'
-            section = 'Evoked'
-        else:  # It's a contrast of two conditions.
-            caption = f'Contrast: {condition[0]} – {condition[1]}'
-            section = 'Contrast'
+    # if conditions:
+    #     evokeds = mne.read_evokeds(fname_ave)
+    # else:
+    #     evokeds = []
 
-        fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
-        rep.add_figs_to_section(figs=fig, captions=caption,
-                                comments=evoked.comment, section=section)
+    # for condition, evoked in zip(conditions, evokeds):
+    #     if cfg.analyze_channels:
+    #         evoked.pick(cfg.analyze_channels)
+
+    #     if condition in cfg.conditions:
+    #         caption = f'Condition: {condition}'
+    #         section = 'Evoked'
+    #     else:  # It's a contrast of two conditions.
+    #         caption = f'Contrast: {condition[0]} – {condition[1]}'
+    #         section = 'Contrast'
+
+    #     fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
+    #     rep.add_figs_to_section(figs=fig, captions=caption,
+    #                             comments=evoked.comment, section=section)
 
     ###########################################################################
     #
@@ -464,12 +495,12 @@ def run_report(cfg, subject, session=None):
                                         section='Sources')
                 del peak_time
 
-    if cfg.process_er:
-        fig_er_psd = plot_er_psd(cfg=cfg, subject=subject, session=session)
-        rep.add_figs_to_section(figs=fig_er_psd,
-                                captions='Empty-Room Power Spectral Density '
-                                         '(after filtering)',
-                                section='Empty-Room')
+    # if cfg.process_er:
+    #     fig_er_psd = plot_er_psd(cfg=cfg, subject=subject, session=session)
+    #     rep.add_figs_to_section(figs=fig_er_psd,
+    #                             captions='Empty-Room Power Spectral Density '
+    #                                      '(after filtering)',
+    #                             section='Empty-Room')
 
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)

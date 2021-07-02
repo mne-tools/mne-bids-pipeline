@@ -19,6 +19,7 @@ find_flat_channels_meg = False
 find_noisy_channels_meg = False
 use_maxwell_filter = True
 
+mf_reference_run = '01'
 mf_cal_fname = bids_root + '/derivatives/meg_derivatives/sss_cal.dat'
 mf_ctc_fname = bids_root + '/derivatives/meg_derivatives/ct_sparse.fif'
 

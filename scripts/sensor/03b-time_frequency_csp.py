@@ -36,7 +36,7 @@ from matplotlib.figure import Figure
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
-from tqdm import tqdm  # TODO does not work as smoothly
+from tqdm import tqdm  # TODO does not work smoothly
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -52,14 +52,6 @@ from mne.utils import BunchConst
 from mne.report import Report
 
 from mne_bids import BIDSPath
-
-
-# my config
-from cfg import (
-    n_freqs, n_cycles,
-    reg,
-    alpha, alpha_t_test,
-    n_permutations)
 
 # mne-bids-pipeline config
 from config import N_JOBS, gen_log_message, on_error, failsafe_run
@@ -137,16 +129,16 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
     # For band passed periodic signal, according to the Nyquist theorem,
     # we can reconstruct the signal if f_s > 2 * band_freq
     band_freq = (cfg.time_frequency_freq_max -
-                 cfg.time_frequency_freq_min)/(n_freqs - 1)
+                 cfg.time_frequency_freq_min)/(cfg.n_freqs - 1)
     min_nyquist_period = 1 / (2 * band_freq)
 
     # But the signal should be periodic.
     # One period of the signal is not suffiscient.
     # So we recommend to take at least n_cycles > 10
-    min_window_size = min_nyquist_period * n_cycles
+    min_window_size = min_nyquist_period * cfg.n_cycles
     msg = (f"The minimum Nyquist windows period is "
            f"{round(min_nyquist_period, 3)}s, "
-           f"n_cycles={n_cycles} which puts your time windows "
+           f"n_cycles={cfg.n_cycles} which puts your time windows "
            f"size to a minimum of {round(min_window_size, 3)}s.")
     logger.info(gen_log_message(message=msg, step=3))
 
@@ -178,10 +170,10 @@ class Tf:
         """Calculate the required time and frequency size."""
         freqs = np.linspace(cfg.time_frequency_freq_min,
                             cfg.time_frequency_freq_max,
-                            n_freqs)
+                            cfg.n_freqs)
         # make freqs list of tuples
         freq_ranges = list(zip(freqs[:-1], freqs[1:]))
-        n_freq_windows = n_freqs - 1
+        n_freq_windows = cfg.n_freqs - 1
 
         n_time_windows = compute_n_time_windows(cfg)
         # n_times is not really used in the rest of the code.
@@ -199,7 +191,7 @@ class Tf:
         # Recap:
         assert n_time_windows == n_times - 1
         assert len(time_ranges) == n_time_windows
-        assert n_freq_windows == n_freqs - 1
+        assert n_freq_windows == cfg.n_freqs - 1
         assert len(freq_ranges) == n_freq_windows
 
         self.freqs = freqs
@@ -211,6 +203,7 @@ class Tf:
         self.n_freq_windows = n_freq_windows
 
         # TODO: Check that each subject contains the 2 conditions.
+        # in order to avoid bad naws after 1 hour of computation ?
 
 
 def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
@@ -366,7 +359,6 @@ def plot_time_frequency_decoding(
     sfreq
         Sampling frequency # TODO: check if no border effect with decimate.
     centered_w_times
-        TODO: put in cfg
         List of times indicating the center of each time windows.
     subject
         name of the subject.
@@ -417,6 +409,8 @@ def one_subject_decoding(
     the two conditions.
     Then, we plot the roc-auc of the classifier.
 
+    # TODO : profile this function
+
     Returns
     -------
     None. We just save the plots in the report
@@ -432,7 +426,7 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
 
     # Assemble the classifier using scikit-learn pipeline
-    clf = make_pipeline(CSP(n_components=4, reg=reg,
+    clf = make_pipeline(CSP(n_components=4, reg=cfg.reg,
                             log=True, norm_trace=False),
                         LinearDiscriminantAnalysis())
 
@@ -700,7 +694,7 @@ def group_analysis(
     # Calculating the 95% confidence intervals
     # TODO: The confidence intervals indicated on the individual
     # plot are not quite valid because
-    # they use only std of the cross-validation.
+    # they use only the std of the cross-validation scores.
     # We should also divide by the square root.
     all_freq_scores_std = load_and_average(
         pth.freq_scores, subjects=subjects, average=False)
@@ -732,6 +726,10 @@ def group_analysis(
     # Reshape data to what is equivalent to (n_samples, n_space, n_time)
     X = load_and_average(pth.tf_scores, subjects=subjects, average=False)
     X = X - chance
+
+    # TODO: Perform test without filling nan values.
+    # The permutation test do not like nan values.
+    # So I fill in the nan values with the average of each column.
     # nanmean accentuate the effect? A little bit augmenting
     # artificially the number of subjects.
     col_mean = np.nanmean(X, axis=0)
@@ -750,13 +748,13 @@ def group_analysis(
 
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
-    threshold = stats.distributions.t.ppf(1 - alpha_t_test,
+    threshold = stats.distributions.t.ppf(1 - cfg.alpha_t_test,
                                           len(subjects) - 1)
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,
         threshold=threshold,
         adjacency=None,  # a regular lattice adjacency is assumed
-        n_permutations=n_permutations, out_type='mask')
+        n_permutations=cfg.n_permutations, out_type='mask')
 
     # TODO: plot H0 ?
     msg = "Permutations performed succesfully"
@@ -769,13 +767,14 @@ def group_analysis(
            f"each one with a p-value of {p_values}.")
     logger.info(gen_log_message(msg, step=3))
 
-    if np.min(p_values) > alpha:
+    if np.min(p_values) > cfg.alpha:
         msg = ("The results are not significative. "
                "Try increasing the number of subjects.")
         logger.info(gen_log_message(msg, step=3))
     else:
         msg = (f"Congrats, the results seem significative. At least one of "
-               f"your cluster has a significant p-value at the level {alpha}")
+               f"your cluster has a significant p-value "
+               f"at the level {cfg.alpha}")
         logger.info(gen_log_message(msg, step=3))
 
     ts.append(t_clust)
@@ -813,7 +812,13 @@ def get_config(
         task=config.task,
         acq=config.acq,
         rec=config.rec,
-        space=config.space
+        space=config.space,
+        n_freqs=config.n_freqs,
+        n_cycles=config.n_cycles,
+        reg=config.reg,
+        alpha=config.alpha,
+        alpha_t_test=config.alpha_t_test,
+        n_permutations=config.n_permutations
     )
     return cfg
 
@@ -833,6 +838,7 @@ def main():
 
     report = Report(title="csp-permutations", verbose=False)
 
+    # Usefull for debuging:
     # [one_subject_decoding(
     #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
     #     for subject in config.get_subjects()]

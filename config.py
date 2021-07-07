@@ -4,6 +4,7 @@ alter for your specific analysis.
 """
 
 import importlib
+from multiprocessing import Value
 import pathlib
 import functools
 import os
@@ -1189,6 +1190,7 @@ The metric to use for estimating classification performance. It can be
 With ROC AUC, chance level is the same regardless of class balance, that is,
 you don't need to be worried about **exactly** balancing class sizes.
 """
+# TODO: add warning
 
 decoding_n_splits: int = 5
 """
@@ -1199,6 +1201,26 @@ n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding score.
+"""
+
+reg: float = 0.1
+"""
+Regularization used in the covariance estimator when calculating CSPs.
+"""
+
+alpha: float = 0.05
+"""
+Statistic level used in the time frequency script.
+"""
+
+alpha_t_test: float = 0.1
+"""
+Treshold level used to determine clusters.
+"""
+
+n_permutations: int = 10000
+"""
+Number of permutations used when estimating the p-values.
 """
 
 ###############################################################################
@@ -1248,6 +1270,19 @@ Maximum frequency for the time frequency analysis, in Hz.
     ```python
     time_frequency_freq_max = 22.3  # 22.3 Hz
     ```
+"""
+
+n_freqs: int = 5
+"""
+The number of frequencies used for decoding using time frequency widows.
+Example: n_freqs = 5 generates 4 frequency bins.
+"""
+
+n_cycles: int = 1
+"""
+Control the duration of the time windows in the CSP decoding script.
+n_cycle = 1 is just above the Nyquist requirements.
+Increase it in case of numerical instabilities.
 """
 
 ###############################################################################
@@ -1716,6 +1751,19 @@ if (spatial_filter == 'ica' and
                 f'stringent as that in '
                 f'ica_reject["{ch_type}"] ({ica_reject[ch_type]})'
             )
+
+
+if decoding_n_splits < 2:  # TODO Change it to allow 1
+    raise ValueError('decoding_n_splits should be at least 2')
+
+if n_freqs < 2:
+    raise ValueError('n_freqs should be at least 2')
+
+if not 0 < alpha < 1:
+    raise ValueError("alpha should be in the (0, 1) interval.")
+
+if n_permutations < 10/alpha:
+    raise ValueError("n_permutations is not big enouth to control your alpha.")
 
 
 ###############################################################################

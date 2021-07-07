@@ -88,7 +88,7 @@ authors:
   in the time-frequency domain using the new script: 03b-time_frequency_csp.py.
   We also test the significance of the contrast between the two conditions
   using cluster permutation statistics.
-  ({{ gh(?) }} by {{ authors.crsegerie }})
+  ({{ gh(404) }} by {{ authors.crsegerie }})
 
 ### Behavior changes
 

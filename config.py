@@ -1201,17 +1201,17 @@ The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding score.
 """
 
-reg: float = 0.1
+csp_reg: float = 0.1
 """
 Regularization used in the covariance estimator when calculating CSPs.
 """
 
-alpha: float = 0.05
+cluster_stats_alpha: float = 0.05
 """
 Statistic level used in the time frequency script.
 """
 
-alpha_t_test: float = 0.1
+cluster_stats_alpha_t_test: float = 0.1
 """
 Threshold level used to determine clusters.
 """
@@ -1272,7 +1272,7 @@ Maximum frequency for the time frequency analysis, in Hz.
 
 n_freqs: int = 5
 """
-The number of frequencies used for decoding using time frequency widows.
+The number of frequencies used for decoding using time frequency windows.
 Example: n_freqs = 5 generates 4 frequency bins.
 """
 
@@ -1757,10 +1757,10 @@ if decoding_n_splits < 2:  # TODO Change it to allow 1
 if n_freqs < 2:
     raise ValueError('n_freqs should be at least 2.')
 
-if not 0 < alpha < 1:
+if not 0 < cluster_stats_alpha < 1:
     raise ValueError("alpha should be in the (0, 1) interval.")
 
-if n_permutations < 10/alpha:
+if n_permutations < 10 / cluster_stats_alpha:
     raise ValueError("n_permutations is not big enough to calculate "
                      "accurately the p-values.")
 

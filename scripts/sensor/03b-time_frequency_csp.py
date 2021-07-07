@@ -263,8 +263,10 @@ def prepare_epochs_and_y(
     """
     # Prepare epoch_filter
     epochs_filter = epochs.copy()
+
+    # TODO: remove the cfg.decim and apply maximal decimation
     epochs_filter.decimate(decim=cfg.decim)
-    epochs_filter.filter(fmin, fmax, n_jobs=1, fir_design='firwin',
+    epochs_filter.filter(fmin, fmax, n_jobs=1,
                          skip_by_annotation='edge')
     epochs_filter.drop_bad()
 
@@ -426,7 +428,7 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
 
     # Assemble the classifier using scikit-learn pipeline
-    clf = make_pipeline(CSP(n_components=4, reg=cfg.reg,
+    clf = make_pipeline(CSP(n_components=4, reg=cfg.csp_reg,
                             log=True, norm_trace=False),
                         LinearDiscriminantAnalysis())
 
@@ -748,7 +750,7 @@ def group_analysis(
 
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
-    threshold = stats.distributions.t.ppf(1 - cfg.alpha_t_test,
+    threshold = stats.distributions.t.ppf(1 - cfg.cluster_stats_alpha_t_test,
                                           len(subjects) - 1)
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,
@@ -767,7 +769,7 @@ def group_analysis(
            f"each one with a p-value of {p_values}.")
     logger.info(gen_log_message(msg, step=3))
 
-    if np.min(p_values) > cfg.alpha:
+    if np.min(p_values) > cfg.cluster_stats_alpha:
         msg = ("The results are not significant. "
                "Try increasing the number of subjects.")
         logger.info(gen_log_message(msg, step=3))
@@ -815,9 +817,9 @@ def get_config(
         space=config.space,
         n_freqs=config.n_freqs,
         n_cycles=config.n_cycles,
-        reg=config.reg,
-        alpha=config.alpha,
-        alpha_t_test=config.alpha_t_test,
+        csp_reg=config.csp_reg,
+        cluster_stats_alpha=config.cluster_stats_alpha,
+        cluster_stats_alpha_t_test=config.cluster_stats_cluster_stats_alpha_t_test,
         n_permutations=config.n_permutations
     )
     return cfg

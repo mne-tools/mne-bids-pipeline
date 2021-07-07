@@ -3,7 +3,7 @@
 ::: config.decoding_metric
 ::: config.decoding_n_splits
 ::: config.n_boot
-::: config.reg,
-::: config.alpha,
-::: config.alpha_t_test,
+::: config.csp_reg,
+::: config.cluster_stats_alpha,
+::: config.cluster_stats_alpha_t_test,
 ::: config.n_permutations

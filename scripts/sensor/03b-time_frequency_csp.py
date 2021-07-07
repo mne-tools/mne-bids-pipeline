@@ -2,7 +2,7 @@
 ====================================================================
 Decoding in time-frequency space using Common Spatial Patterns (CSP)
 ====================================================================
- 
+
 This file contains two main steps:
 - 1. Decoding
 The time-frequency decomposition is estimated by iterating over raw data that
@@ -13,14 +13,14 @@ signals. More detail are available here:
 https://mne.tools/stable/auto_tutorials/machine-learning/50_decoding.html#common-spatial-pattern
 Warning: This step, especially the double loop on the time-frequency bins
 is very computationally expensive.
- 
+
 - 2. Permutation statistics
 We try to answer the following question: is the difference between
 the two conditions statistically significant? We use the classic permutations
 cluster tests on the time-frequency roc-auc map.
 More details are available here:
 https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html#sphx-glr-auto-tutorials-stats-sensor-space-10-background-stats-py
- 
+
 The user has only to specify the [f_min, f_max] band
 with the n_freq which is the number of frequency windows + 1.
 # TODO : bad API.

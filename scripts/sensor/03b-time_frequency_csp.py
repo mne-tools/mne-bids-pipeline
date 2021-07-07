@@ -2,7 +2,7 @@
 ====================================================================
 Decoding in time-frequency space using Common Spatial Patterns (CSP)
 ====================================================================
-
+ 
 This file contains two main steps:
 - 1. Decoding
 The time-frequency decomposition is estimated by iterating over raw data that
@@ -12,18 +12,18 @@ filtered signals. A linear discriminant classifier is then applied to these
 signals. More detail are available here:
 https://mne.tools/stable/auto_tutorials/machine-learning/50_decoding.html#common-spatial-pattern
 Warning: This step, especially the double loop on the time-frequency bins
-is very computationnaly expensive.
-
+is very computationally expensive.
+ 
 - 2. Permutation statistics
 We try to answer the following question: is the difference between
 the two conditions statistically significant? We use the classic permutations
 cluster tests on the time-frequency roc-auc map.
-More détails are available here:
+More details are available here:
 https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html#sphx-glr-auto-tutorials-stats-sensor-space-10-background-stats-py
-
+ 
 The user has only to specify the [f_min, f_max] band
-with the n_freq wich is the number of frequency windows + 1.
-# TODO : bad api.
+with the n_freq which is the number of frequency windows + 1.
+# TODO : bad API.
 And we calculate automatically the time-windows based on the Nyquist criterion.
 """
 # License: BSD (3-clause)
@@ -67,11 +67,11 @@ chance = 0.5
 
 
 class Pth:
-    """Util class containing usefull Paths infos."""
+    """Util class containing useful Paths info."""
 
     def __init__(self, cfg) -> None:
         """Initialize directory. Initialize the base path."""
-        # We initialise to the average subject and session ?
+        # We initialize to the average subject and session ?
         self.bids_basename = BIDSPath(
             subject="average",
             # session=config.get_sessions()[0], # TODO
@@ -101,7 +101,7 @@ class Pth:
         self,
         *,
         subject: str,
-        # TODO: Not DRY and Any != Unkwnown
+        # TODO: Not DRY and Any != Unknown
         # TODO: Does not work if multiple session
         session: Union[list[None],  str, List[Any]],
         cfg
@@ -123,7 +123,7 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
     """Compute the number of time windows.
 
     We begin by calculating the minimum Nyquist windows size according
-    to the hiher frequence. Then we take n_cycle times this mininum duration.
+    to the higher frequency. Then we take n_cycle times this minimum duration.
     """
     # Infer window spacing from the min freq and number of cycles to avoid gaps
     # For band passed periodic signal, according to the Nyquist theorem,
@@ -133,8 +133,8 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
     min_nyquist_period = 1 / (2 * band_freq)
 
     # But the signal should be periodic.
-    # One period of the signal is not suffiscient.
-    # So we recommend to take at least n_cycles > 10
+    # One period of the signal is not sufficient.
+    # So we recommend taking at least n_cycles > 10
     min_window_size = min_nyquist_period * cfg.n_cycles
     msg = (f"The minimum Nyquist windows period is "
            f"{round(min_nyquist_period, 3)}s, "
@@ -143,7 +143,7 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
     logger.info(gen_log_message(message=msg, step=3))
 
     # TODO: no more n_cycle
-    # In oder to count how many min_asked_spacing windows we can fit in the
+    # In order to count how many min_asked_spacing windows we can fit in the
     # epochs range, we use the np.arange method.
     centered_w_times_not_adjusted = \
         np.arange(cfg.epochs_tmin, cfg.epochs_tmax, min_window_size)[1:]
@@ -154,8 +154,8 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
                "Try to increase your band frequency by decreasing n_freq.")
         logger.error(msg)
 
-    # Yes, this is absolutly hidious...
-    # Sometimes when for example epochs_tmax = 5s,
+    # Yes, this is absolutely hideous...
+    # Sometimes when, for example epochs_tmax = 5s,
     # the last element of np.arange is 4.99999, so we have to delete it...
     if np.isclose(centered_w_times_not_adjusted[-1], cfg.epochs_tmax):
         centered_w_times_not_adjusted = centered_w_times_not_adjusted[:-1]
@@ -164,7 +164,7 @@ def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
 
 
 class Tf:
-    """Util class containing usefull infos about the time frequency windows."""
+    """Util class containing useful info about the time frequency windows."""
 
     def __init__(self, cfg):
         """Calculate the required time and frequency size."""
@@ -203,13 +203,13 @@ class Tf:
         self.n_freq_windows = n_freq_windows
 
         # TODO: Check that each subject contains the 2 conditions.
-        # in order to avoid bad naws after 1 hour of computation ?
+        # in order to avoid bad news after 1 hour of computation ?
 
 
 def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
-    This projection is usefull in the case of hierarchical events:
+    This projection is useful in the case of hierarchical events:
     we project the different events contain in one condition into
     just one label.
 
@@ -220,7 +220,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     tf_conditions = cfg.time_frequency_conditions
     assert len(tf_conditions) == 2
 
-    # TODO: this create sometime a critical error sometime
+    # TODO: this creates sometime a critical error sometime
     # but difficult to debug
     # because there is not the subject number written in the error.
     # "A critical error occurred. The error message was:
@@ -306,7 +306,7 @@ def plot_frequency_decoding(
 
     Returns:
     -------
-    Histogramm with frequency bins.
+    Histogram with frequency bins.
     For the average subject, we also plot the std.
     """
     plt.close()
@@ -405,7 +405,7 @@ def one_subject_decoding(
     1. The frequency analysis.
     2. The time-frequency analysis.
 
-    For each bins of those plot, we train a classifier to discriminate
+    For each bin of those plot, we train a classifier to discriminate
     the two conditions.
     Then, we plot the roc-auc of the classifier.
 
@@ -518,7 +518,7 @@ def one_subject_decoding(
         section="Time - frequency decoding",
         captions=f'sub-{subject}')
 
-    msg = f"Decoding for subject {subject} finished succesfully."
+    msg = f"Decoding for subject {subject} finished successfully."
     logger.info(gen_log_message(message=msg, subject=subject, step=3))
 
 
@@ -532,7 +532,7 @@ def load_and_average(
     Parameters:
     -----------
     path
-        function of the subject returning the path of the numpy array.
+        function of the subject, returning the path of the numpy array.
     average
         if True, returns average along the subject dimension.
 
@@ -593,7 +593,7 @@ def plot_axis_time_frequency_statistics(
     array = np.reshape(array, (tf.n_freq_windows, tf.n_time_windows))
     array = -np.log10(array) if value_type == "p" else array
 
-    # adaptative color plot ?
+    # Adaptive color plot ?
     lims = np.array([np.min(array), np.max(array)])
 
     img = ax.imshow(array, cmap='Reds', origin='lower',
@@ -730,7 +730,7 @@ def group_analysis(
     # TODO: Perform test without filling nan values.
     # The permutation test do not like nan values.
     # So I fill in the nan values with the average of each column.
-    # nanmean accentuate the effect? A little bit augmenting
+    # nanmean accentuate the effect? A bit augmenting
     # artificially the number of subjects.
     col_mean = np.nanmean(X, axis=0)
     # Find indices that you need to replace
@@ -757,7 +757,7 @@ def group_analysis(
         n_permutations=cfg.n_permutations, out_type='mask')
 
     # TODO: plot H0 ?
-    msg = "Permutations performed succesfully"
+    msg = "Permutations performed successfully"
     logger.info(gen_log_message(msg, step=3))
     # Put the cluster data in a viewable format
     p_clust = np.ones((tf.n_freq_windows, tf.n_time_windows))
@@ -768,11 +768,11 @@ def group_analysis(
     logger.info(gen_log_message(msg, step=3))
 
     if np.min(p_values) > cfg.alpha:
-        msg = ("The results are not significative. "
+        msg = ("The results are not significant. "
                "Try increasing the number of subjects.")
         logger.info(gen_log_message(msg, step=3))
     else:
-        msg = (f"Congrats, the results seem significative. At least one of "
+        msg = (f"Congrats, the results seem significant. At least one of "
                f"your cluster has a significant p-value "
                f"at the level {cfg.alpha}")
         logger.info(gen_log_message(msg, step=3))
@@ -838,7 +838,7 @@ def main():
 
     report = Report(title="csp-permutations", verbose=False)
 
-    # Usefull for debuging:
+    # Useful for debugging:
     # [one_subject_decoding(
     #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
     #     for subject in config.get_subjects()]

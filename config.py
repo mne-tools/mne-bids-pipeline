@@ -1190,7 +1190,6 @@ The metric to use for estimating classification performance. It can be
 With ROC AUC, chance level is the same regardless of class balance, that is,
 you don't need to be worried about **exactly** balancing class sizes.
 """
-# TODO: add warning
 
 decoding_n_splits: int = 5
 """
@@ -1215,7 +1214,7 @@ Statistic level used in the time frequency script.
 
 alpha_t_test: float = 0.1
 """
-Treshold level used to determine clusters.
+Threshold level used to determine clusters.
 """
 
 n_permutations: int = 10000
@@ -1754,16 +1753,17 @@ if (spatial_filter == 'ica' and
 
 
 if decoding_n_splits < 2:  # TODO Change it to allow 1
-    raise ValueError('decoding_n_splits should be at least 2')
+    raise ValueError('decoding_n_splits should be at least 2.')
 
 if n_freqs < 2:
-    raise ValueError('n_freqs should be at least 2')
+    raise ValueError('n_freqs should be at least 2.')
 
 if not 0 < alpha < 1:
     raise ValueError("alpha should be in the (0, 1) interval.")
 
 if n_permutations < 10/alpha:
-    raise ValueError("n_permutations is not big enouth to control your alpha.")
+    raise ValueError("n_permutations is not big enough to calculate "
+                     "accurately the p-values.")
 
 
 ###############################################################################

@@ -1216,7 +1216,7 @@ alpha_t_test: float = 0.1
 Threshold level used to determine clusters.
 """
 
-n_permutations: int = 10000
+n_permutations: int = 10_000
 """
 Number of permutations used when estimating the p-values.
 """

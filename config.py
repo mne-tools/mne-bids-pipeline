@@ -1778,8 +1778,11 @@ if (spatial_filter == 'ica' and
 if decoding_n_splits < 2:  # TODO Change it to allow 1
     raise ValueError('decoding_n_splits should be at least 2.')
 
-if n_freqs < 2:
-    raise ValueError('n_freqs should be at least 2.')
+if len(csp_times) < 2:
+    raise ValueError('csp_times should contain at least 2 values.')
+
+if len(csp_freqs) < 2:
+    raise ValueError('csp_freqs should contain at least 2 values.')
 
 if not 0 < cluster_stats_alpha < 1:
     raise ValueError("alpha should be in the (0, 1) interval.")
@@ -1789,7 +1792,7 @@ if n_permutations < 10 / cluster_stats_alpha:
                      "accurately the p-values.")
 
 
-if decoding_metric != "roc-auc":
+if decoding_metric != "roc_auc":
     msg = f"{decoding_metric} is not supported for csp decoding."
     logger.warning(msg)
 

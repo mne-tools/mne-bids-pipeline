@@ -161,7 +161,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
-    we project the different events contain in one condition into
+    we project the different events contained in one condition into
     just one label.
 
     Returns:

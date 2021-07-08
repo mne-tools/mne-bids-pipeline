@@ -25,7 +25,6 @@ The user has only to specify the list of frequency and the list of timings.
 """
 # License: BSD (3-clause)
 
-from pathlib import Path
 from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 import logging
 from matplotlib.figure import Figure
@@ -33,7 +32,6 @@ from matplotlib.figure import Figure
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
-from tqdm import tqdm  # TODO does not work smoothly
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -45,7 +43,7 @@ from mne import create_info, read_epochs, set_log_level
 from mne.decoding import CSP
 from mne.time_frequency import AverageTFR
 from mne.parallel import parallel_func
-from mne.utils import BunchConst
+from mne.utils import BunchConst, ProgressBar
 from mne.report import Report
 
 from mne_bids import BIDSPath
@@ -399,10 +397,10 @@ def one_subject_decoding(
     freq_scores_std = np.zeros((tf.n_freq_windows,))
 
     # Loop through each frequency range of interest
-    for freq, (fmin, fmax) in tqdm(
+    for freq, (fmin, fmax) in ProgressBar(
             enumerate(tf.freq_ranges),
-            total=tf.n_freq_windows,
-            desc=f'subject {subject} - frequency loop'):
+            max_value=tf.n_freq_windows,
+            mesg=f'subject {subject} - frequency loop'):
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
@@ -438,10 +436,10 @@ def one_subject_decoding(
     tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
 
     # Loop through each frequency range of interest
-    for freq, (fmin, fmax) in tqdm(
+    for freq, (fmin, fmax) in ProgressBar(
             enumerate(tf.freq_ranges),
-            total=tf.n_freq_windows,
-            desc=f'subject {subject} - time-frequency loop'):
+            max_value=tf.n_freq_windows,
+            mesg=f'subject {subject} - time-frequency loop'):
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
@@ -481,7 +479,7 @@ def one_subject_decoding(
 
 
 def load_and_average(
-    path: Callable[[str], str],
+    path: Callable[[str], BIDSPath],
     subjects: List[str],
     average: bool = True
 ) -> np.ndarray:
@@ -793,9 +791,14 @@ def main():
     report = Report(title="csp-permutations", verbose=False)
 
     # Useful for debugging:
-    [one_subject_decoding(
-        cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
-        for subject in config.get_subjects()]
+    # [one_subject_decoding(
+    #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+    #     for subject in config.get_subjects()]
+
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+             for subject in config.get_subjects())
+
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.
     group_analysis(subjects=config.get_subjects(),

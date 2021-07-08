@@ -1204,7 +1204,8 @@ confidence interval of the mean decoding score.
 
 csp_reg: float = 0.1
 """
-Regularization used in the covariance estimator when calculating CSPs.
+Regularization used in the covariance estimator when calculating CSPs. Must be
+between 0 and 1.
 """
 
 cluster_stats_alpha: float = 0.05

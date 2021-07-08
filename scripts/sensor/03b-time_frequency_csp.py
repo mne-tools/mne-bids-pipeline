@@ -84,11 +84,6 @@ class Pth:
             processing='clean',
             check=False)
 
-        # TODO remove from here
-        # create directory if it does not exist
-        Path("results").mkdir(parents=True, exist_ok=True)
-        Path("results/npy").mkdir(parents=True, exist_ok=True)
-
         self.report_fname = self.bids_basename.copy().update(
             processing='csp+permutation+test',
             suffix='report',

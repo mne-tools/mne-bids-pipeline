@@ -54,7 +54,7 @@ from config import (N_JOBS, gen_log_message, on_error,
 import config
 
 logger = logging.getLogger('mne-bids-pipeline')
-set_log_level(verbose="WARNING")  # mne logger
+# set_log_level(verbose="WARNING")  # mne logger
 
 
 # ROC-AUC chance score level
@@ -423,11 +423,11 @@ def one_subject_decoding(
         conf_int=freq_scores_std,
         pth=pth,
         subject=subject)
-
+    section = "Frequency roc-auc decoding"
     report.add_figs_to_section(  # TODO: That does not work
         fig,
-        section="Frequency roc-auc decoding",
-        captions=f'sub-{subject}')
+        section=section,
+        captions=section + f' sub-{subject}')
 
     ######################################################################
     # 2. Loop through frequencies and time
@@ -469,10 +469,11 @@ def one_subject_decoding(
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
         centered_w_times=tf.centered_w_times, subject=subject)
+    section = "Time-frequency decoding"
     report.add_figs_to_section(
         fig,
-        section="Time - frequency decoding",
-        captions=f'sub-{subject}')
+        section=section,
+        captions=section + f' sub-{subject}')
 
     msg = f"Decoding for subject {subject} finished successfully."
     logger.info(gen_log_message(message=msg, subject=subject, step=3))
@@ -659,22 +660,24 @@ def group_analysis(
 
     fig = plot_frequency_decoding(
         freqs=tf.freqs, freq_scores=all_freq_scores, pth=pth,
-        conf_int=conf_int, subject="all")
+        conf_int=conf_int, subject="avg")
+    section = "Frequency decoding"
     report.add_figs_to_section(
         fig,
-        section="Frequency decoding",
-        captions='sub-all')
+        section=section,
+        captions=section + ' sub-avg')
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(pth.tf_scores, subjects=subjects)
 
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject="all")
+        centered_w_times=tf.centered_w_times, subject="avg")
+    section = "Time - frequency decoding"
     report.add_figs_to_section(
         fig,
-        section="Time - frequency decoding",
-        captions='sub-all')
+        section=section,
+        captions=section + ' sub-avg')
 
     ######################################################################
     # 2. Statistical tests
@@ -742,10 +745,11 @@ def group_analysis(
             subjects=subjects, cfg=cfg, tf=tf)
 
         cluster = "with" if i else "without"
+        section = f"Time - frequency statistics - {cluster} cluster"
         report.add_figs_to_section(
             fig,
-            section=f"Time - frequency statistics - {cluster} cluster",
-            captions='sub-all')
+            section=section,
+            captions=section + ' sub-avg')
     msg = "Group analysis statistic analysis finished."
     logger.info(gen_log_message(msg, step=3))
 
@@ -795,9 +799,9 @@ def main():
     #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
     #     for subject in config.get_subjects()]
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
-             for subject in config.get_subjects())
+    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+    #          for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

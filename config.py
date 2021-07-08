@@ -13,6 +13,7 @@ import sys
 import copy
 import logging
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+from numpy.typing import ArrayLike
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -1269,18 +1270,40 @@ Maximum frequency for the time frequency analysis, in Hz.
     time_frequency_freq_max = 22.3  # 22.3 Hz
     ```
 """
+csp_freqs: ArrayLike = np.linspace(time_frequency_freq_min,
+                                   time_frequency_freq_max,
+                                   num=5)
+"""
+List of frequencies used in the csp-decoding script.
+We will then decode inside each bin.
+The first element of the list will be the lower bound frequency
+The last element will be the higher frequency.
+The list needs to contain at least those two elements.
+???+ example "Example"
+    ```python
+    # in order to create the bins [(4,8), (8,14), (14,16), (16,20)]
+    # Two solutions:
+    csp_freqs = [4., 8., 14., 16., 20.]
+    csp_freqs = np.linspace(start=4, stop=25, num=5)
+    ```
+"""
 
-n_freqs: int = 5
+csp_times: ArrayLike = np.linspace(epochs_tmin,
+                                   epochs_tmax,
+                                   num=5)
 """
-The number of frequencies used for decoding using time frequency windows.
-Example: n_freqs = 5 generates 4 frequency bins.
-"""
-
-n_cycles: int = 1
-"""
-Control the duration of the time windows in the CSP decoding script.
-n_cycle = 1 is just above the Nyquist requirements.
-Increase it in case of numerical instabilities.
+List of times used in the csp-decoding script.
+We will then decode inside each bin.
+The list needs to contain at least two elements.
+The elements of the list must be contained in the epochs interval.
+???+ example "Example"
+    ```python
+    # If epochs_tmin = 0, and epochs_tmax = 0.6
+    # in order to create the bins [(0,0.2), (0.2,0.4), (0.4,0.6)]
+    # Two solutions:
+    csp_freqs = [0.0, 0.2, 0.4, 0.6]
+    csp_freqs = np.linspace(start=0, stop=0.6, num=4)
+    ```
 """
 
 ###############################################################################

@@ -21,10 +21,7 @@ cluster tests on the time-frequency roc-auc map.
 More details are available here:
 https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html#sphx-glr-auto-tutorials-stats-sensor-space-10-background-stats-py
 
-The user has only to specify the [f_min, f_max] band
-with the n_freq which is the number of frequency windows + 1.
-# TODO : bad API.
-And we calculate automatically the time-windows based on the Nyquist criterion.
+The user has only to specify the list of frequency and the list of timings.
 """
 # License: BSD (3-clause)
 
@@ -119,80 +116,34 @@ class Pth:
         return f"results/npy/tf_scores-{subject}.npy"
 
 
-def compute_n_time_windows(cfg) -> int:  # This could go in the tf class
-    """Compute the number of time windows.
-
-    We begin by calculating the minimum Nyquist windows size according
-    to the higher frequency. Then we take n_cycle times this minimum duration.
-    """
-    # Infer window spacing from the min freq and number of cycles to avoid gaps
-    # For band passed periodic signal, according to the Nyquist theorem,
-    # we can reconstruct the signal if f_s > 2 * band_freq
-    band_freq = (cfg.time_frequency_freq_max -
-                 cfg.time_frequency_freq_min)/(cfg.n_freqs - 1)
-    min_nyquist_period = 1 / (2 * band_freq)
-
-    # But the signal should be periodic.
-    # One period of the signal is not sufficient.
-    # So we recommend taking at least n_cycles > 10
-    min_window_size = min_nyquist_period * cfg.n_cycles
-    msg = (f"The minimum Nyquist windows period is "
-           f"{round(min_nyquist_period, 3)}s, "
-           f"n_cycles={cfg.n_cycles} which puts your time windows "
-           f"size to a minimum of {round(min_window_size, 3)}s.")
-    logger.info(gen_log_message(message=msg, step=3))
-
-    # TODO: no more n_cycle
-    # In order to count how many min_asked_spacing windows we can fit in the
-    # epochs range, we use the np.arange method.
-    centered_w_times_not_adjusted = \
-        np.arange(cfg.epochs_tmin, cfg.epochs_tmax, min_window_size)[1:]
-
-    n_time_windows = len(centered_w_times_not_adjusted)
-    if n_time_windows == 0:
-        msg = ("Minimum windows size do not fit in the epoch interval. "
-               "Try to increase your band frequency by decreasing n_freq.")
-        logger.error(msg)
-
-    # Yes, this is absolutely hideous...
-    # Sometimes when, for example epochs_tmax = 5s,
-    # the last element of np.arange is 4.99999, so we have to delete it...
-    if np.isclose(centered_w_times_not_adjusted[-1], cfg.epochs_tmax):
-        centered_w_times_not_adjusted = centered_w_times_not_adjusted[:-1]
-
-    return n_time_windows
-
-
 class Tf:
     """Util class containing useful info about the time frequency windows."""
 
     def __init__(self, cfg):
         """Calculate the required time and frequency size."""
-        freqs = np.linspace(cfg.time_frequency_freq_min,
-                            cfg.time_frequency_freq_max,
-                            cfg.n_freqs)
-        # make freqs list of tuples
+        freqs = np.array(cfg.csp_freqs)
+        times = np.array(cfg.csp_times)
+
         freq_ranges = list(zip(freqs[:-1], freqs[1:]))
-        n_freq_windows = cfg.n_freqs - 1
-
-        n_time_windows = compute_n_time_windows(cfg)
-        # n_times is not really used in the rest of the code.
-        # Same case for n_freqs.
-        n_times = n_time_windows + 1
-
-        msg = (f"We will split the epoch time interval"
-               f" into {n_time_windows} windows.")
-        logger.info(gen_log_message(msg, step=3))
-        times = np.linspace(
-            cfg.epochs_tmin, cfg.epochs_tmax, n_time_windows + 1)
         time_ranges = list(zip(times[:-1], times[1:]))
-        centered_w_times = (times[1:] + times[:-1])/2
 
-        # Recap:
-        assert n_time_windows == n_times - 1
-        assert len(time_ranges) == n_time_windows
-        assert n_freq_windows == cfg.n_freqs - 1
-        assert len(freq_ranges) == n_freq_windows
+        n_freq_windows = len(freq_ranges)
+        n_time_windows = len(time_ranges)
+
+        # For band passed periodic signal,
+        # according to the Nyquist theorem,
+        # we can reconstruct the signal if f_s > 2 * band_freq
+        min_band_freq = np.min(freqs[1:] - freqs[:-1])
+        min_band_time = np.min(times[1:] - times[:-1])
+        recommanded_windows_min_time = 1 / (2 * min_band_freq)
+
+        if recommanded_windows_min_time < min_band_time:
+            msg = ("We recommand increasing the duration of "
+                   "your time intervals "
+                   f"to at least {recommanded_windows_min_time}s.")
+            logger.info(gen_log_message(msg, step=3))
+
+        centered_w_times = (times[1:] + times[:-1])/2
 
         self.freqs = freqs
         self.freq_ranges = freq_ranges
@@ -805,8 +756,6 @@ def get_config(
         deriv_root=config.get_deriv_root(),  # TODO
         time_frequency_conditions=config.time_frequency_conditions,
         ch_types=config.ch_types,  # TODO
-        time_frequency_freq_min=config.time_frequency_freq_min,
-        time_frequency_freq_max=config.time_frequency_freq_max,
         decim=config.decim,
         decoding_n_splits=config.decoding_n_splits,
         epochs_tmin=config.epochs_tmin,
@@ -815,8 +764,8 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        n_freqs=config.n_freqs,
-        n_cycles=config.n_cycles,
+        csp_freqs=config.csp_freqs,
+        csp_times=config.csp_times,
         csp_reg=config.csp_reg,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,

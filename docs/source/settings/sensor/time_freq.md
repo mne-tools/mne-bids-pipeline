@@ -1,3 +1,3 @@
 ::: config.time_frequency_conditions
-::: config.n_freqs,
-::: n_cycles=config.n_cycles,
+::: config.csp_times
+::: config.csp_freqs

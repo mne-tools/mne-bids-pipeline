@@ -36,6 +36,7 @@ SENSOR_SCRIPTS = (
     '01-make_evoked.py',
     '02-sliding_estimator.py',
     '03-time_frequency.py',
+    '03b-time_frequency_csp.py',
     '04-group_average.py'
 )
 

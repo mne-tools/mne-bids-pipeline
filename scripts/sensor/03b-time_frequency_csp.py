@@ -54,14 +54,14 @@ from mne.report import Report
 from mne_bids import BIDSPath
 
 # mne-bids-pipeline config
-from config import N_JOBS, gen_log_message, on_error, failsafe_run
+from config import (N_JOBS, gen_log_message, on_error,
+                    failsafe_run)
 import config
 
 logger = logging.getLogger('mne-bids-pipeline')
 set_log_level(verbose="WARNING")  # mne logger
 
 
-# TODO : Should we generalize this with the parameter decoding_metric?
 # ROC-AUC chance score level
 chance = 0.5
 
@@ -776,7 +776,7 @@ def group_analysis(
     else:
         msg = (f"Congrats, the results seem significant. At least one of "
                f"your cluster has a significant p-value "
-               f"at the level {cfg.alpha}")
+               f"at the level {cfg.cluster_stats_alpha}")
         logger.info(gen_log_message(msg, step=3))
 
     ts.append(t_clust)
@@ -819,8 +819,8 @@ def get_config(
         n_cycles=config.n_cycles,
         csp_reg=config.csp_reg,
         cluster_stats_alpha=config.cluster_stats_alpha,
-        cluster_stats_alpha_t_test=config.cluster_stats_cluster_stats_alpha_t_test,
-        n_permutations=config.n_permutations
+        cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,
+        n_permutations=config.n_permutations,
     )
     return cfg
 
@@ -841,13 +841,9 @@ def main():
     report = Report(title="csp-permutations", verbose=False)
 
     # Useful for debugging:
-    # [one_subject_decoding(
-    #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
-    #     for subject in config.get_subjects()]
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
-             for subject in config.get_subjects())
-
+    [one_subject_decoding(
+        cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+        for subject in config.get_subjects()]
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.
     group_analysis(subjects=config.get_subjects(),

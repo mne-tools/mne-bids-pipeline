@@ -1765,6 +1765,10 @@ if n_permutations < 10 / cluster_stats_alpha:
                      "accurately the p-values.")
 
 
+if decoding_metric != "roc-auc":
+    msg = f"{decoding_metric} is not supported for csp decoding."
+    logger.warning(msg)
+
 ###############################################################################
 # Helper functions
 # ----------------

@@ -331,15 +331,15 @@ def run_ica(cfg, subject, session=None):
         del raw, epochs, eog_epochs, ecg_epochs  # free memory
 
     # Lastly, we can concatenate the epochs and set an EEG reference
-    epochs = mne.concatenate_epochs(epochs_all_runs)
+    epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
 
     if eog_epochs_all_runs:
-        epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs)
+        epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs, on_mismatch='warn')
     else:
         epochs_eog = None
 
     if ecg_epochs_all_runs:
-        epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs)
+        epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs, on_mismatch='warn')
     else:
         epochs_ecg = None
 

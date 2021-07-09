@@ -60,6 +60,8 @@ def average_evokeds(cfg, session):
         all_evokeds[idx] = mne.grand_average(
             evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
         )  # Combine subjects
+        # Keep condition in comment
+        all_evokeds[idx].comment = 'Grand average: ' + evokeds[0].comment
 
     subject = 'average'
     fname_out = BIDSPath(subject=subject,

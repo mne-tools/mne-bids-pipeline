@@ -210,7 +210,7 @@ def run_tests(test_suite, download):
             shutil.copy(
                 src=Path(__file__).parent / 'ds000247_scans.tsv',
                 dst=Path('~/mne_data/ds000247/sub-0002/ses-0001/'
-                         'sub-0002_ses-0001_scans.tsv').expanduser()
+                         'sub-0002_ses-01_scans.tsv').expanduser()
             )
 
         # Run the tests.

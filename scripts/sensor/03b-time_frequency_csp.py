@@ -100,6 +100,7 @@ class Pth:
         return self.bids_basename.copy().update(subject=subject)
 
     def freq_scores(self, subject) -> BIDSPath:
+        """Path to array containing the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
@@ -107,6 +108,7 @@ class Pth:
             extension='.npy')
 
     def freq_scores_std(self, subject) -> BIDSPath:
+        """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
@@ -114,6 +116,7 @@ class Pth:
             extension='.npy')
 
     def tf_scores(self, subject) -> BIDSPath:
+        """Path to time-frequency scores."""
         return self.bids_basename.copy().update(
             processing='csp+tf',
             subject=subject,
@@ -734,7 +737,6 @@ def group_analysis(
         adjacency=None,  # a regular lattice adjacency is assumed
         n_permutations=cfg.n_permutations, out_type='mask')
 
-    # TODO: plot H0 ?
     msg = "Permutations performed successfully"
     logger.info(gen_log_message(msg, step=3))
     # Put the cluster data in a viewable format

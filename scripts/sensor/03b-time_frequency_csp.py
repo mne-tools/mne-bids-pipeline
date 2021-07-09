@@ -741,7 +741,7 @@ def group_analysis(
            f"each one with a p-value of {p_values}.")
     logger.info(gen_log_message(msg, step=3))
 
-    if np.min(p_values) > cfg.cluster_stats_alpha:
+    if len(p_values) == 0 or np.min(p_values) > cfg.cluster_stats_alpha:
         msg = ("The results are not significant. "
                "Try increasing the number of subjects.")
         logger.info(gen_log_message(msg, step=3))

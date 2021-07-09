@@ -92,7 +92,7 @@ def run_epochs(cfg, subject, session=None):
         del raw  # free memory
 
     # Lastly, we can concatenate the epochs and set an EEG reference
-    epochs = mne.concatenate_epochs(epochs_all_runs)
+    epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)

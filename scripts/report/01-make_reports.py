@@ -58,7 +58,7 @@ def plot_events(cfg, subject, session):
         del this_raw_fname
 
     # Concatenate the filtered raws and extract the events.
-    raw_filt_concat = mne.concatenate_raws(raws_filt)
+    raw_filt_concat = mne.concatenate_raws(raws_filt, on_mismatch='warn')
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     fig = mne.viz.plot_events(events=events, event_id=event_id,
                               first_samp=raw_filt_concat.first_samp,

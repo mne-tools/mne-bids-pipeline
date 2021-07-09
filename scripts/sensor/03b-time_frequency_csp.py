@@ -788,7 +788,6 @@ def get_config(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         time_frequency_conditions=config.time_frequency_conditions,
-        ch_types=config.ch_types,  # TODO Do I need it ?
         decim=config.decim,
         decoding_n_splits=config.decoding_n_splits,
         task=config.task,

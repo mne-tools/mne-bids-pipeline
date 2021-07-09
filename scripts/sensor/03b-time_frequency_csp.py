@@ -19,7 +19,7 @@ We try to answer the following question: is the difference between
 the two conditions statistically significant? We use the classic permutations
 cluster tests on the time-frequency roc-auc map.
 More details are available here:
-https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html#sphx-glr-auto-tutorials-stats-sensor-space-10-background-stats-py
+https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html
 
 The user has only to specify the list of frequency and the list of timings.
 """

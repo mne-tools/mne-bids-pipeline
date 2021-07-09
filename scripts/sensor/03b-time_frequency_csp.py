@@ -142,7 +142,7 @@ class Tf:
         min_band_time = np.min(times[1:] - times[:-1])
         recommanded_w_min_time = 1 / (2 * min_band_freq)
 
-        if recommanded_w_min_time < min_band_time:
+        if recommanded_w_min_time > min_band_time:
             msg = ("We recommand increasing the duration of "
                    "your time intervals "
                    f"to at least {round(recommanded_w_min_time, 2)}s.")

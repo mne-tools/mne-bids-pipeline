@@ -150,10 +150,11 @@ def main():
     msg = 'Running Step 3: Epoching'
     logger.info(gen_log_message(step=3, message=msg))
 
-    n_jobs = config.get_n_jobs()
     # Here we use fewer n_jobs to prevent potential memory problems
-    parallel, run_func, _ = parallel_func(run_epochs,
-                                          n_jobs=max(n_jobs // 4, 1))
+    parallel, run_func, _ = parallel_func(
+        run_epochs,
+        n_jobs=max(config.get_n_jobs() // 4, 1)
+    )
     parallel(run_func(get_config(subject, session), subject, session)
              for subject, session in
              itertools.product(config.get_subjects(), config.get_sessions()))

@@ -33,7 +33,7 @@ def _prepare_forward_fsaverage(cfg):
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
                                  add_dist=False,
-                                 n_jobs=cfg.N_JOBS)
+                                 n_jobs=cfg.n_jobs)
     return src, trans, str(bem_sol)
 
 
@@ -74,7 +74,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
                                  add_dist=False,
-                                 n_jobs=cfg.N_JOBS)
+                                 n_jobs=cfg.n_jobs)
 
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.

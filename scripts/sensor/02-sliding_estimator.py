@@ -90,7 +90,7 @@ def run_time_decoding(cfg, subject, condition1, condition2, session=None):
 
     se = SlidingEstimator(clf,
                           scoring=cfg.decoding_metric,
-                          n_jobs=cfg.N_JOBS)
+                          n_jobs=cfg.n_jobs)
     scores = cross_val_multiscore(se, X=X, y=y, cv=cfg.decoding_n_splits)
 
     # let's save the scores now

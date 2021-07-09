@@ -225,6 +225,10 @@ def prepare_epochs_and_y(
     epochs_filter.filter(fmin, fmax, n_jobs=1,
                          skip_by_annotation='edge')
 
+    epochs_filter.pick_types(
+        meg=True, eeg=True, stim=False, eog=False,
+        exclude='bads')
+
     # prepare labels
     y = prepare_labels(epochs=epochs_filter, cfg=cfg)
 

@@ -334,12 +334,14 @@ def run_ica(cfg, subject, session=None):
     epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
 
     if eog_epochs_all_runs:
-        epochs_eog = mne.concatenate_epochs(eog_epochs_all_runs, on_mismatch='warn')
+        epochs_eog = mne.concatenate_epochs(
+            eog_epochs_all_runs, on_mismatch='warn')
     else:
         epochs_eog = None
 
     if ecg_epochs_all_runs:
-        epochs_ecg = mne.concatenate_epochs(ecg_epochs_all_runs, on_mismatch='warn')
+        epochs_ecg = mne.concatenate_epochs(
+            ecg_epochs_all_runs, on_mismatch='warn')
     else:
         epochs_ecg = None
 

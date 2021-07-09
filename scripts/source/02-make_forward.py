@@ -62,7 +62,9 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0],
                                 root=cfg.bids_root),
-        t1_bids_path=t1_bids_path)
+        t1_bids_path=t1_bids_path,
+        fs_subject=cfg.fs_subject,
+        fs_subjects_dir=cfg.fs_subjects_dir)
 
     # Create the source space.
     msg = 'Creating source space'
@@ -93,7 +95,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
         message = ("Could not make BEM model due to a missing file. \n"
                    "Can be solved by setting recreate_bem=True in the config "
                    "to force recreation of the BEM model, or by deleting the\n"
-                   f" {cfg.bids_roo}/derivatives/freesurfer/"
+                   f" {cfg.bids_root}/derivatives/freesurfer/"
                    f"subjects/sub-{subject}/bem/ folder")
         raise FileNotFoundError(message)
 

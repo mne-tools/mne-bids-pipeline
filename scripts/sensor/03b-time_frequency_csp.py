@@ -54,7 +54,7 @@ from config import (N_JOBS, gen_log_message, on_error,
 import config
 
 logger = logging.getLogger('mne-bids-pipeline')
-# set_log_level(verbose="WARNING")  # mne logger
+set_log_level(verbose="WARNING")  # mne logger
 
 
 # ROC-AUC chance score level
@@ -99,21 +99,21 @@ class Pth:
         """Return the path of the file."""
         return self.bids_basename.copy().update(subject=subject)
 
-    def freq_scores(self, subject):
+    def freq_scores(self, subject) -> BIDSPath:
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
             suffix='scores',
             extension='.npy')
 
-    def freq_scores_std(self, subject):
+    def freq_scores_std(self, subject) -> BIDSPath:
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
             suffix='scores+std',
             extension='.npy')
 
-    def tf_scores(self, subject):
+    def tf_scores(self, subject) -> BIDSPath:
         return self.bids_basename.copy().update(
             processing='csp+tf',
             subject=subject,
@@ -382,9 +382,9 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
 
     # Assemble the classifier using scikit-learn pipeline
-    clf = make_pipeline(CSP(n_components=4, reg=cfg.csp_reg,
-                            log=True, norm_trace=False),
-                        LinearDiscriminantAnalysis())
+    csp = CSP(n_components=4, reg=cfg.csp_reg,
+              log=True, norm_trace=False)
+    clf = make_pipeline(csp, LinearDiscriminantAnalysis())
 
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=42)
@@ -414,6 +414,15 @@ def one_subject_decoding(
 
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
+
+        csp.fit(X, y)
+        fig = csp.plot_patterns(epochs_filter.info)
+        section = "CSP Patterns - frequency"
+        title = f' sub-{subject}-{(fmin, fmax)}Hz - all epoch'
+        report.add_figs_to_section(
+            fig,
+            section=section,
+            captions=section + title)
 
     np.save(file=pth.freq_scores(subject), arr=freq_scores)
     np.save(file=pth.freq_scores_std(subject), arr=freq_scores_std)
@@ -462,8 +471,19 @@ def one_subject_decoding(
                                         scoring='roc_auc',
                                         cv=cv,
                                         n_jobs=1)
+            tf_scores[freq, t] = np.mean(cv_scores, axis=0)
 
             # TODO: add CSP plots
+            # We plot the component using all the epochs
+            # without splitting the epochs
+            csp.fit(X, y)
+            fig = csp.plot_patterns(epochs_filter.info)
+            section = "CSP Patterns - time-frequency"
+            title = f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
+            report.add_figs_to_section(  # TODO: That does not work
+                fig,
+                section=section,
+                captions=section + title)
 
     np.save(file=pth.tf_scores(subject), arr=tf_scores)
     fig = plot_time_frequency_decoding(
@@ -799,9 +819,9 @@ def main():
     #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
     #     for subject in config.get_subjects()]
 
-    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
-    #          for subject in config.get_subjects())
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+             for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

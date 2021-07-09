@@ -85,6 +85,9 @@ authors:
   ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
 - Files docstrings in the preprocessing steps were updated.
   ({{ gh(409) }} by {{ authors.crsegerie }})
+- Do not crash when concatenating epochs or raws with different measurement
+  info (like the dev_head_t when using EEG only data).
+  ({{ gh(#416) }} by {{ authors.agramfort }})
 
 ### Behavior changes
 

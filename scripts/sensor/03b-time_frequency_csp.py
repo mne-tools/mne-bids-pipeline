@@ -605,16 +605,8 @@ def plot_t_and_p_values(
     subjects: List[str],
     cfg,
     tf: Tf
-) -> Figure:  # TODO : delete this function ?
+) -> Figure:
     """Plot t-values and either (p-values or clusters).
-
-    Parameters:
-    -----------
-    t-values
-    p_values
-    title
-    cfg
-    tf
 
     Returns
     -------
@@ -784,7 +776,7 @@ def group_analysis(
     msg = f"Report {pth_report} saved in the average subject folder"
     logger.info(gen_log_message(message=msg, step=3))
 
-    msg = "Group analysis statistic analysis finished."
+    msg = "Group statistic analysis finished."
     logger.info(gen_log_message(msg, step=3))
 
 

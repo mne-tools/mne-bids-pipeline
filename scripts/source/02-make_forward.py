@@ -158,7 +158,7 @@ def get_config(
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
-        N_JOBS=config.N_JOBS
+        n_jobs=config.get_n_jobs()
     )
     return cfg
 
@@ -173,7 +173,8 @@ def main():
         logger.info(gen_log_message(step=10, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_forward, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(run_forward,
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(get_config(subject=subject), subject, session)
              for subject, session in
              itertools.product(config.get_subjects(),

@@ -76,7 +76,8 @@ SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
                        SCRIPT_PATHS['report'])
 
 
-def _run_script(script_path, config, root_dir, subject, session, task, run):
+def _run_script(script_path, config, root_dir, subject, session, task, run,
+                n_jobs):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -98,6 +99,9 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
+    if n_jobs:
+        env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+
     runpy.run_path(script_path, run_name='__main__')
 
 
@@ -112,7 +116,8 @@ def process(config: PathLike,
             subject: Optional[str] = None,
             session: Optional[str] = None,
             task: Optional[str] = None,
-            run: Optional[str] = None):
+            run: Optional[str] = None,
+            n_jobs: Optional[int] = None):
     """Run the BIDS pipeline.
 
     Parameters
@@ -137,6 +142,8 @@ def process(config: PathLike,
         The task to process.
     run
         The run to process.
+    n_jobs
+        The number of parallel processes to execute.
     """
     if steps is None:
         steps = ('all',)
@@ -207,7 +214,8 @@ def process(config: PathLike,
     for script_path in script_paths:
         step_name = script_path.name.replace('.py', '')[3:]
         logger.info(f'Now running: {step_name}')
-        _run_script(script_path, config, root_dir, subject, session, task, run)
+        _run_script(script_path, config, root_dir, subject, session, task, run,
+                    n_jobs)
         logger.info(f'Successfully finished running: {step_name}')
 
 

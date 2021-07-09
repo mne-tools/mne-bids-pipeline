@@ -510,7 +510,8 @@ def main():
     logger.info(gen_log_message(step=4, message=msg))
 
     if config.spatial_filter == 'ica':
-        parallel, run_func, _ = parallel_func(run_ica, n_jobs=config.N_JOBS)
+        parallel, run_func, _ = parallel_func(run_ica,
+                                              n_jobs=config.get_n_jobs())
         parallel(run_func(get_config(subject=subject), subject, session)
                  for subject, session in
                  itertools.product(config.get_subjects(),

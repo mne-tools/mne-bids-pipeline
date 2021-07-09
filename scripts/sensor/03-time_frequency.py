@@ -107,7 +107,7 @@ def main():
     logger.info(gen_log_message(message=msg, step=8))
 
     parallel, run_func, _ = parallel_func(run_time_frequency,
-                                          n_jobs=config.N_JOBS)
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(get_config(), subject, session)
              for subject, session in
              itertools.product(config.get_subjects(),

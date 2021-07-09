@@ -1960,6 +1960,18 @@ def get_task() -> Optional[str]:
         return task
 
 
+def get_n_jobs() -> int:
+    global N_JOBS
+
+    env = os.environ
+    if env.get('MNE_BIDS_STUDY_NJOBS'):
+        n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])
+    else:
+        n_jobs = N_JOBS
+
+    return n_jobs
+
+
 def _get_reject(
     *,
     subject: Optional[str] = None,

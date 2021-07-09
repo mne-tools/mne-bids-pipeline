@@ -134,7 +134,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=config.get_eeg_reference(),
-        N_JOBS=config.N_JOBS
+        n_jobs=config.get_n_jobs()
     )
     return cfg
 

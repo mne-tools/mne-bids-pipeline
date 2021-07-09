@@ -82,11 +82,6 @@ class Pth:
             processing='clean',
             check=False)
 
-        self.report_fname = self.bids_basename.copy().update(
-            processing='csp+permutation+test',
-            suffix='report',
-            extension='.html')
-
     def file(
         self,
         *,
@@ -98,6 +93,14 @@ class Pth:
     ) -> BIDSPath:
         """Return the path of the file."""
         return self.bids_basename.copy().update(subject=subject)
+
+    def report(self, subject) -> BIDSPath:
+        """Path to array containing the report."""
+        return self.bids_basename.copy().update(
+            processing='csp+permutation+test',
+            subject=subject,
+            suffix='report',
+            extension='.html')
 
     def freq_scores(self, subject) -> BIDSPath:
         """Path to array containing the histograms."""
@@ -357,7 +360,6 @@ def one_subject_decoding(
     tf: Tf,
     pth: Pth,
     subject: str,
-    report: Report
 ) -> None:
     """Run one subject.
 
@@ -376,6 +378,8 @@ def one_subject_decoding(
     """
     msg = f"Running decoding for subject {subject}..."
     logger.info(gen_log_message(msg, step=3, subject=subject))
+
+    report = Report(title=f"csp-permutations-sub-{subject}")
 
     # Extract information from the raw file
     epochs = read_epochs(pth.file(subject=subject,
@@ -496,6 +500,8 @@ def one_subject_decoding(
         fig,
         section=section,
         captions=section + f' sub-{subject}')
+    report.save(pth.report(subject), overwrite=True,
+                open_browser=config.interactive)
 
     msg = f"Decoding for subject {subject} finished successfully."
     logger.info(gen_log_message(message=msg, subject=subject, step=3))
@@ -635,8 +641,7 @@ def group_analysis(
     subjects: List[str],
     cfg,
     pth: Pth,
-    tf: Tf,
-    report: Report,
+    tf: Tf
 ) -> None:
     """Group analysis.
 
@@ -657,6 +662,8 @@ def group_analysis(
 
     msg = "Running group analysis..."
     logger.info(gen_log_message(msg, step=3))
+
+    report = Report(title=f"csp-permutations-sub-average")
 
     ######################################################################
     # 1. Average roc-auc scores across subjects
@@ -771,6 +778,13 @@ def group_analysis(
             fig,
             section=section,
             captions=section + ' sub-avg')
+
+    pth_report = pth.report("average")
+    report.save(pth_report, overwrite=True,
+                open_browser=config.interactive)
+    msg = f"Report {pth_report} saved in the average subject folder"
+    logger.info(gen_log_message(message=msg, step=3))
+
     msg = "Group analysis statistic analysis finished."
     logger.info(gen_log_message(msg, step=3))
 
@@ -813,28 +827,19 @@ def main():
     # Compute the paths
     pth = Pth(cfg=cfg)
 
-    report = Report(title="csp-permutations", verbose=False)
-
     # Useful for debugging:
     # [one_subject_decoding(
-    #     cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+    #     cfg=cfg, tf=tf, pth=pth, subject=subject)
     #     for subject in config.get_subjects()]
 
     parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject, report=report)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
              for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.
     group_analysis(subjects=config.get_subjects(),
-                   cfg=cfg, pth=pth, tf=tf,
-                   report=report)
-
-    report.save(pth.report_fname, overwrite=True,
-                open_browser=config.interactive)
-
-    msg = f"Report {pth.report_fname} saved in the average subject folder"
-    logger.info(gen_log_message(message=msg, step=3))
+                   cfg=cfg, pth=pth, tf=tf)
 
     msg = 'Completed Step 3: Time-frequency decoding'
     logger.info(gen_log_message(message=msg, step=3))

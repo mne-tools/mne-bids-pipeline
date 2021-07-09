@@ -439,7 +439,7 @@ def one_subject_decoding(
         pth=pth,
         subject=subject)
     section = "Frequency roc-auc decoding"
-    report.add_figs_to_section(  # TODO: That does not work
+    report.add_figs_to_section(
         fig,
         section=section,
         captions=section + f' sub-{subject}')
@@ -479,14 +479,13 @@ def one_subject_decoding(
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
 
-            # TODO: add CSP plots
-            # We plot the component using all the epochs
+            # We plot the patterns using all the epochs
             # without splitting the epochs
             csp.fit(X, y)
             fig = csp.plot_patterns(epochs_filter.info)
             section = "CSP Patterns - time-frequency"
             title = f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
-            report.add_figs_to_section(  # TODO: That does not work
+            report.add_figs_to_section(
                 fig,
                 section=section,
                 captions=section + title)

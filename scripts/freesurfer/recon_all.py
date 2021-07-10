@@ -17,7 +17,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
-def run_recon(bids_root, subject, fs_bids_app) -> None:
+def run_recon(root_dir, subject, fs_bids_app) -> None:
     logger.info(f"Running recon-all on subject {subject}. This will take "
                 f"a LONG time – it's a good idea to let it run over night.")
 
@@ -39,21 +39,12 @@ def run_recon(bids_root, subject, fs_bids_app) -> None:
     if not license_file.exists():
         raise RuntimeError("FreeSurfer license file not found.")
 
-    env['SUBJECTS_DIR'] = str(subjects_dir)
-
-    output_dir = (config.get_deriv_root() / 'derivatives' / 'freesurfer' /
-                  'subjects')
-    output_dir.mkdir(exist_ok=True, parents=True)
-
     cmd = [
         f"{sys.executable}",
         f"{fs_bids_app}",
-        f"{bids_root}",
-        f"{output_dir}",
-        "participant",  # analysis level
-        "--n_cpus=2",
-        "--stages=all",
-        "--skip_bids_validator",
+        f"{root_dir}",
+        f"{subjects_dir}", "participant",
+        "--n_cpus=2", "--stages=all", "--skip_bids_validator",
         f"--license_file={license_file}",
         f"--participant_label={subject}"
     ]
@@ -87,13 +78,13 @@ def main() -> None:
     logger.info('Running FreeSurfer')
 
     subjects = config.get_subjects()
-    bids_root = config.get_bids_root()
+    root_dir = config.get_bids_root()
     subjects_dir = Path(config.get_fs_subjects_dir())
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
     n_jobs = config.get_n_jobs()
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
-    parallel(run_func(bids_root, subject, fs_bids_app)
+    parallel(run_func(root_dir, subject, fs_bids_app)
              for subject in subjects)
 
     # Handle fsaverage

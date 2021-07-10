@@ -2040,8 +2040,14 @@ def get_ica_reject() -> Dict[str, float]:
 
 
 def get_fs_subjects_dir():
+    if not subjects_dir and deriv_root is not None:
+        raise ValueError(
+            'When specifying a "deriv_root", you must also supply a '
+            '"subjects_dir".'
+        )
+
     if not subjects_dir:
-        return get_deriv_root() / 'freesurfer' / 'subjects'
+            return get_bids_root() / 'derivatives' / 'freesurfer' / 'subjects'
     else:
         return subjects_dir
 

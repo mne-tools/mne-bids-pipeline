@@ -2057,7 +2057,9 @@ def get_fs_subjects_dir():
     if not subjects_dir:
         return get_bids_root() / 'derivatives' / 'freesurfer' / 'subjects'
     else:
-        return subjects_dir
+        return (pathlib.Path(subjects_dir)
+                .expanduser()
+                .resolve())
 
 
 def gen_log_message(message, step=None, subject=None, session=None,

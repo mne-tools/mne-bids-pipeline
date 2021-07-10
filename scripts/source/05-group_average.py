@@ -132,7 +132,8 @@ def main():
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
-    parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(morph_stc,
+                                          n_jobs=config.get_n_jobs())
     all_morphed_stcs = parallel(
         run_func(get_config(subject, session), subject, session)
         for subject, session in

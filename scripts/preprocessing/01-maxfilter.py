@@ -232,7 +232,7 @@ def main():
 
     if config.use_maxwell_filter:
         parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                              n_jobs=config.N_JOBS)
+                                              n_jobs=config.get_n_jobs())
         parallel(run_func(get_config(subject, session), subject, session)
                  for subject, session in
                  itertools.product(config.get_subjects(),

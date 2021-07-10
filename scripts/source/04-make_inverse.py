@@ -107,7 +107,8 @@ def main():
         logger.info(gen_log_message(step=12, message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(run_inverse,
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(get_config(), subject, session)
              for subject, session in
              itertools.product(config.get_subjects(),

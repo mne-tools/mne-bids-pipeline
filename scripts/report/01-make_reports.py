@@ -730,7 +730,8 @@ def main():
     msg = 'Running Step 99: Create reports'
     logger.info(gen_log_message(step=99, message=msg))
 
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(run_report,
+                                          n_jobs=config.get_n_jobs())
     parallel(
         run_func(get_config(subject=subject), subject, session)
         for subject, session in

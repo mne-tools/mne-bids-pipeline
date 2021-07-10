@@ -240,7 +240,8 @@ def main():
     msg = 'Running Step 2: Frequency filtering'
     logger.info(gen_log_message(step=2, message=msg))
 
-    parallel, run_func, _ = parallel_func(filter_data, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(filter_data,
+                                          n_jobs=config.get_n_jobs())
 
     # Enabling different runs for different subjects
     sub_run_ses = []

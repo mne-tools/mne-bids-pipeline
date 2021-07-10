@@ -213,6 +213,12 @@ def run_tests(test_suite, download):
                          'sub-0002_ses-01_scans.tsv').expanduser()
             )
 
+        # Test the `--n_jobs` parameter
+        if dataset == 'ds000117':
+            n_jobs = '2'
+        else:
+            n_jobs = None
+
         # Run the tests.
         steps = test_options['steps']
         task = test_options['task']
@@ -226,7 +232,8 @@ def run_tests(test_suite, download):
                 sys.argv[0],
                 f'{step}',
                 f'--config={config_path}',
-                f'--task={task}' if task else ''
+                f'--task={task}' if task else '',
+                f'--n_jobs={n_jobs}' if n_jobs else ''
             ]
             # We have to use run_path because run_module doesn't allow
             # relative imports.

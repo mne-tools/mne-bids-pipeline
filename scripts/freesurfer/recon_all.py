@@ -82,7 +82,7 @@ def main() -> None:
     subjects_dir = Path(config.get_fs_subjects_dir())
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
-    n_jobs = config.N_JOBS
+    n_jobs = config.get_n_jobs()
     parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
     parallel(run_func(root_dir, subject, fs_bids_app)
              for subject in subjects)

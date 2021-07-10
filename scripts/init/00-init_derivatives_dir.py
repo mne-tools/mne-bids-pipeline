@@ -84,7 +84,7 @@ def main():
 
     init_dataset(cfg=get_config())
     parallel, run_func, _ = parallel_func(init_subject_dirs,
-                                          n_jobs=config.N_JOBS)
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(cfg=get_config(), subject=subject, session=session)
              for subject, session in
              itertools.product(config.get_subjects(),

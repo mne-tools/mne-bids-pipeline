@@ -87,7 +87,8 @@ def main():
     msg = 'Running Step 5: Apply SSP'
     logger.info(gen_log_message(step=5, message=msg))
 
-    parallel, run_func, _ = parallel_func(apply_ssp, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(apply_ssp,
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(get_config(), subject, session) for subject, session in
              itertools.product(config.get_subjects(),
                                config.get_sessions()))

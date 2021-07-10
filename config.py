@@ -2049,8 +2049,9 @@ def get_ica_reject() -> Dict[str, float]:
 
 def get_fs_subjects_dir():
     if not subjects_dir and deriv_root is not None:
-        # We do this check here to avoid an error message when a user doesn't
-        # intend to run the source analysis steps anyway.
+        # We do this check here (and not in our regular checks section) to
+        # avoid an error message when a user doesn't intend to run the source
+        # analysis steps anyway.
         raise ValueError(
             'When specifying a "deriv_root", you must also supply a '
             '"subjects_dir".'

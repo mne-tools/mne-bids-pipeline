@@ -1961,8 +1961,6 @@ def get_task() -> Optional[str]:
 
 
 def get_n_jobs() -> int:
-    global N_JOBS
-
     env = os.environ
     if env.get('MNE_BIDS_STUDY_NJOBS'):
         n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])

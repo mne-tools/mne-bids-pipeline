@@ -117,7 +117,7 @@ def process(config: PathLike,
             session: Optional[str] = None,
             task: Optional[str] = None,
             run: Optional[str] = None,
-            n_jobs: Optional[int] = None):
+            n_jobs: Optional[str] = None):
     """Run the BIDS pipeline.
 
     Parameters
@@ -170,6 +170,8 @@ def process(config: PathLike,
         run = str(run)
     if task is not None:
         task = str(task)
+    if n_jobs is not None:
+        n_jobs = str(n_jobs)
 
     processing_stages = []
     processing_steps = []

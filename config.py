@@ -74,7 +74,7 @@ parcellations from anatomical scans in the BIDS dataset, the output will be
 stored in this directory.
 
 If ``None``, this will default
-to [`bids_root`][config.bids_root_root]`/freesurfer/subjects`.
+to [`bids_root`][config.bids_root_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
     This setting is required if you specify [`deriv_root`][config.deriv_root]

@@ -63,9 +63,14 @@ the processing results. If ``None``, this will be
 
 subjects_dir: Optional[PathLike] = None
 """
-Path to the directory that contains the MRI data files and their
-derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-$SUBJECTS_DIR used by the Freesurfer software.
+Path to the directory that contains the FreeSurfer parcellations of all
+subjects. Specifically, this defines the ``SUBJECTS_DIR`` that is used by
+FreeSurfer. When running the ``freesurfer`` processing step to create the
+parcellations from anatomical scans in the BIDS dataset, the output will be
+stored in this directory.
+
+If ``None``, this will default
+to [`deriv_root`][config.deriv_root]`/freesurfer/subjects`.
 """
 
 interactive: bool = False
@@ -2036,7 +2041,7 @@ def get_ica_reject() -> Dict[str, float]:
 
 def get_fs_subjects_dir():
     if not subjects_dir:
-        return get_bids_root() / 'derivatives' / 'freesurfer' / 'subjects'
+        return get_deriv_root() / 'freesurfer' / 'subjects'
     else:
         return subjects_dir
 

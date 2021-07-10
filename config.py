@@ -59,6 +59,10 @@ deriv_root: Optional[PathLike] = None
 The root of the derivatives directory in which the pipeline will store
 the processing results. If ``None``, this will be
 ``derivatives/mne-bids-pipeline`` inside the BIDS root.
+
+Note: Note
+    If specified and you wish to run the source analysis steps, you must
+    set [`subjects_dir`][config.subjects_dir] as well.
 """
 
 subjects_dir: Optional[PathLike] = None
@@ -70,7 +74,11 @@ parcellations from anatomical scans in the BIDS dataset, the output will be
 stored in this directory.
 
 If ``None``, this will default
-to [`deriv_root`][config.deriv_root]`/freesurfer/subjects`.
+to [`bids_root`][config.bids_root_root]`/freesurfer/subjects`.
+
+Note: Note
+    This setting is required if you specify [`deriv_root`][config.deriv_root]
+    and want to run the source analysis steps.
 """
 
 interactive: bool = False

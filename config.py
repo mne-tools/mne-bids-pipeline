@@ -59,13 +59,30 @@ deriv_root: Optional[PathLike] = None
 The root of the derivatives directory in which the pipeline will store
 the processing results. If ``None``, this will be
 ``derivatives/mne-bids-pipeline`` inside the BIDS root.
+
+Note: Note
+    If specified and you wish to run the source analysis steps, you must
+    set [`subjects_dir`][config.subjects_dir] as well.
 """
 
 subjects_dir: Optional[PathLike] = None
 """
-Path to the directory that contains the MRI data files and their
-derivativesfor all subjects. Specifically, the ``subjects_dir`` is the
-$SUBJECTS_DIR used by the Freesurfer software.
+Path to the directory that contains the FreeSurfer reconstructions of all
+subjects. Specifically, this defines the ``SUBJECTS_DIR`` that is used by
+FreeSurfer.
+
+- When running the ``freesurfer`` processing step to create the
+  reconstructions from anatomical scans in the BIDS dataset, the
+  output will be stored in this directory.
+- When running the source analysis steps, we will look for the surfaces in this
+  directory and also store the BEM surfaces there.
+
+If ``None``, this will default to
+[`bids_root`][config.bids_root_root]`/derivatives/freesurfer/subjects`.
+
+Note: Note
+    This setting is required if you specify [`deriv_root`][config.deriv_root]
+    and want to run the source analysis steps.
 """
 
 interactive: bool = False
@@ -2035,10 +2052,21 @@ def get_ica_reject() -> Dict[str, float]:
 
 
 def get_fs_subjects_dir():
+    if not subjects_dir and deriv_root is not None:
+        # We do this check here (and not in our regular checks section) to
+        # avoid an error message when a user doesn't intend to run the source
+        # analysis steps anyway.
+        raise ValueError(
+            'When specifying a "deriv_root", you must also supply a '
+            '"subjects_dir".'
+        )
+
     if not subjects_dir:
         return get_bids_root() / 'derivatives' / 'freesurfer' / 'subjects'
     else:
-        return subjects_dir
+        return (pathlib.Path(subjects_dir)
+                .expanduser()
+                .resolve())
 
 
 def gen_log_message(message, step=None, subject=None, session=None,

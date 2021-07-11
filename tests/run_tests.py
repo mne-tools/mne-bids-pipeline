@@ -87,6 +87,13 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'task': None,
         'env': {}
     },
+    'ds000248_coreg_surfaces': {
+        'dataset': 'ds000248_coreg_surfaces',
+        'config': 'config_ds000248_coreg_surfaces.py',
+        'steps': ('freesurfer/coreg_surfaces',),
+        'task': None,
+        'env': {}
+    },
     'ds000248_no_mri': {
         'dataset': 'ds000248_no_mri',
         'config': 'config_ds000248_no_mri.py',

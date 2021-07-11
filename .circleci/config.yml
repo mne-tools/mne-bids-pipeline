@@ -169,14 +169,16 @@ jobs:
             python ~/project/tests/download_test_data.py -d ds000248_ica
             python ~/project/tests/download_test_data.py -d ds000248_FLASH_BEM
             python ~/project/tests/download_test_data.py -d ds000248_T1_BEM
+            python ~/project/tests/download_test_data.py -d ds000248_coreg_surfaces
             python ~/project/tests/download_test_data.py -d ds000248_no_mri
       - save_cache:
           key: data-cache-ds000248-{{ .Revision }}
           paths:
             - ~/mne_data/ds000248
             - ~/mne_data/ds000248_ica
-            - ~/mne_data/ds000248_T1_BEM
             - ~/mne_data/ds000248_FLASH_BEM
+            - ~/mne_data/ds000248_T1_BEM
+            - ~/mne_data/ds000248_coreg_surfaces
             - ~/mne_data/ds000248_no_mri
 
   cache_ds001810:
@@ -451,6 +453,23 @@ jobs:
           command: |
             python tests/run_tests.py --download=0 ds000248_T1_BEM
           no_output_timeout: 20m
+
+  test_ds000248_coreg_surfaces:
+    <<: *imageconfig
+    steps:
+      - run:
+          <<: *bashenv
+      - run:
+          <<: *xvfb
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-{{ .Revision }}
+      - run:
+          name: test head surface creation for MNE coregistration
+          command: |
+            python tests/run_tests.py --download=0 ds000248_coreg_surfaces
 
   test_ds000248_no_mri:
     <<: *imageconfig
@@ -742,6 +761,9 @@ workflows:
           requires:
             - cache_ds000248
       - test_ds000248_T1_BEM:
+          requires:
+            - cache_ds000248
+      - test_ds000248_coreg_surfaces:
           requires:
             - cache_ds000248
       - test_ds000248_no_mri:

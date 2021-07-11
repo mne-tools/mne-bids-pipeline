@@ -130,6 +130,9 @@ authors:
   ({{ gh(358) }} by {{ authors.hoechenberger }})
 - [`ica_reject`][config.ica_reject] now also applies to ECG and EOG epochs.
   ({{ gh(373) }} by {{ authors.crsegerie }})
+- Added a new step `freesurfer/coreg_surfaces` that creates the scalp surfaces
+  required for coregistration in MNE-Python.
+  ({{ gh(422) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

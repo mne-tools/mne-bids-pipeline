@@ -49,7 +49,10 @@ SOURCE_SCRIPTS = (
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 
-FREESURFER_SCRIPTS = ('recon_all.py',)
+FREESURFER_SCRIPTS = (
+    '01-recon_all.py',
+    '02-coreg_surfaces.py'
+)
 
 SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
 
@@ -214,7 +217,7 @@ def process(config: PathLike,
         script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
     for script_path in script_paths:
-        step_name = script_path.name.replace('.py', '')[3:]
+        step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'Now running: {step_name}')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)

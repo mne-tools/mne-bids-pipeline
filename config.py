@@ -67,14 +67,18 @@ Note: Note
 
 subjects_dir: Optional[PathLike] = None
 """
-Path to the directory that contains the FreeSurfer parcellations of all
+Path to the directory that contains the FreeSurfer reconstructions of all
 subjects. Specifically, this defines the ``SUBJECTS_DIR`` that is used by
-FreeSurfer. When running the ``freesurfer`` processing step to create the
-parcellations from anatomical scans in the BIDS dataset, the output will be
-stored in this directory.
+FreeSurfer.
 
-If ``None``, this will default
-to [`bids_root`][config.bids_root_root]`/derivatives/freesurfer/subjects`.
+- When running the ``freesurfer`` processing step to create the
+  reconstructions from anatomical scans in the BIDS dataset, the
+  output will be stored in this directory.
+- When running the source analysis steps, we will look for the surfaces in this
+  directory and also store the BEM surfaces there.
+
+If ``None``, this will default to
+[`bids_root`][config.bids_root_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
     This setting is required if you specify [`deriv_root`][config.deriv_root]

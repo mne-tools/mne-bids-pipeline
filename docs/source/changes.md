@@ -132,7 +132,7 @@ authors:
   ({{ gh(373) }} by {{ authors.crsegerie }})
 - Added a new step `freesurfer/coreg_surfaces` that creates the scalp surfaces
   required for coregistration in MNE-Python.
-  ({{ gh(xxx) }} by {{ authors.hoechenberger }})
+  ({{ gh(422) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

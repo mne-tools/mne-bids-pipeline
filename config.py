@@ -1985,11 +1985,20 @@ def _get_reject(
         # Automated threshold calculation requested
         import autoreject
 
+        ch_types_autoreject = list(ch_types)
+        if 'meg' in ch_types_autoreject:
+            ch_types_autoreject.remove('meg')
+            if 'mag' in epochs:
+                ch_types_autoreject.append('mag')
+            if 'grad' in epochs:
+                ch_types_autoreject.append('grad')
+
         msg = 'Generating rejection thresholds using autoreject …'
         logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
         reject = autoreject.get_rejection_threshold(
-            epochs=epochs, ch_types=ch_types, decim=decim, verbose=False
+            epochs=epochs, ch_types=ch_types_autoreject, decim=decim,
+            verbose=False
         )
         return reject
 

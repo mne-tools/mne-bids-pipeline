@@ -13,6 +13,7 @@ The end result is an averaging effect across sensors.
 import os.path as op
 import logging
 from typing import Optional
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,7 @@ from scipy.io import savemat
 
 import mne
 from mne.utils import BunchConst
+from mne.parallel import parallel_func
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
 from mne_bids import BIDSPath
@@ -157,14 +159,15 @@ def main():
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
-
-    for subject in config.get_subjects():
-        for session in config.get_sessions():
-            for contrast in config.contrasts:
-                cond_1, cond_2 = contrast
-                run_time_decoding(cfg=get_config(), subject=subject,
-                                  condition1=cond_1, condition2=cond_2,
-                                  session=session)
+    parallel, run_func, _ = parallel_func(run_time_decoding,
+                                          n_jobs=1)
+    parallel(run_func(get_config(), subject=subject,
+                      condition1=cond_1, condition2=cond_2,
+                      session=session)
+             for subject, session, (cond_1, cond_2) in
+             itertools.product(config.get_subjects(),
+                               config.get_sessions(),
+                               config.contrasts))
 
     msg = 'Completed Step 7: Sliding estimator'
     logger.info(gen_log_message(step=7, message=msg))

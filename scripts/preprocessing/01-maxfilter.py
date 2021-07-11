@@ -212,6 +212,8 @@ def get_config(
         rename_events=config.rename_events,
         eeg_template_montage=config.eeg_template_montage,
         fix_stim_artifact=config.fix_stim_artifact,
+        stim_artifact_tmin=config.stim_artifact_tmin,
+        stim_artifact_tmax=config.stim_artifact_tmax,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         mf_reference_run=config.get_mf_reference_run(),

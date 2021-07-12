@@ -884,9 +884,9 @@ def main():
     #     cfg=cfg, tf=tf, pth=pth, subject=subject)
     #     for subject in config.get_subjects()]
 
-    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #          for subject in config.get_subjects())
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+             for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

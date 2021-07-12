@@ -645,8 +645,8 @@ def compute_conf_inter(
     # Maybe we could create a common function in mne?
     """
     contrast_score_stats = {
-        'cond_1': cfg.conditions[0],
-        'cond_2': cfg.conditions[1],
+        'cond_1': cfg.time_frequency_conditions[0],
+        'cond_2': cfg.time_frequency_conditions[1],
         'times': tf.times,
         'N': len(subjects),
         'mean': np.empty(tf.n_time_windows),

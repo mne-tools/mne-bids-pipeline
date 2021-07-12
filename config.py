@@ -1307,8 +1307,8 @@ The elements of the list must be contained in the epochs interval.
     # If epochs_tmin = 0, and epochs_tmax = 0.6
     # in order to create the bins [(0,0.2), (0.2,0.4), (0.4,0.6)]
     # Two solutions:
-    csp_freqs = [0.0, 0.2, 0.4, 0.6]
-    csp_freqs = np.linspace(start=0, stop=0.6, num=4)
+    csp_times = [0.0, 0.2, 0.4, 0.6]
+    csp_times = np.linspace(start=0, stop=0.6, num=4)
     ```
 """
 

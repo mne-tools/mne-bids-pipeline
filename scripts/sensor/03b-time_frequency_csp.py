@@ -59,6 +59,7 @@ set_log_level(verbose="WARNING")  # mne logger
 # ROC-AUC chance score level
 chance = 0.5
 plot_patterns = False
+csp_use_pca = False
 
 
 class Pth:
@@ -396,7 +397,10 @@ def one_subject_decoding(
 
     # TODO: pca just one time when maxfilter
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-    clf = make_pipeline(pca, csp, LinearDiscriminantAnalysis())
+    if csp_use_pca:
+        clf = make_pipeline(pca, csp, LinearDiscriminantAnalysis())
+    else:
+        clf = make_pipeline(csp, LinearDiscriminantAnalysis())
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=42)
 

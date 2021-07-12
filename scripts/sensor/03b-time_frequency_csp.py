@@ -25,7 +25,7 @@ The user has only to specify the list of frequency and the list of timings.
 """
 # License: BSD (3-clause)
 
-from typing import Any, Callable, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 import logging
 from matplotlib.figure import Figure
 import numpy as np
@@ -48,7 +48,6 @@ from mne.report import Report
 
 from mne_bids import BIDSPath
 
-# mne-bids-pipeline config
 from config import (N_JOBS, gen_log_message, on_error,
                     failsafe_run)
 import config
@@ -111,7 +110,7 @@ class Pth:
             suffix='scores',
             extension='.npy')
 
-    def freq_scores_std(self, subject) -> BIDSPath:
+    def freq_scores_std(self, subject) -> BIDSPath:  # TODO: savemat instead ?
         """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq',
@@ -254,6 +253,9 @@ def plot_frequency_decoding(
     Show and save the roc-auc score in a 1D histogram for
     each frequency bin.
 
+    Keep in mind that the confidence intervals indicated on the individual
+    plot use only the std of the cross-validation scores.
+
     Parameters:
     -----------
     freqs
@@ -263,7 +265,7 @@ def plot_frequency_decoding(
     freq_scores_std
         The std of the cross-validation roc-auc scores for each frequency bin.
     subject
-        name of the subject.
+        name of the subject or "avg" subject
     pth
         Pth class.
 
@@ -277,8 +279,6 @@ def plot_frequency_decoding(
 
     yerr = conf_int if len(subject) > 1 else None
 
-    # The confidence intervals do not have any sense for individual subjects
-    # yerr = freq_scores_std if subject == "avg" else None
     ax.bar(x=freqs[:-1], height=freq_scores, yerr=yerr,
            width=np.diff(freqs)[0],
            align='edge', edgecolor='black')
@@ -297,7 +297,8 @@ def plot_frequency_decoding(
     ax.legend()
     ax.set_xlabel('Frequency (Hz)')
     ax.set_ylabel('Decoding Scores')
-    ax.set_title('Frequency Decoding Scores - 95% CI')
+    CI_msg = "95% CI" if subject == "avg" else "CV std score"
+    ax.set_title(f'Frequency Decoding Scores - {CI_msg}')
 
     return fig
 
@@ -542,8 +543,7 @@ def load_and_average(
         try:
             arr = np.load(path(sub))
         except FileNotFoundError:
-            # Not exactly what to do with confidence intervals...
-            # Maybe 0 is not here also
+            # TODO: Maybe 0 is not here also
             arr = np.empty_like(res[0])
             arr.fill(np.NaN)
         if np.isnan(arr).any():
@@ -634,6 +634,62 @@ def plot_t_and_p_values(
     return fig
 
 
+def compute_conf_inter(
+    mean_scores: np.ndarray,
+    subjects: List[str],
+    cfg,
+    tf: Tf
+) -> Dict[str, Any]:
+    """Compute the 95% confidence interval through bootstrapping.
+
+    mean_scores = np.array((len(subjects), len(times)))
+    # TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158
+    # Maybe we could create a common function in mne?
+    """
+    contrast_score_stats = {
+        'cond_1': cfg.conditions[0],
+        'cond_2': cfg.conditions[1],
+        'times': tf.times,
+        'N': len(subjects),
+        'mean': np.empty(tf.n_time_windows),
+        'mean_min': np.empty(tf.n_time_windows),
+        'mean_max': np.empty(tf.n_time_windows),
+        'mean_se': np.empty(tf.n_time_windows),
+        'mean_ci_lower': np.empty(tf.n_time_windows),
+        'mean_ci_upper': np.empty(tf.n_time_windows)}
+
+    # Now we can calculate some descriptive statistics on the mean scores.
+    # We use the [:] here as a safeguard to ensure we don't mess up the
+    # dimensions.
+    contrast_score_stats['mean'][:] = mean_scores.mean(axis=0)
+    contrast_score_stats['mean_min'][:] = mean_scores.min(axis=0)
+    contrast_score_stats['mean_max'][:] = mean_scores.max(axis=0)
+
+    # Finally, for each time point, bootstrap the mean, and calculate the
+    # SD of the bootstrapped distribution: this is the standard error of
+    # the mean. We also derive 95% confidence intervals.
+    rng = np.random.default_rng(seed=cfg.random_state)
+
+    for time_idx in range(tf.n_time_windows):
+        scores_resampled = rng.choice(mean_scores[:, time_idx],
+                                      size=(cfg.n_boot, len(subjects)),
+                                      replace=True)
+        bootstrapped_means = scores_resampled.mean(axis=1)
+
+        # SD of the bootstrapped distribution == SE of the metric.
+        se = bootstrapped_means.std(ddof=1)
+        ci_lower = np.quantile(bootstrapped_means, q=0.025)
+        ci_upper = np.quantile(bootstrapped_means, q=0.975)
+
+        contrast_score_stats['mean_se'][time_idx] = se
+        contrast_score_stats['mean_ci_lower'][time_idx] = ci_lower
+        contrast_score_stats['mean_ci_upper'][time_idx] = ci_upper
+
+        del bootstrapped_means, se, ci_lower, ci_upper
+
+    return contrast_score_stats
+
+
 @failsafe_run(on_error=on_error)
 def group_analysis(
     subjects: List[str],
@@ -673,21 +729,19 @@ def group_analysis(
     sfreq = epochs.info['sfreq']
 
     # Average Frequency analysis
-    all_freq_scores = load_and_average(pth.freq_scores, subjects=subjects)
+    all_freq_scores = load_and_average(
+        pth.freq_scores, subjects=subjects, average=False)
+    freq_scores = np.nanmean(all_freq_scores, axis=0)
 
     # Calculating the 95% confidence intervals
-    # TODO: The confidence intervals indicated on the individual
-    # plot are not quite valid because
-    # they use only the std of the cross-validation scores.
-    # We should also divide by the square root.
-    all_freq_scores_std = load_and_average(
-        pth.freq_scores, subjects=subjects, average=False)
-    std_ = np.nanstd(all_freq_scores_std, axis=0, ddof=1)
-    conf_int = 1.96*std_ / np.sqrt(all_freq_scores_std.shape[0])
+    contrast_score_stats = compute_conf_inter(
+        mean_scores=all_freq_scores,
+        subjects=subjects, cfg=cfg, tf=tf)
 
     fig = plot_frequency_decoding(
-        freqs=tf.freqs, freq_scores=all_freq_scores, pth=pth,
-        conf_int=conf_int, subject="avg")
+        freqs=tf.freqs, freq_scores=freq_scores, pth=pth,
+        conf_int=contrast_score_stats["mean_se"],
+        subject="avg")
     section = "Frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -806,6 +860,7 @@ def get_config(
         csp_times=config.csp_times,
         csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
+        n_boot=config.n_boot,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,
         n_permutations=config.n_permutations,
@@ -827,13 +882,13 @@ def main():
     pth = Pth(cfg=cfg)
 
     # Useful for debugging:
-    [one_subject_decoding(
-        cfg=cfg, tf=tf, pth=pth, subject=subject)
-        for subject in config.get_subjects()]
+    # [one_subject_decoding(
+    #     cfg=cfg, tf=tf, pth=pth, subject=subject)
+    #     for subject in config.get_subjects()]
 
-    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #          for subject in config.get_subjects())
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+             for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

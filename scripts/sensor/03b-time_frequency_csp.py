@@ -28,7 +28,6 @@ The user has only to specify the list of frequency and the list of timings.
 from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 import logging
 from matplotlib.figure import Figure
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -36,11 +35,12 @@ from scipy import stats
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import PCA
 
 from mne.stats.cluster_level import permutation_cluster_1samp_test
 from mne.epochs import BaseEpochs
-from mne import create_info, read_epochs, set_log_level
-from mne.decoding import CSP
+from mne import create_info, read_epochs, set_log_level, compute_rank
+from mne.decoding import UnsupervisedSpatialFilter, CSP
 from mne.time_frequency import AverageTFR
 from mne.parallel import parallel_func
 from mne.utils import BunchConst, ProgressBar
@@ -59,6 +59,7 @@ set_log_level(verbose="WARNING")  # mne logger
 
 # ROC-AUC chance score level
 chance = 0.5
+plot_patterns = False
 
 
 class Pth:
@@ -228,8 +229,7 @@ def prepare_epochs_and_y(
 
     # TODO: remove the cfg.decim and apply maximal decimation
     epochs_filter.decimate(decim=cfg.decim)
-    epochs_filter.filter(fmin, fmax, n_jobs=1,
-                         skip_by_annotation='edge')
+    epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     epochs_filter.pick_types(
         meg=True, eeg=True, stim=False, eog=False,
@@ -388,10 +388,15 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
 
     # Assemble the classifier using scikit-learn pipeline
-    csp = CSP(n_components=4, reg=cfg.csp_reg,
+    csp = CSP(n_components=4, reg=cfg.csp_reg,  # TODO component
               log=True, norm_trace=False)
-    clf = make_pipeline(csp, LinearDiscriminantAnalysis())
 
+    rank_dic = compute_rank(epochs, rank="info")
+    rank = rank_dic[cfg.data_type]
+
+    # TODO: pca just one time when maxfilter
+    pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
+    clf = make_pipeline(pca, csp, LinearDiscriminantAnalysis())
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=42)
 
@@ -421,14 +426,15 @@ def one_subject_decoding(
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
-        csp.fit(X, y)
-        fig = csp.plot_patterns(epochs_filter.info)
-        section = "CSP Patterns - frequency"
-        title = f' sub-{subject}-{(fmin, fmax)}Hz - all epoch'
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + title)
+        if plot_patterns:
+            csp.fit(X, y)
+            fig = csp.plot_patterns(epochs_filter.info)
+            section = "CSP Patterns - frequency"
+            title = f' sub-{subject}-{(fmin, fmax)}Hz - all epoch'
+            report.add_figs_to_section(
+                fig,
+                section=section,
+                captions=section + title)
 
     np.save(file=pth.freq_scores(subject), arr=freq_scores)
     np.save(file=pth.freq_scores_std(subject), arr=freq_scores_std)
@@ -481,14 +487,15 @@ def one_subject_decoding(
 
             # We plot the patterns using all the epochs
             # without splitting the epochs
-            csp.fit(X, y)
-            fig = csp.plot_patterns(epochs_filter.info)
-            section = "CSP Patterns - time-frequency"
-            title = f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
-            report.add_figs_to_section(
-                fig,
-                section=section,
-                captions=section + title)
+            if plot_patterns:
+                csp.fit(X, y)
+                fig = csp.plot_patterns(epochs_filter.info)
+                section = "CSP Patterns - time-frequency"
+                title = f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
+                report.add_figs_to_section(
+                    fig,
+                    section=section,
+                    captions=section + title)
 
     np.save(file=pth.tf_scores(subject), arr=tf_scores)
     fig = plot_time_frequency_decoding(
@@ -784,11 +791,12 @@ def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> BunchConst:
-    cfg = BunchConst(
+    cfg = BunchConst(  # TODO: check if other get_*
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         time_frequency_conditions=config.time_frequency_conditions,
         decim=config.decim,
+        data_type=config.get_datatype(),
         decoding_n_splits=config.decoding_n_splits,
         task=config.task,
         acq=config.acq,
@@ -818,13 +826,13 @@ def main():
     pth = Pth(cfg=cfg)
 
     # Useful for debugging:
-    # [one_subject_decoding(
-    #     cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #     for subject in config.get_subjects()]
+    [one_subject_decoding(
+        cfg=cfg, tf=tf, pth=pth, subject=subject)
+        for subject in config.get_subjects()]
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-             for subject in config.get_subjects())
+    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+    #          for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

@@ -263,7 +263,7 @@ def plot_frequency_decoding(
     freq_scores_std
         The std of the cross-validation roc-auc scores for each frequency bin.
     subject
-        name of the subject or "avg" subject
+        name of the subject or "average" subject
     pth
         Pth class.
 
@@ -295,7 +295,7 @@ def plot_frequency_decoding(
     ax.legend()
     ax.set_xlabel('Frequency (Hz)')
     ax.set_ylabel('Decoding Scores')
-    CI_msg = "95% CI" if subject == "avg" else "CV std score"
+    CI_msg = "95% CI" if subject == "average" else "CV std score"
     ax.set_title(f'Frequency Decoding Scores - {CI_msg}')
 
     return fig
@@ -739,24 +739,24 @@ def group_analysis(
     fig = plot_frequency_decoding(
         freqs=tf.freqs, freq_scores=freq_scores, pth=pth,
         conf_int=contrast_score_stats["mean_se"],
-        subject="avg")
+        subject="average")
     section = "Frequency decoding"
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + ' sub-avg')
+        captions=section + ' sub-average')
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(pth.tf_scores, subjects=subjects)
 
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject="avg")
+        centered_w_times=tf.centered_w_times, subject="average")
     section = "Time - frequency decoding"
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + ' sub-avg')
+        captions=section + ' sub-average')
 
     ######################################################################
     # 2. Statistical tests
@@ -827,7 +827,7 @@ def group_analysis(
         report.add_figs_to_section(
             fig,
             section=section,
-            captions=section + ' sub-avg')
+            captions=section + ' sub-average')
 
     pth_report = pth.report("average")
     report.save(pth_report, overwrite=True,

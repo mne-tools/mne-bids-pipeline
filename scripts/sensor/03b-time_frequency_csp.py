@@ -226,8 +226,6 @@ def prepare_epochs_and_y(
     # Prepare epoch_filter
     epochs_filter = epochs.copy()
 
-    # TODO: remove the cfg.decim and apply maximal decimation
-    epochs_filter.decimate(decim=cfg.decim)
     epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     epochs_filter.pick_types(
@@ -321,7 +319,7 @@ def plot_time_frequency_decoding(
     tf_scores
         The roc-auc scores for each time-frequency bin.
     sfreq
-        Sampling frequency # TODO: check if no border effect with decimate.
+        Sampling frequency
     centered_w_times
         List of times indicating the center of each time windows.
     subject
@@ -849,7 +847,6 @@ def get_config(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         time_frequency_conditions=config.time_frequency_conditions,
-        decim=config.decim,
         data_type=config.get_datatype(),
         decoding_n_splits=config.decoding_n_splits,
         task=config.task,

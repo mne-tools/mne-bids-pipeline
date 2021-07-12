@@ -51,8 +51,6 @@ def filter(
     h_trans_bandwidth: Optional[Union[float, Literal['auto']]]
 ) -> None:
     """Filter data channels (MEG and EEG)."""
-    if l_freq is None and h_freq is None:
-        return
 
     data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
 
@@ -65,9 +63,14 @@ def filter(
     elif l_freq is not None and h_freq is not None:
         msg = (f'Band-pass filtering {data_type} data; range: '
                f'{l_freq} – {h_freq} Hz')
+    else:
+        msg = (f'Not applying frequency filtering to {data_type} data.')
 
     logger.info(gen_log_message(message=msg, step=2, subject=subject,
                                 session=session, run=run))
+
+    if l_freq is None and h_freq is None:
+        return
 
     raw.filter(l_freq=l_freq, h_freq=h_freq,
                l_trans_bandwidth=l_trans_bandwidth,
@@ -101,8 +104,6 @@ def filter_data(
     session: Optional[str] = None,
 ) -> None:
     """Filter data from a single subject."""
-    if cfg.l_freq is None and cfg.h_freq is None:
-        return
 
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.

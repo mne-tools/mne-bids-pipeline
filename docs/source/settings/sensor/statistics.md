@@ -3,6 +3,7 @@
 ::: config.decoding_metric
 ::: config.decoding_n_splits
 ::: config.n_boot
+::: config.csp_n_components
 ::: config.csp_reg
 ::: config.cluster_stats_alpha,
 ::: config.cluster_stats_alpha_t_test

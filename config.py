@@ -1202,6 +1202,11 @@ The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding score.
 """
 
+csp_n_components: int = 4
+"""
+The number of components used in the CSP.
+"""
+
 csp_reg: float = 0.1
 """
 Regularization used in the covariance estimator when calculating CSPs. Must be

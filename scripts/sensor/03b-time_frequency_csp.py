@@ -47,7 +47,6 @@ from mne.utils import BunchConst, ProgressBar
 from mne.report import Report
 
 from mne_bids import BIDSPath
-import pdb
 
 # mne-bids-pipeline config
 from config import (N_JOBS, gen_log_message, on_error,
@@ -389,8 +388,9 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
 
     # Assemble the classifier using scikit-learn pipeline
-    csp = CSP(n_components=4, reg=cfg.csp_reg,  # TODO component
-              log=True, norm_trace=False, cov_method_params={"cv": 1})
+    csp = CSP(n_components=cfg.csp_n_components,
+              reg=cfg.csp_reg,
+              log=True, norm_trace=False)  # TODO  cov_method_params={"cv": 1}
 
     rank_dic = compute_rank(epochs, rank="info")
     rank = rank_dic[cfg.data_type]
@@ -414,10 +414,8 @@ def one_subject_decoding(
             max_value=tf.n_freq_windows,
             mesg=f'subject {subject} - frequency loop'):
 
-        print("filtering...")
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
-        print("get data")
         X = epochs_filter.get_data()
 
         # Save mean scores over folds
@@ -806,6 +804,7 @@ def get_config(
         space=config.space,
         csp_freqs=config.csp_freqs,
         csp_times=config.csp_times,
+        csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,

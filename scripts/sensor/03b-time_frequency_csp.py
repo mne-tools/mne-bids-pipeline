@@ -58,7 +58,7 @@ set_log_level(verbose="WARNING")  # mne logger
 
 # ROC-AUC chance score level
 chance = 0.5
-plot_patterns = False
+plot_patterns = True
 csp_use_pca = False
 
 
@@ -519,6 +519,7 @@ def one_subject_decoding(
 def load_and_average(
     path: Callable[[str], BIDSPath],
     subjects: List[str],
+    shape: List[int],
     average: bool = True
 ) -> np.ndarray:
     """Load and average a np.array.
@@ -529,6 +530,9 @@ def load_and_average(
         function of the subject, returning the path of the numpy array.
     average
         if True, returns average along the subject dimension.
+    shape
+        The shape of the resultts.
+        Either (freq) or (freq, times)
 
     Returns:
     --------
@@ -538,15 +542,20 @@ def load_and_average(
     --------
     Gives the list of files containing NaN values.
     """
-    res = np.zeros_like(np.load(path(subjects[0])))
-    shape = [len(subjects)]+list(res.shape)
-    res = np.zeros(shape)
+    shape_all = [len(subjects)]+list(shape)
+    res = np.zeros(shape_all)
     for i, sub in enumerate(subjects):
         try:
             arr = np.load(path(sub))
+            # Checking for previous iteration, previous shapes
+            if list(arr.shape) != shape:
+                msg = f"Shape mismatch for {path(sub)}"
+                logger.warning(gen_log_message(
+                    message=msg, subject=sub, step=3))
+                raise FileNotFoundError
         except FileNotFoundError:
-            # TODO: Maybe 0 is not here also
-            arr = np.empty_like(res[0])
+            print(FileNotFoundError)
+            arr = np.empty(shape=shape)
             arr.fill(np.NaN)
         if np.isnan(arr).any():
             msg = f"NaN values were found in {path(sub)}"
@@ -644,6 +653,8 @@ def compute_conf_inter(
 ) -> Dict[str, Any]:
     """Compute the 95% confidence interval through bootstrapping.
 
+    For the moment only serves for frequency histogram.
+
     mean_scores = np.array((len(subjects), len(times)))
     # TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158
     # Maybe we could create a common function in mne?
@@ -653,17 +664,17 @@ def compute_conf_inter(
         'cond_2': cfg.time_frequency_conditions[1],
         'times': tf.times,
         'N': len(subjects),
-        'mean': np.empty(tf.n_time_windows),
-        'mean_min': np.empty(tf.n_time_windows),
-        'mean_max': np.empty(tf.n_time_windows),
-        'mean_se': np.empty(tf.n_time_windows),
-        'mean_ci_lower': np.empty(tf.n_time_windows),
-        'mean_ci_upper': np.empty(tf.n_time_windows)}
+        'mean': np.empty(tf.n_freq_windows),
+        'mean_min': np.empty(tf.n_freq_windows),
+        'mean_max': np.empty(tf.n_freq_windows),
+        'mean_se': np.empty(tf.n_freq_windows),
+        'mean_ci_lower': np.empty(tf.n_freq_windows),
+        'mean_ci_upper': np.empty(tf.n_freq_windows)}
 
     # Now we can calculate some descriptive statistics on the mean scores.
     # We use the [:] here as a safeguard to ensure we don't mess up the
     # dimensions.
-    contrast_score_stats['mean'][:] = mean_scores.mean(axis=0)
+    contrast_score_stats['mean'][:] = np.nanmean(mean_scores, axis=0)
     contrast_score_stats['mean_min'][:] = mean_scores.min(axis=0)
     contrast_score_stats['mean_max'][:] = mean_scores.max(axis=0)
 
@@ -672,7 +683,7 @@ def compute_conf_inter(
     # the mean. We also derive 95% confidence intervals.
     rng = np.random.default_rng(seed=cfg.random_state)
 
-    for time_idx in range(tf.n_time_windows):
+    for time_idx in range(tf.n_freq_windows):
         scores_resampled = rng.choice(mean_scores[:, time_idx],
                                       size=(cfg.n_boot, len(subjects)),
                                       replace=True)
@@ -688,6 +699,9 @@ def compute_conf_inter(
         contrast_score_stats['mean_ci_upper'][time_idx] = ci_upper
 
         del bootstrapped_means, se, ci_lower, ci_upper
+
+    msg = ("Confidence intervals results:", mean_scores)
+    logger.info(gen_log_message(msg, step=3))
 
     return contrast_score_stats
 
@@ -732,7 +746,7 @@ def group_analysis(
 
     # Average Frequency analysis
     all_freq_scores = load_and_average(
-        pth.freq_scores, subjects=subjects, average=False)
+        pth.freq_scores, subjects=subjects, average=False, shape=[tf.n_freq_windows])
     freq_scores = np.nanmean(all_freq_scores, axis=0)
 
     # Calculating the 95% confidence intervals
@@ -751,7 +765,9 @@ def group_analysis(
         captions=section + ' sub-average')
 
     # Average time-Frequency analysis
-    all_tf_scores = load_and_average(pth.tf_scores, subjects=subjects)
+    all_tf_scores = load_and_average(
+        pth.tf_scores, subjects=subjects,
+        shape=[tf.n_freq_windows, tf.n_time_windows])
 
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
@@ -766,7 +782,9 @@ def group_analysis(
     # 2. Statistical tests
 
     # Reshape data to what is equivalent to (n_samples, n_space, n_time)
-    X = load_and_average(pth.tf_scores, subjects=subjects, average=False)
+    X = load_and_average(
+        pth.tf_scores, subjects=subjects, average=False,
+        shape=[tf.n_freq_windows, tf.n_time_windows])
     X = X - chance
 
     # TODO: Perform test without filling nan values.

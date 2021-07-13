@@ -515,7 +515,8 @@ def main():
     parallel, run_func, _ = parallel_func(run_ica,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(
-        run_func(get_config(subject=subject), subject, session)
+        run_func(cfg=get_config(subject=subject), subject=subject,
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(),
                           config.get_sessions())

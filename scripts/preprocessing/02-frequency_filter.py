@@ -98,8 +98,8 @@ def filter_data(
     *,
     cfg,
     subject: str,
-    run: Optional[str] = None,
     session: Optional[str] = None,
+    run: Optional[str] = None,
 ) -> None:
     """Filter data from a single subject."""
     if cfg.l_freq is None and cfg.h_freq is None:

@@ -2106,7 +2106,12 @@ def failsafe_run(on_error):
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
-            log_info = pd.Series(kwargs)
+            kwargs_copy = copy.deepcopy(kwargs)
+            if "cfg" in kwargs_copy:
+                kwargs_copy["cfg"] = json_tricks.dumps(
+                    kwargs_copy["cfg"], sort_keys=False, indent=2
+                )
+            log_info = pd.Series(kwargs_copy)
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
@@ -2837,7 +2842,7 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
 
 
 def save_logs(logs):
-    fname = get_deriv_root() / 'logs.xlsx'
+    fname = get_deriv_root() / f'task-{get_task()}_log.xlsx'
 
     # Get the script from which the function is called for logging
     script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
@@ -2845,6 +2850,15 @@ def save_logs(logs):
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
     df = pd.DataFrame(logs)
+
+    columns = df.columns
+    if "cfg" in columns:
+        columns = list(columns)
+        idx = columns.index("cfg")
+        del columns[idx]
+        columns.insert(-2, "cfg")
+
+    df = df[columns]
 
     if fname.exists():
         book = load_workbook(fname)

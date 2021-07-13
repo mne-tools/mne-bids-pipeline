@@ -205,7 +205,7 @@ def get_config(
 
 
 @failsafe_run(on_error=on_error)
-def run_group_average_sensor(subject='average'):  # pass 'average' for logging
+def run_group_average_sensor(*, cfg, subject='average'):  # pass 'average' for logging
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
         logger.info(gen_log_message(message=msg))
@@ -216,20 +216,20 @@ def run_group_average_sensor(subject='average'):  # pass 'average' for logging
         sessions = [None]
 
     for session in sessions:
-        evokeds = average_evokeds(get_config(), session)
+        evokeds = average_evokeds(cfg, session)
         if config.interactive:
             for evoked in evokeds:
                 evoked.plot()
 
         if config.decode:
-            average_decoding(get_config(), session)
+            average_decoding(cfg, session)
 
 
 def main():
     msg = 'Running Step: Grand-average sensor data'
     logger.info(gen_log_message(message=msg))
 
-    log = run_group_average_sensor(subject='average')
+    log = run_group_average_sensor(cfg=get_config(), subject='average')
 
     config.save_logs([log])
 

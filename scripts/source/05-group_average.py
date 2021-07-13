@@ -23,7 +23,7 @@ from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def morph_stc(cfg, subject, session=None):
+def morph_stc(cfg, subject, fs_subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -57,7 +57,7 @@ def morph_stc(cfg, subject, session=None):
         stc = mne.read_source_estimate(fname_stc)
 
         morph = mne.compute_source_morph(
-            stc, subject_from=cfg.fs_subject, subject_to='fsaverage',
+            stc, subject_from=fs_subject, subject_to='fsaverage',
             subjects_dir=cfg.fs_subjects_dir)
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
@@ -100,8 +100,6 @@ def run_average(cfg, session, mean_morphed_stcs):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
@@ -112,7 +110,6 @@ def get_config(
         proc=config.proc,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
-        fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
     )
@@ -120,7 +117,7 @@ def get_config(
 
 
 @failsafe_run(on_error=on_error)
-def run_group_average_source(subject='average'):  # pass 'average' for logging
+def run_group_average_source(*, cfg, subject='average'):  # pass 'average' for logging
     """Run group average in source space"""
     msg = 'Running Step: Grand-average source estimates'
     logger.info(gen_log_message(message=msg))
@@ -135,7 +132,9 @@ def run_group_average_source(subject='average'):  # pass 'average' for logging
     parallel, run_func, _ = parallel_func(morph_stc,
                                           n_jobs=config.get_n_jobs())
     all_morphed_stcs = parallel(
-        run_func(get_config(subject, session), subject, session)
+        run_func(cfg=cfg, subject=subject,
+                 fs_subject=config.get_fs_subject(subject),
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(),
                           config.get_sessions())
@@ -160,7 +159,7 @@ def main():
     msg = 'Running Step: Grand-average source data'
     logger.info(gen_log_message(message=msg))
 
-    log = run_group_average_source()
+    log = run_group_average_source(cfg=get_config())
 
     config.save_logs([log])
 

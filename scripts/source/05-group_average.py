@@ -8,7 +8,6 @@ Source estimates are morphed to the ``fsaverage`` brain.
 
 import itertools
 import logging
-from typing import Optional
 
 import numpy as np
 import mne
@@ -99,8 +98,7 @@ def run_average(cfg, session, mean_morphed_stcs):
         stc.save(fname_stc_avg)
 
 
-def get_config(
-) -> BunchConst:
+def get_config() -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),
@@ -116,8 +114,8 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
-def run_group_average_source(*, cfg, subject='average'):  # pass 'average' for logging
+@failsafe_run(on_error=on_error)  # pass 'average' for logging
+def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
     msg = 'Running Step: Grand-average source estimates'
     logger.info(gen_log_message(message=msg))
@@ -149,7 +147,7 @@ def run_group_average_source(*, cfg, subject='average'):  # pass 'average' for l
         session = None
 
     run_average(
-        cfg=get_config(subject='average', session=session),
+        cfg=cfg,
         session=session,
         mean_morphed_stcs=mean_morphed_stcs
     )

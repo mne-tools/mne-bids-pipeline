@@ -43,13 +43,13 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     # "trans" file in the derivatives folder.
     subject, session = bids_path.subject, bids_path.session
 
-    if cfg.mri_t1_path_generator is None:
+    if config.mri_t1_path_generator is None:
         t1_bids_path = None
     else:
         t1_bids_path = BIDSPath(subject=subject,
                                 session=session,
                                 root=cfg.bids_root)
-        t1_bids_path = cfg.mri_t1_path_generator(t1_bids_path.copy())
+        t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
         if t1_bids_path.suffix is None:
             t1_bids_path.update(suffix='T1w')
         if t1_bids_path.datatype is None:
@@ -149,7 +149,6 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,

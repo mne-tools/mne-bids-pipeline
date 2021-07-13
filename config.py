@@ -2191,9 +2191,11 @@ def get_channels_to_analyze(info) -> List[str]:
         pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
-            pick_idx += mne.pick_types(info, meg='mag', exclude=[])
+            pick_idx = np.concatenate(
+                [pick_idx, mne.pick_types(info, meg='mag', exclude=[])])
         if 'grad' in ch_types:
-            pick_idx += mne.pick_types(info, meg='grad', exclude=[])
+            pick_idx = np.concatenate(
+                [pick_idx, mne.pick_types(info, meg='grad', exclude=[])])
         if 'meg' in ch_types:
             pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
                                       exclude=[])

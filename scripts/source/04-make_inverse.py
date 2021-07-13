@@ -109,10 +109,14 @@ def main():
 
     parallel, run_func, _ = parallel_func(run_inverse,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
+
+    config.save_logs(logs)
 
     msg = 'Completed Step: Compute and apply inverse solution'
     logger.info(gen_log_message(message=msg))

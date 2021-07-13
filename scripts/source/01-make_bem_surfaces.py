@@ -24,7 +24,6 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
 def make_bem(*, cfg, subject):
     fs_subject = cfg.fs_subject
     mri_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'mri'
@@ -70,7 +69,6 @@ def make_bem(*, cfg, subject):
              show=show)
 
 
-@failsafe_run(on_error=on_error)
 def make_scalp_surface(*, cfg, subject):
     fs_subject = cfg.fs_subject
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
@@ -116,6 +114,12 @@ def get_config(
     return cfg
 
 
+@failsafe_run(on_error=on_error)
+def make_bem_and_scalp_surface(*, cfg, subject):
+    make_bem(cfg=cfg, subject=subject)
+    make_scalp_surface(cfg=cfg, subject=subject)
+
+
 def main():
     """Run BEM surface extraction."""
     msg = 'Running Step: Create BEM & high-resolution scalp surface'
@@ -131,15 +135,14 @@ def main():
         logger.info(gen_log_message(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(make_bem,
+    parallel, run_func, _ = parallel_func(make_bem_and_scalp_surface,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(subject=subject), subject)
-             for subject in config.get_subjects())
+    logs = parallel(
+        run_func(cfg=get_config(subject=subject), subject=subject)
+        for subject in config.get_subjects()
+    )
 
-    parallel, run_func, _ = parallel_func(make_scalp_surface,
-                                          n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(subject=subject), subject)
-             for subject in config.get_subjects())
+    config.save_logs(logs)
 
     msg = 'Completed Step: Create BEM & high-resolution scalp surface'
     logger.info(gen_log_message(message=msg))

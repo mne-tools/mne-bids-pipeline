@@ -204,8 +204,8 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
-def run_group_average_sensor(*, cfg, subject='average'):  # pass 'average' for logging
+@failsafe_run(on_error=on_error)  # pass 'average' for logging
+def run_group_average_sensor(*, cfg, subject='average'):
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
         logger.info(gen_log_message(message=msg))

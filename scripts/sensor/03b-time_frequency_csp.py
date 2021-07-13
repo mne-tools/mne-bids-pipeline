@@ -169,9 +169,6 @@ class Tf:
         self.n_time_windows = n_time_windows
         self.n_freq_windows = n_freq_windows
 
-        # TODO: Check that each subject contains the 2 conditions.
-        # in order to avoid bad news after 1 hour of computation ?
-
 
 def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
@@ -187,14 +184,6 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     tf_conditions = cfg.time_frequency_conditions
     assert len(tf_conditions) == 2
 
-    # TODO: this creates sometime a critical error sometime
-    # but difficult to debug
-    # because there is not the subject number written in the error.
-    # "A critical error occurred. The error message was:
-    # 'Event "3_item" is not in Epochs.
-    # Event_ids must be one of "1_item/medium,
-    # 1_item/short" The epochs.metadata Pandas query did not yield any
-    # results: invalid syntax'"
     epochs_cond_0 = epochs[tf_conditions[0]]
     event_id_condition_0 = set(epochs_cond_0.events[:, 2])
     epochs_cond_1 = epochs[tf_conditions[1]]
@@ -210,7 +199,6 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
             msg = (f"Event_id {y[i]} is not contained in "
                    f"{tf_conditions[0]}'s set {event_id_condition_0}  nor in "
                    f"{tf_conditions[1]}'s set {event_id_condition_1}.")
-            # TODO: Add subject number in this error?
             logger.warning(msg)
     return y
 
@@ -401,7 +389,7 @@ def one_subject_decoding(
     # Assemble the classifier using scikit-learn pipeline
     csp = CSP(n_components=cfg.csp_n_components,
               reg=cfg.csp_reg,
-              log=True, norm_trace=False)  # TODO  cov_method_params={"cv": 1}
+              log=True, norm_trace=False)
 
     rank_dic = compute_rank(epochs, rank="info")
     rank = rank_dic[cfg.data_type]

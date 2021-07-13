@@ -23,7 +23,7 @@ from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 matplotlib.use('Agg')  # do not open any window  # noqa
 
@@ -396,8 +396,8 @@ def run_report(*, cfg, subject, session=None):
 
         for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'
-            logger.info(gen_log_message(message=msg,
-                                        subject=subject, session=session))
+            logger.info(**gen_log_kwargs(message=msg,
+                                         subject=subject, session=session))
 
             if condition in cfg.conditions:
                 full_condition = config.sanitize_cond_name(evoked.comment)
@@ -689,7 +689,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
     plt.close('all')  # close all figures to save memory
 
 
@@ -729,7 +729,7 @@ def get_config(
 def main():
     """Make reports."""
     msg = 'Running Step: Create reports'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(run_report,
                                           n_jobs=config.get_n_jobs())
@@ -750,7 +750,7 @@ def main():
     if (config.get_task() is not None and
             config.get_task().lower() == 'rest'):
         msg = '    … skipping "average" report for "rest" task.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     for session in sessions:

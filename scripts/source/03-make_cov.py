@@ -16,7 +16,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -44,8 +44,8 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname}, Output: {cov_fname}")
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
@@ -72,8 +72,8 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
     msg = (f'Computing regularized covariance based on empty-room recording. '
            f'Input: {raw_er_fname}, Output: {cov_fname}')
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
     cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
@@ -112,11 +112,11 @@ def get_config(
 def main():
     """Run cov."""
     msg = 'Running Step: Estimate noise covariance'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_covariance,
@@ -131,7 +131,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Estimate noise covariance'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

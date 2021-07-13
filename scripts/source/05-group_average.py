@@ -17,7 +17,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -118,11 +118,11 @@ def get_config() -> BunchConst:
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
     msg = 'Running Step: Grand-average source estimates'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
@@ -155,14 +155,14 @@ def run_group_average_source(*, cfg, subject='average'):
 
 def main():
     msg = 'Running Step: Grand-average source data'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     log = run_group_average_source(cfg=get_config())
 
     config.save_logs([log])
 
     msg = 'Completed Step: Grand-average source data'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

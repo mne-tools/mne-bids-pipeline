@@ -15,9 +15,9 @@ import logging
 import inspect
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    from typing import Literal, TypedDict
 else:
-    from typing_extensions import Literal
+    from typing_extensions import Literal, TypedDict
 
 import coloredlogs
 import numpy as np
@@ -1533,10 +1533,52 @@ CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
 
 logger = logging.getLogger('mne-bids-pipeline')
 
-log_fmt = '%(asctime)s %(message)s'
+log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
 log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
-coloredlogs.install(level=log_level, logger=logger, fmt=log_fmt,
-                    date_fmt=log_date_fmt)
+log_level_styles = {
+    'warning': '202,bold;error=background=red',
+    'critical': 'bold,background=red'
+}
+log_field_styles = {
+    'step': {
+        'color': 'white',
+        'bold': True
+    },
+    'subject': {
+        'color': 'blue',
+        'bold': True
+    },
+    'session': {
+        'bold': True
+    },
+    'run': {
+        'bold': True
+    }
+}
+
+
+class LogFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'step'):
+            record.step = ''
+        if not hasattr(record, 'subject'):
+            record.subject = ''
+        if not hasattr(record, 'session'):
+            record.session = ''
+        if not hasattr(record, 'run'):
+            record.run = ''
+
+        return True
+
+
+logger.addFilter(LogFilter())
+
+coloredlogs.install(
+    level=log_level, logger=logger, fmt=log_fmt,
+    date_fmt=log_date_fmt, level_styles=log_level_styles,
+    field_styles=log_field_styles
+)
+
 
 mne.set_log_level(verbose=mne_log_level.upper())
 
@@ -2013,8 +2055,8 @@ def _get_reject(
                 ch_types_autoreject.append('grad')
 
         msg = 'Generating rejection thresholds using autoreject …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
         reject = autoreject.get_rejection_threshold(
             epochs=epochs, ch_types=ch_types_autoreject, decim=decim,
             verbose=False
@@ -2080,26 +2122,51 @@ def get_fs_subjects_dir():
                 .resolve())
 
 
-def gen_log_message(message, subject=None, session=None,
-                    run=None) -> str:
-    if subject is not None:
-        subject = f'sub-{subject}'
-    if session is not None:
-        session = f'ses-{session}'
-    if run is not None:
-        run = f'run-{run}'
+class LogKwargsT(TypedDict):
+    msg: str
+    extra: Dict[str, str]
 
-    prefix = ', '.join([item for item in [subject, session, run]
-                        if item is not None])
-    if prefix:
-        prefix = f'[{prefix}]'
+
+def gen_log_kwargs(
+    message: str,
+    subject: Optional[Union[str, int]] = None,
+    session: Optional[Union[str, int]] = None,
+    run: Optional[Union[str, int]]  = None
+) -> LogKwargsT:
+    if subject is not None:
+        subject = f' sub-{subject}'
+    if session is not None:
+        session = f' ses-{session}'
+    if run is not None:
+        run = f' run-{run}'
+
+    message = f' {message}'
+
+    # prefix = ', '.join([item for item in [subject, session, run]
+    #                     if item is not None])
+    # if prefix:
+    #     prefix = f'[{prefix}]'
 
     # Get the script from which the function is called for logging
     script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
     step_name = f'{script_path.parent.name}/{script_path.stem}'
-    prefix = f'[{step_name}]{prefix}'
+    # prefix = f'[{step_name}]{prefix}'
 
-    return prefix + ' ' + message
+    extra = {
+        'step': step_name
+    }
+    if subject:
+        extra['subject'] = subject
+    if session:
+        extra['session'] = session
+    if run:
+        extra['run'] = run
+
+    kwargs: LogKwargsT = {
+        'msg': message,
+        'extra': extra
+    }
+    return kwargs
 
 
 def failsafe_run(on_error):
@@ -2120,21 +2187,20 @@ def failsafe_run(on_error):
                 log_info['error_message'] = ''
             except Exception as e:
                 message = 'A critical error occurred.'
-                message = gen_log_message(message=message)
                 log_info['success'] = False
                 log_info['error_message'] = str(e)
 
                 if on_error == 'abort':
-                    logger.critical(message)
+                    logger.critical(**gen_log_kwargs(message=message))
                     raise(e)
                 elif on_error == 'debug':
-                    logger.critical(message)
+                    logger.critical(**gen_log_kwargs(message=message))
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
                 else:
                     message = f'{message} The error message was:\n{str(e)}'
-                    logger.critical(message)
+                    logger.critical(**gen_log_kwargs(message=message))
             return log_info
         return wrapper
     return failsafe_run_decorator
@@ -2403,13 +2469,13 @@ def _rename_events_func(cfg, raw, subject, session) -> None:
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(gen_log_message(message=msg,
-                                    subject=subject, session=session))
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
         for idx, description in enumerate(descriptions.copy()):
             if description == old_event_name:
                 descriptions[idx] = new_event_name
@@ -2436,8 +2502,8 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
         msg = ('Finding flat channels, and noisy channels using '
                'Maxwell filtering.')
 
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -2466,20 +2532,20 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
 
     if find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
-        logger.info(gen_log_message(message=msg,
-                                    subject=subject, session=session))
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
         bads.extend(auto_flat_chs)
     if find_noisy_channels_meg:
         msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-        logger.info(gen_log_message(message=msg,
-                                    subject=subject, session=session))
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
     raw.info['bads'] = bads
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(gen_log_message(message=msg,
-                                subject=subject, session=session))
+    logger.info(**gen_log_kwargs(message=msg,
+                                 subject=subject, session=session))
 
     if find_noisy_channels_meg:
         auto_scores_fname = bids_path.copy().update(
@@ -2561,8 +2627,8 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
     """
     if cfg.drop_channels:
         msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
         raw.drop_channels(cfg.drop_channels)
 
 
@@ -2573,13 +2639,13 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
     """
     if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
         raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
-            logger.info(gen_log_message(message=msg, subject=subject,
-                                        session=session))
+            logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
@@ -2593,14 +2659,14 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
                 any([eog_ch_name in cfg.eeg_bipolar_channels
                      for eog_ch_name in eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
-            logger.info(gen_log_message(message=msg, subject=subject,
-                                        session=session))
+            logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
         for eog_ch_name in eog_channels:
             if eog_ch_name in cfg.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
-                logger.info(gen_log_message(message=msg,
-                                            subject=subject,
-                                            session=session))
+                logger.info(**gen_log_kwargs(message=msg,
+                                             subject=subject,
+                                             session=session))
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
@@ -2616,8 +2682,8 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
     if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage}.')
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
         if not is_mne_montage:
             montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
@@ -2777,8 +2843,8 @@ def get_reference_run_info(
 ) -> mne.Info:
 
     msg = f'Loading info for run: {run}.'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run))
 
     bids_path = BIDSPath(
         subject=subject,
@@ -2808,14 +2874,14 @@ def _find_breaks_func(
 ) -> None:
     if not cfg.find_breaks:
         msg = 'Finding breaks has been disabled by the user.'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         return
 
     msg = (f'Finding breaks with a mininum duration of '
            f'{cfg.min_break_duration} seconds.')
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run))
 
     break_annots = mne.preprocessing.annotate_break(
         raw=raw,
@@ -2826,8 +2892,8 @@ def _find_breaks_func(
 
     msg = (f'Found and annotated '
            f'{len(break_annots) if break_annots else "no"} break periods.')
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run))
 
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
 

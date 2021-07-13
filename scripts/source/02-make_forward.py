@@ -17,7 +17,7 @@ from mne.datasets import fetch_fsaverage
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -56,8 +56,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
             t1_bids_path.update(datatype='anat')
 
     msg = 'Estimating head ↔ MRI transform'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0],
@@ -68,8 +68,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
 
     # Create the source space.
     msg = 'Creating source space'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
@@ -79,8 +79,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.
     msg = 'Calculating BEM solution'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     if 'eeg' in cfg.ch_types:
         conductivity = (0.3, 0.006, 0.3)
@@ -128,8 +128,8 @@ def run_forward(*, cfg, subject, session=None):
 
     # Finally, calculate and save the forward solution.
     msg = 'Calculating forward solution'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     info = mne.io.read_info(fname_evoked)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=cfg.mindist)
@@ -165,11 +165,11 @@ def get_config(
 def main():
     """Run forward."""
     msg = 'Running Step: Create forward solution'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_forward,
@@ -185,7 +185,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Create forward solution'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

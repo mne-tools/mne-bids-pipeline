@@ -21,7 +21,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -46,8 +46,8 @@ def drop_ptp(*, cfg, subject, session=None):
     fname_out = bids_path.copy().update(processing='clean')
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(fname_in, preload=True)
@@ -62,13 +62,13 @@ def drop_ptp(*, cfg, subject, session=None):
                 msg = (f'Adjusting PTP rejection threshold proposed by '
                        f'autoreject, as it is greater than ica_reject: '
                        f'{ch_type}: {reject[ch_type]} -> {threshold}')
-                logger.info(gen_log_message(message=msg,
-                                            subject=subject, session=session))
+                logger.info(**gen_log_kwargs(message=msg,
+                                             subject=subject, session=session))
                 reject[ch_type] = threshold
 
     msg = f'Using PTP rejection thresholds: {reject}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = cfg.reject_tmin
@@ -79,8 +79,8 @@ def drop_ptp(*, cfg, subject, session=None):
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = ('More than 50% of all epochs rejected. Please check the '
                'rejection thresholds.')
-        logger.warning(gen_log_message(message=msg, subject=subject,
-                                       session=session))
+        logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                        session=session))
     elif n_epochs_after_reject == 0:
         raise RuntimeError('No epochs remaining after peak-to-peak-based '
                            'rejection. Cannot continue.')
@@ -115,7 +115,7 @@ def get_config(
 def main():
     """Run epochs."""
     msg = 'Running Step: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -128,7 +128,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step 6: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

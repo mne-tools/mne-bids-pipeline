@@ -34,7 +34,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (make_epochs, gen_log_message, on_error, failsafe_run,
+from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
                     annotations_to_events)
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -52,12 +52,12 @@ def filter_for_ica(
     if cfg.ica_l_freq is None:
         msg = (f'Not applying high-pass filter (data is already filtered, '
                f'cutoff: {raw.info["highpass"]} Hz).')
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
     else:
         msg = f'Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw.filter(l_freq=cfg.ica_l_freq, h_freq=None)
 
 
@@ -88,8 +88,8 @@ def fit_ica(
     msg = (f'Fit {ica.n_components_} components (explaining '
            f'{round(explained_var * 100, 1)}% of the variance) in '
            f'{ica.n_iter_} iterations.')
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     return ica
 
 
@@ -105,8 +105,8 @@ def make_ecg_epochs(
     if ('ecg' in raw.get_channel_types() or 'meg' in cfg.ch_types or
             'mag' in cfg.ch_types):
         msg = 'Creating ECG epochs …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
 
         ecg_epochs = create_ecg_epochs(raw,
                                        baseline=(None, -0.2),
@@ -115,14 +115,14 @@ def make_ecg_epochs(
         if len(ecg_epochs) == 0:
             msg = ('No ECG events could be found. Not running ECG artifact '
                    'detection.')
-            logger.info(gen_log_message(message=msg, subject=subject,
-                                        session=session, run=run))
+            logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session, run=run))
             ecg_epochs = None
     else:
         msg = ('No ECG or magnetometer channels are present. Cannot '
                'automate artifact detection for ECG')
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         ecg_epochs = None
 
     return ecg_epochs
@@ -149,8 +149,8 @@ def make_eog_epochs(
 
     if ch_names:
         msg = 'Creating EOG epochs …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
 
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
                                        baseline=(None, -0.2))
@@ -158,15 +158,15 @@ def make_eog_epochs(
         if len(eog_epochs) == 0:
             msg = ('No EOG events could be found. Not running EOG artifact '
                    'detection.')
-            logger.warning(gen_log_message(message=msg,
-                                           subject=subject,
-                                           session=session, run=run))
+            logger.warning(**gen_log_kwargs(message=msg,
+                                            subject=subject,
+                                            session=session, run=run))
             eog_epochs = None
     else:
         msg = ('No EOG channel is present. Cannot automate IC detection '
                'for EOG')
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         eog_epochs = None
 
     return eog_epochs
@@ -186,8 +186,8 @@ def detect_bad_components(
 
     artifact = which.upper()
     msg = f'Performing automated {artifact} artifact detection …'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     if which == 'eog':
         inds, scores = ica.find_bads_eog(
@@ -206,14 +206,14 @@ def detect_bad_components(
         warn = (f'No {artifact}-related ICs detected, this is highly '
                 f'suspicious. A manual check is suggested. You may wish to '
                 f'lower "{adjust_setting}".')
-        logger.warning(gen_log_message(message=warn,
-                                       subject=subject,
-                                       session=session))
+        logger.warning(**gen_log_kwargs(message=warn,
+                                        subject=subject,
+                                        session=session))
     else:
         msg = (f'Detected {len(inds)} {artifact}-related ICs in '
                f'{len(epochs)} {artifact} epochs.')
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
 
     # Mark the artifact-related components for removal
     ica.exclude = inds
@@ -280,8 +280,8 @@ def run_ica(*, cfg, subject, session=None):
 
     for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # EOG epochs
@@ -317,8 +317,8 @@ def run_ica(*, cfg, subject, session=None):
                 del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,
@@ -355,8 +355,8 @@ def run_ica(*, cfg, subject, session=None):
 
     # Reject epochs based on peak-to-peak rejection thresholds
     msg = f'Using PTP rejection thresholds: {cfg.ica_reject}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     # Reject epochs based on peak-to-peak amplitude
     epochs.drop_bad(reject=cfg.ica_reject)
@@ -367,8 +367,8 @@ def run_ica(*, cfg, subject, session=None):
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     ica = fit_ica(cfg=cfg, epochs=epochs, subject=subject, session=session)
 
     # Start a report
@@ -406,8 +406,8 @@ def run_ica(*, cfg, subject, session=None):
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
     msg = 'Saving ICA solution and detected artifacts to disk.'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(ica_fname)
 
@@ -441,8 +441,8 @@ def run_ica(*, cfg, subject, session=None):
                                captions=caption)
 
     msg = 'Adding diagnostic plots for all ICs to the HTML report …'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     for component_num in tqdm(range(ica.n_components_)):
         fig = ica.plot_properties(epochs,
                                   picks=component_num,
@@ -465,8 +465,8 @@ def run_ica(*, cfg, subject, session=None):
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
            f"report {report_fname.basename}, and mark all components you wish "
            f"to reject as 'bad' in {ica_components_fname.basename}")
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
 
 def get_config(
@@ -510,7 +510,7 @@ def main():
         return
 
     msg = 'Running Step: Compute ICA'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(run_ica,
                                           n_jobs=config.get_n_jobs())
@@ -525,7 +525,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step 4: Compute ICA'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

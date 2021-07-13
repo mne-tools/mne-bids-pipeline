@@ -18,7 +18,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -46,21 +46,21 @@ def apply_ssp(*, cfg, subject, session=None):
     epochs = mne.read_epochs(fname_in, preload=True)
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     proj_fname_in = bids_path.copy().update(suffix='proj', check=False)
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     projs = mne.read_proj(proj_fname_in)
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
 
     msg = 'Saving epochs with projectors.'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     epochs_cleaned.save(fname_out, overwrite=True)
 
 
@@ -85,7 +85,7 @@ def main():
         return
 
     msg = 'Running Step: Apply SSP'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(apply_ssp,
                                           n_jobs=config.get_n_jobs())
@@ -99,7 +99,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Apply SSP'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

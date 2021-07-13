@@ -20,7 +20,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import make_epochs, gen_log_message, on_error, failsafe_run
+from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -60,8 +60,8 @@ def run_epochs(*, cfg, subject, session=None):
     epochs_all_runs = []
     for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
@@ -74,8 +74,8 @@ def run_epochs(*, cfg, subject, session=None):
                     del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,
@@ -99,12 +99,12 @@ def run_epochs(*, cfg, subject, session=None):
 
     msg = (f'Created {len(epochs)} epochs with time interval: '
            f'{epochs.tmin} – {epochs.tmax} sec')
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     msg = 'Writing epochs to disk'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
     epochs.save(epochs_fname, overwrite=True)
 
@@ -148,7 +148,7 @@ def get_config(
 def main():
     """Run epochs."""
     msg = 'Running Step: Epoching'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     # Here we use fewer n_jobs to prevent potential memory problems
     parallel, run_func, _ = parallel_func(
@@ -165,7 +165,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Epoching'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

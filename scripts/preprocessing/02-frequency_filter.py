@@ -34,7 +34,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (gen_log_message, on_error, failsafe_run,
+from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data)
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -66,8 +66,8 @@ def filter(
         msg = (f'Band-pass filtering {data_type} data; range: '
                f'{l_freq} – {h_freq} Hz')
 
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run))
 
     raw.filter(l_freq=l_freq, h_freq=h_freq,
                l_trans_bandwidth=l_trans_bandwidth,
@@ -88,8 +88,8 @@ def resample(
 
     data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
     msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session, run=run,))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run,))
     raw.resample(sfreq, npad='auto')
 
 
@@ -129,8 +129,8 @@ def filter_data(
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
         msg = f'Reading: {raw_fname_in}'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
         raw = import_experimental_data(cfg=cfg,
@@ -168,8 +168,8 @@ def filter_data(
             if raw_er_fname_in.copy().update(split='01').fpath.exists():
                 raw_er_fname_in.update(split='01')
             msg = f'Reading empty-room recording: {raw_er_fname_in}'
-            logger.info(gen_log_message(message=msg, subject=subject,
-                                        session=session, run=run))
+            logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session, run=run))
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
             raw_er.info['bads'] = bads
         else:
@@ -240,7 +240,7 @@ def get_config(
 def main():
     """Run filter."""
     msg = 'Running Step: Frequency filtering'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
@@ -265,7 +265,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed: Frequency filtering'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

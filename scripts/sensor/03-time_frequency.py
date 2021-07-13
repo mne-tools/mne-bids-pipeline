@@ -20,7 +20,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -46,8 +46,8 @@ def run_time_frequency(*, cfg, subject, session=None):
                                        extension='.fif')
 
     msg = f'Input: {fname_in}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     epochs = mne.read_epochs(fname_in)
     if cfg.analyze_channels:
@@ -104,7 +104,7 @@ def get_config(
 def main():
     """Run Time-frequency decomposition."""
     msg = 'Running Step: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.get_n_jobs())
@@ -118,7 +118,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

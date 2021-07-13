@@ -29,7 +29,7 @@ from mne.report import Report
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -67,8 +67,8 @@ def apply_ica(*, cfg, subject, session):
 
     # Load ICA.
     msg = f'Reading ICA: {fname_ica}'
-    logger.debug(gen_log_message(message=msg, subject=subject,
-                                 session=session))
+    logger.debug(**gen_log_kwargs(message=msg, subject=subject,
+                                  session=session))
     ica = read_ica(fname=fname_ica)
 
     # Select ICs to remove.
@@ -79,8 +79,8 @@ def apply_ica(*, cfg, subject, session):
 
     # Load epochs to reject ICA components.
     msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     epochs = mne.read_epochs(fname_epo_in, preload=True)
     epochs.drop_bad(cfg.ica_reject)
@@ -113,13 +113,13 @@ def apply_ica(*, cfg, subject, session):
 
     # Now actually reject the components.
     msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
     msg = 'Saving reconstructed epochs after ICA.'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     epochs_cleaned.save(fname_epo_out, overwrite=True)
 
     if cfg.interactive:
@@ -150,7 +150,7 @@ def main():
         return
 
     msg = 'Running Step: Apply ICA'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     parallel, run_func, _ = parallel_func(apply_ica,
                                           n_jobs=config.get_n_jobs())
@@ -164,7 +164,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Apply ICA'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

@@ -21,7 +21,7 @@ from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -45,8 +45,8 @@ def average_evokeds(cfg, session):
                             check=False)
 
         msg = f'Input: {fname_in}'
-        logger.info(gen_log_message(message=msg, subject=subject,
-                                    session=session))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
 
         evokeds = mne.read_evokeds(fname_in)
         for idx, evoked in enumerate(evokeds):
@@ -78,8 +78,8 @@ def average_evokeds(cfg, session):
         os.makedirs(fname_out.fpath.parent)
 
     msg = f'Saving grand-averaged evoked sensor data: {fname_out}'
-    logger.info(gen_log_message(message=msg, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     mne.write_evokeds(fname_out, list(all_evokeds.values()))
     return list(all_evokeds.values())
 
@@ -208,7 +208,7 @@ def get_config(
 def run_group_average_sensor(*, cfg, subject='average'):
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     sessions = config.get_sessions()
@@ -227,14 +227,14 @@ def run_group_average_sensor(*, cfg, subject='average'):
 
 def main():
     msg = 'Running Step: Grand-average sensor data'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     log = run_group_average_sensor(cfg=get_config(), subject='average')
 
     config.save_logs([log])
 
     msg = 'Completed Step: Grand-average sensor data'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

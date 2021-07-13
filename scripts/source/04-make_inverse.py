@@ -18,7 +18,7 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -100,11 +100,11 @@ def get_config(
 def main():
     """Run inv."""
     msg = 'Running Step: Compute and apply inverse solution'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_inverse,
@@ -119,7 +119,7 @@ def main():
     config.save_logs(logs)
 
     msg = 'Completed Step: Compute and apply inverse solution'
-    logger.info(gen_log_message(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

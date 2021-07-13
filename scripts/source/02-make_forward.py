@@ -61,7 +61,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0],
-                                root=cfg.bids_root),
+                                root=cfg.bids_root,
+                                extension=None),
         t1_bids_path=t1_bids_path,
         fs_subject=cfg.fs_subject,
         fs_subjects_dir=cfg.fs_subjects_dir)

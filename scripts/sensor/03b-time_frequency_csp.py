@@ -788,17 +788,6 @@ def group_analysis(
         shape=[tf.n_freq_windows, tf.n_time_windows])
     X = X - chance
 
-    # # TODO: Perform test without filling nan values.
-    # # The permutation test do not like nan values.
-    # # So I fill in the nan values with the average of each column.
-    # # nanmean accentuate the effect? A bit augmenting
-    # # artificially the number of subjects.
-    # col_mean = np.nanmean(X, axis=0)
-    # # Find indices that you need to replace
-    # inds = np.where(np.isnan(X))
-    # # Place column means in the indices. Align the arrays using take
-    # X[inds] = np.take(col_mean, inds[1])
-
     # Analyse with cluster permutation statistics
     titles = ['Without clustering']
     out = stats.ttest_1samp(X, 0, axis=0)

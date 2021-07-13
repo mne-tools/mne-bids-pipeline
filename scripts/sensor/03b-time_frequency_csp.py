@@ -58,8 +58,12 @@ set_log_level(verbose="WARNING")  # mne logger
 
 # ROC-AUC chance score level
 chance = 0.5
-plot_patterns = True
-csp_use_pca = False
+plot_patterns = False
+
+# The usage of the pca is highly recommended for two reasons
+# 1. The execution of the code is faster.
+# 2. There will be much less numerical instabilities.
+csp_use_pca = True
 
 
 class Pth:
@@ -211,6 +215,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     return y
 
 
+# @profile
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,
@@ -227,11 +232,16 @@ def prepare_epochs_and_y(
     # Prepare epoch_filter
     epochs_filter = epochs.copy()
 
-    epochs_filter.filter(fmin, fmax, n_jobs=1)
-
     epochs_filter.pick_types(
         meg=True, eeg=True, stim=False, eog=False,
         exclude='bads')
+
+    # We only take gradiometers to speed up computation
+    #  because the information is redundant between grad and mag
+    epochs_filter.pick_types(meg="mag")
+
+    # We filter after droping channel, because filtering is costly
+    epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     # prepare labels
     y = prepare_labels(epochs=epochs_filter, cfg=cfg)
@@ -354,6 +364,7 @@ def plot_time_frequency_decoding(
 
 
 @failsafe_run(on_error=on_error)
+# @profile
 def one_subject_decoding(
     *,
     cfg,
@@ -401,12 +412,14 @@ def one_subject_decoding(
         clf = make_pipeline(pca, csp, LinearDiscriminantAnalysis())
     else:
         clf = make_pipeline(csp, LinearDiscriminantAnalysis())
+
+    # TODO: le faire plutot par run avec group cross val
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=42)
 
     ##########################################################################
     # 1. Loop through frequencies, apply classifier and save scores
-
+    # TODO: une seul boucle
     # init scores
     freq_scores = np.zeros((tf.n_freq_windows,))
     freq_scores_std = np.zeros((tf.n_freq_windows,))
@@ -787,16 +800,16 @@ def group_analysis(
         shape=[tf.n_freq_windows, tf.n_time_windows])
     X = X - chance
 
-    # TODO: Perform test without filling nan values.
-    # The permutation test do not like nan values.
-    # So I fill in the nan values with the average of each column.
-    # nanmean accentuate the effect? A bit augmenting
-    # artificially the number of subjects.
-    col_mean = np.nanmean(X, axis=0)
-    # Find indices that you need to replace
-    inds = np.where(np.isnan(X))
-    # Place column means in the indices. Align the arrays using take
-    X[inds] = np.take(col_mean, inds[1])
+    # # TODO: Perform test without filling nan values.
+    # # The permutation test do not like nan values.
+    # # So I fill in the nan values with the average of each column.
+    # # nanmean accentuate the effect? A bit augmenting
+    # # artificially the number of subjects.
+    # col_mean = np.nanmean(X, axis=0)
+    # # Find indices that you need to replace
+    # inds = np.where(np.isnan(X))
+    # # Place column means in the indices. Align the arrays using take
+    # X[inds] = np.take(col_mean, inds[1])
 
     # Analyse with cluster permutation statistics
     titles = ['Without clustering']
@@ -906,9 +919,9 @@ def main():
     #     cfg=cfg, tf=tf, pth=pth, subject=subject)
     #     for subject in config.get_subjects()]
 
-    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #          for subject in config.get_subjects())
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+             for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

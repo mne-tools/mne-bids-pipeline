@@ -168,6 +168,5 @@ def main():
     logger.info(gen_log_message(message=msg))
 
 
-
 if __name__ == '__main__':
     main()

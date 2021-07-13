@@ -10,8 +10,6 @@ import itertools
 import logging
 from typing import Optional
 
-import pandas as pd
-
 import mne
 from mne.utils import BunchConst
 from mne.parallel import parallel_func
@@ -113,7 +111,7 @@ def get_config(
 
 def main():
     """Run evoked."""
-    msg = f'Running Step: Create evoked data'
+    msg = 'Running Step: Create evoked data'
     logger.info(gen_log_message(message=msg))
 
     if config.get_task().lower() == 'rest':

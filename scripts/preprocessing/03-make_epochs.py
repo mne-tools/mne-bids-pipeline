@@ -147,7 +147,7 @@ def get_config(
 
 def main():
     """Run epochs."""
-    msg = f'Running Step: Epoching'
+    msg = 'Running Step: Epoching'
     logger.info(gen_log_message(message=msg))
 
     # Here we use fewer n_jobs to prevent potential memory problems
@@ -164,7 +164,7 @@ def main():
 
     config.save_logs(logs)
 
-    msg = f'Completed Step: Epoching'
+    msg = 'Completed Step: Epoching'
     logger.info(gen_log_message(message=msg))
 
 

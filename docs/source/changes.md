@@ -189,3 +189,5 @@ authors:
 - Parameters retrieved from the BIDS dataset were not limited to the modality
   ("data type") we meant to process, sometimes leading to crashes.
   ({{ gh(391) }} by {{ authors.hoechenberger }})
+- Fix forward computation for CTF data.
+  ({{ gh(427) }} by {{ authors.agramfort }})

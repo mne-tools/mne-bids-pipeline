@@ -700,8 +700,8 @@ def compute_conf_inter(
 
         del bootstrapped_means, se, ci_lower, ci_upper
 
-    msg = ("Confidence intervals results:", mean_scores)
-    logger.info(gen_log_message(msg, step=3))
+    # We cannot use the logger here
+    print("Confidence intervals results:", mean_scores)
 
     return contrast_score_stats
 
@@ -906,9 +906,9 @@ def main():
     #     cfg=cfg, tf=tf, pth=pth, subject=subject)
     #     for subject in config.get_subjects()]
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-             for subject in config.get_subjects())
+    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+    #          for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

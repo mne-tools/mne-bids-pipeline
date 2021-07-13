@@ -1798,7 +1798,7 @@ _valid_subjects = _get_entity_vals_cached(
 )
 
 _all_sessions = _get_entity_vals_cached(
-    bids_root,
+    root=get_bids_root(),
     entity_key='session',
     ignore_datatypes=tuple(_ignore_datatypes)
 )

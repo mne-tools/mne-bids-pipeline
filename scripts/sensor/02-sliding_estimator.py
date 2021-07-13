@@ -36,7 +36,8 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_time_decoding(cfg, subject, condition1, condition2, session=None):
+@failsafe_run(on_error=on_error)
+def run_time_decoding(cfg, *, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(gen_log_message(message=msg, step=7, subject=subject,
                                 session=session))
@@ -141,36 +142,40 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run sliding estimator."""
     msg = 'Running Step 7: Sliding estimator'
-    logger.info(gen_log_message(step=7, message=msg))
+    step = 7
+    logger.info(gen_log_message(step=step, message=msg))
 
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
-        logger.info(gen_log_message(step=7, message=msg))
+        logger.info(gen_log_message(step=step, message=msg))
         return
 
     if not config.decode:
         msg = 'No decoding requested by user.'
-        logger.info(gen_log_message(step=7, message=msg))
+        logger.info(gen_log_message(step=step, message=msg))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
     parallel, run_func, _ = parallel_func(run_time_decoding,
                                           n_jobs=1)
-    parallel(run_func(get_config(), subject=subject,
-                      condition1=cond_1, condition2=cond_2,
-                      session=session)
-             for subject, session, (cond_1, cond_2) in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions(),
-                               config.contrasts))
+    logs = parallel(
+        run_func(get_config(), subject=subject,
+                 condition1=cond_1, condition2=cond_2,
+                 session=session)
+        for subject, session, (cond_1, cond_2) in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions(),
+                          config.contrasts)
+    )
 
     msg = 'Completed Step 7: Sliding estimator'
-    logger.info(gen_log_message(step=7, message=msg))
+    logger.info(gen_log_message(step=step, message=msg))
+
+    config.save_logs(step, logs)
 
 
 if __name__ == '__main__':

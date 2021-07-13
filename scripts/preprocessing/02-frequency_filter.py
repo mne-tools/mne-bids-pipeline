@@ -239,8 +239,9 @@ def get_config(
 @failsafe_run(on_error=on_error)
 def main():
     """Run filter."""
-    msg = 'Running Step 2: Frequency filtering'
-    logger.info(gen_log_message(step=2, message=msg))
+    step = 2
+    msg = f'Running Step {step}: Frequency filtering'
+    logger.info(gen_log_message(step=step, message=msg))
 
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
@@ -253,7 +254,7 @@ def main():
             config.get_runs(subject=subject),
             config.get_sessions()))
 
-    parallel(
+    logs = parallel(
         run_func(
             cfg=get_config(subject),
             subject=subject,
@@ -262,8 +263,10 @@ def main():
         ) for subject, run, session in sub_run_ses
     )
 
+    config.save_logs(step, logs)
+
     msg = 'Completed 2: Frequency filtering'
-    logger.info(gen_log_message(step=2, message=msg))
+    logger.info(gen_log_message(step=step, message=msg))
 
 
 if __name__ == '__main__':

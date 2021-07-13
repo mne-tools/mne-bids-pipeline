@@ -26,7 +26,8 @@ from config import gen_log_message, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def drop_ptp(cfg, subject, session=None):
+@failsafe_run(on_error=on_error)
+def drop_ptp(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -111,19 +112,24 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run epochs."""
-    msg = 'Running Step 6: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(step=6, message=msg))
+    step = 6
+    msg = f'Running Step {step}: Reject epochs based on peak-to-peak amplitude'
+    logger.info(gen_log_message(step=step, message=msg))
 
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(), subject, session) for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
+
+    config.save_logs(step, logs)
 
     msg = 'Completed Step 6: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(step=6, message=msg))
+    logger.info(gen_log_message(step=step, message=msg))
 
 
 if __name__ == '__main__':

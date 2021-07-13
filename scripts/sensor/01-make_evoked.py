@@ -10,6 +10,8 @@ import itertools
 import logging
 from typing import Optional
 
+import pandas as pd
+
 import mne
 from mne.utils import BunchConst
 from mne.parallel import parallel_func
@@ -23,7 +25,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_evoked(cfg, subject, session=None):
+def run_evoked(cfg, *, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -112,22 +114,27 @@ def get_config(
 def main():
     """Run evoked."""
     msg = 'Running Step 6: Create evoked data'
-    logger.info(gen_log_message(step=6, message=msg))
+    step = 6
+    logger.info(gen_log_message(step=step, message=msg))
 
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(gen_log_message(step=step, message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_evoked,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
     msg = 'Completed Step 6: Create evoked data'
     logger.info(gen_log_message(step=6, message=msg))
+
+    config.save_logs(step, logs)
 
 
 if __name__ == '__main__':

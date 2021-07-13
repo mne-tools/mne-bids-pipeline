@@ -26,7 +26,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_epochs(cfg, subject, session=None):
+def run_epochs(*, cfg, subject, session=None):
     """Extract epochs for one subject."""
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -147,20 +147,26 @@ def get_config(
 
 def main():
     """Run epochs."""
-    msg = 'Running Step 3: Epoching'
-    logger.info(gen_log_message(step=3, message=msg))
+    step = 3
+    msg = f'Running Step {step}: Epoching'
+    logger.info(gen_log_message(step=step, message=msg))
 
     # Here we use fewer n_jobs to prevent potential memory problems
     parallel, run_func, _ = parallel_func(
         run_epochs,
         n_jobs=max(config.get_n_jobs() // 4, 1)
     )
-    parallel(run_func(get_config(subject, session), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(subject, session), subject=subject,
+                 session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(), config.get_sessions())
+    )
 
-    msg = 'Completed Step 3: Epoching'
-    logger.info(gen_log_message(step=3, message=msg))
+    config.save_logs(step, logs)
+
+    msg = f'Completed Step {step}: Epoching'
+    logger.info(gen_log_message(step=step, message=msg))
 
 
 if __name__ == '__main__':

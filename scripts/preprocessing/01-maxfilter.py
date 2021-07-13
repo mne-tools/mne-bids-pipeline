@@ -36,7 +36,8 @@ from config import (gen_log_message, on_error, failsafe_run,
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_maxwell_filter(cfg, subject, session=None):
+@failsafe_run(on_error=on_error)
+def run_maxwell_filter(*, cfg, subject, session=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
@@ -226,19 +227,24 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
     msg = 'Running Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    step = 1
+    logger.info(gen_log_message(step=step, message=msg))
 
     if config.use_maxwell_filter:
         parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                               n_jobs=config.get_n_jobs())
-        parallel(run_func(get_config(subject, session), subject, session)
-                 for subject, session in
-                 itertools.product(config.get_subjects(),
-                                   config.get_sessions()))
+        logs = parallel(
+            run_func(cfg=get_config(subject, session),
+                     subject=subject, session=session)
+            for subject, session in
+            itertools.product(config.get_subjects(),
+                              config.get_sessions())
+        )
+
+        config.save_logs(step, logs)
 
     msg = 'Completed Step 1: Maxwell filter'
     logger.info(gen_log_message(step=1, message=msg))

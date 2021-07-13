@@ -21,6 +21,7 @@ else:
 import coloredlogs
 import numpy as np
 import pandas as pd
+from openpyxl import load_workbook
 import json_tricks
 import mne
 import mne_bids
@@ -2102,11 +2103,18 @@ def failsafe_run(on_error):
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            log_info = pd.Series(kwargs)
             try:
-                return func(*args, **kwargs)
+                assert len(args) == 0  # make sure params are only kwargs
+                out = func(*args, **kwargs)
+                assert out is None  # make sure the function return None
+                log_info['success'] = True
+                log_info['error_message'] = ''
             except Exception as e:
                 message = 'A critical error occurred.'
                 message = gen_log_message(message=message)
+                log_info['success'] = False
+                log_info['error_message'] = str(e)
 
                 if on_error == 'abort':
                     logger.critical(message)
@@ -2119,6 +2127,7 @@ def failsafe_run(on_error):
                 else:
                     message = f'{message} The error message was:\n{str(e)}'
                     logger.critical(message)
+            return log_info
         return wrapper
     return failsafe_run_decorator
 
@@ -2822,6 +2831,27 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+def save_logs(step, logs):
+    fname = get_deriv_root() / 'logs.xlsx'
+    sheet_name = f'step-{step}'
+
+    df = pd.DataFrame(logs)
+
+    if fname.exists():
+        book = load_workbook(fname)
+        if sheet_name in book:
+            book.remove(book[sheet_name])
+        writer = pd.ExcelWriter(fname, engine='openpyxl')
+        writer.book = book
+    else:
+        writer = pd.ExcelWriter(fname, engine='openpyxl')
+
+    df.to_excel(writer, sheet_name=sheet_name)
+    writer.save()
+    writer.close()
+
 
 
 # XXX This check should actually go into the CHECKS section, but it depends

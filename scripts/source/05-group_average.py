@@ -120,7 +120,7 @@ def get_config(
 
 
 @failsafe_run(on_error=on_error)
-def main(subject='average'):  # we pass 'average' here for logging
+def run_group_average_source(subject='average'):  # pass 'average' for logging
     """Run group average in source space"""
     msg = 'Running Step: Grand-average source estimates'
     logger.info(gen_log_message(message=msg))
@@ -155,8 +155,18 @@ def main(subject='average'):  # we pass 'average' here for logging
         mean_morphed_stcs=mean_morphed_stcs
     )
 
-    msg = 'Completed Step: Grand-average source estimates'
+
+def main():
+    msg = 'Running Step: Grand-average source data'
     logger.info(gen_log_message(message=msg))
+
+    log = run_group_average_source()
+
+    config.save_logs([log])
+
+    msg = 'Completed Step: Grand-average source data'
+    logger.info(gen_log_message(message=msg))
+
 
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ import traceback
 import sys
 import copy
 import logging
+import inspect
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -2080,7 +2081,7 @@ def get_fs_subjects_dir():
 
 
 def gen_log_message(message, step=None, subject=None, session=None,
-                    run=None) -> str:
+                    run=None, fname=None) -> str:
     if subject is not None:
         subject = f'sub-{subject}'
     if session is not None:
@@ -2093,8 +2094,10 @@ def gen_log_message(message, step=None, subject=None, session=None,
     if prefix:
         prefix = f'[{prefix}]'
 
-    if step is not None:
-        prefix = f'[Step-{step:02}]{prefix}'
+    # Get the script from which the function is called for logging
+    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
+    step_name = f'{script_path.parent.name}/{script_path.stem}'
+    prefix = f'[{step_name}]{prefix}'
 
     return prefix + ' ' + message
 
@@ -2833,9 +2836,12 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return eeg_reference
 
 
-def save_logs(step, logs):
+def save_logs(logs):
     fname = get_deriv_root() / 'logs.xlsx'
-    sheet_name = f'step-{step}'
+
+    # Get the script from which the function is called for logging
+    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
+    sheet_name = f'{script_path.parent.name}-{script_path.stem}'
 
     df = pd.DataFrame(logs)
 
@@ -2848,7 +2854,7 @@ def save_logs(step, logs):
     else:
         writer = pd.ExcelWriter(fname, engine='openpyxl')
 
-    df.to_excel(writer, sheet_name=sheet_name)
+    df.to_excel(writer, sheet_name=sheet_name, index=False)
     writer.save()
     writer.close()
 

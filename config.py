@@ -2874,7 +2874,6 @@ def save_logs(logs):
     writer.close()
 
 
-
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
 if 'MKDOCS' not in os.environ:

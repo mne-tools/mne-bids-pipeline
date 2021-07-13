@@ -66,7 +66,7 @@ def filter(
         msg = (f'Band-pass filtering {data_type} data; range: '
                f'{l_freq} – {h_freq} Hz')
 
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session, run=run))
 
     raw.filter(l_freq=l_freq, h_freq=h_freq,
@@ -88,11 +88,12 @@ def resample(
 
     data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
     msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session, run=run,))
     raw.resample(sfreq, npad='auto')
 
 
+@failsafe_run(on_error=on_error)
 def filter_data(
     *,
     cfg,
@@ -128,7 +129,7 @@ def filter_data(
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
         msg = f'Reading: {raw_fname_in}'
-        logger.info(gen_log_message(message=msg, step=2, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
@@ -167,7 +168,7 @@ def filter_data(
             if raw_er_fname_in.copy().update(split='01').fpath.exists():
                 raw_er_fname_in.update(split='01')
             msg = f'Reading empty-room recording: {raw_er_fname_in}'
-            logger.info(gen_log_message(message=msg, step=2, subject=subject,
+            logger.info(gen_log_message(message=msg, subject=subject,
                                         session=session, run=run))
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
             raw_er.info['bads'] = bads
@@ -236,12 +237,10 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run filter."""
-    step = 2
-    msg = f'Running Step {step}: Frequency filtering'
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = 'Running Step: Frequency filtering'
+    logger.info(gen_log_message(message=msg))
 
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
@@ -263,10 +262,10 @@ def main():
         ) for subject, run, session in sub_run_ses
     )
 
-    config.save_logs(step, logs)
+    config.save_logs(logs)
 
-    msg = 'Completed 2: Frequency filtering'
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = 'Completed: Frequency filtering'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

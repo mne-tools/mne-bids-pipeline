@@ -120,14 +120,14 @@ def get_config(
 
 
 @failsafe_run(on_error=on_error)
-def main():
+def main(subject='average'):  # we pass 'average' here for logging
     """Run group average in source space"""
-    msg = 'Running Step 13: Grand-average source estimates'
-    logger.info(gen_log_message(step=13, message=msg))
+    msg = 'Running Step: Grand-average source estimates'
+    logger.info(gen_log_message(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=13, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
@@ -155,8 +155,8 @@ def main():
         mean_morphed_stcs=mean_morphed_stcs
     )
 
-    msg = 'Completed Step 13: Grand-average source estimates'
-    logger.info(gen_log_message(step=13, message=msg))
+    msg = 'Completed Step: Grand-average source estimates'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

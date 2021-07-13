@@ -46,7 +46,7 @@ def drop_ptp(*, cfg, subject, session=None):
     fname_out = bids_path.copy().update(processing='clean')
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
-    logger.info(gen_log_message(message=msg, step=6, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     # Get rejection parameters and drop bad epochs
@@ -62,12 +62,12 @@ def drop_ptp(*, cfg, subject, session=None):
                 msg = (f'Adjusting PTP rejection threshold proposed by '
                        f'autoreject, as it is greater than ica_reject: '
                        f'{ch_type}: {reject[ch_type]} -> {threshold}')
-                logger.info(gen_log_message(message=msg, step=6,
+                logger.info(gen_log_message(message=msg,
                                             subject=subject, session=session))
                 reject[ch_type] = threshold
 
     msg = f'Using PTP rejection thresholds: {reject}'
-    logger.info(gen_log_message(message=msg, step=6, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     n_epochs_before_reject = len(epochs)
@@ -79,7 +79,7 @@ def drop_ptp(*, cfg, subject, session=None):
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = ('More than 50% of all epochs rejected. Please check the '
                'rejection thresholds.')
-        logger.warning(gen_log_message(message=msg, step=6, subject=subject,
+        logger.warning(gen_log_message(message=msg, subject=subject,
                                        session=session))
     elif n_epochs_after_reject == 0:
         raise RuntimeError('No epochs remaining after peak-to-peak-based '
@@ -114,9 +114,8 @@ def get_config(
 
 def main():
     """Run epochs."""
-    step = 6
-    msg = f'Running Step {step}: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = 'Running Step: Reject epochs based on peak-to-peak amplitude'
+    logger.info(gen_log_message(message=msg))
 
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -126,10 +125,10 @@ def main():
                           config.get_sessions())
     )
 
-    config.save_logs(step, logs)
+    config.save_logs(logs)
 
     msg = 'Completed Step 6: Reject epochs based on peak-to-peak amplitude'
-    logger.info(gen_log_message(step=step, message=msg))
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

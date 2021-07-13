@@ -24,7 +24,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_inverse(cfg, subject, session=None):
+def run_inverse(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -99,12 +99,12 @@ def get_config(
 
 def main():
     """Run inv."""
-    msg = 'Running Step 12: Compute and apply inverse solution'
-    logger.info(gen_log_message(step=12, message=msg))
+    msg = 'Running Step: Compute and apply inverse solution'
+    logger.info(gen_log_message(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=12, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_inverse,
@@ -114,8 +114,8 @@ def main():
              itertools.product(config.get_subjects(),
                                config.get_sessions()))
 
-    msg = 'Completed Step 12: Compute and apply inverse solution'
-    logger.info(gen_log_message(step=12, message=msg))
+    msg = 'Completed Step: Compute and apply inverse solution'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

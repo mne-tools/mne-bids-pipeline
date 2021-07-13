@@ -24,7 +24,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def apply_ssp(cfg, subject, session=None):
+def apply_ssp(*, cfg, subject, session=None):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
 
@@ -46,20 +46,20 @@ def apply_ssp(cfg, subject, session=None):
     epochs = mne.read_epochs(fname_in, preload=True)
 
     msg = f'Input: {fname_in}, Output: {fname_out}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     proj_fname_in = bids_path.copy().update(suffix='proj', check=False)
 
     msg = f'Reading SSP projections from : {proj_fname_in}'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     projs = mne.read_proj(proj_fname_in)
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
 
     msg = 'Saving epochs with projectors.'
-    logger.info(gen_log_message(message=msg, step=5, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
     epochs_cleaned.save(fname_out, overwrite=True)
 
@@ -84,17 +84,22 @@ def main():
     if not config.spatial_filter == 'ssp':
         return
 
-    msg = 'Running Step 5: Apply SSP'
-    logger.info(gen_log_message(step=5, message=msg))
+    msg = 'Running Step: Apply SSP'
+    logger.info(gen_log_message(message=msg))
 
     parallel, run_func, _ = parallel_func(apply_ssp,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(), subject, session) for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 5: Apply SSP'
-    logger.info(gen_log_message(step=5, message=msg))
+    config.save_logs(logs)
+
+    msg = 'Completed Step: Apply SSP'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

@@ -37,9 +37,9 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_time_decoding(cfg, *, subject, condition1, condition2, session=None):
+def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(gen_log_message(message=msg, step=7, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     fname_epochs = BIDSPath(subject=subject,
@@ -144,18 +144,17 @@ def get_config(
 
 def main():
     """Run sliding estimator."""
-    msg = 'Running Step 7: Sliding estimator'
-    step = 7
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = 'Running Step: Sliding estimator'
+    logger.info(gen_log_message(message=msg))
 
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
-        logger.info(gen_log_message(step=step, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     if not config.decode:
         msg = 'No decoding requested by user.'
-        logger.info(gen_log_message(step=step, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
@@ -163,7 +162,7 @@ def main():
     parallel, run_func, _ = parallel_func(run_time_decoding,
                                           n_jobs=1)
     logs = parallel(
-        run_func(get_config(), subject=subject,
+        run_func(cfg=get_config(), subject=subject,
                  condition1=cond_1, condition2=cond_2,
                  session=session)
         for subject, session, (cond_1, cond_2) in
@@ -172,10 +171,10 @@ def main():
                           config.contrasts)
     )
 
-    msg = 'Completed Step 7: Sliding estimator'
-    logger.info(gen_log_message(step=step, message=msg))
+    config.save_logs(logs)
 
-    config.save_logs(step, logs)
+    msg = 'Completed Step: Sliding estimator'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

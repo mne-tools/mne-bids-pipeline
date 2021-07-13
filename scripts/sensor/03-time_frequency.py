@@ -26,7 +26,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def run_time_frequency(cfg, subject, session=None):
+def run_time_frequency(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -46,7 +46,7 @@ def run_time_frequency(cfg, subject, session=None):
                                        extension='.fif')
 
     msg = f'Input: {fname_in}'
-    logger.info(gen_log_message(message=msg, step=8, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     epochs = mne.read_epochs(fname_in)
@@ -102,19 +102,23 @@ def get_config(
 
 
 def main():
-    """Run tf."""
-    msg = 'Running Step 8: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg, step=8))
+    """Run Time-frequency decomposition."""
+    msg = 'Running Step: Time-frequency decomposition'
+    logger.info(gen_log_message(message=msg))
 
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 8: Time-frequency decomposition'
-    logger.info(gen_log_message(message=msg, step=8))
+    config.save_logs(logs)
+
+    msg = 'Completed Step: Time-frequency decomposition'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

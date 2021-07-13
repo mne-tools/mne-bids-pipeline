@@ -196,7 +196,8 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
-def run_report(cfg, subject, session=None):
+@failsafe_run(on_error=on_error)
+def run_report(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -390,12 +391,12 @@ def run_report(cfg, subject, session=None):
         # else:
         #     msg = ('Cannot render sensor alignment (coregistration) because '
         #            'no usable 3d backend was found.')
-        #     logger.warning(gen_log_message(message=msg, step=99,
+        #     logger.warning(gen_log_message(message=msg,
         #                                    subject=subject, session=session))
 
         for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'
-            logger.info(gen_log_message(message=msg, step=99,
+            logger.info(gen_log_message(message=msg,
                                         subject=subject, session=session))
 
             if condition in cfg.conditions:
@@ -533,7 +534,8 @@ def add_event_counts(*,
 #         epochs = mne.read_epochs(fname_epochs)
 
 
-def run_report_average(cfg, subject: str, session: str) -> None:
+@failsafe_run(on_error=on_error)
+def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -687,7 +689,7 @@ def run_report_average(cfg, subject: str, session: str) -> None:
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
     msg = 'Completed Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
+    logger.info(gen_log_message(message=msg))
     plt.close('all')  # close all figures to save memory
 
 
@@ -724,20 +726,22 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Make reports."""
-    msg = 'Running Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
+    msg = 'Running Step: Create reports'
+    logger.info(gen_log_message(message=msg))
 
     parallel, run_func, _ = parallel_func(run_report,
                                           n_jobs=config.get_n_jobs())
-    parallel(
-        run_func(get_config(subject=subject), subject, session)
+    logs = parallel(
+        run_func(cfg=get_config(subject=subject), subject=subject,
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(),
                           config.get_sessions())
     )
+
+    config.save_logs(logs)
 
     sessions = config.get_sessions()
     if not sessions:
@@ -746,7 +750,7 @@ def main():
     if (config.get_task() is not None and
             config.get_task().lower() == 'rest'):
         msg = '    … skipping "average" report for "rest" task.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     for session in sessions:

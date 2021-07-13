@@ -2080,8 +2080,8 @@ def get_fs_subjects_dir():
                 .resolve())
 
 
-def gen_log_message(message, step=None, subject=None, session=None,
-                    run=None, fname=None) -> str:
+def gen_log_message(message, subject=None, session=None,
+                    run=None) -> str:
     if subject is not None:
         subject = f'sub-{subject}'
     if session is not None:
@@ -2398,12 +2398,12 @@ def _rename_events_func(cfg, raw, subject, session) -> None:
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
-    logger.info(gen_log_message(message=msg, step=0, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
     descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(gen_log_message(message=msg, step=0,
+        logger.info(gen_log_message(message=msg,
                                     subject=subject, session=session))
         for idx, description in enumerate(descriptions.copy()):
             if description == old_event_name:
@@ -2431,7 +2431,7 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
         msg = ('Finding flat channels, and noisy channels using '
                'Maxwell filtering.')
 
-    logger.info(gen_log_message(message=msg, step=0, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     bids_path = BIDSPath(subject=subject,
@@ -2461,19 +2461,19 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
 
     if find_flat_channels_meg:
         msg = f'Found {len(auto_flat_chs)} flat channels.'
-        logger.info(gen_log_message(message=msg, step=0,
+        logger.info(gen_log_message(message=msg,
                                     subject=subject, session=session))
         bads.extend(auto_flat_chs)
     if find_noisy_channels_meg:
         msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-        logger.info(gen_log_message(message=msg, step=0,
+        logger.info(gen_log_message(message=msg,
                                     subject=subject, session=session))
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
     raw.info['bads'] = bads
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(gen_log_message(message=msg, step=0,
+    logger.info(gen_log_message(message=msg,
                                 subject=subject, session=session))
 
     if find_noisy_channels_meg:
@@ -2556,7 +2556,7 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
     """
     if cfg.drop_channels:
         msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
-        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
         raw.drop_channels(cfg.drop_channels)
 
@@ -2568,12 +2568,12 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
     """
     if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
-        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
         raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
-            logger.info(gen_log_message(message=msg, step=0, subject=subject,
+            logger.info(gen_log_message(message=msg, subject=subject,
                                         session=session))
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
@@ -2588,12 +2588,12 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
                 any([eog_ch_name in cfg.eeg_bipolar_channels
                      for eog_ch_name in eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
-            logger.info(gen_log_message(message=msg, step=0, subject=subject,
+            logger.info(gen_log_message(message=msg, subject=subject,
                                         session=session))
         for eog_ch_name in eog_channels:
             if eog_ch_name in cfg.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
-                logger.info(gen_log_message(message=msg, step=0,
+                logger.info(gen_log_message(message=msg,
                                             subject=subject,
                                             session=session))
                 raw.set_channel_types({eog_ch_name: 'eog'})
@@ -2611,7 +2611,7 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
     if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage}.')
-        logger.info(gen_log_message(message=msg, step=0, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
         if not is_mne_montage:
             montage = mne.channels.make_standard_montage(montage_name)
@@ -2772,7 +2772,7 @@ def get_reference_run_info(
 ) -> mne.Info:
 
     msg = f'Loading info for run: {run}.'
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session, run=run))
 
     bids_path = BIDSPath(
@@ -2803,13 +2803,13 @@ def _find_breaks_func(
 ) -> None:
     if not cfg.find_breaks:
         msg = 'Finding breaks has been disabled by the user.'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session, run=run))
         return
 
     msg = (f'Finding breaks with a mininum duration of '
            f'{cfg.min_break_duration} seconds.')
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session, run=run))
 
     break_annots = mne.preprocessing.annotate_break(
@@ -2821,7 +2821,7 @@ def _find_breaks_func(
 
     msg = (f'Found and annotated '
            f'{len(break_annots) if break_annots else "no"} break periods.')
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session, run=run))
 
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
@@ -2842,6 +2842,7 @@ def save_logs(logs):
     # Get the script from which the function is called for logging
     script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
     sheet_name = f'{script_path.parent.name}-{script_path.stem}'
+    sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
     df = pd.DataFrame(logs)
 

@@ -59,7 +59,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
     msg = f'Loading reference run: {cfg.mf_reference_run}.'
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     reference_run_info = get_reference_run_info(
@@ -82,7 +82,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
 
         # Maxwell-filter experimental data.
         msg = 'Applying Maxwell filter to experimental data.'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session, run=run))
 
         # Warn if no bad channels are set before Maxwell filter
@@ -92,11 +92,11 @@ def run_maxwell_filter(*, cfg, subject, session=None):
         if not bads:
             msg = 'Found no bad channels.'
             logger.warning(gen_log_message(message=msg, subject=subject,
-                                           step=1, session=session, run=run))
+                                           session=session, run=run))
 
         if cfg.mf_st_duration:
             msg = '    st_duration=%d' % (cfg.mf_st_duration)
-            logger.info(gen_log_message(message=msg, step=1,
+            logger.info(gen_log_message(message=msg,
                                         subject=subject, session=session,
                                         run=run))
 
@@ -134,7 +134,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
         # convenient to code it this way.
         if cfg.process_er and run == cfg.mf_reference_run:
             msg = 'Processing empty-room recording …'
-            logger.info(gen_log_message(step=1, subject=subject,
+            logger.info(gen_log_message(subject=subject,
                                         session=session, message=msg))
 
             raw_er = import_er_data(
@@ -147,7 +147,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
 
             # Maxwell-filter empty-room data.
             msg = 'Applying Maxwell filter to empty-room recording'
-            logger.info(gen_log_message(message=msg, step=1,
+            logger.info(gen_log_message(message=msg,
                                         subject=subject, session=session))
 
             # We want to ensure we use the same coordinate frame origin in
@@ -229,9 +229,8 @@ def get_config(
 
 def main():
     """Run maxwell_filter."""
-    msg = 'Running Step 1: Maxwell filter'
-    step = 1
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = 'Running Step: Maxwell filter'
+    logger.info(gen_log_message(message=msg))
 
     if config.use_maxwell_filter:
         parallel, run_func, _ = parallel_func(run_maxwell_filter,
@@ -244,10 +243,10 @@ def main():
                               config.get_sessions())
         )
 
-        config.save_logs(step, logs)
+        config.save_logs(logs)
 
-    msg = 'Completed Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    msg = 'Completed Step: Maxwell filter'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

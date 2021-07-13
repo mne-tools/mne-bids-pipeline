@@ -67,7 +67,7 @@ def run_evoked(*, cfg, subject, session=None):
 
     if cfg.contrasts:
         msg = 'Contrasting evoked responses …'
-        logger.info(gen_log_message(message=msg, step=6, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
 
         for contrast in cfg.contrasts:

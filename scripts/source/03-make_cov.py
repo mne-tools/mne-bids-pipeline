@@ -44,7 +44,7 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname}, Output: {cov_fname}")
-    logger.info(gen_log_message(message=msg, step=11, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
@@ -72,7 +72,7 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
     msg = (f'Computing regularized covariance based on empty-room recording. '
            f'Input: {raw_er_fname}, Output: {cov_fname}')
-    logger.info(gen_log_message(message=msg, step=11, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
@@ -81,7 +81,7 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
 
 @failsafe_run(on_error=on_error)
-def run_covariance(cfg, subject, session=None):
+def run_covariance(*, cfg, subject, session=None):
     if cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
         compute_cov_from_empty_room(cfg=cfg, subject=subject, session=session)
     else:
@@ -111,12 +111,12 @@ def get_config(
 
 def main():
     """Run cov."""
-    msg = 'Running Step 11: Estimate noise covariance'
-    logger.info(gen_log_message(step=11, message=msg))
+    msg = 'Running Step: Estimate noise covariance'
+    logger.info(gen_log_message(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=11, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_covariance,
@@ -126,8 +126,8 @@ def main():
              itertools.product(config.get_subjects(),
                                config.get_sessions()))
 
-    msg = 'Completed Step 11: Estimate noise covariance'
-    logger.info(gen_log_message(step=11, message=msg))
+    msg = 'Completed Step: Estimate noise covariance'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

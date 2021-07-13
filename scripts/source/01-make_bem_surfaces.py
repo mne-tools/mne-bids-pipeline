@@ -25,7 +25,7 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 
 @failsafe_run(on_error=on_error)
-def make_bem(cfg, subject):
+def make_bem(*, cfg, subject):
     fs_subject = cfg.fs_subject
     mri_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'mri'
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
@@ -48,10 +48,10 @@ def make_bem(cfg, subject):
         msg = 'Found existing BEM surfaces. '
         if cfg.recreate_bem:
             msg += 'Overwriting as requested in configuration.'
-            logger.info(gen_log_message(step=10, message=msg, subject=subject))
+            logger.info(gen_log_message(message=msg, subject=subject))
         else:
             msg = 'Skipping surface extraction as requested in configuration.'
-            logger.info(gen_log_message(step=10, message=msg, subject=subject))
+            logger.info(gen_log_message(message=msg, subject=subject))
             return
 
     if mri_images == 'FLASH':
@@ -62,7 +62,7 @@ def make_bem(cfg, subject):
                'watershed algorithm')
         bem_func = mne.bem.make_watershed_bem
 
-    logger.info(gen_log_message(step=10, message=msg, subject=subject))
+    logger.info(gen_log_message(message=msg, subject=subject))
     bem_func(subject=fs_subject,
              subjects_dir=cfg.fs_subjects_dir,
              copy=True,
@@ -71,7 +71,7 @@ def make_bem(cfg, subject):
 
 
 @failsafe_run(on_error=on_error)
-def make_scalp_surface(cfg, subject):
+def make_scalp_surface(*, cfg, subject):
     fs_subject = cfg.fs_subject
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
 
@@ -86,11 +86,11 @@ def make_scalp_surface(cfg, subject):
     if not generate_surface:
         # Seems everything is in place, so we can safely skip surface creation
         msg = 'Not generating high-resolution scalp surface.'
-        logger.info(gen_log_message(step=10, message=msg, subject=subject))
+        logger.info(gen_log_message(message=msg, subject=subject))
         return
 
     msg = 'Generating high-resolution scalp surface for coregistration.'
-    logger.info(gen_log_message(step=10, message=msg, subject=subject))
+    logger.info(gen_log_message(message=msg, subject=subject))
 
     mne.bem.make_scalp_surfaces(
         subject=fs_subject,
@@ -118,17 +118,17 @@ def get_config(
 
 def main():
     """Run BEM surface extraction."""
-    msg = 'Running Step 10: Create BEM & high-resolution scalp surface'
-    logger.info(gen_log_message(step=10, message=msg))
+    msg = 'Running Step: Create BEM & high-resolution scalp surface'
+    logger.info(gen_log_message(message=msg))
 
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     if config.use_template_mri:
         msg = '    … skipping BEM computating when using MRI template.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(make_bem,
@@ -141,8 +141,8 @@ def main():
     parallel(run_func(get_config(subject=subject), subject)
              for subject in config.get_subjects())
 
-    msg = 'Completed Step 10: Create BEM & high-resolution scalp surface'
-    logger.info(gen_log_message(step=10, message=msg))
+    msg = 'Completed Step: Create BEM & high-resolution scalp surface'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

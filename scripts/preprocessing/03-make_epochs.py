@@ -60,7 +60,7 @@ def run_epochs(*, cfg, subject, session=None):
     epochs_all_runs = []
     for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
@@ -74,7 +74,7 @@ def run_epochs(*, cfg, subject, session=None):
                     del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session, run=run))
         epochs = make_epochs(
             raw=raw,
@@ -99,11 +99,11 @@ def run_epochs(*, cfg, subject, session=None):
 
     msg = (f'Created {len(epochs)} epochs with time interval: '
            f'{epochs.tmin} – {epochs.tmax} sec')
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
 
     msg = 'Writing epochs to disk'
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
     epochs.save(epochs_fname, overwrite=True)
@@ -147,9 +147,8 @@ def get_config(
 
 def main():
     """Run epochs."""
-    step = 3
-    msg = f'Running Step {step}: Epoching'
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = f'Running Step: Epoching'
+    logger.info(gen_log_message(message=msg))
 
     # Here we use fewer n_jobs to prevent potential memory problems
     parallel, run_func, _ = parallel_func(
@@ -163,10 +162,10 @@ def main():
         itertools.product(config.get_subjects(), config.get_sessions())
     )
 
-    config.save_logs(step, logs)
+    config.save_logs(logs)
 
-    msg = f'Completed Step {step}: Epoching'
-    logger.info(gen_log_message(step=step, message=msg))
+    msg = f'Completed Step: Epoching'
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

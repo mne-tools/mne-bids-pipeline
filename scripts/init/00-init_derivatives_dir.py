@@ -25,7 +25,7 @@ def init_dataset(cfg) -> None:
     """Prepare the pipeline directory in /derivatives.
     """
     msg = "Initializing output directories."
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(gen_log_message(message=msg))
 
     cfg.deriv_root.mkdir(exist_ok=True, parents=True)
 
@@ -80,7 +80,7 @@ def get_config(
 def main():
     """Initialize the output directories."""
     msg = 'Running: Initializing output directories.'
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(gen_log_message(message=msg))
 
     init_dataset(cfg=get_config())
     parallel, run_func, _ = parallel_func(init_subject_dirs,
@@ -91,7 +91,7 @@ def main():
                                config.get_sessions()))
 
     msg = 'Completed: Initializing output directories.'
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(gen_log_message(message=msg))
 
 
 if __name__ == '__main__':

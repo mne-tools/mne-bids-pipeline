@@ -21,13 +21,9 @@ from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message
+from config import gen_log_message, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
-
-
-msg = 'Running Step 9: Grand-average sensor data'
-logger.info(gen_log_message(step=9, message=msg))
 
 
 def average_evokeds(cfg, session):
@@ -49,7 +45,7 @@ def average_evokeds(cfg, session):
                             check=False)
 
         msg = f'Input: {fname_in}'
-        logger.info(gen_log_message(message=msg, step=9, subject=subject,
+        logger.info(gen_log_message(message=msg, subject=subject,
                                     session=session))
 
         evokeds = mne.read_evokeds(fname_in)
@@ -82,7 +78,7 @@ def average_evokeds(cfg, session):
         os.makedirs(fname_out.fpath.parent)
 
     msg = f'Saving grand-averaged evoked sensor data: {fname_out}'
-    logger.info(gen_log_message(message=msg, step=9, subject=subject,
+    logger.info(gen_log_message(message=msg, subject=subject,
                                 session=session))
     mne.write_evokeds(fname_out, list(all_evokeds.values()))
     return list(all_evokeds.values())
@@ -208,10 +204,14 @@ def get_config(
     return cfg
 
 
-def main():
+@failsafe_run(on_error=on_error)
+def main(subject='average'):  # we pass 'average' here for logging
+    msg = 'Running Step: Grand-average sensor data'
+    logger.info(gen_log_message(message=msg))
+
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(gen_log_message(message=msg))
         return
 
     sessions = config.get_sessions()
@@ -227,10 +227,9 @@ def main():
         if config.decode:
             average_decoding(get_config(), session)
 
+    msg = 'Completed Step: Grand-average sensor data'
+    logger.info(gen_log_message(message=msg))
+
 
 if __name__ == '__main__':
     main()
-
-
-msg = 'Completed Step 9: Grand-average sensor data'
-logger.info(gen_log_message(step=9, message=msg))

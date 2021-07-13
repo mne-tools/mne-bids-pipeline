@@ -229,21 +229,23 @@ def get_config(
 
 def main():
     """Run maxwell_filter."""
+    if not config.use_maxwell_filter:
+        return
+
     msg = 'Running Step: Maxwell filter'
     logger.info(gen_log_message(message=msg))
 
-    if config.use_maxwell_filter:
-        parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                              n_jobs=config.get_n_jobs())
-        logs = parallel(
-            run_func(cfg=get_config(subject, session),
-                     subject=subject, session=session)
-            for subject, session in
-            itertools.product(config.get_subjects(),
-                              config.get_sessions())
-        )
+    parallel, run_func, _ = parallel_func(run_maxwell_filter,
+                                          n_jobs=config.get_n_jobs())
+    logs = parallel(
+        run_func(cfg=get_config(subject, session),
+                 subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-        config.save_logs(logs)
+    config.save_logs(logs)
 
     msg = 'Completed Step: Maxwell filter'
     logger.info(gen_log_message(message=msg))

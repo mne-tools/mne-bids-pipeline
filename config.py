@@ -2922,12 +2922,12 @@ def save_logs(logs):
 
     df = pd.DataFrame(logs)
 
-    column_order = ('subject', 'session', 'run', 'task', 'cfg', 'success',
-                    'error_message')
-    columns = []
-    for column in column_order:
-        if column in df.columns:
-            columns.append(column)
+    columns = df.columns
+    if "cfg" in columns:
+        columns = list(columns)
+        idx = columns.index("cfg")
+        del columns[idx]
+        columns.insert(-2, "cfg")
 
     df = df[columns]
 

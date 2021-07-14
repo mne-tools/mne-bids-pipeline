@@ -1596,6 +1596,7 @@ coloredlogs.install(
 
 mne.set_log_level(verbose=mne_log_level.upper())
 
+
 class LogKwargsT(TypedDict):
     msg: str
     extra: Dict[str, str]

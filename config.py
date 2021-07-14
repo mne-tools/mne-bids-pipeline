@@ -1593,6 +1593,47 @@ coloredlogs.install(
 
 mne.set_log_level(verbose=mne_log_level.upper())
 
+class LogKwargsT(TypedDict):
+    msg: str
+    extra: Dict[str, str]
+
+
+def gen_log_kwargs(
+    message: str,
+    subject: Optional[Union[str, int]] = None,
+    session: Optional[Union[str, int]] = None,
+    run: Optional[Union[str, int]] = None
+) -> LogKwargsT:
+    if subject is not None:
+        subject = f' sub-{subject}'
+    if session is not None:
+        session = f' ses-{session}'
+    if run is not None:
+        run = f' run-{run}'
+
+    message = f' {message}'
+
+    # Get the script from which the function is called for logging
+    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
+    step_name = f'{script_path.parent.name}/{script_path.stem}'
+
+    extra = {
+        'step': step_name
+    }
+    if subject:
+        extra['subject'] = subject
+    if session:
+        extra['session'] = session
+    if run:
+        extra['run'] = run
+
+    kwargs: LogKwargsT = {
+        'msg': message,
+        'extra': extra
+    }
+    return kwargs
+
+
 ###############################################################################
 # Retrieve custom configuration options
 # -------------------------------------
@@ -1610,7 +1651,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 
     if cfg_path.exists():
         msg = f'Using custom configuration: {cfg_path}'
-        logger.info(msg)
+        logger.info(**gen_log_kwargs(message=msg))
     else:
         msg = ('The custom configuration file specified in the '
                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
@@ -1703,7 +1744,7 @@ if 'eeg' in ch_types:
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
            f"but received: {on_error}.")
-    logger.info(msg)
+    logger.info(**gen_log_kwargs(message=msg))
 
 if isinstance(noise_cov, str) and noise_cov != 'emptyroom':
     msg = (f"noise_cov must be a tuple or 'emptyroom', but received "
@@ -1976,7 +2017,7 @@ def get_runs(
             msg = ('Extracted all the runs. '
                    'Beware, not all subjects share the same '
                    'set of runs.')
-            logger.info(msg)
+            logger.info(**gen_log_kwargs(message=msg))
 
     env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
     if env_run and env_run not in valid_runs:
@@ -2131,48 +2172,6 @@ def get_fs_subjects_dir():
         return (pathlib.Path(subjects_dir)
                 .expanduser()
                 .resolve())
-
-
-class LogKwargsT(TypedDict):
-    msg: str
-    extra: Dict[str, str]
-
-
-def gen_log_kwargs(
-    message: str,
-    subject: Optional[Union[str, int]] = None,
-    session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None
-) -> LogKwargsT:
-    if subject is not None:
-        subject = f' sub-{subject}'
-    if session is not None:
-        session = f' ses-{session}'
-    if run is not None:
-        run = f' run-{run}'
-
-    message = f' {message}'
-
-    # Get the script from which the function is called for logging
-    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
-    step_name = f'{script_path.parent.name}/{script_path.stem}'
-    # prefix = f'[{step_name}]{prefix}'
-
-    extra = {
-        'step': step_name
-    }
-    if subject:
-        extra['subject'] = subject
-    if session:
-        extra['session'] = session
-    if run:
-        extra['run'] = run
-
-    kwargs: LogKwargsT = {
-        'msg': message,
-        'extra': extra
-    }
-    return kwargs
 
 
 def failsafe_run(on_error):

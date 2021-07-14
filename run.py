@@ -15,9 +15,22 @@ import fire
 import coloredlogs
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
+
+log_level_styles = {
+    'info': {
+        'bright': True,
+        'bold': True
+    }
+}
+log_fmt = '\n%(message)s'
+coloredlogs.install(
+    fmt=log_fmt,
+    level_styles=log_level_styles,
+    logger=logger
+)
 
 PathLike = Union[str, pathlib.Path]
+
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
@@ -216,12 +229,15 @@ def process(config: PathLike,
         # them twice.
         script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
+    logger.info(
+        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+        "   Please fasten your seatbelt. We hope you'll enjoy your flight.\n"
+    )
     for script_path in script_paths:
         step_name = f'{script_path.parent.name}/{script_path.name}'
-        logger.info(f'Now running: {step_name}')
+        logger.info(f'🚀 Now running script: {step_name} 👇\n')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)
-        logger.info(f'Successfully finished running: {step_name}')
 
 
 if __name__ == '__main__':

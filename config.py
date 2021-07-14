@@ -1536,9 +1536,18 @@ logger = logging.getLogger('mne-bids-pipeline')
 log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
 log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
 log_level_styles = {
-    'warning': '202,bold',
-    'error': 'bold,background=red',
-    'critical': 'bold,background=red'
+    'warning': {
+        'color': 202,
+        'bold': True
+    },
+    'error': {
+        'background': 'red',
+        'bold': True
+    },
+    'critical': {
+        'background': 'red',
+        'bold': True
+    }
 }
 log_field_styles = {
     'step': {

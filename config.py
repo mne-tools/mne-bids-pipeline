@@ -2131,7 +2131,7 @@ def gen_log_kwargs(
     message: str,
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]]  = None
+    run: Optional[Union[str, int]] = None
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'

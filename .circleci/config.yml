@@ -295,6 +295,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000117
           destination: reports/ds000117
@@ -323,6 +324,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000246
           destination: reports/ds000246
@@ -351,6 +353,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000247
           destination: reports/ds000247
@@ -380,6 +383,7 @@ jobs:
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.json ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248
           destination: reports/ds000248
@@ -410,6 +414,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
@@ -490,6 +495,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248_no_mri
           destination: reports/ds000248_no_mri
@@ -517,6 +523,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds001810
           destination: reports/ds001810
@@ -544,6 +551,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds003104
           destination: reports/ds003104
@@ -573,6 +581,7 @@ jobs:
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds003392
           destination: reports/ds003392
@@ -602,6 +611,7 @@ jobs:
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/eeg_matchingpennies
           destination: reports/eeg_matchingpennies
@@ -631,36 +641,43 @@ jobs:
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N400
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE ERN
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_ERN
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*ERN*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE LRP
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_LRP
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*LRP*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE MMN
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_MMN
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*MMN*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE N2pc
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_N2pc
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N2pc*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE N170
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_N170
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N170*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - run:
           name: test ERP CORE P3
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_P3
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*P3*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE

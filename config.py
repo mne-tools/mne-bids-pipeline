@@ -12,7 +12,7 @@ import traceback
 import sys
 import copy
 import logging
-import inspect
+import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -2181,6 +2181,7 @@ def failsafe_run(on_error):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
             kwargs_copy = copy.deepcopy(kwargs)
+            t0 = time.time()
             if "cfg" in kwargs_copy:
                 kwargs_copy["cfg"] = json_tricks.dumps(
                     kwargs_copy["cfg"], sort_keys=False, indent=4
@@ -2208,6 +2209,7 @@ def failsafe_run(on_error):
                 else:
                     message = f'{message} The error message was:\n{str(e)}'
                     logger.critical(**gen_log_kwargs(message=message))
+            log_info['time'] = round(time.time() - t0, ndigits=1)
             return log_info
         return wrapper
     return failsafe_run_decorator

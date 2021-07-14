@@ -2143,7 +2143,6 @@ def gen_log_kwargs(
 
     message = f' {message}'
 
-
     # Get the script from which the function is called for logging
     script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
     step_name = f'{script_path.parent.name}/{script_path.stem}'

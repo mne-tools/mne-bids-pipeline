@@ -114,9 +114,6 @@ def get_config(
 
 def main():
     """Run epochs."""
-    msg = 'Running Step: Reject epochs based on peak-to-peak amplitude'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
     logs = parallel(
         run_func(cfg=get_config(), subject=subject, session=session)
@@ -126,9 +123,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step 6: Reject epochs based on peak-to-peak amplitude'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

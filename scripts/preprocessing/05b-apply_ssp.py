@@ -84,9 +84,6 @@ def main():
     if not config.spatial_filter == 'ssp':
         return
 
-    msg = 'Running Step: Apply SSP'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(apply_ssp,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -97,9 +94,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Apply SSP'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

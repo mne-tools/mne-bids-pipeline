@@ -239,9 +239,6 @@ def get_config(
 
 def main():
     """Run filter."""
-    msg = 'Running Step: Frequency filtering'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
 
@@ -263,9 +260,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed: Frequency filtering'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

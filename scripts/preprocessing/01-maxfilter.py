@@ -232,9 +232,6 @@ def main():
     if not config.use_maxwell_filter:
         return
 
-    msg = 'Running Step: Maxwell filter'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(run_maxwell_filter,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -246,9 +243,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Maxwell filter'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

@@ -164,9 +164,6 @@ def get_config(
 
 def main():
     """Run forward."""
-    msg = 'Running Step: Create forward solution'
-    logger.info(**gen_log_kwargs(message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -183,9 +180,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Create forward solution'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

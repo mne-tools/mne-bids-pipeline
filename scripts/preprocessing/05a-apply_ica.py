@@ -149,9 +149,6 @@ def main():
     if not config.spatial_filter == 'ica':
         return
 
-    msg = 'Running Step: Apply ICA'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(apply_ica,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -162,9 +159,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Apply ICA'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

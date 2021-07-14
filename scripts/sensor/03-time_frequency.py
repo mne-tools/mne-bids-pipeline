@@ -103,9 +103,6 @@ def get_config(
 
 def main():
     """Run Time-frequency decomposition."""
-    msg = 'Running Step: Time-frequency decomposition'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(
@@ -116,9 +113,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Time-frequency decomposition'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

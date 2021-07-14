@@ -144,9 +144,6 @@ def get_config(
 
 def main():
     """Run sliding estimator."""
-    msg = 'Running Step: Sliding estimator'
-    logger.info(**gen_log_kwargs(message=msg))
-
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -172,9 +169,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Sliding estimator'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

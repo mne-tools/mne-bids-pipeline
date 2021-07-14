@@ -111,9 +111,6 @@ def get_config(
 
 def main():
     """Run evoked."""
-    msg = 'Running Step: Create evoked data'
-    logger.info(**gen_log_kwargs(message=msg))
-
     if config.get_task().lower() == 'rest':
         msg = '    … skipping: for "rest" task.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -129,9 +126,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Create evoked data'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

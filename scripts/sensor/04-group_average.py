@@ -226,15 +226,8 @@ def run_group_average_sensor(*, cfg, subject='average'):
 
 
 def main():
-    msg = 'Running Step: Grand-average sensor data'
-    logger.info(**gen_log_kwargs(message=msg))
-
     log = run_group_average_sensor(cfg=get_config(), subject='average')
-
     config.save_logs([log])
-
-    msg = 'Completed Step: Grand-average sensor data'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

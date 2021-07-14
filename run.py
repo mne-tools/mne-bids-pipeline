@@ -22,7 +22,7 @@ log_level_styles = {
         'bold': True
     }
 }
-log_fmt = '\n%(message)s'
+log_fmt = '%(message)s'
 coloredlogs.install(
     fmt=log_fmt,
     level_styles=log_level_styles,
@@ -232,13 +232,13 @@ def process(config: PathLike,
 
     logger.info(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
-        "   Please fasten your seatbelt. We hope you'll enjoy your flight.\n"
     )
     for script_path in script_paths:
         step_name = f'{script_path.parent.name}/{script_path.name}'
-        logger.info(f'🚀 Now running script: {step_name} 👇\n')
+        logger.info(f'🚀 Now running script: {step_name} 👇')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)
+        logger.info(f'💪 Done running script: {step_name}')
 
 
 if __name__ == '__main__':

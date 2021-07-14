@@ -147,9 +147,6 @@ def get_config(
 
 def main():
     """Run epochs."""
-    msg = 'Running Step: Epoching'
-    logger.info(**gen_log_kwargs(message=msg))
-
     # Here we use fewer n_jobs to prevent potential memory problems
     parallel, run_func, _ = parallel_func(
         run_epochs,
@@ -163,9 +160,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Epoching'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

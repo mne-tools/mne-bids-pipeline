@@ -117,9 +117,6 @@ def get_config() -> BunchConst:
 @failsafe_run(on_error=on_error)  # pass 'average' for logging
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
-    msg = 'Running Step: Grand-average source estimates'
-    logger.info(**gen_log_kwargs(message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -154,15 +151,8 @@ def run_group_average_source(*, cfg, subject='average'):
 
 
 def main():
-    msg = 'Running Step: Grand-average source data'
-    logger.info(**gen_log_kwargs(message=msg))
-
     log = run_group_average_source(cfg=get_config())
-
     config.save_logs([log])
-
-    msg = 'Completed Step: Grand-average source data'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

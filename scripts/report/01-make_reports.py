@@ -688,8 +688,6 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         task=cfg.task, suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
-    msg = 'Completed Step 99: Create reports'
-    logger.info(**gen_log_kwargs(message=msg))
     plt.close('all')  # close all figures to save memory
 
 
@@ -728,9 +726,6 @@ def get_config(
 
 def main():
     """Make reports."""
-    msg = 'Running Step: Create reports'
-    logger.info(**gen_log_kwargs(message=msg))
-
     parallel, run_func, _ = parallel_func(run_report,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(

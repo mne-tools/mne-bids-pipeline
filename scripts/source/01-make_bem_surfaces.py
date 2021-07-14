@@ -122,9 +122,6 @@ def make_bem_and_scalp_surface(*, cfg, subject):
 
 def main():
     """Run BEM surface extraction."""
-    msg = 'Running Step: Create BEM & high-resolution scalp surface'
-    logger.info(**gen_log_kwargs(message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -143,9 +140,6 @@ def main():
     )
 
     config.save_logs(logs)
-
-    msg = 'Completed Step: Create BEM & high-resolution scalp surface'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

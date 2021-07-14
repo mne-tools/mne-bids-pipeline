@@ -2142,10 +2142,6 @@ def gen_log_kwargs(
 
     message = f' {message}'
 
-    # prefix = ', '.join([item for item in [subject, session, run]
-    #                     if item is not None])
-    # if prefix:
-    #     prefix = f'[{prefix}]'
 
     # Get the script from which the function is called for logging
     script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
@@ -2176,7 +2172,7 @@ def failsafe_run(on_error):
             kwargs_copy = copy.deepcopy(kwargs)
             if "cfg" in kwargs_copy:
                 kwargs_copy["cfg"] = json_tricks.dumps(
-                    kwargs_copy["cfg"], sort_keys=False, indent=2
+                    kwargs_copy["cfg"], sort_keys=False, indent=4
                 )
             log_info = pd.Series(kwargs_copy)
             try:

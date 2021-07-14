@@ -1550,12 +1550,15 @@ log_level_styles = {
     }
 }
 log_field_styles = {
+    'asctime': {
+        'color': 'green'
+    },
     'step': {
         'color': 'white',
         'bold': True
     },
     'subject': {
-        'color': 'cyan',
+        'color': 'blue',
         'bright': True,
         'bold': True
     },
@@ -1613,8 +1616,7 @@ def gen_log_kwargs(
 
     message = f' {message}'
 
-    # Get the script from which the function is called for logging
-    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
+    script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
     extra = {
@@ -2916,7 +2918,7 @@ def save_logs(logs):
     fname = get_deriv_root() / f'task-{get_task()}_log.xlsx'
 
     # Get the script from which the function is called for logging
-    script_path = pathlib.Path(inspect.getsourcefile(sys._getframe(1)))
+    script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
     sheet_name = f'{script_path.parent.name}-{script_path.stem}'
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 

@@ -1555,7 +1555,8 @@ log_field_styles = {
         'bold': True
     },
     'subject': {
-        'color': 'blue',
+        'color': 'cyan',
+        'bright': True,
         'bold': True
     },
     'session': {

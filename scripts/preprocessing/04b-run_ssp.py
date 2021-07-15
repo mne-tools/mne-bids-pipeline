@@ -58,12 +58,13 @@ def run_ssp(*, cfg, subject, session=None):
                                   session=session))
 
     reject_ecg_ = None
-    ecg_epochs = (create_ecg_epochs(raw)
-                  if cfg.ssp_reject_ecg == 'autoreject_global' else None)
-    if len(ecg_epochs) >= 5:
-        reject_ecg_ = config.get_ssp_reject(
-            ssp_type='ecg',
-            epochs=ecg_epochs)
+    ecg_epochs = None
+    if cfg.ssp_reject_ecg == 'autoreject_global':
+        ecg_epochs = create_ecg_epochs(raw)
+        if len(ecg_epochs) >= 5:
+            reject_ecg_ = config.get_ssp_reject(
+                ssp_type='ecg',
+                epochs=ecg_epochs)
     ecg_projs, _ = compute_proj_ecg(raw,
                                     average=cfg.ecg_proj_from_average,
                                     reject=reject_ecg_,
@@ -83,13 +84,13 @@ def run_ssp(*, cfg, subject, session=None):
         ch_names = None
 
     reject_eog_ = None
-    eog_epochs = (create_eog_epochs(raw)
-                  if cfg.ssp_reject_eog == 'autoreject_global' else None)
-
-    if len(eog_epochs) >= 5:
-        reject_eog_ = config.get_ssp_reject(
-            ssp_type='eog',
-            epochs=eog_epochs)
+    eog_epochs = None
+    if cfg.ssp_reject_eog == 'autoreject_global':
+        eog_epochs = create_eog_epochs(raw)
+        if len(eog_epochs) >= 5:
+            reject_eog_ = config.get_ssp_reject(
+                ssp_type='eog',
+                epochs=eog_epochs)
 
     eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
                                     average=cfg.eog_proj_from_average,

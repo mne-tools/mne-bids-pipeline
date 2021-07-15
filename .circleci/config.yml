@@ -257,10 +257,10 @@ jobs:
   test_ds000117:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000117-{{ .Revision }}
@@ -283,10 +283,10 @@ jobs:
   test_ds000246:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000246-{{ .Revision }}
@@ -311,10 +311,10 @@ jobs:
   test_ds000247:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000247-{{ .Revision }}
@@ -337,10 +337,10 @@ jobs:
   test_ds000248:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -367,10 +367,10 @@ jobs:
   test_ds000248_ica:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -395,10 +395,10 @@ jobs:
   test_ds000248_FLASH_BEM:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -410,10 +410,10 @@ jobs:
   test_ds000248_T1_BEM:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -426,10 +426,10 @@ jobs:
   test_ds000248_coreg_surfaces:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -441,10 +441,10 @@ jobs:
   test_ds000248_no_mri:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -467,10 +467,10 @@ jobs:
   test_ds001810:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds001810-{{ .Revision }}
@@ -493,10 +493,10 @@ jobs:
   test_ds003104:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds003104-{{ .Revision }}
@@ -519,10 +519,10 @@ jobs:
   test_ds003392:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds003392-{{ .Revision }}
@@ -549,10 +549,10 @@ jobs:
   test_eeg_matchingpennies:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-eeg_matchingpennies-{{ .Revision }}
@@ -575,10 +575,10 @@ jobs:
   test_ERP_CORE:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
@@ -639,10 +639,10 @@ jobs:
   build_docs:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       # necessary because gen_examples.py runs config script, which otherwise complains:
       # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
       - restore_cache:

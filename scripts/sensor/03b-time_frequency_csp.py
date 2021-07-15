@@ -25,6 +25,14 @@ The user has only to specify the list of frequency and the list of timings.
 """
 # License: BSD (3-clause)
 
+# TODO math
+# Going to source space, with some interpretability with the pattern figure (would increase interpretability)
+# factorization of the pca when Maxfilter have been used (would divide the running time by 2)
+# sliding windows (would increase virtually the temporal precision)
+# Cross validate the number of csp component (would increase the roc-auc, and probably also the significance of our results)
+# Use inverse pca with plot patterns (would be faster and probably would give a bit more beautiful topomaps)
+# Usage of group cross validation (more mathematically rigorous)
+
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 import logging
 from matplotlib.figure import Figure
@@ -823,7 +831,10 @@ def group_analysis(
     else:
         msg = (f"Congrats, the results seem significant. At least one of "
                f"your cluster has a significant p-value "
-               f"at the level {cfg.cluster_stats_alpha}")
+               f"at the level {cfg.cluster_stats_alpha}. "
+               "This means that there is probably a meaningful difference "
+               "between the two states, highlighted by the difference in "
+               "cluster size.")
         logger.info(gen_log_message(msg, step=3))
 
     ts.append(t_clust)

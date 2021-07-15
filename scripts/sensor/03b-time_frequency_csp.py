@@ -71,6 +71,7 @@ csp_plot_patterns = False
 # The usage of the pca is highly recommended for two reasons
 # 1. The execution of the code is faster.
 # 2. There will be much less numerical instabilities.
+# One PCA is fitted for each frequency bin.
 csp_use_pca = True
 
 
@@ -211,7 +212,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     return y
 
 
-# @profile
+@profile
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,
@@ -387,7 +388,7 @@ def plot_patterns(csp, epochs_filter: BaseEpochs, report: Report, section: str, 
 
 
 @failsafe_run(on_error=on_error)
-# @profile
+@profile
 def one_subject_decoding(
     *,
     cfg,
@@ -431,10 +432,8 @@ def one_subject_decoding(
 
     # TODO: pca just one time when maxfilter
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-    if csp_use_pca:
-        clf = make_pipeline(pca, csp, LinearDiscriminantAnalysis())
-    else:
-        clf = make_pipeline(csp, LinearDiscriminantAnalysis())
+
+    clf = make_pipeline(csp, LinearDiscriminantAnalysis())
 
     # TODO: le faire plutot par run avec group cross val
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
@@ -457,9 +456,10 @@ def one_subject_decoding(
         # 1. Loop through frequencies, apply classifier and save scores
 
         X = epochs_filter.get_data()
+        X_pca = pca.fit_transform(X) if csp_use_pca else X
 
         # Save mean scores over folds
-        cv_scores = cross_val_score(estimator=clf, X=X, y=y,
+        cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
                                     n_jobs=1)
 
@@ -467,7 +467,8 @@ def one_subject_decoding(
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
         if csp_plot_patterns:
-            csp.fit(X, y)
+            X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
+            csp.fit(X_inv, y)
             plot_patterns(
                 csp, epochs_filter, report,
                 section="CSP Patterns - frequency",
@@ -487,6 +488,8 @@ def one_subject_decoding(
 
             # Crop data into time-window of interest
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
+            # transform or fit_transform ?
+            X_pca = pca.transform(X) if csp_use_pca else X
 
             # Save mean scores over folds for each frequency and time window
             cv_scores = cross_val_score(estimator=clf,
@@ -499,7 +502,8 @@ def one_subject_decoding(
             # We plot the patterns using all the epochs
             # without splitting the epochs
             if csp_plot_patterns:
-                csp.fit(X, y)
+                X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
+                csp.fit(X_inv, y)
                 plot_patterns(
                     csp, epochs_filter, report,
                     section="CSP Patterns - time-frequency",
@@ -915,13 +919,13 @@ def main():
     pth = Pth(cfg=cfg)
 
     # Useful for debugging:
-    # [one_subject_decoding(
-    #     cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #     for subject in config.get_subjects()]
+    [one_subject_decoding(
+        cfg=cfg, tf=tf, pth=pth, subject=subject)
+        for subject in config.get_subjects()]
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-             for subject in config.get_subjects())
+    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    # parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
+    #          for subject in config.get_subjects())
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

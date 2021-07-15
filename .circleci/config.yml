@@ -647,7 +647,7 @@ jobs:
           command: |
             python tests/run_tests.py --download=0 ERP_CORE_ERN
             cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*ERN*.html ~/reports/ERP_CORE/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*.xlsx ~/reports/${DS}/
+            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*ERN*.xlsx ~/reports/ERP_CORE/
       - run:
           name: test ERP CORE LRP
           command: |

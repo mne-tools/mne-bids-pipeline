@@ -413,12 +413,9 @@ def one_subject_decoding(
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=42)
 
-    ##########################################################################
-    # 1. Loop through frequencies, apply classifier and save scores
-    # TODO: une seul boucle
-    # init scores
     freq_scores = np.zeros((tf.n_freq_windows,))
     freq_scores_std = np.zeros((tf.n_freq_windows,))
+    tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
 
     # Loop through each frequency range of interest
     for freq, (fmin, fmax) in ProgressBar(
@@ -428,6 +425,10 @@ def one_subject_decoding(
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
+
+        ##########################################################################
+        # 1. Loop through frequencies, apply classifier and save scores
+
         X = epochs_filter.get_data()
 
         # Save mean scores over folds
@@ -448,34 +449,8 @@ def one_subject_decoding(
                 section=section,
                 captions=section + title)
 
-    np.save(file=pth.freq_scores(subject), arr=freq_scores)
-    np.save(file=pth.freq_scores_std(subject), arr=freq_scores_std)
-    fig = plot_frequency_decoding(
-        freqs=tf.freqs,
-        freq_scores=freq_scores,
-        conf_int=freq_scores_std,
-        pth=pth,
-        subject=subject)
-    section = "Frequency roc-auc decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + f' sub-{subject}')
-
-    ######################################################################
-    # 2. Loop through frequencies and time
-
-    # init scores
-    tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
-
-    # Loop through each frequency range of interest
-    for freq, (fmin, fmax) in ProgressBar(
-            enumerate(tf.freq_ranges),
-            max_value=tf.n_freq_windows,
-            mesg=f'subject {subject} - time-frequency loop'):
-
-        epochs_filter, y = prepare_epochs_and_y(
-            epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
+        ######################################################################
+        # 2. Loop through frequencies and time
 
         # Roll covariance, csp and lda over time
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
@@ -509,6 +484,22 @@ def one_subject_decoding(
                     section=section,
                     captions=section + title)
 
+    # Frequency savings
+    np.save(file=pth.freq_scores(subject), arr=freq_scores)
+    np.save(file=pth.freq_scores_std(subject), arr=freq_scores_std)
+    fig = plot_frequency_decoding(
+        freqs=tf.freqs,
+        freq_scores=freq_scores,
+        conf_int=freq_scores_std,
+        pth=pth,
+        subject=subject)
+    section = "Frequency roc-auc decoding"
+    report.add_figs_to_section(
+        fig,
+        section=section,
+        captions=section + f' sub-{subject}')
+
+    # Time frequency savings
     np.save(file=pth.tf_scores(subject), arr=tf_scores)
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=tf_scores, sfreq=sfreq, pth=pth,

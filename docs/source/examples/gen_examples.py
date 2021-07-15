@@ -26,9 +26,6 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     example_config = runpy.run_path(example_config_path)
     env['BIDS_ROOT'] = example_config['bids_root']
 
-    # Another dummy variable to prevent a crash when running config.py
-    env['MNE_BIDS_STUDY_SCRIPT_PATH'] = 'just_a_dummy.py'
-
     config_module_path = Path('config.py')
     config = runpy.run_path(config_module_path)
 

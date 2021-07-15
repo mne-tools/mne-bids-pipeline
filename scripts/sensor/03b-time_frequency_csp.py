@@ -436,7 +436,9 @@ def one_subject_decoding(
 
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
 
-    # TODO: le faire plutot par run avec group cross val
+    # TODO: Use instead group cross val with multiple session/run
+    # But impossible to group crossval easily if
+    # there is just one run/session
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=cfg.random_state)
 

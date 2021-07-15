@@ -438,7 +438,7 @@ def one_subject_decoding(
 
     # TODO: le faire plutot par run avec group cross val
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
-                         shuffle=True, random_state=42)
+                         shuffle=True, random_state=cfg.random_state)
 
     freq_scores = np.zeros((tf.n_freq_windows,))
     freq_scores_std = np.zeros((tf.n_freq_windows,))

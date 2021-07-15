@@ -459,6 +459,7 @@ def one_subject_decoding(
         X = epochs_filter.get_data()
         X_pca = pca.fit_transform(X) if csp_use_pca else X
         # print(rank, X.shape) # 72 (53, 102, 961)
+        # that mean we go from dim 102 to 72
         # the pca is way less usefull than the mag channel selection
 
         # Save mean scores over folds

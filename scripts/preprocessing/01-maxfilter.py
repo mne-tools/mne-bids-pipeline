@@ -29,14 +29,15 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (gen_log_message, on_error, failsafe_run,
+from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data,
                     get_reference_run_info)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_maxwell_filter(cfg, subject, session=None):
+@failsafe_run(on_error=on_error)
+def run_maxwell_filter(*, cfg, subject, session=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
@@ -58,8 +59,8 @@ def run_maxwell_filter(cfg, subject, session=None):
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
     msg = f'Loading reference run: {cfg.mf_reference_run}.'
-    logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     reference_run_info = get_reference_run_info(
         subject=subject, session=session, run=cfg.mf_reference_run
@@ -81,8 +82,8 @@ def run_maxwell_filter(cfg, subject, session=None):
 
         # Maxwell-filter experimental data.
         msg = 'Applying Maxwell filter to experimental data.'
-        logger.info(gen_log_message(message=msg, step=1, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
 
         # Warn if no bad channels are set before Maxwell filter
         # Create a copy, we'll need this later for setting the bads of the
@@ -90,14 +91,14 @@ def run_maxwell_filter(cfg, subject, session=None):
         bads = raw.info['bads'].copy()
         if not bads:
             msg = 'Found no bad channels.'
-            logger.warning(gen_log_message(message=msg, subject=subject,
-                                           step=1, session=session, run=run))
+            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                            session=session, run=run))
 
         if cfg.mf_st_duration:
             msg = '    st_duration=%d' % (cfg.mf_st_duration)
-            logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session,
-                                        run=run))
+            logger.info(**gen_log_kwargs(message=msg,
+                                         subject=subject, session=session,
+                                         run=run))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.
@@ -133,8 +134,8 @@ def run_maxwell_filter(cfg, subject, session=None):
         # convenient to code it this way.
         if cfg.process_er and run == cfg.mf_reference_run:
             msg = 'Processing empty-room recording …'
-            logger.info(gen_log_message(step=1, subject=subject,
-                                        session=session, message=msg))
+            logger.info(**gen_log_kwargs(subject=subject,
+                                         session=session, message=msg))
 
             raw_er = import_er_data(
                 cfg=cfg,
@@ -146,8 +147,8 @@ def run_maxwell_filter(cfg, subject, session=None):
 
             # Maxwell-filter empty-room data.
             msg = 'Applying Maxwell filter to empty-room recording'
-            logger.info(gen_log_message(message=msg, step=1,
-                                        subject=subject, session=session))
+            logger.info(**gen_log_kwargs(message=msg,
+                                         subject=subject, session=session))
 
             # We want to ensure we use the same coordinate frame origin in
             # empty-room and experimental data processing. To do this, we
@@ -226,22 +227,22 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run maxwell_filter."""
-    msg = 'Running Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    if not config.use_maxwell_filter:
+        return
 
-    if config.use_maxwell_filter:
-        parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                              n_jobs=config.get_n_jobs())
-        parallel(run_func(get_config(subject, session), subject, session)
-                 for subject, session in
-                 itertools.product(config.get_subjects(),
-                                   config.get_sessions()))
+    parallel, run_func, _ = parallel_func(run_maxwell_filter,
+                                          n_jobs=config.get_n_jobs())
+    logs = parallel(
+        run_func(cfg=get_config(subject, session),
+                 subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 1: Maxwell filter'
-    logger.info(gen_log_message(step=1, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

@@ -15,9 +15,22 @@ import fire
 import coloredlogs
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
+
+log_level_styles = {
+    'info': {
+        'bright': True,
+        'bold': True
+    }
+}
+log_fmt = '%(message)s'
+coloredlogs.install(
+    fmt=log_fmt,
+    level_styles=log_level_styles,
+    logger=logger
+)
 
 PathLike = Union[str, pathlib.Path]
+
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
@@ -86,6 +99,7 @@ def _run_script(script_path, config, root_dir, subject, session, task, run,
     # upon exit.
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+    env['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
 
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
@@ -216,12 +230,15 @@ def process(config: PathLike,
         # them twice.
         script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
+    logger.info(
+        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+    )
     for script_path in script_paths:
         step_name = f'{script_path.parent.name}/{script_path.name}'
-        logger.info(f'Now running: {step_name}')
+        logger.info(f'🚀 Now running script: {step_name} 👇')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)
-        logger.info(f'Successfully finished running: {step_name}')
+        logger.info(f'🎉 Done running script: {step_name} 👏')
 
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ from mne.datasets import fetch_fsaverage
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -43,21 +43,21 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     # "trans" file in the derivatives folder.
     subject, session = bids_path.subject, bids_path.session
 
-    if cfg.mri_t1_path_generator is None:
+    if config.mri_t1_path_generator is None:
         t1_bids_path = None
     else:
         t1_bids_path = BIDSPath(subject=subject,
                                 session=session,
                                 root=cfg.bids_root)
-        t1_bids_path = cfg.mri_t1_path_generator(t1_bids_path.copy())
+        t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
         if t1_bids_path.suffix is None:
             t1_bids_path.update(suffix='T1w')
         if t1_bids_path.datatype is None:
             t1_bids_path.update(datatype='anat')
 
     msg = 'Estimating head ↔ MRI transform'
-    logger.info(gen_log_message(message=msg, step=10, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0],
@@ -69,8 +69,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
 
     # Create the source space.
     msg = 'Creating source space'
-    logger.info(gen_log_message(message=msg, step=10, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
@@ -80,8 +80,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.
     msg = 'Calculating BEM solution'
-    logger.info(gen_log_message(message=msg, step=10, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     if 'eeg' in cfg.ch_types:
         conductivity = (0.3, 0.006, 0.3)
@@ -105,7 +105,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
 
 
 @failsafe_run(on_error=on_error)
-def run_forward(cfg, subject, session=None):
+def run_forward(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -129,8 +129,8 @@ def run_forward(cfg, subject, session=None):
 
     # Finally, calculate and save the forward solution.
     msg = 'Calculating forward solution'
-    logger.info(gen_log_message(message=msg, step=10, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     info = mne.io.read_info(fname_evoked)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=cfg.mindist)
@@ -150,7 +150,6 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        mri_t1_path_generator=config.mri_t1_path_generator,
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
@@ -166,23 +165,22 @@ def get_config(
 
 def main():
     """Run forward."""
-    msg = 'Running Step 10: Create forward solution'
-    logger.info(gen_log_message(step=10, message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_forward,
                                           n_jobs=config.get_n_jobs())
-    parallel(run_func(get_config(subject=subject), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    logs = parallel(
+        run_func(cfg=get_config(subject=subject), subject=subject,
+                 session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 10: Create forward solution'
-    logger.info(gen_log_message(step=10, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

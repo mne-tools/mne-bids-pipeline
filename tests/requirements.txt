@@ -24,5 +24,6 @@ mkdocstrings
 coloredlogs
 openneuro-py
 autoreject
+openpyxl
 https://api.github.com/repos/mne-tools/mne-python/zipball/main
 https://api.github.com/repos/mne-tools/mne-bids/zipball/main

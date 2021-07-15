@@ -493,7 +493,7 @@ def one_subject_decoding(
 
             # Save mean scores over folds for each frequency and time window
             cv_scores = cross_val_score(estimator=clf,
-                                        X=X, y=y,
+                                        X=X_pca, y=y,
                                         scoring='roc_auc',
                                         cv=cv,
                                         n_jobs=1)

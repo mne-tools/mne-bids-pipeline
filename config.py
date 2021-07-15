@@ -2188,6 +2188,7 @@ def failsafe_run(on_error):
                     kwargs_copy["cfg"], sort_keys=False, indent=4
                 )
             log_info = pd.Series(kwargs_copy)
+            log_info['time'] = np.nan  # put time before success & err columns
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
@@ -2932,7 +2933,7 @@ def save_logs(logs):
         columns = list(columns)
         idx = columns.index("cfg")
         del columns[idx]
-        columns.insert(-2, "cfg")
+        columns.insert(-3, "cfg")  # put it before time, success & err cols
 
     df = df[columns]
 

@@ -235,7 +235,8 @@ def prepare_epochs_and_y(
 
     # We only take gradiometers to speed up computation
     #  because the information is redundant between grad and mag
-    epochs_filter.pick_types(meg="mag")
+    if cfg.datatype == "meg":
+        epochs_filter.pick_types(meg="mag")
 
     # We filter after droping channel, because filtering is costly
     epochs_filter.filter(fmin, fmax, n_jobs=1)
@@ -428,7 +429,7 @@ def one_subject_decoding(
               log=True, norm_trace=False)
 
     rank_dic = compute_rank(epochs, rank="info")
-    rank = rank_dic[cfg.data_type]
+    rank = rank_dic[cfg.datatype]
 
     # TODO: pca just one time when maxfilter
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
@@ -457,6 +458,8 @@ def one_subject_decoding(
 
         X = epochs_filter.get_data()
         X_pca = pca.fit_transform(X) if csp_use_pca else X
+        # print(rank, X.shape) # 72 (53, 102, 961)
+        # the pca is way less usefull than the mag channel selection
 
         # Save mean scores over folds
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
@@ -886,7 +889,6 @@ def get_config(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         time_frequency_conditions=config.time_frequency_conditions,
-        data_type=config.get_datatype(),
         decoding_n_splits=config.decoding_n_splits,
         task=config.task,
         acq=config.acq,

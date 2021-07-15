@@ -102,7 +102,7 @@ class Pth:
         subject: str,
         # TODO: Not DRY and Any != Unknown
         # TODO: Does not work if multiple session
-        session: Union[list[None],  str, List[Any]],
+        session: Union[List[None],  str, List[Any]],
         cfg
     ) -> BIDSPath:
         """Return the path of the file."""

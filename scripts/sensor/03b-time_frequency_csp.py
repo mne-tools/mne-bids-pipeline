@@ -66,7 +66,7 @@ set_log_level(verbose="WARNING")  # mne logger
 
 # ROC-AUC chance score level
 chance = 0.5
-plot_patterns = False
+csp_plot_patterns = False
 
 # The usage of the pca is highly recommended for two reasons
 # 1. The execution of the code is faster.
@@ -359,6 +359,33 @@ def plot_time_frequency_decoding(
     return figs[0]
 
 
+def plot_patterns(csp, epochs_filter: BaseEpochs, report: Report, section: str, title: str):
+    """Plot csp topographic patterns and save them in the reports.
+
+    PARAMETERS
+    ----------
+    csp 
+        csp fitted estimator 
+    epochs_filter
+        Epochs which have been band passed filtered and maybe time cropped.
+    report
+        Where to save the topographic plot.
+    section
+        choose the section of the report.
+    title
+        Title of the figure in the report.
+
+    RETURNS
+    -------
+    None. Just save the figure in the report.
+    """
+    fig = csp.plot_patterns(epochs_filter.info)
+    report.add_figs_to_section(
+        fig,
+        section=section,
+        captions=section + title)
+
+
 @failsafe_run(on_error=on_error)
 # @profile
 def one_subject_decoding(
@@ -439,15 +466,12 @@ def one_subject_decoding(
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
-        if plot_patterns:
+        if csp_plot_patterns:
             csp.fit(X, y)
-            fig = csp.plot_patterns(epochs_filter.info)
-            section = "CSP Patterns - frequency"
-            title = f' sub-{subject}-{(fmin, fmax)}Hz - all epoch'
-            report.add_figs_to_section(
-                fig,
-                section=section,
-                captions=section + title)
+            plot_patterns(
+                csp, epochs_filter, report,
+                section="CSP Patterns - frequency",
+                title=f' sub-{subject}-{(fmin, fmax)}Hz - all epoch')
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -474,15 +498,12 @@ def one_subject_decoding(
 
             # We plot the patterns using all the epochs
             # without splitting the epochs
-            if plot_patterns:
+            if csp_plot_patterns:
                 csp.fit(X, y)
-                fig = csp.plot_patterns(epochs_filter.info)
-                section = "CSP Patterns - time-frequency"
-                title = f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
-                report.add_figs_to_section(
-                    fig,
-                    section=section,
-                    captions=section + title)
+                plot_patterns(
+                    csp, epochs_filter, report,
+                    section="CSP Patterns - time-frequency",
+                    title=f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject), arr=freq_scores)

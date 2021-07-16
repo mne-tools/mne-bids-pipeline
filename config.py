@@ -1249,7 +1249,7 @@ locations set.
 # TIME-FREQUENCY
 # --------------
 
-time_frequency_conditions: Iterable[str] = []
+time_frequency_conditions: List[str] = []
 """
 The conditions to compute time-frequency decomposition on.
 

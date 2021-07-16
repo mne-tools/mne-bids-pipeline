@@ -198,9 +198,6 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     --------
     A boolean numpy array containing the labels.
     """
-    tf_conditions = cfg.time_frequency_conditions
-    assert len(tf_conditions) == 2
-
     epochs_cond_0 = epochs[tf_conditions[0]]
     event_id_condition_0 = set(epochs_cond_0.events[:, 2])
     epochs_cond_1 = epochs[tf_conditions[1]]
@@ -949,6 +946,12 @@ def main():
     logger.info(gen_log_message(message=msg, step=8))
 
     cfg = get_config()
+
+    if len(config.time_frequency_conditions) != 2:
+        msg = ('tf_conditions does not contain 2 elements.'
+               'skipping step Time-frequency decoding')
+        logger.info(gen_log_message(message=msg, step=8))
+        return None
 
     # Calculate the appropriate time and frequency windows size
     tf = Tf(cfg)

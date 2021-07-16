@@ -183,12 +183,14 @@ class Tf:
             logger.info(gen_log_message(msg, step=8))
 
         centered_w_times = (times[1:] + times[:-1])/2
+        centered_w_freqs = (freqs[1:] + freqs[:-1])/2
 
         self.freqs = freqs
         self.freq_ranges = freq_ranges
         self.times = times
         self.time_ranges = time_ranges
         self.centered_w_times = centered_w_times
+        self.centered_w_freqs = centered_w_freqs
         self.n_time_windows = n_time_windows
         self.n_freq_windows = n_freq_windows
 
@@ -327,10 +329,9 @@ def plot_frequency_decoding(
 
 def plot_time_frequency_decoding(
     *,
-    freqs: np.ndarray,
     tf_scores: np.ndarray,
-    sfreq: float,
-    centered_w_times: np.ndarray,
+    sfreq: float,  # TODO: put in tf
+    tf: Tf,
     pth: Pth,
     subject: str,
     session: Session
@@ -339,15 +340,17 @@ def plot_time_frequency_decoding(
 
     Parameters:
     -----------
-    freqs
-        The frequencies bins.
     tf_scores
         The roc-auc scores for each time-frequency bin.
     sfreq
         Sampling frequency
-    centered_w_times
-        List of times indicating the center of each time windows.
+    tf
+        Util object for time frequency information.
+    pth:
+        Util object for paths.
     subject
+        name of the subject.
+    session
         name of the subject.
 
     Returns:
@@ -364,7 +367,7 @@ def plot_time_frequency_decoding(
     av_tfr = AverageTFR(create_info(['freq'], sfreq),
                         # newaxis linked with the [0] in plot
                         tf_scores_[np.newaxis, :],
-                        centered_w_times, freqs[1:], 1)
+                        tf.centered_w_times, tf.centered_w_freqs, 1)
 
     # Centered color map around the chance level.
     max_abs_v = np.max(np.abs(tf_scores_ - chance))
@@ -551,8 +554,8 @@ def one_subject_decoding(
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session), arr=tf_scores)
     fig = plot_time_frequency_decoding(
-        freqs=tf.freqs, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject=subject, session=session)
+        tf=tf, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
+        subject=subject, session=session)
     section = "Time-frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -663,10 +666,11 @@ def plot_axis_time_frequency_statistics(
     cbar = plt.colorbar(ax=ax, shrink=0.75, orientation='horizontal',
                         mappable=img, )
     cbar.set_ticks(lims)
-    cbar.set_ticklabels([round(lim, 1) for lim in lims])
+
+    cbar.set_ticklabels([f'10$^{{{-round(lim, 1)}}}$' for lim in lims])
     cbar.ax.get_xaxis().set_label_coords(0.5, -0.3)
     if value_type == "p":
-        cbar.set_label(r'$-\log_{10}(p)$')
+        cbar.set_label(r'p-value')
     if value_type == "t":
         cbar.set_label(r't-value')
 
@@ -838,8 +842,8 @@ def group_analysis(
         shape=[tf.n_freq_windows, tf.n_time_windows])
 
     fig = plot_time_frequency_decoding(
-        freqs=tf.freqs, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject="average", session=None)
+        tf=tf, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
+        subject="average", session=None)
     section = "Time - frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -969,11 +973,11 @@ def main():
     #     for subject, session in
     #         itertools.product(subjects, sessions)]
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth,
-                      subject=subject, session=session)
-             for subject, session in
-             itertools.product(subjects, sessions))
+    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    # parallel(run_func(cfg=cfg, tf=tf, pth=pth,
+    #                   subject=subject, session=session)
+    #          for subject, session in
+    #          itertools.product(subjects, sessions))
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

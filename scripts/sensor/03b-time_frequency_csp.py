@@ -166,7 +166,7 @@ class Tf:
             msg = ("We recommand increasing the duration of "
                    "your time intervals "
                    f"to at least {round(recommanded_w_min_time, 2)}s.")
-            logger.info(gen_log_message(msg, step=3))
+            logger.info(gen_log_message(msg, step=8))
 
         centered_w_times = (times[1:] + times[:-1])/2
 
@@ -212,7 +212,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     return y
 
 
-@profile
+# @profile
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,
@@ -342,7 +342,7 @@ def plot_time_frequency_decoding(
     if np.isnan(tf_scores).any():
         msg = ("There is at least one nan value in one of "
                "the time-frequencies bins.")
-        logger.info(gen_log_message(message=msg, step=3,
+        logger.info(gen_log_message(message=msg, step=8,
                                     subject=subject))
     tf_scores_ = np.nan_to_num(tf_scores, nan=chance)
     av_tfr = AverageTFR(create_info(['freq'], sfreq),
@@ -389,7 +389,7 @@ def plot_patterns(csp, epochs_filter: BaseEpochs, report: Report, section: str, 
 
 
 @failsafe_run(on_error=on_error)
-@profile
+# @profile
 def one_subject_decoding(
     *,
     cfg,
@@ -413,7 +413,7 @@ def one_subject_decoding(
     and the numpy results in memory.
     """
     msg = f"Running decoding for subject {subject}..."
-    logger.info(gen_log_message(msg, step=3, subject=subject))
+    logger.info(gen_log_message(msg, step=8, subject=subject))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
 
@@ -544,7 +544,7 @@ def one_subject_decoding(
                 open_browser=config.interactive)
 
     msg = f"Decoding for subject {subject} finished successfully."
-    logger.info(gen_log_message(message=msg, subject=subject, step=3))
+    logger.info(gen_log_message(message=msg, subject=subject, step=8))
 
 
 def load_and_average(
@@ -582,7 +582,7 @@ def load_and_average(
             if list(arr.shape) != shape:
                 msg = f"Shape mismatch for {path(sub)}"
                 logger.warning(gen_log_message(
-                    message=msg, subject=sub, step=3))
+                    message=msg, subject=sub, step=8))
                 raise FileNotFoundError
         except FileNotFoundError:
             print(FileNotFoundError)
@@ -591,7 +591,7 @@ def load_and_average(
         if np.isnan(arr).any():
             msg = f"NaN values were found in {path(sub)}"
             logger.warning(gen_log_message(
-                message=msg, subject=sub, step=3))
+                message=msg, subject=sub, step=8))
         res[i] = arr
     if average:
         return np.nanmean(res, axis=0)
@@ -759,10 +759,10 @@ def group_analysis(
     """
     if len(subjects) == 0:
         msg = "We cannot run a group analysis with just one subject."
-        logger.critical(gen_log_message(msg, step=3))
+        logger.critical(gen_log_message(msg, step=8))
 
     msg = "Running group analysis..."
-    logger.info(gen_log_message(msg, step=3))
+    logger.info(gen_log_message(msg, step=8))
 
     report = Report(title=f"csp-permutations-sub-average")
 
@@ -837,19 +837,19 @@ def group_analysis(
         n_permutations=cfg.n_permutations, out_type='mask')
 
     msg = "Permutations performed successfully"
-    logger.info(gen_log_message(msg, step=3))
+    logger.info(gen_log_message(msg, step=8))
     # Put the cluster data in a viewable format
     p_clust = np.ones((tf.n_freq_windows, tf.n_time_windows))
     for cl, p in zip(clusters, p_values):
         p_clust[cl] = p
     msg = (f"We found {len(p_values)} clusters "
            f"each one with a p-value of {p_values}.")
-    logger.info(gen_log_message(msg, step=3))
+    logger.info(gen_log_message(msg, step=8))
 
     if len(p_values) == 0 or np.min(p_values) > cfg.cluster_stats_alpha:
         msg = ("The results are not significant. "
                "Try increasing the number of subjects.")
-        logger.info(gen_log_message(msg, step=3))
+        logger.info(gen_log_message(msg, step=8))
     else:
         msg = (f"Congrats, the results seem significant. At least one of "
                f"your cluster has a significant p-value "
@@ -857,7 +857,7 @@ def group_analysis(
                "This means that there is probably a meaningful difference "
                "between the two states, highlighted by the difference in "
                "cluster size.")
-        logger.info(gen_log_message(msg, step=3))
+        logger.info(gen_log_message(msg, step=8))
 
     ts.append(t_clust)
     ps.append(p_clust)
@@ -878,10 +878,10 @@ def group_analysis(
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
     msg = f"Report {pth_report} saved in the average subject folder"
-    logger.info(gen_log_message(message=msg, step=3))
+    logger.info(gen_log_message(message=msg, step=8))
 
     msg = "Group statistic analysis finished."
-    logger.info(gen_log_message(msg, step=3))
+    logger.info(gen_log_message(msg, step=8))
 
 
 def get_config(
@@ -913,7 +913,7 @@ def get_config(
 def main():
     """Run all subjects decoding in parallel."""
     msg = 'Running Step 3: Time-frequency decoding'
-    logger.info(gen_log_message(message=msg, step=3))
+    logger.info(gen_log_message(message=msg, step=8))
 
     cfg = get_config()
 
@@ -938,7 +938,7 @@ def main():
                    cfg=cfg, pth=pth, tf=tf)
 
     msg = 'Completed Step 3: Time-frequency decoding'
-    logger.info(gen_log_message(message=msg, step=3))
+    logger.info(gen_log_message(message=msg, step=8))
 
 
 if __name__ == '__main__':

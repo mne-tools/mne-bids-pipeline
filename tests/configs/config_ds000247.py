@@ -4,6 +4,7 @@ OMEGA Resting State Sample Data
 
 study_name = 'ds000247'
 bids_root = '~/mne_data/ds000247'
+deriv_root = '~/mne_data/mne-bids-pipeline/tests/ds000247'
 
 subjects = ['0002']
 sessions = ['01']

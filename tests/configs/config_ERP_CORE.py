@@ -28,6 +28,7 @@ import mne
 
 study_name = 'ERP-CORE'
 bids_root = '~/mne_data/ERP_CORE'
+deriv_root = '~/mne_data/mne-bids-pipeline/tests/ERP_CORE'
 
 task = os.environ.get('MNE_BIDS_STUDY_TASK')
 sessions = [task]

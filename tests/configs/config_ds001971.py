@@ -14,6 +14,7 @@ export BIDS_ROOT=~/mne_data/ds001971
 
 study_name = 'ds001971'
 bids_root = '~/mne_data/ds001971'
+deriv_root = '~/mne_data/mne-bids-pipeline/tests/ds001971'
 
 task = 'AudioCueWalkingStudy'
 interactive = False

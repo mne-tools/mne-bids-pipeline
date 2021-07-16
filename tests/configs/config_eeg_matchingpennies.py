@@ -4,6 +4,7 @@ Matchingpennies EEG experiment
 
 study_name = 'eeg_matchingpennies'
 bids_root = '~/mne_data/eeg_matchingpennies'
+deriv_root = '~/mne_data/mne-bids-pipeline/tests/eeg_matchingpennies'
 
 subjects = ['05']
 task = 'matchingpennies'

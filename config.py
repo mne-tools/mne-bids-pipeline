@@ -2976,24 +2976,3 @@ if (get_task() is not None and
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
-
-
-# # Leave this here for reference for now
-#
-# _preproc_funcs_path = (pathlib.Path(__file__).parent / 'scripts' /
-#                        'preprocessing' / 'common_functions.py')
-# _preproc_funcs = runpy.run_path(_preproc_funcs_path)
-# _preproc_funcs = {
-#     func_name: func
-#     for func_name, func in _preproc_funcs.items()
-#     if func in _preproc_funcs['exports']
-# }
-#
-#
-# class Funcs(TypedDict):
-#     preprocessing: Dict[str, Callable]
-#
-#
-# funcs = Funcs(
-#     preprocessing=_preproc_funcs
-# )

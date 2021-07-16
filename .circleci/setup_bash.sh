@@ -1,18 +1,31 @@
 #!/bin/bash -ef
 
 # skip job if not in a [circle full] or on main
+export REGEXP="r'(?<=\[circle )(.*)(?=\])'"
 export COMMIT_MESSAGE=$(git log --format=oneline -n 1);
+export CIRCLE_REQUESTED_JOB=$(
+    python -c "import re; matches = re.findall(pattern=${REGEXP}, string='${COMMIT_MESSAGE}'); match = '' if not matches else matches[0]; print(match)"
+);
+
 echo "CIRCLE_JOB=$CIRCLE_JOB"
 echo "COMMIT_MESSAGE=$COMMIT_MESSAGE"
+echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 
-# On a PR, only run setup_env, build_docs, and ds00247
-if [[ -v CIRCLE_PULL_REQUEST ]] &&
-    [[ "$COMMIT_MESSAGE" != *"[circle full]"* ]] &&
-    [[ "$CIRCLE_JOB" != *"ds000247" ]] &&
-    [[ "$CIRCLE_JOB" != "setup_env" ]] &&
-    [[ "$CIRCLE_JOB" != "build_docs" ]]; then
-    echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
-    circleci-agent step halt
+# On a PR, only run setup_env, build_docs, and the requested job(s). If no
+# jobs have been specifically requested, run ds000247.
+if [[
+    -v CIRCLE_PULL_REQUEST &&
+    "$CIRCLE_REQUESTED_JOB" != "full" &&
+    "$CIRCLE_JOB" != "setup_env" &&
+    "$CIRCLE_JOB" != "build_docs"
+   ]] && [[
+       (-n $CIRCLE_REQUESTED_JOB &&  # Specific job requested -> run only that one
+        "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB") ||
+       (-z $CIRCLE_REQUESTED_JOB &&  # no specific job requested -> run only ds000247
+        "$CIRCLE_JOB" != *"ds000247")
+    ]]; then
+        echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
+        circleci-agent step halt
 # Otherwise, run everything
 elif [[ -v CIRCLE_PULL_REQUEST ]]; then
     echo "Running job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}"

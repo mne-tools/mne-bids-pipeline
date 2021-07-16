@@ -1526,18 +1526,6 @@ of an error.
 PIPELINE_NAME = 'mne-bids-pipeline'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
-MNE_CONFIG_DIR = pathlib.Path(mne.get_config_path()).parent
-PIPELINE_SETTINGS_FILE = MNE_CONFIG_DIR / 'mne-bids-pipeline.json'
-
-
-def _get_current_script() -> str:
-    with PIPELINE_SETTINGS_FILE.open('r', encoding='utf-8') as f:
-        settings = json_tricks.load(f)
-
-    return settings['current_script']
-
-
-os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = _get_current_script()
 
 ###############################################################################
 # Logger

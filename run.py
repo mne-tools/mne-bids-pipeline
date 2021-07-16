@@ -253,7 +253,7 @@ def process(config: PathLike,
     # Clear the settings
     with PIPELINE_SETTINGS_FILE.open('w', encoding='utf-8') as f:
         settings = {
-            'current_script': ''
+            'current_script': None
         }
         json.dump(obj=settings, fp=f)
 

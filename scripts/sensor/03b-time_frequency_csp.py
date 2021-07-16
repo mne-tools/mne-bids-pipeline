@@ -942,7 +942,7 @@ def get_config(
 
 def main():
     """Run all subjects decoding in parallel."""
-    msg = 'Running Step 3: Time-frequency decoding'
+    msg = 'Running Step 8: Time-frequency decoding'
     logger.info(gen_log_message(message=msg, step=8))
 
     cfg = get_config()
@@ -968,18 +968,18 @@ def main():
     #     for subject, session in
     #         itertools.product(subjects, sessions)]
 
-    # parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    # parallel(run_func(cfg=cfg, tf=tf, pth=pth,
-    #                   subject=subject, session=session)
-    #          for subject, session in
-    #          itertools.product(subjects, sessions))
+    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth,
+                      subject=subject, session=session)
+             for subject, session in
+             itertools.product(subjects, sessions))
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.
     group_analysis(subjects=config.get_subjects(),
                    cfg=cfg, pth=pth, tf=tf)
 
-    msg = 'Completed Step 3: Time-frequency decoding'
+    msg = 'Completed Step 8: Time-frequency decoding'
     logger.info(gen_log_message(message=msg, step=8))
 
 

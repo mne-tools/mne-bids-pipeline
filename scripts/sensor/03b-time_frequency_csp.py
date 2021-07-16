@@ -948,8 +948,8 @@ def main():
     cfg = get_config()
 
     if len(config.time_frequency_conditions) != 2:
-        msg = ('tf_conditions does not contain 2 elements.'
-               'skipping step Time-frequency decoding')
+        msg = ('tf_conditions does not contain 2 elements. '
+               'Skipping step Time-frequency decoding...')
         logger.info(gen_log_message(message=msg, step=8))
         return None
 

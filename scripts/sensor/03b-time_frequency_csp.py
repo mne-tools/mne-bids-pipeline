@@ -33,6 +33,7 @@ The user has only to specify the list of frequency and the list of timings.
 # Use inverse pca with plot patterns (would be faster and probably would give a bit more beautiful topomaps): not important
 # Usage of group cross validation (more mathematically rigorous): not necessary.
 
+import itertools
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 import logging
 from matplotlib.figure import Figure
@@ -74,6 +75,8 @@ csp_plot_patterns = False
 # One PCA is fitted for each frequency bin.
 csp_use_pca = True
 
+Session = Union[None, str]
+
 
 class Pth:
     """Util class containing useful Paths info."""
@@ -83,7 +86,6 @@ class Pth:
         # We initialize to the average subject and session ?
         self.bids_basename = BIDSPath(
             subject="average",
-            # session=config.get_sessions()[0], # TODO
             task=cfg.task,
             acquisition=cfg.acq,
             run=None,
@@ -100,45 +102,57 @@ class Pth:
         self,
         *,
         subject: str,
-        # TODO: Not DRY and Any != Unknown
-        # TODO: Does not work if multiple session
-        session: Union[List[None],  str, List[Any]],
+        session: Session,
         cfg
     ) -> BIDSPath:
         """Return the path of the file."""
-        return self.bids_basename.copy().update(subject=subject)
+        return self.bids_basename.copy().update(
+            subject=subject,
+            session=session)
 
-    def report(self, subject) -> BIDSPath:
+    def report(self, subject: str, session: Session) -> BIDSPath:
         """Path to array containing the report."""
         return self.bids_basename.copy().update(
             processing='csp+permutation+test',
             subject=subject,
+            session=session,
             suffix='report',
             extension='.html')
 
-    def freq_scores(self, subject) -> BIDSPath:
+    def freq_scores(self, subject: str, session: Session) -> BIDSPath:
         """Path to array containing the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
+            session=session,
             suffix='scores',
             extension='.npy')
 
-    def freq_scores_std(self, subject) -> BIDSPath:  # TODO: savemat instead ?
+    # TODO: savemat instead ?
+    def freq_scores_std(self, subject: str, session: Session) -> BIDSPath:
         """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq',
             subject=subject,
+            session=session,
             suffix='scores+std',
             extension='.npy')
 
-    def tf_scores(self, subject) -> BIDSPath:
+    def tf_scores(self, subject: str, session: Session) -> BIDSPath:
         """Path to time-frequency scores."""
         return self.bids_basename.copy().update(
             processing='csp+tf',
             subject=subject,
+            session=session,
             suffix='scores+std',
             extension='.npy')
+
+    def prefix(self, subject: str, session: Session) -> str:
+        """Usefull when printing messages."""
+        if session:
+            return f'subject-{subject}-session-{session}'
+        else:
+            return f'subject-{subject}'
 
 
 class Tf:
@@ -253,6 +267,7 @@ def plot_frequency_decoding(
     freq_scores: np.ndarray,
     conf_int: np.ndarray,
     subject: str,
+    session: Session,
     pth: Pth
 ) -> Figure:
     """Plot and save the frequencies results.
@@ -317,7 +332,8 @@ def plot_time_frequency_decoding(
     sfreq: float,
     centered_w_times: np.ndarray,
     pth: Pth,
-    subject: str
+    subject: str,
+    session: Session
 ) -> Figure:
     """Plot and save the time-frequencies results.
 
@@ -366,8 +382,8 @@ def plot_patterns(csp, epochs_filter: BaseEpochs, report: Report, section: str, 
 
     PARAMETERS
     ----------
-    csp 
-        csp fitted estimator 
+    csp
+        csp fitted estimator
     epochs_filter
         Epochs which have been band passed filtered and maybe time cropped.
     report
@@ -396,6 +412,7 @@ def one_subject_decoding(
     tf: Tf,
     pth: Pth,
     subject: str,
+    session: Session
 ) -> None:
     """Run one subject.
 
@@ -412,14 +429,14 @@ def one_subject_decoding(
     None. We just save the plots in the report
     and the numpy results in memory.
     """
-    msg = f"Running decoding for subject {subject}..."
-    logger.info(gen_log_message(msg, step=8, subject=subject))
+    msg = f"Running decoding for {pth.prefix(subject, session)}..."
+    logger.info(gen_log_message(msg, step=8, subject=subject, session=session))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
 
     # Extract information from the raw file
     epochs = read_epochs(pth.file(subject=subject,
-                                  session=config.get_sessions(),
+                                  session=session,
                                   cfg=cfg))
     sfreq = epochs.info['sfreq']
 
@@ -450,7 +467,7 @@ def one_subject_decoding(
     for freq, (fmin, fmax) in ProgressBar(
             enumerate(tf.freq_ranges),
             max_value=tf.n_freq_windows,
-            mesg=f'subject {subject} - frequency loop'):
+            mesg=pth.prefix(subject, session) + '- frequency loop'):
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
@@ -478,7 +495,7 @@ def one_subject_decoding(
             plot_patterns(
                 csp, epochs_filter, report,
                 section="CSP Patterns - frequency",
-                title=f' sub-{subject}-{(fmin, fmax)}Hz - all epoch')
+                title=f'{pth.prefix(subject, session)}-{(fmin, fmax)}Hz - all epoch')
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -513,47 +530,51 @@ def one_subject_decoding(
                 plot_patterns(
                     csp, epochs_filter, report,
                     section="CSP Patterns - time-frequency",
-                    title=f' sub-{subject}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
+                    title=f'{pth.prefix(subject, session)}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
 
     # Frequency savings
-    np.save(file=pth.freq_scores(subject), arr=freq_scores)
-    np.save(file=pth.freq_scores_std(subject), arr=freq_scores_std)
+    np.save(file=pth.freq_scores(subject, session), arr=freq_scores)
+    np.save(file=pth.freq_scores_std(subject, session), arr=freq_scores_std)
     fig = plot_frequency_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
         conf_int=freq_scores_std,
         pth=pth,
-        subject=subject)
+        subject=subject,
+        session=session)
     section = "Frequency roc-auc decoding"
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + f' sub-{subject}')
+        captions=section + pth.prefix(subject, session))
 
     # Time frequency savings
-    np.save(file=pth.tf_scores(subject), arr=tf_scores)
+    np.save(file=pth.tf_scores(subject, session), arr=tf_scores)
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject=subject)
+        centered_w_times=tf.centered_w_times, subject=subject, session=session)
     section = "Time-frequency decoding"
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + f' sub-{subject}')
-    report.save(pth.report(subject), overwrite=True,
+        captions=section + pth.prefix(subject, session))
+    report.save(pth.report(subject, session), overwrite=True,
                 open_browser=config.interactive)
 
-    msg = f"Decoding for subject {subject} finished successfully."
-    logger.info(gen_log_message(message=msg, subject=subject, step=8))
+    msg = f"Decoding for {pth.prefix(subject, session)} finished successfully."
+    logger.info(gen_log_message(message=msg, subject=subject, session=session,
+                                step=8))
 
 
 def load_and_average(
-    path: Callable[[str], BIDSPath],
+    path: Callable[[str, Session], BIDSPath],
     subjects: List[str],
     shape: List[int],
     average: bool = True
 ) -> np.ndarray:
     """Load and average a np.array.
+
+    We average between all subjects and all sessions.
 
     Parameters:
     -----------
@@ -573,14 +594,17 @@ def load_and_average(
     --------
     Gives the list of files containing NaN values.
     """
-    shape_all = [len(subjects)]+list(shape)
+    sessions = config.get_sessions()
+    len_session = len(sessions) if type(sessions) == list else 1
+    shape_all = [len(subjects) * len_session] + list(shape)
     res = np.zeros(shape_all)
-    for i, sub in enumerate(subjects):
+    iterator = itertools.product(subjects, sessions)
+    for i, (sub, ses) in enumerate(iterator):
         try:
-            arr = np.load(path(sub))
+            arr = np.load(path(sub, ses))
             # Checking for previous iteration, previous shapes
             if list(arr.shape) != shape:
-                msg = f"Shape mismatch for {path(sub)}"
+                msg = f"Shape mismatch for {path(sub, ses)}"
                 logger.warning(gen_log_message(
                     message=msg, subject=sub, step=8))
                 raise FileNotFoundError
@@ -589,9 +613,9 @@ def load_and_average(
             arr = np.empty(shape=shape)
             arr.fill(np.NaN)
         if np.isnan(arr).any():
-            msg = f"NaN values were found in {path(sub)}"
+            msg = f"NaN values were found in {path(sub, ses)}"
             logger.warning(gen_log_message(
-                message=msg, subject=sub, step=8))
+                message=msg, subject=sub, session=ses, step=8))
         res[i] = arr
     if average:
         return np.nanmean(res, axis=0)
@@ -686,9 +710,16 @@ def compute_conf_inter(
 
     For the moment only serves for frequency histogram.
 
-    mean_scores = np.array((len(subjects), len(times)))
-    # TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158
-    # Maybe we could create a common function in mne?
+    TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158
+    Maybe we could create a common function in mne?
+
+    PARAMETERS:
+    -----------
+    mean_scores: np.array((len(subjects)*nb_session, len(times)))
+
+    RETURNS:
+    --------
+    Dictionnary of meta data. 
     """
     contrast_score_stats = {
         'cond_1': cfg.time_frequency_conditions[0],
@@ -770,8 +801,14 @@ def group_analysis(
     # 1. Average roc-auc scores across subjects
 
     # just to obtain sfreq
+    sessions = config.get_sessions()
+    first_session: Session = None
+    if type(sessions) == list:
+        first_session = sessions[0]
+    else:
+        first_session = sessions
     epochs = read_epochs(pth.file(subject=subjects[0],
-                                  session=config.get_sessions(),
+                                  session=first_session,
                                   cfg=cfg))
     sfreq = epochs.info['sfreq']
 
@@ -788,7 +825,7 @@ def group_analysis(
     fig = plot_frequency_decoding(
         freqs=tf.freqs, freq_scores=freq_scores, pth=pth,
         conf_int=contrast_score_stats["mean_se"],
-        subject="average")
+        subject="average", session=None)
     section = "Frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -802,7 +839,7 @@ def group_analysis(
 
     fig = plot_time_frequency_decoding(
         freqs=tf.freqs, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
-        centered_w_times=tf.centered_w_times, subject="average")
+        centered_w_times=tf.centered_w_times, subject="average", session=None)
     section = "Time - frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -874,7 +911,7 @@ def group_analysis(
             section=section,
             captions=section + ' sub-average')
 
-    pth_report = pth.report("average")
+    pth_report = pth.report("average", session=None)
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
     msg = f"Report {pth_report} saved in the average subject folder"
@@ -923,14 +960,20 @@ def main():
     # Compute the paths
     pth = Pth(cfg=cfg)
 
+    subjects = config.get_subjects()
+    sessions = config.get_sessions()
+
     # Useful for debugging:
     # [one_subject_decoding(
     #     cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #     for subject in config.get_subjects()]
+    #     for subject, session in
+    #         itertools.product(subjects, sessions)]
 
     parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth, subject=subject)
-             for subject in config.get_subjects())
+    parallel(run_func(cfg=cfg, tf=tf, pth=pth,
+                      subject=subject, session=session)
+             for subject, session in
+             itertools.product(subjects, sessions))
 
     # Once every subject has been calculated,
     # the group_analysis is very fast to compute.

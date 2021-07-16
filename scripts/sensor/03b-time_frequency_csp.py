@@ -27,11 +27,11 @@ The user has only to specify the list of frequency and the list of timings.
 
 # TODO math
 # Going to source space, with some interpretability with the pattern figure (would increase interpretability)
-# factorization of the pca when Maxfilter have been used (would divide the running time by 2)
-# sliding windows (would increase virtually the temporal precision)
-# Cross validate the number of csp component (would increase the roc-auc, and probably also the significance of our results)
-# Use inverse pca with plot patterns (would be faster and probably would give a bit more beautiful topomaps)
-# Usage of group cross validation (more mathematically rigorous)
+# factorization of the pca when Maxfilter have been used (would divide the running time by 2) Done
+# sliding windows (would increase virtually the temporal precision) : Too complicated
+# Cross validate the number of csp component (would increase the roc-auc, and probably also the significance of our results): not really usefull
+# Use inverse pca with plot patterns (would be faster and probably would give a bit more beautiful topomaps): not important
+# Usage of group cross validation (more mathematically rigorous): not necessary.
 
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
 import logging

@@ -929,12 +929,12 @@ def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> BunchConst:
-    cfg = BunchConst(  # TODO: check if other get_*
+    cfg = BunchConst(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         time_frequency_conditions=config.time_frequency_conditions,
         decoding_n_splits=config.decoding_n_splits,
-        task=config.task,
+        task=config.get_task(),
         acq=config.acq,
         rec=config.rec,
         space=config.space,

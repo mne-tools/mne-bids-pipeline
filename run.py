@@ -35,6 +35,7 @@ coloredlogs.install(
 PathLike = Union[str, pathlib.Path]
 
 MNE_CONFIG_DIR = pathlib.Path(mne.get_config_path()).parent
+MNE_CONFIG_DIR.mkdir(exist_ok=True)
 PIPELINE_SETTINGS_FILE = MNE_CONFIG_DIR / 'mne-bids-pipeline.json'
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)

@@ -4,7 +4,7 @@ MNE Sample Data: Using the `fsaverage` template MRI
 
 study_name = 'ds000248'
 bids_root = '~/mne_data/ds000248'
-deriv_root = '~/mne_data/mne-bids-pipeline/tests/ds000248_no_mri'
+deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000248_no_mri'
 subjects_dir = f'{bids_root}/derivatives/freesurfer/subjects'
 
 subjects = ['01']

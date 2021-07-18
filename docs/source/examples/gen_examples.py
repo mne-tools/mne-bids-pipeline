@@ -67,7 +67,7 @@ for test_name, test_opt in test_options.items():
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
-    example_source_dir = Path(f'~/mne_data/mne-bids-pipeline/tests/'
+    example_source_dir = Path(f'~/mne_data/derivatives/mne-bids-pipeline/'
                               f'{dataset_name}').expanduser()
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 

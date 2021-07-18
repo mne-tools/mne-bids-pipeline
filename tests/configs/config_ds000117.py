@@ -4,7 +4,7 @@ Faces dataset
 
 study_name = 'ds000117'
 bids_root = '~/mne_data/ds000117'
-deriv_root = '~/mne_data/mne-bids-pipeline/tests/ds000117'
+deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000117'
 
 task = 'facerecognition'
 ch_types = ['meg']

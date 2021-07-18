@@ -3,7 +3,7 @@ hMT+ Localizer
 """
 study_name = 'localizer'
 bids_root = '~/mne_data/ds003392'
-deriv_root = '~/mne_data/mne-bids-pipeline/tests/ds003392'
+deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds003392'
 
 subjects = ['01']
 

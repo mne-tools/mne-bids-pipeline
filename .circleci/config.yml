@@ -268,7 +268,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000117
             - mne_data/derivatives/mne-bids-pipeline/ds000117/*/*/*/*.html
 
   test_ds000246:
@@ -296,7 +295,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000246
             - mne_data/derivatives/mne-bids-pipeline/ds000246/*/*/*.html
             - mne_data/derivatives/mne-bids-pipeline/ds000246/*/*/*.tsv
 
@@ -324,7 +322,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000247
             - mne_data/derivatives/mne-bids-pipeline/ds000247/*/*/*/*.html
 
   test_ds000248:
@@ -353,7 +350,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248
             - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.html
             - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.json
             - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.tsv
@@ -383,7 +379,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248
             - mne_data/derivatives/mne-bids-pipeline/ds000248_ica/*/*/*.html
             - mne_data/derivatives/mne-bids-pipeline/ds000248_ica/*/*/*.tsv
 
@@ -457,7 +452,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248
             - mne_data/derivatives/mne-bids-pipeline/ds000248_no_mri/*/*/*.html
 
   test_ds001810:
@@ -484,7 +478,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds001810
             - mne_data/derivatives/mne-bids-pipeline/ds001810/*/*/*/*.html
 
   test_ds003104:
@@ -511,7 +504,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds003104
             - mne_data/derivatives/mne-bids-pipeline/ds003104/*/*/*.html
 
   test_ds003392:
@@ -540,7 +532,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds003392
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.html
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
@@ -569,7 +560,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/eeg_matchingpennies
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
   test_ERP_CORE:
@@ -634,7 +624,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ERP_CORE
             - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
 
   build_docs:
@@ -648,7 +637,15 @@ jobs:
       # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
       - restore_cache:
           keys:
+            - data-cache-ds000117-{{ .Revision }}
+            - data-cache-ds000246-{{ .Revision }}
+            - data-cache-ds000247-{{ .Revision }}
             - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds001810-{{ .Revision }}
+            - data-cache-ds003104-{{ .Revision }}
+            - data-cache-ds003392-{{ .Revision }}
+            - data-cache-eeg_matchingpennies-{{ .Revision }}
+            - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh

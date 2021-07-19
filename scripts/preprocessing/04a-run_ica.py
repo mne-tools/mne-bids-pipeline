@@ -507,6 +507,8 @@ def get_config(
 def main():
     """Run ICA."""
     if not config.spatial_filter == 'ica':
+        msg = 'Skipping …'
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_ica,

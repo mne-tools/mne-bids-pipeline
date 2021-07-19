@@ -3,7 +3,7 @@
 # skip job if not in a [circle full] or on main
 export REGEXP="r'(?<=\[circle )(.*)(?=\])'"
 export COMMIT_MESSAGE=$(git log --format=oneline -n 1);
-export COMMIT_MESSAGE_ESCAPED=${COMMIT_MESSAGE//\'/\\\'}  # escape '
+COMMIT_MESSAGE_ESCAPED=${COMMIT_MESSAGE//\'/\\\'}  # escape '
 export COMMIT_MESSAGE_ESCAPED=${COMMIT_MESSAGE_ESCAPED//\"/\\\'}  # escape "
 export CIRCLE_REQUESTED_JOB=$(
     python -c "import re; matches = re.findall(pattern=${REGEXP}, string='${COMMIT_MESSAGE_ESCAPED}'); match = '' if not matches else matches[0]; print(match)"

@@ -198,9 +198,10 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     --------
     A boolean numpy array containing the labels.
     """
-    epochs_cond_0 = epochs[tf_conditions[0]]
+    tf_cond = cfg.time_frequency_conditions
+    epochs_cond_0 = epochs[tf_cond[0]]
     event_id_condition_0 = set(epochs_cond_0.events[:, 2])
-    epochs_cond_1 = epochs[tf_conditions[1]]
+    epochs_cond_1 = epochs[tf_cond[1]]
     event_id_condition_1 = set(epochs_cond_1.events[:, 2])
 
     y = epochs.events[:, 2].copy()
@@ -211,8 +212,8 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
             y[i] = 1
         else:
             msg = (f"Event_id {y[i]} is not contained in "
-                   f"{tf_conditions[0]}'s set {event_id_condition_0}  nor in "
-                   f"{tf_conditions[1]}'s set {event_id_condition_1}.")
+                   f"{tf_cond[0]}'s set {event_id_condition_0}  nor in "
+                   f"{tf_cond[1]}'s set {event_id_condition_1}.")
             logger.warning(msg)
     return y
 
@@ -858,8 +859,8 @@ def group_analysis(
 
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
-    threshold = stats.distributions.t.ppf(1 - cfg.cluster_stats_alpha_t_test,
-                                          len(subjects) - 1)
+    threshold = stats.distributions.t.ppf(
+        1 - cfg.cluster_stats_alpha_t_test, len(subjects) - 1)
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,
         threshold=threshold,
@@ -948,7 +949,7 @@ def main():
     cfg = get_config()
 
     if len(config.time_frequency_conditions) != 2:
-        msg = ('tf_conditions does not contain 2 elements. '
+        msg = ('time_frequency_conditions does not contain 2 elements. '
                'Skipping step Time-frequency decoding...')
         logger.info(gen_log_message(message=msg, step=8))
         return None

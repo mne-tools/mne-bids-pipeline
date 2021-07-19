@@ -23,7 +23,7 @@ if [[
     "$CIRCLE_JOB" != "build_docs"
    ]] && [[
        (-n $CIRCLE_REQUESTED_JOB &&  # Specific job requested -> run only that one
-        "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB") ||
+        "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB"*) ||
        (-z $CIRCLE_REQUESTED_JOB &&  # no specific job requested -> run only ds000247
         "$CIRCLE_JOB" != *"ds000247")
     ]]; then

@@ -562,7 +562,7 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
-  test_ERP_CORE:
+  test_ERP_CORE_N400:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -582,39 +582,171 @@ jobs:
             python tests/run_tests.py --download=0 ERP_CORE_N400
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N400*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N400*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_ERN:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE ERN
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_ERN
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*ERN*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*ERN*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_LRP:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE LRP
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_LRP
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*LRP*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*LRP*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_MMN:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE MMN
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_MMN
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*MMN*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*MMN*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_N2pc:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N2pc
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N2pc
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N2pc*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N2pc*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_N170:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N170
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N170
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N170*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N170*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_P3:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE P3
           command: |
+            mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_P3
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*P3*.html ~/reports/ERP_CORE/
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*P3*.xlsx ~/reports/ERP_CORE/
@@ -780,7 +912,25 @@ workflows:
       - cache_ERP_CORE:
           requires:
             - setup_env
-      - test_ERP_CORE:
+      - test_ERP_CORE_N400:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_ERN:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_LRP:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_MMN:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_N2pc:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_N170:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_P3:
           requires:
             - cache_ERP_CORE
 
@@ -796,7 +946,13 @@ workflows:
             - test_ds003104
             - test_ds003392
             - test_eeg_matchingpennies
-            - test_ERP_CORE
+            - test_ERP_CORE_N400
+            - test_ERP_CORE_ERN
+            - test_ERP_CORE_LRP
+            - test_ERP_CORE_MMN
+            - test_ERP_CORE_N2pc
+            - test_ERP_CORE_N170
+            - test_ERP_CORE_P3
       - deploy_docs:
           requires:
             - build_docs

@@ -638,13 +638,29 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds000117-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds000246-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds000247-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds000248-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds001810-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds003104-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds003392-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-eeg_matchingpennies-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation

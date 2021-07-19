@@ -695,6 +695,25 @@ def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> BunchConst:
+    # Deal with configurations where `deriv_root` was specified, but not
+    # `fs_subjects_dir`. We normally raise an exception in this case in
+    # `get_fs_subjects_dir()`. However, in situations where users only run the
+    # sensor-space scripts, we never call this function, so everything works
+    # totally fine at first (which is expected). Yet, when creating the
+    # reports, the pipeline would fail with an exception – which is
+    # unjustified, as it would not make sense to force users to provide an
+    # `fs_subjects_dir` if they don't care about source analysis anyway! So
+    # simply assign a dummy value in such cases.
+    # `get_fs_subject()` calls `get_fs_subjects_dir()`, so take care of this
+    # too.
+    try:
+        fs_subjects_dir = config.get_fs_subjects_dir()
+    except ValueError:
+        fs_subjects_dir = None
+        fs_subject = None
+    else:
+        fs_subject = config.get_fs_subject(subject=subject)
+
     cfg = BunchConst(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
@@ -715,8 +734,8 @@ def get_config(
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
         inverse_method=config.inverse_method,
-        fs_subject=config.get_fs_subject(subject=subject),
-        fs_subjects_dir=config.get_fs_subjects_dir(),
+        fs_subject=fs_subject,
+        fs_subjects_dir=fs_subjects_dir,
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
         use_template_mri=config.use_template_mri,

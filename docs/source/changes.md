@@ -88,9 +88,14 @@ authors:
 - Do not crash when concatenating epochs or raws with different measurement
   info (like the dev_head_t when using EEG only data).
   ({{ gh(416) }} by {{ authors.agramfort }})
-- The ``run.py`` command line interface gained a new parameter ``n_jobs`` to
+- The ``run.py`` command line interface gained a new parameter ``--n_jobs`` to
   specify the number of processes to run in parallel.
   ({{ gh(417) }} by {{ authors.hoechenberger }})
+- Great improvements to our logging system produce more readable output on the
+  terminal. We also generate an Excel file containing useful debugging info
+  for all participants at each processing step to help you spot problematic
+  participants more easily.
+  ({{ gh(429) }} by {{ authors.agramfort }} {{ authors.hoechenberger }})
 
 ### Behavior changes
 

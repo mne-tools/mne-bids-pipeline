@@ -934,6 +934,17 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
+min_ecg_epochs: int = 5
+"""
+Minimal number of ECG epochs needed to compute SSP or ICA rejection with autoreject.
+"""
+
+min_eog_epochs: int = 5
+"""
+Minimal number of EOG epochs needed to compute SSP or ICA rejection with autoreject.
+"""
+
+
 # Rejection based on SSP
 # ~~~~~~~~~~~~~~~~~~~~~~
 

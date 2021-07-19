@@ -80,7 +80,7 @@ FreeSurfer.
   directory and also store the BEM surfaces there.
 
 If ``None``, this will default to
-[`bids_root`][config.bids_root_root]`/derivatives/freesurfer/subjects`.
+[`bids_root`][config.bids_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
     This setting is required if you specify [`deriv_root`][config.deriv_root]

@@ -234,17 +234,16 @@ def run_tests(test_suite, download):
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.
         argv_orig = sys.argv.copy()
-        for step in steps:
-            sys.argv = [
-                sys.argv[0],
-                f'{step}',
-                f'--config={config_path}',
-                f'--task={task}' if task else '',
-                f'--n_jobs={n_jobs}' if n_jobs else ''
-            ]
-            # We have to use run_path because run_module doesn't allow
-            # relative imports.
-            runpy.run_path(run_script, run_name='__main__')
+        sys.argv = [
+            sys.argv[0],
+            f'--steps={",".join(steps)}',
+            f'--config={config_path}',
+            f'--task={task}' if task else '',
+            f'--n_jobs={n_jobs}' if n_jobs else ''
+        ]
+        # We have to use run_path because run_module doesn't allow
+        # relative imports.
+        runpy.run_path(run_script, run_name='__main__')
         sys.argv = argv_orig
 
 

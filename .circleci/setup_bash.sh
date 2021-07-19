@@ -3,12 +3,15 @@
 # skip job if not in a [circle full] or on main
 export REGEXP="r'(?<=\[circle )(.*)(?=\])'"
 export COMMIT_MESSAGE=$(git log --format=oneline -n 1);
+export COMMIT_MESSAGE_ESCAPED=${COMMIT_MESSAGE//\'/\\\'}  # escape '
+export COMMIT_MESSAGE_ESCAPED=${COMMIT_MESSAGE_ESCAPED//\"/\\\'}  # escape "
 export CIRCLE_REQUESTED_JOB=$(
-    python -c "import re; matches = re.findall(pattern=${REGEXP}, string='${COMMIT_MESSAGE}'); match = '' if not matches else matches[0]; print(match)"
+    python -c "import re; matches = re.findall(pattern=${REGEXP}, string='${COMMIT_MESSAGE_ESCAPED}'); match = '' if not matches else matches[0]; print(match)"
 );
 
 echo "CIRCLE_JOB=$CIRCLE_JOB"
 echo "COMMIT_MESSAGE=$COMMIT_MESSAGE"
+echo "COMMIT_MESSAGE_ESCAPED=$COMMIT_MESSAGE_ESCAPED"
 echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 
 # On a PR, only run setup_env, build_docs, and the requested job(s). If no

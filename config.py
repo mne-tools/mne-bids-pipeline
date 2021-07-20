@@ -1528,7 +1528,7 @@ PIPELINE_NAME = 'mne-bids-pipeline'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
 
-os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = __file__
+os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 
 ###############################################################################
 # Logger

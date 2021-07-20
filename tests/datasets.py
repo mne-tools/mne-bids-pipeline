@@ -70,8 +70,11 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000248',
         'osf': '',
         'web': '',
-        'include': ['sub-01', 'sub-emptyroom',
-                    'derivatives/freesurfer/subjects'],
+        'include': [
+            'sub-01',
+            'sub-emptyroom',
+            'derivatives/freesurfer/subjects'
+        ],
         'exclude': [
             'derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2005s+aseg.mgz',  # noqa: E501
             'derivatives/freesurfer/subjects/fsaverage/mri/aparc+aseg.mgz',
@@ -82,61 +85,6 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
             'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
         ],
-    },
-    'ds000248_ica': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['sub-01'],
-        'exclude': []
-    },
-    'ds000248_T1_BEM': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': [
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz',
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
-        ],
-    },
-    'ds000248_FLASH_BEM': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': [
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz',
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
-        ],
-    },
-    'ds000248_coreg_surfaces': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': [
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz',
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
-        ],
-    },
-    'ds000248_no_mri': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['sub-01'],
-        'exclude': ['sub-01/anat'],
     },
     'ds000117': {
         'git': '',

@@ -230,6 +230,8 @@ def get_config(
 def main():
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
+        msg = 'Skipping …'
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(run_maxwell_filter,

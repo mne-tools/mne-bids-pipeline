@@ -103,6 +103,11 @@ def get_config(
 
 def main():
     """Run Time-frequency decomposition."""
+    if not config.time_frequency_conditions:
+        msg = 'Skipping …'
+        logger.info(**gen_log_kwargs(message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(

@@ -80,7 +80,7 @@ def compute_cov_from_empty_room(cfg, subject, session):
     cov.save(cov_fname)
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_covariance(*, cfg, subject, session=None):
     if cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
         compute_cov_from_empty_room(cfg=cfg, subject=subject, session=session)

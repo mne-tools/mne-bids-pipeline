@@ -237,7 +237,7 @@ def detect_bad_components(
     return inds
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_ica(*, cfg, subject, session=None):
     """Run ICA."""
     bids_basename = BIDSPath(subject=subject,

@@ -96,7 +96,7 @@ def resample(
     raw.resample(sfreq, npad='auto')
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def filter_data(
     *,
     cfg,
@@ -134,6 +134,8 @@ def filter_data(
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
+        import os
+
         raw = import_experimental_data(cfg=cfg,
                                        subject=subject, session=session,
                                        run=run, save=False)
@@ -240,6 +242,7 @@ def get_config(
 
 def main():
     """Run filter."""
+    import os
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
 

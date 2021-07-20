@@ -104,7 +104,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     return src, trans, bem_sol
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_forward(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,

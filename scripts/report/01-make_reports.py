@@ -196,7 +196,7 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -534,7 +534,7 @@ def add_event_counts(*,
 #         epochs = mne.read_epochs(fname_epochs)
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib

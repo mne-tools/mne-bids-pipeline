@@ -1506,7 +1506,8 @@ mne_log_level: Literal['info', 'error'] = 'error'
 Set the MNE-Python logging verbosity.
 """
 
-on_error: Literal['continue', 'abort', 'debug'] = 'abort'
+OnErrorT = Literal['continue', 'abort', 'debug']
+on_error: OnErrorT = 'abort'
 """
 Whether to abort processing as soon as an error occurs, continue with all other
 processing steps for as long as possible, or drop you into a debugger in case
@@ -1526,6 +1527,8 @@ of an error.
 PIPELINE_NAME = 'mne-bids-pipeline'
 VERSION = '0.1.dev0'
 CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
+
+os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 
 ###############################################################################
 # Logger
@@ -2177,10 +2180,14 @@ def get_fs_subjects_dir():
                 .resolve())
 
 
-def failsafe_run(on_error):
+def failsafe_run(
+    on_error: OnErrorT,
+    script_path: PathLike,
+):
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
             if "cfg" in kwargs_copy:

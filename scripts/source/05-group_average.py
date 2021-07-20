@@ -114,7 +114,8 @@ def get_config() -> BunchConst:
     return cfg
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)  # pass 'average' for logging
+# pass 'average' subject for logging
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
     if not config.run_source_estimation:

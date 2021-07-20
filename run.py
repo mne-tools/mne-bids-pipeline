@@ -4,7 +4,6 @@ import os
 import sys
 import runpy
 import pathlib
-import json
 import logging
 from typing import Union, Optional, Tuple
 if sys.version_info >= (3, 8):
@@ -14,7 +13,6 @@ else:
 
 import fire
 import coloredlogs
-import mne
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +32,6 @@ coloredlogs.install(
 
 PathLike = Union[str, pathlib.Path]
 
-MNE_CONFIG_DIR = pathlib.Path(mne.get_config_path()).parent
-MNE_CONFIG_DIR.mkdir(exist_ok=True)
-PIPELINE_SETTINGS_FILE = MNE_CONFIG_DIR / 'mne-bids-pipeline.json'
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
@@ -239,24 +234,11 @@ def process(config: PathLike,
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
     for script_path in script_paths:
-        with PIPELINE_SETTINGS_FILE.open('w', encoding='utf-8') as f:
-            settings = {
-                'current_script': str(script_path)
-            }
-            json.dump(obj=settings, fp=f)
-
         step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'🚀 Now running script: {step_name} 👇')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)
         logger.info(f'🎉 Done running script: {step_name} 👆')
-
-    # Clear the settings
-    with PIPELINE_SETTINGS_FILE.open('w', encoding='utf-8') as f:
-        settings = {
-            'current_script': None
-        }
-        json.dump(obj=settings, fp=f)
 
 
 if __name__ == '__main__':

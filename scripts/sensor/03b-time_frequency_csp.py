@@ -194,6 +194,12 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     we project the different events contained in one condition into
     just one label.
 
+    PARAMETERS:
+    -----------
+    epochs:
+        Should only contain events contained in
+        time_frequency_conditions.
+
     Returns:
     --------
     A boolean numpy array containing the labels.
@@ -206,15 +212,22 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
 
     y = epochs.events[:, 2].copy()
     for i in range(len(y)):
-        if y[i] in event_id_condition_0:
+        if y[i] in event_id_condition_0 and y[i] in event_id_condition_1:
+            msg = (f"Event_id {y[i]} is contained both in "
+                   f"{tf_cond[0]}'s set {event_id_condition_0} and in "
+                   f"{tf_cond[1]}'s set {event_id_condition_1}."
+                   f"{tf_cond} does not constitute a valid partition.")
+            logger.critical(msg)
+        elif y[i] in event_id_condition_0:
             y[i] = 0
         elif y[i] in event_id_condition_1:
             y[i] = 1
         else:
+            # This should not happen because epochs should already by filtered
             msg = (f"Event_id {y[i]} is not contained in "
                    f"{tf_cond[0]}'s set {event_id_condition_0}  nor in "
                    f"{tf_cond[1]}'s set {event_id_condition_1}.")
-            logger.warning(msg)
+            logger.critical(msg)
     return y
 
 
@@ -244,8 +257,12 @@ def prepare_epochs_and_y(
     if cfg.datatype == "meg":
         epochs_filter.pick_types(meg="mag")
 
-    # We filter after droping channel, because filtering is costly
-    epochs_filter.filter(fmin, fmax, n_jobs=1)
+    # filtering out the conditions we are not interested in.
+    epochs_filter = epochs_filter[cfg.time_frequency_conditions]
+
+    # We frequency filter after droping channel,
+    # because freq filtering is costly
+    epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     # prepare labels
     y = prepare_labels(epochs=epochs_filter, cfg=cfg)
@@ -503,7 +520,14 @@ def one_subject_decoding(
             # the windows size for all frequencies.
 
             # Crop data into time-window of interest
+            # Those two conditions enable to deal with numerical imprecisions
+            # Without totally silencing the crop warning if needed
+            if epochs_filter.tmin - 0.01 < w_tmin < epochs_filter.tmin:
+                w_tmin = epochs_filter.tmin
+            if epochs_filter.tmax < w_tmax < epochs_filter.tmax + 0.01:
+                w_tmax = epochs_filter.tmax
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
+
             # transform or fit_transform ?
             X_pca = pca.transform(X) if csp_use_pca else X
 
@@ -782,12 +806,13 @@ def group_analysis(
     -------
     None. Plots are saved in memory.
     """
-    if len(subjects) == 0:
-        msg = "We cannot run a group analysis with just one subject."
-        logger.critical(gen_log_message(msg, step=8))
-
     msg = "Running group analysis..."
     logger.info(gen_log_message(msg, step=8))
+
+    if len(subjects) < 2:
+        msg = "We cannot run a group analysis with just one subject."
+        logger.warning(gen_log_message(message=msg, step=8))
+        return None
 
     report = Report(title=f"csp-permutations-sub-average")
 

@@ -1,6 +1,7 @@
 """
 MNE Sample Data
 """
+import numpy as np
 
 study_name = 'ds000248'
 bids_root = '~/mne_data/ds000248'
@@ -13,6 +14,11 @@ contrasts = [('Visual', 'Auditory'),
              ('Auditory/Right', 'Auditory/Left')]
 
 time_frequency_conditions = ['Auditory', 'Visual']
+
+# We have to deal with the filter warning
+# RuntimeWarning: filter_length (455) is longer than the signal (421), distortion is likely. Reduce filter length or filter a longer signal.
+# that's why we do not use csp_freqs = np.linspace(10, 40, 5) but:
+csp_freqs = np.linspace(20, 40, 5)  # ok.
 
 ch_types = ['meg']
 mf_reference_run = '01'

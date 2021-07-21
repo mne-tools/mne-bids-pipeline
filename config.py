@@ -1786,6 +1786,21 @@ if decoding_n_splits < 2:  # TODO Change it to allow 1
 if len(csp_times) < 2:
     raise ValueError('csp_times should contain at least 2 values.')
 
+if min(csp_times) < epochs_tmin or max(csp_times) > epochs_tmax:
+    err = ('csp_times should be contained in the epoch interval.'
+           f'But we do not have {epochs_tmin} < {csp_times} < {epochs_tmax}')
+    raise ValueError(err)
+
+if list(csp_times) != sorted(csp_times):
+    ValueError("csp_times should be sorted.")
+
+if list(csp_freqs) != sorted(csp_freqs):
+    ValueError("csp_freqs should be sorted.")
+
+if min(csp_freqs) < 0:
+    ValueError("csp_freqs should contain only positive values.")
+
+
 if len(csp_freqs) < 2:
     raise ValueError('csp_freqs should contain at least 2 values.')
 

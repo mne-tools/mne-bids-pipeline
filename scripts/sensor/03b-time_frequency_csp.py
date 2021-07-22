@@ -172,7 +172,7 @@ class Tf:
             msg = ("We recommand increasing the duration of "
                    "your time intervals "
                    f"to at least {round(recommanded_w_min_time, 2)}s.")
-            logger.info(gen_log_message(msg, step=8))
+            logger.warning(gen_log_message(msg, step=8))
 
         centered_w_times = (times[1:] + times[:-1])/2
         centered_w_freqs = (freqs[1:] + freqs[:-1])/2
@@ -185,6 +185,15 @@ class Tf:
         self.centered_w_freqs = centered_w_freqs
         self.n_time_windows = n_time_windows
         self.n_freq_windows = n_freq_windows
+
+    def check_csp_times(self, epochs: BaseEpochs):
+        """Check if csp_times is contained in the epoch interval."""
+        # This test can only be performed after having read the Epochs file
+        # So it cannot be performed in the check section of the config file.
+        if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
+            err = ('csp_times should be contained in the epoch interval.'
+                   f'But we do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
+            raise ValueError(err)
 
 
 def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
@@ -449,6 +458,7 @@ def one_subject_decoding(
                                   session=session,
                                   cfg=cfg))
     sfreq = epochs.info['sfreq']
+    tf.check_csp_times(epochs)
 
     # Assemble the classifier using scikit-learn pipeline
     csp = CSP(n_components=cfg.csp_n_components,
@@ -463,9 +473,6 @@ def one_subject_decoding(
 
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
 
-    # TODO: Use instead group cross val with multiple session/run
-    # But impossible to group crossval easily if
-    # there is just one run/session
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=cfg.random_state)
 

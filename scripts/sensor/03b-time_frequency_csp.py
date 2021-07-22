@@ -493,11 +493,8 @@ def one_subject_decoding(
     rank_dic = compute_rank(epochs, rank="info")
     rank = rank_dic[cfg.datatype]
 
-    # TODO: pca just one time when maxfilter
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
-
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=cfg.random_state)
 

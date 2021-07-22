@@ -1,4 +1,5 @@
-"""
+""".
+
 ====================================================================
 Decoding in time-frequency space using Common Spatial Patterns (CSP)
 ====================================================================
@@ -228,9 +229,9 @@ def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast, cfg) -> np.ndarray
     A boolean numpy array containing the labels.
     """
     epochs_cond_0 = epochs[contrast[0]]
-    event_id_condition_0 = set(epochs_cond_0.events[:, 2])
+    event_id_condition_0 = set(epochs_cond_0.events[:, 2])  # type: ignore
     epochs_cond_1 = epochs[contrast[1]]
-    event_id_condition_1 = set(epochs_cond_1.events[:, 2])
+    event_id_condition_1 = set(epochs_cond_1.events[:, 2])  # type: ignore
 
     y = epochs.events[:, 2].copy()
     for i in range(len(y)):
@@ -285,7 +286,7 @@ def prepare_epochs_and_y(
 
     # We frequency filter after droping channel,
     # because freq filtering is costly
-    epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)
+    epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)  # type: ignore
 
     # prepare labels
     y = prepare_labels(epochs=epochs_filter, contrast=contrast, cfg=cfg)
@@ -914,7 +915,7 @@ def group_analysis(
 
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
-    threshold = stats.distributions.t.ppf(
+    threshold = stats.distributions.t.ppf(  # type: ignore
         1 - cfg.cluster_stats_alpha_t_test, len(subjects) - 1)
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,

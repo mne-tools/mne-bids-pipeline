@@ -360,7 +360,6 @@ def plot_frequency_decoding(
 def plot_time_frequency_decoding(
     *,
     tf_scores: np.ndarray,
-    sfreq: float,  # TODO: put in tf
     tf: Tf,
     pth: Pth,
     subject: str,
@@ -394,7 +393,10 @@ def plot_time_frequency_decoding(
         logger.info(gen_log_message(message=msg, step=8,
                                     subject=subject))
     tf_scores_ = np.nan_to_num(tf_scores, nan=chance)
-    av_tfr = AverageTFR(create_info(['freq'], sfreq),
+
+    # Here we just use an sfreq random number just
+    # to create a basic info structure.
+    av_tfr = AverageTFR(create_info(['freq'], sfreq=1.),
                         # newaxis linked with the [0] in plot
                         tf_scores_[np.newaxis, :],
                         tf.centered_w_times, tf.centered_w_freqs, 1)
@@ -478,7 +480,7 @@ def one_subject_decoding(
     sfreq = epochs.info['sfreq']
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
     print(decimation_needed)
-    if decimation_needed > 2 and cfg.quick_csp:
+    if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
     print(epochs)
     tf.check_csp_times(epochs)
@@ -607,7 +609,7 @@ def one_subject_decoding(
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
     fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
+        tf=tf, tf_scores=tf_scores, pth=pth,
         subject=subject, session=session)
     section = "Time-frequency decoding"
     report.add_figs_to_section(
@@ -861,18 +863,6 @@ def group_analysis(
     ######################################################################
     # 1. Average roc-auc scores across subjects
 
-    # just to obtain sfreq
-    sessions = config.get_sessions()
-    first_session: Session = None
-    if type(sessions) == list:
-        first_session = sessions[0]
-    else:
-        first_session = sessions
-    epochs = read_epochs(pth.file(subject=subjects[0],
-                                  session=first_session,
-                                  cfg=cfg))
-    sfreq = epochs.info['sfreq']
-
     # Average Frequency analysis
     all_freq_scores = load_and_average(
         pth.freq_scores, subjects=subjects, contrast=contrast,
@@ -900,7 +890,7 @@ def group_analysis(
         shape=[tf.n_freq_windows, tf.n_time_windows])
 
     fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=all_tf_scores, sfreq=sfreq, pth=pth,
+        tf=tf, tf_scores=all_tf_scores, pth=pth,
         subject="average", session=None)
     section = "Time - frequency decoding"
     report.add_figs_to_section(

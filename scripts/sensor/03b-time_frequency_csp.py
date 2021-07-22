@@ -165,10 +165,10 @@ class Pth:
 class Tf:
     """Util class containing useful info about the time frequency windows."""
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, freqs, times):
         """Calculate the required time and frequency size."""
-        freqs = np.array(cfg.csp_freqs)
-        times = np.array(cfg.csp_times)
+        freqs = np.array(freqs)
+        times = np.array(times)
 
         freq_ranges = list(zip(freqs[:-1], freqs[1:]))
         time_ranges = list(zip(times[:-1], times[1:]))
@@ -472,7 +472,15 @@ def one_subject_decoding(
     epochs = read_epochs(pth.file(subject=subject,
                                   session=session,
                                   cfg=cfg))
+
+    # compute maximal decimation possible
+    # 3 is to take a bit of margin wrt Nyquist
     sfreq = epochs.info['sfreq']
+    decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
+    print(decimation_needed)
+    if decimation_needed > 2 and cfg.quick_csp:
+        epochs.decimate(int(decimation_needed))
+    print(epochs)
     tf.check_csp_times(epochs)
 
     # Assemble the classifier using scikit-learn pipeline
@@ -544,9 +552,17 @@ def one_subject_decoding(
             # Crop data into time-window of interest
             # Those two conditions enable to deal with numerical imprecisions
             # Without totally silencing the crop warning if needed
-            if epochs_filter.tmin - 0.01 < w_tmin < epochs_filter.tmin:
+            # This occurs because, when we resample the data,
+            # epochs tmin and tmax change because of the padding
+            # This is a Patch which unfortunately makes the first and the last
+            # time bin slightly smaller than the central bins.
+            # So the central bins will have very slightly smaller rocauc scores than the
+            # central ones.
+            # But this slightlhy indesirable effect won't appear when
+            # setting csp_quick to false.
+            if epochs_filter.tmin - 0.1 < w_tmin < epochs_filter.tmin:
                 w_tmin = epochs_filter.tmin
-            if epochs_filter.tmax < w_tmax < epochs_filter.tmax + 0.01:
+            if epochs_filter.tmax < w_tmax < epochs_filter.tmax + 0.1:
                 w_tmax = epochs_filter.tmax
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
 
@@ -979,6 +995,7 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        csp_quick=config.csp_quick,
         csp_freqs=config.csp_freqs,
         csp_times=config.csp_times,
         csp_n_components=config.csp_n_components,
@@ -1006,7 +1023,7 @@ def main():
         return None
 
     # Calculate the appropriate time and frequency windows size
-    tf = Tf(cfg)
+    tf = Tf(cfg, freqs=config.csp_freqs, times=config.csp_times)
 
     # Compute the paths
     pth = Pth(cfg=cfg)
@@ -1019,11 +1036,11 @@ def main():
     for contrast in config.contrasts:
 
         # Useful for debugging:
-        # [one_subject_decoding(
-        #     cfg=cfg, tf=tf, pth=pth,
-        #     subject=subject, session=session, contrast=contrast)
-        #     for subject, session in
-        #  itertools.product(subjects, sessions)]
+        [one_subject_decoding(
+            cfg=cfg, tf=tf, pth=pth,
+            subject=subject, session=session, contrast=contrast)
+            for subject, session in
+         itertools.product(subjects, sessions)]
 
         parallel, run_func, _ = parallel_func(
             one_subject_decoding, n_jobs=N_JOBS)

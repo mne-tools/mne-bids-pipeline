@@ -1213,6 +1213,13 @@ Regularization used in the covariance estimator when calculating CSPs. Must be
 between 0 and 1.
 """
 
+csp_quick: bool = True
+"""
+Enables to decimate the data when performing the time_frequency_csp analysis.
+Disable it when you have finished calibrating the pipeline.
+But the difference with and without it is nearly negligeable.
+"""
+
 cluster_stats_alpha: float = 0.05
 """
 Statistic level used in the time frequency script.
@@ -2278,7 +2285,8 @@ def sanitize_cond_name(cond: str) -> str:
     cond = (cond
             .replace(os.path.sep, '')
             .replace('-', '')
-            .replace(' ', ''))
+            .replace(' ', '')
+            .replace('_', ''))
     return cond
 
 

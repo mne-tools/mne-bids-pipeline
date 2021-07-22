@@ -22,6 +22,12 @@ More details are available here:
 https://mne.tools/stable/auto_tutorials/stats-sensor-space/10_background_stats.html
 
 The user has only to specify the list of frequency and the list of timings.
+
+
+Iterations levels:
+    - contrasts
+        - We iterate through subjects and sessions
+    -       - If there are multiple runs, runs are concatenated into one big session.
 """
 # License: BSD (3-clause)
 
@@ -61,13 +67,15 @@ set_log_level(verbose="WARNING")  # mne logger
 chance = 0.5
 csp_plot_patterns = False
 
+# One PCA is fitted for each frequency bin.
 # The usage of the pca is highly recommended for two reasons
 # 1. The execution of the code is faster.
 # 2. There will be much less numerical instabilities.
-# One PCA is fitted for each frequency bin.
 csp_use_pca = True
 
+# typing
 Session = Union[None, str]
+Contrast = Tuple[str, str]
 
 
 class Pth:
@@ -75,7 +83,8 @@ class Pth:
 
     def __init__(self, cfg) -> None:
         """Initialize directory. Initialize the base path."""
-        # We initialize to the average subject and session ?
+        # We initialize to the average subject
+        # and to the default None session
         self.bids_basename = BIDSPath(
             subject="average",
             task=cfg.task,
@@ -102,49 +111,55 @@ class Pth:
             subject=subject,
             session=session)
 
-    def report(self, subject: str, session: Session) -> BIDSPath:
+    def report(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
         """Path to array containing the report."""
         return self.bids_basename.copy().update(
-            processing='csp+permutation+test',
+            processing='tf+csp' + self.contrast_suffix(contrast),
             subject=subject,
             session=session,
             suffix='report',
             extension='.html')
 
-    def freq_scores(self, subject: str, session: Session) -> BIDSPath:
+    def freq_scores(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
         """Path to array containing the histograms."""
         return self.bids_basename.copy().update(
-            processing='csp+freq',
+            processing='csp+freq' + self.contrast_suffix(contrast),
             subject=subject,
             session=session,
             suffix='scores',
             extension='.npy')
 
-    # TODO: savemat instead ?
-    def freq_scores_std(self, subject: str, session: Session) -> BIDSPath:
+    def freq_scores_std(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
         """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
-            processing='csp+freq',
+            processing='csp+freq' + self.contrast_suffix(contrast),
             subject=subject,
             session=session,
             suffix='scores+std',
             extension='.npy')
 
-    def tf_scores(self, subject: str, session: Session) -> BIDSPath:
+    def tf_scores(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
         """Path to time-frequency scores."""
         return self.bids_basename.copy().update(
-            processing='csp+tf',
+            processing='csp+tf' + self.contrast_suffix(contrast),
             subject=subject,
             session=session,
             suffix='scores+std',
             extension='.npy')
 
-    def prefix(self, subject: str, session: Session) -> str:
-        """Usefull when printing messages."""
+    def contrast_suffix(self, contrast: Contrast):
+        """Contrast suffix conform with Bids format."""
+        con0 = config.sanitize_cond_name(contrast[0])
+        con1 = config.sanitize_cond_name(contrast[1])
+        return f'+contr+{con0}+{con1}'
+
+    def prefix(self, subject: str, session: Session, contrast: Contrast) -> str:
+        """Usefull when logging messages."""
+        res = f'subject-{subject}-' + self.contrast_suffix(contrast)
         if session:
-            return f'subject-{subject}-session-{session}'
+            return res + f'-session-{session}'
         else:
-            return f'subject-{subject}'
+            return res
 
 
 class Tf:
@@ -196,7 +211,7 @@ class Tf:
             raise ValueError(err)
 
 
-def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
+def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast, cfg) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
@@ -206,26 +221,24 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
     PARAMETERS:
     -----------
     epochs:
-        Should only contain events contained in
-        time_frequency_conditions.
+        Should only contain events contained in contrast.
 
     Returns:
     --------
     A boolean numpy array containing the labels.
     """
-    tf_cond = cfg.time_frequency_conditions
-    epochs_cond_0 = epochs[tf_cond[0]]
+    epochs_cond_0 = epochs[contrast[0]]
     event_id_condition_0 = set(epochs_cond_0.events[:, 2])
-    epochs_cond_1 = epochs[tf_cond[1]]
+    epochs_cond_1 = epochs[contrast[1]]
     event_id_condition_1 = set(epochs_cond_1.events[:, 2])
 
     y = epochs.events[:, 2].copy()
     for i in range(len(y)):
         if y[i] in event_id_condition_0 and y[i] in event_id_condition_1:
             msg = (f"Event_id {y[i]} is contained both in "
-                   f"{tf_cond[0]}'s set {event_id_condition_0} and in "
-                   f"{tf_cond[1]}'s set {event_id_condition_1}."
-                   f"{tf_cond} does not constitute a valid partition.")
+                   f"{contrast[0]}'s set {event_id_condition_0} and in "
+                   f"{contrast[1]}'s set {event_id_condition_1}."
+                   f"{contrast} does not constitute a valid partition.")
             logger.critical(msg)
         elif y[i] in event_id_condition_0:
             y[i] = 0
@@ -234,8 +247,8 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
         else:
             # This should not happen because epochs should already by filtered
             msg = (f"Event_id {y[i]} is not contained in "
-                   f"{tf_cond[0]}'s set {event_id_condition_0}  nor in "
-                   f"{tf_cond[1]}'s set {event_id_condition_1}.")
+                   f"{contrast[0]}'s set {event_id_condition_0}  nor in "
+                   f"{contrast[1]}'s set {event_id_condition_1}.")
             logger.critical(msg)
     return y
 
@@ -244,6 +257,7 @@ def prepare_labels(*, epochs: BaseEpochs, cfg) -> np.ndarray:
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,
+    contrast: Contrast,
     cfg,
     fmin: float,
     fmax: float
@@ -267,14 +281,14 @@ def prepare_epochs_and_y(
         epochs_filter.pick_types(meg="mag")
 
     # filtering out the conditions we are not interested in.
-    epochs_filter = epochs_filter[cfg.time_frequency_conditions]
+    epochs_filter = epochs_filter[contrast]
 
     # We frequency filter after droping channel,
     # because freq filtering is costly
     epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     # prepare labels
-    y = prepare_labels(epochs=epochs_filter, cfg=cfg)
+    y = prepare_labels(epochs=epochs_filter, contrast=contrast, cfg=cfg)
 
     return epochs_filter, y
 
@@ -431,7 +445,8 @@ def one_subject_decoding(
     tf: Tf,
     pth: Pth,
     subject: str,
-    session: Session
+    session: Session,
+    contrast: Contrast
 ) -> None:
     """Run one subject.
 
@@ -448,7 +463,7 @@ def one_subject_decoding(
     None. We just save the plots in the report
     and the numpy results in memory.
     """
-    msg = f"Running decoding for {pth.prefix(subject, session)}..."
+    msg = f"Running decoding for {pth.prefix(subject, session, contrast)}..."
     logger.info(gen_log_message(msg, step=8, subject=subject, session=session))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
@@ -484,10 +499,10 @@ def one_subject_decoding(
     for freq, (fmin, fmax) in ProgressBar(
             enumerate(tf.freq_ranges),
             max_value=tf.n_freq_windows,
-            mesg=pth.prefix(subject, session) + '- frequency loop'):
+            mesg=pth.prefix(subject, session, contrast) + '- frequency loop'):
 
         epochs_filter, y = prepare_epochs_and_y(
-            epochs=epochs, fmin=fmin, fmax=fmax, cfg=cfg)
+            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg)
 
         ##########################################################################
         # 1. Loop through frequencies, apply classifier and save scores
@@ -512,7 +527,7 @@ def one_subject_decoding(
             plot_patterns(
                 csp, epochs_filter, report,
                 section="CSP Patterns - frequency",
-                title=f'{pth.prefix(subject, session)}-{(fmin, fmax)}Hz - all epoch')
+                title=f'{pth.prefix(subject, session, contrast)}-{(fmin, fmax)}Hz - all epoch')
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -554,11 +569,12 @@ def one_subject_decoding(
                 plot_patterns(
                     csp, epochs_filter, report,
                     section="CSP Patterns - time-frequency",
-                    title=f'{pth.prefix(subject, session)}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
+                    title=f'{pth.prefix(subject, session, contrast)}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
 
     # Frequency savings
-    np.save(file=pth.freq_scores(subject, session), arr=freq_scores)
-    np.save(file=pth.freq_scores_std(subject, session), arr=freq_scores_std)
+    np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
+    np.save(file=pth.freq_scores_std(
+        subject, session, contrast), arr=freq_scores_std)
     fig = plot_frequency_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
@@ -570,10 +586,10 @@ def one_subject_decoding(
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + pth.prefix(subject, session))
+        captions=section + pth.prefix(subject, session, contrast))
 
     # Time frequency savings
-    np.save(file=pth.tf_scores(subject, session), arr=tf_scores)
+    np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
     fig = plot_time_frequency_decoding(
         tf=tf, tf_scores=tf_scores, sfreq=sfreq, pth=pth,
         subject=subject, session=session)
@@ -581,18 +597,19 @@ def one_subject_decoding(
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + pth.prefix(subject, session))
-    report.save(pth.report(subject, session), overwrite=True,
+        captions=section + pth.prefix(subject, session, contrast))
+    report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
 
-    msg = f"Decoding for {pth.prefix(subject, session)} finished successfully."
+    msg = f"Decoding for {pth.prefix(subject, session, contrast)} finished successfully."
     logger.info(gen_log_message(message=msg, subject=subject, session=session,
                                 step=8))
 
 
 def load_and_average(
-    path: Callable[[str, Session], BIDSPath],
+    path: Callable[[str, Session, Contrast], BIDSPath],
     subjects: List[str],
+    contrast: Contrast,
     shape: List[int],
     average: bool = True
 ) -> np.ndarray:
@@ -625,10 +642,10 @@ def load_and_average(
     iterator = itertools.product(subjects, sessions)
     for i, (sub, ses) in enumerate(iterator):
         try:
-            arr = np.load(path(sub, ses))
+            arr = np.load(path(sub, ses, contrast))
             # Checking for previous iteration, previous shapes
             if list(arr.shape) != shape:
-                msg = f"Shape mismatch for {path(sub, ses)}"
+                msg = f"Shape mismatch for {path(sub, ses, contrast)}"
                 logger.warning(gen_log_message(
                     message=msg, subject=sub, step=8))
                 raise FileNotFoundError
@@ -637,7 +654,7 @@ def load_and_average(
             arr = np.empty(shape=shape)
             arr.fill(np.NaN)
         if np.isnan(arr).any():
-            msg = f"NaN values were found in {path(sub, ses)}"
+            msg = f"NaN values were found in {path(sub, ses, contrast)}"
             logger.warning(gen_log_message(
                 message=msg, subject=sub, session=ses, step=8))
         res[i] = arr
@@ -728,6 +745,7 @@ def plot_t_and_p_values(
 def compute_conf_inter(
     mean_scores: np.ndarray,
     subjects: List[str],
+    contrast: Contrast,
     cfg,
     tf: Tf
 ) -> Dict[str, Any]:
@@ -747,8 +765,8 @@ def compute_conf_inter(
     Dictionnary of meta data. 
     """
     contrast_score_stats = {
-        'cond_1': cfg.time_frequency_conditions[0],
-        'cond_2': cfg.time_frequency_conditions[1],
+        'cond_1': contrast[0],
+        'cond_2': contrast[1],
         'times': tf.times,
         'N': len(subjects),
         'mean': np.empty(tf.n_freq_windows),
@@ -796,6 +814,7 @@ def compute_conf_inter(
 @failsafe_run(on_error=on_error)
 def group_analysis(
     subjects: List[str],
+    contrast: Contrast,
     cfg,
     pth: Pth,
     tf: Tf
@@ -840,12 +859,13 @@ def group_analysis(
 
     # Average Frequency analysis
     all_freq_scores = load_and_average(
-        pth.freq_scores, subjects=subjects, average=False, shape=[tf.n_freq_windows])
+        pth.freq_scores, subjects=subjects, contrast=contrast,
+        average=False, shape=[tf.n_freq_windows])
     freq_scores = np.nanmean(all_freq_scores, axis=0)
 
     # Calculating the 95% confidence intervals
     contrast_score_stats = compute_conf_inter(
-        mean_scores=all_freq_scores,
+        mean_scores=all_freq_scores, contrast=contrast,
         subjects=subjects, cfg=cfg, tf=tf)
 
     fig = plot_frequency_decoding(
@@ -860,7 +880,7 @@ def group_analysis(
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(
-        pth.tf_scores, subjects=subjects,
+        pth.tf_scores, subjects=subjects, contrast=contrast,
         shape=[tf.n_freq_windows, tf.n_time_windows])
 
     fig = plot_time_frequency_decoding(
@@ -877,7 +897,7 @@ def group_analysis(
 
     # Reshape data to what is equivalent to (n_samples, n_space, n_time)
     X = load_and_average(
-        pth.tf_scores, subjects=subjects, average=False,
+        pth.tf_scores, subjects=subjects, average=False, contrast=contrast,
         shape=[tf.n_freq_windows, tf.n_time_windows])
     X = X - chance
 
@@ -937,7 +957,7 @@ def group_analysis(
             section=section,
             captions=section + ' sub-average')
 
-    pth_report = pth.report("average", session=None)
+    pth_report = pth.report("average", session=None, contrast=contrast)
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
     msg = f"Report {pth_report} saved in the average subject folder"
@@ -954,7 +974,6 @@ def get_config(
     cfg = BunchConst(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
-        time_frequency_conditions=config.time_frequency_conditions,
         decoding_n_splits=config.decoding_n_splits,
         task=config.get_task(),
         acq=config.acq,
@@ -980,8 +999,8 @@ def main():
 
     cfg = get_config()
 
-    if len(config.time_frequency_conditions) != 2:
-        msg = ('time_frequency_conditions does not contain 2 elements. '
+    if not config.contrasts:
+        msg = ('contrasts was not specified. '
                'Skipping step Time-frequency decoding...')
         logger.info(gen_log_message(message=msg, step=8))
         return None
@@ -995,22 +1014,31 @@ def main():
     subjects = config.get_subjects()
     sessions = config.get_sessions()
 
-    # Useful for debugging:
-    # [one_subject_decoding(
-    #     cfg=cfg, tf=tf, pth=pth, subject=subject)
-    #     for subject, session in
-    #         itertools.product(subjects, sessions)]
+    # TODO : add "rocauc in figures titles"
 
-    parallel, run_func, _ = parallel_func(one_subject_decoding, n_jobs=N_JOBS)
-    parallel(run_func(cfg=cfg, tf=tf, pth=pth,
-                      subject=subject, session=session)
-             for subject, session in
-             itertools.product(subjects, sessions))
+    for contrast in config.contrasts:
 
-    # Once every subject has been calculated,
-    # the group_analysis is very fast to compute.
-    group_analysis(subjects=config.get_subjects(),
-                   cfg=cfg, pth=pth, tf=tf)
+        # Useful for debugging:
+        # [one_subject_decoding(
+        #     cfg=cfg, tf=tf, pth=pth,
+        #     subject=subject, session=session, contrast=contrast)
+        #     for subject, session in
+        #  itertools.product(subjects, sessions)]
+
+        parallel, run_func, _ = parallel_func(
+            one_subject_decoding, n_jobs=N_JOBS)
+        parallel(run_func(cfg=cfg, tf=tf, pth=pth,
+                          subject=subject,
+                          session=session,
+                          contrast=contrast)
+                 for subject, session in
+                 itertools.product(subjects, sessions))
+
+        # Once every subject has been calculated,
+        # the group_analysis is very fast to compute.
+        group_analysis(subjects=config.get_subjects(),
+                       contrast=contrast,
+                       cfg=cfg, pth=pth, tf=tf)
 
     msg = 'Completed Step 8: Time-frequency decoding'
     logger.info(gen_log_message(message=msg, step=8))

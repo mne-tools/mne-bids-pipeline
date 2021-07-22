@@ -1276,6 +1276,13 @@ Maximum frequency for the time frequency analysis, in Hz.
     time_frequency_freq_max = 22.3  # 22.3 Hz
     ```
 """
+
+
+###############################################################################
+# TIME-FREQUENCY CSP
+# ------------------
+
+
 csp_freqs: ArrayLike = np.linspace(time_frequency_freq_min,
                                    time_frequency_freq_max,
                                    num=5)
@@ -2270,8 +2277,8 @@ def get_fs_subject(subject) -> str:
 def sanitize_cond_name(cond: str) -> str:
     cond = (cond
             .replace(os.path.sep, '')
-            .replace('_', '')
-            .replace('-', ''))
+            .replace('-', '')
+            .replace(' ', ''))
     return cond
 
 

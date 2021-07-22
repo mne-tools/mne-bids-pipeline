@@ -350,9 +350,9 @@ def plot_frequency_decoding(
                label='chance level')
     ax.legend()
     ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel('Decoding Scores')
+    ax.set_ylabel('Decoding Roc-Auc Scores')
     CI_msg = "95% CI" if subject == "average" else "CV std score"
-    ax.set_title(f'Frequency Decoding Scores - {CI_msg}')
+    ax.set_title(f'Frequency Decoding Roc-Auc Scores - {CI_msg}')
 
     return fig
 
@@ -1030,8 +1030,6 @@ def main():
 
     subjects = config.get_subjects()
     sessions = config.get_sessions()
-
-    # TODO : add "rocauc in figures titles"
 
     for contrast in config.contrasts:
 

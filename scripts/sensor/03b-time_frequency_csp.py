@@ -475,6 +475,7 @@ def one_subject_decoding(
     epochs = read_epochs(pth.file(subject=subject,
                                   session=session,
                                   cfg=cfg))
+    tf.check_csp_times(epochs)
 
     # compute maximal decimation possible
     # 3 is to take a bit of margin wrt Nyquist
@@ -484,7 +485,6 @@ def one_subject_decoding(
     if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
     print(epochs)
-    tf.check_csp_times(epochs)
 
     # Assemble the classifier using scikit-learn pipeline
     csp = CSP(n_components=cfg.csp_n_components,

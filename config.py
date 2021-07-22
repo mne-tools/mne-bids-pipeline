@@ -1217,7 +1217,7 @@ csp_quick: bool = True
 """
 Enables to decimate the data when performing the time_frequency_csp analysis.
 Disable it when you have finished calibrating the pipeline.
-But the difference with and without it is nearly negligeable.
+But the difference with and without it is nearly negligible.
 """
 
 cluster_stats_alpha: float = 0.05

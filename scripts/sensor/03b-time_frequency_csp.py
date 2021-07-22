@@ -181,12 +181,12 @@ class Tf:
         # we can reconstruct the signal if f_s > 2 * band_freq
         min_band_freq = np.min(freqs[1:] - freqs[:-1])
         min_band_time = np.min(times[1:] - times[:-1])
-        recommanded_w_min_time = 1 / (2 * min_band_freq)
+        recommended_w_min_time = 1 / (2 * min_band_freq)
 
-        if recommanded_w_min_time > min_band_time:
-            msg = ("We recommand increasing the duration of "
+        if recommended_w_min_time > min_band_time:
+            msg = ("We recommend increasing the duration of "
                    "your time intervals "
-                   f"to at least {round(recommanded_w_min_time, 2)}s.")
+                   f"to at least {round(recommended_w_min_time, 2)}s.")
             logger.warning(gen_log_message(msg, step=8))
 
         centered_w_times = (times[1:] + times[:-1])/2
@@ -558,7 +558,7 @@ def one_subject_decoding(
             # time bin slightly smaller than the central bins.
             # So the central bins will have very slightly smaller rocauc scores than the
             # central ones.
-            # But this slightlhy indesirable effect won't appear when
+            # But this slightly undesirable effect won't appear when
             # setting csp_quick to false.
             if epochs_filter.tmin - 0.1 < w_tmin < epochs_filter.tmin:
                 w_tmin = epochs_filter.tmin
@@ -640,7 +640,7 @@ def load_and_average(
     average
         if True, returns average along the subject dimension.
     shape
-        The shape of the resultts.
+        The shape of the results.
         Either (freq) or (freq, times)
 
     Returns:

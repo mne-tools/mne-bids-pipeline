@@ -206,10 +206,11 @@ class Tf:
         """Check if csp_times is contained in the epoch interval."""
         # This test can only be performed after having read the Epochs file
         # So it cannot be performed in the check section of the config file.
-        if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
-            err = ('csp_times should be contained in the epoch interval.'
+        # 0.01 because epochs tmain end tmax are a bit approximate, even before decimation.
+        if min(self.times) < epochs.tmin - 0.01 or max(self.times) > epochs.tmax + 0.01:
+            wrn = ('csp_times should be contained in the epoch interval.'
                    f'But we do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
-            raise ValueError(err)
+            logger.warning(wrn)
 
 
 def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast, cfg) -> np.ndarray:

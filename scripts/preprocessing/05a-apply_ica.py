@@ -34,7 +34,7 @@ from config import gen_log_kwargs, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def apply_ica(*, cfg, subject, session):
     bids_basename = BIDSPath(subject=subject,
                              session=session,
@@ -147,6 +147,8 @@ def get_config(
 def main():
     """Apply ICA."""
     if not config.spatial_filter == 'ica':
+        msg = 'Skipping …'
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func, _ = parallel_func(apply_ica,

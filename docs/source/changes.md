@@ -95,7 +95,7 @@ authors:
   terminal. We also generate an Excel file containing useful debugging info
   for all participants at each processing step to help you spot problematic
   participants more easily.
-  ({{ gh(429) }} by {{ authors.agramfort }} {{ authors.hoechenberger }})
+  ({{ gh(429), gh(441) }} by {{ authors.agramfort }} {{ authors.hoechenberger }})
 
 ### Behavior changes
 

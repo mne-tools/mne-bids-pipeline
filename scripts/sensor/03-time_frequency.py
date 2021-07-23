@@ -25,7 +25,7 @@ from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_time_frequency(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -103,6 +103,11 @@ def get_config(
 
 def main():
     """Run Time-frequency decomposition."""
+    if not config.time_frequency_conditions:
+        msg = 'Skipping …'
+        logger.info(**gen_log_kwargs(message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(run_time_frequency,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(

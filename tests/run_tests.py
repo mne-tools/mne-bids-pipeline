@@ -67,35 +67,35 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'env': {}
     },
     'ds000248_ica': {
-        'dataset': 'ds000248_ica',
+        'dataset': 'ds000248',
         'config': 'config_ds000248_ica.py',
         'steps': ('preprocessing', 'sensor', 'report'),
         'task': None,
         'env': {}
     },
     'ds000248_T1_BEM': {
-        'dataset': 'ds000248_T1_BEM',
+        'dataset': 'ds000248',
         'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
         'task': None,
         'env': {}
     },
     'ds000248_FLASH_BEM': {
-        'dataset': 'ds000248_FLASH_BEM',
+        'dataset': 'ds000248',
         'config': 'config_ds000248_FLASH_BEM.py',
         'steps': ('source/make_bem_surfaces',),
         'task': None,
         'env': {}
     },
     'ds000248_coreg_surfaces': {
-        'dataset': 'ds000248_coreg_surfaces',
+        'dataset': 'ds000248',
         'config': 'config_ds000248_coreg_surfaces.py',
         'steps': ('freesurfer/coreg_surfaces',),
         'task': None,
         'env': {}
     },
     'ds000248_no_mri': {
-        'dataset': 'ds000248_no_mri',
+        'dataset': 'ds000248',
         'config': 'config_ds000248_no_mri.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
         'task': None,
@@ -234,17 +234,16 @@ def run_tests(test_suite, download):
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.
         argv_orig = sys.argv.copy()
-        for step in steps:
-            sys.argv = [
-                sys.argv[0],
-                f'{step}',
-                f'--config={config_path}',
-                f'--task={task}' if task else '',
-                f'--n_jobs={n_jobs}' if n_jobs else ''
-            ]
-            # We have to use run_path because run_module doesn't allow
-            # relative imports.
-            runpy.run_path(run_script, run_name='__main__')
+        sys.argv = [
+            sys.argv[0],
+            f'--steps={",".join(steps)}',
+            f'--config={config_path}',
+            f'--task={task}' if task else '',
+            f'--n_jobs={n_jobs}' if n_jobs else ''
+        ]
+        # We have to use run_path because run_module doesn't allow
+        # relative imports.
+        runpy.run_path(run_script, run_name='__main__')
         sys.argv = argv_orig
 
 
@@ -269,12 +268,13 @@ if __name__ == '__main__':
         if os.environ.get('DATASET') is None:
             parser.print_help()
         print('\n\n')
-        raise KeyError('"{}" is not a valid dataset key in the TEST_SUITE '
-                       'dictionary in the run_tests.py module. Use one of {}.'
-                       .format(args.dataset, ', '.join(TEST_SUITE.keys())))
+        raise KeyError(
+            f'"{args.dataset}" is not a valid dataset key in the TEST_SUITE '
+            f'dictionary in the run_tests.py module. Use one of: '
+            f'{", ".join(TEST_SUITE.keys())}.'
+        )
 
     # Run the tests
-    print('Running the following tests: {}'
-          .format(', '.join(test_suite.keys())))
+    print(f'Running the following tests: {", ".join(test_suite.keys())}')
 
     run_tests(test_suite, download=download)

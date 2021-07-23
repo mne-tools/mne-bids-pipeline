@@ -14,6 +14,7 @@ else:
 import fire
 import coloredlogs
 
+
 logger = logging.getLogger(__name__)
 
 log_level_styles = {
@@ -99,7 +100,6 @@ def _run_script(script_path, config, root_dir, subject, session, task, run,
     # upon exit.
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
-    env['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
 
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
@@ -238,7 +238,7 @@ def process(config: PathLike,
         logger.info(f'🚀 Now running script: {step_name} 👇')
         _run_script(script_path, config, root_dir, subject, session, task, run,
                     n_jobs)
-        logger.info(f'🎉 Done running script: {step_name} 👏')
+        logger.info(f'🎉 Done running script: {step_name} 👆')
 
 
 if __name__ == '__main__':

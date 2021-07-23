@@ -114,7 +114,7 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def make_bem_and_scalp_surface(*, cfg, subject):
     make_bem(cfg=cfg, subject=subject)
     make_scalp_surface(cfg=cfg, subject=subject)

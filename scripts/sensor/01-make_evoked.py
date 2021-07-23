@@ -22,7 +22,7 @@ from config import gen_log_kwargs, on_error, failsafe_run
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def run_evoked(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -112,7 +112,7 @@ def get_config(
 def main():
     """Run evoked."""
     if config.get_task().lower() == 'rest':
-        msg = '    … skipping: for "rest" task.'
+        msg = '    … skipping: for resting-state task.'
         logger.info(**gen_log_kwargs(message=msg))
         return
 

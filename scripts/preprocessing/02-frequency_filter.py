@@ -96,7 +96,7 @@ def resample(
     raw.resample(sfreq, npad='auto')
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def filter_data(
     *,
     cfg,

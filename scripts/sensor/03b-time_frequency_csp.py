@@ -100,13 +100,7 @@ class Pth:
             processing='clean',
             check=False)
 
-    def file(
-        self,
-        *,
-        subject: str,
-        session: Session,
-        cfg
-    ) -> BIDSPath:
+    def file(self, subject: str, session: Session) -> BIDSPath:
         """Return the path of the file."""
         return self.bids_basename.copy().update(
             subject=subject,
@@ -166,7 +160,7 @@ class Pth:
 class Tf:
     """Util class containing useful info about the time frequency windows."""
 
-    def __init__(self, cfg, freqs, times):
+    def __init__(self, *, freqs, times):
         """Calculate the required time and frequency size."""
         freqs = np.array(freqs)
         times = np.array(times)
@@ -213,7 +207,7 @@ class Tf:
             logger.warning(wrn)
 
 
-def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast, cfg) -> np.ndarray:
+def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
@@ -264,7 +258,7 @@ def prepare_epochs_and_y(
     fmin: float,
     fmax: float
 ) -> Tuple[BaseEpochs, np.ndarray]:
-    """Band-pass and clean the epochs and prepare labels.
+    """Band-pass between (fmin, fmax), clean the epochs, prepare labels.
 
     Returns:
     --------
@@ -290,7 +284,7 @@ def prepare_epochs_and_y(
     epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)  # type: ignore
 
     # prepare labels
-    y = prepare_labels(epochs=epochs_filter, contrast=contrast, cfg=cfg)
+    y = prepare_labels(epochs=epochs_filter, contrast=contrast)
 
     return epochs_filter, y
 
@@ -300,9 +294,7 @@ def plot_frequency_decoding(
     freqs: np.ndarray,
     freq_scores: np.ndarray,
     conf_int: np.ndarray,
-    subject: str,
-    session: Session,
-    pth: Pth
+    subject: str
 ) -> Figure:
     """Plot and save the frequencies results.
 
@@ -322,8 +314,6 @@ def plot_frequency_decoding(
         The std of the cross-validation roc-auc scores for each frequency bin.
     subject
         name of the subject or "average" subject
-    pth
-        Pth class.
 
     Returns:
     -------
@@ -363,9 +353,7 @@ def plot_time_frequency_decoding(
     *,
     tf_scores: np.ndarray,
     tf: Tf,
-    pth: Pth,
-    subject: str,
-    session: Session
+    subject: str
 ) -> Figure:
     """Plot and save the time-frequencies results.
 
@@ -377,11 +365,7 @@ def plot_time_frequency_decoding(
         Sampling frequency
     tf
         Util object for time frequency information.
-    pth:
-        Util object for paths.
     subject
-        name of the subject.
-    session
         name of the subject.
 
     Returns:
@@ -414,13 +398,20 @@ def plot_time_frequency_decoding(
     return figs[0]
 
 
-def plot_patterns(csp, epochs_filter: BaseEpochs, report: Report, section: str, title: str):
+def plot_patterns(
+    *,
+    csp,
+    epochs_filter: BaseEpochs,
+    report: Report,
+    section: str,
+    title: str
+):
     """Plot csp topographic patterns and save them in the reports.
 
     PARAMETERS
     ----------
     csp
-        csp fitted estimator
+        csp fitted estimator.
     epochs_filter
         Epochs which have been band passed filtered and maybe time cropped.
     report
@@ -473,9 +464,7 @@ def one_subject_decoding(
     report = Report(title=f"csp-permutations-sub-{subject}")
 
     # Extract information from the raw file
-    epochs = read_epochs(pth.file(subject=subject,
-                                  session=session,
-                                  cfg=cfg))
+    epochs = read_epochs(pth.file(subject=subject, session=session))
     tf.check_csp_times(epochs)
 
     # compute maximal decimation possible
@@ -538,7 +527,7 @@ def one_subject_decoding(
             X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
             csp.fit(X_inv, y)
             plot_patterns(
-                csp, epochs_filter, report,
+                csp=csp, epochs_filter=epochs_filter, report=report,
                 section="CSP Patterns - frequency",
                 title=f'{pth.prefix(subject, session, contrast)}-{(fmin, fmax)}Hz - all epoch')
 
@@ -590,9 +579,10 @@ def one_subject_decoding(
                 X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
                 csp.fit(X_inv, y)
                 plot_patterns(
-                    csp, epochs_filter, report,
+                    csp=csp, epochs_filter=epochs_filter, report=report,
                     section="CSP Patterns - time-frequency",
-                    title=f'{pth.prefix(subject, session, contrast)}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s')
+                    title=(f'{pth.prefix(subject, session, contrast)}'
+                           f'{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'))
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
@@ -602,9 +592,7 @@ def one_subject_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
         conf_int=freq_scores_std,
-        pth=pth,
-        subject=subject,
-        session=session)
+        subject=subject)
     section = "Frequency roc-auc decoding"
     report.add_figs_to_section(
         fig,
@@ -614,8 +602,7 @@ def one_subject_decoding(
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
     fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=tf_scores, pth=pth,
-        subject=subject, session=session)
+        tf=tf, tf_scores=tf_scores, subject=subject)
     section = "Time-frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -692,18 +679,18 @@ def plot_axis_time_frequency_statistics(
     ax: plt.Axes,
     array: np.ndarray,
     value_type: Literal['p', 't'],
-    subjects: List[str],
-    cfg,
     tf: Tf
 ) -> None:
     """Plot one 2D axis containing decoding statistics.
 
     Parameters:
     -----------
-    ax: pyplot axis.
-    array : np.ndarray
-    value_type : either "p" or "t"
-    cfg : BunchConst
+    ax :
+        inplace plot in this axis. 
+    array :
+        The two dimensianal array containing the results.
+    value_type :
+        either "p" or "t" values.
 
     Returns:
     --------
@@ -737,11 +724,10 @@ def plot_axis_time_frequency_statistics(
 
 
 def plot_t_and_p_values(
+    *,
     t_values: np.ndarray,
     p_values: np.ndarray,
     title: str,
-    subjects: List[str],
-    cfg,
     tf: Tf
 ) -> Figure:
     """Plot t-values and either (p-values or clusters).
@@ -755,11 +741,9 @@ def plot_t_and_p_values(
     axes = [fig.add_subplot(121), fig.add_subplot(122)]
 
     plot_axis_time_frequency_statistics(
-        ax=axes[0], array=t_values, cfg=cfg,
-        subjects=subjects, value_type="t", tf=tf)
+        ax=axes[0], array=t_values, value_type="t", tf=tf)
     plot_axis_time_frequency_statistics(
-        ax=axes[1], array=p_values, cfg=cfg,
-        subjects=subjects,  value_type="p", tf=tf)
+        ax=axes[1], array=p_values, value_type="p", tf=tf)
     plt.tight_layout()
     fig.suptitle(title)
     return fig
@@ -880,9 +864,9 @@ def group_analysis(
         subjects=subjects, cfg=cfg, tf=tf)
 
     fig = plot_frequency_decoding(
-        freqs=tf.freqs, freq_scores=freq_scores, pth=pth,
+        freqs=tf.freqs, freq_scores=freq_scores,
         conf_int=contrast_score_stats["mean_se"],
-        subject="average", session=None)
+        subject="average")
     section = "Frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -895,8 +879,7 @@ def group_analysis(
         shape=[tf.n_freq_windows, tf.n_time_windows])
 
     fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=all_tf_scores, pth=pth,
-        subject="average", session=None)
+        tf=tf, tf_scores=all_tf_scores, subject="average")
     section = "Time - frequency decoding"
     report.add_figs_to_section(
         fig,
@@ -932,6 +915,7 @@ def group_analysis(
 
     msg = "Permutations performed successfully"
     logger.info(gen_log_message(msg, step=8))
+
     # Put the cluster data in a viewable format
     p_clust = np.ones((tf.n_freq_windows, tf.n_time_windows))
     for cl, p in zip(clusters, p_values):
@@ -958,8 +942,7 @@ def group_analysis(
     mccs.append(True)
     for i in range(2):
         fig = plot_t_and_p_values(
-            t_values=ts[i], p_values=ps[i], title=titles[i],
-            subjects=subjects, cfg=cfg, tf=tf)
+            t_values=ts[i], p_values=ps[i], title=titles[i], tf=tf)
 
         cluster = "with" if i else "without"
         section = f"Time - frequency statistics - {cluster} cluster"
@@ -1020,7 +1003,7 @@ def main():
         return None
 
     # Calculate the appropriate time and frequency windows size
-    tf = Tf(cfg, freqs=config.csp_freqs, times=config.csp_times)
+    tf = Tf(freqs=config.csp_freqs, times=config.csp_times)
 
     # Compute the paths
     pth = Pth(cfg=cfg)

@@ -487,6 +487,9 @@ def one_subject_decoding(
     # Selecting the channel group with the smallest rank
     ch_type = min(rank_dic, key=rank_dic.get)
     rank = rank_dic[ch_type]
+    if rank > 100:
+        print("Using dimensionaly reduced data to 100 dimensions.")
+        rank = 100
 
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())

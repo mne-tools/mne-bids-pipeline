@@ -1191,7 +1191,7 @@ With ROC AUC, chance level is the same regardless of class balance, that is,
 you don't need to be worried about **exactly** balancing class sizes.
 """
 
-decoding_n_splits: int = 5
+decoding_n_splits: int = 2
 """
 The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
 """

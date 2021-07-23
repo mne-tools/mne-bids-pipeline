@@ -518,8 +518,9 @@ def one_subject_decoding(
         # 1. Loop through frequencies, apply classifier and save scores
 
         X = epochs_filter.get_data()
+        print("X before pca", X.shape)
         X_pca = pca.fit_transform(X) if csp_use_pca else X
-        # print(rank, X.shape) # 72 (53, 102, 961)
+        print("X after pca", X_pca.shape)  # 72 (53, 102, 961)
         # that mean we go from dim 102 to 72
         # the pca is way less usefull than the mag channel selection
 
@@ -527,6 +528,7 @@ def one_subject_decoding(
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
                                     n_jobs=1)
+        print("Calcultated cv cores ofr freq", fmin, fmax)
 
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
@@ -544,6 +546,7 @@ def one_subject_decoding(
 
         # Roll covariance, csp and lda over time
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
+            print("looping though time.", (w_tmin, w_tmax))
 
             # Originally the window size varied accross frequencies...
             # But this means also that there is some mutual information between
@@ -570,6 +573,7 @@ def one_subject_decoding(
 
             # transform or fit_transform ?
             X_pca = pca.transform(X) if csp_use_pca else X
+            print("PCA calculated succesfully")
 
             # Save mean scores over folds for each frequency and time window
             cv_scores = cross_val_score(estimator=clf,

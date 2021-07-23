@@ -483,7 +483,9 @@ def one_subject_decoding(
     rank_dic = compute_rank(epochs, rank="info")
     print("rank_dic", rank_dic)
     print("cfg.datatype", cfg.datatype)
-    ch_type = "mag" if cfg.datatype == "meg" else "eeg"
+    # ch_type = "mag" if cfg.datatype == "meg" else "eeg"
+    # Selecting the channel group with the smallest rank
+    ch_type = min(rank_dic, key=rank_dic.get)
     rank = rank_dic[ch_type]
 
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
@@ -1014,11 +1016,11 @@ def main():
     for contrast in config.contrasts:
 
         # Useful for debugging:
-        # [one_subject_decoding(
-        #     cfg=cfg, tf=tf, pth=pth,
-        #     subject=subject, session=session, contrast=contrast)
-        #     for subject, session in
-        #  itertools.product(subjects, sessions)]
+        [one_subject_decoding(
+            cfg=cfg, tf=tf, pth=pth,
+            subject=subject, session=session, contrast=contrast)
+            for subject, session in
+         itertools.product(subjects, sessions)]
 
         parallel, run_func, _ = parallel_func(
             one_subject_decoding, n_jobs=N_JOBS)

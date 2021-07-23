@@ -470,7 +470,8 @@ def one_subject_decoding(
     # compute maximal decimation possible
     # 3 is to take a bit of margin wrt Nyquist
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
-    print("decimation_needed", decimation_needed)
+    msg = f"Decimating...decimation_needed {decimation_needed}"
+    logger.info(gen_log_message(msg, subject=subject))
     if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
     print(epochs)
@@ -482,7 +483,6 @@ def one_subject_decoding(
 
     rank_dic = compute_rank(epochs, rank="info")
     print("rank_dic", rank_dic)
-    print("cfg.datatype", cfg.datatype)
     # ch_type = "mag" if cfg.datatype == "meg" else "eeg"
     # Selecting the channel group with the smallest rank
     ch_type = min(rank_dic, key=rank_dic.get)
@@ -515,9 +515,11 @@ def one_subject_decoding(
         X = epochs_filter.get_data()
         print("X before pca", X.shape)
         X_pca = pca.fit_transform(X) if csp_use_pca else X
-        print("X after pca", X_pca.shape)  # 72 (53, 102, 961)
+        # print("X after pca", X_pca.shape)  # 72 (53, 102, 961)
         # that mean we go from dim 102 to 72
         # the pca is way less usefull than the mag channel selection
+        msg = f"X after pca {X_pca.shape}"
+        logger.info(gen_log_message(msg, subject=subject))
 
         # Save mean scores over folds
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,

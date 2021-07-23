@@ -1292,7 +1292,7 @@ Maximum frequency for the time frequency analysis, in Hz.
 
 csp_freqs: ArrayLike = np.linspace(time_frequency_freq_min,
                                    time_frequency_freq_max,
-                                   num=3)
+                                   num=2)
 """
 List of frequencies used in the csp-decoding script.
 We will then decode inside each bin.
@@ -1310,7 +1310,7 @@ The list needs to contain at least those two elements.
 
 csp_times: ArrayLike = np.linspace(epochs_tmin,
                                    epochs_tmax,
-                                   num=4)
+                                   num=3)
 """
 List of times used in the csp-decoding script.
 We will then decode inside each bin.

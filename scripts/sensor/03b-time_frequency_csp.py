@@ -983,21 +983,23 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
+        # Data parameters
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
-        decoding_n_splits=config.decoding_n_splits,
         task=config.get_task(),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
+        # Processing parameters
         csp_quick=config.csp_quick,
         csp_freqs=config.csp_freqs,
         csp_times=config.csp_times,
+        decoding_n_splits=config.decoding_n_splits,
         csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
-        n_boot=config.n_boot,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,
+        n_boot=config.n_boot,
         n_permutations=config.n_permutations,
         random_state=config.random_state
     )

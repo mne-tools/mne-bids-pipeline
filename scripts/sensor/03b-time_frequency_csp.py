@@ -911,7 +911,7 @@ def group_analysis(
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
     threshold = stats.distributions.t.ppf(  # type: ignore
-        1 - cfg.cluster_stats_alpha_t_test, len(subjects) - 1)
+        1 - cfg.cluster_t_dist_alpha_thres, len(subjects) - 1)
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,
         threshold=threshold,
@@ -986,7 +986,7 @@ def get_config(
         csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
         cluster_stats_alpha=config.cluster_stats_alpha,
-        cluster_stats_alpha_t_test=config.cluster_stats_alpha_t_test,
+        cluster_t_dist_alpha_thres=config.cluster_t_dist_alpha_thres,
         n_boot=config.n_boot,
         n_permutations=config.n_permutations,
         random_state=config.random_state

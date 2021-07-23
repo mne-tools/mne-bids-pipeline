@@ -1225,9 +1225,16 @@ cluster_stats_alpha: float = 0.05
 Statistic level used in the time frequency script.
 """
 
-cluster_stats_alpha_t_test: float = 0.1
+cluster_t_dist_alpha_thres: float = 0.1
 """
-Threshold level used to determine clusters.
+The percentile of the t-distribution to use as the threshold when creating the
+clusters. The t-distribution is created with `number of subjects - 1` degrees
+of freedom. For example, if you set this value to `0.05` and your analysis
+includes 10 subjects, the value of the 95th percentile of the t-distribution
+`t(10)` will be used for thresholding the clusters.
+
+Theoretically, you can tweak this value as you want, but for good science
+practices we advise to stick to our default value.
 """
 
 n_permutations: int = 10_000

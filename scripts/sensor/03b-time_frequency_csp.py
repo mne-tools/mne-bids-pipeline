@@ -1,4 +1,4 @@
-""".
+"""
 
 ====================================================================
 Decoding in time-frequency space using Common Spatial Patterns (CSP)
@@ -29,6 +29,9 @@ Iterations levels:
     - contrasts
         - We iterate through subjects and sessions
     -       - If there are multiple runs, runs are concatenated into one big session.
+
+
+Mathetically ...
 """
 # License: BSD (3-clause)
 
@@ -61,7 +64,7 @@ from config import (N_JOBS, gen_log_message, on_error,
 import config
 
 logger = logging.getLogger('mne-bids-pipeline')
-set_log_level(verbose="WARNING")  # mne logger
+# set_log_level(verbose="WARNING")  # mne logger
 
 
 # ROC-AUC chance score level
@@ -75,8 +78,8 @@ csp_plot_patterns = False
 csp_use_pca = True
 
 # typing
-Session = Union[None, str]
-Contrast = Tuple[str, str]
+SessionT = Union[None, str]
+ContrastT = Tuple[str, str]
 
 
 class Pth:
@@ -100,13 +103,13 @@ class Pth:
             processing='clean',
             check=False)
 
-    def file(self, subject: str, session: Session) -> BIDSPath:
+    def file(self, subject: str, session: SessionT) -> BIDSPath:
         """Return the path of the file."""
         return self.bids_basename.copy().update(
             subject=subject,
             session=session)
 
-    def report(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
+    def report(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
         """Path to array containing the report."""
         return self.bids_basename.copy().update(
             processing='tf+csp' + self.contrast_suffix(contrast),
@@ -115,7 +118,7 @@ class Pth:
             suffix='report',
             extension='.html')
 
-    def freq_scores(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
+    def freq_scores(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
         """Path to array containing the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq' + self.contrast_suffix(contrast),
@@ -124,7 +127,7 @@ class Pth:
             suffix='scores',
             extension='.npy')
 
-    def freq_scores_std(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
+    def freq_scores_std(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
         """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq' + self.contrast_suffix(contrast),
@@ -133,7 +136,7 @@ class Pth:
             suffix='scores+std',
             extension='.npy')
 
-    def tf_scores(self, subject: str, session: Session, contrast: Contrast) -> BIDSPath:
+    def tf_scores(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
         """Path to time-frequency scores."""
         return self.bids_basename.copy().update(
             processing='csp+tf' + self.contrast_suffix(contrast),
@@ -142,13 +145,13 @@ class Pth:
             suffix='scores+std',
             extension='.npy')
 
-    def contrast_suffix(self, contrast: Contrast):
+    def contrast_suffix(self, contrast: ContrastT):
         """Contrast suffix conform with Bids format."""
         con0 = config.sanitize_cond_name(contrast[0])
         con1 = config.sanitize_cond_name(contrast[1])
         return f'+contr+{con0}+{con1}'
 
-    def prefix(self, subject: str, session: Session, contrast: Contrast) -> str:
+    def prefix(self, subject: str, session: SessionT, contrast: ContrastT) -> str:
         """Usefull when logging messages."""
         res = f'subject-{subject}-' + self.contrast_suffix(contrast)
         if session:
@@ -207,7 +210,7 @@ class Tf:
             logger.warning(wrn)
 
 
-def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast) -> np.ndarray:
+def prepare_labels(*, epochs: BaseEpochs, contrast: ContrastT) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
@@ -253,7 +256,7 @@ def prepare_labels(*, epochs: BaseEpochs, contrast: Contrast) -> np.ndarray:
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,
-    contrast: Contrast,
+    contrast: ContrastT,
     cfg,
     fmin: float,
     fmax: float
@@ -440,8 +443,8 @@ def one_subject_decoding(
     tf: Tf,
     pth: Pth,
     subject: str,
-    session: Session,
-    contrast: Contrast
+    session: SessionT,
+    contrast: ContrastT
 ) -> None:
     """Run one subject.
 
@@ -624,9 +627,9 @@ def one_subject_decoding(
 
 
 def load_and_average(
-    path: Callable[[str, Session, Contrast], BIDSPath],
+    path: Callable[[str, SessionT, ContrastT], BIDSPath],
     subjects: List[str],
-    contrast: Contrast,
+    contrast: ContrastT,
     shape: List[int],
     average: bool = True
 ) -> np.ndarray:
@@ -759,7 +762,7 @@ def plot_t_and_p_values(
 def compute_conf_inter(
     mean_scores: np.ndarray,
     subjects: List[str],
-    contrast: Contrast,
+    contrast: ContrastT,
     cfg,
     tf: Tf
 ) -> Dict[str, Any]:
@@ -828,7 +831,7 @@ def compute_conf_inter(
 @failsafe_run(on_error=on_error)
 def group_analysis(
     subjects: List[str],
-    contrast: Contrast,
+    contrast: ContrastT,
     cfg,
     pth: Pth,
     tf: Tf

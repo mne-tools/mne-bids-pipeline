@@ -277,8 +277,8 @@ def prepare_epochs_and_y(
         meg=True, eeg=True, stim=False, eog=False,
         exclude='bads')
 
-    # We only take gradiometers to speed up computation
-    #  because the information is redundant between grad and mag
+    # We only take mag to speed up computation
+    # because the information is redundant between grad and mag
     if cfg.datatype == "meg":
         epochs_filter.pick_types(meg="mag")
 
@@ -494,7 +494,8 @@ def one_subject_decoding(
     rank_dic = compute_rank(epochs, rank="info")
     print("rank_dic", rank_dic)
     print("cfg.datatype", cfg.datatype)
-    rank = rank_dic[cfg.datatype]
+    ch_type = "mag" if cfg.datatype == "meg" else "eeg"
+    rank = rank_dic[ch_type]
 
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())

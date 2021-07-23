@@ -493,6 +493,8 @@ def one_subject_decoding(
               log=True, norm_trace=False)
 
     rank_dic = compute_rank(epochs, rank="info")
+    print("rank_dic", rank_dic)
+    print("cfg.datatype", cfg.datatype)
     rank = rank_dic[cfg.datatype]
 
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)

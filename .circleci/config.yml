@@ -43,7 +43,8 @@ jobs:
           name: Get Python running
           command: |
             python -m pip install --user --upgrade --progress-bar off pip setuptools
-            python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+            python -m pip install --user --upgrade --progress-bar off -r requirements.txt
+            python -m pip install --user --upgrade --progress-bar off -r tests/tests_requirements.txt
       # - save_cache:
       #     key: pip-cache
       #     paths:

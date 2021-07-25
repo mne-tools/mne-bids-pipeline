@@ -15,8 +15,8 @@ Please find the installation and usage instructions at
 
 The original pipeline for MEG/EEG data processing with MNE python was built
 jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/)
-and the [MNE Python Team](https://martinos.org/mne/stable/index.html),
-based on scripts originally developed for this publication:
+and the [MNE Python Team](https://mne.tools), based on scripts originally
+developed for this publication:
 
 > M. Jas, E. Larson, D. A. Engemann, J. Leppäkangas, S. Taulu, M. Hämäläinen,
 > A. Gramfort (2018). A reproducible MEG/EEG group study with the MNE software:

@@ -1,0 +1,14 @@
+nibabel
+python-picard
+pyqt5
+pyvista
+pyvistaqt
+datalad
+openneuro-py
+https://api.github.com/repos/mne-tools/mne-python/zipball/main
+https://api.github.com/repos/mne-tools/mne-bids/zipball/main
+mkdocs
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-macros-plugin
+mkdocstrings

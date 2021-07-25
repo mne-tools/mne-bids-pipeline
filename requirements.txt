@@ -1,0 +1,12 @@
+typing_extensions
+pandas
+scikit-learn
+json_tricks
+h5py
+seaborn
+coloredlogs
+fire
+autoreject
+openpyxl
+matplotlib
+pip

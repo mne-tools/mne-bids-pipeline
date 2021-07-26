@@ -28,10 +28,11 @@ The user has only to specify the list of frequency and the list of timings.
 Iterations levels:
     - contrasts
         - We iterate through subjects and sessions
-    -       - If there are multiple runs, runs are concatenated into one big session.
+            - If there are multiple runs, runs are concatenated into one big session.
 
 
-Mathetically we do not seek here to create the best classifier, and to optimize the rocauc score,
+Mathetically we do not seek here to create the best classifier, 
+and to optimize the rocauc score,
 we only seek to obtain unbiased scores usable afterwards in the permutation test.
 This is why it is not a big deal to optimize the running time 
 by making some approximations, such as : 

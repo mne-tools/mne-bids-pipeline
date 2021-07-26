@@ -277,7 +277,6 @@ def prepare_epochs_and_y(
     --------
     epochs_filter, y
     """
-    # Prepare epoch_filter
     epochs_filter = epochs.copy()
 
     epochs_filter.pick_types(
@@ -290,13 +289,13 @@ def prepare_epochs_and_y(
         epochs_filter.pick_types(meg="mag")
 
     # filtering out the conditions we are not interested in.
+    # So we ensure here we have a valid partition between the condition of the contrast.
     epochs_filter = epochs_filter[contrast]
 
     # We frequency filter after droping channel,
-    # because freq filtering is costly
+    # because filtering is costly
     epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)  # type: ignore
 
-    # prepare labels
     y = prepare_labels(epochs=epochs_filter, contrast=contrast)
 
     return epochs_filter, y
@@ -393,8 +392,8 @@ def plot_time_frequency_decoding(
                                     subject=subject))
     tf_scores_ = np.nan_to_num(tf_scores, nan=chance)
 
-    # Here we just use an sfreq random number just
-    # to create a basic info structure.
+    # Here we just use an sfreq random number like 1. Hz just
+    # to create a basic info object.
     av_tfr = AverageTFR(create_info(['freq'], sfreq=1.),
                         # newaxis linked with the [0] in plot
                         tf_scores_[np.newaxis, :],
@@ -476,11 +475,10 @@ def one_subject_decoding(
 
     report = Report(title=f"csp-permutations-sub-{subject}")
 
-    # Extract information from the raw file
     epochs = read_epochs(pth.file(subject=subject, session=session))
     tf.check_csp_times(epochs)
 
-    # compute maximal decimation possible
+    # Compute maximal decimation possible
     # 3 is to take a bit of margin wrt Nyquist
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
     msg = f"Decimating...decimation_needed {decimation_needed}"
@@ -489,22 +487,24 @@ def one_subject_decoding(
         epochs.decimate(int(decimation_needed))
     print(epochs)
 
-    # Assemble the classifier using scikit-learn pipeline
-    csp = CSP(n_components=cfg.csp_n_components,
-              reg=cfg.csp_reg,
-              log=True, norm_trace=False)
-
+    # Chosing the right rank:
+    # 1. Selecting the channel group with the smallest rank (Usefull for meg)
     rank_dic = compute_rank(epochs, rank="info")
     print("rank_dic", rank_dic)
-    # ch_type = "mag" if cfg.datatype == "meg" else "eeg"
-    # Selecting the channel group with the smallest rank
     ch_type = min(rank_dic, key=rank_dic.get)  # type: ignore
+    print(f"ch_type {ch_type} has minimal rank" )
     rank = rank_dic[ch_type]
+    # 2. If there is no channel type, we reduce the dimension 
+    # to a reasonable number. (Useful for eeg)
     if rank > 100:
         print("Using dimensionaly reduced data to 100 dimensions.")
         rank = 100
-
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
+    
+    # Classifier
+    csp = CSP(n_components=cfg.csp_n_components,
+              reg=cfg.csp_reg,
+              log=True, norm_trace=False)
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
     cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
                          shuffle=True, random_state=cfg.random_state)
@@ -513,7 +513,6 @@ def one_subject_decoding(
     freq_scores_std = np.zeros((tf.n_freq_windows,))
     tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
 
-    # Loop through each frequency range of interest
     for freq, (fmin, fmax) in ProgressBar(
             enumerate(tf.freq_ranges),
             max_value=tf.n_freq_windows,
@@ -528,9 +527,7 @@ def one_subject_decoding(
         X = epochs_filter.get_data()
         print("X before pca", X.shape)
         X_pca = pca.fit_transform(X) if csp_use_pca else X
-        # print("X after pca", X_pca.shape)  # 72 (53, 102, 961)
-        # that mean we go from dim 102 to 72
-        # the pca is way less usefull than the mag channel selection
+
         msg = f"X after pca {X_pca.shape}"
         logger.info(gen_log_message(msg, subject=subject))
 
@@ -580,7 +577,7 @@ def one_subject_decoding(
                 w_tmax = epochs_filter.tmax
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
 
-            # transform or fit_transform ?
+            # transform or fit_transform?
             X_pca = pca.transform(X) if csp_use_pca else X
             print("PCA calculated succesfully")
 
@@ -594,7 +591,7 @@ def one_subject_decoding(
 
 
             # We plot the patterns using all the epochs
-            # without splitting the epochs
+            # without splitting the epochs by using cv
             if csp_plot_patterns:
                 X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
                 csp.fit(X_inv, y)

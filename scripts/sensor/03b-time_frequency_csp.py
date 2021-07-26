@@ -513,10 +513,12 @@ def one_subject_decoding(
     freq_scores_std = np.zeros((tf.n_freq_windows,))
     tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
 
-    for freq, (fmin, fmax) in ProgressBar(
-            enumerate(tf.freq_ranges),
-            max_value=tf.n_freq_windows,
-            mesg=pth.prefix(subject, session, contrast) + '- frequency loop'):
+    # for freq, (fmin, fmax) in ProgressBar(
+    #         enumerate(tf.freq_ranges),
+    #         max_value=tf.n_freq_windows,
+    #         mesg=pth.prefix(subject, session, contrast) + '- frequency loop'):
+    
+    for freq, (fmin, fmax) in enumerate(tf.freq_ranges):
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg)
@@ -589,31 +591,42 @@ def one_subject_decoding(
                            f'{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'))
 
     # Frequency savings
+    print("end for")
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
+    print("save freq scores")
     np.save(file=pth.freq_scores_std(
         subject, session, contrast), arr=freq_scores_std)
+    print("save freq scores std ")
+    
     fig = plot_frequency_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
         conf_int=freq_scores_std,
         subject=subject)
+    print("save freqs decoding")
     section = "Frequency roc-auc decoding"
     report.add_figs_to_section(
         fig,
         section=section,
         captions=section + pth.prefix(subject, session, contrast))
+    print("save freqs roc auc decoding")
+
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
+    print("np.save(file=pth.tf_scores(sub")
     fig = plot_time_frequency_decoding(
         tf=tf, tf_scores=tf_scores, subject=subject)
+    print("fig = plot_time_frequen")
     section = "Time-frequency decoding"
     report.add_figs_to_section(
         fig,
         section=section,
         captions=section + pth.prefix(subject, session, contrast))
+    print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
+    print("report.save(pth.report")
 
     msg = f"Decoding for {pth.prefix(subject, session, contrast)} finished successfully."
     logger.info(gen_log_message(message=msg, subject=subject, session=session,

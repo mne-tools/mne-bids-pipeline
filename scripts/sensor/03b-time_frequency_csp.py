@@ -490,7 +490,7 @@ def one_subject_decoding(
     print("rank_dic", rank_dic)
     # ch_type = "mag" if cfg.datatype == "meg" else "eeg"
     # Selecting the channel group with the smallest rank
-    ch_type = min(rank_dic, key=rank_dic.get)
+    ch_type = min(rank_dic, key=rank_dic.get)  # type: ignore
     rank = rank_dic[ch_type]
     if rank > 100:
         print("Using dimensionaly reduced data to 100 dimensions.")
@@ -584,6 +584,8 @@ def one_subject_decoding(
                                         cv=cv,
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
+            print("cross_val_score calculated succesfully")
+
 
             # We plot the patterns using all the epochs
             # without splitting the epochs

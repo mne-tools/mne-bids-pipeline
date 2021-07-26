@@ -213,8 +213,7 @@ class Tf:
         """Check if csp_times is contained in the epoch interval."""
         # This test can only be performed after having read the Epochs file
         # So it cannot be performed in the check section of the config file.
-        # 0.01 because epochs tmin and tmax are a bit approximate, even before decimation.
-        if min(self.times) < epochs.tmin - 0.01 or max(self.times) > epochs.tmax + 0.01:
+        if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
             wrn = ('csp_times should be contained in the epoch interval.'
                    f'But we do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
             logger.warning(wrn)
@@ -561,20 +560,6 @@ def one_subject_decoding(
             # the windows size for all frequencies.
 
             # Crop data into time-window of interest
-            # Those two conditions enable to deal with numerical imprecisions
-            # Without totally silencing the crop warning if needed
-            # This occurs because, when we resample the data,
-            # epochs tmin and tmax change because of the padding
-            # This is a Patch which unfortunately makes the first and the last
-            # time bin slightly smaller than the central bins.
-            # So the central bins will have very slightly smaller rocauc scores than the
-            # central ones.
-            # But this slightly undesirable effect won't appear when
-            # setting csp_quick to false.
-            if epochs_filter.tmin - 0.1 < w_tmin < epochs_filter.tmin:
-                w_tmin = epochs_filter.tmin
-            if epochs_filter.tmax < w_tmax < epochs_filter.tmax + 0.1:
-                w_tmax = epochs_filter.tmax
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
 
             # transform or fit_transform?

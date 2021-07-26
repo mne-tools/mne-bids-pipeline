@@ -31,7 +31,15 @@ Iterations levels:
     -       - If there are multiple runs, runs are concatenated into one big session.
 
 
-Mathetically ...
+Mathetically we do not seek here to create the best classifier, and to optimize the rocauc score,
+we only seek to obtain unbiased scores usable afterwards in the permutation test.
+This is why it is not a big deal to optimize the running time 
+by making some approximations, such as : 
+- decimation to Nyquist
+- Selection of the mag channels, which contain a very large part of 
+    the information contained in (mag+grad)
+- PCA, which is very useful to reduce the dimension for eeg
+where there is only one channel type.
 """
 # License: BSD (3-clause)
 
@@ -526,7 +534,6 @@ def one_subject_decoding(
         msg = f"X after pca {X_pca.shape}"
         logger.info(gen_log_message(msg, subject=subject))
 
-        # Save mean scores over folds
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
                                     n_jobs=1)
@@ -577,7 +584,6 @@ def one_subject_decoding(
             X_pca = pca.transform(X) if csp_use_pca else X
             print("PCA calculated succesfully")
 
-            # Save mean scores over folds for each frequency and time window
             cv_scores = cross_val_score(estimator=clf,
                                         X=X_pca, y=y,
                                         scoring='roc_auc',

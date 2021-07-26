@@ -445,7 +445,6 @@ def plot_patterns(
 
 
 @failsafe_run(on_error=on_error)
-# @profile
 def one_subject_decoding(
     *,
     cfg,

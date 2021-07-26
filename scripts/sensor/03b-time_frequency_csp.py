@@ -572,7 +572,8 @@ def one_subject_decoding(
                                         cv=cv,
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
-            print("cross_val_score calculated succesfully")
+            msg = "cross_val_score calculated succesfully"
+            logger.info(gen_log_message(msg))
 
 
             # We plot the patterns using all the epochs

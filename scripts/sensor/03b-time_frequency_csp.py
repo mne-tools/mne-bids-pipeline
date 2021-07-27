@@ -633,7 +633,10 @@ def one_subject_decoding(
     # print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
-    print("report.save(pth.report")
+    msg = (f"Report for {sub_ses_con} finished successfully. "
+           f"The report is saved in {pth.report(subject, session, contrast)}")
+    logger.info(**gen_log_kwargs(message=msg,
+                subject=subject, session=session))
 
     msg = f"Decoding for {sub_ses_con} finished successfully."
     logger.info(**gen_log_kwargs(message=msg,
@@ -977,7 +980,7 @@ def group_analysis(
     pth_report = pth.report("average", session=None, contrast=contrast)
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
-    msg = f"Report {pth_report} saved in the average subject folder"
+    msg = f"CSP final Report {pth_report} saved in the average subject folder"
     logger.info(**gen_log_kwargs(message=msg))
 
     msg = "Group statistic analysis finished."

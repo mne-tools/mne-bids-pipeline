@@ -5,6 +5,6 @@
 ::: config.n_boot
 ::: config.csp_n_components
 ::: config.csp_reg
-::: config.cluster_stats_alpha,
+::: config.cluster_stats_alpha
 ::: config.cluster_stats_alpha_t_test
 ::: config.n_permutations

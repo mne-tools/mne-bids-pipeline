@@ -489,7 +489,6 @@ def one_subject_decoding(
     # Compute maximal decimation possible
     # 3 is to take a bit of margin wrt Nyquist
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
-    
     if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
         msg = f"Decimating by a factor {int(decimation_needed)}"

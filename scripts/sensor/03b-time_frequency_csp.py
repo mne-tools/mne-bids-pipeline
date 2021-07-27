@@ -489,11 +489,11 @@ def one_subject_decoding(
     # Compute maximal decimation possible
     # 3 is to take a bit of margin wrt Nyquist
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
-    msg = f"Decimating...decimation_needed {decimation_needed}"
-    logger.info(**gen_log_kwargs(msg, subject=subject))
+    
     if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
-    print(epochs)
+        msg = f"Decimating by a factor {int(decimation_needed)}"
+        logger.info(**gen_log_kwargs(msg, subject=subject))
 
     # Chosing the right rank:
     # 1. Selecting the channel group with the smallest rank (Usefull for meg)
@@ -508,6 +508,8 @@ def one_subject_decoding(
         print("Using dimensionaly reduced data to 100 dimensions.")
         rank = 100
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
+    msg = f"PCA reducing the dimension to {rank}"
+    logger.info(**gen_log_kwargs(msg, subject=subject))
 
     # Classifier
     csp = CSP(n_components=cfg.csp_n_components,
@@ -535,16 +537,11 @@ def one_subject_decoding(
         # 1. Loop through frequencies, apply classifier and save scores
 
         X = epochs_filter.get_data()
-        print("X before pca", X.shape)  # type: ignore
         X_pca = pca.fit_transform(X) if csp_use_pca else X
-
-        msg = f"X after pca {X_pca.shape}"  # type: ignore
-        logger.info(**gen_log_kwargs(msg, subject=subject))
 
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
                                     n_jobs=1)
-        print("Calcultated cv cores ofr freq", fmin, fmax)
 
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
@@ -563,7 +560,9 @@ def one_subject_decoding(
 
         # Roll covariance, csp and lda over time
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
-            print("looping though time.", (w_tmin, w_tmax))
+            title = f'{sub_ses_con}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
+            msg = f"running {title}"
+            logger.info(**gen_log_kwargs(msg))
 
             # Originally the window size varied accross frequencies...
             # But this means also that there is some mutual information between
@@ -576,7 +575,6 @@ def one_subject_decoding(
 
             # transform or fit_transform?
             X_pca = pca.transform(X) if csp_use_pca else X
-            print("PCA calculated succesfully")
 
             cv_scores = cross_val_score(estimator=clf,
                                         X=X_pca, y=y,
@@ -584,15 +582,12 @@ def one_subject_decoding(
                                         cv=cv,
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
-            msg = "cross_val_score calculated succesfully"
-            logger.info(**gen_log_kwargs(msg))
 
             # We plot the patterns using all the epochs
             # without splitting the epochs by using cv
             if csp_plot_patterns:
                 X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
                 csp.fit(X_inv, y)
-                title = f'{sub_ses_con}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
                 plot_patterns(
                     csp=csp, epochs_filter=epochs_filter, report=report,
                     section="CSP Patterns - time-frequency",

@@ -26,18 +26,18 @@ The user has only to specify the list of frequency and the list of timings.
 
 
 Iterations levels:
-    - contrasts
-        - We iterate through subjects and sessions
-            - If there are multiple runs, runs are concatenated into one big session.
+- contrasts
+    - We iterate through subjects and sessions
+        - If there are multiple runs, runs are concatenated into one session.
 
 
-Mathetically we do not seek here to create the best classifier, 
-and to optimize the rocauc score,
-we only seek to obtain unbiased scores usable afterwards in the permutation test.
-This is why it is not a big deal to optimize the running time 
-by making some approximations, such as : 
+Mathetically we do not seek here to create the best classifier,
+and to optimize the rocauc score, we only seek
+to obtain unbiased scores usable afterwards in the permutation test.
+This is why it is not a big deal to optimize the running time
+by making some approximations, such as:
 - Decimation
-- Selection of the mag channels, which contain a very large part of 
+- Selection of the mag channels, which contain a very large part of
     the information contained in (mag+grad)
 - PCA, which is very useful to reduce the dimension for eeg
     where there is only one channel type.
@@ -59,11 +59,11 @@ from sklearn.decomposition import PCA
 
 from mne.stats.cluster_level import permutation_cluster_1samp_test
 from mne.epochs import BaseEpochs
-from mne import create_info, read_epochs, set_log_level, compute_rank
+from mne import create_info, read_epochs, compute_rank
 from mne.decoding import UnsupervisedSpatialFilter, CSP
 from mne.time_frequency import AverageTFR
 from mne.parallel import parallel_func
-from mne.utils import BunchConst, ProgressBar
+from mne.utils import BunchConst  # , ProgressBar
 from mne.report import Report
 
 from mne_bids import BIDSPath
@@ -118,7 +118,9 @@ class Pth:
             subject=subject,
             session=session)
 
-    def report(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
+    def report(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
         """Path to array containing the report."""
         return self.bids_basename.copy().update(
             processing='tf+csp' + self.contrast_suffix(contrast),
@@ -127,7 +129,9 @@ class Pth:
             suffix='report',
             extension='.html')
 
-    def freq_scores(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
+    def freq_scores(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
         """Path to array containing the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq' + self.contrast_suffix(contrast),
@@ -136,7 +140,9 @@ class Pth:
             suffix='scores',
             extension='.npy')
 
-    def freq_scores_std(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
+    def freq_scores_std(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
         """Path to array containing the std of the histograms."""
         return self.bids_basename.copy().update(
             processing='csp+freq' + self.contrast_suffix(contrast),
@@ -145,7 +151,9 @@ class Pth:
             suffix='scores+std',
             extension='.npy')
 
-    def tf_scores(self, subject: str, session: SessionT, contrast: ContrastT) -> BIDSPath:
+    def tf_scores(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
         """Path to time-frequency scores."""
         return self.bids_basename.copy().update(
             processing='csp+tf' + self.contrast_suffix(contrast),
@@ -154,13 +162,15 @@ class Pth:
             suffix='scores+std',
             extension='.npy')
 
-    def contrast_suffix(self, contrast: ContrastT):
+    def contrast_suffix(self, contrast: ContrastT) -> str:
         """Contrast suffix conform with Bids format."""
         con0 = config.sanitize_cond_name(contrast[0])
         con1 = config.sanitize_cond_name(contrast[1])
         return f'+contr+{con0}+{con1}'
 
-    def prefix(self, subject: str, session: SessionT, contrast: ContrastT) -> str:
+    def prefix(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> str:
         """Usefull when logging messages."""
         res = f'subject-{subject}-' + self.contrast_suffix(contrast)
         if session:
@@ -215,8 +225,9 @@ class Tf:
         # This test can only be performed after having read the Epochs file
         # So it cannot be performed in the check section of the config file.
         if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
-            wrn = ('csp_times should be contained in the epoch interval.'
-                   f'But we do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
+            wrn = (
+                'csp_times should be contained in the epoch interval. But we '
+                f'do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
             logger.warning(wrn)
 
 
@@ -289,7 +300,8 @@ def prepare_epochs_and_y(
         epochs_filter.pick_types(meg="mag")
 
     # filtering out the conditions we are not interested in.
-    # So we ensure here we have a valid partition between the condition of the contrast.
+    # So we ensure here we have a valid partition between the
+    # condition of the contrast.
     epochs_filter = epochs_filter[contrast]
 
     # We frequency filter after droping channel,
@@ -389,7 +401,7 @@ def plot_time_frequency_decoding(
         msg = ("There is at least one nan value in one of "
                "the time-frequencies bins.")
         logger.info(**gen_log_kwargs(message=msg,
-                                    subject=subject))
+                                     subject=subject))
     tf_scores_ = np.nan_to_num(tf_scores, nan=chance)
 
     # Here we just use an sfreq random number like 1. Hz just
@@ -469,7 +481,8 @@ def one_subject_decoding(
     None. We just save the plots in the report
     and the numpy results in memory.
     """
-    msg = f"Running decoding for {pth.prefix(subject, session, contrast)}..."
+    sub_ses_con = pth.prefix(subject, session, contrast)
+    msg = f"Running decoding for {sub_ses_con}..."
     logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
@@ -491,15 +504,15 @@ def one_subject_decoding(
     rank_dic = compute_rank(epochs, rank="info")
     print("rank_dic", rank_dic)
     ch_type = min(rank_dic, key=rank_dic.get)  # type: ignore
-    print(f"ch_type {ch_type} has minimal rank" )
+    print(f"ch_type {ch_type} has minimal rank")
     rank = rank_dic[ch_type]
-    # 2. If there is no channel type, we reduce the dimension 
+    # 2. If there is no channel type, we reduce the dimension
     # to a reasonable number. (Useful for eeg)
     if rank > 100:
         print("Using dimensionaly reduced data to 100 dimensions.")
         rank = 100
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-    
+
     # Classifier
     csp = CSP(n_components=cfg.csp_n_components,
               reg=cfg.csp_reg,
@@ -515,21 +528,21 @@ def one_subject_decoding(
     # for freq, (fmin, fmax) in ProgressBar(
     #         enumerate(tf.freq_ranges),
     #         max_value=tf.n_freq_windows,
-    #         mesg=pth.prefix(subject, session, contrast) + '- frequency loop'):
-    
+    #         mesg=sub_ses_con + '- frequency loop'):
+
     for freq, (fmin, fmax) in enumerate(tf.freq_ranges):
 
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg)
 
-        ##########################################################################
+        ######################################################################
         # 1. Loop through frequencies, apply classifier and save scores
 
         X = epochs_filter.get_data()
-        print("X before pca", X.shape)
+        print("X before pca", X.shape)  # type: ignore
         X_pca = pca.fit_transform(X) if csp_use_pca else X
 
-        msg = f"X after pca {X_pca.shape}"
+        msg = f"X after pca {X_pca.shape}"  # type: ignore
         logger.info(**gen_log_kwargs(msg, subject=subject))
 
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
@@ -541,12 +554,13 @@ def one_subject_decoding(
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
         if csp_plot_patterns:
+            prefix = sub_ses_con
             X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
             csp.fit(X_inv, y)
             plot_patterns(
                 csp=csp, epochs_filter=epochs_filter, report=report,
                 section="CSP Patterns - frequency",
-                title=f'{pth.prefix(subject, session, contrast)}-{(fmin, fmax)}Hz - all epoch')
+                title=f'{prefix}-{(fmin, fmax)}Hz - all epoch')
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -577,17 +591,16 @@ def one_subject_decoding(
             msg = "cross_val_score calculated succesfully"
             logger.info(**gen_log_kwargs(msg))
 
-
             # We plot the patterns using all the epochs
             # without splitting the epochs by using cv
             if csp_plot_patterns:
                 X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
                 csp.fit(X_inv, y)
+                title = f'{sub_ses_con}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
                 plot_patterns(
                     csp=csp, epochs_filter=epochs_filter, report=report,
                     section="CSP Patterns - time-frequency",
-                    title=(f'{pth.prefix(subject, session, contrast)}'
-                           f'{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'))
+                    title=title)
 
     # Frequency savings
     print("end for")
@@ -596,7 +609,7 @@ def one_subject_decoding(
     np.save(file=pth.freq_scores_std(
         subject, session, contrast), arr=freq_scores_std)
     print("save freq scores std ")
-    
+
     fig = plot_frequency_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
@@ -607,9 +620,8 @@ def one_subject_decoding(
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + pth.prefix(subject, session, contrast))
+        captions=section + sub_ses_con)
     print("save freqs roc auc decoding")
-
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
@@ -621,14 +633,15 @@ def one_subject_decoding(
     report.add_figs_to_section(
         fig,
         section=section,
-        captions=section + pth.prefix(subject, session, contrast))
+        captions=section + sub_ses_con)
     print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
     print("report.save(pth.report")
 
-    msg = f"Decoding for {pth.prefix(subject, session, contrast)} finished successfully."
-    logger.info(**gen_log_kwargs(message=msg, subject=subject, session=session))
+    msg = f"Decoding for {sub_ses_con} finished successfully."
+    logger.info(**gen_log_kwargs(message=msg,
+                subject=subject, session=session))
 
 
 def load_and_average(
@@ -701,7 +714,7 @@ def plot_axis_time_frequency_statistics(
     Parameters:
     -----------
     ax :
-        inplace plot in this axis. 
+        inplace plot in this axis.
     array :
         The two dimensianal array containing the results.
     value_type :
@@ -775,7 +788,7 @@ def compute_conf_inter(
 
     For the moment only serves for frequency histogram.
 
-    TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158
+    TODO : copy pasted from https://github.com/mne-tools/mne-bids-pipeline/blob/main/scripts/sensor/04-group_average.py#L158  # noqa: E501
     Maybe we could create a common function in mne?
 
     PARAMETERS:
@@ -784,7 +797,7 @@ def compute_conf_inter(
 
     RETURNS:
     --------
-    Dictionnary of meta data. 
+    Dictionnary of meta data.
     """
     contrast_score_stats = {
         'cond_1': contrast[0],
@@ -862,7 +875,7 @@ def group_analysis(
         logger.warning(**gen_log_kwargs(message=msg))
         return None
 
-    report = Report(title=f"csp-permutations-sub-average")
+    report = Report(title="csp-permutations-sub-average")
 
     ######################################################################
     # 1. Average roc-auc scores across subjects
@@ -1039,14 +1052,13 @@ def main():
             one_subject_decoding, n_jobs=N_JOBS)
         logs = parallel(
             run_func(cfg=cfg, tf=tf, pth=pth,
-                          subject=subject,
-                          session=session,
-                          contrast=contrast)
+                     subject=subject,
+                     session=session,
+                     contrast=contrast)
             for subject, session in
             itertools.product(subjects, sessions)
         )
         config.save_logs(logs)
-        
 
         # Once every subject has been calculated,
         # the group_analysis is very fast to compute.

@@ -444,7 +444,7 @@ def plot_patterns(
         captions=section + title)
 
 
-@failsafe_run(on_error=on_error)
+# @failsafe_run(on_error=on_error)
 def one_subject_decoding(
     *,
     cfg,
@@ -1030,20 +1030,20 @@ def main():
     for contrast in config.contrasts:
 
         # Useful for debugging:
-        # [one_subject_decoding(
-        #     cfg=cfg, tf=tf, pth=pth,
-        #     subject=subject, session=session, contrast=contrast)
-        #     for subject, session in
-        #  itertools.product(subjects, sessions)]
+        [one_subject_decoding(
+            cfg=cfg, tf=tf, pth=pth,
+            subject=subject, session=session, contrast=contrast)
+            for subject, session in
+         itertools.product(subjects, sessions)]
 
-        parallel, run_func, _ = parallel_func(
-            one_subject_decoding, n_jobs=N_JOBS)
-        parallel(run_func(cfg=cfg, tf=tf, pth=pth,
-                          subject=subject,
-                          session=session,
-                          contrast=contrast)
-                 for subject, session in
-                 itertools.product(subjects, sessions))
+        # parallel, run_func, _ = parallel_func(
+        #     one_subject_decoding, n_jobs=N_JOBS)
+        # parallel(run_func(cfg=cfg, tf=tf, pth=pth,
+        #                   subject=subject,
+        #                   session=session,
+        #                   contrast=contrast)
+        #          for subject, session in
+        #          itertools.product(subjects, sessions))
 
         # Once every subject has been calculated,
         # the group_analysis is very fast to compute.

@@ -4,7 +4,9 @@ Auditory MEG
 
 study_name = 'ds000246'
 bids_root = '~/mne_data/ds000246'
-deriv_root = '~/mne_data/ds000246/derivatives/mne-bids-pipeline'
+deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000246'
+subjects_dir = f'{bids_root}/derivatives/freesurfer/subjects'
+
 runs = ['01']
 l_freq = .3
 h_freq = 100.

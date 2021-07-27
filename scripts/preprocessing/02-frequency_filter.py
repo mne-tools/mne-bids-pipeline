@@ -34,7 +34,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import (gen_log_message, on_error, failsafe_run,
+from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data)
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -51,8 +51,6 @@ def filter(
     h_trans_bandwidth: Optional[Union[float, Literal['auto']]]
 ) -> None:
     """Filter data channels (MEG and EEG)."""
-    if l_freq is None and h_freq is None:
-        return
 
     data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
 
@@ -65,9 +63,14 @@ def filter(
     elif l_freq is not None and h_freq is not None:
         msg = (f'Band-pass filtering {data_type} data; range: '
                f'{l_freq} – {h_freq} Hz')
+    else:
+        msg = (f'Not applying frequency filtering to {data_type} data.')
 
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run))
+
+    if l_freq is None and h_freq is None:
+        return
 
     raw.filter(l_freq=l_freq, h_freq=h_freq,
                l_trans_bandwidth=l_trans_bandwidth,
@@ -88,21 +91,20 @@ def resample(
 
     data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
     msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
-    logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                session=session, run=run,))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session, run=run,))
     raw.resample(sfreq, npad='auto')
 
 
+@failsafe_run(on_error=on_error, script_path=__file__)
 def filter_data(
     *,
     cfg,
     subject: str,
-    run: Optional[str] = None,
     session: Optional[str] = None,
+    run: Optional[str] = None,
 ) -> None:
     """Filter data from a single subject."""
-    if cfg.l_freq is None and cfg.h_freq is None:
-        return
 
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -128,8 +130,8 @@ def filter_data(
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
         msg = f'Reading: {raw_fname_in}'
-        logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
         raw = import_experimental_data(cfg=cfg,
@@ -167,8 +169,8 @@ def filter_data(
             if raw_er_fname_in.copy().update(split='01').fpath.exists():
                 raw_er_fname_in.update(split='01')
             msg = f'Reading empty-room recording: {raw_er_fname_in}'
-            logger.info(gen_log_message(message=msg, step=2, subject=subject,
-                                        session=session, run=run))
+            logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session, run=run))
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
             raw_er.info['bads'] = bads
         else:
@@ -222,6 +224,8 @@ def get_config(
         eeg_bipolar_channels=config.eeg_bipolar_channels,
         eeg_template_montage=config.eeg_template_montage,
         fix_stim_artifact=config.fix_stim_artifact,
+        stim_artifact_tmin=config.stim_artifact_tmin,
+        stim_artifact_tmax=config.stim_artifact_tmax,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         reference_run=config.get_mf_reference_run(),
@@ -234,13 +238,10 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run filter."""
-    msg = 'Running Step 2: Frequency filtering'
-    logger.info(gen_log_message(step=2, message=msg))
-
-    parallel, run_func, _ = parallel_func(filter_data, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(filter_data,
+                                          n_jobs=config.get_n_jobs())
 
     # Enabling different runs for different subjects
     sub_run_ses = []
@@ -250,7 +251,7 @@ def main():
             config.get_runs(subject=subject),
             config.get_sessions()))
 
-    parallel(
+    logs = parallel(
         run_func(
             cfg=get_config(subject),
             subject=subject,
@@ -259,8 +260,7 @@ def main():
         ) for subject, run, session in sub_run_ses
     )
 
-    msg = 'Completed 2: Frequency filtering'
-    logger.info(gen_log_message(step=2, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

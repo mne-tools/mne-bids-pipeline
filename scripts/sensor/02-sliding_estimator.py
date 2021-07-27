@@ -13,6 +13,7 @@ The end result is an averaging effect across sensors.
 import os.path as op
 import logging
 from typing import Optional
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,7 @@ from scipy.io import savemat
 
 import mne
 from mne.utils import BunchConst
+from mne.parallel import parallel_func
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
 from mne_bids import BIDSPath
@@ -29,15 +31,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def run_time_decoding(cfg, subject, condition1, condition2, session=None):
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(gen_log_message(message=msg, step=7, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
@@ -90,7 +93,7 @@ def run_time_decoding(cfg, subject, condition1, condition2, session=None):
 
     se = SlidingEstimator(clf,
                           scoring=cfg.decoding_metric,
-                          n_jobs=cfg.N_JOBS)
+                          n_jobs=cfg.n_jobs)
     scores = cross_val_multiscore(se, X=X, y=y, cv=cfg.decoding_n_splits)
 
     # let's save the scores now
@@ -134,40 +137,38 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=config.get_eeg_reference(),
-        N_JOBS=config.N_JOBS
+        n_jobs=config.get_n_jobs()
     )
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Run sliding estimator."""
-    msg = 'Running Step 7: Sliding estimator'
-    logger.info(gen_log_message(step=7, message=msg))
-
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
-        logger.info(gen_log_message(step=7, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if not config.decode:
         msg = 'No decoding requested by user.'
-        logger.info(gen_log_message(step=7, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
+    parallel, run_func, _ = parallel_func(run_time_decoding,
+                                          n_jobs=1)
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject,
+                 condition1=cond_1, condition2=cond_2,
+                 session=session)
+        for subject, session, (cond_1, cond_2) in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions(),
+                          config.contrasts)
+    )
 
-    for subject in config.get_subjects():
-        for session in config.get_sessions():
-            for contrast in config.contrasts:
-                cond_1, cond_2 = contrast
-                run_time_decoding(cfg=get_config(), subject=subject,
-                                  condition1=cond_1, condition2=cond_2,
-                                  session=session)
-
-    msg = 'Completed Step 7: Sliding estimator'
-    logger.info(gen_log_message(step=7, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

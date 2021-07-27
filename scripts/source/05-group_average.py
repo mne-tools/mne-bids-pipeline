@@ -8,7 +8,6 @@ Source estimates are morphed to the ``fsaverage`` brain.
 
 import itertools
 import logging
-from typing import Optional
 
 import numpy as np
 import mne
@@ -18,12 +17,12 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def morph_stc(cfg, subject, session=None):
+def morph_stc(cfg, subject, fs_subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -57,7 +56,7 @@ def morph_stc(cfg, subject, session=None):
         stc = mne.read_source_estimate(fname_stc)
 
         morph = mne.compute_source_morph(
-            stc, subject_from=cfg.fs_subject, subject_to='fsaverage',
+            stc, subject_from=fs_subject, subject_to='fsaverage',
             subjects_dir=cfg.fs_subjects_dir)
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage)
@@ -99,10 +98,7 @@ def run_average(cfg, session, mean_morphed_stcs):
         stc.save(fname_stc_avg)
 
 
-def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
-) -> BunchConst:
+def get_config() -> BunchConst:
     cfg = BunchConst(
         task=config.get_task(),
         datatype=config.get_datatype(),
@@ -112,29 +108,29 @@ def get_config(
         proc=config.proc,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
-        fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
     )
     return cfg
 
 
-@failsafe_run(on_error=on_error)
-def main():
+# pass 'average' subject for logging
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
-    msg = 'Running Step 13: Grand-average source estimates'
-    logger.info(gen_log_message(step=13, message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=13, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
-    parallel, run_func, _ = parallel_func(morph_stc, n_jobs=config.N_JOBS)
+    parallel, run_func, _ = parallel_func(morph_stc,
+                                          n_jobs=config.get_n_jobs())
     all_morphed_stcs = parallel(
-        run_func(get_config(subject, session), subject, session)
+        run_func(cfg=cfg, subject=subject,
+                 fs_subject=config.get_fs_subject(subject),
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(),
                           config.get_sessions())
@@ -149,13 +145,15 @@ def main():
         session = None
 
     run_average(
-        cfg=get_config(subject='average', session=session),
+        cfg=cfg,
         session=session,
         mean_morphed_stcs=mean_morphed_stcs
     )
 
-    msg = 'Completed Step 13: Grand-average source estimates'
-    logger.info(gen_log_message(step=13, message=msg))
+
+def main():
+    log = run_group_average_source(cfg=get_config())
+    config.save_logs([log])
 
 
 if __name__ == '__main__':

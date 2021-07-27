@@ -23,7 +23,7 @@ from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 matplotlib.use('Agg')  # do not open any window  # noqa
 
@@ -58,7 +58,7 @@ def plot_events(cfg, subject, session):
         del this_raw_fname
 
     # Concatenate the filtered raws and extract the events.
-    raw_filt_concat = mne.concatenate_raws(raws_filt)
+    raw_filt_concat = mne.concatenate_raws(raws_filt, on_mismatch='warn')
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     fig = mne.viz.plot_events(events=events, event_id=event_id,
                               first_samp=raw_filt_concat.first_samp,
@@ -196,7 +196,8 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
-def run_report(cfg, subject, session=None):
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_report(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -390,13 +391,13 @@ def run_report(cfg, subject, session=None):
         # else:
         #     msg = ('Cannot render sensor alignment (coregistration) because '
         #            'no usable 3d backend was found.')
-        #     logger.warning(gen_log_message(message=msg, step=99,
+        #     logger.warning(gen_log_message(message=msg,
         #                                    subject=subject, session=session))
 
         for condition, evoked in zip(conditions, evokeds):
             msg = f'Rendering inverse solution for {evoked.comment} …'
-            logger.info(gen_log_message(message=msg, step=99,
-                                        subject=subject, session=session))
+            logger.info(**gen_log_kwargs(message=msg,
+                                         subject=subject, session=session))
 
             if condition in cfg.conditions:
                 full_condition = config.sanitize_cond_name(evoked.comment)
@@ -533,7 +534,8 @@ def add_event_counts(*,
 #         epochs = mne.read_epochs(fname_epochs)
 
 
-def run_report_average(cfg, subject: str, session: str) -> None:
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -686,8 +688,6 @@ def run_report_average(cfg, subject: str, session: str) -> None:
         task=cfg.task, suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
 
-    msg = 'Completed Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
     plt.close('all')  # close all figures to save memory
 
 
@@ -695,6 +695,25 @@ def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> BunchConst:
+    # Deal with configurations where `deriv_root` was specified, but not
+    # `fs_subjects_dir`. We normally raise an exception in this case in
+    # `get_fs_subjects_dir()`. However, in situations where users only run the
+    # sensor-space scripts, we never call this function, so everything works
+    # totally fine at first (which is expected). Yet, when creating the
+    # reports, the pipeline would fail with an exception – which is
+    # unjustified, as it would not make sense to force users to provide an
+    # `fs_subjects_dir` if they don't care about source analysis anyway! So
+    # simply assign a dummy value in such cases.
+    # `get_fs_subject()` calls `get_fs_subjects_dir()`, so take care of this
+    # too.
+    try:
+        fs_subjects_dir = config.get_fs_subjects_dir()
+    except ValueError:
+        fs_subjects_dir = None
+        fs_subject = None
+    else:
+        fs_subject = config.get_fs_subject(subject=subject)
+
     cfg = BunchConst(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
@@ -715,8 +734,8 @@ def get_config(
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
         inverse_method=config.inverse_method,
-        fs_subject=config.get_fs_subject(subject=subject),
-        fs_subjects_dir=config.get_fs_subjects_dir(),
+        fs_subject=fs_subject,
+        fs_subjects_dir=fs_subjects_dir,
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
         use_template_mri=config.use_template_mri,
@@ -724,19 +743,19 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
 def main():
     """Make reports."""
-    msg = 'Running Step 99: Create reports'
-    logger.info(gen_log_message(step=99, message=msg))
-
-    parallel, run_func, _ = parallel_func(run_report, n_jobs=config.N_JOBS)
-    parallel(
-        run_func(get_config(subject=subject), subject, session)
+    parallel, run_func, _ = parallel_func(run_report,
+                                          n_jobs=config.get_n_jobs())
+    logs = parallel(
+        run_func(cfg=get_config(subject=subject), subject=subject,
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(),
                           config.get_sessions())
     )
+
+    config.save_logs(logs)
 
     sessions = config.get_sessions()
     if not sessions:
@@ -745,7 +764,7 @@ def main():
     if (config.get_task() is not None and
             config.get_task().lower() == 'rest'):
         msg = '    … skipping "average" report for "rest" task.'
-        logger.info(gen_log_message(step=10, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     for session in sessions:

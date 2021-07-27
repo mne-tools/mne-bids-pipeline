@@ -16,7 +16,7 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -44,8 +44,8 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname}, Output: {cov_fname}")
-    logger.info(gen_log_message(message=msg, step=11, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
@@ -72,16 +72,16 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
     msg = (f'Computing regularized covariance based on empty-room recording. '
            f'Input: {raw_er_fname}, Output: {cov_fname}')
-    logger.info(gen_log_message(message=msg, step=11, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
     cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
     cov.save(cov_fname)
 
 
-@failsafe_run(on_error=on_error)
-def run_covariance(cfg, subject, session=None):
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_covariance(*, cfg, subject, session=None):
     if cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
         compute_cov_from_empty_room(cfg=cfg, subject=subject, session=session)
     else:
@@ -111,22 +111,21 @@ def get_config(
 
 def main():
     """Run cov."""
-    msg = 'Running Step 11: Estimate noise covariance'
-    logger.info(gen_log_message(step=11, message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=11, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_covariance, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    parallel, run_func, _ = parallel_func(run_covariance,
+                                          n_jobs=config.get_n_jobs())
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 11: Estimate noise covariance'
-    logger.info(gen_log_message(step=11, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

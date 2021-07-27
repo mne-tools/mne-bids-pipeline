@@ -14,10 +14,24 @@ else:
 import fire
 import coloredlogs
 
+
 logger = logging.getLogger(__name__)
-coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s', logger=logger)
+
+log_level_styles = {
+    'info': {
+        'bright': True,
+        'bold': True
+    }
+}
+log_fmt = '%(message)s'
+coloredlogs.install(
+    fmt=log_fmt,
+    level_styles=log_level_styles,
+    logger=logger
+)
 
 PathLike = Union[str, pathlib.Path]
+
 
 INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
 
@@ -50,7 +64,10 @@ SOURCE_SCRIPTS = (
 
 REPORT_SCRIPTS = ('01-make_reports.py',)
 
-FREESURFER_SCRIPTS = ('recon_all.py',)
+FREESURFER_SCRIPTS = (
+    '01-recon_all.py',
+    '02-coreg_surfaces.py'
+)
 
 SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
 
@@ -77,7 +94,8 @@ SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
                        SCRIPT_PATHS['report'])
 
 
-def _run_script(script_path, config, root_dir, subject, session, task, run):
+def _run_script(script_path, config, root_dir, subject, session, task, run,
+                n_jobs):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -99,6 +117,9 @@ def _run_script(script_path, config, root_dir, subject, session, task, run):
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
+    if n_jobs:
+        env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+
     runpy.run_path(script_path, run_name='__main__')
 
 
@@ -113,7 +134,8 @@ def process(config: PathLike,
             subject: Optional[str] = None,
             session: Optional[str] = None,
             task: Optional[str] = None,
-            run: Optional[str] = None):
+            run: Optional[str] = None,
+            n_jobs: Optional[str] = None):
     """Run the BIDS pipeline.
 
     Parameters
@@ -138,6 +160,8 @@ def process(config: PathLike,
         The task to process.
     run
         The run to process.
+    n_jobs
+        The number of parallel processes to execute.
     """
     if steps is None:
         steps = ('all',)
@@ -164,6 +188,8 @@ def process(config: PathLike,
         run = str(run)
     if task is not None:
         task = str(task)
+    if n_jobs is not None:
+        n_jobs = str(n_jobs)
 
     processing_stages = []
     processing_steps = []
@@ -205,11 +231,15 @@ def process(config: PathLike,
         # them twice.
         script_paths = [*SCRIPT_PATHS['init'], *script_paths]
 
+    logger.info(
+        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+    )
     for script_path in script_paths:
-        step_name = script_path.name.replace('.py', '')[3:]
-        logger.info(f'Now running: {step_name}')
-        _run_script(script_path, config, root_dir, subject, session, task, run)
-        logger.info(f'Successfully finished running: {step_name}')
+        step_name = f'{script_path.parent.name}/{script_path.name}'
+        logger.info(f'🚀 Now running script: {step_name} 👇')
+        _run_script(script_path, config, root_dir, subject, session, task, run,
+                    n_jobs)
+        logger.info(f'🎉 Done running script: {step_name} 👆')
 
 
 if __name__ == '__main__':

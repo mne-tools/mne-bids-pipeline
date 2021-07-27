@@ -18,13 +18,13 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_message, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
-def run_inverse(cfg, subject, session=None):
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_inverse(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -99,22 +99,21 @@ def get_config(
 
 def main():
     """Run inv."""
-    msg = 'Running Step 12: Compute and apply inverse solution'
-    logger.info(gen_log_message(step=12, message=msg))
-
     if not config.run_source_estimation:
         msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(gen_log_message(step=12, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_inverse, n_jobs=config.N_JOBS)
-    parallel(run_func(get_config(), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    parallel, run_func, _ = parallel_func(run_inverse,
+                                          n_jobs=config.get_n_jobs())
+    logs = parallel(
+        run_func(cfg=get_config(), subject=subject, session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(),
+                          config.get_sessions())
+    )
 
-    msg = 'Completed Step 12: Compute and apply inverse solution'
-    logger.info(gen_log_message(step=12, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

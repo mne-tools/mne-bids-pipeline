@@ -84,6 +84,17 @@ authors:
   ({{ gh(405) }} by {{ authors.agramfort}} and {{ authors.hoechenberger }})
 - Files docstrings in the preprocessing steps were updated.
   ({{ gh(409) }} by {{ authors.crsegerie }})
+- Do not crash when concatenating epochs or raws with different measurement
+  info (like the dev_head_t when using EEG only data).
+  ({{ gh(416) }} by {{ authors.agramfort }})
+- The ``run.py`` command line interface gained a new parameter ``--n_jobs`` to
+  specify the number of processes to run in parallel.
+  ({{ gh(417) }} by {{ authors.hoechenberger }})
+- Great improvements to our logging system produce more readable output on the
+  terminal. We also generate an Excel file containing useful debugging info
+  for all participants at each processing step to help you spot problematic
+  participants more easily.
+  ({{ gh(429), gh(441) }} by {{ authors.agramfort }} {{ authors.hoechenberger }})
 - It is now possible to analyze the contrast using the Common Spatial Patterns
   in the time-frequency domain using the new script: 03b-time_frequency_csp.py.
   We also test the significance of the contrast between the two conditions
@@ -128,6 +139,9 @@ authors:
   ({{ gh(358) }} by {{ authors.hoechenberger }})
 - [`ica_reject`][config.ica_reject] now also applies to ECG and EOG epochs.
   ({{ gh(373) }} by {{ authors.crsegerie }})
+- Added a new step `freesurfer/coreg_surfaces` that creates the scalp surfaces
+  required for coregistration in MNE-Python.
+  ({{ gh(422) }} by {{ authors.hoechenberger }})
 
 ### Code health
 
@@ -184,3 +198,5 @@ authors:
 - Parameters retrieved from the BIDS dataset were not limited to the modality
   ("data type") we meant to process, sometimes leading to crashes.
   ({{ gh(391) }} by {{ authors.hoechenberger }})
+- Fix forward computation for CTF data.
+  ({{ gh(427) }} by {{ authors.agramfort }})

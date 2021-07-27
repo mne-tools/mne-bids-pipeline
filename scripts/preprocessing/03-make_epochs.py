@@ -20,13 +20,13 @@ from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import make_epochs, gen_log_message, on_error, failsafe_run
+from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error)
-def run_epochs(cfg, subject, session=None):
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_epochs(*, cfg, subject, session=None):
     """Extract epochs for one subject."""
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -60,8 +60,8 @@ def run_epochs(cfg, subject, session=None):
     epochs_all_runs = []
     for run, raw_fname in zip(cfg.runs, raw_fnames):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
@@ -74,8 +74,8 @@ def run_epochs(cfg, subject, session=None):
                     del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                    session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
         epochs = make_epochs(
             raw=raw,
             event_id=event_id,
@@ -92,19 +92,19 @@ def run_epochs(cfg, subject, session=None):
         del raw  # free memory
 
     # Lastly, we can concatenate the epochs and set an EEG reference
-    epochs = mne.concatenate_epochs(epochs_all_runs)
+    epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     msg = (f'Created {len(epochs)} epochs with time interval: '
            f'{epochs.tmin} – {epochs.tmax} sec')
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
 
     msg = 'Writing epochs to disk'
-    logger.info(gen_log_message(message=msg, step=3, subject=subject,
-                                session=session))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
     epochs.save(epochs_fname, overwrite=True)
 
@@ -147,18 +147,19 @@ def get_config(
 
 def main():
     """Run epochs."""
-    msg = 'Running Step 3: Epoching'
-    logger.info(gen_log_message(step=3, message=msg))
+    # Here we use fewer n_jobs to prevent potential memory problems
+    parallel, run_func, _ = parallel_func(
+        run_epochs,
+        n_jobs=max(config.get_n_jobs() // 4, 1)
+    )
+    logs = parallel(
+        run_func(cfg=get_config(subject, session), subject=subject,
+                 session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(), config.get_sessions())
+    )
 
-    # Here we use fewer N_JOBS to prevent potential memory problems
-    parallel, run_func, _ = parallel_func(run_epochs,
-                                          n_jobs=max(config.N_JOBS // 4, 1))
-    parallel(run_func(get_config(subject, session), subject, session)
-             for subject, session in
-             itertools.product(config.get_subjects(), config.get_sessions()))
-
-    msg = 'Completed Step 3: Epoching'
-    logger.info(gen_log_message(step=3, message=msg))
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

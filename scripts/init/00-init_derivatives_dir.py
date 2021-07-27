@@ -16,7 +16,7 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
-from config import gen_log_message, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -25,7 +25,7 @@ def init_dataset(cfg) -> None:
     """Prepare the pipeline directory in /derivatives.
     """
     msg = "Initializing output directories."
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     cfg.deriv_root.mkdir(exist_ok=True, parents=True)
 
@@ -76,22 +76,22 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def main():
     """Initialize the output directories."""
     msg = 'Running: Initializing output directories.'
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
     init_dataset(cfg=get_config())
     parallel, run_func, _ = parallel_func(init_subject_dirs,
-                                          n_jobs=config.N_JOBS)
+                                          n_jobs=config.get_n_jobs())
     parallel(run_func(cfg=get_config(), subject=subject, session=session)
              for subject, session in
              itertools.product(config.get_subjects(),
                                config.get_sessions()))
 
     msg = 'Completed: Initializing output directories.'
-    logger.info(gen_log_message(step=1, message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

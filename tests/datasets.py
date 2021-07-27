@@ -62,7 +62,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000247',
         'osf': '',
         'web': '',
-        'include': ['sub-0002/ses-0001/meg'],
+        'include': ['sub-0002/ses-01/meg'],
         'exclude': []
     },
     'ds000248': {
@@ -70,8 +70,11 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000248',
         'osf': '',
         'web': '',
-        'include': ['sub-01', 'sub-emptyroom',
-                    'derivatives/freesurfer/subjects'],
+        'include': [
+            'sub-01',
+            'sub-emptyroom',
+            'derivatives/freesurfer/subjects'
+        ],
         'exclude': [
             'derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2005s+aseg.mgz',  # noqa: E501
             'derivatives/freesurfer/subjects/fsaverage/mri/aparc+aseg.mgz',
@@ -83,48 +86,6 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
         ],
     },
-    'ds000248_ica': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['sub-01'],
-        'exclude': []
-    },
-    'ds000248_T1_BEM': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': [
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz',
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
-        ],
-    },
-    'ds000248_FLASH_BEM': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['derivatives/freesurfer/subjects/sub-01'],
-        'exclude': [
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz',
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz',  # noqa: E501
-            'derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz'
-        ],
-    },
-    'ds000248_no_mri': {
-        'git': '',
-        'openneuro': 'ds000248',
-        'osf': '',
-        'web': '',
-        'include': ['sub-01'],
-        'exclude': ['sub-01/anat'],
-    },
     'ds000117': {
         'git': '',
         'openneuro': 'ds000117',
@@ -132,13 +93,13 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'web': '',
         'include': [
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_coordsystem.json',  # noqa: E501
-            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_events.tsv',  # noqa: E501
-            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_meg.fif',  # noqa: E501
-            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_events.tsv',  # noqa: E501
-            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_meg.fif',  # noqa: E501
+            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*',  # noqa: E501
+            'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos',
             'derivatives/meg_derivatives/ct_sparse.fif',
-            'derivatives/meg_derivatives/sss_cal.dat'
+            'derivatives/meg_derivatives/sss_cal.dat',
+            'sub-01/ses-meg/*.tsv',
+            'sub-01/ses-meg/*.json',
         ],
         'exclude': []
     },

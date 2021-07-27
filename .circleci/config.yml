@@ -5,11 +5,6 @@ _imageconfig: &imageconfig
   docker:
     - image: circleci/python:3.8-buster
 
-_xvfb: &xvfb
-  name: Start Xvfb virtual framebuffer
-  command: |
-    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
-
 _git: &git
   name: Configure git
   command: |
@@ -20,22 +15,7 @@ _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
     set -e
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
-    wget -O- http://neuro.debian.net/lists/buster.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
-    sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-    sudo apt-get update
-    sudo apt install tcsh git-annex-standalone libosmesa6 libglx-mesa0 libopengl0 libglx0 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xinerama0
-    echo "set -e" >> $BASH_ENV;
-    echo "export OPENBLAS_NUM_THREADS=4" >> $BASH_ENV;
-    echo "shopt -s globstar" >> $BASH_ENV;  # Enable recursive globbing via **
-    echo "export PATH=~/.local/bin:$PATH" >> $BASH_ENV;
-    PATH=~/.local/bin:$PATH
-    echo "export MNE_DATA=/home/circleci/mne_data" >> $BASH_ENV;
-    echo "export DISPLAY=:99" >> $BASH_ENV;
-    echo "export XDG_RUNTIME_DIR=/tmp/runtime-circleci" >> $BASH_ENV
-    wget https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
-    source get_minimal_commands.sh
-    mkdir -p ~/mne_data
+    ./.circleci/setup_bash.sh
 
 jobs:
   setup_env:
@@ -51,8 +31,6 @@ jobs:
             - ".git"
       - run:
           <<: *bashenv
-      - run:
-          <<: *xvfb
       - run:
           <<: *git
       # - restore_cache:
@@ -166,18 +144,10 @@ jobs:
           name: Get ds000248
           command: |
             python ~/project/tests/download_test_data.py -d ds000248
-            python ~/project/tests/download_test_data.py -d ds000248_ica
-            python ~/project/tests/download_test_data.py -d ds000248_FLASH_BEM
-            python ~/project/tests/download_test_data.py -d ds000248_T1_BEM
-            python ~/project/tests/download_test_data.py -d ds000248_no_mri
       - save_cache:
           key: data-cache-ds000248-{{ .Revision }}
           paths:
             - ~/mne_data/ds000248
-            - ~/mne_data/ds000248_ica
-            - ~/mne_data/ds000248_T1_BEM
-            - ~/mne_data/ds000248_FLASH_BEM
-            - ~/mne_data/ds000248_no_mri
 
   cache_ds001810:
     <<: *imageconfig
@@ -277,12 +247,10 @@ jobs:
   test_ds000117:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000117-{{ .Revision }}
@@ -292,24 +260,23 @@ jobs:
             export DS=ds000117
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000117
           destination: reports/ds000117
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000117/derivatives/mne-bids-pipeline/*/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000117/*/*/*/*.html
 
   test_ds000246:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000246-{{ .Revision }}
@@ -319,26 +286,25 @@ jobs:
             export DS=ds000246
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000246
           destination: reports/ds000246
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.html
-            - mne_data/ds000246/derivatives/mne-bids-pipeline/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds000246/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000246/*/*/*.tsv
 
   test_ds000247:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000247-{{ .Revision }}
@@ -348,24 +314,23 @@ jobs:
             export DS=ds000247
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000247
           destination: reports/ds000247
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000247/derivatives/mne-bids-pipeline/*/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000247/*/*/*/*.html
 
   test_ds000248:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -375,28 +340,27 @@ jobs:
             export DS=ds000248
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.json ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248
           destination: reports/ds000248
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.html
-            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.json
-            - mne_data/ds000248/derivatives/mne-bids-pipeline/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.tsv
 
   test_ds000248_ica:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -406,26 +370,25 @@ jobs:
             export DS=ds000248_ica
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248_ica/derivatives/mne-bids-pipeline/*/*/*.html
-            - mne_data/ds000248_ica/derivatives/mne-bids-pipeline/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_ica/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_ica/*/*/*.tsv
 
   test_ds000248_FLASH_BEM:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -437,12 +400,10 @@ jobs:
   test_ds000248_T1_BEM:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -452,15 +413,28 @@ jobs:
             python tests/run_tests.py --download=0 ds000248_T1_BEM
           no_output_timeout: 20m
 
+  test_ds000248_coreg_surfaces:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-{{ .Revision }}
+      - run:
+          name: test head surface creation for MNE coregistration
+          command: |
+            python tests/run_tests.py --download=0 ds000248_coreg_surfaces
+
   test_ds000248_no_mri:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds000248-{{ .Revision }}
@@ -470,24 +444,23 @@ jobs:
             export DS=ds000248_no_mri
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds000248_no_mri
           destination: reports/ds000248_no_mri
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds000248_no_mri/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_no_mri/*/*/*.html
 
   test_ds001810:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds001810-{{ .Revision }}
@@ -497,24 +470,23 @@ jobs:
             export DS=ds001810
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds001810
           destination: reports/ds001810
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds001810/derivatives/mne-bids-pipeline/*/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds001810/*/*/*/*.html
 
   test_ds003104:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds003104-{{ .Revision }}
@@ -524,24 +496,23 @@ jobs:
             export DS=ds003104
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds003104
           destination: reports/ds003104
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds003104/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds003104/*/*/*.html
 
   test_ds003392:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ds003392-{{ .Revision }}
@@ -551,28 +522,27 @@ jobs:
             export DS=ds003392
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.json ~/reports/${DS}/
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.json ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ds003392
           destination: reports/ds003392
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.html
-            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.json
-            - mne_data/ds003392/derivatives/mne-bids-pipeline/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
 
   test_eeg_matchingpennies:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-eeg_matchingpennies-{{ .Revision }}
@@ -582,24 +552,23 @@ jobs:
             export DS=eeg_matchingpennies
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
-            cp ~/mne_data/${DS}/derivatives/mne-bids-pipeline/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/eeg_matchingpennies
           destination: reports/eeg_matchingpennies
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/eeg_matchingpennies/derivatives/mne-bids-pipeline/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
-  test_ERP_CORE:
+  test_ERP_CORE_N400:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
@@ -611,59 +580,220 @@ jobs:
           command: |
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N400
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N400*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE ERN
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_ERN
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*ERN*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE LRP
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_LRP
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*LRP*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE MMN
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_MMN
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*MMN*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE N2pc
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_N2pc
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N2pc*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE N170
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_N170
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*N170*.html ~/reports/ERP_CORE/
-      - run:
-          name: test ERP CORE P3
-          command: |
-            python tests/run_tests.py --download=0 ERP_CORE_P3
-            cp ~/mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/**/*P3*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N400*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N400*.xlsx ~/reports/ERP_CORE/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/ERP_CORE/derivatives/mne-bids-pipeline/*/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_ERN:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE ERN
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_ERN
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*ERN*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*ERN*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_LRP:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE LRP
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_LRP
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*LRP*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*LRP*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_MMN:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE MMN
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_MMN
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*MMN*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*MMN*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_N2pc:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE N2pc
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_N2pc
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N2pc*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N2pc*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_N170:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE N170
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_N170
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N170*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N170*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
+
+  test_ERP_CORE_P3:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
+      - run:
+          name: prepare PyVista settings dir
+          command: mkdir -p /home/circleci/.local/share/pyvista
+      - run:
+          name: test ERP CORE P3
+          command: |
+            mkdir -p ~/reports/ERP_CORE
+            python tests/run_tests.py --download=0 ERP_CORE_P3
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*P3*.html ~/reports/ERP_CORE/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*P3*.xlsx ~/reports/ERP_CORE/
+      - store_artifacts:
+          path: /home/circleci/reports/ERP_CORE
+          destination: reports/ERP_CORE
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/*/*/*.html
 
   build_docs:
     <<: *imageconfig
     steps:
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *xvfb
       - attach_workspace:
           at: ~/
+      - run:
+          <<: *bashenv
       # necessary because gen_examples.py runs config script, which otherwise complains:
       # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
       - restore_cache:
           keys:
+            - data-cache-ds000117-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds000246-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds000247-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds000248-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds001810-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds003104-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-eeg_matchingpennies-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
           command: ./docs/build-docs.sh
@@ -744,6 +874,9 @@ workflows:
       - test_ds000248_T1_BEM:
           requires:
             - cache_ds000248
+      - test_ds000248_coreg_surfaces:
+          requires:
+            - cache_ds000248
       - test_ds000248_no_mri:
           requires:
             - cache_ds000248
@@ -779,7 +912,25 @@ workflows:
       - cache_ERP_CORE:
           requires:
             - setup_env
-      - test_ERP_CORE:
+      - test_ERP_CORE_N400:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_ERN:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_LRP:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_MMN:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_N2pc:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_N170:
+          requires:
+            - cache_ERP_CORE
+      - test_ERP_CORE_P3:
           requires:
             - cache_ERP_CORE
 
@@ -795,7 +946,13 @@ workflows:
             - test_ds003104
             - test_ds003392
             - test_eeg_matchingpennies
-            - test_ERP_CORE
+            - test_ERP_CORE_N400
+            - test_ERP_CORE_ERN
+            - test_ERP_CORE_LRP
+            - test_ERP_CORE_MMN
+            - test_ERP_CORE_N2pc
+            - test_ERP_CORE_N170
+            - test_ERP_CORE_P3
       - deploy_docs:
           requires:
             - build_docs

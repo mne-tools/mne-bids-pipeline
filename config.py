@@ -1253,7 +1253,7 @@ includes 10 subjects, the value of the 95th percentile of the t-distribution
 `t(10)` will be used for thresholding the clusters.
 
 Theoretically, you can tweak this value as you want to choose the size of
-the cluster, but for good science practices we advise to choose this value 
+the cluster, but for good science practices we advise to choose this value
 preliminary to seing the results.
 """
 

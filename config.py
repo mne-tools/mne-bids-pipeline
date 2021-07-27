@@ -3136,8 +3136,8 @@ class Tf:
                    f"to at least {round(recommended_w_min_time, 2)}s.")
             logger.warning(**gen_log_kwargs(msg))
 
-        centered_w_times = (times[1:] + times[:-1])/2
-        centered_w_freqs = (freqs[1:] + freqs[:-1])/2
+        centered_w_times = (times[1:] + times[:-1]) / 2
+        centered_w_freqs = (freqs[1:] + freqs[:-1]) / 2
 
         self.freqs = freqs
         self.freq_ranges = freq_ranges

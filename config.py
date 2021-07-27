@@ -14,6 +14,7 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+from mne.epochs import BaseEpochs
 from numpy.typing import ArrayLike
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -3100,3 +3101,152 @@ if (get_task() is not None and
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
+
+
+# Pickle = Trouble.
+# Moved the Pth and Tf class to config.py because
+# otherwise Pickle cannot serialze the classes 
+# for some reason. Pickle is used by the parallel thing
+class Tf:
+    """Util class containing useful info about the time frequency windows."""
+
+    def __init__(self, *, freqs, times):
+        """Calculate the required time and frequency size."""
+        freqs = np.array(freqs)
+        times = np.array(times)
+
+        # tmin , tmax, n_time_bins
+
+        freq_ranges = list(zip(freqs[:-1], freqs[1:]))
+        time_ranges = list(zip(times[:-1], times[1:]))
+
+        n_freq_windows = len(freq_ranges)
+        n_time_windows = len(time_ranges)
+
+        # For band passed periodic signal,
+        # according to the Nyquist theorem,
+        # we can reconstruct the signal if f_s > 2 * band_freq
+        min_band_freq = np.min(freqs[1:] - freqs[:-1])
+        min_band_time = np.min(times[1:] - times[:-1])
+        recommended_w_min_time = 1 / (2 * min_band_freq)
+
+        if recommended_w_min_time > min_band_time:
+            msg = ("We recommend increasing the duration of "
+                   "your time intervals "
+                   f"to at least {round(recommended_w_min_time, 2)}s.")
+            logger.warning(**gen_log_kwargs(msg))
+
+        centered_w_times = (times[1:] + times[:-1])/2
+        centered_w_freqs = (freqs[1:] + freqs[:-1])/2
+
+        self.freqs = freqs
+        self.freq_ranges = freq_ranges
+        self.times = times
+        self.time_ranges = time_ranges
+        self.centered_w_times = centered_w_times
+        self.centered_w_freqs = centered_w_freqs
+        self.n_time_windows = n_time_windows
+        self.n_freq_windows = n_freq_windows
+
+    def check_csp_times(self, epochs: BaseEpochs):
+        """Check if csp_times is contained in the epoch interval."""
+        # This test can only be performed after having read the Epochs file
+        # So it cannot be performed in the check section of the config file.
+        if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
+            wrn = (
+                'csp_times should be contained in the epoch interval. But we '
+                f'do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
+            logger.warning(wrn)
+
+
+# typing
+SessionT = Union[None, str]
+ContrastT = Tuple[str, str]
+
+
+class Pth:
+    """Util class containing useful Paths info."""
+
+    def __init__(self, cfg) -> None:
+        """Initialize directory. Initialize the base path."""
+        # We initialize to the average subject
+        # and to the default None session
+        self.bids_basename = BIDSPath(
+            subject="average",
+            task=cfg.task,
+            acquisition=cfg.acq,
+            run=None,
+            recording=cfg.rec,
+            space=cfg.space,
+            suffix='epo',
+            extension='.fif',
+            datatype=cfg.datatype,
+            root=cfg.deriv_root,
+            processing='clean',
+            check=False)
+
+    def file(self, subject: str, session: SessionT) -> BIDSPath:
+        """Return the path of the file."""
+        return self.bids_basename.copy().update(
+            subject=subject,
+            session=session)
+
+    def report(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
+        """Path to array containing the report."""
+        return self.bids_basename.copy().update(
+            processing='tf+csp' + self.contrast_suffix(contrast),
+            subject=subject,
+            session=session,
+            suffix='report',
+            extension='.html')
+
+    def freq_scores(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
+        """Path to array containing the histograms."""
+        return self.bids_basename.copy().update(
+            processing='csp+freq' + self.contrast_suffix(contrast),
+            subject=subject,
+            session=session,
+            suffix='scores',
+            extension='.npy')
+
+    def freq_scores_std(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
+        """Path to array containing the std of the histograms."""
+        return self.bids_basename.copy().update(
+            processing='csp+freq' + self.contrast_suffix(contrast),
+            subject=subject,
+            session=session,
+            suffix='scores+std',
+            extension='.npy')
+
+    def tf_scores(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> BIDSPath:
+        """Path to time-frequency scores."""
+        return self.bids_basename.copy().update(
+            processing='csp+tf' + self.contrast_suffix(contrast),
+            subject=subject,
+            session=session,
+            suffix='scores+std',
+            extension='.npy')
+
+    def contrast_suffix(self, contrast: ContrastT) -> str:
+        """Contrast suffix conform with Bids format."""
+        con0 = sanitize_cond_name(contrast[0])
+        con1 = sanitize_cond_name(contrast[1])
+        return f'+contr+{con0}+{con1}'
+
+    def prefix(
+        self, subject: str, session: SessionT, contrast: ContrastT
+    ) -> str:
+        """Usefull when logging messages."""
+        res = f'subject-{subject}-' + self.contrast_suffix(contrast)
+        if session:
+            return res + f'-session-{session}'
+        else:
+            return res

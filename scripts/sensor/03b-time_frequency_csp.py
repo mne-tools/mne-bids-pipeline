@@ -624,15 +624,15 @@ def one_subject_decoding(
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
     print("np.save(file=pth.tf_scores(sub")
-    fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=tf_scores, subject=subject)
-    print("fig = plot_time_frequen")
-    section = "Time-frequency decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + sub_ses_con)
-    print("plot time-frequency decoding")
+    # fig = plot_time_frequency_decoding(
+    #     tf=tf, tf_scores=tf_scores, subject=subject)
+    # print("fig = plot_time_frequen")
+    # section = "Time-frequency decoding"
+    # report.add_figs_to_section(
+    #     fig,
+    #     section=section,
+    #     captions=section + sub_ses_con)
+    # print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
     print("report.save(pth.report")

@@ -342,7 +342,6 @@ def plot_frequency_decoding(
     Histogram with frequency bins.
     For the average subject, we also plot the std.
     """
-    plt.close()
     fig, ax = plt.subplots()
 
     yerr = conf_int if len(subject) > 1 else None
@@ -394,7 +393,6 @@ def plot_time_frequency_decoding(
     -------
     The roc-auc score in a 2D map for each time-frequency bin.
     """
-    plt.close()
     if np.isnan(tf_scores).any():
         msg = ("There is at least one nan value in one of "
                "the time-frequencies bins.")
@@ -762,7 +760,6 @@ def plot_t_and_p_values(
     -------
     A figure with two subplot: t-values and p-values.
     """
-    plt.close()
     fig = plt.figure(figsize=(10, 5))
     axes = [fig.add_subplot(121), fig.add_subplot(122)]
 

@@ -452,7 +452,7 @@ def plot_patterns(
         captions=section + title)
 
 
-# @failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def one_subject_decoding(
     *,
     cfg,
@@ -599,29 +599,23 @@ def one_subject_decoding(
                     title=title)
 
     # Frequency savings
-    print("end for")
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
-    print("save freq scores")
     np.save(file=pth.freq_scores_std(
         subject, session, contrast), arr=freq_scores_std)
-    print("save freq scores std ")
 
     fig = plot_frequency_decoding(
         freqs=tf.freqs,
         freq_scores=freq_scores,
         conf_int=freq_scores_std,
         subject=subject)
-    print("save freqs decoding")
     section = "Frequency roc-auc decoding"
     report.add_figs_to_section(
         fig,
         section=section,
         captions=section + sub_ses_con)
-    print("save freqs roc auc decoding")
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
-    print("np.save(file=pth.tf_scores(sub")
     # fig = plot_time_frequency_decoding(
     #     tf=tf, tf_scores=tf_scores, subject=subject)
     # print("fig = plot_time_frequen")
@@ -633,12 +627,9 @@ def one_subject_decoding(
     # print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
-    msg = (f"Report for {sub_ses_con} finished successfully. "
-           f"The report is saved in {pth.report(subject, session, contrast)}")
-    logger.info(**gen_log_kwargs(message=msg,
-                subject=subject, session=session))
 
-    msg = f"Decoding for {sub_ses_con} finished successfully."
+    msg = (f"Decoding for {sub_ses_con} finished successfully. "
+           f"The report is saved in {pth.report(subject, session, contrast)}")
     logger.info(**gen_log_kwargs(message=msg,
                 subject=subject, session=session))
 
@@ -839,7 +830,8 @@ def compute_conf_inter(
         del bootstrapped_means, se, ci_lower, ci_upper
 
     # We cannot use the logger here
-    print("Confidence intervals results:", mean_scores)
+    print("Confidence intervals results:")
+    print(mean_scores)
 
     return contrast_score_stats
 

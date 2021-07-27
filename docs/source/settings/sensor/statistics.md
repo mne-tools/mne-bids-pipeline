@@ -6,5 +6,5 @@
 ::: config.csp_n_components
 ::: config.csp_reg
 ::: config.cluster_stats_alpha
-::: config.cluster_stats_alpha_t_test
+::: config.cluster_t_dist_alpha_thres
 ::: config.n_permutations

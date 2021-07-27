@@ -73,8 +73,6 @@ from config import (N_JOBS, gen_log_kwargs, on_error,
 import config
 
 logger = logging.getLogger('mne-bids-pipeline')
-# set_log_level(verbose="WARNING")  # mne logger
-
 
 # ROC-AUC chance score level
 chance = 0.5

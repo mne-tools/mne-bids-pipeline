@@ -36,11 +36,11 @@ and to optimize the rocauc score,
 we only seek to obtain unbiased scores usable afterwards in the permutation test.
 This is why it is not a big deal to optimize the running time 
 by making some approximations, such as : 
-- decimation to Nyquist
+- Decimation
 - Selection of the mag channels, which contain a very large part of 
     the information contained in (mag+grad)
 - PCA, which is very useful to reduce the dimension for eeg
-where there is only one channel type.
+    where there is only one channel type.
 """
 # License: BSD (3-clause)
 
@@ -68,7 +68,7 @@ from mne.report import Report
 
 from mne_bids import BIDSPath
 
-from config import (N_JOBS, gen_log_message, on_error,
+from config import (N_JOBS, gen_log_kwargs, on_error,
                     failsafe_run)
 import config
 
@@ -196,7 +196,7 @@ class Tf:
             msg = ("We recommend increasing the duration of "
                    "your time intervals "
                    f"to at least {round(recommended_w_min_time, 2)}s.")
-            logger.warning(gen_log_message(msg, step=8))
+            logger.warning(**gen_log_kwargs(msg))
 
         centered_w_times = (times[1:] + times[:-1])/2
         centered_w_freqs = (freqs[1:] + freqs[:-1])/2
@@ -388,7 +388,7 @@ def plot_time_frequency_decoding(
     if np.isnan(tf_scores).any():
         msg = ("There is at least one nan value in one of "
                "the time-frequencies bins.")
-        logger.info(gen_log_message(message=msg, step=8,
+        logger.info(**gen_log_kwargs(message=msg,
                                     subject=subject))
     tf_scores_ = np.nan_to_num(tf_scores, nan=chance)
 
@@ -470,7 +470,7 @@ def one_subject_decoding(
     and the numpy results in memory.
     """
     msg = f"Running decoding for {pth.prefix(subject, session, contrast)}..."
-    logger.info(gen_log_message(msg, step=8, subject=subject, session=session))
+    logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
 
@@ -481,7 +481,7 @@ def one_subject_decoding(
     # 3 is to take a bit of margin wrt Nyquist
     decimation_needed = epochs.info["sfreq"] / (3*tf.freqs[-1])
     msg = f"Decimating...decimation_needed {decimation_needed}"
-    logger.info(gen_log_message(msg, subject=subject))
+    logger.info(**gen_log_kwargs(msg, subject=subject))
     if decimation_needed > 2 and cfg.csp_quick:
         epochs.decimate(int(decimation_needed))
     print(epochs)
@@ -530,7 +530,7 @@ def one_subject_decoding(
         X_pca = pca.fit_transform(X) if csp_use_pca else X
 
         msg = f"X after pca {X_pca.shape}"
-        logger.info(gen_log_message(msg, subject=subject))
+        logger.info(**gen_log_kwargs(msg, subject=subject))
 
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
@@ -575,7 +575,7 @@ def one_subject_decoding(
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
             msg = "cross_val_score calculated succesfully"
-            logger.info(gen_log_message(msg))
+            logger.info(**gen_log_kwargs(msg))
 
 
             # We plot the patterns using all the epochs
@@ -628,8 +628,7 @@ def one_subject_decoding(
     print("report.save(pth.report")
 
     msg = f"Decoding for {pth.prefix(subject, session, contrast)} finished successfully."
-    logger.info(gen_log_message(message=msg, subject=subject, session=session,
-                                step=8))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject, session=session))
 
 
 def load_and_average(
@@ -672,8 +671,8 @@ def load_and_average(
             # Checking for previous iteration, previous shapes
             if list(arr.shape) != shape:
                 msg = f"Shape mismatch for {path(sub, ses, contrast)}"
-                logger.warning(gen_log_message(
-                    message=msg, subject=sub, step=8))
+                logger.warning(**gen_log_kwargs(
+                    message=msg, subject=sub))
                 raise FileNotFoundError
         except FileNotFoundError:
             print(FileNotFoundError)
@@ -681,8 +680,8 @@ def load_and_average(
             arr.fill(np.NaN)
         if np.isnan(arr).any():
             msg = f"NaN values were found in {path(sub, ses, contrast)}"
-            logger.warning(gen_log_message(
-                message=msg, subject=sub, session=ses, step=8))
+            logger.warning(**gen_log_kwargs(
+                message=msg, subject=sub, session=ses))
         res[i] = arr
     if average:
         return np.nanmean(res, axis=0)
@@ -856,11 +855,11 @@ def group_analysis(
     None. Plots are saved in memory.
     """
     msg = "Running group analysis..."
-    logger.info(gen_log_message(msg, step=8))
+    logger.info(**gen_log_kwargs(msg))
 
     if len(subjects) < 2:
         msg = "We cannot run a group analysis with just one subject."
-        logger.warning(gen_log_message(message=msg, step=8))
+        logger.warning(**gen_log_kwargs(message=msg))
         return None
 
     report = Report(title=f"csp-permutations-sub-average")
@@ -930,7 +929,7 @@ def group_analysis(
         n_permutations=cfg.n_permutations, out_type='mask')
 
     msg = "Permutations performed successfully"
-    logger.info(gen_log_message(msg, step=8))
+    logger.info(**gen_log_kwargs(msg))
 
     # Put the cluster data in a viewable format
     p_clust = np.ones((tf.n_freq_windows, tf.n_time_windows))
@@ -938,12 +937,12 @@ def group_analysis(
         p_clust[cl] = p
     msg = (f"We found {len(p_values)} clusters "
            f"each one with a p-value of {p_values}.")
-    logger.info(gen_log_message(msg, step=8))
+    logger.info(**gen_log_kwargs(msg))
 
     if len(p_values) == 0 or np.min(p_values) > cfg.cluster_stats_alpha:
         msg = ("The results are not significant. "
                "Try increasing the number of subjects.")
-        logger.info(gen_log_message(msg, step=8))
+        logger.info(**gen_log_kwargs(msg))
     else:
         msg = (f"Congrats, the results seem significant. At least one of "
                f"your cluster has a significant p-value "
@@ -951,7 +950,7 @@ def group_analysis(
                "This means that there is probably a meaningful difference "
                "between the two states, highlighted by the difference in "
                "cluster size.")
-        logger.info(gen_log_message(msg, step=8))
+        logger.info(**gen_log_kwargs(msg))
 
     ts.append(t_clust)
     ps.append(p_clust)
@@ -971,10 +970,10 @@ def group_analysis(
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
     msg = f"Report {pth_report} saved in the average subject folder"
-    logger.info(gen_log_message(message=msg, step=8))
+    logger.info(**gen_log_kwargs(message=msg))
 
     msg = "Group statistic analysis finished."
-    logger.info(gen_log_message(msg, step=8))
+    logger.info(**gen_log_kwargs(msg))
 
 
 def get_config(
@@ -1008,14 +1007,14 @@ def get_config(
 def main():
     """Run all subjects decoding in parallel."""
     msg = 'Running Step 8: Time-frequency decoding'
-    logger.info(gen_log_message(message=msg, step=8))
+    logger.info(**gen_log_kwargs(message=msg))
 
     cfg = get_config()
 
     if not config.contrasts:
         msg = ('contrasts was not specified. '
                'Skipping step Time-frequency decoding...')
-        logger.info(gen_log_message(message=msg, step=8))
+        logger.info(**gen_log_kwargs(message=msg))
         return None
 
     # Calculate the appropriate time and frequency windows size
@@ -1052,7 +1051,7 @@ def main():
                        cfg=cfg, pth=pth, tf=tf)
 
     msg = 'Completed Step 8: Time-frequency decoding'
-    logger.info(gen_log_message(message=msg, step=8))
+    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

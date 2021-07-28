@@ -354,17 +354,16 @@ def one_subject_decoding(
     # Chosing the right rank:
     # 1. Selecting the channel group with the smallest rank (Usefull for meg)
     rank_dic = compute_rank(epochs, rank="info")
-    print("rank_dic", rank_dic)
     ch_type = min(rank_dic, key=rank_dic.get)  # type: ignore
-    print(f"ch_type {ch_type} has minimal rank")
     rank = rank_dic[ch_type]
     # 2. If there is no channel type, we reduce the dimension
     # to a reasonable number. (Useful for eeg)
     if rank > 100:
-        print("Using dimensionaly reduced data to 100 dimensions.")
+        msg = ("Manually reducing the dimension to 100.")
+        logger.info(**gen_log_kwargs(msg, subject=subject))
         rank = 100
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-    msg = f"PCA reducing the dimension to {rank}"
+    msg = f"PCA reducing the dimension to {rank}. (ranks details: {rank_dic})."
     logger.info(**gen_log_kwargs(msg, subject=subject))
 
     # Classifier
@@ -418,7 +417,7 @@ def one_subject_decoding(
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
             title = f'{sub_ses_con}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
             msg = f"running {title}"
-            logger.info(**gen_log_kwargs(msg))
+            logger.info(**gen_log_kwargs(msg, subject=subject))
 
             # Originally the window size varied accross frequencies...
             # But this means also that there is some mutual information between

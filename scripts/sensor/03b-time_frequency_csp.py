@@ -45,6 +45,7 @@ by making some approximations, such as:
 # License: BSD (3-clause)
 
 import itertools
+import os
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 import logging
 from matplotlib.figure import Figure
@@ -818,6 +819,8 @@ def group_analysis(
                 captions=section + ' sub-average')
 
     pth_report = pth.report("average", session=None, contrast=contrast)
+    if not pth_report.fpath.parent.exists():
+        os.makedirs(pth_report.fpath.parent)
     report.save(pth_report, overwrite=True,
                 open_browser=config.interactive)
     msg = f"CSP final Report {pth_report} saved in the average subject folder"

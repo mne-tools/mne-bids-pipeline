@@ -352,16 +352,10 @@ def one_subject_decoding(
         logger.info(**gen_log_kwargs(msg, subject=subject))
 
     # Chosing the right rank:
-    # 1. Selecting the channel group with the smallest rank (Usefull for meg)
+    # Selecting the channel group with the smallest rank
     rank_dic = compute_rank(epochs, rank="info")
     ch_type = min(rank_dic, key=rank_dic.get)  # type: ignore
     rank = rank_dic[ch_type]
-    # 2. If there is no channel type, we reduce the dimension
-    # to a reasonable number. (Useful for eeg)
-    if rank > 100:
-        msg = ("Manually reducing the dimension to 100.")
-        logger.info(**gen_log_kwargs(msg, subject=subject))
-        rank = 100
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
     msg = f"PCA reducing the dimension to {rank}. (ranks details: {rank_dic})."
     logger.info(**gen_log_kwargs(msg, subject=subject))

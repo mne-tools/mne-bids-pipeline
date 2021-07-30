@@ -910,7 +910,7 @@ def main():
 
         # Once every subject has been calculated,
         # the group_analysis is very fast to compute.
-        group_analysis(subjects=config.get_subjects(),
+        group_analysis(subjects=subjects,
                        contrast=contrast,
                        cfg=cfg, pth=pth, tf=tf)
 

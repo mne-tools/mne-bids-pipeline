@@ -3105,8 +3105,8 @@ if (get_task() is not None and
 
 # Pickle = Trouble.
 # Moved the Pth and Tf class to config.py because
-# otherwise Pickle cannot serialze the classes
-# for some reason. Pickle is used by the parallel thing
+# otherwise Pickle cannot serialze the classes. 
+# Pickle is used by mne.parallel
 class Tf:
     """Util class containing useful info about the time frequency windows."""
 

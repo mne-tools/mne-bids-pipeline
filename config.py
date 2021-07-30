@@ -1922,7 +1922,7 @@ if (spatial_filter == 'ica' and
             )
 
 
-if decoding_n_splits < 2:  # TODO Change it to allow 1
+if decoding_n_splits < 2:
     raise ValueError('decoding_n_splits should be at least 2.')
 
 if len(csp_times) < 2:

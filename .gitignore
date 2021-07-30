@@ -12,4 +12,3 @@ docs/source/examples/*
 .pytest_cache/
 __pycache__/
 *.npy
-run.py.lprof

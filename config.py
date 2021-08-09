@@ -936,12 +936,12 @@ ways using the configuration options you can find below.
 
 min_ecg_epochs: int = 5
 """
-Minimal number of ECG epochs needed to compute SSP or ICA rejection with autoreject.
+Minimal number of ECG epochs needed to compute SSP or ICA rejection.
 """
 
 min_eog_epochs: int = 5
 """
-Minimal number of EOG epochs needed to compute SSP or ICA rejection with autoreject.
+Minimal number of EOG epochs needed to compute SSP or ICA rejection.
 """
 
 

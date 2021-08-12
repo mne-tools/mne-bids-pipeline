@@ -78,7 +78,8 @@ def run_ssp(*, cfg, subject, session=None):
                                             **cfg.n_proj_ecg)
 
     if not ecg_projs:
-        msg = 'No ECG events could be found. No ECG projectors computed.'
+        msg = ('Not enough ECG events could be found. No ECG projectors are '
+               'computed.')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
@@ -112,7 +113,8 @@ def run_ssp(*, cfg, subject, session=None):
                                             **cfg.n_proj_eog)
 
     if not eog_projs:
-        msg = 'Not enough EOG events could be found. No EOG projectors computed.'
+        msg = ('Not enough EOG events could be found. No EOG projectors are '
+               'computed.')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 

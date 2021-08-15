@@ -247,7 +247,7 @@ def run_report(*, cfg, subject, session=None):
     if cfg.task is not None:
         rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
     if mne.viz.get_3d_backend() is not None:
-        with mne.viz.use_3d_backend('pyvista'):
+        with mne.viz.use_3d_backend('pyvistaqt'):
             rep.parse_folder(**rep_kwargs)
     else:
         rep.parse_folder(**rep_kwargs)

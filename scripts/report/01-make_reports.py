@@ -427,7 +427,8 @@ def run_report(*, cfg, subject, session=None):
 
                 if mne.viz.get_3d_backend() is not None:
                     brain = stc.plot(views=['lat'], hemi='split',
-                                     initial_time=peak_time, backend='pyvistaqt',
+                                     initial_time=peak_time,
+                                     backend='pyvistaqt',
                                      time_viewer=True,
                                      subjects_dir=cfg.fs_subjects_dir)
                     brain.toggle_interface()

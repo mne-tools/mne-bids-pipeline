@@ -875,13 +875,6 @@ def main():
 
     for contrast in config.contrasts:
 
-        # Useful for debugging:
-        # [one_subject_decoding(
-        #     cfg=cfg, tf=tf, pth=pth,
-        #     subject=subject, session=session, contrast=contrast)
-        #     for subject, session in
-        #  itertools.product(subjects, sessions)]
-
         parallel, run_func, _ = parallel_func(
             one_subject_decoding, n_jobs=N_JOBS)
         logs = parallel(

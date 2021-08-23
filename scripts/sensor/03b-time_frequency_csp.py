@@ -403,9 +403,9 @@ def one_subject_decoding(
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
         if csp_plot_patterns:
+            # We cannot use pca if plotting the pattern.
             prefix = sub_ses_con
-            X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
-            csp.fit(X_inv, y)
+            csp.fit(X, y)
             plot_patterns(
                 csp=csp, epochs_filter=epochs_filter, report=report,
                 section="CSP Patterns - frequency",
@@ -442,8 +442,7 @@ def one_subject_decoding(
             # We plot the patterns using all the epochs
             # without splitting the epochs by using cv
             if csp_plot_patterns:
-                X_inv = pca.inverse_transform(X_pca) if csp_use_pca else X
-                csp.fit(X_inv, y)
+                csp.fit(X, y)
                 plot_patterns(
                     csp=csp, epochs_filter=epochs_filter, report=report,
                     section="CSP Patterns - time-frequency",

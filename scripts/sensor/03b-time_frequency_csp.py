@@ -129,7 +129,6 @@ def prepare_labels(*, epochs: BaseEpochs, contrast: ContrastT) -> np.ndarray:
     return y
 
 
-# @profile
 def prepare_epochs_and_y(
     *,
     epochs: BaseEpochs,

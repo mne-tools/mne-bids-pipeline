@@ -76,8 +76,6 @@ import config
 
 logger = logging.getLogger('mne-bids-pipeline')
 
-# ROC-AUC chance score level
-chance = 0.5
 csp_plot_patterns = False
 
 # One PCA is fitted for each frequency bin.
@@ -85,6 +83,9 @@ csp_plot_patterns = False
 # 1. The execution of the code is faster.
 # 2. There will be much less numerical instabilities.
 csp_use_pca = True
+
+# ROC-AUC chance score level
+chance = 0.5
 
 
 def prepare_labels(*, epochs: BaseEpochs, contrast: ContrastT) -> np.ndarray:

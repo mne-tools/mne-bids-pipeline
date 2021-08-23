@@ -64,7 +64,7 @@ from mne import create_info, read_epochs, compute_rank
 from mne.decoding import UnsupervisedSpatialFilter, CSP
 from mne.time_frequency import AverageTFR
 from mne.parallel import parallel_func
-from mne.utils import BunchConst  # , ProgressBar
+from mne.utils import BunchConst
 from mne.report import Report
 
 from mne_bids import BIDSPath
@@ -377,11 +377,6 @@ def one_subject_decoding(
     freq_scores = np.zeros((tf.n_freq_windows,))
     freq_scores_std = np.zeros((tf.n_freq_windows,))
     tf_scores = np.zeros((tf.n_freq_windows, tf.n_time_windows))
-
-    # for freq, (fmin, fmax) in ProgressBar(
-    #         enumerate(tf.freq_ranges),
-    #         max_value=tf.n_freq_windows,
-    #         mesg=sub_ses_con + '- frequency loop'):
 
     for freq, (fmin, fmax) in enumerate(tf.freq_ranges):
 

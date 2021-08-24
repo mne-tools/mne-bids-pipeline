@@ -447,28 +447,30 @@ def one_subject_decoding(
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
     np.save(file=pth.freq_scores_std(
         subject, session, contrast), arr=freq_scores_std)
-    fig = plot_frequency_decoding(
-        freqs=tf.freqs,
-        freq_scores=freq_scores,
-        conf_int=freq_scores_std,
-        subject=subject)
-    section = "Frequency roc-auc decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + sub_ses_con)
+    if cfg.interactive:
+        fig = plot_frequency_decoding(
+            freqs=tf.freqs,
+            freq_scores=freq_scores,
+            conf_int=freq_scores_std,
+            subject=subject)
+        section = "Frequency roc-auc decoding"
+        report.add_figs_to_section(
+            fig,
+            section=section,
+            captions=section + sub_ses_con)
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
-    fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=tf_scores, subject=subject)
-    print("fig = plot_time_frequen")
-    section = "Time-frequency decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + sub_ses_con)
-    print("plot time-frequency decoding")
+    if cfg.interactive:
+        fig = plot_time_frequency_decoding(
+            tf=tf, tf_scores=tf_scores, subject=subject)
+        print("fig = plot_time_frequen")
+        section = "Time-frequency decoding"
+        report.add_figs_to_section(
+            fig,
+            section=section,
+            captions=section + sub_ses_con)
+        print("plot time-frequency decoding")
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
 
@@ -724,27 +726,31 @@ def group_analysis(
     contrast_score_stats = compute_conf_inter(
         mean_scores=all_freq_scores, contrast=contrast,
         subjects=subjects, cfg=cfg, tf=tf)
-    fig = plot_frequency_decoding(
-        freqs=tf.freqs, freq_scores=freq_scores,
-        conf_int=contrast_score_stats["mean_se"],
-        subject="average")
-    section = "Frequency decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + ' sub-average')
+
+    if cfg.interactive:
+        fig = plot_frequency_decoding(
+            freqs=tf.freqs, freq_scores=freq_scores,
+            conf_int=contrast_score_stats["mean_se"],
+            subject="average")
+        section = "Frequency decoding"
+        report.add_figs_to_section(
+            fig,
+            section=section,
+            captions=section + ' sub-average')
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(
         pth.tf_scores, subjects=subjects, contrast=contrast,
         shape=[tf.n_freq_windows, tf.n_time_windows])
-    fig = plot_time_frequency_decoding(
-        tf=tf, tf_scores=all_tf_scores, subject="average")
-    section = "Time - frequency decoding"
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + ' sub-average')
+
+    if cfg.interactive:
+        fig = plot_time_frequency_decoding(
+            tf=tf, tf_scores=all_tf_scores, subject="average")
+        section = "Time - frequency decoding"
+        report.add_figs_to_section(
+            fig,
+            section=section,
+            captions=section + ' sub-average')
 
     ######################################################################
     # 2. Statistical tests
@@ -801,15 +807,16 @@ def group_analysis(
     ps.append(p_clust)
     mccs.append(True)
     for i in range(2):
-        fig = plot_t_and_p_values(
-            t_values=ts[i], p_values=ps[i], title=titles[i], tf=tf)
+        if cfg.interactive:
+            fig = plot_t_and_p_values(
+                t_values=ts[i], p_values=ps[i], title=titles[i], tf=tf)
 
-        cluster = "with" if i else "without"
-        section = f"Time - frequency statistics - {cluster} cluster"
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + ' sub-average')
+            cluster = "with" if i else "without"
+            section = f"Time - frequency statistics - {cluster} cluster"
+            report.add_figs_to_section(
+                fig,
+                section=section,
+                captions=section + ' sub-average')
 
     pth_report = pth.report("average", session=None, contrast=contrast)
     if not pth_report.fpath.parent.exists():

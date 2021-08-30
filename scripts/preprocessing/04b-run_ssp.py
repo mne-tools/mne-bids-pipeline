@@ -57,16 +57,29 @@ def run_ssp(*, cfg, subject, session=None):
     logger.debug(**gen_log_kwargs(message=msg, subject=subject,
                                   session=session))
 
-    reject_ecg_ = config.get_ssp_reject(
-        ssp_type='ecg',
-        epochs=(create_ecg_epochs(raw)
-                if cfg.ssp_reject_ecg == 'autoreject_global' else None))
-    ecg_projs, _ = compute_proj_ecg(raw,
-                                    average=cfg.ecg_proj_from_average,
-                                    reject=reject_ecg_,
-                                    **cfg.n_proj_ecg)
+    ecg_projs = []
+    ecg_epochs = create_ecg_epochs(raw)
+    if len(ecg_epochs) >= config.min_ecg_epochs:
+        if cfg.ssp_reject_ecg == 'autoreject_global':
+            reject_ecg_ = config.get_ssp_reject(
+                ssp_type='ecg',
+                epochs=ecg_epochs)
+            ecg_projs, _ = compute_proj_ecg(raw,
+                                            average=cfg.ecg_proj_from_average,
+                                            reject=reject_ecg_,
+                                            **cfg.n_proj_ecg)
+        else:
+            reject_ecg_ = config.get_ssp_reject(
+                    ssp_type='ecg',
+                    epochs=None)
+            ecg_projs, _ = compute_proj_ecg(raw,
+                                            average=cfg.ecg_proj_from_average,
+                                            reject=reject_ecg_,
+                                            **cfg.n_proj_ecg)
+
     if not ecg_projs:
-        msg = 'No ECG events could be found. No ECG projectors computed.'
+        msg = ('Not enough ECG events could be found. No ECG projectors are '
+               'computed.')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
@@ -79,17 +92,29 @@ def run_ssp(*, cfg, subject, session=None):
     else:
         ch_names = None
 
-    reject_eog_ = config.get_ssp_reject(
-        ssp_type='eog',
-        epochs=(create_eog_epochs(raw)
-                if cfg.ssp_reject_eog == 'autoreject_global' else None))
-    eog_projs, _ = compute_proj_eog(raw, ch_name=ch_names,
-                                    average=cfg.eog_proj_from_average,
-                                    reject=reject_eog_,
-                                    **cfg.n_proj_eog)
+    eog_projs = []
+    eog_epochs = create_eog_epochs(raw)
+    if len(eog_epochs) >= config.min_eog_epochs:
+        if cfg.ssp_reject_eog == 'autoreject_global':
+            reject_eog_ = config.get_ssp_reject(
+                ssp_type='eog',
+                epochs=eog_epochs)
+            eog_projs, _ = compute_proj_eog(raw,
+                                            average=cfg.eog_proj_from_average,
+                                            reject=reject_eog_,
+                                            **cfg.n_proj_eog)
+        else:
+            reject_eog_ = config.get_ssp_reject(
+                    ssp_type='eog',
+                    epochs=None)
+            eog_projs, _ = compute_proj_eog(raw,
+                                            average=cfg.eog_proj_from_average,
+                                            reject=reject_eog_,
+                                            **cfg.n_proj_eog)
 
     if not eog_projs:
-        msg = 'No EOG events could be found. No EOG projectors computed.'
+        msg = ('Not enough EOG events could be found. No EOG projectors are '
+               'computed.')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 

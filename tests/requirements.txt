@@ -16,6 +16,7 @@ pyqt5
 pyvista
 pyvistaqt
 pip
+setuptools <58  # XXX Fixes jsmin install. Revisit this one soon.
 mkdocs
 mkdocs-material
 mkdocs-material-extensions

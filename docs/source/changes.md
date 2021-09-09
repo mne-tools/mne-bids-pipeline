@@ -102,6 +102,12 @@ authors:
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
   ({{ gh(348) }} by {{ authors.guiomar }} and {{ authors.hoechenberger }})
+- When creating epochs, only those epochs are kept that belong to the specified
+  [`conditions`][config.conditions]. This means that only this subset of epochs
+  will be passed to ICA and SSP (if used). Previously, we would created epochs
+  based on all events found in the data, and only subset them to the requested
+  conditions at the epoching stage.
+  ({{ gh(449) }} by {{ authors.agramfort }})
 - Epochs rejection based on peak-to-peak amplitude, as controlled via the
   [`reject`][config.reject] setting, will now take place **after** ICA or SSP.
   In previous versions of the Pipeline, rejection was carried out before ICA

@@ -88,6 +88,8 @@ def run_epochs(*, cfg, subject, session=None):
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
+        if config.conditions:
+            epochs = epochs[config.conditions]
         epochs_all_runs.append(epochs)
         del raw  # free memory
 

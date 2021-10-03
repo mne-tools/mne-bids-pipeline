@@ -22,6 +22,7 @@ mkdocs-material
 mkdocs-material-extensions
 mkdocs-macros-plugin
 mkdocstrings
+livereload
 coloredlogs
 autoreject
 openpyxl

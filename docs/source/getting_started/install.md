@@ -27,6 +27,7 @@ pip install -r https://raw.githubusercontent.com/mne-tools/mne-bids-pipeline/mai
     - `scikit-learn` for decoding
     - `fire` for the command line interface
     - `typing_extensions` if you're using a Python version older than 3.8
+    - `pooch` for using the template MRI
 
 Download MNE-BIDS-Pipeline
 --------------------------

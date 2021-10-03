@@ -1,4 +1,4 @@
-setuptools <58  # XXX Fixes jsmin install. Revisit this one soon.
+setuptools
 pip
 typing_extensions
 datalad

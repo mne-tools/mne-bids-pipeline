@@ -31,4 +31,4 @@ pip install -r https://raw.githubusercontent.com/mne-tools/mne-bids-pipeline/mai
 Download MNE-BIDS-Pipeline
 --------------------------
 
-Download the [code](https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip)
+Download and extract the [the code](https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip)

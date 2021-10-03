@@ -1,4 +1,7 @@
+setuptools <58  # XXX Fixes jsmin install. Revisit this one soon.
+pip
 typing_extensions
+datalad
 numpy
 scipy
 scikit-learn
@@ -12,7 +15,14 @@ coloredlogs
 python-picard
 fire
 pyqt5
+pyvista
 pyvistaqt
+mkdocs
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-macros-plugin
+mkdocstrings
+coloredlogs
 openneuro-py
 autoreject
 openpyxl

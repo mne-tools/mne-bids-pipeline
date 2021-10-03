@@ -1,0 +1,20 @@
+typing_extensions
+numpy
+scipy
+scikit-learn
+pandas
+json_tricks
+h5py
+matplotlib
+seaborn
+nibabel
+coloredlogs
+python-picard
+fire
+pyqt5
+pyvistaqt
+openneuro-py
+autoreject
+openpyxl
+mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
+mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

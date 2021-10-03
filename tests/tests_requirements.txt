@@ -1,14 +1,28 @@
+setuptools <58  # XXX Fixes jsmin install. Revisit this one soon.
+pip
+typing_extensions
+datalad
+numpy
+scipy
+scikit-learn
+pandas
+json_tricks
+h5py
+matplotlib
+seaborn
 nibabel
 python-picard
 pyqt5
 pyvista
 pyvistaqt
-datalad
-openneuro-py
-https://api.github.com/repos/mne-tools/mne-python/zipball/main
-https://api.github.com/repos/mne-tools/mne-bids/zipball/main
 mkdocs
 mkdocs-material
 mkdocs-material-extensions
 mkdocs-macros-plugin
 mkdocstrings
+coloredlogs
+openneuro-py
+autoreject
+openpyxl
+mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
+mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

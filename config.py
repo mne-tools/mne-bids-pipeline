@@ -1482,11 +1482,11 @@ computation by updating 'bids_path'.
     ```
 """
 
-inverse_targets: Optional[List[str]] = []
+inverse_targets: Optional[List[str]] = ['evoked']
 """
 List of the different types of data on which to apply the inverse operator.
 
-If [] only the inverse solution coputation is done.
+If None only the inverse solution computation is done.
 
 ???+ example "Example"
     ```python

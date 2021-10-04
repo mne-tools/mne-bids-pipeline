@@ -1,4 +1,4 @@
-setuptools <58  # XXX Fixes jsmin install. Revisit this one soon.
+setuptools
 pip
 typing_extensions
 datalad
@@ -21,10 +21,13 @@ mkdocs
 mkdocs-material
 mkdocs-material-extensions
 mkdocs-macros-plugin
-mkdocstrings
+mkdocstrings >= 0.16
+pytkdocs >= 0.11
+livereload
 coloredlogs
-openneuro-py
 autoreject
 openpyxl
+openneuro-py
+pooch
 mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
 mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

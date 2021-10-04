@@ -1470,7 +1470,7 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```
 """
 
-source_info_update: Optional[Dict[str, str]] = None
+source_info_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """
 Match the file name from where to read the info in forward and inverse solution
 computation by updating 'bids_path'.
@@ -1479,6 +1479,18 @@ computation by updating 'bids_path'.
     ```python
     source_info_update = {'processing': 'clean',
                           'suffix': 'epo'}
+    ```
+"""
+
+inverse_targets: Optional[List[str]] = []
+"""
+List of the different types of data on which to apply the inverse operator.
+
+If [] only the inverse solution coputation is done.
+
+???+ example "Example"
+    ```python
+    inverse_targets = ['raw', 'evoked', 'cov', 'epochs']
     ```
 """
 

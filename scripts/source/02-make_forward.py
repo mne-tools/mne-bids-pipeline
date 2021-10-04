@@ -118,10 +118,7 @@ def run_forward(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    if cfg.source_info_update == None:
-        fname_info = bids_path.copy().update(suffix='ave')
-    else:
-        fname_info = bids_path.copy().update(**cfg.source_info_update)
+    fname_info = bids_path.copy().update(**cfg.source_info_update)
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_fwd = bids_path.copy().update(suffix='fwd')
 

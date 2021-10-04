@@ -840,12 +840,12 @@ workflows:
     jobs:
       - setup_env
 
-      - cache_ds000117:
-          requires:
-            - setup_env
-      - test_ds000117:
-          requires:
-            - cache_ds000117
+      # - cache_ds000117:
+      #     requires:
+      #       - setup_env
+      # - test_ds000117:
+      #     requires:
+      #       - cache_ds000117
 
       - cache_ds000246:
           requires:
@@ -904,12 +904,12 @@ workflows:
           requires:
             - cache_ds003392
 
-      - cache_eeg_matchingpennies:
-          requires:
-            - setup_env
-      - test_eeg_matchingpennies:
-          requires:
-            - cache_eeg_matchingpennies
+      # - cache_eeg_matchingpennies:
+      #     requires:
+      #       - setup_env
+      # - test_eeg_matchingpennies:
+      #     requires:
+      #       - cache_eeg_matchingpennies
 
       - cache_ERP_CORE:
           requires:
@@ -938,7 +938,7 @@ workflows:
 
       - build_docs:
           requires:
-            - test_ds000117
+            # - test_ds000117
             - test_ds000246
             - test_ds000247
             - test_ds000248
@@ -947,7 +947,7 @@ workflows:
             - test_ds001810
             - test_ds003104
             - test_ds003392
-            - test_eeg_matchingpennies
+            # - test_eeg_matchingpennies
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN
             - test_ERP_CORE_LRP

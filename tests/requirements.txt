@@ -21,7 +21,8 @@ mkdocs
 mkdocs-material
 mkdocs-material-extensions
 mkdocs-macros-plugin
-mkdocstrings
+mkdocstrings >= 0.16
+pytkdocs >= 0.11
 livereload
 coloredlogs
 autoreject

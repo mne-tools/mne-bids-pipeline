@@ -118,7 +118,10 @@ def run_forward(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    fname_evoked = bids_path.copy().update(suffix='ave')
+    if cfg.source_info_update == None:
+        fname_info = bids_path.copy().update(suffix='ave')
+    else:
+        fname_info = bids_path.copy().update(**cfg.source_info_update)
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_fwd = bids_path.copy().update(suffix='fwd')
 
@@ -131,7 +134,7 @@ def run_forward(*, cfg, subject, session=None):
     msg = 'Calculating forward solution'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    info = mne.io.read_info(fname_evoked)
+    info = mne.io.read_info(fname_info)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=cfg.mindist)
 
@@ -153,6 +156,7 @@ def get_config(
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
+        source_info_update=config.source_info_update,
         ch_types=config.ch_types,
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),

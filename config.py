@@ -1470,6 +1470,18 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```
 """
 
+source_info_update: Optional[Dict[str, str]] = None
+"""
+Match the file name from where to read the info in forward and inverse solution
+computation by updating 'bids_path'.
+
+???+ example "Example"
+    ```python
+    source_info_update = {'processing': 'clean',
+                          'suffix': 'epo'}
+    ```
+"""
+
 ###############################################################################
 # ADVANCED
 # --------

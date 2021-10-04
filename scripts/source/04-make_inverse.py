@@ -37,12 +37,15 @@ def run_inverse(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    fname_ave = bids_path.copy().update(suffix='ave')
+    if cfg.source_info_update == None:
+        fname_info = bids_path.copy().update(suffix='ave')
+    else:
+        fname_info = bids_path.copy().update(**cfg.source_info_update)
     fname_fwd = bids_path.copy().update(suffix='fwd')
     fname_cov = bids_path.copy().update(suffix='cov')
     fname_inv = bids_path.copy().update(suffix='inv')
 
-    evokeds = mne.read_evokeds(fname_ave)
+    evokeds = mne.read_evokeds(fname_ave) #XXX the code below assumes it is evoked
     cov = mne.read_cov(fname_cov)
     forward = mne.read_forward_solution(fname_fwd)
     info = evokeds[0].info

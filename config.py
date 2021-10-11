@@ -1484,13 +1484,15 @@ computation by updating 'bids_path'.
 
 inverse_targets: Optional[List[str]] = ['evoked']
 """
-List of the different types of data on which to apply the inverse operator.
+
+Wether to apply the inverse operator on evoked files or not.
 
 If None only the inverse solution computation is done.
 
 ???+ example "Example"
     ```python
-    inverse_targets = ['raw', 'evoked', 'cov', 'epochs']
+    inverse_targets = ['evoked']
+    inverse_targets = None
     ```
 """
 

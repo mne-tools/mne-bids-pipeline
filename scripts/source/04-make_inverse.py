@@ -58,9 +58,6 @@ def run_inverse(*, cfg, subject, session=None):
     else:
         conditions = cfg.conditions
 
-    if cfg.inverse_targets is None:
-        return
-
     if 'evoked' in cfg.inverse_targets:
         fname_ave = bids_path.copy().update(suffix='ave')
         evokeds = mne.read_evokeds(fname_ave)

@@ -1482,17 +1482,17 @@ computation by updating 'bids_path'.
     ```
 """
 
-inverse_targets: Optional[List[str]] = ['evoked']
+inverse_targets: List[Literal['evoked']] = ['evoked']
 """
 
-Wether to apply the inverse operator on evoked files or not.
-
-If None only the inverse solution computation is done.
+On which target file to apply the inverse operators. Accepted target
+is limited to "evoked" at this point. If no inverse computation should be
+done use `[]`.
 
 ???+ example "Example"
     ```python
     inverse_targets = ['evoked']
-    inverse_targets = None
+    inverse_targets = []
     ```
 """
 

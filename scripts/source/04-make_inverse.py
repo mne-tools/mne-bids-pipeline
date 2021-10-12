@@ -44,7 +44,7 @@ def run_inverse(*, cfg, subject, session=None):
 
     cov = mne.read_cov(fname_cov)
     forward = mne.read_forward_solution(fname_fwd)
-    info =  mne.io.read_info(fname_info)
+    info = mne.io.read_info(fname_info)
     inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
                                              depth=0.8, rank='info')
     write_inverse_operator(fname_inv, inverse_operator)
@@ -61,7 +61,7 @@ def run_inverse(*, cfg, subject, session=None):
     if 'evoked' in cfg.inverse_targets:
         fname_ave = bids_path.copy().update(suffix='ave')
         evokeds = mne.read_evokeds(fname_ave)
-        
+
         for condition, evoked in zip(conditions, evokeds):
             method = cfg.inverse_method
             pick_ori = None
@@ -76,9 +76,13 @@ def run_inverse(*, cfg, subject, session=None):
             if "eeg" in cfg.ch_types:
                 evoked.set_eeg_reference('average', projection=True)
 
-            stc = apply_inverse(evoked=evoked,
-                                inverse_operator=inverse_operator,
-                                lambda2=lambda2, method=method, pick_ori=pick_ori)
+            stc = apply_inverse(
+                evoked=evoked,
+                inverse_operator=inverse_operator,
+                lambda2=lambda2,
+                method=method,
+                pick_ori=pick_ori
+            )
             stc.save(fname_stc)
 
 

@@ -1470,6 +1470,43 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```
 """
 
+source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
+"""
+When computing the forward and inverse solutions, by default the pipeline
+retrieves the `mne.Info` object from the cleaned evoked data. However, in
+certain situations you may wish to use a different `Info`.
+
+This parameter allows you to explicitly specify from which file to retrieve the
+`mne.Info` object. Use this parameter to supply a dictionary to
+`BIDSPath.update()` during the forward and inverse processing steps.
+
+???+ example "Example"
+    Use the `Info` object stored in the cleaned epochs:
+    ```python
+    source_info_path_update = {'processing': 'clean',
+                               'suffix': 'epo'}
+    ```
+"""
+
+inverse_targets: List[Literal['evoked']] = ['evoked']
+"""
+
+On which data to apply the inverse operator. Currently, the only supported
+target is `'evoked'`. If no inverse computation should be done, pass an
+empty list, `[]`.
+
+???+ example "Example"
+    Compute the inverse solution on evoked data:
+    ```python
+    inverse_targets = ['evoked']
+    ```
+
+    Don't compute an inverse solution:
+    ```python
+    inverse_targets = []
+    ```
+"""
+
 ###############################################################################
 # ADVANCED
 # --------

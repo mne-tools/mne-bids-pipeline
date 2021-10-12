@@ -96,6 +96,10 @@ authors:
   for all participants at each processing step to help you spot problematic
   participants more easily.
   ({{ gh(429), gh(441) }} by {{ authors.agramfort }} {{ authors.hoechenberger }})
+- It is now possible to specify from which file to load the `mne.Info` object
+  during forward and inverse computation via
+  [`source_info_path_update`][config.source_info_path_update].
+  ({{ gh(452) }} by {{ authors.apmellot }})
 
 ### Behavior changes
 
@@ -151,6 +155,10 @@ authors:
   options from the user config and operates solely on these. This helps make it
   clear which settings an individual script depends on.
   ({{ gh(383) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
+- We laid the groundwork for applying the inverse operator on other data types
+  than just `mne.Evoked` by introducing
+  [`inverse_targets`][config.inverse_targets].
+  ({{ gh(452) }} by {{ authors.apmellot }})
 
 ### Bug fixes
 

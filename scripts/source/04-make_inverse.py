@@ -37,7 +37,7 @@ def run_inverse(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    fname_info = bids_path.copy().update(**cfg.source_info_update)
+    fname_info = bids_path.copy().update(**cfg.source_info_path_update)
     fname_fwd = bids_path.copy().update(suffix='fwd')
     fname_cov = bids_path.copy().update(suffix='cov')
     fname_inv = bids_path.copy().update(suffix='inv')
@@ -92,7 +92,7 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        source_info_update=config.source_info_update,
+        source_info_path_update=config.source_info_path_update,
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,

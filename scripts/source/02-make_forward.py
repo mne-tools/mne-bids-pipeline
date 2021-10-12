@@ -118,7 +118,7 @@ def run_forward(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    fname_info = bids_path.copy().update(**cfg.source_info_update)
+    fname_info = bids_path.copy().update(**cfg.source_info_path_update)
     fname_trans = bids_path.copy().update(suffix='trans')
     fname_fwd = bids_path.copy().update(suffix='fwd')
 
@@ -153,7 +153,7 @@ def get_config(
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
-        source_info_update=config.source_info_update,
+        source_info_path_update=config.source_info_path_update,
         ch_types=config.ch_types,
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),

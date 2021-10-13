@@ -1,7 +1,4 @@
-setuptools
-pip
 typing_extensions
-datalad
 numpy
 scipy
 scikit-learn
@@ -15,19 +12,9 @@ coloredlogs
 python-picard
 fire
 pyqt5
-pyvista
 pyvistaqt
-mkdocs
-mkdocs-material
-mkdocs-material-extensions
-mkdocs-macros-plugin
-mkdocstrings >= 0.16
-pytkdocs >= 0.11
-livereload
-coloredlogs
 autoreject
 openpyxl
-openneuro-py
 pooch
 mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
 mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

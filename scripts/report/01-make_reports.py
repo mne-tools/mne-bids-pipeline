@@ -433,8 +433,6 @@ def run_report(*, cfg, subject, session=None):
                 import matplotlib.pyplot as plt
 
                 if mne.viz.get_3d_backend() is not None:
-                    from mne.viz.backends.renderer import backend
-
                     brain = stc.plot(views=['lat'], hemi='split',
                                      initial_time=peak_time,
                                      backend='pyvistaqt',

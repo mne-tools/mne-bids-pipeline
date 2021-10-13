@@ -433,7 +433,7 @@ def run_report(*, cfg, subject, session=None):
                 import matplotlib.pyplot as plt
 
                 if mne.viz.get_3d_backend() is not None:
-                    from ..viz.backends.renderer import backend
+                    from mne.viz.backends.renderer import backend
 
                     brain = stc.plot(views=['lat'], hemi='split',
                                      initial_time=peak_time,
@@ -703,7 +703,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 if mne.viz.get_3d_backend() is None:
                     plt.close(fig)
                 else:
-                    from ..viz.backends.renderer import backend
+                    from mne.viz.backends.renderer import backend
                     backend._close_3d_figure(fig)
 
             del peak_time

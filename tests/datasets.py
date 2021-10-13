@@ -92,7 +92,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': [
-            'sub-01/ses-meg/meg/sub-01_ses-meg_coordsystem.json',  # noqa: E501
+            'sub-01/ses-meg/meg/sub-01_ses-meg_coordsystem.json',
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos',

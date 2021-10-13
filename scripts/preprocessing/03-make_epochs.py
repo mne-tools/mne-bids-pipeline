@@ -89,12 +89,13 @@ def run_epochs(*, cfg, subject, session=None):
             decim=cfg.decim
         )
 
-        if isinstance(cfg.conditions, dict):
-            conditions = list(cfg.conditions.keys())
-        else:
-            conditions = cfg.conditions
+        if cfg.task != 'rest':
+            if isinstance(cfg.conditions, dict):
+                conditions = list(cfg.conditions.keys())
+            else:
+                conditions = cfg.conditions
+            epochs = epochs[conditions]
 
-        epochs = epochs[conditions]
         epochs_all_runs.append(epochs)
         del raw  # free memory
 

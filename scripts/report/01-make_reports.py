@@ -449,7 +449,6 @@ def run_report(*, cfg, subject, session=None):
                     ax.axis('off')
                     comments = evoked.comment
                     captions = caption
-                    backend._close_3d_figure(fig)
                     figs = [fig]
                 else:
                     fig_lh = plt.figure()
@@ -475,8 +474,16 @@ def run_report(*, cfg, subject, session=None):
                                         captions=captions,
                                         comments=comments,
                                         section='Sources')
+
+                if mne.viz.get_3d_backend() is not None:
+                    try:  # not sure WHY we need this …
+                        brain.close()
+                    except AttributeError:
+                        pass
+
                 for fig in figs:
                     plt.close(fig)
+
                 del peak_time
 
     if cfg.process_er:
@@ -699,12 +706,15 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
             rep.add_figs_to_section(figs=figs, captions=captions,
                                     section='Sources')
-            for fig in figs:
-                if mne.viz.get_3d_backend() is None:
+
+            if mne.viz.get_3d_backend() is not None:
+                try:  # not sure WHY we need this …
+                    brain.close()
+                except AttributeError:
+                    pass
+            else:
+                for fig in figs:
                     plt.close(fig)
-                else:
-                    from mne.viz.backends.renderer import backend
-                    backend._close_3d_figure(fig)
 
             del peak_time
 

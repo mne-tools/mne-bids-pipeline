@@ -196,8 +196,6 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
-from memory_profiler import profile
-
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(*, cfg, subject, session=None):
     import matplotlib.pyplot as plt

@@ -88,8 +88,14 @@ def run_epochs(*, cfg, subject, session=None):
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
-        if config.conditions:
-            epochs = epochs[config.conditions]
+
+        if cfg.task != 'rest':
+            if isinstance(cfg.conditions, dict):
+                conditions = list(cfg.conditions.keys())
+            else:
+                conditions = cfg.conditions
+            epochs = epochs[conditions]
+
         epochs_all_runs.append(epochs)
         del raw  # free memory
 
@@ -133,6 +139,7 @@ def get_config(
         bids_root=config.get_bids_root(),
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
+        conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
         epochs_metadata_tmin=config.epochs_metadata_tmin,

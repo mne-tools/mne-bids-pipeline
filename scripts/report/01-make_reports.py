@@ -198,6 +198,8 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
 
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(*, cfg, subject, session=None):
+    import matplotlib.pyplot as plt
+
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -233,24 +235,31 @@ def run_report(*, cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    params: Dict[str, Any] = dict(info_fname=fname_epo, raw_psd=True,
-                                  subject=cfg.fs_subject, title=title)
+    report_kwargs: Dict[str, Any] = dict(
+        info_fname=fname_epo,
+        raw_psd=True,
+        subject=cfg.fs_subject,
+        title=title
+    )
     if has_trans:
-        params['subjects_dir'] = cfg.fs_subjects_dir
+        report_kwargs['subjects_dir'] = cfg.fs_subjects_dir
 
-    rep = mne.Report(**params)
-    rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
-                                      verbose=False)
+    rep = mne.Report(**report_kwargs)
+    parse_folder_kwargs: Dict[str, Any] = dict(
+        data_path=fname_ave.fpath.parent,
+        raw_butterfly=False,  # `True` consumes large amounts of memory!
+        verbose=False
+    )
     if not has_trans:
-        rep_kwargs['render_bem'] = False
+        parse_folder_kwargs['render_bem'] = False
 
     if cfg.task is not None:
-        rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
+        parse_folder_kwargs['pattern'] = f'*_task-{cfg.task}*'
     if mne.viz.get_3d_backend() is not None:
         with mne.viz.use_3d_backend('pyvistaqt'):
-            rep.parse_folder(**rep_kwargs)
+            rep.parse_folder(**parse_folder_kwargs)
     else:
-        rep.parse_folder(**rep_kwargs)
+        rep.parse_folder(**parse_folder_kwargs)
 
     # Visualize automated noisy channel detection.
     if cfg.find_noisy_channels_meg:
@@ -259,14 +268,15 @@ def run_report(*, cfg, subject, session=None):
         rep.add_figs_to_section(figs=figs,
                                 captions=captions,
                                 section='Data Quality')
-
+        for fig in figs:
+            plt.close(fig)
     # Visualize events.
     if cfg.task.lower() != 'rest':
         events_fig = plot_events(cfg=cfg, subject=subject, session=session)
         rep.add_figs_to_section(figs=events_fig,
                                 captions='Events in filtered continuous data',
                                 section='Events')
-
+        plt.close(events_fig)
     ###########################################################################
     #
     # Visualize effect of ICA artifact rejection.
@@ -282,6 +292,7 @@ def run_report(*, cfg, subject, session=None):
                      f'({len(ica.exclude)} ICs removed)',
             section='ICA'
         )
+        plt.close(fig)
 
     ###########################################################################
     #
@@ -303,6 +314,7 @@ def run_report(*, cfg, subject, session=None):
                                  border='k')
         rep.add_figs_to_section(figs=fig, captions=f"TFR Power: {condition}",
                                 section="TFR")
+        plt.close(fig)
 
     ###########################################################################
     #
@@ -336,6 +348,7 @@ def run_report(*, cfg, subject, session=None):
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
+        plt.close(fig)
 
     ###########################################################################
     #
@@ -365,6 +378,7 @@ def run_report(*, cfg, subject, session=None):
             rep.add_figs_to_section(figs=fig, captions=caption,
                                     comments=comment,
                                     section='Decoding')
+            plt.close(fig)
             del decoding_data, cond_1, cond_2, caption, comment
 
         del epochs
@@ -435,11 +449,12 @@ def run_report(*, cfg, subject, session=None):
                     brain._renderer.plotter.reset_camera()
                     brain._renderer.plotter.subplot(0, 0)
                     brain._renderer.plotter.reset_camera()
-                    figs, ax = plt.subplots(figsize=(15, 10))
+                    fig, ax = plt.subplots(figsize=(15, 10))
                     ax.imshow(brain.screenshot(time_viewer=True))
                     ax.axis('off')
                     comments = evoked.comment
                     captions = caption
+                    figs = [fig]
                 else:
                     fig_lh = plt.figure()
                     fig_rh = plt.figure()
@@ -464,6 +479,16 @@ def run_report(*, cfg, subject, session=None):
                                         captions=captions,
                                         comments=comments,
                                         section='Sources')
+
+                if mne.viz.get_3d_backend() is not None:
+                    try:  # not sure WHY we need this …
+                        brain.close()
+                    except AttributeError:
+                        pass
+
+                for fig in figs:
+                    plt.close(fig)
+
                 del peak_time
 
     if cfg.process_er:
@@ -472,6 +497,7 @@ def run_report(*, cfg, subject, session=None):
                                 captions='Empty-Room Power Spectral Density '
                                          '(after filtering)',
                                 section='Empty-Room')
+        plt.close(fig_er_psd)
 
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
     rep.save(fname=fname_report, open_browser=False, overwrite=True)
@@ -559,9 +585,12 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=cfg.fs_subjects_dir,
-                     title=title)
+    rep = mne.Report(
+        info_fname=evoked_fname,
+        subject='fsaverage',
+        subjects_dir=cfg.fs_subjects_dir,
+        title=title
+    )
     evokeds = mne.read_evokeds(evoked_fname)
     if cfg.analyze_channels:
         for evoked in evokeds:
@@ -600,6 +629,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         fig = evoked.plot(spatial_colors=True, gfp=True, show=False)
         rep.add_figs_to_section(figs=fig, captions=caption,
                                 comments=evoked.comment, section=section)
+        plt.close(fig)
 
     #######################################################################
     #
@@ -629,6 +659,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             rep.add_figs_to_section(figs=fig, captions=caption,
                                     comments=comment,
                                     section='Decoding')
+            plt.close(fig)
             del decoding_data, cond_1, cond_2, caption, comment
 
     #######################################################################
@@ -662,7 +693,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                                  show_traces=True,
                                  subjects_dir=cfg.fs_subjects_dir)
                 brain.toggle_interface()
-                figs = brain._renderer.figure
+                fig = brain._renderer.figure
+                figs = [fig]
                 captions = caption
             else:
                 fig_lh = plt.figure()
@@ -682,6 +714,15 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
             rep.add_figs_to_section(figs=figs, captions=captions,
                                     section='Sources')
+
+            if mne.viz.get_3d_backend() is not None:
+                try:  # not sure WHY we need this …
+                    brain.close()
+                except AttributeError:
+                    pass
+            else:
+                for fig in figs:
+                    plt.close(fig)
 
             del peak_time
 

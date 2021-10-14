@@ -80,9 +80,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys:
-            - data-cache-ds000117
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds000117
       - run:
           <<: *bashenv
       - run:
@@ -218,6 +218,8 @@ jobs:
       #       - data-cache-eeg_matchingpennies
       - run:
           <<: *bashenv
+      - run:
+          <<: *git
       - run:
           name: Get eeg_matchingpennies
           command: |

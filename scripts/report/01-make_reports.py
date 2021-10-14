@@ -585,9 +585,12 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    rep = mne.Report(info_fname=evoked_fname, subject='fsaverage',
-                     subjects_dir=cfg.fs_subjects_dir,
-                     title=title)
+    rep = mne.Report(
+        info_fname=evoked_fname,
+        subject='fsaverage',
+        subjects_dir=cfg.fs_subjects_dir,
+        title=title
+    )
     evokeds = mne.read_evokeds(evoked_fname)
     if cfg.analyze_channels:
         for evoked in evokeds:

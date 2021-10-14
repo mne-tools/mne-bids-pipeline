@@ -7,8 +7,8 @@ bids_root = '~/mne_data/ds000246'
 deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000246'
 
 runs = ['01']
-l_freq = .3
-h_freq = 100.
+l_freq = 0.3
+h_freq = 100
 decim = 4
 subjects = ['0001']
 ch_types = ['meg']

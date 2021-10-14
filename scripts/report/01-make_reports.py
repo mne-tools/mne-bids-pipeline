@@ -196,6 +196,8 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
+from memory_profiler import profile
+
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(*, cfg, subject, session=None):
     import matplotlib.pyplot as plt
@@ -235,24 +237,31 @@ def run_report(*, cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    params: Dict[str, Any] = dict(info_fname=fname_epo, raw_psd=True,
-                                  subject=cfg.fs_subject, title=title)
+    report_kwargs: Dict[str, Any] = dict(
+        info_fname=fname_epo,
+        raw_psd=True,
+        subject=cfg.fs_subject,
+        title=title
+    )
     if has_trans:
-        params['subjects_dir'] = cfg.fs_subjects_dir
+        report_kwargs['subjects_dir'] = cfg.fs_subjects_dir
 
-    rep = mne.Report(**params)
-    rep_kwargs: Dict[str, Any] = dict(data_path=fname_ave.fpath.parent,
-                                      verbose=False)
+    rep = mne.Report(**report_kwargs)
+    parse_folder_kwargs: Dict[str, Any] = dict(
+        data_path=fname_ave.fpath.parent,
+        raw_butterfly=False,  # `True` consumes large amounts of memory!
+        verbose=False
+    )
     if not has_trans:
-        rep_kwargs['render_bem'] = False
+        parse_folder_kwargs['render_bem'] = False
 
     if cfg.task is not None:
-        rep_kwargs['pattern'] = f'*_task-{cfg.task}*'
+        parse_folder_kwargs['pattern'] = f'*_task-{cfg.task}*'
     if mne.viz.get_3d_backend() is not None:
         with mne.viz.use_3d_backend('pyvistaqt'):
-            rep.parse_folder(**rep_kwargs)
+            rep.parse_folder(**parse_folder_kwargs)
     else:
-        rep.parse_folder(**rep_kwargs)
+        rep.parse_folder(**parse_folder_kwargs)
 
     # Visualize automated noisy channel detection.
     if cfg.find_noisy_channels_meg:

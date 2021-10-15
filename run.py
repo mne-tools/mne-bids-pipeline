@@ -197,7 +197,7 @@ def process(
     if task is not None:
         task = str(task)
     if interactive is not None:
-        interactive = "1" if interactive in ['1', 'True'] else "0"
+        interactive = '1' if interactive in ['1', 'True', True] else '0'
     if n_jobs is not None:
         n_jobs = str(n_jobs)
 

@@ -63,7 +63,6 @@ def apply_ica(*, cfg, subject, session):
         title += f', ses-{session}'
     if cfg.task is not None:
         title += f', task-{cfg.task}'
-    report = Report(report_fname, title=title, verbose=False)
 
     # Load ICA.
     msg = f'Reading ICA: {fname_ica}'
@@ -85,32 +84,6 @@ def apply_ica(*, cfg, subject, session):
     epochs = mne.read_epochs(fname_epo_in, preload=True)
     epochs.drop_bad(cfg.ica_reject)
 
-    # Compare ERP/ERF before and after ICA artifact rejection. The evoked
-    # response is calculated across ALL epochs, just like ICA was run on
-    # all epochs, regardless of their respective experimental condition.
-    #
-    # Note that up until now, we haven't actually rejected any ICs from the
-    # epochs.
-    #
-    # We apply baseline correction here to (hopefully!) make the effects of
-    # ICA easier to see. Otherwise, individual channels might just have
-    # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
-    # going on!
-    evoked = epochs.average().apply_baseline(cfg.baseline)
-
-    # Plot source time course
-    fig = ica.plot_sources(evoked, show=cfg.interactive)
-    report.add_figs_to_section(figs=fig,
-                               captions='All ICs - Source time course')
-
-    # Plot original & corrected data
-    fig = ica.plot_overlay(evoked, show=cfg.interactive)
-    report.add_figs_to_section(figs=fig,
-                               captions=f'Evoked response (across all epochs) '
-                                        f'before and after cleaning via ICA '
-                                        f'({len(ica.exclude)} ICs removed)')
-    report.save(report_fname, overwrite=True, open_browser=False)
-
     # Now actually reject the components.
     msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -122,8 +95,23 @@ def apply_ica(*, cfg, subject, session):
                                  session=session))
     epochs_cleaned.save(fname_epo_out, overwrite=True, split_naming='bids')
 
-    if cfg.interactive:
-        epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")
+    # Compare ERP/ERF before and after ICA artifact rejection. The evoked
+    # response is calculated across ALL epochs, just like ICA was run on
+    # all epochs, regardless of their respective experimental condition.
+    #
+    # We apply baseline correction here to (hopefully!) make the effects of
+    # ICA easier to see. Otherwise, individual channels might just have
+    # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
+    # going on!
+    report = Report(report_fname, title=title, verbose=False)
+    picks = ica.exclude if ica.exclude else None
+    report.add_ica(
+        ica=ica,
+        title='Effects of ICA cleaning',
+        inst=epochs.copy().apply_baseline(cfg.baseline),
+        picks=picks
+    )
+    report.save(report_fname, overwrite=True, open_browser=cfg.interactive)
 
 
 def get_config(

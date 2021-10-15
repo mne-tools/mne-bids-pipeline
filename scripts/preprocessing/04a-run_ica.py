@@ -16,7 +16,7 @@ run 05a-apply_ica.py.
 import sys
 import itertools
 import logging
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Tuple
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -179,11 +179,8 @@ def detect_bad_components(
     epochs: mne.BaseEpochs,
     ica: mne.preprocessing.ICA,
     subject: str,
-    session: str,
-    report: mne.Report
-) -> List[int]:
-    evoked = epochs.average()
-
+    session: str
+) -> Tuple[List[int], np.ndarray]:
     artifact = which.upper()
     msg = f'Performing automated {artifact} artifact detection …'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -215,26 +212,7 @@ def detect_bad_components(
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
-    # Mark the artifact-related components for removal
-    ica.exclude = inds
-
-    # Plot scores
-    fig = ica.plot_scores(scores, labels=which, show=cfg.interactive)
-    report.add_figs_to_section(figs=fig, captions=f'Scores - {artifact}',
-                               section=f'sub-{subject}')
-
-    # Plot source time course
-    fig = ica.plot_sources(evoked, show=cfg.interactive)
-    report.add_figs_to_section(figs=fig,
-                               captions=f'Source time course - {artifact}',
-                               section=f'sub-{subject}')
-
-    # Plot original & corrected data
-    fig = ica.plot_overlay(evoked, show=cfg.interactive)
-    report.add_figs_to_section(figs=fig, captions=f'Corrections - {artifact}',
-                               section=f'sub-{subject}')
-
-    return inds
+    return inds, scores
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -378,30 +356,26 @@ def run_ica(*, cfg, subject, session=None):
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    report = Report(info_fname=epochs, title=title, verbose=False)
-
     # ECG and EOG component detection
     if epochs_ecg:
-        ecg_ics = detect_bad_components(
+        ecg_ics, ecg_scores = detect_bad_components(
             cfg=cfg, which='ecg', epochs=epochs_ecg,
             ica=ica,
             subject=subject,
-            session=session,
-            report=report
+            session=session
         )
     else:
-        ecg_ics = []
+        ecg_ics = ecg_scores = []
 
     if epochs_eog:
-        eog_ics = detect_bad_components(
+        eog_ics, eog_scores = detect_bad_components(
             cfg=cfg, which='eog', epochs=epochs_eog,
             ica=ica,
             subject=subject,
-            session=session,
-            report=report
+            session=session
         )
     else:
-        eog_ics = []
+        eog_ics = eog_scores = []
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -435,38 +409,38 @@ def run_ica(*, cfg, subject, session=None):
 
     # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
     # for manual inspection.
-    fig = epochs.plot_drop_log(subject=f'sub-{subject}', show=cfg.interactive)
-    caption = 'Dropped epochs before fit'
-    report.add_figs_to_section(fig, section=f'sub-{subject}',
-                               captions=caption)
-
-    msg = 'Adding diagnostic plots for all ICs to the HTML report …'
+    msg = 'Adding diagnostic plots for all ICA components to the HTML report …'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    for component_num in tqdm(range(ica.n_components_)):
-        fig = ica.plot_properties(epochs,
-                                  picks=component_num,
-                                  psd_args={'fmax': 60},
-                                  show=False)
 
-        caption = f'IC {component_num}'
-        if component_num in eog_ics and component_num in ecg_ics:
-            caption += ' (EOG & ECG)'
-        elif component_num in eog_ics:
-            caption += ' (EOG)'
-        elif component_num in ecg_ics:
-            caption += ' (ECG)'
-        report.add_figs_to_section(fig, section=f'sub-{subject}',
-                                   captions=caption)
+    report = Report(info_fname=epochs, title=title, verbose=False)
+    report.add_epochs(
+        epochs=epochs,
+        title='Epochs used for ICA fitting'
+    )
 
-    open_browser = True if cfg.interactive else False
-    report.save(report_fname, overwrite=True, open_browser=open_browser)
+    ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
+    eog_evoked = None if epochs_eog is None else epochs_eog.average()
+    ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
+    eog_scores = None if len(eog_scores) == 0 else eog_scores
+
+    report.add_ica(
+        ica=ica,
+        title='ICA cleaning',
+        inst=epochs,
+        ecg_evoked=ecg_evoked,
+        eog_evoked=eog_evoked,
+        ecg_scores=ecg_scores,
+        eog_scores=eog_scores
+    )
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
            f"report {report_fname.basename}, and mark all components you wish "
            f"to reject as 'bad' in {ica_components_fname.basename}")
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
+
+    report.save(report_fname, overwrite=True, open_browser=cfg.interactive)
 
 
 def get_config(

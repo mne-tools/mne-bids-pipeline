@@ -1729,7 +1729,7 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 
 
 if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
-    interactive = bool(os.environ['MNE_BIDS_STUDY_INTERACTIVE'])
+    interactive = bool(int(os.environ['MNE_BIDS_STUDY_INTERACTIVE']))
 
 ###############################################################################
 # CHECKS

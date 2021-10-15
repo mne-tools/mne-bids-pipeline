@@ -103,7 +103,7 @@ authors:
 - The `run.py` command line interface gained a new parameter, `--interactive`,
   allowing you to override the interactive mode setting from the configuration
   file.
-  ({{ gh(456) }} by {{ authors.hoechenberger }})
+  ({{ gh(456), gh(457) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

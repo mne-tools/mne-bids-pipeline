@@ -239,8 +239,11 @@ def run_tests(test_suite, download):
             f'--steps={",".join(steps)}',
             f'--config={config_path}',
             f'--task={task}' if task else '',
-            f'--n_jobs={n_jobs}' if n_jobs else ''
+            f'--n_jobs={n_jobs}' if n_jobs else '',
+            f'--interactive=0'
         ]
+        # Eliminate "empty" items
+        sys.argv = [arg for arg in sys.argv if arg != '']
         # We have to use run_path because run_module doesn't allow
         # relative imports.
         runpy.run_path(run_script, run_name='__main__')

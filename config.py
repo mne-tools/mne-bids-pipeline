@@ -1728,6 +1728,9 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
             exec("%s = custom_cfg.%s" % (val, val))
 
 
+if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
+    interactive = bool(os.environ['MNE_BIDS_STUDY_INTERACTIVE'])
+
 ###############################################################################
 # CHECKS
 # ------

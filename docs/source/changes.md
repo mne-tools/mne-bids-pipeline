@@ -100,6 +100,10 @@ authors:
   during forward and inverse computation via
   [`source_info_path_update`][config.source_info_path_update].
   ({{ gh(452) }} by {{ authors.apmellot }})
+- The `run.py` command line interface gained a new parameter, `--interactive`,
+  allowing you to override the interactive mode setting from the configuration
+  file.
+  ({{ gh(456) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

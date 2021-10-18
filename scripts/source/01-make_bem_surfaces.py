@@ -62,11 +62,14 @@ def make_bem(*, cfg, subject):
         bem_func = mne.bem.make_watershed_bem
 
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
-    bem_func(subject=fs_subject,
-             subjects_dir=cfg.fs_subjects_dir,
-             copy=True,
-             overwrite=True,
-             show=show)
+    bem_func(
+        subject=fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+        copy=True,
+        overwrite=True,
+        show=show,
+        verbose=cfg.freesurfer_verbose
+    )
 
 
 def make_scalp_surface(*, cfg, subject):
@@ -95,7 +98,8 @@ def make_scalp_surface(*, cfg, subject):
         subjects_dir=cfg.fs_subjects_dir,
         no_decimate=True,
         force=True,
-        overwrite=True
+        overwrite=True,
+        verbose=cfg.freesurfer_verbose
     )
 
 
@@ -110,6 +114,7 @@ def get_config(
         bem_mri_images=config.bem_mri_images,
         recreate_scalp_surface=config.recreate_scalp_surface,
         interactive=config.interactive,
+        freesurfer_verbose=config.freesurfer_verbose
     )
     return cfg
 

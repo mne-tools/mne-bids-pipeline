@@ -105,6 +105,10 @@ authors:
   file.
   ({{ gh(456), gh(457) }} by {{ authors.hoechenberger }})
 
+- Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
+  to control whether to display of FreeSurfer output.
+  ({{ gh(459) }} by {{ authors.hoechenberger }})
+
 ### Behavior changes
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.

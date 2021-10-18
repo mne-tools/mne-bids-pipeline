@@ -265,9 +265,10 @@ def run_report(*, cfg, subject, session=None):
     if cfg.find_noisy_channels_meg:
         figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
                                           session=session)
-        rep.add_figs_to_section(figs=figs,
-                                captions=captions,
-                                section='Data Quality')
+        rep.add_figure(
+            fig=figs, caption=captions, title='Data Quality',
+            tags=('raw', 'noisy-channel-detection')
+        )
         for fig in figs:
             plt.close(fig)
     # Visualize events.

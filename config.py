@@ -1330,6 +1330,11 @@ of the coregistration in the report. If ``False``, the scalp surface is only
 created if it does not exist already. If ``True``, forces a re-computation.
 """
 
+freesurfer_verbose: bool = False
+"""
+Whether to print the complete output of FreeSurfer commands. Note that if
+``False``, no FreeSurfer output might be displayed at all!"""
+
 mri_t1_path_generator: Optional[Callable] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a

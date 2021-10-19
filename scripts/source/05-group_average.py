@@ -36,10 +36,13 @@ def morph_stc(cfg, subject, fs_subject, session=None):
 
     morphed_stcs = []
 
-    if isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
+    if cfg.task == 'rest':
+        conditions = ['rest']
     else:
-        conditions = cfg.conditions
+        if isinstance(cfg.conditions, dict):
+            conditions = list(cfg.conditions.keys())
+        else:
+            conditions = cfg.conditions
 
     for condition in conditions:
         method = cfg.inverse_method

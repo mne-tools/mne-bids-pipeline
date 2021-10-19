@@ -53,7 +53,7 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
 
     ds_path.mkdir(parents=True, exist_ok=True)
 
-    with httpx.Client() as client:
+    with httpx.Client(follow_redirects=True) as client:
         with client.stream('GET', url=url) as response:
             if not response.is_error:
                 pass  # All good!

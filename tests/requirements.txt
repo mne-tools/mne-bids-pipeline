@@ -29,5 +29,7 @@ autoreject
 openpyxl
 openneuro-py
 pooch
+httpx >= 0.20
+tqdm
 mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
 mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

@@ -68,7 +68,7 @@ run_source_estimation = False
 
 on_error = 'abort'
 on_rename_missing_events = 'warn'
-N_JOBS = 10
+N_JOBS = 2
 
 if task == 'N400':
     rename_events = {

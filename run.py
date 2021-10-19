@@ -93,8 +93,8 @@ SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
                        SCRIPT_PATHS['report'])
 
 
-def _run_script(script_path, config, root_dir, subject, session, task, run,
-                n_jobs):
+def _run_script(*, script_path, config, root_dir, subject, session, task, run,
+                interactive, n_jobs):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -116,6 +116,9 @@ def _run_script(script_path, config, root_dir, subject, session, task, run,
     if subject:
         env['MNE_BIDS_STUDY_SUBJECT'] = subject
 
+    if interactive:
+        env['MNE_BIDS_STUDY_INTERACTIVE'] = interactive
+
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
 
@@ -127,14 +130,18 @@ Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
 Steps_T = Union[Step_T, Tuple[Step_T]]
 
 
-def process(config: PathLike,
-            steps: Optional[Steps_T] = None,
-            root_dir: Optional[PathLike] = None,
-            subject: Optional[str] = None,
-            session: Optional[str] = None,
-            task: Optional[str] = None,
-            run: Optional[str] = None,
-            n_jobs: Optional[str] = None):
+def process(
+    *,
+    config: PathLike,
+    steps: Optional[Steps_T] = None,
+    root_dir: Optional[PathLike] = None,
+    subject: Optional[str] = None,
+    session: Optional[str] = None,
+    task: Optional[str] = None,
+    run: Optional[str] = None,
+    interactive: Optional[str] = None,
+    n_jobs: Optional[str] = None
+):
     """Run the BIDS pipeline.
 
     Parameters
@@ -159,6 +166,8 @@ def process(config: PathLike,
         The task to process.
     run
         The run to process.
+    interactive
+        Whether or not to enable "interactive" mode.
     n_jobs
         The number of parallel processes to execute.
     """
@@ -187,6 +196,8 @@ def process(config: PathLike,
         run = str(run)
     if task is not None:
         task = str(task)
+    if interactive is not None:
+        interactive = '1' if interactive in ['1', 'True', True] else '0'
     if n_jobs is not None:
         n_jobs = str(n_jobs)
 
@@ -236,8 +247,17 @@ def process(config: PathLike,
     for script_path in script_paths:
         step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'🚀 Now running script: {step_name} 👇')
-        _run_script(script_path, config, root_dir, subject, session, task, run,
-                    n_jobs)
+        _run_script(
+            script_path=script_path,
+            config=config,
+            root_dir=root_dir,
+            subject=subject,
+            session=session,
+            task=task,
+            run=run,
+            interactive=interactive,
+            n_jobs=n_jobs
+        )
         logger.info(f'🎉 Done running script: {step_name} 👆')
 
 

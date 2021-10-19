@@ -116,6 +116,11 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
+    if config.noise_cov == "ad-hoc":
+        msg = '    … skipping: using ad-hoc diagonal covariance.'
+        logger.info(**gen_log_kwargs(message=msg))
+        return
+
     parallel, run_func, _ = parallel_func(run_covariance,
                                           n_jobs=config.get_n_jobs())
     logs = parallel(

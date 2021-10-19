@@ -1473,7 +1473,13 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'emptyroom'
     ```
+
+    Use an ad-hoc covariance:
+    ```python
+    noise_cov = 'ad-hoc'
+    ```
 """
+
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """
@@ -1808,8 +1814,8 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"but received: {on_error}.")
     logger.info(**gen_log_kwargs(message=msg))
 
-if isinstance(noise_cov, str) and noise_cov != 'emptyroom':
-    msg = (f"noise_cov must be a tuple or 'emptyroom', but received "
+if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc'):
+    msg = (f"noise_cov must be a tuple, 'emptyroom' or 'ad-hoc', but received "
            f"{noise_cov}")
     raise ValueError(msg)
 

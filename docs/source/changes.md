@@ -109,6 +109,10 @@ authors:
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
 
+- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
+  and data-independent diagonal noise covariance matrix for source imaging.
+  ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
+
 ### Behavior changes
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.

@@ -303,16 +303,17 @@ def run_report(*, cfg, subject, session=None):
         epochs = mne.read_epochs(fname_epo)
         ica = mne.preprocessing.read_ica(fname_ica)
 
-        rep.add_ica(
-            ica=ica,
-            title='ICA',
-            inst=epochs,
-            picks=ica.exclude
-            # TODO upstream
-            # captions=f'Evoked response (across all epochs) '
-            # f'before and after ICA '
-            # f'({len(ica.exclude)} ICs removed)',
-        )
+        if ica.exclude:
+            rep.add_ica(
+                ica=ica,
+                title='ICA',
+                inst=epochs,
+                picks=ica.exclude
+                # TODO upstream
+                # captions=f'Evoked response (across all epochs) '
+                # f'before and after ICA '
+                # f'({len(ica.exclude)} ICs removed)',
+            )
 
     ###########################################################################
     #

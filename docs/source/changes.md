@@ -104,11 +104,9 @@ authors:
   allowing you to override the interactive mode setting from the configuration
   file.
   ({{ gh(456), gh(457) }} by {{ authors.hoechenberger }})
-
 - Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
-
 - The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
   and data-independent diagonal noise covariance matrix for source imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
@@ -222,3 +220,5 @@ authors:
   ({{ gh(391) }} by {{ authors.hoechenberger }})
 - Fix forward computation for CTF data.
   ({{ gh(427) }} by {{ authors.agramfort }})
+- Generated derivative epochs split files now follow the BIDS naming scheme.
+  ({{ gh(463)}} by {{ authors.dengemann }})

@@ -61,7 +61,7 @@ def apply_ssp(*, cfg, subject, session=None):
     msg = 'Saving epochs with projectors.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_cleaned.save(fname_out, overwrite=True)
+    epochs_cleaned.save(fname_out, overwrite=True, split_naming='bids')
 
 
 def get_config(

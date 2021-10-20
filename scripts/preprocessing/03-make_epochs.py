@@ -114,7 +114,7 @@ def run_epochs(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
-    epochs.save(epochs_fname, overwrite=True)
+    epochs.save(epochs_fname, overwrite=True, split_naming='bids')
 
     if cfg.interactive:
         epochs.plot()

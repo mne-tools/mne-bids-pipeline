@@ -120,7 +120,7 @@ def apply_ica(*, cfg, subject, session):
     msg = 'Saving reconstructed epochs after ICA.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_cleaned.save(fname_epo_out, overwrite=True)
+    epochs_cleaned.save(fname_epo_out, overwrite=True, split_naming='bids')
 
     if cfg.interactive:
         epochs_cleaned.plot_image(combine='gfp', sigma=2., cmap="YlGnBu_r")

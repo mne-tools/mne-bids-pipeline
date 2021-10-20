@@ -246,7 +246,10 @@ def run_report(*, cfg, subject, session=None):
     rep = mne.Report(title=title, raw_psd=True)
 
     for idx, fname in enumerate(fnames_raw_filt):
-        title = f'Raw, run {fname.run}'
+        title = 'Raw'
+        if fname.run is not None:
+            title += f'run {fname.run}'
+
         rep.add_raw(
             raw=fname,
             title=title,

@@ -11,9 +11,8 @@ import os.path as op
 from pathlib import Path
 import itertools
 import logging
-from typing import Dict, Any, Tuple, Union, Optional
+from typing import Tuple, Union, Optional
 
-import numpy as np
 from scipy.io import loadmat
 import matplotlib
 
@@ -109,9 +108,9 @@ def plot_auto_scores(cfg, subject, session):
     all_captions = []
     for run in cfg.runs:
         fname_scores.update(run=run)
-        auto_scores =  json_tricks.loads(
+        auto_scores = json_tricks.loads(
             fname_scores.fpath.read_text(encoding='utf-8-sig')
-        ) 
+        )
 
         figs = config.plot_auto_scores(auto_scores)
         all_figs.extend(figs)
@@ -274,7 +273,7 @@ def run_report(*, cfg, subject, session=None):
         figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
                                           session=session)
 
-        tags=('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
+        tags = ('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
         rep.add_figure(
             fig=figs,
             caption=captions,
@@ -348,8 +347,8 @@ def run_report(*, cfg, subject, session=None):
             tags = (
                 'evoked',
                 'contrast',
-                 f"{condition[0].lower().replace(' ', '-')}-"
-                 f"{condition[1].lower().replace(' ', '-')}"
+                f"{condition[0].lower().replace(' ', '-')}-"
+                f"{condition[1].lower().replace(' ', '-')}"
             )
 
         rep.add_evokeds(
@@ -387,8 +386,8 @@ def run_report(*, cfg, subject, session=None):
             tags = (
                 'epochs',
                 'constrast',
-                 f"{contrast[0].lower().replace(' ', '-')}-"
-                 f"{contrast[1].lower().replace(' ', '-')}"
+                f"{contrast[0].lower().replace(' ', '-')}-"
+                f"{contrast[1].lower().replace(' ', '-')}"
             )
 
             rep.add_figure(
@@ -463,7 +462,7 @@ def run_report(*, cfg, subject, session=None):
                 suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
                 extension=None)
 
-            tags=(
+            tags = (
                 'source-estimate',
                 condition.lower().replace(' ', '-')
             )
@@ -576,10 +575,10 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     for condition, evoked in zip(conditions, evokeds):
         if condition in cfg.conditions:
             title = f'Average: {condition}'
-            tags =  ('evoked', config.sanitize_cond_name(condition))
+            tags = ('evoked', config.sanitize_cond_name(condition))
         else:  # It's a contrast of two conditions.
             title = f'Average Contrast: {condition[0]} – {condition[1]}'
-            tags =  (
+            tags = (
                 'evoked',
                 f'{config.sanitize_cond_name(condition[0])} – '
                 f'{config.sanitize_cond_name(condition[1])}'
@@ -636,12 +635,11 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Visualize forward solution, inverse operator, and inverse solutions.
     #
 
-    
     for condition, evoked in zip(conditions, evokeds):
         if condition in cfg.conditions:
             title = f'Average: {condition}'
             cond_str = config.sanitize_cond_name(condition)
-            tags=(
+            tags = (
                 'source-estimate',
                 condition.lower().replace(' ', '-')
             )
@@ -661,7 +659,6 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 subjects_dir=cfg.fs_subjects_dir,
                 tags=tags
             )
-
 
     fname_report = evoked_fname.copy().update(
         task=cfg.task, suffix='report', extension='.html')

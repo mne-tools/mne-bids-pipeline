@@ -22,7 +22,6 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
-from tqdm import tqdm
 import pandas as pd
 import numpy as np
 

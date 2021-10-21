@@ -315,7 +315,7 @@ def run_report(*, cfg, subject, session=None):
                 # TODO upstream
                 # captions=f'Evoked response (across all epochs) '
                 # f'before and after ICA '
-                # f'({len(ica.exclude)} ICs removed)',
+                # f'({len(ica.exclude)} ICs removed)'
             )
 
     ###########################################################################

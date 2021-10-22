@@ -253,7 +253,6 @@ def run_report(*, cfg, subject, session=None):
             raw=fname,
             title=title,
             psd=idx == 0,  # only for the first run,
-            butterfly=False,
             tags=('raw', 'filtered', f'run-{fname.run}'),
             # caption=fname.fpath.name  # TODO upstream
         )
@@ -263,7 +262,6 @@ def run_report(*, cfg, subject, session=None):
         rep.add_raw(
             raw=er_path,
             title='Empty-Room',
-            butterfly=False,
             tags=('raw', 'empty-room'),
             # caption=er_path.fpath.name  # TODO upstream
         )

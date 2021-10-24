@@ -13,11 +13,11 @@ be used for visualization of the sensor alignment (coregistration).
 import logging
 from pathlib import Path
 from typing import Optional
+from types import SimpleNamespace
 
 from joblib import parallel_backend
 
 import mne
-from mne.utils import BunchConst
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
@@ -108,8 +108,8 @@ def make_scalp_surface(*, cfg, subject):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         recreate_bem=config.recreate_bem,

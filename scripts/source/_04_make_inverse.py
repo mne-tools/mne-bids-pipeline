@@ -9,11 +9,11 @@ Compute and apply an inverse solution for each evoked data set.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 from joblib import parallel_backend
 
 import mne
-from mne.utils import BunchConst
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
 from mne_bids import BIDSPath
@@ -94,8 +94,8 @@ def run_inverse(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

@@ -9,11 +9,11 @@ Calculate forward solution for MEG channels.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 from joblib import parallel_backend
 
 import mne
-from mne.utils import BunchConst
 from mne.datasets import fetch_fsaverage
 from mne_bids import BIDSPath, get_head_mri_trans
 
@@ -144,8 +144,8 @@ def run_forward(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),

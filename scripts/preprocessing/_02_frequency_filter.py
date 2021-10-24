@@ -28,10 +28,11 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import SimpleNamespace
 
 from joblib import parallel_backend
+
 import mne
-from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config
@@ -111,7 +112,6 @@ def filter_data(
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    cfg = BunchConst(**cfg)  # FIXME dask
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,
@@ -204,8 +204,8 @@ def filter_data(
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,

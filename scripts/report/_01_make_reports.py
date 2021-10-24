@@ -12,13 +12,13 @@ from pathlib import Path
 import itertools
 import logging
 from typing import Tuple, Union, Optional
+from types import SimpleNamespace
 
 from scipy.io import loadmat
 import matplotlib
 from joblib import parallel_backend
 
 import mne
-from mne.utils import BunchConst
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
@@ -676,7 +676,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
+) -> SimpleNamespace:
     # Deal with configurations where `deriv_root` was specified, but not
     # `fs_subjects_dir`. We normally raise an exception in this case in
     # `get_fs_subjects_dir()`. However, in situations where users only run the
@@ -696,7 +696,7 @@ def get_config(
     else:
         fs_subject = config.get_fs_subject(subject=subject)
 
-    cfg = BunchConst(
+    cfg = SimpleNamespace(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),

@@ -13,11 +13,11 @@ To save space, the epoch data can be decimated.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 from joblib import parallel_backend
 
 import mne
-from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config
@@ -126,8 +126,8 @@ def run_epochs(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,

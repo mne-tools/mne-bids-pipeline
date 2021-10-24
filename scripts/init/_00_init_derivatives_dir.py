@@ -9,10 +9,10 @@ We initialize the derivatives directory.
 import logging
 import itertools
 from typing import Optional
+from types import SimpleNamespace
 
 from joblib import parallel_backend
 
-from mne.utils import BunchConst
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
@@ -67,8 +67,8 @@ def init_subject_dirs(
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
         PIPELINE_NAME=config.PIPELINE_NAME,

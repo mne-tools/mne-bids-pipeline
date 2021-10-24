@@ -17,11 +17,11 @@ order might differ).
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 import pandas as pd
 
 import mne
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne.preprocessing import read_ica
 from mne.report import Report
@@ -117,8 +117,8 @@ def apply_ica(*, cfg, subject, session):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

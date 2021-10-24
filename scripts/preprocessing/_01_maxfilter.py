@@ -20,11 +20,11 @@ The function loads machine-specific calibration files.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 import numpy as np
 
 import mne
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
@@ -191,8 +191,8 @@ def run_maxwell_filter(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         mf_cal_fname=config.get_mf_cal_fname(subject, session),
         mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
         mf_st_duration=config.mf_st_duration,

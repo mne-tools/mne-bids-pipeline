@@ -26,7 +26,7 @@ import pandas as pd
 import numpy as np
 
 import mne
-from mne.utils import BunchConst
+from types import SimpleNamespace
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne.parallel import parallel_func
@@ -445,8 +445,8 @@ def run_ica(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         runs=config.get_runs(subject=subject),

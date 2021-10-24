@@ -9,9 +9,9 @@ The evoked data sets are created by averaging different conditions.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 import mne
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 
 from mne_bids import BIDSPath
@@ -94,8 +94,8 @@ def run_evoked(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

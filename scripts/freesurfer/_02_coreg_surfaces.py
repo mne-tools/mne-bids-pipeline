@@ -3,9 +3,9 @@
 from pathlib import Path
 import logging
 from typing import Union
+from types import SimpleNamespace
 
 import mne.bem
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 
 import config
@@ -16,7 +16,7 @@ fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
 def make_coreg_surfaces(
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str
 ) -> None:
     """Create head surfaces for use with MNE-Python coregistration tools."""
@@ -35,8 +35,8 @@ def make_coreg_surfaces(
     )
 
 
-def get_config() -> BunchConst:
-    cfg = BunchConst(
+def get_config() -> SimpleNamespace:
+    cfg = SimpleNamespace(
         subjects_dir=config.get_fs_subjects_dir()
     )
     return cfg

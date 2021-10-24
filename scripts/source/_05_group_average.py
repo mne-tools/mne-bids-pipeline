@@ -8,10 +8,10 @@ Source estimates are morphed to the ``fsaverage`` brain.
 
 import itertools
 import logging
+from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 
 from mne_bids import BIDSPath
@@ -101,8 +101,8 @@ def run_average(cfg, session, mean_morphed_stcs):
         stc.save(fname_stc_avg)
 
 
-def get_config() -> BunchConst:
-    cfg = BunchConst(
+def get_config() -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

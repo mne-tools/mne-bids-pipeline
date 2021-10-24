@@ -14,13 +14,13 @@ import os.path as op
 import logging
 from typing import Optional
 import itertools
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 from scipy.io import savemat
 
 import mne
-from mne.utils import BunchConst
 from mne.parallel import parallel_func
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
@@ -120,8 +120,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

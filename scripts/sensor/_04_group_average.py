@@ -11,13 +11,13 @@ import os.path as op
 from collections import defaultdict
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 from tqdm import tqdm
 import numpy as np
 from scipy.io import loadmat, savemat
 
 import mne
-from mne.utils import BunchConst
 from mne_bids import BIDSPath
 
 import config
@@ -178,8 +178,8 @@ def average_decoding(cfg, session):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         subjects=config.get_subjects(),
         task=config.get_task(),
         datatype=config.get_datatype(),

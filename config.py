@@ -3,6 +3,7 @@ but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
 
+from dataclasses import dataclass
 import importlib
 import pathlib
 import functools
@@ -3045,3 +3046,11 @@ if (get_task() is not None and
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
+
+
+@dataclass
+class MaxfilterConfig:
+    mf_cal_fname=config.get_mf_cal_fname(subject, session),
+    mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
+    mf_st_duration=config.mf_st_duration,
+    mf_head_origin=config.mf_head_origin,

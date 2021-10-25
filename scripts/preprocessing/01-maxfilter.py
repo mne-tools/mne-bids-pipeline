@@ -17,6 +17,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """  # noqa: E501
 
+from dataclasses import dataclass
 import itertools
 import logging
 from typing import Optional
@@ -31,18 +32,66 @@ from mne_bids import BIDSPath
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data,
-                    get_reference_run_info)
+                    get_reference_run_info, BaseConfig, MaxFilterConfig,
+                    StimArtifactConfig, FindBreaksConfig, EegConfig,
+                    ChannelsConfig, RunsConfig, EventsConfig)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
+@dataclass
+class Config(
+    BaseConfig, MaxFilterConfig, FindBreaksConfig, StimArtifactConfig,
+    ChannelsConfig, EegConfig, RunsConfig, EventsConfig
+):
+    pass
+
+
+def get_config(
+    subject: str,
+    session: Optional[str] = None
+) -> Config:
+    cfg = Config(
+        mf_cal_fname=config.get_mf_cal_fname(subject, session),
+        mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
+        mf_st_duration=config.mf_st_duration,
+        mf_head_origin=config.mf_head_origin,
+        process_er=config.process_er,
+        runs=config.get_runs(subject=subject),  # XXX needs to accept session!
+        use_maxwell_filter=config.use_maxwell_filter,
+        proc=config.proc,
+        task=config.get_task(),
+        datatype=config.get_datatype(),
+        acq=config.acq,
+        rec=config.rec,
+        space=config.space,
+        bids_root=config.get_bids_root(),
+        deriv_root=config.get_deriv_root(),
+        crop_runs=config.crop_runs,
+        interactive=config.interactive,
+        rename_events=config.rename_events,
+        eeg_template_montage=config.eeg_template_montage,
+        fix_stim_artifact=config.fix_stim_artifact,
+        stim_artifact_tmin=config.stim_artifact_tmin,
+        stim_artifact_tmax=config.stim_artifact_tmax,
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        mf_reference_run=config.get_mf_reference_run(),
+        drop_channels=config.drop_channels,
+        find_breaks=config.find_breaks,
+        min_break_duration=config.min_break_duration,
+        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
+        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+    )
+    return cfg
+
+
 @failsafe_run(on_error=on_error, script_path=__file__)
-def run_maxwell_filter(*, cfg, subject, session=None):
+def run_maxwell_filter(*, cfg: Config, subject, session=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
-
     bids_path_out = BIDSPath(subject=subject,
                              session=session,
                              task=cfg.task,
@@ -186,45 +235,6 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             raw_er_sss.save(raw_er_fname_out, picks=picks,
                             overwrite=True, split_naming='bids')
             del raw_er_sss
-
-
-def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
-        mf_cal_fname=config.get_mf_cal_fname(subject, session),
-        mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
-        mf_st_duration=config.mf_st_duration,
-        mf_head_origin=config.mf_head_origin,
-        process_er=config.process_er,
-        runs=config.get_runs(subject=subject),  # XXX needs to accept session!
-        use_maxwell_filter=config.use_maxwell_filter,
-        proc=config.proc,
-        task=config.get_task(),
-        datatype=config.get_datatype(),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.get_bids_root(),
-        deriv_root=config.get_deriv_root(),
-        crop_runs=config.crop_runs,
-        interactive=config.interactive,
-        rename_events=config.rename_events,
-        eeg_template_montage=config.eeg_template_montage,
-        fix_stim_artifact=config.fix_stim_artifact,
-        stim_artifact_tmin=config.stim_artifact_tmin,
-        stim_artifact_tmax=config.stim_artifact_tmax,
-        find_flat_channels_meg=config.find_flat_channels_meg,
-        find_noisy_channels_meg=config.find_noisy_channels_meg,
-        mf_reference_run=config.get_mf_reference_run(),
-        drop_channels=config.drop_channels,
-        find_breaks=config.find_breaks,
-        min_break_duration=config.min_break_duration,
-        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
-        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
-    )
-    return cfg
 
 
 def main():

@@ -6,6 +6,7 @@ alter for your specific analysis.
 from dataclasses import dataclass
 import importlib
 import pathlib
+from pathlib import Path
 import functools
 import os
 import pdb
@@ -2396,7 +2397,7 @@ def sanitize_cond_name(cond: str) -> str:
 
 def get_mf_cal_fname(
     subject: str,
-    session: str
+    session: Optional[str]
 ) -> pathlib.Path:
     if mf_cal_fname is None:
         mf_cal_fpath = (BIDSPath(subject=subject,
@@ -2419,7 +2420,7 @@ def get_mf_cal_fname(
 
 def get_mf_ctc_fname(
     subject: str,
-    session: str
+    session: Optional[str]
 ) -> pathlib.Path:
     if mf_ctc_fname is None:
         mf_ctc_fpath = (BIDSPath(subject=subject,
@@ -3049,8 +3050,68 @@ if (get_task() is not None and
 
 
 @dataclass
-class MaxfilterConfig:
-    mf_cal_fname=config.get_mf_cal_fname(subject, session),
-    mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
-    mf_st_duration=config.mf_st_duration,
-    mf_head_origin=config.mf_head_origin,
+class MaxFilterConfig:
+    use_maxwell_filter: bool
+    mf_cal_fname: Union[Path, None]
+    mf_ctc_fname: Union[Path, None]
+    mf_st_duration: Union[float, None]
+    mf_head_origin: Union[Literal['auto'], np.ndarray, None]
+    mf_reference_run: str
+
+@dataclass
+class BaseConfig:
+    runs: Iterable[Union[str, None]]
+    proc: Union[str, None]
+    task: Union[str, None]
+    datatype: Literal['meg', 'eeg']
+    acq: Union[str, None]
+    rec: Union[str, None]
+    space: Union[str, None]
+    bids_root: Path
+    deriv_root: Path
+    process_er: bool
+    interactive: bool
+
+
+@dataclass
+class FreqFilterConfig:
+    l_freq: Union[float, None]
+    h_freq: Union[float, None]
+    l_trans_bandwidth: Union[float, Literal['auto']]
+    h_trans_bandwidth: Union[float, Literal['auto']]
+    resample_sfreq: Union[float, None]
+
+
+@dataclass
+class EventsConfig:
+    rename_events: dict
+
+
+@dataclass
+class RunsConfig:
+    crop_runs: Union[Tuple[float, float], None]
+
+@dataclass
+class StimArtifactConfig:
+    fix_stim_artifact: bool
+    stim_artifact_tmin: float
+    stim_artifact_tmax: float
+
+
+@dataclass
+class ChannelsConfig:
+    find_flat_channels_meg: bool
+    find_noisy_channels_meg: bool
+    drop_channels: Iterable[str]
+
+
+@dataclass
+class FindBreaksConfig:
+    find_breaks: bool
+    min_break_duration: float
+    t_break_annot_start_after_previous_event: float
+    t_break_annot_stop_before_next_event: float
+
+@dataclass
+class EegConfig:
+    eeg_template_montage: Union[str, None]

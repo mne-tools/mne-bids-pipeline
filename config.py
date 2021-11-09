@@ -2917,12 +2917,17 @@ def import_er_data(
     return raw_er
 
 
-def get_reference_run_info(
+class ReferenceRunParams(TypedDict):
+    montage: mne.channels.DigMontage
+    dev_head_t: mne.Transform
+
+
+def get_reference_run_params(
     *,
     subject: str,
     session: Optional[str] = None,
     run: str
-) -> mne.Info:
+) -> ReferenceRunParams:
 
     msg = f'Loading info for run: {run}.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -2942,8 +2947,12 @@ def get_reference_run_info(
         root=get_bids_root(),
     )
 
-    info = mne.io.read_info(bids_path)
-    return info
+    raw = read_raw_bids(bids_path=bids_path)
+    params = ReferenceRunParams(
+        montage=raw.get_montage(),
+        dev_head_t=raw.info['dev_head_t']
+    )
+    return params
 
 
 def _find_breaks_func(

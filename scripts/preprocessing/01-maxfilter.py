@@ -158,7 +158,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             # very clean, as we normally should not alter info manually,
             # except for info['bads']. Will need improvement upstream in
             # MNE-Python.
-            raw_er.set_montage(montage=montage, on_missing='ignore')
+            raw_er.set_montage(montage=montage)
             raw_er.info['dev_head_t'] = dev_head_t
             raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
                                                           **common_mf_kws)

@@ -2906,8 +2906,11 @@ def import_er_data(
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Set same set of bads as in the experimental run, but only for MEG
-    # channels (because we won't have any others in empty-room recordings)
+    # channels (we might not have non-MEG channels in empty-room recordings).
     raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
+
+    # Only keep MEG channels.
+    raw_er.pick_types(meg=True)
 
     # Save the data.
     if save:

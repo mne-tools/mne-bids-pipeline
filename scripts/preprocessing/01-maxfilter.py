@@ -31,7 +31,7 @@ from mne_bids import BIDSPath
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data,
-                    get_reference_run_info)
+                    get_reference_run_params)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -62,12 +62,12 @@ def run_maxwell_filter(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    reference_run_info = get_reference_run_info(
+    reference_run_params = get_reference_run_params(
         subject=subject, session=session, run=cfg.mf_reference_run
     )
-    dev_head_t = reference_run_info['dev_head_t']
-    dig = reference_run_info['dig']
-    del reference_run_info
+    dev_head_t = reference_run_params['dev_head_t']
+    montage = reference_run_params['montage']
+    del reference_run_params
 
     for run in cfg.runs:
         bids_path_out.update(run=run)
@@ -158,7 +158,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             # very clean, as we normally should not alter info manually,
             # except for info['bads']. Will need improvement upstream in
             # MNE-Python.
-            raw_er.info['dig'] = dig
+            raw_er.set_montage(montage=montage)
             raw_er.info['dev_head_t'] = dev_head_t
             raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
                                                           **common_mf_kws)

@@ -2906,8 +2906,11 @@ def import_er_data(
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Set same set of bads as in the experimental run, but only for MEG
-    # channels (because we won't have any others in empty-room recordings)
+    # channels (we might not have non-MEG channels in empty-room recordings).
     raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
+
+    # Only keep MEG channels.
+    raw_er.pick_types(meg=True)
 
     # Save the data.
     if save:
@@ -2917,12 +2920,17 @@ def import_er_data(
     return raw_er
 
 
-def get_reference_run_info(
+class ReferenceRunParams(TypedDict):
+    montage: mne.channels.DigMontage
+    dev_head_t: mne.Transform
+
+
+def get_reference_run_params(
     *,
     subject: str,
     session: Optional[str] = None,
     run: str
-) -> mne.Info:
+) -> ReferenceRunParams:
 
     msg = f'Loading info for run: {run}.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -2942,8 +2950,12 @@ def get_reference_run_info(
         root=get_bids_root(),
     )
 
-    info = mne.io.read_info(bids_path)
-    return info
+    raw = read_raw_bids(bids_path=bids_path)
+    params = ReferenceRunParams(
+        montage=raw.get_montage(),
+        dev_head_t=raw.info['dev_head_t']
+    )
+    return params
 
 
 def _find_breaks_func(

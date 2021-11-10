@@ -48,12 +48,10 @@ def filter(
     l_freq: Optional[float],
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    h_trans_bandwidth: Optional[Union[float, Literal['auto']]]
+    h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
+    data_type: Literal['experimental', 'empty-room']
 ) -> None:
     """Filter data channels (MEG and EEG)."""
-
-    data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
-
     if l_freq is not None and h_freq is None:
         msg = (f'High-pass filtering {data_type} data; lower bound: '
                f'{l_freq} Hz')
@@ -84,12 +82,12 @@ def resample(
     subject: str,
     session: Optional[str],
     run: Optional[str],
-    sfreq: Optional[float]
+    sfreq: Optional[float],
+    data_type: Literal['experimental', 'empty-room']
 ) -> None:
     if not sfreq:
         return
 
-    data_type = 'empty-room' if subject == 'emptyroom' else 'experimental'
     msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session, run=run,))
@@ -145,10 +143,11 @@ def filter_data(
         raw=raw, subject=subject, session=session, run=run,
         h_freq=cfg.h_freq, l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
-        l_trans_bandwidth=cfg.l_trans_bandwidth
+        l_trans_bandwidth=cfg.l_trans_bandwidth,
+        data_type='experimental'
     )
     resample(raw=raw, subject=subject, session=session, run=run,
-             sfreq=cfg.resample_sfreq)
+             sfreq=cfg.resample_sfreq, data_type='experimental')
 
     raw.save(raw_fname_out, overwrite=True, split_naming='bids')
     if cfg.interactive:
@@ -170,7 +169,7 @@ def filter_data(
                 raw_er_fname_in.update(split='01')
             msg = f'Reading empty-room recording: {raw_er_fname_in}'
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session, run=run))
+                                         session=session))
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
             raw_er.info['bads'] = bads
         else:
@@ -181,13 +180,14 @@ def filter_data(
 
         raw_er.load_data()
         filter(
-            raw=raw_er, subject='emptyroom', session=session, run=run,
+            raw=raw_er, subject=subject, session=session, run=None,
             h_freq=cfg.h_freq, l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
-            l_trans_bandwidth=cfg.l_trans_bandwidth
+            l_trans_bandwidth=cfg.l_trans_bandwidth,
+            data_type='empty-room'
         )
-        resample(raw=raw_er, subject='emptyroom', session=session, run=run,
-                 sfreq=cfg.resample_sfreq)
+        resample(raw=raw_er, subject=subject, session=session, run=None,
+                 sfreq=cfg.resample_sfreq, data_type='empty-room')
 
         raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
         if cfg.interactive:

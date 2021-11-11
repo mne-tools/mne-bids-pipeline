@@ -2,7 +2,6 @@
 
 import os
 import sys
-# import runpy
 import pathlib
 import logging
 from typing import Union, Optional, Tuple
@@ -49,71 +48,10 @@ from scripts import freesurfer
 
 INIT_SCRIPTS = init.SCRIPTS
 PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
-SENSOR_SCRIPTS = ()
-SOURCE_SCRIPTS = ()
-REPORT_SCRIPTS = ()
-FREESURFER_SCRIPTS = ()
-# SENSOR_SCRIPTS = sensor.SCRIPTS
-# SOURCE_SCRIPTS = source.SCRIPTS
-# REPORT_SCRIPTS = report.SCRIPTS
-# FREESURFER_SCRIPTS = freesurfer.SCRIPTS
-
-# PREPROCESSING_SCRIPTS = (
-#     '01-maxfilter.py',
-#     '02-frequency_filter.py',
-#     '03-make_epochs.py',
-#     '04a-run_ica.py',
-#     '04b-run_ssp.py',
-#     '05a-apply_ica.py',
-#     '05b-apply_ssp.py',
-#     '06-ptp_reject.py'
-# )
-
-# SENSOR_SCRIPTS = (
-#     '01-make_evoked.py',
-#     '02-sliding_estimator.py',
-#     '03-time_frequency.py',
-#     '04-group_average.py'
-# )
-
-# SOURCE_SCRIPTS = (
-#     '01-make_bem_surfaces.py',
-#     '02-make_forward.py',
-#     '03-make_cov.py',
-#     '04-make_inverse.py',
-#     '05-group_average.py'
-# )
-
-# REPORT_SCRIPTS = ('01-make_reports.py',)
-
-# FREESURFER_SCRIPTS = (
-#     '01-recon_all.py',
-#     '02-coreg_surfaces.py'
-# )
-
-# SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
-
-# SCRIPT_PATHS = {
-#     'init': [SCRIPT_BASE_DIR / 'init' / s
-#              for s in INIT_SCRIPTS],
-#     'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
-#                       for s in PREPROCESSING_SCRIPTS],
-#     'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
-#                for s in SENSOR_SCRIPTS],
-#     'source': [SCRIPT_BASE_DIR / 'source' / s
-#                for s in SOURCE_SCRIPTS],
-#     'report': [SCRIPT_BASE_DIR / 'report' / s
-#                for s in REPORT_SCRIPTS],
-#     'freesurfer': [SCRIPT_BASE_DIR / 'freesurfer' / s
-#                    for s in FREESURFER_SCRIPTS]
-# }
-
-# # Do not include the FreeSurfer scripts in "all" – we don't intend to run
-# # recon-all by default!
-# SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
-#                        SCRIPT_PATHS['preprocessing'] +
-#                        SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
-#                        SCRIPT_PATHS['report'])
+SENSOR_SCRIPTS = sensor.SCRIPTS
+SOURCE_SCRIPTS = source.SCRIPTS
+REPORT_SCRIPTS = report.SCRIPTS
+FREESURFER_SCRIPTS = freesurfer.SCRIPTS
 
 SCRIPT_MODULES = {
     'init': INIT_SCRIPTS,
@@ -136,7 +74,7 @@ SCRIPT_MODULES['all'] = (
 
 
 def _run_script(*, script_module, config, root_dir, subject, session, task, run,
-                interactive, n_jobs, futures, client):
+                interactive, n_jobs):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -164,7 +102,7 @@ def _run_script(*, script_module, config, root_dir, subject, session, task, run,
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
 
-    script_module.main(futures=futures, client=client)
+    script_module.main()
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
@@ -286,16 +224,12 @@ def process(
     logger.info(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
-    from distributed import Client
-    # futures = {}
-    # client = Client()
-    futures = {}
-    client = None
+
     for script_module in script_modules:
         script_path = pathlib.Path(script_module.__file__)
         step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'🚀 Now running script: {script_module} 👇')
-        futures = _run_script(
+        _run_script(
             script_module=script_module,
             config=config,
             root_dir=root_dir,
@@ -305,8 +239,6 @@ def process(
             run=run,
             interactive=interactive,
             n_jobs=n_jobs,
-            futures=futures,
-            client=client,
         )
         logger.info(f'🎉 Done running script: {step_name} 👆')
 

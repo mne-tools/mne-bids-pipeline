@@ -154,37 +154,21 @@ def get_config(
     return cfg
 
 
-def main(futures=None, client=None):
+def main():
     """Run epochs."""
     # Here we use fewer n_jobs to prevent potential memory problems
 
-    if client is None:
-        parallel, run_func, _ = parallel_func(
-            run_epochs,
-            n_jobs=max(config.get_n_jobs() // 4, 1)
-        )
-        logs = parallel(
-            run_func(cfg=get_config(subject, session), subject=subject,
-                     session=session)
-            for subject, session in
-            itertools.product(config.get_subjects(), config.get_sessions())
-        )
-        config.save_logs(logs)
-    else:
-        out_futures = {}
-        for subject in config.get_subjects():
-            if futures is not None and subject in futures:
-                [f.result() for f in futures[subject]]
-            out_futures[subject] = []
-            for session in config.get_sessions():
-                out_futures[subject].append(
-                    client.submit(
-                        run_epochs,
-                        cfg=get_config(subject),
-                        subject=subject,
-                        session=session
-                    )
-                )
+    parallel, run_func, _ = parallel_func(
+        run_epochs,
+        n_jobs=max(config.get_n_jobs() // 4, 1)
+    )
+    logs = parallel(
+        run_func(cfg=get_config(subject, session), subject=subject,
+                    session=session)
+        for subject, session in
+        itertools.product(config.get_subjects(), config.get_sessions())
+    )
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

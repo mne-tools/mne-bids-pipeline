@@ -227,24 +227,40 @@ def get_config(
     return cfg
 
 
-def main():
+def main(futures=None, client=None):
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_maxwell_filter,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject, session),
-                 subject=subject, session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
+    if client is None:
+        parallel, run_func, _ = parallel_func(run_maxwell_filter,
+                                            n_jobs=config.get_n_jobs())
+        logs = parallel(
+            run_func(cfg=get_config(subject, session),
+                    subject=subject, session=session)
+            for subject, session in
+            itertools.product(config.get_subjects(),
+                            config.get_sessions())
+        )
+        config.save_logs(logs)
+    else:
+        out_futures = {}
+        for subject in config.get_subjects():
+            if futures is not None and subject in futures:
+                [f.result() for f in futures[subject]]
+            subject_futures = []
+            for session in config.get_sessions():
+                subject_futures.append(client.submit(
+                    run_maxwell_filter,
+                    cfg=get_config(subject, session),
+                    subject=subject,
+                    session=session
+                ))
+            out_futures[subject] = subject_futures
+        return out_futures
 
-    config.save_logs(logs)
 
 
 if __name__ == '__main__':

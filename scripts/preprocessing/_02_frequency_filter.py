@@ -18,7 +18,6 @@ If config.interactive = True plots raw data and power spectral density.
 
 """  # noqa: E501
 
-from re import sub
 import sys
 import itertools
 import logging

@@ -32,16 +32,8 @@ coloredlogs.install(
 PathLike = Union[str, pathlib.Path]
 
 
-def _get_script_modules(*,
-    config,
-    root_dir,
-    subject,
-    session,
-    task,
-    run,
-    interactive,
-    n_jobs,
-):
+def _get_script_modules(*, config, root_dir, subject, session, task, run,
+                        interactive, n_jobs):
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
 
@@ -217,7 +209,8 @@ def process(
         else:
             # User specified 'stage/step'
             for script_module in SCRIPT_MODULES[stage]:
-                if step in str(script_module):
+                script_name = pathlib.Path(script_module.__file__).name
+                if step in script_name:
                     script_modules.append(script_module)
                     break
             else:

@@ -164,7 +164,7 @@ def main():
     )
     logs = parallel(
         run_func(cfg=get_config(subject, session), subject=subject,
-                    session=session)
+                 session=session)
         for subject, session in
         itertools.product(config.get_subjects(), config.get_sessions())
     )

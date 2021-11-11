@@ -2,7 +2,7 @@
 
 import os
 import sys
-import runpy
+# import runpy
 import pathlib
 import logging
 from typing import Union, Optional, Tuple
@@ -32,69 +32,111 @@ coloredlogs.install(
 
 PathLike = Union[str, pathlib.Path]
 
+env = os.environ
+ds = "ERP_CORE"
+env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(f'./tests/configs/config_{ds}.py').expanduser())
+env['BIDS_ROOT'] = str(pathlib.Path(f'~/mne_data/{ds}').expanduser())
+env['MNE_BIDS_STUDY_TASK'] = 'N400'
+env['MNE_BIDS_STUDY_SESSION'] = ''
+env['MNE_BIDS_STUDY_RUN'] = ''
 
-INIT_SCRIPTS = ('00-init_derivatives_dir.py',)
+from scripts import init
+from scripts import preprocessing
+from scripts import sensor
+from scripts import source
+from scripts import report
+from scripts import freesurfer
 
-PREPROCESSING_SCRIPTS = (
-    '01-maxfilter.py',
-    '02-frequency_filter.py',
-    '03-make_epochs.py',
-    '04a-run_ica.py',
-    '04b-run_ssp.py',
-    '05a-apply_ica.py',
-    '05b-apply_ssp.py',
-    '06-ptp_reject.py'
-)
+INIT_SCRIPTS = init.SCRIPTS
+PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
+SENSOR_SCRIPTS = ()
+SOURCE_SCRIPTS = ()
+REPORT_SCRIPTS = ()
+FREESURFER_SCRIPTS = ()
+# SENSOR_SCRIPTS = sensor.SCRIPTS
+# SOURCE_SCRIPTS = source.SCRIPTS
+# REPORT_SCRIPTS = report.SCRIPTS
+# FREESURFER_SCRIPTS = freesurfer.SCRIPTS
 
-SENSOR_SCRIPTS = (
-    '01-make_evoked.py',
-    '02-sliding_estimator.py',
-    '03-time_frequency.py',
-    '04-group_average.py'
-)
+# PREPROCESSING_SCRIPTS = (
+#     '01-maxfilter.py',
+#     '02-frequency_filter.py',
+#     '03-make_epochs.py',
+#     '04a-run_ica.py',
+#     '04b-run_ssp.py',
+#     '05a-apply_ica.py',
+#     '05b-apply_ssp.py',
+#     '06-ptp_reject.py'
+# )
 
-SOURCE_SCRIPTS = (
-    '01-make_bem_surfaces.py',
-    '02-make_forward.py',
-    '03-make_cov.py',
-    '04-make_inverse.py',
-    '05-group_average.py'
-)
+# SENSOR_SCRIPTS = (
+#     '01-make_evoked.py',
+#     '02-sliding_estimator.py',
+#     '03-time_frequency.py',
+#     '04-group_average.py'
+# )
 
-REPORT_SCRIPTS = ('01-make_reports.py',)
+# SOURCE_SCRIPTS = (
+#     '01-make_bem_surfaces.py',
+#     '02-make_forward.py',
+#     '03-make_cov.py',
+#     '04-make_inverse.py',
+#     '05-group_average.py'
+# )
 
-FREESURFER_SCRIPTS = (
-    '01-recon_all.py',
-    '02-coreg_surfaces.py'
-)
+# REPORT_SCRIPTS = ('01-make_reports.py',)
 
-SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
+# FREESURFER_SCRIPTS = (
+#     '01-recon_all.py',
+#     '02-coreg_surfaces.py'
+# )
 
-SCRIPT_PATHS = {
-    'init': [SCRIPT_BASE_DIR / 'init' / s
-             for s in INIT_SCRIPTS],
-    'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
-                      for s in PREPROCESSING_SCRIPTS],
-    'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
-               for s in SENSOR_SCRIPTS],
-    'source': [SCRIPT_BASE_DIR / 'source' / s
-               for s in SOURCE_SCRIPTS],
-    'report': [SCRIPT_BASE_DIR / 'report' / s
-               for s in REPORT_SCRIPTS],
-    'freesurfer': [SCRIPT_BASE_DIR / 'freesurfer' / s
-                   for s in FREESURFER_SCRIPTS]
+# SCRIPT_BASE_DIR = pathlib.Path(__file__).parent / 'scripts'
+
+# SCRIPT_PATHS = {
+#     'init': [SCRIPT_BASE_DIR / 'init' / s
+#              for s in INIT_SCRIPTS],
+#     'preprocessing': [SCRIPT_BASE_DIR / 'preprocessing' / s
+#                       for s in PREPROCESSING_SCRIPTS],
+#     'sensor': [SCRIPT_BASE_DIR / 'sensor' / s
+#                for s in SENSOR_SCRIPTS],
+#     'source': [SCRIPT_BASE_DIR / 'source' / s
+#                for s in SOURCE_SCRIPTS],
+#     'report': [SCRIPT_BASE_DIR / 'report' / s
+#                for s in REPORT_SCRIPTS],
+#     'freesurfer': [SCRIPT_BASE_DIR / 'freesurfer' / s
+#                    for s in FREESURFER_SCRIPTS]
+# }
+
+# # Do not include the FreeSurfer scripts in "all" – we don't intend to run
+# # recon-all by default!
+# SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
+#                        SCRIPT_PATHS['preprocessing'] +
+#                        SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
+#                        SCRIPT_PATHS['report'])
+
+SCRIPT_MODULES = {
+    'init': INIT_SCRIPTS,
+    'preprocessing': PREPROCESSING_SCRIPTS,
+    'sensor': SENSOR_SCRIPTS,
+    'source': SOURCE_SCRIPTS,
+    'report': REPORT_SCRIPTS,
+    'freesurfer': FREESURFER_SCRIPTS
 }
 
 # Do not include the FreeSurfer scripts in "all" – we don't intend to run
 # recon-all by default!
-SCRIPT_PATHS['all'] = (SCRIPT_PATHS['init'] +
-                       SCRIPT_PATHS['preprocessing'] +
-                       SCRIPT_PATHS['sensor'] + SCRIPT_PATHS['source'] +
-                       SCRIPT_PATHS['report'])
+SCRIPT_MODULES['all'] = (
+    SCRIPT_MODULES['init'] +
+    SCRIPT_MODULES['preprocessing'] +
+    SCRIPT_MODULES['sensor'] +
+    SCRIPT_MODULES['source'] +
+    SCRIPT_MODULES['report']
+)
 
 
-def _run_script(*, script_path, config, root_dir, subject, session, task, run,
-                interactive, n_jobs):
+def _run_script(*, script_module, config, root_dir, subject, session, task, run,
+                interactive, n_jobs, futures, client):
     # It's okay to fiddle with the environment variables here as process()
     # has set up some handlers to reset the environment to its previous state
     # upon exit.
@@ -122,7 +164,7 @@ def _run_script(*, script_path, config, root_dir, subject, session, task, run,
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
 
-    runpy.run_path(script_path, run_name='__main__')
+    script_module.main(futures=futures, client=client)
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
@@ -214,22 +256,22 @@ def process(
             processing_stages.append(steps_)
             processing_steps.append(None)
 
-    script_paths = []
+    script_modules = []
     for stage, step in zip(processing_stages, processing_steps):
-        if stage not in SCRIPT_PATHS.keys():
+        if stage not in SCRIPT_MODULES.keys():
             raise ValueError(
                 f"Invalid step requested: '{stage}'. "
-                f'It should be one of {list(SCRIPT_PATHS.keys())}.'
+                f'It should be one of {list(SCRIPT_MODULES.keys())}.'
             )
 
         if step is None:
             # User specified `sensors`, `source`, or similar
-            script_paths.extend(SCRIPT_PATHS[stage])
+            script_modules.extend(SCRIPT_MODULES[stage])
         else:
             # User specified 'stage/step'
-            for script_path in SCRIPT_PATHS[stage]:
-                if step in str(script_path):
-                    script_paths.append(script_path)
+            for script_module in SCRIPT_MODULES[stage]:
+                if step in str(script_module):
+                    script_modules.append(script_module)
                     break
             else:
                 # We've iterated over all scripts, but none matched!
@@ -239,16 +281,22 @@ def process(
         # Always run the directory initialization scripts, but skip for 'all',
         # because it already includes them – and we want to avoid running
         # them twice.
-        script_paths = [*SCRIPT_PATHS['init'], *script_paths]
+        script_modules = [*SCRIPT_MODULES['init'], *script_modules]
 
     logger.info(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
-    for script_path in script_paths:
+    from distributed import Client
+    # futures = {}
+    # client = Client()
+    futures = {}
+    client = None
+    for script_module in script_modules:
+        script_path = pathlib.Path(script_module.__file__)
         step_name = f'{script_path.parent.name}/{script_path.name}'
-        logger.info(f'🚀 Now running script: {step_name} 👇')
-        _run_script(
-            script_path=script_path,
+        logger.info(f'🚀 Now running script: {script_module} 👇')
+        futures = _run_script(
+            script_module=script_module,
             config=config,
             root_dir=root_dir,
             subject=subject,
@@ -256,7 +304,9 @@ def process(
             task=task,
             run=run,
             interactive=interactive,
-            n_jobs=n_jobs
+            n_jobs=n_jobs,
+            futures=futures,
+            client=client,
         )
         logger.info(f'🎉 Done running script: {step_name} 👆')
 

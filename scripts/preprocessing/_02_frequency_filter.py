@@ -238,27 +238,44 @@ def get_config(
     return cfg
 
 
-def main():
+def main(futures=None, client=None):
     """Run filter."""
     parallel, run_func, _ = parallel_func(filter_data,
                                           n_jobs=config.get_n_jobs())
 
     # Enabling different runs for different subjects
-    sub_run_ses = []
+    sub_run_ses = {}
     for subject in config.get_subjects():
-        sub_run_ses += list(itertools.product(
-            [subject],
+        sub_run_ses[subject] = list(itertools.product(
             config.get_runs(subject=subject),
             config.get_sessions()))
 
-    logs = parallel(
-        run_func(
-            cfg=get_config(subject),
-            subject=subject,
-            run=run,
-            session=session
-        ) for subject, run, session in sub_run_ses
-    )
+    if client is None:
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject),
+                subject=subject,
+                run=run,
+                session=session
+            ) for subject, run, session in sub_run_ses
+        )
+    else:
+        out_futures = {}
+        for subject in sub_run_ses:
+            if futures is not None and subject in futures:
+                [f.result() for f in futures[subject]]
+            out_futures[subject] = []
+            for run, session in sub_run_ses[subject]:
+                out_futures[subject].append(
+                    client.submit(
+                        filter_data,
+                        cfg=get_config(subject),
+                        subject=subject,
+                        run=run,
+                        session=session
+                    )
+                )
+        return out_futures
 
     config.save_logs(logs)
 

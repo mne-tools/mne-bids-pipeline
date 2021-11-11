@@ -31,53 +31,17 @@ coloredlogs.install(
 
 PathLike = Union[str, pathlib.Path]
 
-env = os.environ
-ds = "ERP_CORE"
-env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(f'./tests/configs/config_{ds}.py').expanduser())
-env['BIDS_ROOT'] = str(pathlib.Path(f'~/mne_data/{ds}').expanduser())
-env['MNE_BIDS_STUDY_TASK'] = 'N400'
-env['MNE_BIDS_STUDY_SESSION'] = ''
-env['MNE_BIDS_STUDY_RUN'] = ''
 
-from scripts import init
-from scripts import preprocessing
-from scripts import sensor
-from scripts import source
-from scripts import report
-from scripts import freesurfer
-
-INIT_SCRIPTS = init.SCRIPTS
-PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
-SENSOR_SCRIPTS = sensor.SCRIPTS
-SOURCE_SCRIPTS = source.SCRIPTS
-REPORT_SCRIPTS = report.SCRIPTS
-FREESURFER_SCRIPTS = freesurfer.SCRIPTS
-
-SCRIPT_MODULES = {
-    'init': INIT_SCRIPTS,
-    'preprocessing': PREPROCESSING_SCRIPTS,
-    'sensor': SENSOR_SCRIPTS,
-    'source': SOURCE_SCRIPTS,
-    'report': REPORT_SCRIPTS,
-    'freesurfer': FREESURFER_SCRIPTS
-}
-
-# Do not include the FreeSurfer scripts in "all" – we don't intend to run
-# recon-all by default!
-SCRIPT_MODULES['all'] = (
-    SCRIPT_MODULES['init'] +
-    SCRIPT_MODULES['preprocessing'] +
-    SCRIPT_MODULES['sensor'] +
-    SCRIPT_MODULES['source'] +
-    SCRIPT_MODULES['report']
-)
-
-
-def _run_script(*, script_module, config, root_dir, subject, session, task, run,
-                interactive, n_jobs):
-    # It's okay to fiddle with the environment variables here as process()
-    # has set up some handlers to reset the environment to its previous state
-    # upon exit.
+def _get_script_modules(*,
+    config,
+    root_dir,
+    subject,
+    session,
+    task,
+    run,
+    interactive,
+    n_jobs,
+):
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
 
@@ -102,7 +66,40 @@ def _run_script(*, script_module, config, root_dir, subject, session, task, run,
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
 
-    script_module.main()
+    from scripts import init
+    from scripts import preprocessing
+    from scripts import sensor
+    from scripts import source
+    from scripts import report
+    from scripts import freesurfer
+
+    INIT_SCRIPTS = init.SCRIPTS
+    PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
+    SENSOR_SCRIPTS = sensor.SCRIPTS
+    SOURCE_SCRIPTS = source.SCRIPTS
+    REPORT_SCRIPTS = report.SCRIPTS
+    FREESURFER_SCRIPTS = freesurfer.SCRIPTS
+
+    SCRIPT_MODULES = {
+        'init': INIT_SCRIPTS,
+        'preprocessing': PREPROCESSING_SCRIPTS,
+        'sensor': SENSOR_SCRIPTS,
+        'source': SOURCE_SCRIPTS,
+        'report': REPORT_SCRIPTS,
+        'freesurfer': FREESURFER_SCRIPTS
+    }
+
+    # Do not include the FreeSurfer scripts in "all" – we don't intend to run
+    # recon-all by default!
+    SCRIPT_MODULES['all'] = (
+        SCRIPT_MODULES['init'] +
+        SCRIPT_MODULES['preprocessing'] +
+        SCRIPT_MODULES['sensor'] +
+        SCRIPT_MODULES['source'] +
+        SCRIPT_MODULES['report']
+    )
+
+    return SCRIPT_MODULES
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
@@ -151,6 +148,7 @@ def process(
     n_jobs
         The number of parallel processes to execute.
     """
+
     if steps is None:
         steps = ('all',)
     elif isinstance(steps, str) and ',' in steps:
@@ -194,6 +192,17 @@ def process(
             processing_stages.append(steps_)
             processing_steps.append(None)
 
+    SCRIPT_MODULES = _get_script_modules(
+        config=config,
+        root_dir=root_dir,
+        subject=subject,
+        session=session,
+        task=task,
+        run=run,
+        interactive=interactive,
+        n_jobs=n_jobs,
+    )
+
     script_modules = []
     for stage, step in zip(processing_stages, processing_steps):
         if stage not in SCRIPT_MODULES.keys():
@@ -229,17 +238,7 @@ def process(
         script_path = pathlib.Path(script_module.__file__)
         step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'🚀 Now running script: {script_module} 👇')
-        _run_script(
-            script_module=script_module,
-            config=config,
-            root_dir=root_dir,
-            subject=subject,
-            session=session,
-            task=task,
-            run=run,
-            interactive=interactive,
-            n_jobs=n_jobs,
-        )
+        script_module.main()
         logger.info(f'🎉 Done running script: {step_name} 👆')
 
 

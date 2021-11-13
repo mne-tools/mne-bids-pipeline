@@ -140,7 +140,6 @@ def process(
     n_jobs
         The number of parallel processes to execute.
     """
-
     if steps is None:
         steps = ('all',)
     elif isinstance(steps, str) and ',' in steps:

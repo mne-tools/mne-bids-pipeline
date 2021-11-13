@@ -2250,9 +2250,7 @@ def failsafe_run(
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
             os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
-            kwargs_copy = dict(kwargs)
-            if "futures" in kwargs_copy:
-                del kwargs_copy["futures"]
+            kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
             if "cfg" in kwargs_copy:
                 kwargs_copy["cfg"] = json_tricks.dumps(

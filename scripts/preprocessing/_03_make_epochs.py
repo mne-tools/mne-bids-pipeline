@@ -157,7 +157,6 @@ def get_config(
 def main():
     """Run epochs."""
     # Here we use fewer n_jobs to prevent potential memory problems
-
     parallel, run_func, _ = parallel_func(
         run_epochs,
         n_jobs=max(config.get_n_jobs() // 4, 1)
@@ -168,6 +167,7 @@ def main():
         for subject, session in
         itertools.product(config.get_subjects(), config.get_sessions())
     )
+
     config.save_logs(logs)
 
 

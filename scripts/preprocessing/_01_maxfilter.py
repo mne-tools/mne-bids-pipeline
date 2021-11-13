@@ -243,6 +243,7 @@ def main():
         itertools.product(config.get_subjects(),
                           config.get_sessions())
     )
+
     config.save_logs(logs)
 
 

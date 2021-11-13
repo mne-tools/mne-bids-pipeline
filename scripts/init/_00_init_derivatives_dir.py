@@ -77,7 +77,7 @@ def get_config(
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
-def main(client=None, futures=None):
+def main():
     """Initialize the output directories."""
     msg = 'Running: Initializing output directories.'
     logger.info(**gen_log_kwargs(message=msg))

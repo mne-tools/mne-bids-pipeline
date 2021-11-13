@@ -169,6 +169,10 @@ authors:
   than just `mne.Evoked` by introducing
   [`inverse_targets`][config.inverse_targets].
   ({{ gh(452) }} by {{ authors.apmellot }})
+- All processing scripts have been renamed and can be imported like regular
+  Python modules. This also prepares the code for using Dask for out-of-core
+  and parallelized computations.
+  ({{ gh(470) }} by {{ authors.agramfort }})
 
 ### Bug fixes
 

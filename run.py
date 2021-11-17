@@ -4,11 +4,12 @@ import os
 import sys
 import pathlib
 import logging
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, List, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import ModuleType
 
 import fire
 import coloredlogs
@@ -32,8 +33,17 @@ coloredlogs.install(
 PathLike = Union[str, pathlib.Path]
 
 
-def _get_script_modules(*, config, root_dir, subject, session, task, run,
-                        interactive, n_jobs):
+def _get_script_modules(
+    *,
+    config: PathLike,
+    root_dir: Optional[PathLike] = None,
+    subject: Optional[str] = None,
+    session: Optional[str] = None,
+    task: Optional[str] = None,
+    run: Optional[str] = None,
+    interactive: Optional[str] = None,
+    n_jobs: Optional[str] = None
+) -> Dict[str, Tuple[ModuleType]]:
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
 
@@ -194,7 +204,7 @@ def process(
         n_jobs=n_jobs,
     )
 
-    script_modules = []
+    script_modules: List[ModuleType] = []
     for stage, step in zip(processing_stages, processing_steps):
         if stage not in SCRIPT_MODULES.keys():
             raise ValueError(
@@ -229,9 +239,9 @@ def process(
     for script_module in script_modules:
         script_path = pathlib.Path(script_module.__file__)
         step_name = f'{script_path.parent.name}/{script_path.name}'
-        logger.info(f'🚀 Now running script: {script_module} 👇')
+        logger.info(f'🚀 Now running script: {script_module.__name__} 👇')
         script_module.main()
-        logger.info(f'🎉 Done running script: {step_name} 👆')
+        logger.info(f'🎉 Done running script: {script_module.__name__} 👆')
 
 
 if __name__ == '__main__':

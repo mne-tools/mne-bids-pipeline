@@ -7,8 +7,10 @@ from pathlib import Path
 import logging
 from typing import Union
 
+from joblib import parallel_backend
+
 from mne.utils import run_subprocess
-from mne.parallel import parallel_func
+from config import parallel_func
 
 import config
 
@@ -82,22 +84,23 @@ def main() -> None:
     subjects_dir = Path(config.get_fs_subjects_dir())
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
-    n_jobs = config.get_n_jobs()
-    parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
-    parallel(run_func(root_dir, subject, fs_bids_app)
-             for subject in subjects)
+    with parallel_backend(config.parallel_backend):
+        n_jobs = config.get_n_jobs()
+        parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
+        parallel(run_func(root_dir, subject, fs_bids_app)
+                for subject in subjects)
 
-    # Handle fsaverage
-    fsaverage_dir = subjects_dir / 'fsaverage'
-    if fsaverage_dir.exists():
-        if fsaverage_dir.is_symlink():
-            fsaverage_dir.unlink()
-        else:
-            shutil.rmtree(fsaverage_dir)
+        # Handle fsaverage
+        fsaverage_dir = subjects_dir / 'fsaverage'
+        if fsaverage_dir.exists():
+            if fsaverage_dir.is_symlink():
+                fsaverage_dir.unlink()
+            else:
+                shutil.rmtree(fsaverage_dir)
 
-    env = os.environ
-    shutil.copytree(f"{env['FREESURFER_HOME']}/subjects/fsaverage",
-                    subjects_dir / 'fsaverage')
+        env = os.environ
+        shutil.copytree(f"{env['FREESURFER_HOME']}/subjects/fsaverage",
+                        subjects_dir / 'fsaverage')
 
 
 if __name__ == '__main__':

@@ -6,9 +6,11 @@ from typing import Union
 
 import mne.bem
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
+
+from joblib import parallel_backend
 
 import config
+from config import parallel_func
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
@@ -48,14 +50,15 @@ def main():
     if (Path(config.get_fs_subjects_dir()) / 'fsaverage').exists():
         subjects.append('fsaverage')
 
-    parallel, run_func, _ = parallel_func(make_coreg_surfaces,
-                                          n_jobs=config.get_n_jobs())
+    with parallel_backend(config.parallel_backend):
+        parallel, run_func, _ = parallel_func(make_coreg_surfaces,
+                                            n_jobs=config.get_n_jobs())
 
-    parallel(
-        run_func(
-            get_config(), subject
-        ) for subject in subjects
-    )
+        parallel(
+            run_func(
+                get_config(), subject
+            ) for subject in subjects
+        )
 
 
 if __name__ == '__main__':

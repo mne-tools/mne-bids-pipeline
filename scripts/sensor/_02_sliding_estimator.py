@@ -19,9 +19,10 @@ import numpy as np
 import pandas as pd
 from scipy.io import savemat
 
+from joblib import parallel_backend
+
 import mne
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
 from mne_bids import BIDSPath
@@ -32,6 +33,8 @@ from sklearn.linear_model import LogisticRegression
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -154,21 +157,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-    # so we don't dispatch manually to multiple jobs.
-    parallel, run_func, _ = parallel_func(run_time_decoding,
-                                          n_jobs=1)
-    logs = parallel(
-        run_func(cfg=get_config(), subject=subject,
-                 condition1=cond_1, condition2=cond_2,
-                 session=session)
-        for subject, session, (cond_1, cond_2) in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions(),
-                          config.contrasts)
-    )
+    with parallel_backend(config.parallel_backend):
+        # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
+        # so we don't dispatch manually to multiple jobs.
+        parallel, run_func, _ = parallel_func(run_time_decoding,
+                                            n_jobs=1)
+        logs = parallel(
+            run_func(cfg=get_config(), subject=subject,
+                    condition1=cond_1, condition2=cond_2,
+                    session=session)
+            for subject, session, (cond_1, cond_2) in
+            itertools.product(config.get_subjects(),
+                            config.get_sessions(),
+                            config.contrasts)
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

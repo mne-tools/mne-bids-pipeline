@@ -16,6 +16,8 @@ from tqdm import tqdm
 import numpy as np
 from scipy.io import loadmat, savemat
 
+from joblib import parallel_backend
+
 import mne
 from mne.utils import BunchConst
 from mne_bids import BIDSPath

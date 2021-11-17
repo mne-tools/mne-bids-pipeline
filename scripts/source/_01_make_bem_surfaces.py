@@ -14,12 +14,14 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from joblib import parallel_backend
+
 import mne
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -137,14 +139,15 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(make_bem_and_scalp_surface,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject)
-        for subject in config.get_subjects()
-    )
+    with parallel_backend(config.parallel_backend):
+        parallel, run_func, _ = parallel_func(make_bem_and_scalp_surface,
+                                            n_jobs=config.get_n_jobs())
+        logs = parallel(
+            run_func(cfg=get_config(subject=subject), subject=subject)
+            for subject in config.get_subjects()
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

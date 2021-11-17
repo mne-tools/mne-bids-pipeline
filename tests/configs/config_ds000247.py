@@ -23,3 +23,5 @@ rest_epochs_overlap = 0
 
 epochs_tmin = 0
 baseline = None
+
+on_error = "debug"

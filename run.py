@@ -226,6 +226,10 @@ def process(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
 
+
+    from dask.distributed import Client
+    client = Client()
+
     for script_module in script_modules:
         script_path = pathlib.Path(script_module.__file__)
         step_name = f'{script_path.parent.name}/{script_path.name}'

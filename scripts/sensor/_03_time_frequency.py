@@ -15,12 +15,13 @@ import numpy as np
 
 import mne
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
 
 from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 

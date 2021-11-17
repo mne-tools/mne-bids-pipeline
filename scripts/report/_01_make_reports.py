@@ -18,12 +18,13 @@ import matplotlib
 
 import mne
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
+
 
 matplotlib.use('Agg')  # do not open any window  # noqa
 
@@ -720,32 +721,33 @@ def get_config(
 
 def main():
     """Make reports."""
-    parallel, run_func, _ = parallel_func(run_report,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject,
-                 session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
+    with parallel_backend(config.parallel_backend):
+        parallel, run_func, _ = parallel_func(run_report,
+                                            n_jobs=config.get_n_jobs())
+        logs = parallel(
+            run_func(cfg=get_config(subject=subject), subject=subject,
+                    session=session)
+            for subject, session in
+            itertools.product(config.get_subjects(),
+                            config.get_sessions())
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
-    sessions = config.get_sessions()
-    if not sessions:
-        sessions = [None]
+        sessions = config.get_sessions()
+        if not sessions:
+            sessions = [None]
 
-    if (config.get_task() is not None and
-            config.get_task().lower() == 'rest'):
-        msg = '    … skipping "average" report for "rest" task.'
-        logger.info(**gen_log_kwargs(message=msg))
-        return
+        if (config.get_task() is not None and
+                config.get_task().lower() == 'rest'):
+            msg = '    … skipping "average" report for "rest" task.'
+            logger.info(**gen_log_kwargs(message=msg))
+            return
 
-    for session in sessions:
-        run_report_average(cfg=get_config(subject='average'),
-                           subject='average',
-                           session=session)
+        for session in sessions:
+            run_report_average(cfg=get_config(subject='average'),
+                            subject='average',
+                            session=session)
 
 
 if __name__ == '__main__':

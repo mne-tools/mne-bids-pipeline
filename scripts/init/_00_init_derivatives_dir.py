@@ -10,13 +10,15 @@ import logging
 import itertools
 from typing import Optional
 
+from joblib import parallel_backend
+
 from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -82,16 +84,17 @@ def main():
     msg = 'Running: Initializing output directories.'
     logger.info(**gen_log_kwargs(message=msg))
 
-    init_dataset(cfg=get_config())
-    parallel, run_func, _ = parallel_func(init_subject_dirs,
-                                          n_jobs=config.get_n_jobs())
-    parallel(run_func(cfg=get_config(), subject=subject, session=session)
-             for subject, session in
-             itertools.product(config.get_subjects(),
-                               config.get_sessions()))
+    with parallel_backend(config.parallel_backend):
+        init_dataset(cfg=get_config())
+        parallel, run_func, _ = parallel_func(init_subject_dirs,
+                                            n_jobs=config.get_n_jobs())
+        parallel(run_func(cfg=get_config(), subject=subject, session=session)
+                for subject, session in
+                itertools.product(config.get_subjects(),
+                                config.get_sessions()))
 
-    msg = 'Completed: Initializing output directories.'
-    logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Completed: Initializing output directories.'
+        logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

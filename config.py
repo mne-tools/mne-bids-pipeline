@@ -14,6 +14,7 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
 else:
@@ -1541,6 +1542,12 @@ N_JOBS: int = 1
 Specifies how many subjects you want to process in parallel.
 """
 
+parallel_backend: str = 'dask'
+# parallel_backend: str = 'loky'
+"""
+Specifies the parallel backend to use.
+"""
+
 random_state: Optional[int] = 42
 """
 You can specify the seed of the random number generator (RNG).
@@ -2149,6 +2156,21 @@ def get_n_jobs() -> int:
         n_jobs = N_JOBS
 
     return n_jobs
+
+
+def parallel_func(func, n_jobs):
+    if n_jobs == 1:
+        n_jobs = 1
+        my_func = func
+        parallel = list
+    else:
+        from joblib import Parallel, delayed, cpu_count
+        if n_jobs < 0:
+            n_cores = cpu_count()
+            n_jobs = min(n_cores + n_jobs + 1, n_cores)
+        parallel = Parallel(n_jobs=n_jobs)
+        my_func = delayed(func)
+    return parallel, my_func, n_jobs
 
 
 def _get_reject(

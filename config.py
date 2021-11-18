@@ -1754,6 +1754,12 @@ if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
 # CHECKS
 # ------
 
+if parallel_backend not in ('dask', 'loky'):
+    raise ValueError(
+        f'parallel_backend must be one of "dask" and "loky", but got: '
+        f'{parallel_backend}'
+    )
+
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
     raise ValueError('Cannot use maxwell filter without MEG channels.')

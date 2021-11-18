@@ -14,6 +14,7 @@ import fire
 import coloredlogs
 
 try:
+    import dask
     from dask.distributed import Client
     have_dask = True
 except ImportError:
@@ -234,7 +235,18 @@ def process(
 
     if have_dask:
         logger.info('👾 Initializing Dask client …')
-        client = Client()  # noqa: F841
+        dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
+        logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
+        dask.config.set(
+            {
+                'temporary_directory': dask_temp_dir
+            }
+        )
+        client = Client(
+            name='mne-bids-pipeline',
+            dashboard_address=':80'
+        )  # noqa: F841
+        logger.info('⏱  The Dask client is ready.\n')
 
     for script_module in script_modules:
         script_path = pathlib.Path(script_module.__file__)

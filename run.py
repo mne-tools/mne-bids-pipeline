@@ -253,12 +253,16 @@ def process(
             }
         )
         client = Client(  # noqa: F841
-            name='mne-bids-pipeline',
-            dashboard_address=':80'
+            name='mne-bids-pipeline'
         )
+        dashboard_url = client.dashboard_link
         logger.info(
-            '⏱  The Dask client is ready. Open http://localhost:80/ '
-            'to monitor the workers.\n')
+            f'⏱  The Dask client is ready. Open {dashboard_url} '
+            f'to monitor the workers.\n'
+        )
+
+        import webbrowser
+        webbrowser.open(url=dashboard_url, autoraise=True)
 
     for script_module in script_modules:
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')

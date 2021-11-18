@@ -1549,6 +1549,12 @@ default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
 be installed.
 """
 
+open_dask_dashboard: bool = False
+"""
+Whether to open the Dask dashboard in the default webbrowser automatically.
+Ignored if `parallel_backend` is not `'dask'`.
+"""
+
 random_state: Optional[int] = 42
 """
 You can specify the seed of the random number generator (RNG).

@@ -261,8 +261,8 @@ def process(
             f'to monitor the workers.\n'
         )
 
-        import webbrowser
-        webbrowser.open(url=dashboard_url, autoraise=True)
+        # import webbrowser
+        # webbrowser.open(url=dashboard_url, autoraise=True)
 
     for script_module in script_modules:
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')

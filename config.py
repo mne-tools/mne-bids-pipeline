@@ -2172,17 +2172,23 @@ def get_n_jobs() -> int:
 
 
 def parallel_func(func, n_jobs):
-    if n_jobs == 1:
-        n_jobs = 1
-        my_func = func
-        parallel = list
-    else:
-        from joblib import Parallel, delayed, cpu_count
-        if n_jobs < 0:
-            n_cores = cpu_count()
-            n_jobs = min(n_cores + n_jobs + 1, n_cores)
+    if parallel_backend == 'loky':
+        if n_jobs == 1:
+            n_jobs = 1
+            my_func = func
+            parallel = list
+        else:
+            from joblib import Parallel, delayed, cpu_count
+            if n_jobs < 0:
+                n_cores = cpu_count()
+                n_jobs = min(n_cores + n_jobs + 1, n_cores)
+            parallel = Parallel(n_jobs=n_jobs)
+            my_func = delayed(func)
+    else:  # Dask
+        from joblib import Parallel, delayed
         parallel = Parallel(n_jobs=n_jobs)
         my_func = delayed(func)
+
     return parallel, my_func, n_jobs
 
 

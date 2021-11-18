@@ -4,6 +4,7 @@ import os
 import sys
 import pathlib
 import logging
+import multiprocessing
 from typing import Union, Optional, Tuple, List, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -244,15 +245,17 @@ def process(
     )
 
     if have_dask:
-        logger.info('👾 Initializing Dask client …')
+        n_workers = multiprocessing.cpu_count()
+        logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
         dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
         logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
         dask.config.set(
             {
-                'temporary_directory': dask_temp_dir
+                'temporary-directory': dask_temp_dir
             }
         )
         client = Client(  # noqa: F841
+            n_workers=n_workers,
             name='mne-bids-pipeline'
         )
         dashboard_url = client.dashboard_link

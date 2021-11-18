@@ -111,6 +111,7 @@ def filter_data(
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
+    cfg = BunchConst(**cfg)  # FIXME dask
     bids_path = BIDSPath(subject=subject,
                          run=run,
                          session=session,

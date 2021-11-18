@@ -5,6 +5,7 @@ datalad
 numpy
 scipy
 scikit-learn
+dask
 pandas
 json_tricks
 h5py

@@ -1542,10 +1542,11 @@ N_JOBS: int = 1
 Specifies how many subjects you want to process in parallel.
 """
 
-parallel_backend: str = 'dask'
-# parallel_backend: str = 'loky'
+parallel_backend: Literal['loky', 'dask'] = 'loky'
 """
-Specifies the parallel backend to use.
+Specifies which backend to use for parallel job execution. `loky` is the
+default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
+be installed.
 """
 
 random_state: Optional[int] = 42

@@ -1,6 +1,7 @@
 typing_extensions
 numpy
 scipy
+dask
 scikit-learn
 pandas
 json_tricks

@@ -256,7 +256,9 @@ def process(
             name='mne-bids-pipeline',
             dashboard_address=':80'
         )  # noqa: F841
-        logger.info('⏱  The Dask client is ready.\n')
+        logger.info(
+            '⏱  The Dask client is ready. Open http://localhost:80/ '
+            'to monitor the workers.\n')
 
     for script_module in script_modules:
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')

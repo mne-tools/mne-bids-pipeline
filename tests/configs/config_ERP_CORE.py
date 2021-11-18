@@ -69,7 +69,7 @@ run_source_estimation = False
 on_error = 'abort'
 on_rename_missing_events = 'warn'
 parallel_backend = 'dask'
-N_JOBS = -1
+N_JOBS = 2
 
 if task == 'N400':
     rename_events = {

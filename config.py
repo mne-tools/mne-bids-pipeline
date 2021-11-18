@@ -2499,10 +2499,10 @@ def make_epochs(
             stop=stop)
         event_id = dict(rest=3000)
     else:  # Events for task runs
-        events, event_id_from_annotations = mne.events_from_annotations(raw)
+        if event_id is None:
+            event_id = 'auto'
 
-    if event_id is None:
-        event_id = event_id_from_annotations
+        events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
     # Construct metadata from the epochs
     if metadata_tmin is None:

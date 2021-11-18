@@ -575,13 +575,17 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     for condition, evoked in zip(conditions, evokeds):
         if condition in cfg.conditions:
             title = f'Average: {condition}'
-            tags = ('evoked', config.sanitize_cond_name(condition))
+            tags = (
+                'evoked',
+                config.sanitize_cond_name(condition).lower().replace(' ', '')
+            )
         else:  # It's a contrast of two conditions.
             title = f'Average Contrast: {condition[0]} – {condition[1]}'
             tags = (
                 'evoked',
                 f'{config.sanitize_cond_name(condition[0])} – '
                 f'{config.sanitize_cond_name(condition[1])}'
+                .lower().replace(' ', '')
             )
 
         rep.add_evokeds(
@@ -625,7 +629,9 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                     'decoding',
                     'contrast',
                     f'{config.sanitize_cond_name(cond_1)} – '
-                    f'{config.sanitize_cond_name(cond_2)}')
+                    f'{config.sanitize_cond_name(cond_2)}'
+                    .lower().replace(' ', '-')
+                )
             )
             plt.close(fig)
             del decoding_data, cond_1, cond_2, caption, title

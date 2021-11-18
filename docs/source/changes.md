@@ -226,3 +226,9 @@ authors:
   ({{ gh(427) }} by {{ authors.agramfort }})
 - Generated derivative epochs split files now follow the BIDS naming scheme.
   ({{ gh(463)}} by {{ authors.dengemann }})
+- Report tags are now better sanitized.
+  ({{ gh(471) }} by {{ authors.hoechenberger }})
+- When creating epochs, we now ensure that the trigger codes provided via the
+  [`event_id`][config.event_id] setting are retained; previously, new trigger
+  codes were generated in certain situations.
+  ({{ gh(471) }} by {{ authors.hoechenberger }})

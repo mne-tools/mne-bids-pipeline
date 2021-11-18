@@ -237,8 +237,6 @@ def process(
     )
 
     for script_module in script_modules:
-        script_path = pathlib.Path(script_module.__file__)
-        step_name = f'{script_path.parent.name}/{script_path.name}'
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')
         script_module.main()
         logger.info(f'🎉 Done running script: {script_module.__name__} 👆')

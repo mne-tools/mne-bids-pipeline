@@ -385,7 +385,7 @@ def run_ica(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
-    ica.save(ica_fname)
+    ica.save(ica_fname, overwrite=True)
 
     # Create TSV.
     tsv_data = pd.DataFrame(

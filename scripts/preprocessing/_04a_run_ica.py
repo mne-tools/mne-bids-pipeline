@@ -21,6 +21,7 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
@@ -28,7 +29,6 @@ import numpy as np
 from joblib import parallel_backend
 
 import mne
-from types import SimpleNamespace
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath

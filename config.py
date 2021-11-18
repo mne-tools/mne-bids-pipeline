@@ -1765,6 +1765,10 @@ if parallel_backend not in ('dask', 'loky'):
         f'parallel_backend must be one of "dask" and "loky", but got: '
         f'{parallel_backend}'
     )
+if parallel_backend == 'dask':
+    # Disable interactive plotting backend
+    import matplotlib
+    matplotlib.use('Agg')
 
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):

@@ -123,8 +123,10 @@ def main():
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in
-            itertools.product(config.get_subjects(),
-                            config.get_sessions())
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
         )
 
         config.save_logs(logs)

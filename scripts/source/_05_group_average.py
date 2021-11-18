@@ -131,15 +131,21 @@ def run_group_average_source(*, cfg, subject='average'):
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
     with parallel_backend(config.parallel_backend):
-        parallel, run_func, _ = parallel_func(morph_stc,
-                                            n_jobs=config.get_n_jobs())
+        parallel, run_func, _ = parallel_func(
+            morph_stc,
+            n_jobs=config.get_n_jobs()
+        )
         all_morphed_stcs = parallel(
-            run_func(cfg=cfg, subject=subject,
-                    fs_subject=config.get_fs_subject(subject),
-                    session=session)
+            run_func(
+                cfg=cfg, subject=subject,
+                fs_subject=config.get_fs_subject(subject),
+                session=session
+            )
             for subject, session in
-            itertools.product(config.get_subjects(),
-                            config.get_sessions())
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
         )
         mean_morphed_stcs = np.array(all_morphed_stcs).mean(axis=0)
 

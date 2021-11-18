@@ -15,6 +15,7 @@ from typing import Tuple, Union, Optional
 
 from scipy.io import loadmat
 import matplotlib
+from joblib import parallel_backend
 
 import mne
 from mne.utils import BunchConst
@@ -722,14 +723,20 @@ def get_config(
 def main():
     """Make reports."""
     with parallel_backend(config.parallel_backend):
-        parallel, run_func, _ = parallel_func(run_report,
-                                            n_jobs=config.get_n_jobs())
+        parallel, run_func, _ = parallel_func(
+            run_report,
+            n_jobs=config.get_n_jobs()
+        )
         logs = parallel(
-            run_func(cfg=get_config(subject=subject), subject=subject,
-                    session=session)
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
             for subject, session in
-            itertools.product(config.get_subjects(),
-                            config.get_sessions())
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
         )
 
         config.save_logs(logs)
@@ -745,9 +752,11 @@ def main():
             return
 
         for session in sessions:
-            run_report_average(cfg=get_config(subject='average'),
-                            subject='average',
-                            session=session)
+            run_report_average(
+                cfg=get_config(subject='average'),
+                subject='average',
+                session=session
+            )
 
 
 if __name__ == '__main__':

@@ -160,16 +160,22 @@ def main():
     with parallel_backend(config.parallel_backend):
         # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
         # so we don't dispatch manually to multiple jobs.
-        parallel, run_func, _ = parallel_func(run_time_decoding,
-                                            n_jobs=1)
+        parallel, run_func, _ = parallel_func(
+            run_time_decoding,
+            n_jobs=1
+        )
         logs = parallel(
-            run_func(cfg=get_config(), subject=subject,
-                    condition1=cond_1, condition2=cond_2,
-                    session=session)
+            run_func(
+                cfg=get_config(), subject=subject,
+                condition1=cond_1, condition2=cond_2,
+                session=session
+            )
             for subject, session, (cond_1, cond_2) in
-            itertools.product(config.get_subjects(),
-                            config.get_sessions(),
-                            config.contrasts)
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions(),
+                config.contrasts
+            )
         )
 
         config.save_logs(logs)

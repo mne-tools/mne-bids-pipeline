@@ -229,7 +229,7 @@ def process(
     if config.parallel_backend == 'dask':
         logger.info('👾 Initializing Dask …')
         from dask.distributed import Client
-        client = Client()
+        client = Client()  # noqa: F841
 
     for script_module in script_modules:
         script_path = pathlib.Path(script_module.__file__)

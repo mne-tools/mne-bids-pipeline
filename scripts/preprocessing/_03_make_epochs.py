@@ -165,8 +165,10 @@ def main():
             n_jobs=max(config.get_n_jobs() // 4, 1)
         )
         logs = parallel(
-            run_func(cfg=get_config(subject, session), subject=subject,
-                    session=session)
+            run_func(
+                cfg=get_config(subject, session), subject=subject,
+                session=session
+            )
             for subject, session in
             itertools.product(config.get_subjects(), config.get_sessions())
         )

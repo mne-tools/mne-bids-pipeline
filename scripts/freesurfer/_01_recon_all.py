@@ -88,7 +88,7 @@ def main() -> None:
         n_jobs = config.get_n_jobs()
         parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
         parallel(run_func(root_dir, subject, fs_bids_app)
-                for subject in subjects)
+                 for subject in subjects)
 
         # Handle fsaverage
         fsaverage_dir = subjects_dir / 'fsaverage'

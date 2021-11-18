@@ -1,7 +1,7 @@
 typing_extensions
 numpy
 scipy
-dask[distributed]
+dask[distributed,diagnostics]
 scikit-learn
 pandas
 json_tricks

@@ -5,7 +5,7 @@ datalad
 numpy
 scipy
 scikit-learn
-dask[distributed]
+dask[distributed,diagnostics]
 pandas
 json_tricks
 h5py

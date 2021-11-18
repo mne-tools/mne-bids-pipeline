@@ -13,6 +13,12 @@ else:
 import fire
 import coloredlogs
 
+try:
+    from dask.distributed import Client
+    have_dask = True
+except ImportError:
+    have_dask = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -226,9 +232,8 @@ def process(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
 
-    if config.parallel_backend == 'dask':
-        logger.info('👾 Initializing Dask …')
-        from dask.distributed import Client
+    if have_dask:
+        logger.info('👾 Initializing Dask client …')
         client = Client()  # noqa: F841
 
     for script_module in script_modules:

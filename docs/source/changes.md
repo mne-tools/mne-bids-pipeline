@@ -107,11 +107,15 @@ authors:
 - Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
-- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
+- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed
   and data-independent diagonal noise covariance matrix for source imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
-
-### Behavior changes
+- Processing can now be parallelized using [Dask](https://dask.org). To use
+  Dask, set the new configuration setting [`parallel_backend`][config.parallel_backend]
+  to `'dask'`.
+  ({{ gh(472) }} by {{ authors.agramfort }} and  {{ authors.hoechenberger }})
+  
+  ### Behavior changes
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
@@ -170,9 +174,11 @@ authors:
   [`inverse_targets`][config.inverse_targets].
   ({{ gh(452) }} by {{ authors.apmellot }})
 - All processing scripts have been renamed and can be imported like regular
-  Python modules. This also prepares the code for using Dask for out-of-core
-  and parallelized computations.
+  Python modules.
   ({{ gh(470) }} by {{ authors.agramfort }})
+- For storing configuration values, we switched from using `BunchConst` to
+  Python's built-in `SimpleNamespace`.
+  ({{ gh(472) }} by {{ authors.agramfort }})
 
 ### Bug fixes
 

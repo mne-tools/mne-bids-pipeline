@@ -158,6 +158,9 @@ authors:
 - Added a new step `freesurfer/coreg_surfaces` that creates the scalp surfaces
   required for coregistration in MNE-Python.
   ({{ gh(422) }} by {{ authors.hoechenberger }})
+- Enabling interactive mode by setting [`interactive`][config.interactive] to
+  `True` now deactivates parallel processing.
+  ({{ gh(473) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

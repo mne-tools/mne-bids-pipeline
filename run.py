@@ -245,7 +245,7 @@ def process(
     )
 
     if have_dask:
-        n_workers = multiprocessing.cpu_count()
+        n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
         logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
         dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
         logger.info(f'📂 Temporary directory is: {dask_temp_dir}')

@@ -1558,6 +1558,19 @@ Whether to open the Dask dashboard in the default webbrowser automatically.
 Ignored if `parallel_backend` is not `'dask'`.
 """
 
+dask_temp_dir: Optional[PathLike] = None
+"""
+The temporary directory to use by Dask. Dask places lock-files in this
+directory, and also uses it to "spill" RAM contents to disk if the amount of
+free memory in the system hits a critical low. It is recommended to point this
+to a location on a fast, local disk (i.e., not a network-attached storage) to
+ensure good performance. The directory needs to be writable and will be created
+if it does not exist.
+
+If `None`, will use `.dask-worker-space` inside of
+[`deriv_root`][config.deriv_root].
+"""
+
 random_state: Optional[int] = 42
 """
 You can specify the seed of the random number generator (RNG).
@@ -1768,10 +1781,6 @@ if parallel_backend not in ('dask', 'loky'):
         f'parallel_backend must be one of "dask" and "loky", but got: '
         f'{parallel_backend}'
     )
-if parallel_backend == 'dask':
-    # Disable interactive plotting backend
-    import matplotlib
-    matplotlib.use('Agg')
 
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
@@ -2200,6 +2209,15 @@ def parallel_func(func, n_jobs):
         my_func = delayed(func)
 
     return parallel, my_func, n_jobs
+
+
+if parallel_backend == 'dask':
+    # Disable interactive plotting backend
+    import matplotlib
+    matplotlib.use('Agg')
+
+    if dask_temp_dir is None:
+        dask_temp_dir = get_deriv_root() / '.dask-worker-space'
 
 
 def _get_reject(

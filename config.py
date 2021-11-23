@@ -100,7 +100,8 @@ Note: Note
 
 sessions: Union[List, Literal['all']] = 'all'
 """
-The sessions to process.
+The sessions to process. If ``'all'``, will process all sessions found in the
+BIDS dataset.
 """
 
 task: str = ''
@@ -110,7 +111,8 @@ The task to process.
 
 runs: Union[Iterable, Literal['all']] = 'all'
 """
-The runs to process.
+The runs to process. If ``'all'``, will process all runs found in the
+BIDS dataset.
 """
 
 exclude_runs: Optional[Dict[str, List[str]]] = None

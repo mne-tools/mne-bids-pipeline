@@ -108,11 +108,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds001810',
         'osf': '',
         'web': '',
-        'include': ['sub-01/ses-anodalpre',
-                    'sub-02/ses-anodalpre',
-                    'sub-03/ses-anodalpre',
-                    'sub-04/ses-anodalpre',
-                    'sub-05/ses-anodalpre'],
+        'include': ['sub-01'],
         'exclude': []
     },
     'ds001971': {

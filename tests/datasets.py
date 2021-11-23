@@ -39,8 +39,10 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds003104',
         'osf': '',
         'web': '',
-        'include': ['sub-01',
-                    'derivatives/freesurfer/subjects'],
+        'include': [
+            'sub-01',
+            'derivatives/freesurfer/subjects'
+        ],
         'exclude': [
             'derivatives/freesurfer/subjects/01/mri/aparc+aseg.mgz',
             'derivatives/freesurfer/subjects/01/mri/aparc.DKTatlas+aseg.mgz',
@@ -52,9 +54,11 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds000246',
         'osf': '',
         'web': '',
-        'include': ['sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
-                    'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
-                    'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'],
+        'include': [
+            'sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds',
+            'sub-0001/meg/sub-0001_task-AEF_run-01_meg.json',
+            'sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv'
+        ],
         'exclude': []
     },
     'ds000247': {
@@ -132,8 +136,10 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'openneuro': 'ds003392',
         'osf': '',
         'web': '',
-        'include': ['sub-01',
-                    'sub-emptyroom/ses-19111211'],
+        'include': [
+            'sub-01',
+            'sub-emptyroom/ses-19111211'
+        ],
         'exclude': []
     }
 }

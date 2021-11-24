@@ -2192,6 +2192,8 @@ def get_n_jobs() -> int:
 
 
 def get_parallel_backend() -> Literal['dask', 'loky']:
+    global dask_temp_dir
+
     if parallel_backend == 'loky' or get_n_jobs() == 1:
         return 'loky'
     elif parallel_backend == 'dask':

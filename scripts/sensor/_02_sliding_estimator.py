@@ -29,7 +29,8 @@ from mne_bids import BIDSPath
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
+# from sklearn.linear_model import LogisticRegression
+from dask_ml.linear_model import LogisticRegression
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
@@ -88,36 +89,47 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
+    with parallel_backend('dask'):
+        clf = make_pipeline(
+            StandardScaler(),
+            LogisticRegression(
+                solver='admm',
+                random_state=cfg.random_state,
+                n_jobs=1
+            )
+        )
 
-    clf = make_pipeline(
-        StandardScaler(),
-        LogisticRegression(solver='liblinear',
-                           random_state=cfg.random_state))
+        se = SlidingEstimator(
+            clf,
+            scoring=cfg.decoding_metric,
+            n_jobs=cfg.n_jobs
+        )
+        print(y)
+        print(np.unique(y))
+        from sklearn.model_selection import StratifiedKFold
+        cv = StratifiedKFold(shuffle=True)
+        scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
+                                      n_jobs=1)
 
-    se = SlidingEstimator(clf,
-                          scoring=cfg.decoding_metric,
-                          n_jobs=cfg.n_jobs)
-    scores = cross_val_multiscore(se, X=X, y=y, cv=cfg.decoding_n_splits)
+        # let's save the scores now
+        a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
 
-    # let's save the scores now
-    a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-    processing = f'{a_vs_b}+{cfg.decoding_metric}'
-    processing = processing.replace('_', '-').replace('-', '')
+        fname_mat = fname_epochs.copy().update(suffix='decoding',
+                                            processing=processing,
+                                            extension='.mat')
+        savemat(fname_mat, {'scores': scores, 'times': epochs.times})
 
-    fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                           processing=processing,
-                                           extension='.mat')
-    savemat(fname_mat, {'scores': scores, 'times': epochs.times})
-
-    fname_tsv = fname_mat.copy().update(extension='.tsv')
-    tabular_data = pd.DataFrame(
-        dict(cond_1=[cond_names[0]] * len(epochs.times),
-             cond_2=[cond_names[1]] * len(epochs.times),
-             time=epochs.times,
-             mean_crossval_score=scores.mean(axis=0),
-             metric=[cfg.decoding_metric] * len(epochs.times))
-    )
-    tabular_data.to_csv(fname_tsv, sep='\t', index=False)
+        fname_tsv = fname_mat.copy().update(extension='.tsv')
+        tabular_data = pd.DataFrame(
+            dict(cond_1=[cond_names[0]] * len(epochs.times),
+                cond_2=[cond_names[1]] * len(epochs.times),
+                time=epochs.times,
+                mean_crossval_score=scores.mean(axis=0),
+                metric=[cfg.decoding_metric] * len(epochs.times))
+        )
+        tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
 def get_config(
@@ -157,28 +169,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(config.parallel_backend):
-        # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-        # so we don't dispatch manually to multiple jobs.
-        parallel, run_func, _ = parallel_func(
-            run_time_decoding,
-            n_jobs=1
+    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
+    # so we don't dispatch manually to multiple jobs.
+    logs = []
+    for subject, session, (cond_1, cond_2) in itertools.product(
+        config.get_subjects(),
+        config.get_sessions(),
+        config.contrasts
+    ):
+        log = run_time_decoding(
+            cfg=get_config(), subject=subject,
+            condition1=cond_1, condition2=cond_2,
+            session=session
         )
-        logs = parallel(
-            run_func(
-                cfg=get_config(), subject=subject,
-                condition1=cond_1, condition2=cond_2,
-                session=session
-            )
-            for subject, session, (cond_1, cond_2) in
-            itertools.product(
-                config.get_subjects(),
-                config.get_sessions(),
-                config.contrasts
-            )
-        )
+        logs.append(log)
 
-        config.save_logs(logs)
+    config.save_logs(logs)
 
 
 if __name__ == '__main__':

@@ -1542,14 +1542,15 @@ parameters.
 
 N_JOBS: int = 1
 """
-Specifies how many subjects you want to process in parallel.
+Specifies how many subjects you want to process in parallel. If `1`, disables
+parallel processing.
 """
 
 parallel_backend: Literal['loky', 'dask'] = 'loky'
 """
 Specifies which backend to use for parallel job execution. `loky` is the
 default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
-be installed.
+be installed. Ignored if [`N_JOBS`][config.N_JOBS] is set to `1`.
 """
 
 open_dask_dashboard: bool = False
@@ -2190,8 +2191,23 @@ def get_n_jobs() -> int:
     return n_jobs
 
 
+def get_parallel_backend() -> Literal['dask', 'loky']:
+    if parallel_backend == 'loky' or get_n_jobs() == 1:
+        return 'loky'
+    elif parallel_backend == 'dask':
+        # Disable interactive plotting backend
+        import matplotlib
+        matplotlib.use('Agg')
+
+        if dask_temp_dir is None:
+            dask_temp_dir = get_deriv_root() / '.dask-worker-space'
+        return 'dask'
+    else:
+        raise ValueError(f'Unknown parallel backend: {parallel_backend}')
+
+
 def parallel_func(func, n_jobs):
-    if parallel_backend == 'loky':
+    if get_parallel_backend() == 'loky':
         if n_jobs == 1:
             n_jobs = 1
             my_func = func
@@ -2209,15 +2225,6 @@ def parallel_func(func, n_jobs):
         my_func = delayed(func)
 
     return parallel, my_func, n_jobs
-
-
-if parallel_backend == 'dask':
-    # Disable interactive plotting backend
-    import matplotlib
-    matplotlib.use('Agg')
-
-    if dask_temp_dir is None:
-        dask_temp_dir = get_deriv_root() / '.dask-worker-space'
 
 
 def _get_reject(

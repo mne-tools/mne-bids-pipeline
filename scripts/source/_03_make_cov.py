@@ -123,7 +123,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(config.parallel_backend):
+    with parallel_backend(config.get_parallel_backend()):
         parallel, run_func, _ = parallel_func(
             run_covariance,
             n_jobs=config.get_n_jobs()

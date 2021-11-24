@@ -159,7 +159,7 @@ def get_config(
 def main():
     """Run epochs."""
     # Here we use fewer n_jobs to prevent potential memory problems
-    with parallel_backend(config.parallel_backend):
+    with parallel_backend(config.get_parallel_backend()):
         parallel, run_func, _ = parallel_func(
             run_epochs,
             n_jobs=max(config.get_n_jobs() // 4, 1)

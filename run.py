@@ -256,6 +256,7 @@ def process(
         )
         client = Client(  # noqa: F841
             n_workers=n_workers,
+            n_threads_per_worker=1,
             name='mne-bids-pipeline'
         )
         dashboard_url = client.dashboard_link

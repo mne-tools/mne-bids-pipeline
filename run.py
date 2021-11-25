@@ -245,9 +245,14 @@ def process(
     )
 
     if have_dask:
-        n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
+        # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
+        n_workers = 5
         logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
-        dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
+        # dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
+        dask_temp_dir = pathlib.Path(
+            '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
+            '.dask-worker-space'
+        )
         logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
         dask.config.set(
             {
@@ -257,6 +262,10 @@ def process(
         client = Client(  # noqa: F841
             n_workers=n_workers,
             threads_per_worker=1,
+            memory_limit='10G',  # max. 10 GB RAM usage per worker
+            memory_target_fraction=False,
+            memory_spill_fraction=False,
+            memory_pause_fraction=False,
             name='mne-bids-pipeline'
         )
         dashboard_url = client.dashboard_link

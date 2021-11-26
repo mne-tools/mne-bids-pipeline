@@ -114,7 +114,7 @@ def make_ecg_epochs(
         # (across all runs)
         total_ecg_dur = 5 * 60
         ecg_dur_per_run = total_ecg_dur / n_runs
-        t_mid = (raw.times[-1] - raw.times[0]) / 2
+        t_mid = (raw.times[-1] + raw.times[0]) / 2
         raw = raw.crop(
             tmin=max(t_mid - 1/2 * ecg_dur_per_run, 0),
             tmax=min(t_mid + 1/2 * ecg_dur_per_run, raw.times[-1])

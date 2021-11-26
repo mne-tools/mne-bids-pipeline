@@ -112,6 +112,10 @@ authors:
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
 - Drastically reduce memory usage during the epoching and ICA steps.
   ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- Time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
+  (CSP).
+  ({{ gh(479) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
+   {{ authors.hoechenberger }})
 
 ### Behavior changes
 

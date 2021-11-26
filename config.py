@@ -2015,7 +2015,7 @@ if not 0 < cluster_stats_alpha < 1:
 
 if n_permutations < 10 / cluster_stats_alpha:
     raise ValueError("n_permutations is not big enough to calculate "
-                    "accurately the p-values.")
+                     "accurately the p-values.")
 
 if decoding_metric != "roc_auc":
     msg = f"{decoding_metric} is not supported for csp decoding."

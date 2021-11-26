@@ -76,7 +76,7 @@ import config
 
 logger = logging.getLogger('mne-bids-pipeline')
 
-csp_plot_patterns = False
+csp_plot_patterns = True
 
 # One PCA is fitted for each frequency bin.
 # The usage of the pca is highly recommended for two reasons
@@ -304,10 +304,11 @@ def plot_patterns(
     None. Just save the figure in the report.
     """
     fig = csp.plot_patterns(epochs_filter.info)
-    report.add_figs_to_section(
-        fig,
-        section=section,
-        captions=section + title)
+    report.add_figure(
+        fig=fig,
+        title=section + title,
+        tags=('csp',)
+    )
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -447,30 +448,30 @@ def one_subject_decoding(
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
     np.save(file=pth.freq_scores_std(
         subject, session, contrast), arr=freq_scores_std)
-    if cfg.interactive:
-        fig = plot_frequency_decoding(
-            freqs=tf.freqs,
-            freq_scores=freq_scores,
-            conf_int=freq_scores_std,
-            subject=subject)
-        section = "Frequency roc-auc decoding"
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + sub_ses_con)
+
+    fig = plot_frequency_decoding(
+        freqs=tf.freqs,
+        freq_scores=freq_scores,
+        conf_int=freq_scores_std,
+        subject=subject)
+    section = "Frequency roc-auc decoding"
+    report.add_figure(
+        fig=fig,
+        title=section + sub_ses_con,
+        tags=('csp',)
+    )
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
-    if cfg.interactive:
-        fig = plot_time_frequency_decoding(
-            tf=tf, tf_scores=tf_scores, subject=subject)
-        print("fig = plot_time_frequen")
-        section = "Time-frequency decoding"
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + sub_ses_con)
-        print("plot time-frequency decoding")
+    fig = plot_time_frequency_decoding(
+        tf=tf, tf_scores=tf_scores, subject=subject)
+    print("fig = plot_time_frequen")
+    section = "Time-frequency decoding"
+    report.add_figure(
+        fig=fig,
+        title=section + sub_ses_con,
+        tags=('csp',)
+    )
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
 
@@ -727,30 +728,30 @@ def group_analysis(
         mean_scores=all_freq_scores, contrast=contrast,
         subjects=subjects, cfg=cfg, tf=tf)
 
-    if cfg.interactive:
-        fig = plot_frequency_decoding(
-            freqs=tf.freqs, freq_scores=freq_scores,
-            conf_int=contrast_score_stats["mean_se"],
-            subject="average")
-        section = "Frequency decoding"
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + ' sub-average')
+    fig = plot_frequency_decoding(
+        freqs=tf.freqs, freq_scores=freq_scores,
+        conf_int=contrast_score_stats["mean_se"],
+        subject="average")
+    section = "Frequency decoding"
+    report.add_figure(
+        fig=fig,
+        title=section + ' sub-average',
+        tags=('csp',)
+    )
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(
         pth.tf_scores, subjects=subjects, contrast=contrast,
         shape=[tf.n_freq_windows, tf.n_time_windows])
 
-    if cfg.interactive:
-        fig = plot_time_frequency_decoding(
-            tf=tf, tf_scores=all_tf_scores, subject="average")
-        section = "Time - frequency decoding"
-        report.add_figs_to_section(
-            fig,
-            section=section,
-            captions=section + ' sub-average')
+    fig = plot_time_frequency_decoding(
+        tf=tf, tf_scores=all_tf_scores, subject="average")
+    section = "Time - frequency decoding"
+    report.add_figure(
+        fig=fig,
+        title=section + ' sub-average',
+        tags=('csp',)
+    )
 
     ######################################################################
     # 2. Statistical tests
@@ -807,16 +808,16 @@ def group_analysis(
     ps.append(p_clust)
     mccs.append(True)
     for i in range(2):
-        if cfg.interactive:
-            fig = plot_t_and_p_values(
-                t_values=ts[i], p_values=ps[i], title=titles[i], tf=tf)
+        fig = plot_t_and_p_values(
+            t_values=ts[i], p_values=ps[i], title=titles[i], tf=tf)
 
-            cluster = "with" if i else "without"
-            section = f"Time - frequency statistics - {cluster} cluster"
-            report.add_figs_to_section(
-                fig,
-                section=section,
-                captions=section + ' sub-average')
+        cluster = "with" if i else "without"
+        section = f"Time - frequency statistics - {cluster} cluster"
+        report.add_figure(
+            fig=fig,
+            title=section + ' sub-average',
+            tags=('csp',)
+        )
 
     pth_report = pth.report("average", session=None, contrast=contrast)
     if not pth_report.fpath.parent.exists():

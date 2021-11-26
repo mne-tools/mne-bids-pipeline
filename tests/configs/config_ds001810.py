@@ -18,7 +18,7 @@ decode = True
 
 l_freq = 0.3
 
-subjects = ['01', '02', '03', '04', '05']
-sessions = ['anodalpre']
+subjects = ['01']
+sessions = 'all'
 
 interpolate_bads_grand_average = False

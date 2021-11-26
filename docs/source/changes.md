@@ -110,6 +110,8 @@ authors:
 - The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
   and data-independent diagonal noise covariance matrix for source imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
+- Drastically reduce memory usage during the epoching and ICA steps.
+  ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 
 ### Behavior changes
 
@@ -158,6 +160,9 @@ authors:
 - Added a new step `freesurfer/coreg_surfaces` that creates the scalp surfaces
   required for coregistration in MNE-Python.
   ({{ gh(422) }} by {{ authors.hoechenberger }})
+- Enabling interactive mode by setting [`interactive`][config.interactive] to
+  `True` now deactivates parallel processing.
+  ({{ gh(473) }} by {{ authors.hoechenberger }})
 
 ### Code health
 
@@ -226,3 +231,9 @@ authors:
   ({{ gh(427) }} by {{ authors.agramfort }})
 - Generated derivative epochs split files now follow the BIDS naming scheme.
   ({{ gh(463)}} by {{ authors.dengemann }})
+- Report tags are now better sanitized.
+  ({{ gh(471) }} by {{ authors.hoechenberger }})
+- When creating epochs, we now ensure that the trigger codes provided via the
+  [`event_id`][config.event_id] setting are retained; previously, new trigger
+  codes were generated in certain situations.
+  ({{ gh(471) }} by {{ authors.hoechenberger }})

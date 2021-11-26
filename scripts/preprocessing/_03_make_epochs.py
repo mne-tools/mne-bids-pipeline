@@ -57,8 +57,9 @@ def run_epochs(*, cfg, subject, session=None):
             raw_paths=raw_fnames)
 
     # Now, generate epochs from each individual run.
-    epochs_all_runs = []
-    for run, raw_fname in zip(cfg.runs, raw_fnames):
+    for idx, (run, raw_fname) in enumerate(
+        zip(cfg.runs, raw_fnames)
+    ):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
@@ -89,6 +90,7 @@ def run_epochs(*, cfg, subject, session=None):
             decim=cfg.decim
         )
 
+        # Only keep epochs that will be analyzed
         if cfg.task != 'rest':
             if isinstance(cfg.conditions, dict):
                 conditions = list(cfg.conditions.keys())
@@ -96,11 +98,23 @@ def run_epochs(*, cfg, subject, session=None):
                 conditions = cfg.conditions
             epochs = epochs[conditions]
 
-        epochs_all_runs.append(epochs)
+        epochs.load_data()  # Remove reference to raw
         del raw  # free memory
 
-    # Lastly, we can concatenate the epochs and set an EEG reference
-    epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
+        if idx == 0:
+            epochs_all_runs = epochs
+        else:
+            epochs_all_runs = mne.concatenate_epochs(
+                [epochs_all_runs, epochs], on_mismatch='warn'
+            )
+
+        del epochs
+
+    # Clean up namespace
+    epochs = epochs_all_runs
+    del epochs_all_runs
+
+    # Set an EEG reference
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)

@@ -93,11 +93,15 @@ If True, the scripts will provide some interactive elements, such as
 figures. If running the scripts from a notebook or Spyder,
 run `%matplotlib qt` in the command line to open the figures in a separate
 window.
+
+Note: Note
+    Enabling interactive mode deactivates parallel processing.
 """
 
 sessions: Union[List, Literal['all']] = 'all'
 """
-The sessions to process.
+The sessions to process. If ``'all'``, will process all sessions found in the
+BIDS dataset.
 """
 
 task: str = ''
@@ -107,7 +111,8 @@ The task to process.
 
 runs: Union[Iterable, Literal['all']] = 'all'
 """
-The runs to process.
+The runs to process. If ``'all'``, will process all runs found in the
+BIDS dataset.
 """
 
 exclude_runs: Optional[Dict[str, List[str]]] = None
@@ -2261,7 +2266,10 @@ def get_task() -> Optional[str]:
 
 def get_n_jobs() -> int:
     env = os.environ
-    if env.get('MNE_BIDS_STUDY_NJOBS'):
+
+    if interactive:
+        n_jobs = 1
+    elif env.get('MNE_BIDS_STUDY_NJOBS'):
         n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])
     else:
         n_jobs = N_JOBS

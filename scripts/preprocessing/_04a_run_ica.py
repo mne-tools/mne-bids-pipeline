@@ -95,21 +95,35 @@ def fit_ica(
 def make_ecg_epochs(
     *,
     cfg,
-    raw: mne.io.BaseRaw,
+    raw_path: BIDSPath,
     subject: str,
     session: str,
-    run: Optional[str] = None
+    run: Optional[str] = None,
+    n_runs: int
 ) -> Optional[mne.BaseEpochs]:
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
+    raw = mne.io.read_raw(raw_path, preload=False)
+
     if ('ecg' in raw.get_channel_types() or 'meg' in cfg.ch_types or
             'mag' in cfg.ch_types):
         msg = 'Creating ECG epochs …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
+        # We want to extract a total of 5 min of data for ECG epochs generation
+        # (across all runs)
+        total_ecg_dur = 5 * 60
+        ecg_dur_per_run = total_ecg_dur / n_runs
+        t_mid = (raw.times[-1] - raw.times[0]) / 2
+        raw = raw.crop(
+            tmin=t_mid - 1/2 * ecg_dur_per_run,
+            tmax=t_mid + 1/2 * ecg_dur_per_run
+        ).load_data()
+
         ecg_epochs = create_ecg_epochs(raw,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
+        del raw  # Free memory
 
         if len(ecg_epochs) == 0:
             msg = ('No ECG events could be found. Not running ECG artifact '
@@ -260,9 +274,24 @@ def run_ica(*, cfg, subject, session=None):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+
+        # ECG epochs
+        ecg_epochs = make_ecg_epochs(
+            cfg=cfg, raw_path=raw_fname, subject=subject, session=session,
+            run=run, n_runs=len(cfg.runs)
+        )
+        if ecg_epochs is not None:
+            if idx == 0:
+                ecg_epochs_all_runs = ecg_epochs
+            else:
+                ecg_epochs_all_runs = mne.concatenate_epochs(
+                    [ecg_epochs_all_runs, ecg_epochs], on_mismatch='warn'
+                )
+
+            del ecg_epochs
 
         # EOG epochs
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
         eog_epochs = make_eog_epochs(
             raw=raw, eog_channels=cfg.eog_channels, subject=subject,
             session=session, run=run
@@ -276,20 +305,6 @@ def run_ica(*, cfg, subject, session=None):
                 )
 
             del eog_epochs
-
-        # ECG epochs
-        ecg_epochs = make_ecg_epochs(
-            cfg=cfg, raw=raw, subject=subject, session=session, run=run
-        )
-        if ecg_epochs is not None:
-            if idx == 0:
-                ecg_epochs_all_runs = ecg_epochs
-            else:
-                ecg_epochs_all_runs = mne.concatenate_epochs(
-                    [ecg_epochs_all_runs, ecg_epochs], on_mismatch='warn'
-                )
-
-            del ecg_epochs
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!
@@ -363,24 +378,6 @@ def run_ica(*, cfg, subject, session=None):
         epochs_eog.drop_bad(reject=cfg.ica_reject)
     if epochs_ecg is not None:
         epochs_ecg.drop_bad(reject=cfg.ica_reject)
-
-    # Only keep 300 ECG and EOG epochs at most to preserve memory
-    EXG_EPOCHS_MAX_COUNT = 300
-    if epochs_ecg is not None and len(epochs_ecg) > EXG_EPOCHS_MAX_COUNT:
-        ecg_epochs_to_keep_idx = np.round(
-            np.linspace(
-                start=0, stop=len(epochs_ecg) - 1, num=EXG_EPOCHS_MAX_COUNT
-            )
-        ).astype(int)
-        epochs_ecg = epochs_ecg[ecg_epochs_to_keep_idx]
-
-    if epochs_eog is not None and len(epochs_eog) > EXG_EPOCHS_MAX_COUNT:
-        eog_epochs_to_keep_idx = np.round(
-            np.linspace(
-                start=0, stop=len(epochs_eog) - 1, num=EXG_EPOCHS_MAX_COUNT
-            )
-        ).astype(int)
-        epochs_eog = epochs_eog[eog_epochs_to_keep_idx]
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'

@@ -110,6 +110,8 @@ authors:
 - The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
   and data-independent diagonal noise covariance matrix for source imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
+- Drastically reduce memory usage during the epoching and ICA steps.
+  ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 
 ### Behavior changes
 

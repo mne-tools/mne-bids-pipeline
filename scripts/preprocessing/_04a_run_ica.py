@@ -95,21 +95,35 @@ def fit_ica(
 def make_ecg_epochs(
     *,
     cfg,
-    raw: mne.io.BaseRaw,
+    raw_path: BIDSPath,
     subject: str,
     session: str,
-    run: Optional[str] = None
+    run: Optional[str] = None,
+    n_runs: int
 ) -> Optional[mne.BaseEpochs]:
     # ECG either needs an ecg channel, or avg of the mags (i.e. MEG data)
+    raw = mne.io.read_raw(raw_path, preload=False)
+
     if ('ecg' in raw.get_channel_types() or 'meg' in cfg.ch_types or
             'mag' in cfg.ch_types):
         msg = 'Creating ECG epochs …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
+        # We want to extract a total of 5 min of data for ECG epochs generation
+        # (across all runs)
+        total_ecg_dur = 5 * 60
+        ecg_dur_per_run = total_ecg_dur / n_runs
+        t_mid = (raw.times[-1] + raw.times[0]) / 2
+        raw = raw.crop(
+            tmin=max(t_mid - 1/2 * ecg_dur_per_run, 0),
+            tmax=min(t_mid + 1/2 * ecg_dur_per_run, raw.times[-1])
+        ).load_data()
+
         ecg_epochs = create_ecg_epochs(raw,
                                        baseline=(None, -0.2),
                                        tmin=-0.5, tmax=0.5)
+        del raw  # Free memory
 
         if len(ecg_epochs) == 0:
             msg = ('No ECG events could be found. Not running ECG artifact '
@@ -251,31 +265,46 @@ def run_ica(*, cfg, subject, session=None):
     event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
 
     # Now, generate epochs from each individual run
-    epochs_all_runs = []
-    eog_epochs_all_runs = []
-    ecg_epochs_all_runs = []
+    eog_epochs_all_runs = None
+    ecg_epochs_all_runs = None
 
-    for run, raw_fname in zip(cfg.runs, raw_fnames):
+    for idx, (run, raw_fname) in enumerate(
+        zip(cfg.runs, raw_fnames)
+    ):
         msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
-
-        # EOG epochs
-        eog_epochs = make_eog_epochs(
-            raw=raw, eog_channels=cfg.eog_channels,
-            subject=subject, session=session, run=run
-        )
-        if eog_epochs is not None:
-            eog_epochs_all_runs.append(eog_epochs)
 
         # ECG epochs
         ecg_epochs = make_ecg_epochs(
-            cfg=cfg, raw=raw, subject=subject, session=session,
-            run=run
+            cfg=cfg, raw_path=raw_fname, subject=subject, session=session,
+            run=run, n_runs=len(cfg.runs)
         )
         if ecg_epochs is not None:
-            ecg_epochs_all_runs.append(ecg_epochs)
+            if idx == 0:
+                ecg_epochs_all_runs = ecg_epochs
+            else:
+                ecg_epochs_all_runs = mne.concatenate_epochs(
+                    [ecg_epochs_all_runs, ecg_epochs], on_mismatch='warn'
+                )
+
+            del ecg_epochs
+
+        # EOG epochs
+        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        eog_epochs = make_eog_epochs(
+            raw=raw, eog_channels=cfg.eog_channels, subject=subject,
+            session=session, run=run
+        )
+        if eog_epochs is not None:
+            if idx == 0:
+                eog_epochs_all_runs = eog_epochs
+            else:
+                eog_epochs_all_runs = mne.concatenate_epochs(
+                    [eog_epochs_all_runs, eog_epochs], on_mismatch='warn'
+                )
+
+            del eog_epochs
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!
@@ -305,27 +334,35 @@ def run_ica(*, cfg, subject, session=None):
             decim=cfg.decim
         )
 
-        epochs_all_runs.append(epochs)
-        del raw, epochs, eog_epochs, ecg_epochs  # free memory
+        # Only keep epochs that will be analyzed -> Keeps ICA in sync with
+        # epochs generated in the make_epochs script (save preserves memory)!
+        if cfg.task != 'rest':
+            if isinstance(cfg.conditions, dict):
+                conditions = list(cfg.conditions.keys())
+            else:
+                conditions = cfg.conditions
+            epochs = epochs[conditions]
 
-    # Lastly, we can concatenate the epochs and set an EEG reference
-    epochs = mne.concatenate_epochs(epochs_all_runs, on_mismatch='warn')
+        epochs.load_data()  # Remove reference to raw
+        del raw  # free memory
 
-    if eog_epochs_all_runs:
-        epochs_eog = mne.concatenate_epochs(
-            eog_epochs_all_runs, on_mismatch='warn')
-    else:
-        epochs_eog = None
+        if idx == 0:
+            epochs_all_runs = epochs
+        else:
+            epochs_all_runs = mne.concatenate_epochs(
+                [epochs_all_runs, epochs], on_mismatch='warn'
+            )
 
-    if ecg_epochs_all_runs:
-        epochs_ecg = mne.concatenate_epochs(
-            ecg_epochs_all_runs, on_mismatch='warn')
-    else:
-        epochs_ecg = None
+        del epochs
+
+    # Clean up namespace
+    epochs = epochs_all_runs
+    epochs_ecg = ecg_epochs_all_runs
+    epochs_eog = eog_epochs_all_runs
 
     del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs
 
-    epochs.load_data()
+    # Set an EEG reference
     if 'eeg' in cfg.ch_types:
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
@@ -382,7 +419,7 @@ def run_ica(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
-    ica.save(ica_fname)
+    ica.save(ica_fname, overwrite=True)
 
     # Create TSV.
     tsv_data = pd.DataFrame(
@@ -447,6 +484,7 @@ def get_config(
     session: Optional[str] = None
 ) -> BunchConst:
     cfg = BunchConst(
+        conditions=config.conditions,
         task=config.get_task(),
         datatype=config.get_datatype(),
         runs=config.get_runs(subject=subject),

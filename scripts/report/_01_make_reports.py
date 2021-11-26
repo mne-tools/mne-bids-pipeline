@@ -220,7 +220,7 @@ def run_report(*, cfg, subject, session=None):
         fnames_raw_filt.append(fname)
 
     fname_ave = bids_path.copy().update(suffix='ave')
-    fname_epo = bids_path.copy().update(suffix='epo')
+    fname_epo_not_clean = bids_path.copy().update(suffix='epo')
     if cfg.use_template_mri:
         fname_trans = 'fsaverage'
         has_trans = True
@@ -228,11 +228,13 @@ def run_report(*, cfg, subject, session=None):
         fname_trans = bids_path.copy().update(suffix='trans')
         has_trans = fname_trans.fpath.exists()
 
-    fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
+    fname_epo_clean = bids_path.copy().update(processing='clean', suffix='epo')
     fname_ica = bids_path.copy().update(suffix='ica')
-    fname_decoding = fname_epo.copy().update(processing=None,
-                                             suffix='decoding',
-                                             extension='.mat')
+    fname_decoding = fname_epo_clean.copy().update(
+        processing=None,
+        suffix='decoding',
+        extension='.mat'
+    )
     fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
                                             extension='.h5')
 
@@ -300,7 +302,7 @@ def run_report(*, cfg, subject, session=None):
     # Visualize effect of ICA artifact rejection.
     #
     if cfg.spatial_filter == 'ica':
-        epochs = mne.read_epochs(fname_epo)
+        epochs = mne.read_epochs(fname_epo_not_clean)
         ica = mne.preprocessing.read_ica(fname_ica)
 
         if ica.exclude:
@@ -360,7 +362,7 @@ def run_report(*, cfg, subject, session=None):
     # Visualize decoding results.
     #
     if cfg.decode:
-        epochs = mne.read_epochs(fname_epo)
+        epochs = mne.read_epochs(fname_epo_clean)
 
         for contrast in cfg.contrasts:
             cond_1, cond_2 = contrast

@@ -405,7 +405,8 @@ def one_subject_decoding(
             plot_patterns(
                 csp=csp, epochs_filter=epochs_filter, report=report,
                 section="CSP Patterns - frequency",
-                title=f'{prefix}-{(fmin, fmax)}Hz - all epoch')
+                title=f'{prefix}-{(fmin, fmax)}Hz - all epoch'
+            )
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -442,7 +443,8 @@ def one_subject_decoding(
                 plot_patterns(
                     csp=csp, epochs_filter=epochs_filter, report=report,
                     section="CSP Patterns - time-frequency",
-                    title=title)
+                    title=title
+                )
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)

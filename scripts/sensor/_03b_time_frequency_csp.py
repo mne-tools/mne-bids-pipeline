@@ -76,7 +76,6 @@ import config
 
 logger = logging.getLogger('mne-bids-pipeline')
 
-csp_plot_patterns = True
 
 # One PCA is fitted for each frequency bin.
 # The usage of the pca is highly recommended for two reasons
@@ -162,7 +161,7 @@ def prepare_epochs_and_y(
 
     # We frequency filter after droping channel,
     # because filtering is costly
-    epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)  # type: ignore
+    epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)
 
     y = prepare_labels(epochs=epochs_filter, contrast=contrast)
 
@@ -398,15 +397,17 @@ def one_subject_decoding(
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
-        if csp_plot_patterns:
-            # We cannot use pca if plotting the pattern.
-            prefix = sub_ses_con
-            csp.fit(X, y)
-            plot_patterns(
-                csp=csp, epochs_filter=epochs_filter, report=report,
-                section="CSP Patterns - frequency",
-                title=f'{prefix}-{(fmin, fmax)}Hz - all epoch'
-            )
+        # Plot patterns. We cannot use pca if plotting the pattern, as we'll
+        # need channel locations.
+        prefix = sub_ses_con
+        csp.fit(X, y)
+        plot_patterns(
+            csp=csp,
+            epochs_filter=epochs_filter,
+            report=report,
+            section="CSP Patterns - frequency",
+            title=f'{prefix}-{(fmin, fmax)}Hz - all epoch'
+        )
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -436,15 +437,16 @@ def one_subject_decoding(
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
 
-            # We plot the patterns using all the epochs
-            # without splitting the epochs by using cv
-            if csp_plot_patterns:
-                csp.fit(X, y)
-                plot_patterns(
-                    csp=csp, epochs_filter=epochs_filter, report=report,
-                    section="CSP Patterns - time-frequency",
-                    title=title
-                )
+            # We plot the patterns using all the epochs without splitting the
+            # epochs by using CV.
+            # We cannot use pca if plotting the pattern, as we'll need channel
+            # locations.
+            csp.fit(X, y)
+            plot_patterns(
+                csp=csp, epochs_filter=epochs_filter, report=report,
+                section="CSP Patterns - time-frequency",
+                title=title
+            )
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)

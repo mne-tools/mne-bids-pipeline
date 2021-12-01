@@ -114,7 +114,7 @@ authors:
   ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 - The new [`plot_psd_for_runs`][config.plot_psd_for_runs] setting can be used
   to control for which runs to add PSD plots of the raw data to the reports.
-  ({{ gh(459) }} by {{ authors.hoechenberger }})
+  ({{ gh(482) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

@@ -251,13 +251,22 @@ def run_report(*, cfg, subject, session=None):
         if fname.run is not None:
             title += f'run {fname.run}'
 
+        if (
+            cfg.plot_psd_for_runs == 'all' or
+            fname.run in cfg.plot_psd_for_runs
+        ):
+            plot_raw_psd = True
+        else:
+            plot_raw_psd = False
+
         rep.add_raw(
             raw=fname,
             title=title,
-            psd=idx == 0,  # only for the first run,
+            psd=plot_raw_psd,
             tags=('raw', 'filtered', f'run-{fname.run}'),
             # caption=fname.fpath.name  # TODO upstream
         )
+        del plot_raw_psd
 
     if cfg.process_er:
         er_path = get_er_path(cfg=cfg, subject=subject, session=session)
@@ -299,6 +308,16 @@ def run_report(*, cfg, subject, session=None):
 
     ###########################################################################
     #
+    # Visualize uncleaned epochs.
+    #
+    epochs = mne.read_epochs(fname_epo_not_clean)
+    rep.add_epochs(
+        epochs=epochs,
+        title='Epochs (before cleaning)'
+    )
+
+    ###########################################################################
+    #
     # Visualize effect of ICA artifact rejection.
     #
     if cfg.spatial_filter == 'ica':
@@ -316,6 +335,16 @@ def run_report(*, cfg, subject, session=None):
                 # f'before and after ICA '
                 # f'({len(ica.exclude)} ICs removed)'
             )
+
+    ###########################################################################
+    #
+    # Visualize cleaned epochs.
+    #
+    epochs = mne.read_epochs(fname_epo_clean)
+    rep.add_epochs(
+        epochs=epochs,
+        title='Epochs (after cleaning)'
+    )
 
     ###########################################################################
     #
@@ -564,7 +593,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
     #######################################################################
     #
-    # Add events end epochs drop log stats.
+    # Add event stats.
     #
     add_event_counts(cfg=cfg, report=rep, session=session)
 
@@ -721,7 +750,8 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
         use_template_mri=config.use_template_mri,
-        interactive=config.interactive
+        interactive=config.interactive,
+        plot_psd_for_runs=config.plot_psd_for_runs
     )
     return cfg
 

@@ -1,4 +1,5 @@
 typing_extensions
+psutil
 numpy
 scipy
 scikit-learn

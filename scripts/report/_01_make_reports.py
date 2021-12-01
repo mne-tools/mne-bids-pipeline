@@ -246,10 +246,10 @@ def run_report(*, cfg, subject, session=None):
 
     rep = mne.Report(title=title, raw_psd=True)
 
-    for idx, fname in enumerate(fnames_raw_filt):
+    for fname in fnames_raw_filt:
         title = 'Raw'
         if fname.run is not None:
-            title += f'run {fname.run}'
+            title += f', run {fname.run}'
 
         if (
             cfg.plot_psd_for_runs == 'all' or

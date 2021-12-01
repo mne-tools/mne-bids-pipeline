@@ -5,6 +5,7 @@ datalad
 numpy
 scipy
 scikit-learn
+joblib >= 0.14
 dask[distributed,diagnostics]
 pandas
 json_tricks

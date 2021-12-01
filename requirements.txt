@@ -1,6 +1,7 @@
 typing_extensions
 numpy
 scipy
+joblib >= 0.14
 dask[distributed,diagnostics]
 scikit-learn
 pandas

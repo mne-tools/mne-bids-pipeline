@@ -84,7 +84,10 @@ def main():
     msg = 'Running: Initializing output directories.'
     logger.info(**gen_log_kwargs(message=msg))
 
-    with parallel_backend(config.get_parallel_backend()):
+    with parallel_backend(
+        config.get_parallel_backend(),
+        inner_max_num_threads=1
+    ):
         init_dataset(cfg=get_config())
         parallel, run_func, _ = parallel_func(
             init_subject_dirs,

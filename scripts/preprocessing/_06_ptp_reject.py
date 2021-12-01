@@ -119,7 +119,10 @@ def main():
     """Run epochs."""
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
 
-    with parallel_backend(config.get_parallel_backend()):
+    with parallel_backend(
+        config.get_parallel_backend(),
+        inner_max_num_threads=1
+    ):
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in

@@ -154,7 +154,10 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(config.get_parallel_backend()):
+    with parallel_backend(
+        config.get_parallel_backend(),
+        inner_max_num_threads=1
+    ):
         parallel, run_func, _ = parallel_func(
             run_ssp,
             n_jobs=config.get_n_jobs()

@@ -63,9 +63,9 @@ def plot_source(stc, filename):
     brain = stc.plot(
         subjects_dir=config.get_fs_subjects_dir(),
         hemi="split", size=(1600, 800))
-    print('... done!')
 
-    # brain.save_image(filename=filename, mode='rgb')
+    print(f'saving image to: {filename}')
+    brain.save_image(filename=filename, mode='rgb')
 
 
 def one_subject(subject, session, cfg, freq_band):
@@ -145,9 +145,9 @@ def one_subject(subject, session, cfg, freq_band):
     # ipdb.set_trace()
     print("subject", subject, np.max(stc_contrast.data), np.min(stc_contrast.data))
 
-    # filename = f"brain_contrast_sub-{subject}-ses-{session}.png"
-    # plot_source(stc_contrast, join(res_path, filename))
-    
+    filename = f"brain_contrast_sub-{subject}-ses-{session}.png"
+    plot_source(stc_contrast, join(res_path, filename))
+
     morph = mne.compute_source_morph(
         stc_contrast,
         subject_from=config.get_fs_subject(subject), subject_to='fsaverage',
@@ -155,8 +155,8 @@ def one_subject(subject, session, cfg, freq_band):
     )
     stc_fsaverage: SourceEstimate = morph.apply(stc_contrast)  # type: ignore
 
-    # filename = f"brain_contrast_morphed_sub-{subject}-ses-{session}.png"
-    # plot_source(stc_fsaverage, join(res_path, filename))
+    filename = f"brain_contrast_morphed_sub-{subject}-ses-{session}.png"
+    plot_source(stc_fsaverage, join(res_path, filename))
 
     stc_fsaverage.save(fname=fname(subject, session, res_path=res_path))
 

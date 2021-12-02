@@ -556,20 +556,6 @@ def run_report_source(
         root=cfg.deriv_root,
         check=False
     )
-
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        recording=cfg.rec,
-        space=cfg.space,
-        extension='.fif',
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False
-    )
     fname_ave = bids_path.copy().update(suffix='ave')
 
     ###########################################################################

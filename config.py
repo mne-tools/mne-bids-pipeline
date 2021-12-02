@@ -2277,7 +2277,7 @@ def failsafe_run(
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
-                assert out is None  # make sure the function return None
+                assert out is None  # make sure the function returns None
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:

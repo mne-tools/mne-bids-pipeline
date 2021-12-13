@@ -258,6 +258,13 @@ def run_report_preprocessing(
     fname_ica = bids_path.copy().update(suffix='ica')
 
     for fname in fnames_raw_filt:
+        msg = 'Adding filtered raw data to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=fname.run
+            )
+        )
+
         title = 'Raw'
         if fname.run is not None:
             title += f', run {fname.run}'
@@ -273,23 +280,39 @@ def run_report_preprocessing(
         report.add_raw(
             raw=fname,
             title=title,
+            butterfly=5,
             psd=plot_raw_psd,
-            tags=('raw', 'filtered', f'run-{fname.run}'),
+            tags=('raw', 'filtered', f'run-{fname.run}')
             # caption=fname.fpath.name  # TODO upstream
         )
         del plot_raw_psd
 
     if cfg.process_er:
+        msg = 'Adding filtered empty-room raw data to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         er_path = get_er_path(cfg=cfg, subject=subject, session=session)
         report.add_raw(
             raw=er_path,
             title='Empty-Room',
-            tags=('raw', 'empty-room'),
+            butterfly=5,
+            tags=('raw', 'empty-room')
             # caption=er_path.fpath.name  # TODO upstream
         )
 
     # Visualize automated noisy channel detection.
     if cfg.find_noisy_channels_meg:
+        msg = 'Adding visualization of noisy channel detection to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
                                           session=session)
 
@@ -305,6 +328,13 @@ def run_report_preprocessing(
 
     # Visualize events.
     if cfg.task.lower() != 'rest':
+        msg = 'Adding events plot to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         events, event_id, sfreq, first_samp = get_events(
             cfg=cfg, subject=subject, session=session
         )
@@ -321,10 +351,22 @@ def run_report_preprocessing(
     #
     # Visualize uncleaned epochs.
     #
+    msg = 'Adding uncleaned epochs to report.'
+    logger.info(
+        **gen_log_kwargs(
+            message=msg, subject=subject, session=session
+        )
+    )
     epochs = mne.read_epochs(fname_epo_not_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (before cleaning)'
+        title='Epochs (before cleaning)',
+        psd=psd
     )
 
     ###########################################################################
@@ -332,6 +374,12 @@ def run_report_preprocessing(
     # Visualize effect of ICA artifact rejection.
     #
     if cfg.spatial_filter == 'ica':
+        msg = 'Adding ICA to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
         epochs = mne.read_epochs(fname_epo_not_clean)
         ica = mne.preprocessing.read_ica(fname_ica)
 
@@ -351,10 +399,22 @@ def run_report_preprocessing(
     #
     # Visualize cleaned epochs.
     #
+    msg = 'Adding cleaned epochs to report.'
+    logger.info(
+        **gen_log_kwargs(
+            message=msg, subject=subject, session=session
+        )
+    )
     epochs = mne.read_epochs(fname_epo_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (after cleaning)'
+        title='Epochs (after cleaning)',
+        psd=psd
     )
 
     return report
@@ -556,7 +616,6 @@ def run_report_source(
         root=cfg.deriv_root,
         check=False
     )
-    fname_ave = bids_path.copy().update(suffix='ave')
 
     ###########################################################################
     #
@@ -586,16 +645,13 @@ def run_report_source(
             title='BEM'
         )
 
-        evokeds = mne.read_evokeds(fname_ave)
-        for condition, evoked in zip(conditions, evokeds):
-            msg = f'Rendering inverse solution for {evoked.comment} …'
+        for condition in conditions:
+            msg = f'Rendering inverse solution for {condition} …'
             logger.info(**gen_log_kwargs(message=msg,
                                          subject=subject, session=session))
 
             if condition in cfg.conditions:
-                full_condition = config.sanitize_cond_name(evoked.comment)
-                title = f'Condition: {full_condition}'
-                del full_condition
+                title = f'Source: {config.sanitize_cond_name(condition)}'
             else:  # It's a contrast of two conditions.
                 # XXX Will change once we process contrasts here too
                 continue
@@ -836,7 +892,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             cond_str = config.sanitize_cond_name(condition)
             tags = (
                 'source-estimate',
-                condition.lower().replace(' ', '-')
+                config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too

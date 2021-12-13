@@ -358,10 +358,15 @@ def run_report_preprocessing(
         )
     )
     epochs = mne.read_epochs(fname_epo_not_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
     report.add_epochs(
         epochs=epochs,
         title='Epochs (before cleaning)',
-        psd=30
+        psd=psd
     )
 
     ###########################################################################
@@ -401,10 +406,15 @@ def run_report_preprocessing(
         )
     )
     epochs = mne.read_epochs(fname_epo_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
     report.add_epochs(
         epochs=epochs,
         title='Epochs (after cleaning)',
-        psd=30
+        psd=psd
     )
 
     return report
@@ -606,7 +616,6 @@ def run_report_source(
         root=cfg.deriv_root,
         check=False
     )
-    fname_ave = bids_path.copy().update(suffix='ave')
 
     ###########################################################################
     #

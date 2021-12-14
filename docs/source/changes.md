@@ -168,6 +168,12 @@ authors:
 - Enabling interactive mode by setting [`interactive`][config.interactive] to
   `True` now deactivates parallel processing.
   ({{ gh(473) }} by {{ authors.hoechenberger }})
+- The resolution of the MRI slices for BEM visualalization has been reduced to
+  256 by 256 pixels (was 512 by 512 before), we now only plot every 8th slice
+  (was ever 2nd before). This greatly speeds up BEM rendering and reduces the
+  size of the generated report, while maintaining a sufficiently detailed
+  visualization.
+  ({{ gh(488) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

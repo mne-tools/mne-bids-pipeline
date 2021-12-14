@@ -639,14 +639,20 @@ def run_report_source(
         has_trans = fname_trans.fpath.exists()
 
     if has_trans:
+        msg = 'Rendering MRI slices with BEM contours.'
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
+
         report.add_bem(
             subject=cfg.fs_subject,
             subjects_dir=cfg.fs_subjects_dir,
-            title='BEM'
+            title='BEM',
+            width=256,
+            decim=8
         )
 
         for condition in conditions:
-            msg = f'Rendering inverse solution for {condition} …'
+            msg = f'Rendering inverse solution for {condition}'
             logger.info(**gen_log_kwargs(message=msg,
                                          subject=subject, session=session))
 

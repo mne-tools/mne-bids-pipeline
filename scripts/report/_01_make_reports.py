@@ -487,6 +487,16 @@ def run_report_sensor(
     else:
         evokeds = []
 
+    if evokeds:
+        msg = (f'Adding {len(conditions)} evoked signals and contrasts to the '
+               f'report.')
+    else:
+        msg = 'No evoked conditions or contrasts found.'
+
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
     for condition, evoked in zip(conditions, evokeds):
         if cfg.analyze_channels:
             evoked.pick(cfg.analyze_channels)
@@ -514,6 +524,11 @@ def run_report_sensor(
     # Visualize decoding results.
     #
     if cfg.decode:
+        msg = 'Adding time-by-time decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
         epochs = mne.read_epochs(fname_epo_clean)
 
         for contrast in cfg.contrasts:
@@ -563,6 +578,12 @@ def run_report_sensor(
         conditions = list(cfg.time_frequency_conditions.keys())
     else:
         conditions = cfg.time_frequency_conditions.copy()
+
+    if conditions:
+        msg = 'Adding TFR analysis results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
 
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)

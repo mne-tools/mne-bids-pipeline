@@ -552,7 +552,7 @@ def run_report_sensor(
                        f'{len(epochs[cond_2])} × {cond_2}')
             tags = (
                 'epochs',
-                'constrast',
+                'contrast',
                 f"{contrast[0].lower().replace(' ', '-')}-"
                 f"{contrast[1].lower().replace(' ', '-')}"
             )
@@ -638,6 +638,19 @@ def run_report_source(
         check=False
     )
 
+    # Use this as a source for the Info dictionary
+    fname_info = bids_path.copy().update(
+        processing='clean',
+        suffix='epo'
+    )
+
+    fname_trans = bids_path.copy().update(suffix='trans')
+    if not fname_trans.fpath.exists():
+        msg = 'No coregistration found, skipping source space report.'
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
+        return report
+
     ###########################################################################
     #
     # Visualize the coregistration & inverse solutions.
@@ -652,58 +665,60 @@ def run_report_source(
 
     conditions.extend(cfg.contrasts)
 
-    if cfg.use_template_mri:
-        fname_trans = 'fsaverage'
-        has_trans = True
-    else:
-        fname_trans = bids_path.copy().update(suffix='trans')
-        has_trans = fname_trans.fpath.exists()
+    msg = 'Rendering MRI slices with BEM contours.'
+    logger.info(**gen_log_kwargs(message=msg,
+                                 subject=subject, session=session))
+    report.add_bem(
+        subject=cfg.fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+        title='BEM',
+        width=256,
+        decim=8
+    )
 
-    if has_trans:
-        msg = 'Rendering MRI slices with BEM contours.'
+    msg = 'Rendering sensor alignment (coregistration).'
+    logger.info(**gen_log_kwargs(message=msg,
+                                 subject=subject, session=session))
+    report.add_trans(
+        trans=fname_trans,
+        info=fname_info,
+        title='Sensor alignment',
+        subject=cfg.fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+    )
+
+    for condition in conditions:
+        msg = f'Rendering inverse solution for {condition}'
         logger.info(**gen_log_kwargs(message=msg,
                                      subject=subject, session=session))
 
-        report.add_bem(
-            subject=cfg.fs_subject,
-            subjects_dir=cfg.fs_subjects_dir,
-            title='BEM',
-            width=256,
-            decim=8
+        if condition in cfg.conditions:
+            title = f'Source: {config.sanitize_cond_name(condition)}'
+        else:  # It's a contrast of two conditions.
+            # XXX Will change once we process contrasts here too
+            continue
+
+        method = cfg.inverse_method
+        cond_str = config.sanitize_cond_name(condition)
+        inverse_str = method
+        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+
+        fname_stc = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
+            extension=None)
+
+        tags = (
+            'source-estimate',
+            condition.lower().replace(' ', '-')
         )
-
-        for condition in conditions:
-            msg = f'Rendering inverse solution for {condition}'
-            logger.info(**gen_log_kwargs(message=msg,
-                                         subject=subject, session=session))
-
-            if condition in cfg.conditions:
-                title = f'Source: {config.sanitize_cond_name(condition)}'
-            else:  # It's a contrast of two conditions.
-                # XXX Will change once we process contrasts here too
-                continue
-
-            method = cfg.inverse_method
-            cond_str = config.sanitize_cond_name(condition)
-            inverse_str = method
-            hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-
-            fname_stc = bids_path.copy().update(
-                suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
-                extension=None)
-
-            tags = (
-                'source-estimate',
-                condition.lower().replace(' ', '-')
+        if Path(f'{fname_stc.fpath}-lh.stc').exists():
+            report.add_stc(
+                stc=fname_stc,
+                title=title,
+                subject=cfg.fs_subject,
+                subjects_dir=cfg.fs_subjects_dir,
+                tags=tags
             )
-            if Path(f'{fname_stc.fpath}-lh.stc').exists():
-                report.add_stc(
-                    stc=fname_stc,
-                    title=title,
-                    subject=cfg.fs_subject,
-                    subjects_dir=cfg.fs_subjects_dir,
-                    tags=tags
-                )
 
     plt.close('all')  # close all figures to save memory
     return report

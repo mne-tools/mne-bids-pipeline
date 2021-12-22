@@ -158,6 +158,14 @@ space: Optional[str] = None
 The BIDS `space` entity.
 """
 
+plot_psd_for_runs: Union[Literal['all'], Iterable[str]] = 'all'
+"""
+For which runs to add a power spectral density (PSD) plot to the generated
+report. This can take a considerable amount of time if you have many long
+runs. In this case, specify the runs, or pass an empty list to disable raw PSD
+plotting.
+"""
+
 subjects: Union[Iterable[str], Literal['all']] = 'all'
 """
 Subjects to analyze. If ``'all'``, include all subjects. To only
@@ -2396,7 +2404,7 @@ def failsafe_run(
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
-                assert out is None  # make sure the function return None
+                assert out is None  # make sure the function returns None
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:

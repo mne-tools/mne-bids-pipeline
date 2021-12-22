@@ -112,6 +112,11 @@ authors:
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
 - Drastically reduce memory usage during the epoching and ICA steps.
   ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- The new [`plot_psd_for_runs`][config.plot_psd_for_runs] setting can be used
+  to control for which runs to add PSD plots of the raw data to the reports.
+  ({{ gh(482) }} by {{ authors.hoechenberger }})
+- Speed up report generation.
+  ({{ gh(487) }} by {{ authors.hoechenberger }})
 - Time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
   (CSP).
   ({{ gh(479) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
@@ -167,6 +172,12 @@ authors:
 - Enabling interactive mode by setting [`interactive`][config.interactive] to
   `True` now deactivates parallel processing.
   ({{ gh(473) }} by {{ authors.hoechenberger }})
+- The resolution of the MRI slices for BEM visualalization has been reduced to
+  256 by 256 pixels (was 512 by 512 before), we now only plot every 8th slice
+  (was ever 2nd before). This greatly speeds up BEM rendering and reduces the
+  size of the generated report, while maintaining a sufficiently detailed
+  visualization.
+  ({{ gh(488) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

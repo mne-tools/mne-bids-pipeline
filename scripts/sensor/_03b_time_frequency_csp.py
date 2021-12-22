@@ -335,8 +335,8 @@ def one_subject_decoding(
     None. We just save the plots in the report
     and the numpy results in memory.
     """
-    sub_ses_con = pth.prefix(subject, session, contrast)
-    msg = f"Running decoding for {sub_ses_con}..."
+    # sub_ses_con = pth.prefix(subject, session, contrast)
+    msg = f"Running decoding ..."
     logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
 
     report = Report(title=f"csp-permutations-sub-{subject}")
@@ -361,11 +361,11 @@ def one_subject_decoding(
     # to a reasonable number. (Useful for eeg)
     if rank > 100:
         msg = ("Manually reducing the dimension to 100.")
-        logger.info(**gen_log_kwargs(msg, subject=subject))
+        logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
         rank = 100
     pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
-    msg = f"PCA reducing the dimension to {rank}. (ranks details: {rank_dic})."
-    logger.info(**gen_log_kwargs(msg, subject=subject))
+    msg = f"Reducing data dimension via PCA; new rank: {rank}."
+    logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
 
     # Classifier
     csp = CSP(
@@ -406,14 +406,18 @@ def one_subject_decoding(
 
         # Plot patterns. We cannot use pca if plotting the pattern, as we'll
         # need channel locations.
-        prefix = sub_ses_con
+        title = f'sub-{subject}'
+        if session:
+            title += ', ses-{session}, '
+        title += f'{contrast}, {fmin}–{fmax} Hz, full epochs'
+        
         csp.fit(X, y)
         plot_patterns(
             csp=csp,
             epochs_filter=epochs_filter,
             report=report,
             section="CSP Patterns - frequency",
-            title=f'{prefix}-{(fmin, fmax)}Hz - all epoch'
+            title=title
         )
 
         ######################################################################
@@ -421,9 +425,12 @@ def one_subject_decoding(
 
         # Roll covariance, csp and lda over time
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
-            title = f'{sub_ses_con}-{(fmin, fmax)}Hz-{(w_tmin, w_tmax)}s'
-            msg = f"running {title}"
-            logger.info(**gen_log_kwargs(msg, subject=subject))
+            msg = (f'Contrast: {contrast[0]} – {contrast[1]}, '
+                   f'Freqs (Hz): {fmin}–{fmax}, '
+                   f'Times (sec): {w_tmin}–{w_tmax}')
+            logger.info(
+                **gen_log_kwargs(msg, subject=subject, session=session)
+            )
 
             # Originally the window size varied accross frequencies...
             # But this means also that there is some mutual information between
@@ -449,6 +456,10 @@ def one_subject_decoding(
             # We cannot use pca if plotting the pattern, as we'll need channel
             # locations.
             csp.fit(X, y)
+            title = f'sub-{subject}'
+            if session:
+                title += ', ses-{session}, '
+            title += f'{contrast}, {fmin}–{fmax} Hz, {w_tmin}–{w_tmax} s'
             plot_patterns(
                 csp=csp, epochs_filter=epochs_filter, report=report,
                 section="CSP Patterns - time-frequency",
@@ -465,10 +476,14 @@ def one_subject_decoding(
         freq_scores=freq_scores,
         conf_int=freq_scores_std,
         subject=subject)
-    section = "Frequency roc-auc decoding"
+
+    title = "Frequency roc-auc decoding"
+    if session:
+        title += ', ses-{session}, '
+    title += f'{contrast}'
     report.add_figure(
         fig=fig,
-        title=section + sub_ses_con,
+        title=title,
         tags=('csp',)
     )
 
@@ -476,20 +491,17 @@ def one_subject_decoding(
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
     fig = plot_time_frequency_decoding(
         tf=tf, tf_scores=tf_scores, subject=subject)
-    print("fig = plot_time_frequen")
-    section = "Time-frequency decoding"
+    title = "Time-frequency decoding"
+    if session:
+        title += ', ses-{session}, '
+    title += f'{contrast}'
     report.add_figure(
         fig=fig,
-        title=section + sub_ses_con,
+        title=title,
         tags=('csp',)
     )
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
-
-    msg = (f"Decoding for {sub_ses_con} finished successfully. "
-           f"The report is saved in {pth.report(subject, session, contrast)}")
-    logger.info(**gen_log_kwargs(message=msg,
-                subject=subject, session=session))
 
 
 def load_and_average(

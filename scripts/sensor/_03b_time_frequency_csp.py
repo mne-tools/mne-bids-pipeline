@@ -368,12 +368,19 @@ def one_subject_decoding(
     logger.info(**gen_log_kwargs(msg, subject=subject))
 
     # Classifier
-    csp = CSP(n_components=cfg.csp_n_components,
-              reg=cfg.csp_reg,
-              log=True, norm_trace=False)
+    csp = CSP(
+        n_components=cfg.csp_n_components,
+        reg=cfg.csp_reg,
+        log=True,
+        norm_trace=False
+    )
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
-    cv = StratifiedKFold(n_splits=cfg.decoding_n_splits,
-                         shuffle=True, random_state=cfg.random_state)
+    random_state = None if cfg.csp_shuffle_cv is False else cfg.random_state 
+    cv = StratifiedKFold(
+        n_splits=cfg.decoding_n_splits,
+        shuffle=cfg.csp_shuffle_cv,
+        random_state=random_state
+    )
 
     freq_scores = np.zeros((tf.n_freq_windows,))
     freq_scores_std = np.zeros((tf.n_freq_windows,))
@@ -854,6 +861,7 @@ def get_config(
         decoding_n_splits=config.decoding_n_splits,
         csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
+        csp_shuffle_cv=config.csp_shuffle_cv,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_t_dist_alpha_thres=config.cluster_t_dist_alpha_thres,
         n_boot=config.n_boot,

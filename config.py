@@ -1241,6 +1241,15 @@ csp_n_components: int = 4
 The number of components used in the CSP.
 """
 
+csp_shuffle_cv: float = True
+"""
+Whether to shuffle each class's samples before splitting into batches for
+cross-validation.
+
+Note: Note
+    The samples within each split will **not** be shuffled.
+"""
+
 csp_reg: float = 0.1
 """
 Regularization used in the covariance estimator when calculating CSPs. Must be

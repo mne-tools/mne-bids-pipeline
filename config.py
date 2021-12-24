@@ -1368,10 +1368,10 @@ However, in certain situations, this is not possible. Examples include:
   allow easier storage and distribution in certain situations.
 
 To allow the Pipeline to find the correct MRI images and perform coregistration
-automatically, we provide a "hook" that allows you to provide in a custom
+automatically, we provide a "hook" that allows you to provide a custom
 function whose output tells the Pipeline where to find the T1-weighted image.
 
-The function is expected to accept a single parameter. The Pipeline will pass
+The function is expected to accept a single parameter: The Pipeline will pass
 a `BIDSPath` with the following parameters set based on the currently processed
 electrophysiological data:
 

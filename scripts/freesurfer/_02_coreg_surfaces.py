@@ -5,7 +5,6 @@ import logging
 from typing import Union
 from types import SimpleNamespace
 
-from joblib import parallel_backend
 import mne.bem
 
 import config

@@ -31,7 +31,6 @@ from sklearn.linear_model import LogisticRegression
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -122,17 +121,17 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         processing = processing.replace('_', '-').replace('-', '')
 
         fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                            processing=processing,
-                                            extension='.mat')
+                                               processing=processing,
+                                               extension='.mat')
         savemat(fname_mat, {'scores': scores, 'times': epochs.times})
 
         fname_tsv = fname_mat.copy().update(extension='.tsv')
         tabular_data = pd.DataFrame(
             dict(cond_1=[cond_names[0]] * len(epochs.times),
-                cond_2=[cond_names[1]] * len(epochs.times),
-                time=epochs.times,
-                mean_crossval_score=scores.mean(axis=0),
-                metric=[cfg.decoding_metric] * len(epochs.times))
+                 cond_2=[cond_names[1]] * len(epochs.times),
+                 time=epochs.times,
+                 mean_crossval_score=scores.mean(axis=0),
+                 metric=[cfg.decoding_metric] * len(epochs.times))
         )
         tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 

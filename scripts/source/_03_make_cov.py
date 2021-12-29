@@ -52,7 +52,7 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
     epochs = mne.read_epochs(epo_fname, preload=True)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
                                  rank='info')
-    cov.save(cov_fname)
+    cov.save(cov_fname, overwrite=True)
 
 
 def compute_cov_from_empty_room(cfg, subject, session):
@@ -79,7 +79,7 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
     raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
     cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
-    cov.save(cov_fname)
+    cov.save(cov_fname, overwrite=True)
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)

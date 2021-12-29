@@ -1,6 +1,7 @@
 setuptools
 pip
 typing_extensions
+psutil
 datalad
 numpy
 scipy

@@ -101,7 +101,8 @@ Note: Note
 
 sessions: Union[List, Literal['all']] = 'all'
 """
-The sessions to process.
+The sessions to process. If ``'all'``, will process all sessions found in the
+BIDS dataset.
 """
 
 task: str = ''
@@ -111,7 +112,8 @@ The task to process.
 
 runs: Union[Iterable, Literal['all']] = 'all'
 """
-The runs to process.
+The runs to process. If ``'all'``, will process all runs found in the
+BIDS dataset.
 """
 
 exclude_runs: Optional[Dict[str, List[str]]] = None
@@ -155,6 +157,14 @@ The BIDS `recording` entity.
 space: Optional[str] = None
 """
 The BIDS `space` entity.
+"""
+
+plot_psd_for_runs: Union[Literal['all'], Iterable[str]] = 'all'
+"""
+For which runs to add a power spectral density (PSD) plot to the generated
+report. This can take a considerable amount of time if you have many long
+runs. In this case, specify the runs, or pass an empty list to disable raw PSD
+plotting.
 """
 
 subjects: Union[Iterable[str], Literal['all']] = 'all'
@@ -1359,10 +1369,10 @@ However, in certain situations, this is not possible. Examples include:
   allow easier storage and distribution in certain situations.
 
 To allow the Pipeline to find the correct MRI images and perform coregistration
-automatically, we provide a "hook" that allows you to provide in a custom
+automatically, we provide a "hook" that allows you to provide a custom
 function whose output tells the Pipeline where to find the T1-weighted image.
 
-The function is expected to accept a single parameter. The Pipeline will pass
+The function is expected to accept a single parameter: The Pipeline will pass
 a `BIDSPath` with the following parameters set based on the currently processed
 electrophysiological data:
 
@@ -2339,7 +2349,7 @@ def failsafe_run(
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
-                assert out is None  # make sure the function return None
+                assert out is None  # make sure the function returns None
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:

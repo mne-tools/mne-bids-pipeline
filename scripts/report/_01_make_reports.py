@@ -193,21 +193,56 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     return fig
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_report(*, cfg, subject, session=None):
+def _gen_empty_report(
+    *,
+    cfg: BunchConst,
+    subject: str,
+    session: Optional[str]
+) -> mne.Report:
+    title = f'sub-{subject}'
+    if session is not None:
+        title += f', ses-{session}'
+    if cfg.task is not None:
+        title += f', task-{cfg.task}'
+
+    report = mne.Report(title=title, raw_psd=True)
+    return report
+
+
+def run_report_preprocessing(
+    *,
+    cfg: BunchConst,
+    subject: str,
+    session: Optional[str] = None,
+    report: Optional[mne.Report]
+) -> mne.Report:
     import matplotlib.pyplot as plt
 
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+    msg = 'Generating preprocessing report …'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
+    if report is None:
+        report = _gen_empty_report(
+            cfg=cfg,
+            subject=subject,
+            session=session
+        )
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
 
     fnames_raw_filt = []
     for run in cfg.runs:
@@ -215,66 +250,76 @@ def run_report(*, cfg, subject, session=None):
             run=run, processing='filt',
             suffix='raw', check=False
         )
-
         if fname.copy().update(split='01').fpath.exists():
             fname.update(split='01')
 
         fnames_raw_filt.append(fname)
 
-    fname_ave = bids_path.copy().update(suffix='ave')
-    fname_epo = bids_path.copy().update(suffix='epo')
-    if cfg.use_template_mri:
-        fname_trans = 'fsaverage'
-        has_trans = True
-    else:
-        fname_trans = bids_path.copy().update(suffix='trans')
-        has_trans = fname_trans.fpath.exists()
-
-    fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
+    fname_epo_not_clean = bids_path.copy().update(suffix='epo')
+    fname_epo_clean = bids_path.copy().update(processing='clean', suffix='epo')
     fname_ica = bids_path.copy().update(suffix='ica')
-    fname_decoding = fname_epo.copy().update(processing=None,
-                                             suffix='decoding',
-                                             extension='.mat')
-    fname_tfr_pow = bids_path.copy().update(suffix='power+condition+tfr',
-                                            extension='.h5')
 
-    title = f'sub-{subject}'
-    if session is not None:
-        title += f', ses-{session}'
-    if cfg.task is not None:
-        title += f', task-{cfg.task}'
-
-    rep = mne.Report(title=title, raw_psd=True)
-
-    for idx, fname in enumerate(fnames_raw_filt):
-        title = 'Raw'
-        if fname.run is not None:
-            title += f'run {fname.run}'
-
-        rep.add_raw(
-            raw=fname,
-            title=title,
-            psd=idx == 0,  # only for the first run,
-            tags=('raw', 'filtered', f'run-{fname.run}'),
-            # caption=fname.fpath.name  # TODO upstream
+    for fname in fnames_raw_filt:
+        msg = 'Adding filtered raw data to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=fname.run
+            )
         )
 
+        title = 'Raw'
+        if fname.run is not None:
+            title += f', run {fname.run}'
+
+        if (
+            cfg.plot_psd_for_runs == 'all' or
+            fname.run in cfg.plot_psd_for_runs
+        ):
+            plot_raw_psd = True
+        else:
+            plot_raw_psd = False
+
+        report.add_raw(
+            raw=fname,
+            title=title,
+            butterfly=5,
+            psd=plot_raw_psd,
+            tags=('raw', 'filtered', f'run-{fname.run}')
+            # caption=fname.fpath.name  # TODO upstream
+        )
+        del plot_raw_psd
+
     if cfg.process_er:
+        msg = 'Adding filtered empty-room raw data to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         er_path = get_er_path(cfg=cfg, subject=subject, session=session)
-        rep.add_raw(
+        report.add_raw(
             raw=er_path,
             title='Empty-Room',
-            tags=('raw', 'empty-room'),
+            butterfly=5,
+            tags=('raw', 'empty-room')
             # caption=er_path.fpath.name  # TODO upstream
         )
 
     # Visualize automated noisy channel detection.
     if cfg.find_noisy_channels_meg:
+        msg = 'Adding visualization of noisy channel detection to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
                                           session=session)
 
         tags = ('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
-        rep.add_figure(
+        report.add_figure(
             fig=figs,
             caption=captions,
             title='Data Quality',
@@ -285,10 +330,17 @@ def run_report(*, cfg, subject, session=None):
 
     # Visualize events.
     if cfg.task.lower() != 'rest':
+        msg = 'Adding events plot to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+
         events, event_id, sfreq, first_samp = get_events(
             cfg=cfg, subject=subject, session=session
         )
-        rep.add_events(
+        report.add_events(
             events=events,
             event_id=event_id,
             sfreq=sfreq,
@@ -299,14 +351,42 @@ def run_report(*, cfg, subject, session=None):
 
     ###########################################################################
     #
+    # Visualize uncleaned epochs.
+    #
+    msg = 'Adding uncleaned epochs to report.'
+    logger.info(
+        **gen_log_kwargs(
+            message=msg, subject=subject, session=session
+        )
+    )
+    epochs = mne.read_epochs(fname_epo_not_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
+    report.add_epochs(
+        epochs=epochs,
+        title='Epochs (before cleaning)',
+        psd=psd
+    )
+
+    ###########################################################################
+    #
     # Visualize effect of ICA artifact rejection.
     #
     if cfg.spatial_filter == 'ica':
-        epochs = mne.read_epochs(fname_epo)
+        msg = 'Adding ICA to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+        epochs = mne.read_epochs(fname_epo_not_clean)
         ica = mne.preprocessing.read_ica(fname_ica)
 
         if ica.exclude:
-            rep.add_ica(
+            report.add_ica(
                 ica=ica,
                 title='ICA',
                 inst=epochs,
@@ -316,6 +396,80 @@ def run_report(*, cfg, subject, session=None):
                 # f'before and after ICA '
                 # f'({len(ica.exclude)} ICs removed)'
             )
+
+    ###########################################################################
+    #
+    # Visualize cleaned epochs.
+    #
+    msg = 'Adding cleaned epochs to report.'
+    logger.info(
+        **gen_log_kwargs(
+            message=msg, subject=subject, session=session
+        )
+    )
+    epochs = mne.read_epochs(fname_epo_clean)
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
+    report.add_epochs(
+        epochs=epochs,
+        title='Epochs (after cleaning)',
+        psd=psd
+    )
+
+    return report
+
+
+def run_report_sensor(
+    *,
+    cfg: BunchConst,
+    subject: str,
+    session: Optional[str] = None,
+    report: mne.Report
+) -> mne.Report:
+    import matplotlib.pyplot as plt
+
+    msg = 'Generating sensor-space analysis report …'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
+    if report is None:
+        report = _gen_empty_report(
+            cfg=cfg,
+            subject=subject,
+            session=session
+        )
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+    fname_epo_clean = bids_path.copy().update(
+        processing='clean',
+        suffix='epo'
+    )
+    fname_ave = bids_path.copy().update(suffix='ave')
+    fname_decoding = bids_path.copy().update(
+        processing=None,
+        suffix='decoding',
+        extension='.mat'
+    )
+    fname_tfr_pow = bids_path.copy().update(
+        suffix='power+condition+tfr',
+        extension='.h5'
+    )
 
     ###########################################################################
     #
@@ -335,6 +489,16 @@ def run_report(*, cfg, subject, session=None):
     else:
         evokeds = []
 
+    if evokeds:
+        msg = (f'Adding {len(conditions)} evoked signals and contrasts to the '
+               f'report.')
+    else:
+        msg = 'No evoked conditions or contrasts found.'
+
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
     for condition, evoked in zip(conditions, evokeds):
         if cfg.analyze_channels:
             evoked.pick(cfg.analyze_channels)
@@ -351,7 +515,7 @@ def run_report(*, cfg, subject, session=None):
                 f"{condition[1].lower().replace(' ', '-')}"
             )
 
-        rep.add_evokeds(
+        report.add_evokeds(
             evokeds=evoked,
             titles=title,
             tags=tags
@@ -362,7 +526,12 @@ def run_report(*, cfg, subject, session=None):
     # Visualize decoding results.
     #
     if cfg.decode:
-        epochs = mne.read_epochs(fname_epo)
+        msg = 'Adding time-by-time decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        epochs = mne.read_epochs(fname_epo_clean)
 
         for contrast in cfg.contrasts:
             cond_1, cond_2 = contrast
@@ -385,12 +554,12 @@ def run_report(*, cfg, subject, session=None):
                        f'{len(epochs[cond_2])} × {cond_2}')
             tags = (
                 'epochs',
-                'constrast',
+                'contrast',
                 f"{contrast[0].lower().replace(' ', '-')}-"
                 f"{contrast[1].lower().replace(' ', '-')}"
             )
 
-            rep.add_figure(
+            report.add_figure(
                 fig=fig,
                 title=title,
                 caption=caption,
@@ -412,6 +581,12 @@ def run_report(*, cfg, subject, session=None):
     else:
         conditions = cfg.time_frequency_conditions.copy()
 
+    if conditions:
+        msg = 'Adding TFR analysis results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)
         fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
@@ -419,7 +594,7 @@ def run_report(*, cfg, subject, session=None):
         power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond)
         fig = power[0].plot_topo(show=False, fig_facecolor='w', font_color='k',
                                  border='k')
-        rep.add_figure(
+        report.add_figure(
             fig=fig,
             title=f'TFR: {condition}',
             caption=f'TFR Power: {condition}',
@@ -427,59 +602,166 @@ def run_report(*, cfg, subject, session=None):
         )
         plt.close(fig)
 
+    return report
+
+
+def run_report_source(
+    *,
+    cfg: BunchConst,
+    subject: str,
+    session: Optional[str] = None,
+    report: mne.Report
+) -> mne.Report:
+    import matplotlib.pyplot as plt
+
+    msg = 'Generating source-space analysis report …'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
+    if report is None:
+        report = _gen_empty_report(
+            cfg=cfg,
+            subject=subject,
+            session=session
+        )
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    # Use this as a source for the Info dictionary
+    fname_info = bids_path.copy().update(
+        processing='clean',
+        suffix='epo'
+    )
+
+    fname_trans = bids_path.copy().update(suffix='trans')
+    if not fname_trans.fpath.exists():
+        msg = 'No coregistration found, skipping source space report.'
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
+        return report
+
     ###########################################################################
     #
     # Visualize the coregistration & inverse solutions.
     #
 
-    if has_trans:
-        rep.add_bem(
-            subject=cfg.fs_subject,
-            subjects_dir=cfg.fs_subjects_dir,
-            title='BEM'
+    if cfg.conditions is None:
+        conditions = []
+    elif isinstance(cfg.conditions, dict):
+        conditions = list(cfg.conditions.keys())
+    else:
+        conditions = cfg.conditions.copy()
+
+    conditions.extend(cfg.contrasts)
+
+    msg = 'Rendering MRI slices with BEM contours.'
+    logger.info(**gen_log_kwargs(message=msg,
+                                 subject=subject, session=session))
+    report.add_bem(
+        subject=cfg.fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+        title='BEM',
+        width=256,
+        decim=8
+    )
+
+    msg = 'Rendering sensor alignment (coregistration).'
+    logger.info(**gen_log_kwargs(message=msg,
+                                 subject=subject, session=session))
+    report.add_trans(
+        trans=fname_trans,
+        info=fname_info,
+        title='Sensor alignment',
+        subject=cfg.fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+    )
+
+    for condition in conditions:
+        msg = f'Rendering inverse solution for {condition}'
+        logger.info(**gen_log_kwargs(message=msg,
+                                     subject=subject, session=session))
+
+        if condition in cfg.conditions:
+            title = f'Source: {config.sanitize_cond_name(condition)}'
+        else:  # It's a contrast of two conditions.
+            # XXX Will change once we process contrasts here too
+            continue
+
+        method = cfg.inverse_method
+        cond_str = config.sanitize_cond_name(condition)
+        inverse_str = method
+        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
+
+        fname_stc = bids_path.copy().update(
+            suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
+            extension=None)
+
+        tags = (
+            'source-estimate',
+            condition.lower().replace(' ', '-')
         )
-
-        evokeds = mne.read_evokeds(fname_ave)
-        for condition, evoked in zip(conditions, evokeds):
-            msg = f'Rendering inverse solution for {evoked.comment} …'
-            logger.info(**gen_log_kwargs(message=msg,
-                                         subject=subject, session=session))
-
-            if condition in cfg.conditions:
-                full_condition = config.sanitize_cond_name(evoked.comment)
-                caption = f'Condition: {full_condition}'
-                del full_condition
-            else:  # It's a contrast of two conditions.
-                # XXX Will change once we process contrasts here too
-                continue
-
-            method = cfg.inverse_method
-            cond_str = config.sanitize_cond_name(condition)
-            inverse_str = method
-            hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-
-            fname_stc = bids_path.copy().update(
-                suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
-                extension=None)
-
-            tags = (
-                'source-estimate',
-                condition.lower().replace(' ', '-')
+        if Path(f'{fname_stc.fpath}-lh.stc').exists():
+            report.add_stc(
+                stc=fname_stc,
+                title=title,
+                subject=cfg.fs_subject,
+                subjects_dir=cfg.fs_subjects_dir,
+                tags=tags
             )
-            if Path(f'{fname_stc.fpath}-lh.stc').exists():
-                rep.add_stc(
-                    stc=fname_stc,
-                    title=evoked.comment,
-                    subject=cfg.fs_subject,
-                    subjects_dir=cfg.fs_subjects_dir,
-                    tags=tags
-                )
 
-    import matplotlib.pyplot as plt  # nested import to help joblib
     plt.close('all')  # close all figures to save memory
+    return report
 
+
+@failsafe_run(on_error=on_error, script_path=__file__)
+def run_report(
+    *,
+    cfg: BunchConst,
+    subject: str,
+    session: Optional[str] = None,
+):
+    report = _gen_empty_report(
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
+    kwargs = dict(cfg=cfg, subject=subject, session=session, report=report)
+    report = run_report_preprocessing(**kwargs)
+    report = run_report_sensor(**kwargs)
+    report = run_report_source(**kwargs)
+
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
     fname_report = bids_path.copy().update(suffix='report', extension='.html')
-    rep.save(fname=fname_report, open_browser=cfg.interactive, overwrite=True)
+    report.save(
+        fname=fname_report,
+        open_browser=cfg.interactive,
+        overwrite=True
+    )
 
 
 def add_event_counts(*,
@@ -522,18 +804,25 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
-    evoked_fname = BIDSPath(subject=subject,
-                            session=session,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            run=None,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix='ave',
-                            extension='.fif',
-                            datatype=cfg.datatype,
-                            root=cfg.deriv_root,
-                            check=False)
+    msg = 'Generating grand average report …'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+
+    evoked_fname = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='ave',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
 
     title = f'sub-{subject}'
     if session is not None:
@@ -541,7 +830,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    rep = mne.Report(
+    report = mne.Report(
         title=title,
         raw_psd=True
     )
@@ -564,9 +853,9 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
     #######################################################################
     #
-    # Add events end epochs drop log stats.
+    # Add event stats.
     #
-    add_event_counts(cfg=cfg, report=rep, session=session)
+    add_event_counts(cfg=cfg, report=report, session=session)
 
     #######################################################################
     #
@@ -588,7 +877,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 .lower().replace(' ', '')
             )
 
-        rep.add_evokeds(
+        report.add_evokeds(
             evokeds=evoked,
             titles=title,
             projs=False,
@@ -621,7 +910,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                        f'subjects. Standard error and confidence interval '
                        f'of the mean were bootstrapped with {cfg.n_boot} '
                        f'resamples.')
-            rep.add_figure(
+            report.add_figure(
                 fig=fig,
                 title=title,
                 caption=caption,
@@ -647,7 +936,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             cond_str = config.sanitize_cond_name(condition)
             tags = (
                 'source-estimate',
-                condition.lower().replace(' ', '-')
+                config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
@@ -658,7 +947,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             extension=None)
 
         if Path(f'{fname_stc_avg.fpath}-lh.stc').exists():
-            rep.add_stc(
+            report.add_stc(
                 stc=fname_stc_avg,
                 title=title,
                 subject='fsaverage',
@@ -668,7 +957,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
     fname_report = evoked_fname.copy().update(
         task=cfg.task, suffix='report', extension='.html')
-    rep.save(fname=fname_report, open_browser=False, overwrite=True)
+    report.save(fname=fname_report, open_browser=False, overwrite=True)
 
     plt.close('all')  # close all figures to save memory
 
@@ -721,7 +1010,8 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         bids_root=config.get_bids_root(),
         use_template_mri=config.use_template_mri,
-        interactive=config.interactive
+        interactive=config.interactive,
+        plot_psd_for_runs=config.plot_psd_for_runs
     )
     return cfg
 

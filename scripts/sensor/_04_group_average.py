@@ -80,7 +80,7 @@ def average_evokeds(cfg, session):
     msg = f'Saving grand-averaged evoked sensor data: {fname_out}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    mne.write_evokeds(fname_out, list(all_evokeds.values()))
+    mne.write_evokeds(fname_out, list(all_evokeds.values()), overwrite=True)
     return list(all_evokeds.values())
 
 

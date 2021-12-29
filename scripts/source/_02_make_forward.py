@@ -137,7 +137,7 @@ def run_forward(*, cfg, subject, session=None):
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem_sol, mindist=cfg.mindist)
 
-    mne.write_trans(fname_trans, fwd['mri_head_t'])
+    mne.write_trans(fname_trans, fwd['mri_head_t'], overwrite=True)
     mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
 
 

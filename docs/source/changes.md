@@ -114,8 +114,15 @@ authors:
   Dask, set the new configuration setting [`parallel_backend`][config.parallel_backend]
   to `'dask'`.
   ({{ gh(472) }} by {{ authors.agramfort }} and  {{ authors.hoechenberger }})
-  
-  ### Behavior changes
+- Drastically reduce memory usage during the epoching and ICA steps.
+  ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- The new [`plot_psd_for_runs`][config.plot_psd_for_runs] setting can be used
+  to control for which runs to add PSD plots of the raw data to the reports.
+  ({{ gh(482) }} by {{ authors.hoechenberger }})
+- Speed up report generation.
+  ({{ gh(487) }} by {{ authors.hoechenberger }})
+
+### Behavior changes
 
 - The [`conditions`][config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
@@ -165,6 +172,12 @@ authors:
 - Enabling interactive mode by setting [`interactive`][config.interactive] to
   `True` now deactivates parallel processing.
   ({{ gh(473) }} by {{ authors.hoechenberger }})
+- The resolution of the MRI slices for BEM visualalization has been reduced to
+  256 by 256 pixels (was 512 by 512 before), we now only plot every 8th slice
+  (was ever 2nd before). This greatly speeds up BEM rendering and reduces the
+  size of the generated report, while maintaining a sufficiently detailed
+  visualization.
+  ({{ gh(488) }} by {{ authors.hoechenberger }})
 
 ### Code health
 
@@ -241,3 +254,6 @@ authors:
   [`event_id`][config.event_id] setting are retained; previously, new trigger
   codes were generated in certain situations.
   ({{ gh(471) }} by {{ authors.hoechenberger }})
+- ICA overlay plots in the report used the cleaned epochs, resulting in no
+  visible ICA cleaning effects. This has been corrected.
+  ({{ gh(478) }} by {{ authors.hoechenberger }})

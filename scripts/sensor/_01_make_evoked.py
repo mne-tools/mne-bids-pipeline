@@ -78,7 +78,7 @@ def run_evoked(*, cfg, subject, session=None):
             all_evoked[contrast] = evoked_diff
 
     evokeds = list(all_evoked.values())
-    mne.write_evokeds(fname_out, evokeds)
+    mne.write_evokeds(fname_out, evokeds, overwrite=True)
 
     if cfg.interactive:
         for evoked in evokeds:

@@ -20,8 +20,6 @@ import numpy as np
 import pandas as pd
 from scipy.io import savemat
 
-from joblib import parallel_backend
-
 import mne
 from mne.decoding import SlidingEstimator, cross_val_multiscore
 
@@ -29,8 +27,7 @@ from mne_bids import BIDSPath
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-# from sklearn.linear_model import LogisticRegression
-from dask_ml.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run

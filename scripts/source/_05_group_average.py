@@ -12,8 +12,6 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from joblib import parallel_backend
-
 import mne
 from mne_bids import BIDSPath
 
@@ -130,10 +128,7 @@ def run_group_average_source(*, cfg, subject='average'):
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             morph_stc,
             n_jobs=config.get_n_jobs()

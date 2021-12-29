@@ -248,11 +248,12 @@ def process(
         # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
         n_workers = 4
         logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
+        dask_temp_dir = "./.dask-worker-space"
         # dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
-        dask_temp_dir = pathlib.Path(
-            '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
-            '.dask-worker-space'
-        )
+        # dask_temp_dir = pathlib.Path(
+        #     '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
+        #     '.dask-worker-space'
+        # )
         logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
         dask.config.set(
             {
@@ -279,8 +280,8 @@ def process(
             f'to monitor the workers.\n'
         )
 
-        # import webbrowser
-        # webbrowser.open(url=dashboard_url, autoraise=True)
+        import webbrowser
+        webbrowser.open(url=dashboard_url, autoraise=True)
 
     for script_module in script_modules:
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')

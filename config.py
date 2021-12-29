@@ -2201,7 +2201,7 @@ def get_n_jobs() -> int:
     return n_jobs
 
 
-def get_parallel_backend() -> Literal['dask', 'loky']:
+def get_parallel_backend_name() -> Literal['dask', 'loky']:
     global dask_temp_dir
 
     if parallel_backend == 'loky' or get_n_jobs() == 1:
@@ -2216,6 +2216,18 @@ def get_parallel_backend() -> Literal['dask', 'loky']:
         return 'dask'
     else:
         raise ValueError(f'Unknown parallel backend: {parallel_backend}')
+
+
+def get_parallel_backend():
+    from joblib import parallel_backend
+    backend = get_parallel_backend_name()
+    kwargs = {}
+    if backend == "loky":
+        kwargs = {"inner_max_num_threads": 1}
+    return parallel_backend(
+        backend,
+        **kwargs
+    )
 
 
 def parallel_func(func, n_jobs):

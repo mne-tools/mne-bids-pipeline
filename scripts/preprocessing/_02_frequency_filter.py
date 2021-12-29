@@ -30,8 +30,6 @@ else:
     from typing_extensions import Literal
 from types import SimpleNamespace
 
-from joblib import parallel_backend
-
 import mne
 from mne_bids import BIDSPath
 
@@ -245,10 +243,7 @@ def get_config(
 def main():
     """Run filter."""
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(filter_data,
                                               n_jobs=config.get_n_jobs())
 

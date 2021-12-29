@@ -7,8 +7,6 @@ from pathlib import Path
 import logging
 from typing import Union
 
-from joblib import parallel_backend
-
 from mne.utils import run_subprocess
 from config import parallel_func
 
@@ -84,10 +82,7 @@ def main() -> None:
     subjects_dir = Path(config.get_fs_subjects_dir())
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         n_jobs = config.get_n_jobs()
         parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
         parallel(run_func(root_dir, subject, fs_bids_app)

@@ -15,8 +15,6 @@ from pathlib import Path
 from typing import Optional
 from types import SimpleNamespace
 
-from joblib import parallel_backend
-
 import mne
 
 import config
@@ -139,10 +137,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             make_bem_and_scalp_surface,
             n_jobs=config.get_n_jobs()

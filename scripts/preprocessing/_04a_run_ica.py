@@ -26,8 +26,6 @@ from types import SimpleNamespace
 import pandas as pd
 import numpy as np
 
-from joblib import parallel_backend
-
 import mne
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
@@ -525,10 +523,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             run_ica,
             n_jobs=config.get_n_jobs()

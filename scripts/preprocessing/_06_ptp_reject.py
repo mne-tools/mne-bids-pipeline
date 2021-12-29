@@ -16,8 +16,6 @@ import logging
 from typing import Optional
 from types import SimpleNamespace
 
-from joblib import parallel_backend
-
 import mne
 from mne_bids import BIDSPath
 
@@ -119,10 +117,7 @@ def main():
     """Run epochs."""
     parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in

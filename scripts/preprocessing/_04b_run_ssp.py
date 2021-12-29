@@ -11,8 +11,6 @@ import logging
 from typing import Optional
 from types import SimpleNamespace
 
-from joblib import parallel_backend
-
 import mne
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
@@ -154,10 +152,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             run_ssp,
             n_jobs=config.get_n_jobs()

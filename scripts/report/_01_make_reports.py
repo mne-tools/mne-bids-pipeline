@@ -16,8 +16,6 @@ from types import SimpleNamespace
 
 from scipy.io import loadmat
 import matplotlib
-from joblib import parallel_backend
-
 import mne
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -195,7 +193,7 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
 
 def _gen_empty_report(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str]
 ) -> mne.Report:
@@ -211,7 +209,7 @@ def _gen_empty_report(
 
 def run_report_preprocessing(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: Optional[mne.Report]
@@ -424,7 +422,7 @@ def run_report_preprocessing(
 
 def run_report_sensor(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: mne.Report
@@ -607,7 +605,7 @@ def run_report_sensor(
 
 def run_report_source(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: mne.Report
@@ -729,7 +727,7 @@ def run_report_source(
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
 ):
@@ -1018,10 +1016,7 @@ def get_config(
 
 def main():
     """Make reports."""
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             run_report,
             n_jobs=config.get_n_jobs()

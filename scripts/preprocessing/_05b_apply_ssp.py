@@ -13,8 +13,6 @@ import logging
 from typing import Optional
 from types import SimpleNamespace
 
-from joblib import parallel_backend
-
 import mne
 from mne_bids import BIDSPath
 
@@ -89,10 +87,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             apply_ssp,
             n_jobs=config.get_n_jobs()

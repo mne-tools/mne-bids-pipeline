@@ -2206,6 +2206,8 @@ dask_client = None
 
 def setup_dask_client():
     global dask_client
+    global dask_temp_dir
+    global open_dask_dashboard
 
     import dask
     from dask.distributed import Client
@@ -2214,18 +2216,16 @@ def setup_dask_client():
         return
 
     # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
-    n_workers = 4
+    n_workers = get_n_jobs()
     logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
-    dask_temp_dir = "./.dask-worker-space"
-    # dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
-    # dask_temp_dir = pathlib.Path(
-    #     '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
-    #     '.dask-worker-space'
-    # )
-    logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
+
+    if dask_temp_dir is None:
+        this_dask_temp_dir = get_deriv_root() / ".dask-worker-space"
+
+    logger.info(f'📂 Temporary directory is: {this_dask_temp_dir}')
     dask.config.set(
         {
-            'temporary-directory': dask_temp_dir,
+            'temporary-directory': this_dask_temp_dir,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker
             'distributed.worker.memory.terminate': 0.99
@@ -2248,25 +2248,21 @@ def setup_dask_client():
         f'to monitor the workers.\n'
     )
 
-    import webbrowser
-    webbrowser.open(url=dashboard_url, autoraise=True)
+    if open_dask_dashboard:
+        import webbrowser
+        webbrowser.open(url=dashboard_url, autoraise=True)
 
     # Update global variable
     dask_client = client
 
 
 def get_parallel_backend_name() -> Literal['dask', 'loky']:
-    global dask_temp_dir
-
     if parallel_backend == 'loky' or get_n_jobs() == 1:
         return 'loky'
     elif parallel_backend == 'dask':
         # Disable interactive plotting backend
         import matplotlib
         matplotlib.use('Agg')
-
-        if dask_temp_dir is None:
-            dask_temp_dir = get_deriv_root() / '.dask-worker-space'
         return 'dask'
     else:
         raise ValueError(f'Unknown parallel backend: {parallel_backend}')

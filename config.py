@@ -1582,6 +1582,11 @@ If `None`, will use `.dask-worker-space` inside of
 [`deriv_root`][config.deriv_root].
 """
 
+dask_worker_memory_limit: str = '10G'
+"""
+The maximum amount of RAM per Dask worker.
+"""
+
 random_state: Optional[int] = 42
 """
 You can specify the seed of the random number generator (RNG).
@@ -2207,6 +2212,7 @@ dask_client = None
 def setup_dask_client():
     global dask_client
     global dask_temp_dir
+    global dask_worker_memory_limit
     global open_dask_dashboard
 
     import dask
@@ -2234,7 +2240,7 @@ def setup_dask_client():
     client = Client(  # noqa: F841
         n_workers=n_workers,
         threads_per_worker=1,
-        memory_limit='23G',  # max. 10 GB RAM usage per worker
+        memory_limit=dask_worker_memory_limit,
         memory_target_fraction=False,
         memory_spill_fraction=False,
         memory_pause_fraction=False,

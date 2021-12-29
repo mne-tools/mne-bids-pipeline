@@ -37,6 +37,15 @@ from config import parallel_func
 logger = logging.getLogger('mne-bids-pipeline')
 
 
+class LogReg(LogisticRegression):
+    """Hack to avoid a warning with n_jobs != 1 when using dask
+    """
+    def fit(self, *args, **kwargs):
+        from joblib import parallel_backend
+        with parallel_backend("loky"):
+            return super().fit(*args, **kwargs)
+
+
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
@@ -86,11 +95,11 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
-    with parallel_backend('dask'):
+    with config.get_parallel_backend():
         clf = make_pipeline(
             StandardScaler(),
-            LogisticRegression(
-                solver='admm',
+            LogReg(
+                solver='liblinear',
                 random_state=cfg.random_state,
                 n_jobs=1
             )
@@ -101,8 +110,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
             scoring=cfg.decoding_metric,
             n_jobs=cfg.n_jobs
         )
-        print(y)
-        print(np.unique(y))
+
         from sklearn.model_selection import StratifiedKFold
         cv = StratifiedKFold(shuffle=True)
         scores = cross_val_multiscore(se, X=X, y=y, cv=cv,

@@ -461,7 +461,7 @@ to control this behavior.
     ```python
     min_break_duration = 15.
     ```
-"""
+"""  # noqa : E501
 
 t_break_annot_start_after_previous_event: float = 5.
 """
@@ -617,7 +617,7 @@ location is used.
     ```python
     mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
     ```
-"""
+"""  # noqa : E501
 
 mf_ctc_fname: Optional[str] = None
 """
@@ -631,7 +631,7 @@ warning:
     ```python
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
-"""
+"""  # noqa : E501
 
 ###############################################################################
 # STIMULATION ARTIFACT
@@ -850,7 +850,7 @@ is not `'rest'`, we will raise an error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
-"""
+"""  # noqa : E501
 
 epochs_tmin: float = -0.2
 """
@@ -1957,8 +1957,8 @@ def _get_entity_vals_cached(*args, **kwargs):
 
 
 def get_bids_root() -> pathlib.Path:
-    # BIDS_ROOT environment variable takes precedence over any configuration file
-    # values.
+    # BIDS_ROOT environment variable takes precedence over any configuration
+    # file values.
     root = os.getenv('BIDS_ROOT')
     if root is not None:
         return (pathlib.Path(root)
@@ -2201,6 +2201,60 @@ def get_n_jobs() -> int:
     return n_jobs
 
 
+dask_client = None
+
+
+def setup_dask_client():
+    global dask_client
+
+    import dask
+    from dask.distributed import Client
+
+    if dask_client is not None:
+        return
+
+    # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
+    n_workers = 4
+    logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
+    dask_temp_dir = "./.dask-worker-space"
+    # dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
+    # dask_temp_dir = pathlib.Path(
+    #     '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
+    #     '.dask-worker-space'
+    # )
+    logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
+    dask.config.set(
+        {
+            'temporary-directory': dask_temp_dir,
+            # fraction of memory that can be utilized before the nanny
+            # process will terminate the worker
+            'distributed.worker.memory.terminate': 0.99
+        }
+    )
+    client = Client(  # noqa: F841
+        n_workers=n_workers,
+        threads_per_worker=1,
+        memory_limit='23G',  # max. 10 GB RAM usage per worker
+        memory_target_fraction=False,
+        memory_spill_fraction=False,
+        memory_pause_fraction=False,
+        name='mne-bids-pipeline'
+    )
+    client.auto_restart = False  # don't restart killed workers
+
+    dashboard_url = client.dashboard_link
+    logger.info(
+        f'⏱  The Dask client is ready. Open {dashboard_url} '
+        f'to monitor the workers.\n'
+    )
+
+    import webbrowser
+    webbrowser.open(url=dashboard_url, autoraise=True)
+
+    # Update global variable
+    dask_client = client
+
+
 def get_parallel_backend_name() -> Literal['dask', 'loky']:
     global dask_temp_dir
 
@@ -2224,6 +2278,9 @@ def get_parallel_backend():
     kwargs = {}
     if backend == "loky":
         kwargs = {"inner_max_num_threads": 1}
+    else:
+        setup_dask_client()
+
     return parallel_backend(
         backend,
         **kwargs

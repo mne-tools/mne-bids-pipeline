@@ -4,7 +4,6 @@ import os
 import sys
 import pathlib
 import logging
-import multiprocessing
 from typing import Union, Optional, Tuple, List, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -14,13 +13,6 @@ from types import ModuleType
 
 import fire
 import coloredlogs
-
-try:
-    import dask
-    from dask.distributed import Client
-    have_dask = True
-except ImportError:
-    have_dask = False
 
 
 logger = logging.getLogger(__name__)
@@ -243,45 +235,6 @@ def process(
     logger.info(
         "👋 Welcome aboard the MNE BIDS Pipeline!\n"
     )
-
-    if have_dask:
-        # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
-        n_workers = 4
-        logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
-        dask_temp_dir = "./.dask-worker-space"
-        # dask_temp_dir = pathlib.Path(__file__).parent / '.dask-worker-space'
-        # dask_temp_dir = pathlib.Path(
-        #     '/storage/store2/derivatives/erp-core/mne-bids-pipeline/'
-        #     '.dask-worker-space'
-        # )
-        logger.info(f'📂 Temporary directory is: {dask_temp_dir}')
-        dask.config.set(
-            {
-                'temporary-directory': dask_temp_dir,
-                # fraction of memory that can be utilized before the nanny
-                # process will terminate the worker
-                'distributed.worker.memory.terminate': 0.99
-            }
-        )
-        client = Client(  # noqa: F841
-            n_workers=n_workers,
-            threads_per_worker=1,
-            memory_limit='23G',  # max. 10 GB RAM usage per worker
-            memory_target_fraction=False,
-            memory_spill_fraction=False,
-            memory_pause_fraction=False,
-            name='mne-bids-pipeline'
-        )
-        client.auto_restart = False  # don't restart killed workers
-
-        dashboard_url = client.dashboard_link
-        logger.info(
-            f'⏱  The Dask client is ready. Open {dashboard_url} '
-            f'to monitor the workers.\n'
-        )
-
-        import webbrowser
-        webbrowser.open(url=dashboard_url, autoraise=True)
 
     for script_module in script_modules:
         logger.info(f'🚀 Now running script: {script_module.__name__} 👇')

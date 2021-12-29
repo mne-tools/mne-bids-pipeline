@@ -49,10 +49,7 @@ def main():
     if (Path(config.get_fs_subjects_dir()) / 'fsaverage').exists():
         subjects.append('fsaverage')
 
-    with parallel_backend(
-        config.get_parallel_backend(),
-        inner_max_num_threads=1
-    ):
+    with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             make_coreg_surfaces,
             n_jobs=config.get_n_jobs()

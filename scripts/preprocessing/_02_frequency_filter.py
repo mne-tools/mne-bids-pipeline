@@ -247,10 +247,6 @@ def main():
         parallel, run_func, _ = parallel_func(filter_data,
                                               n_jobs=config.get_n_jobs())
 
-        # from joblib import Parallel, delayed
-        # parallel = Parallel(n_jobs=n_jobs)
-        # run_func = delayed(filter_data)
-
         # Enabling different runs for different subjects
         sub_run_ses = []
         for subject in config.get_subjects():

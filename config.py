@@ -2211,9 +2211,6 @@ dask_client = None
 
 def setup_dask_client():
     global dask_client
-    global dask_temp_dir
-    global dask_worker_memory_limit
-    global open_dask_dashboard
 
     import dask
     from dask.distributed import Client
@@ -2227,6 +2224,8 @@ def setup_dask_client():
 
     if dask_temp_dir is None:
         this_dask_temp_dir = get_deriv_root() / ".dask-worker-space"
+    else:
+        this_dask_temp_dir = dask_temp_dir
 
     logger.info(f'📂 Temporary directory is: {this_dask_temp_dir}')
     dask.config.set(

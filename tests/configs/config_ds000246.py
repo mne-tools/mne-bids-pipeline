@@ -20,3 +20,4 @@ on_error = 'abort'
 parallel_backend = 'dask'
 N_JOBS = 2
 open_dask_dashboard = True
+dask_temp_dir = "./.dask-worker-space"

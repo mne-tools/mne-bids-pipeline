@@ -117,6 +117,9 @@ authors:
   ({{ gh(482) }} by {{ authors.hoechenberger }})
 - Speed up report generation.
   ({{ gh(487) }} by {{ authors.hoechenberger }})
+- The new [`epochs_metadata_excludes][config.epochs_metadata_excludes] setting
+  allows for the exclusion of epochs based on metadata query strings.
+  ({{ gh(495) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

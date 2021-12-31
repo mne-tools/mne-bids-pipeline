@@ -818,6 +818,19 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
+epochs_metadata_excludes: Iterable[str] = []
+"""
+[Metadata queries][https://mne.tools/dev/auto_tutorials/epochs/30_epochs_metadata.html]
+specifying which epochs to exclude from analysis. If a metadata query doesn't
+yield any epochs, a warning will be emitted.
+
+???+ example "Example"
+    Exclude all epochs with a `response_missing` event:
+    ```python
+    epochs_metadata_excludes = ['response_missing.notna()']
+    ```
+"""
+
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.

@@ -8,6 +8,6 @@
 ::: config.epochs_metadata_tmax
 ::: config.epochs_metadata_keep_first
 ::: config.epochs_metadata_keep_last
-::: config.epochs_metadata_exclude
+::: config.epochs_metadata_excludes
 ::: config.rest_epochs_duration
 ::: config.rest_epochs_overlap

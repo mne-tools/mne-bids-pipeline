@@ -820,9 +820,9 @@ will be named with a ``last_`` instead of a ``first_`` prefix.
 
 epochs_metadata_excludes: Iterable[str] = []
 """
-[Metadata queries][https://mne.tools/dev/auto_tutorials/epochs/30_epochs_metadata.html]
-specifying which epochs to exclude from analysis. If a metadata query doesn't
-yield any epochs, a warning will be emitted.
+[Metadata queries][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
+specifying which epochs to exclude from analysis. If a metadata query fails
+because it refers to an unknown metadata column, a warning will be emitted.
 
 ???+ example "Example"
     Exclude all epochs with a `response_missing` event:

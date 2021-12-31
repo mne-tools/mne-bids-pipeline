@@ -128,7 +128,7 @@ def run_epochs(*, cfg, subject, session=None):
 
     # Lastly, exclude epochs based on metadata.
     if cfg.epochs_metadata_excludes:
-        msg = f'Excluding epochs based on metadata queries …'
+        msg = 'Excluding epochs based on metadata queries …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
@@ -145,7 +145,7 @@ def run_epochs(*, cfg, subject, session=None):
         n_epochs_after = len(epochs)
         n_epochs_diff = n_epochs_before - n_epochs_after
         msg = (f'Removed {n_epochs_diff} epochs matching metadata query: '
-                f'{exclude}')
+               f'{exclude}')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 

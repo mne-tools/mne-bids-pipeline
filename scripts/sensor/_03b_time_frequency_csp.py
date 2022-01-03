@@ -50,6 +50,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 import logging
 from matplotlib.figure import Figure
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from scipy import stats
 
@@ -223,7 +224,6 @@ def plot_frequency_decoding(
     ax.set_ylabel('Decoding Roc-Auc Scores')
     CI_msg = "95% CI" if subject == "average" else "CV std score"
     ax.set_title(f'Frequency Decoding Roc-Auc Scores - {CI_msg}')
-
     return fig
 
 
@@ -259,10 +259,14 @@ def plot_time_frequency_decoding(
 
     # Here we just use an sfreq random number like 1. Hz just
     # to create a basic info object.
-    av_tfr = AverageTFR(create_info(['freq'], sfreq=1.),
-                        # newaxis linked with the [0] in plot
-                        tf_scores_[np.newaxis, :],
-                        tf.centered_w_times, tf.centered_w_freqs, 1)
+    av_tfr = AverageTFR(
+        info=create_info(['freq'], sfreq=1.),
+        # newaxis linked with the [0] in plot
+        data=tf_scores_[np.newaxis, :],
+        times=tf.centered_w_times,
+        freqs=tf.centered_w_freqs,
+        nave=1
+    )
 
     # Centered color map around the chance level.
     max_abs_v = np.max(np.abs(tf_scores_ - chance))
@@ -338,6 +342,9 @@ def one_subject_decoding(
     # sub_ses_con = pth.prefix(subject, session, contrast)
     msg = f"Running decoding ..."
     logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
+
+    if not config.interactive:
+        matplotlib.use('Agg')
 
     report = Report(title=f"csp-permutations-sub-{subject}")
 
@@ -548,7 +555,6 @@ def load_and_average(
                     message=msg, subject=sub))
                 raise FileNotFoundError
         except FileNotFoundError:
-            print(FileNotFoundError)
             arr = np.empty(shape=shape)
             arr.fill(np.NaN)
         if np.isnan(arr).any():

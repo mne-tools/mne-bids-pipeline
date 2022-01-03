@@ -14,7 +14,6 @@ import logging
 from typing import Tuple, Union, Optional
 
 from scipy.io import loadmat
-import matplotlib
 
 import mne
 from mne.utils import BunchConst
@@ -24,8 +23,6 @@ from mne_bids.stats import count_events
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
-
-matplotlib.use('Agg')  # do not open any window  # noqa
 
 logger = logging.getLogger('mne-bids-pipeline')
 

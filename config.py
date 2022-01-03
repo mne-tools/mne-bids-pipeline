@@ -24,6 +24,8 @@ import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
+import matplotlib
+
 import mne
 import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
@@ -1754,6 +1756,10 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 
 if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
     interactive = bool(int(os.environ['MNE_BIDS_STUDY_INTERACTIVE']))
+
+if not interactive:
+    matplotlib.use('Agg')  # do not open any window  # noqa
+
 
 ###############################################################################
 # CHECKS

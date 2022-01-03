@@ -818,6 +818,19 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
+epochs_metadata_query: Optional[str] = None
+"""
+A [metadata query][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
+specifying which epochs to keep. If the query fails because it refers to an
+unknown metadata column, a warning will be emitted and all epochs will be kept.
+
+???+ example "Example"
+    Only keep epochs without a `response_missing` event:
+    ```python
+    epochs_metadata_query = ['response_missing.isna()']
+    ```
+"""
+
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.

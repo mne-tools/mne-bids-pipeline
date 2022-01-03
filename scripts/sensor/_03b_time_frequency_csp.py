@@ -163,7 +163,6 @@ def prepare_epochs_and_y(
     # We frequency filter after droping channel,
     # because filtering is costly
     epochs_filter = epochs_filter.filter(fmin, fmax, n_jobs=1)
-
     y = prepare_labels(epochs=epochs_filter, contrast=contrast)
 
     return epochs_filter, y
@@ -309,7 +308,7 @@ def plot_patterns(
     fig = csp.plot_patterns(epochs_filter.info)
     report.add_figure(
         fig=fig,
-        title=section + title,
+        title=f'{section}: {title}',
         tags=('csp',)
     )
 
@@ -396,14 +395,14 @@ def one_subject_decoding(
     for freq, (fmin, fmax) in enumerate(tf.freq_ranges):
 
         epochs_filter, y = prepare_epochs_and_y(
-            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg)
+            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
+        )
 
         ######################################################################
         # 1. Loop through frequencies, apply classifier and save scores
 
         X = epochs_filter.get_data()
         X_pca = pca.fit_transform(X) if csp_use_pca else X
-
         cv_scores = cross_val_score(estimator=clf, X=X_pca, y=y,
                                     scoring='roc_auc', cv=cv,
                                     n_jobs=1)
@@ -418,14 +417,14 @@ def one_subject_decoding(
             title += ', ses-{session}, '
         title += f'{contrast}, {fmin}–{fmax} Hz, full epochs'
         
-        csp.fit(X, y)
-        plot_patterns(
-            csp=csp,
-            epochs_filter=epochs_filter,
-            report=report,
-            section="CSP Patterns - frequency",
-            title=title
-        )
+        # csp.fit(X, y)
+        # plot_patterns(
+        #     csp=csp,
+        #     epochs_filter=epochs_filter,
+        #     report=report,
+        #     section="CSP Patterns - frequency",
+        #     title=title
+        # )
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -445,10 +444,9 @@ def one_subject_decoding(
             # So the simple way to deal with this is just to fix
             # the windows size for all frequencies.
 
-            # Crop data into time-window of interest
+            # Crop data into time window of interest
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
-
-            # transform or fit_transform?
+            # TODO transform or fit_transform?
             X_pca = pca.transform(X) if csp_use_pca else X
 
             cv_scores = cross_val_score(estimator=clf,
@@ -467,11 +465,11 @@ def one_subject_decoding(
             if session:
                 title += ', ses-{session}, '
             title += f'{contrast}, {fmin}–{fmax} Hz, {w_tmin}–{w_tmax} s'
-            plot_patterns(
-                csp=csp, epochs_filter=epochs_filter, report=report,
-                section="CSP Patterns - time-frequency",
-                title=title
-            )
+            # plot_patterns(
+            #     csp=csp, epochs_filter=epochs_filter, report=report,
+            #     section="CSP Patterns - time-frequency",
+            #     title=title
+            # )
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)

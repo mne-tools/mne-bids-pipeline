@@ -1249,7 +1249,7 @@ csp_n_components: int = 4
 The number of components used in the CSP.
 """
 
-csp_shuffle_cv: float = True
+csp_shuffle_cv: bool = True
 """
 Whether to shuffle each class's samples before splitting into batches for
 cross-validation.

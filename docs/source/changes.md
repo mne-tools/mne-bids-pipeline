@@ -174,6 +174,9 @@ authors:
   size of the generated report, while maintaining a sufficiently detailed
   visualization.
   ({{ gh(488) }} by {{ authors.hoechenberger }})
+- In [`interactive`][config.interactive] mode, the Matplotlib `Agg` backend
+  will be used.
+  ({{ gh(497) }} by {{ authors.hoechenberger }})
 
 ### Code health
 

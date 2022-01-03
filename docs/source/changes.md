@@ -117,6 +117,9 @@ authors:
   ({{ gh(482) }} by {{ authors.hoechenberger }})
 - Speed up report generation.
   ({{ gh(487) }} by {{ authors.hoechenberger }})
+- The new [`epochs_metadata_query][config.epochs_metadata_query] setting
+  allows to select epochs based on metadata query strings.
+  ({{ gh(495) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 
 ### Behavior changes
 

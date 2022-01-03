@@ -141,7 +141,7 @@ def run_epochs(*, cfg, subject, session=None):
             epochs = epochs[cfg.epochs_metadata_query]
         except KeyError:
             msg = (f'Metadata query failed to select any columns: '
-                    f'{cfg.epochs_metadata_query}')
+                   f'{cfg.epochs_metadata_query}')
             logger.warn(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
 

@@ -90,7 +90,9 @@ def run_epochs(*, cfg, subject, session=None):
             decim=cfg.decim
         )
 
-        # Only keep epochs that will be analyzed
+        # Only keep conditions that will be analyzed. Note that epochs
+        # selection based on metadata will take place later (after
+        # concatenation) to reduce the amount of logging output.
         if cfg.task != 'rest':
             if isinstance(cfg.conditions, dict):
                 conditions = list(cfg.conditions.keys())
@@ -124,7 +126,32 @@ def run_epochs(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    msg = 'Writing epochs to disk'
+    # Now, select a subset of epochs based on metadata.
+    # TODO Since epochs indexing will yield copies, we should profile whether
+    # this actually causes excessize memory usage. If it turns out to be an
+    # actual problem, we should do the metadata-based epochs selection on a
+    # per-run basis instead of on the concatenated and preloaded data.
+    if cfg.epochs_metadata_query is not None:
+        msg = 'Excluding epochs based on metadata …'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
+
+        n_epochs_before = len(epochs)
+        try:
+            epochs = epochs[cfg.epochs_metadata_query]
+        except KeyError:
+            msg = (f'Metadata query failed to select any columns: '
+                   f'{cfg.epochs_metadata_query}')
+            logger.warn(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
+
+        n_epochs_after = len(epochs)
+        n_epochs_diff = n_epochs_before - n_epochs_after
+        msg = f'Removed {n_epochs_diff} epochs based on metadata.'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session))
+
+    msg = f'Writing {len(epochs)} epochs to disk.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
@@ -160,6 +187,7 @@ def get_config(
         epochs_metadata_tmax=config.epochs_metadata_tmax,
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
+        epochs_metadata_query=config.epochs_metadata_query,
         event_repeated=config.event_repeated,
         decim=config.decim,
         ch_types=config.ch_types,

@@ -63,7 +63,11 @@ def plot_source(stc, filename):
     """Plot and save the source estimate."""
     brain = stc.plot(
         subjects_dir=config.get_fs_subjects_dir(),
-        hemi="split", size=(1600, 800))
+        hemi="split", size=(1600, 800),
+        colormap="seismic",
+        clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+    )
     brain.save_image(filename=filename, mode='rgb')
 
 
@@ -190,7 +194,8 @@ def group_analysis(subjects, sessions, cfg, freq_band):
         hemi="split", size=(1600, 800), backend="pyvistaqt",
         colormap="seismic",
         # No need to calibrate the colorbar here, you can just use the visualization script
-        clim=dict(kind="percent", pos_lims=[5, 50, 95])
+        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+        clim=dict(kind="percent", pos_lims=[20, 50, 80])
     )
     filename = f"brain_contrast_morphed_sub-{subject}.png"
     brain.save_image(

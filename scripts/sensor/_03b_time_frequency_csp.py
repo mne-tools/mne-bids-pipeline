@@ -70,7 +70,7 @@ from mne.report import Report
 
 from mne_bids import BIDSPath
 
-from config import (N_JOBS, gen_log_kwargs, on_error,
+from config import (gen_log_kwargs, on_error,
                     failsafe_run)
 from config import Tf, Pth, SessionT, ContrastT
 import config
@@ -394,6 +394,12 @@ def one_subject_decoding(
 
     for freq, (fmin, fmax) in enumerate(tf.freq_ranges):
 
+        msg = (f'Contrast: {contrast[0]} – {contrast[1]}, '
+               f'Freqs (Hz): {fmin}–{fmax}')
+        logger.info(
+            **gen_log_kwargs(msg, subject=subject, session=session)
+        )
+
         epochs_filter, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
@@ -431,13 +437,6 @@ def one_subject_decoding(
 
         # Roll covariance, csp and lda over time
         for t, (w_tmin, w_tmax) in enumerate(tf.time_ranges):
-            msg = (f'Contrast: {contrast[0]} – {contrast[1]}, '
-                   f'Freqs (Hz): {fmin}–{fmax}, '
-                   f'Times (sec): {w_tmin}–{w_tmax}')
-            logger.info(
-                **gen_log_kwargs(msg, subject=subject, session=session)
-            )
-
             # Originally the window size varied accross frequencies...
             # But this means also that there is some mutual information between
             # 2 different pixels in the map.
@@ -460,7 +459,20 @@ def one_subject_decoding(
             # epochs by using CV.
             # We cannot use pca if plotting the pattern, as we'll need channel
             # locations.
-            csp.fit(X, y)
+            try:
+                csp.fit(X, y)
+            except np.linalg.LinAlgError as e:
+                msg = (
+                    f'CSP error: '
+                    f'Contrast: {contrast[0]} – {contrast[1]}, '
+                    f'Freqs (Hz): {fmin}–{fmax}, '
+                    f'Times (sec): {w_tmin}–{w_tmax}'
+                )
+                logger.warning(
+                    **gen_log_kwargs(msg, subject=subject, session=session)
+                )
+                print(e)
+                
             title = f'sub-{subject}'
             if session:
                 title += ', ses-{session}, '
@@ -544,24 +556,25 @@ def load_and_average(
     res = np.zeros(shape_all)
     iterator = itertools.product(subjects, sessions)
     for i, (sub, ses) in enumerate(iterator):
-        try:
-            arr = np.load(path(sub, ses, contrast))
-            # Checking for previous iteration, previous shapes
-            if list(arr.shape) != shape:
-                msg = f"Shape mismatch for {path(sub, ses, contrast)}"
-                logger.warning(**gen_log_kwargs(
-                    message=msg, subject=sub))
-                raise FileNotFoundError
-        except FileNotFoundError:
-            arr = np.empty(shape=shape)
-            arr.fill(np.NaN)
+        # try:
+        arr = np.load(path(sub, ses, contrast))
+        # Checking for previous iteration, previous shapes
+        if list(arr.shape) != shape:
+            msg = f"Shape mismatch for {path(sub, ses, contrast)}"
+            logger.warning(**gen_log_kwargs(
+                message=msg, subject=sub))
+            raise FileNotFoundError
+        # except FileNotFoundError:
+        #     arr = np.empty(shape=shape)
+        #     arr.fill(np.NaN)
         if np.isnan(arr).any():
             msg = f"NaN values were found in {path(sub, ses, contrast)}"
             logger.warning(**gen_log_kwargs(
                 message=msg, subject=sub, session=ses))
         res[i] = arr
     if average:
-        return np.nanmean(res, axis=0)
+        # return np.nanmean(res, axis=0)
+        return np.mean(res, axis=0)
     else:
         return res
 
@@ -883,7 +896,7 @@ def get_config(
         n_boot=config.n_boot,
         n_permutations=config.n_permutations,
         random_state=config.random_state,
-        interactive=config.interactive,
+        interactive=config.interactive
     )
     return cfg
 
@@ -913,7 +926,7 @@ def main():
     for contrast in config.contrasts:
 
         parallel, run_func, _ = parallel_func(
-            one_subject_decoding, n_jobs=N_JOBS)
+            one_subject_decoding, n_jobs=config.get_n_jobs())
         logs = parallel(
             run_func(cfg=cfg, tf=tf, pth=pth,
                      subject=subject,

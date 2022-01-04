@@ -3353,7 +3353,7 @@ class Pth:
             processing='csp+tf' + self.contrast_suffix(contrast),
             subject=subject,
             session=session,
-            suffix='scores+std',
+            suffix='scores',
             extension='.npy')
 
     def contrast_suffix(self, contrast: ContrastT) -> str:

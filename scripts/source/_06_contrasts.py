@@ -116,11 +116,8 @@ def one_subject(subject, session, cfg, freq_band):
     stc_cond = []
     for cond in config.contrasts[0]:  # FIXME iterate over ALL contrasts
         print(cond)
-
-        # import ipdb
-        # ipdb.set_trace()
-        epochs_filter = epochs[cond].crop(tmin=1, tmax=4)
-        epochs_filter.filter(l_freq, h_freq)
+        epochs_filter = epochs[cond].filter(l_freq, h_freq)
+        epochs_filter.crop(tmin=1, tmax=2)
 
         data_cov = mne.compute_covariance(epochs_filter)
 

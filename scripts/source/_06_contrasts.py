@@ -61,13 +61,9 @@ def fname(subject, session, res_path):
 
 def plot_source(stc, filename):
     """Plot and save the source estimate."""
-    print('plotting source estimate :-)')
-    # return None
     brain = stc.plot(
         subjects_dir=config.get_fs_subjects_dir(),
         hemi="split", size=(1600, 800))
-
-    print(f'saving image to: {filename}')
     brain.save_image(filename=filename, mode='rgb')
 
 
@@ -158,7 +154,8 @@ def one_subject(subject, session, cfg, freq_band):
     filename = f"brain_contrast_morphed_sub-{subject}-ses-{session}.png"
     plot_source(stc_fsaverage, join(res_path, filename))
 
-    stc_fsaverage.save(fname=fname(subject, session, res_path=res_path))
+    stc_fsaverage.save(fname=fname(subject, session, res_path=res_path),
+                       overwrite=True)
 
     return stc_fsaverage
 
@@ -183,7 +180,7 @@ def group_analysis(subjects, sessions, cfg, freq_band):
     print(stc_avg.data.shape)
     print(type(stc_avg))
 
-    stc_avg.save(join(res_path, "stc_avg.stc"))
+    stc_avg.save(join(res_path, "stc_avg.stc"), overwrite=True)
 
     # TODO: Not elegant
     subject = "fsaverage"
@@ -193,7 +190,7 @@ def group_analysis(subjects, sessions, cfg, freq_band):
         hemi="split", size=(1600, 800), backend="pyvistaqt",
         colormap="seismic",
         # No need to calibrate the colorbar here, you can just use the visualization script
-        clim=dict(kind="percent", pos_lims=[30, 80, 95])
+        clim=dict(kind="percent", pos_lims=[5, 50, 95])
     )
     filename = f"brain_contrast_morphed_sub-{subject}.png"
     brain.save_image(
@@ -209,7 +206,7 @@ def group_analysis(subjects, sessions, cfg, freq_band):
     stc_avg.data = temp
     stc_avg.time = np.linspace(0, 1, len(subjects))
     
-    stc_avg.save(join(res_path, "stc_all.stc"))
+    stc_avg.save(join(res_path, "stc_all.stc"), overwrite=True)
 
 
 def get_config(

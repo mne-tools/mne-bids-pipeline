@@ -38,14 +38,17 @@ logger = logging.getLogger('mne-bids-pipeline')
 # You have to  create the result folder beforehand
 freq_bands = {
     'alpha': {
-        'range': (10, 15),
-        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/res_3s_alpha')
+        'range': (8, 12),
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/alpha')
     },
     'beta': {
-        'range': (15, 20),
-        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/res_3s_beta')
+        'range': (12, 30),
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
+    },
+    'gamma': {
+        'range': (30, 100),
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/gamma')
     }
-
 }
 
 

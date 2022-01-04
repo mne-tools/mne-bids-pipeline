@@ -24,6 +24,8 @@ import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
+import matplotlib
+
 import mne
 import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
@@ -156,6 +158,14 @@ The BIDS `recording` entity.
 space: Optional[str] = None
 """
 The BIDS `space` entity.
+"""
+
+plot_psd_for_runs: Union[Literal['all'], Iterable[str]] = 'all'
+"""
+For which runs to add a power spectral density (PSD) plot to the generated
+report. This can take a considerable amount of time if you have many long
+runs. In this case, specify the runs, or pass an empty list to disable raw PSD
+plotting.
 """
 
 subjects: Union[Iterable[str], Literal['all']] = 'all'
@@ -810,6 +820,19 @@ occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
 """
 
+epochs_metadata_query: Optional[str] = None
+"""
+A [metadata query][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
+specifying which epochs to keep. If the query fails because it refers to an
+unknown metadata column, a warning will be emitted and all epochs will be kept.
+
+???+ example "Example"
+    Only keep epochs without a `response_missing` event:
+    ```python
+    epochs_metadata_query = ['response_missing.isna()']
+    ```
+"""
+
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
@@ -1360,10 +1383,10 @@ However, in certain situations, this is not possible. Examples include:
   allow easier storage and distribution in certain situations.
 
 To allow the Pipeline to find the correct MRI images and perform coregistration
-automatically, we provide a "hook" that allows you to provide in a custom
+automatically, we provide a "hook" that allows you to provide a custom
 function whose output tells the Pipeline where to find the T1-weighted image.
 
-The function is expected to accept a single parameter. The Pipeline will pass
+The function is expected to accept a single parameter: The Pipeline will pass
 a `BIDSPath` with the following parameters set based on the currently processed
 electrophysiological data:
 
@@ -1746,6 +1769,10 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 
 if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
     interactive = bool(int(os.environ['MNE_BIDS_STUDY_INTERACTIVE']))
+
+if not interactive:
+    matplotlib.use('Agg')  # do not open any window  # noqa
+
 
 ###############################################################################
 # CHECKS
@@ -2269,7 +2296,7 @@ def failsafe_run(
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
-                assert out is None  # make sure the function return None
+                assert out is None  # make sure the function returns None
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:

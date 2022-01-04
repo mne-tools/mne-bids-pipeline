@@ -86,7 +86,7 @@ def run_inverse(*, cfg, subject, session=None):
                 method=method,
                 pick_ori=pick_ori
             )
-            stc.save(fname_stc)
+            stc.save(fname_stc, overwrite=True)
 
 
 def get_config(

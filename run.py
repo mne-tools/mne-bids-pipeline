@@ -23,7 +23,7 @@ log_level_styles = {
         'bold': True
     }
 }
-log_fmt = '%(message)s'
+log_fmt = '[%(asctime)s] %(message)s'
 coloredlogs.install(
     fmt=log_fmt,
     level_styles=log_level_styles,

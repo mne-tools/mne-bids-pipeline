@@ -23,3 +23,4 @@
 ::: config.eeg_template_montage
 ::: config.drop_channels
 ::: config.analyze_channels
+::: config.plot_psd_for_runs

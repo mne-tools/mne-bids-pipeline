@@ -46,8 +46,10 @@ by making some approximations, such as:
 
 import itertools
 import os
+import copy
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 import logging
+
 from matplotlib.figure import Figure
 import numpy as np
 import matplotlib
@@ -280,7 +282,8 @@ def plot_time_frequency_decoding(
 
 def plot_patterns(
     *,
-    csp,
+    csp: CSP,
+    pca: PCA,
     epochs_filter: BaseEpochs,
     report: Report,
     section: str,
@@ -291,7 +294,9 @@ def plot_patterns(
     PARAMETERS
     ----------
     csp
-        csp fitted estimator.
+        Fitted CSP estimator.
+    pca
+        Fitted PCA.
     epochs_filter
         Epochs which have been band passed filtered and maybe time cropped.
     report
@@ -305,6 +310,10 @@ def plot_patterns(
     -------
     None. Just save the figure in the report.
     """
+    csp = copy.deepcopy(csp)
+    csp.patterns_ = csp.patterns_[None, :, :]
+    csp.patterns_ = pca.inverse_transform(csp.patterns_)[0].T
+
     fig = csp.plot_patterns(epochs_filter.info)
     report.add_figure(
         fig=fig,
@@ -416,21 +425,21 @@ def one_subject_decoding(
         freq_scores_std[freq] = np.std(cv_scores, axis=0)
         freq_scores[freq] = np.mean(cv_scores, axis=0)
 
-        # Plot patterns. We cannot use pca if plotting the pattern, as we'll
-        # need channel locations.
-        title = f'sub-{subject}'
-        if session:
-            title += ', ses-{session}, '
-        title += f'{contrast}, {fmin}–{fmax} Hz, full epochs'
-        
-        # csp.fit(X, y)
-        # plot_patterns(
-        #     csp=csp,
-        #     epochs_filter=epochs_filter,
-        #     report=report,
-        #     section="CSP Patterns - frequency",
-        #     title=title
-        # )
+        if cfg.csp_plot_patterns:
+            title = f'sub-{subject}'
+            if session:
+                title += ', ses-{session}, '
+            title += f'{contrast}, {fmin}–{fmax} Hz, full epochs'
+
+            csp.fit(X_pca, y)
+            plot_patterns(
+                csp=csp,
+                pca=pca,
+                epochs_filter=epochs_filter,
+                report=report,
+                section="CSP Patterns - frequency",
+                title=title
+            )
 
         ######################################################################
         # 2. Loop through frequencies and time
@@ -445,7 +454,6 @@ def one_subject_decoding(
 
             # Crop data into time window of interest
             X = epochs_filter.copy().crop(w_tmin, w_tmax).get_data()
-            # TODO transform or fit_transform?
             X_pca = pca.transform(X) if csp_use_pca else X
 
             cv_scores = cross_val_score(estimator=clf,
@@ -455,33 +463,19 @@ def one_subject_decoding(
                                         n_jobs=1)
             tf_scores[freq, t] = np.mean(cv_scores, axis=0)
 
-            # We plot the patterns using all the epochs without splitting the
-            # epochs by using CV.
-            # We cannot use pca if plotting the pattern, as we'll need channel
-            # locations.
-            try:
-                csp.fit(X, y)
-            except np.linalg.LinAlgError as e:
-                msg = (
-                    f'CSP error: '
-                    f'Contrast: {contrast[0]} – {contrast[1]}, '
-                    f'Freqs (Hz): {fmin}–{fmax}, '
-                    f'Times (sec): {w_tmin}–{w_tmax}'
+            if cfg.csp_plot_patterns:
+                # We plot the patterns using all the epochs without splitting
+                # the epochs by using CV.
+                csp.fit(X_pca, y)
+                title = f'sub-{subject}'
+                if session:
+                    title += ', ses-{session}, '
+                title += f'{contrast}, {fmin}–{fmax} Hz, {w_tmin}–{w_tmax} s'
+                plot_patterns(
+                    csp=csp, epochs_filter=epochs_filter, report=report,
+                    section="CSP Patterns - time-frequency",
+                    title=title, pca=pca
                 )
-                logger.warning(
-                    **gen_log_kwargs(msg, subject=subject, session=session)
-                )
-                print(e)
-                
-            title = f'sub-{subject}'
-            if session:
-                title += ', ses-{session}, '
-            title += f'{contrast}, {fmin}–{fmax} Hz, {w_tmin}–{w_tmax} s'
-            # plot_patterns(
-            #     csp=csp, epochs_filter=epochs_filter, report=report,
-            #     section="CSP Patterns - time-frequency",
-            #     title=title
-            # )
 
     # Frequency savings
     np.save(file=pth.freq_scores(subject, session, contrast), arr=freq_scores)
@@ -563,7 +557,7 @@ def load_and_average(
             msg = f"Shape mismatch for {path(sub, ses, contrast)}"
             logger.warning(**gen_log_kwargs(
                 message=msg, subject=sub))
-            raise FileNotFoundError
+            raise FileNotFoundError(msg)
         # except FileNotFoundError:
         #     arr = np.empty(shape=shape)
         #     arr.fill(np.NaN)
@@ -891,6 +885,7 @@ def get_config(
         csp_n_components=config.csp_n_components,
         csp_reg=config.csp_reg,
         csp_shuffle_cv=config.csp_shuffle_cv,
+        csp_plot_patterns=config.csp_plot_patterns,
         cluster_stats_alpha=config.cluster_stats_alpha,
         cluster_t_dist_alpha_thres=config.cluster_t_dist_alpha_thres,
         n_boot=config.n_boot,

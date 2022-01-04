@@ -1286,6 +1286,14 @@ Disable it when you have finished calibrating the pipeline.
 But the difference with and without it is nearly negligible.
 """
 
+csp_plot_patterns: bool = True
+"""
+Whether to add the CSP patterns to the report. Note that depending on
+[`csp_times`][config.csp_times], [`csp_freqs`][config.csp_freqs], and
+[`csp_n_components`][config.csp_n_components], a lot of patterns may be
+generated.
+"""
+
 cluster_stats_alpha: float = 0.05
 """
 Statistic level used in the time frequency script.

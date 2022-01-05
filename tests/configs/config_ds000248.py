@@ -11,6 +11,7 @@ subjects = ['01']
 rename_events = {'Smiley': 'Emoji',
                  'Button': 'Switch'}
 conditions = ['Auditory', 'Visual', 'Auditory/Left', 'Auditory/Right']
+epochs_metadata_query = 'event_name != "foobar"'  # Just for testing!
 contrasts = [('Visual', 'Auditory'),
              ('Auditory/Right', 'Auditory/Left')]
 

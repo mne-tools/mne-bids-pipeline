@@ -65,8 +65,8 @@ def plot_source(stc, filename):
         subjects_dir=config.get_fs_subjects_dir(),
         hemi="split", size=(1600, 800),
         colormap="seismic",
-        clim=dict(kind="percent", pos_lims=[20, 50, 80])
-        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+        # clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
     )
     brain.save_image(filename=filename, mode='rgb')
 
@@ -117,7 +117,7 @@ def one_subject(subject, session, cfg, freq_band):
     for cond in config.contrasts[0]:  # FIXME iterate over ALL contrasts
         print(cond)
         epochs_filter = epochs[cond].filter(l_freq, h_freq)
-        epochs_filter.crop(tmin=1, tmax=2)
+        epochs_filter.crop(tmin=1, tmax=3)
 
         data_cov = mne.compute_covariance(epochs_filter)
 
@@ -194,8 +194,8 @@ def group_analysis(subjects, sessions, cfg, freq_band):
         hemi="split", size=(1600, 800), backend="pyvistaqt",
         colormap="seismic",
         # No need to calibrate the colorbar here, you can just use the visualization script
-        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
-        clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+        # clim=dict(kind="percent", pos_lims=[20, 50, 80])
     )
     filename = f"brain_contrast_morphed_sub-{subject}.png"
     brain.save_image(

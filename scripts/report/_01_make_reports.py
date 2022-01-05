@@ -996,6 +996,7 @@ def get_config(
         spatial_filter=config.spatial_filter,
         conditions=config.conditions,
         contrasts=config.contrasts,
+        ica_reject=config.get_ica_reject(),
         time_frequency_conditions=config.time_frequency_conditions,
         decode=config.decode,
         decoding_metric=config.decoding_metric,

@@ -326,6 +326,8 @@ def run_ica(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         epochs = make_epochs(
+            task=cfg.task,
+            conditions=cfg.conditions,
             raw=raw,
             event_id=event_id,
             tmin=cfg.epochs_tmin,
@@ -333,15 +335,6 @@ def run_ica(*, cfg, subject, session=None):
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
-
-        # Only keep epochs that will be analyzed -> Keeps ICA in sync with
-        # epochs generated in the make_epochs script (save preserves memory)!
-        if cfg.task != 'rest':
-            if isinstance(cfg.conditions, dict):
-                conditions = list(cfg.conditions.keys())
-            else:
-                conditions = cfg.conditions
-            epochs = epochs[conditions]
 
         epochs.load_data()  # Remove reference to raw
         del raw  # free memory

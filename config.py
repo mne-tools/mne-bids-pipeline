@@ -2476,8 +2476,10 @@ def get_mf_ctc_fname(
 
 def make_epochs(
     *,
+    task: str,
     raw: mne.io.BaseRaw,
-    event_id: Optional[Dict[str, int]] = None,
+    event_id: Optional[Union[Dict[str, int], Literal['auto']]] = None,
+    conditions: Union[Iterable[str], Dict[str, str]],
     tmin: float,
     tmax: float,
     metadata_tmin: Optional[float] = None,
@@ -2491,9 +2493,9 @@ def make_epochs(
 
     No EEG reference will be set and no projectors will be applied. No
     rejection thresholds will be applied. No baseline-correction will be
-    performed.
+    performed. No metadata queries to subset epochs will be performed.
     """
-    if get_task().lower() == 'rest':
+    if task.lower() == 'rest':
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -2510,7 +2512,7 @@ def make_epochs(
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
-    # Construct metadata from the epochs
+    # Construct metadata
     if metadata_tmin is None:
         metadata_tmin = tmin
 
@@ -2533,6 +2535,35 @@ def make_epochs(
                         metadata=metadata,
                         event_repeated=event_repeated,
                         reject=None)
+
+    # Only keep conditions that will be analyzed.
+    # Note that we're not selection epochs based on metadata here.
+    if task != 'rest':
+        if isinstance(conditions, dict):
+            conditions = list(conditions.keys())
+        epochs = epochs[conditions]
+
+        # Reset metadata index and do an open-heart surgery on the drop log to
+        # make everything appear as we never subset the epochs. Otherwise, the
+        # "sparse" metadata index could confuse the user!
+        #
+        # ⛔️ Don't try this at home, kids! ⛔️
+        drop_log = tuple([
+            epochs.drop_log[i]
+            for i in epochs.metadata.index
+        ])
+        epochs.drop_log = drop_log
+        # Setting metadata must happen after updating `epochs.selection`,
+        # as the index will automatically be changed to `epochs.selection`.
+        # So then all we need to do is set the metadata to itself, and its
+        # index will get magically updated.
+        epochs.selection = np.arange(len(epochs.metadata))
+        epochs.metadata = epochs.metadata
+
+        # These are no-brainers, but better be safe than sorry
+        assert len(epochs.metadata) == len(epochs.drop_log)
+        assert len(epochs.events) == len(epochs.drop_log)
+        assert len(epochs.selection) == len(epochs.events)
 
     return epochs
 

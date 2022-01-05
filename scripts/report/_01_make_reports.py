@@ -381,6 +381,7 @@ def run_report_preprocessing(
             )
         )
         epochs = mne.read_epochs(fname_epo_not_clean)
+        epochs.drop_bad(cfg.ica_reject)
         ica = mne.preprocessing.read_ica(fname_ica)
 
         if ica.exclude:

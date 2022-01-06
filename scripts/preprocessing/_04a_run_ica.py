@@ -326,12 +326,19 @@ def run_ica(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         epochs = make_epochs(
+            subject=subject,
+            session=session,
             task=cfg.task,
             conditions=cfg.conditions,
             raw=raw,
             event_id=event_id,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
+            metadata_tmin=cfg.epochs_metadata_tmin,
+            metadata_tmax=cfg.epochs_metadata_tmax,
+            metadata_keep_first=cfg.epochs_metadata_keep_first,
+            metadata_keep_last=cfg.epochs_metadata_keep_last,
+            metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
@@ -503,6 +510,11 @@ def get_config(
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
+        epochs_metadata_tmin=config.epochs_metadata_tmin,
+        epochs_metadata_tmax=config.epochs_metadata_tmax,
+        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
+        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
+        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=config.get_eeg_reference(),
         eog_channels=config.eog_channels
     )

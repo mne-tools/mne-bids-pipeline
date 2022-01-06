@@ -2477,15 +2477,18 @@ def get_mf_ctc_fname(
 def make_epochs(
     *,
     task: str,
+    subject: str,
+    session: Optional[str],
     raw: mne.io.BaseRaw,
-    event_id: Optional[Union[Dict[str, int], Literal['auto']]] = None,
+    event_id: Optional[Union[Dict[str, int], Literal['auto']]],
     conditions: Union[Iterable[str], Dict[str, str]],
     tmin: float,
     tmax: float,
-    metadata_tmin: Optional[float] = None,
-    metadata_tmax: Optional[float] = None,
-    metadata_keep_first: Optional[Iterable[str]] = None,
-    metadata_keep_last: Optional[Iterable[str]] = None,
+    metadata_tmin: Optional[float],
+    metadata_tmax: Optional[float],
+    metadata_keep_first: Optional[Iterable[str]],
+    metadata_keep_last: Optional[Iterable[str]],
+    metadata_query: Optional[str], 
     event_repeated: Literal['error', 'drop', 'merge'],
     decim: int
 ) -> mne.Epochs:
@@ -2557,6 +2560,19 @@ def make_epochs(
                         metadata=metadata,
                         event_repeated=event_repeated,
                         reject=None)
+
+    # Now, select a subset of epochs based on metadata.
+    # All epochs that are omitted by the query will get a corresponding
+    # 'IGNORED' entry in epochs.drop_log, allowing us to keep track of how
+    # many (and which) epochs got omitted.
+    if metadata_query is not None:
+        try:
+            epochs = epochs[epochs_metadata_query]
+        except KeyError:
+            msg = (f'Metadata query failed to select any columns: '
+                   f'{epochs_metadata_query}')
+            logger.warn(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
 
     return epochs
 

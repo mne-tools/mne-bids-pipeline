@@ -2512,15 +2512,29 @@ def make_epochs(
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
-    # Only keep conditions that will be analyzed.
-    # Note that we're not selecting epochs based on metadata here.
-    if task.lower() != 'rest':
+    if task.lower() == 'rest':
+        metadata = None
+    else:
         if isinstance(conditions, dict):
             conditions = list(conditions.keys())
+        else:
+            conditions = list(conditions)  # Ensure we have a list
+
+        # Construct metadata
+        #
+        # Only keep conditions that will be analyzed or should end up in the
+        # metadata. Note that we're not selecting epochs based on metadata
+        # here.
+
+        metadata_conditions = conditions.copy()
+        if metadata_keep_first:
+            metadata_conditions.extend(metadata_keep_first)
+        if metadata_keep_last:
+            metadata_conditions.extend(metadata_keep_last)
 
         # TODO This function should be made public upstream
         event_names_to_keep = mne.utils.mixin._hid_match(
-            event_id=event_id, keys=conditions
+            event_id=event_id, keys=metadata_conditions
         )
         event_id = {
             event_name: event_code
@@ -2530,22 +2544,24 @@ def make_epochs(
         events = events[np.in1d(events[:, -1],
                                 list(event_id.values()))]
 
-    # Construct metadata
-    if metadata_tmin is None:
-        metadata_tmin = tmin
+        if metadata_tmin is None:
+            metadata_tmin = tmin
+        if metadata_tmax is None:
+            metadata_tmax = tmax
 
-    if metadata_tmax is None:
-        metadata_tmax = tmax
-
-    metadata, _, _ = mne.epochs.make_metadata(
-        events=events, event_id=event_id,
-        tmin=metadata_tmin, tmax=metadata_tmax,
-        keep_first=metadata_keep_first,
-        keep_last=metadata_keep_last,
-        sfreq=raw.info['sfreq'])
+        metadata, events, event_id = mne.epochs.make_metadata(
+            row_events=event_names_to_keep,
+            events=events, event_id=event_id,
+            tmin=metadata_tmin, tmax=metadata_tmax,
+            keep_first=metadata_keep_first,
+            keep_last=metadata_keep_last,
+            sfreq=raw.info['sfreq']
+        )
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
+    # `event_id` now should only contain conditions requested via
+    # `config.conditions`
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=tmin, tmax=tmax,
                         proj=False, baseline=None,

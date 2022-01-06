@@ -2512,21 +2512,20 @@ def make_epochs(
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
+    # Construct metadata
+    #
+    # Only keep conditions that will be analyzed or should end up in the
+    # metadata. Note that we're not selecting epochs based on metadata
+    # here.
+
     if task.lower() == 'rest':
         metadata = None
     else:
         if isinstance(conditions, dict):
-            conditions = list(conditions.keys())
+            metadata_conditions = list(conditions.keys())
         else:
-            conditions = list(conditions)  # Ensure we have a list
+            metadata_conditions = list(conditions)  # Ensure we have a list
 
-        # Construct metadata
-        #
-        # Only keep conditions that will be analyzed or should end up in the
-        # metadata. Note that we're not selecting epochs based on metadata
-        # here.
-
-        metadata_conditions = conditions.copy()
         if metadata_keep_first:
             metadata_conditions.extend(metadata_keep_first)
         if metadata_keep_last:

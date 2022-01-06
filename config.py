@@ -2491,9 +2491,12 @@ def make_epochs(
 ) -> mne.Epochs:
     """Generate Epochs from raw data.
 
-    No EEG reference will be set and no projectors will be applied. No
-    rejection thresholds will be applied. No baseline-correction will be
-    performed. No metadata queries to subset epochs will be performed.
+    - Only events corresponding to `conditions` will be used to create epochs.
+    - Metadata queries to subset epochs will be performed.
+
+    - No EEG reference will be set and no projectors will be applied.
+    - No rejection thresholds will be applied.
+    - No baseline-correction will be performed.
     """
     if task.lower() == 'rest':
         stop = raw.times[-1] - rest_epochs_duration
@@ -2506,21 +2509,16 @@ def make_epochs(
             overlap=rest_epochs_overlap,
             stop=stop)
         event_id = dict(rest=3000)
+        metadata = None
     else:  # Events for task runs
         if event_id is None:
             event_id = 'auto'
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
-    # Construct metadata
-    #
-    # We only keep conditions that will be analyzed or should end up in the
-    # metadata. Note that we're not selecting subsets of epochs based on
-    # metadata queries here.
-
-    if task.lower() == 'rest':
-        metadata = None
-    else:
+        # Construct metadata
+        #
+        # We only keep conditions that will be analyzed.
         if isinstance(conditions, dict):
             conditions = list(conditions.keys())
         else:

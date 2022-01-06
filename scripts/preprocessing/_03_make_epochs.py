@@ -119,10 +119,8 @@ def run_epochs(*, cfg, subject, session=None):
                                  session=session))
 
     # Now, select a subset of epochs based on metadata.
-    # TODO Since epochs indexing will yield copies, we should profile whether
-    # this actually causes excessize memory usage. If it turns out to be an
-    # actual problem, we should do the metadata-based epochs selection on a
-    # per-run basis instead of on the concatenated and preloaded data.
+    # TODO Move the following block to config.make_epochs() once
+    # https://github.com/mne-tools/mne-python/pull/10182 has been merged
     if cfg.epochs_metadata_query is not None:
         msg = 'Excluding epochs based on metadata …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,

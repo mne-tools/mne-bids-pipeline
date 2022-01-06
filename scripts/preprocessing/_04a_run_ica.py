@@ -445,7 +445,8 @@ def run_ica(*, cfg, subject, session=None):
     report = Report(info_fname=epochs, title=title, verbose=False)
     report.add_epochs(
         epochs=epochs,
-        title='Epochs used for ICA fitting'
+        title='Epochs used for ICA fitting',
+        drop_log_ignore=()
     )
 
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()

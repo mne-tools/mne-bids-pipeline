@@ -363,7 +363,8 @@ def run_report_preprocessing(
     report.add_epochs(
         epochs=epochs,
         title='Epochs (before cleaning)',
-        psd=psd
+        psd=psd,
+        drop_log_ignore=()
     )
 
     ###########################################################################
@@ -412,7 +413,8 @@ def run_report_preprocessing(
     report.add_epochs(
         epochs=epochs,
         title='Epochs (after cleaning)',
-        psd=psd
+        psd=psd,
+        drop_log_ignore=()
     )
 
     return report

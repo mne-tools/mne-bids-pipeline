@@ -2488,7 +2488,7 @@ def make_epochs(
     metadata_tmax: Optional[float],
     metadata_keep_first: Optional[Iterable[str]],
     metadata_keep_last: Optional[Iterable[str]],
-    metadata_query: Optional[str], 
+    metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
     decim: int
 ) -> mne.Epochs:

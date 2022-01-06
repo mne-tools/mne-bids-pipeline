@@ -2514,42 +2514,35 @@ def make_epochs(
 
     # Construct metadata
     #
-    # Only keep conditions that will be analyzed or should end up in the
-    # metadata. Note that we're not selecting epochs based on metadata
-    # here.
+    # We only keep conditions that will be analyzed or should end up in the
+    # metadata. Note that we're not selecting subsets of epochs based on
+    # metadata queries here.
 
     if task.lower() == 'rest':
         metadata = None
     else:
         if isinstance(conditions, dict):
-            metadata_conditions = list(conditions.keys())
+            conditions = list(conditions.keys())
         else:
-            metadata_conditions = list(conditions)  # Ensure we have a list
-
-        if metadata_keep_first:
-            metadata_conditions.extend(metadata_keep_first)
-        if metadata_keep_last:
-            metadata_conditions.extend(metadata_keep_last)
+            conditions = list(conditions)  # Ensure we have a list
 
         # TODO This function should be made public upstream
-        event_names_to_keep = mne.utils.mixin._hid_match(
-            event_id=event_id, keys=metadata_conditions
+        row_event_names = mne.utils.mixin._hid_match(
+            event_id=event_id, keys=conditions
         )
-        event_id = {
-            event_name: event_code
-            for event_name, event_code in event_id.items()
-            if event_name in event_names_to_keep
-        }
-        events = events[np.in1d(events[:, -1],
-                                list(event_id.values()))]
 
         if metadata_tmin is None:
             metadata_tmin = tmin
         if metadata_tmax is None:
             metadata_tmax = tmax
 
+        # The returned `events` and `event_id` will only contain
+        # the events from `row_event_names` – which is basically equivalent to
+        # what the user requested via `config.conditions` (only with potential
+        # nested event names expanded, e.g. `visual` might now be
+        # `visual/left` and `visual/right`)
         metadata, events, event_id = mne.epochs.make_metadata(
-            row_events=event_names_to_keep,
+            row_events=row_event_names,
             events=events, event_id=event_id,
             tmin=metadata_tmin, tmax=metadata_tmax,
             keep_first=metadata_keep_first,
@@ -2559,8 +2552,6 @@ def make_epochs(
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
-    # `event_id` now should only contain conditions requested via
-    # `config.conditions`
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=tmin, tmax=tmax,
                         proj=False, baseline=None,

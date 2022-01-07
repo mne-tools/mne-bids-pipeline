@@ -2563,16 +2563,29 @@ def make_epochs(
 
     # Now, select a subset of epochs based on metadata.
     # All epochs that are omitted by the query will get a corresponding
-    # 'IGNORED' entry in epochs.drop_log, allowing us to keep track of how
-    # many (and which) epochs got omitted.
+    # entry in epochs.drop_log, allowing us to keep track of how many (and
+    # which) epochs got omitted. We're first generating an index which we can
+    # then pass to epochs.drop(); this allows us to specify a custom drop
+    # reason.
     if metadata_query is not None:
+        assert epochs.metadata is not None
+
         try:
-            epochs = epochs[epochs_metadata_query]
+            idx_keep = epochs.metadata.eval(metadata_query, engine='python')
         except KeyError:
             msg = (f'Metadata query failed to select any columns: '
                    f'{epochs_metadata_query}')
             logger.warn(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
+            return epochs
+
+        idx_drop = epochs.metadata.loc[~idx_keep, :].index
+        epochs.drop(
+            indices=idx_drop,
+            reason='metadata query',
+            verbose=False
+        )
+        del idx_keep, idx_drop
 
     return epochs
 

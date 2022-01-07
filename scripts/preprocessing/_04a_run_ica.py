@@ -372,7 +372,6 @@ def run_ica(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    # Reject epochs based on peak-to-peak amplitude
     epochs.drop_bad(reject=cfg.ica_reject)
     if epochs_eog is not None:
         epochs_eog.drop_bad(reject=cfg.ica_reject)

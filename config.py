@@ -2579,7 +2579,7 @@ def make_epochs(
                                          session=session))
             return epochs
 
-        idx_drop = epochs.metadata.loc[~idx_keep, :].index
+        idx_drop = epochs.metadata.index[~idx_keep]
         epochs.drop(
             indices=idx_drop,
             reason='metadata query',

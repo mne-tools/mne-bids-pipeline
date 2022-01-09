@@ -25,6 +25,8 @@ import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
+import matplotlib
+
 import mne
 import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
@@ -817,6 +819,19 @@ epochs_metadata_keep_last: Optional[Iterable[str]] = None
 Same as ``epochs_metadata_keep_first``, but for keeping the **last**
 occurrence of matching event types. The columns indicating the event types
 will be named with a ``last_`` instead of a ``first_`` prefix.
+"""
+
+epochs_metadata_query: Optional[str] = None
+"""
+A [metadata query][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
+specifying which epochs to keep. If the query fails because it refers to an
+unknown metadata column, a warning will be emitted and all epochs will be kept.
+
+???+ example "Example"
+    Only keep epochs without a `response_missing` event:
+    ```python
+    epochs_metadata_query = ['response_missing.isna()']
+    ```
 """
 
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
@@ -1787,6 +1802,10 @@ if "MNE_BIDS_STUDY_CONFIG" in os.environ:
 
 if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
     interactive = bool(int(os.environ['MNE_BIDS_STUDY_INTERACTIVE']))
+
+if not interactive:
+    matplotlib.use('Agg')  # do not open any window  # noqa
+
 
 ###############################################################################
 # CHECKS

@@ -15,7 +15,6 @@ from typing import Tuple, Union, Optional
 from types import SimpleNamespace
 
 from scipy.io import loadmat
-import matplotlib
 import mne
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -24,8 +23,6 @@ import config
 from config import gen_log_kwargs, on_error, failsafe_run
 from config import parallel_func
 
-
-matplotlib.use('Agg')  # do not open any window  # noqa
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -381,6 +378,7 @@ def run_report_preprocessing(
             )
         )
         epochs = mne.read_epochs(fname_epo_not_clean)
+        epochs.drop_bad(cfg.ica_reject)
         ica = mne.preprocessing.read_ica(fname_ica)
 
         if ica.exclude:

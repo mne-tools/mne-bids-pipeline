@@ -257,8 +257,8 @@ authors:
 - Report tags are now better sanitized.
   ({{ gh(471) }} by {{ authors.hoechenberger }})
 - When creating epochs, we now ensure that the trigger codes provided via the
-  [`event_id`][config.event_id] setting are retained; previously, new trigger
-  codes were generated in certain situations.
+  `*_events.tsv` file are retained; previously, new trigger codes were
+  generated in certain situations.
   ({{ gh(471) }} by {{ authors.hoechenberger }})
 - ICA overlay plots in the report used the cleaned epochs, resulting in no
   visible ICA cleaning effects. This has been corrected.

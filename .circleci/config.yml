@@ -42,6 +42,8 @@ jobs:
       - run:
           name: Get Python running
           command: |
+            virtualenv ~/python-venv
+            source ~/python-venv/bin/activate
             python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
@@ -88,6 +90,7 @@ jobs:
       - run:
           name: Get ds000117
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds000117
       - save_cache:
           key: data-cache-ds000117-{{ .Revision }}
@@ -107,6 +110,7 @@ jobs:
       - run:
           name: Get ds000246
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds000246
       - save_cache:
           key: data-cache-ds000246-{{ .Revision }}
@@ -126,6 +130,7 @@ jobs:
       - run:
           name: Get ds000247
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds000247
       - save_cache:
           key: data-cache-ds000247-{{ .Revision }}
@@ -145,6 +150,7 @@ jobs:
       - run:
           name: Get ds000248
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds000248
       - save_cache:
           key: data-cache-ds000248-{{ .Revision }}
@@ -164,6 +170,7 @@ jobs:
       - run:
           name: Get ds001810
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds001810
       - save_cache:
           key: data-cache-ds001810-{{ .Revision }}
@@ -183,6 +190,7 @@ jobs:
       - run:
           name: Get ds003104
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds003104
       - save_cache:
           key: data-cache-ds003104-{{ .Revision }}
@@ -202,6 +210,7 @@ jobs:
       - run:
           name: Get ds003392
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ds003392
       - save_cache:
           key: data-cache-ds003392-{{ .Revision }}
@@ -223,6 +232,7 @@ jobs:
       - run:
           name: Get eeg_matchingpennies
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d eeg_matchingpennies
       - save_cache:
           key: data-cache-eeg_matchingpennies-{{ .Revision }}
@@ -242,6 +252,7 @@ jobs:
       - run:
           name: Get ERP_CORE
           command: |
+            source ~/python-venv/bin/activate
             python ~/project/tests/download_test_data.py -d ERP_CORE
       - save_cache:
           key: data-cache-ERP_CORE-{{ .Revision }}
@@ -261,6 +272,7 @@ jobs:
       - run:
           name: test ds000117
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000117
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -287,6 +299,7 @@ jobs:
       - run:
           name: test ds000246
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000246
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -315,6 +328,7 @@ jobs:
       - run:
           name: test ds000247
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000247
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -341,6 +355,7 @@ jobs:
       - run:
           name: test ds000248
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000248
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -371,6 +386,7 @@ jobs:
       - run:
           name: test ds000248_ica
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000248_ica
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -399,6 +415,7 @@ jobs:
       - run:
           name: test BEM from FLASH
           command: |
+            source ~/python-venv/bin/activate
             python tests/run_tests.py --download=0 ds000248_FLASH_BEM
 
   test_ds000248_T1_BEM:
@@ -414,6 +431,7 @@ jobs:
       - run:
           name: test BEM from T1 (watershed)
           command: |
+            source ~/python-venv/bin/activate
             python tests/run_tests.py --download=0 ds000248_T1_BEM
           no_output_timeout: 20m
 
@@ -430,6 +448,7 @@ jobs:
       - run:
           name: test head surface creation for MNE coregistration
           command: |
+            source ~/python-venv/bin/activate
             python tests/run_tests.py --download=0 ds000248_coreg_surfaces
 
   test_ds000248_no_mri:
@@ -445,6 +464,7 @@ jobs:
       - run:
           name: test ds000248_no_mri
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds000248_no_mri
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -471,6 +491,7 @@ jobs:
       - run:
           name: test ds001810
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds001810
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -497,6 +518,7 @@ jobs:
       - run:
           name: test ds003104
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds003104
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -523,6 +545,7 @@ jobs:
       - run:
           name: test ds003392
           command: |
+            source ~/python-venv/bin/activate
             export DS=ds003392
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -553,6 +576,7 @@ jobs:
       - run:
           name: test eeg_matchingpennies
           command: |
+            source ~/python-venv/bin/activate
             export DS=eeg_matchingpennies
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
@@ -582,6 +606,7 @@ jobs:
       - run:
           name: test ERP CORE N400
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N400
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N400*.html ~/reports/ERP_CORE/
@@ -610,6 +635,7 @@ jobs:
       - run:
           name: test ERP CORE ERN
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_ERN
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*ERN*.html ~/reports/ERP_CORE/
@@ -638,6 +664,7 @@ jobs:
       - run:
           name: test ERP CORE LRP
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_LRP
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*LRP*.html ~/reports/ERP_CORE/
@@ -666,6 +693,7 @@ jobs:
       - run:
           name: test ERP CORE MMN
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_MMN
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*MMN*.html ~/reports/ERP_CORE/
@@ -694,6 +722,7 @@ jobs:
       - run:
           name: test ERP CORE N2pc
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N2pc
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N2pc*.html ~/reports/ERP_CORE/
@@ -722,6 +751,7 @@ jobs:
       - run:
           name: test ERP CORE N170
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_N170
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N170*.html ~/reports/ERP_CORE/
@@ -750,6 +780,7 @@ jobs:
       - run:
           name: test ERP CORE P3
           command: |
+            source ~/python-venv/bin/activate
             mkdir -p ~/reports/ERP_CORE
             python tests/run_tests.py --download=0 ERP_CORE_P3
             cp ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*P3*.html ~/reports/ERP_CORE/

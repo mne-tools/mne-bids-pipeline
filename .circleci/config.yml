@@ -840,7 +840,9 @@ jobs:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
-          command: ./docs/build-docs.sh
+          command: |
+          source ~/python-venv/bin/activate
+          ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site

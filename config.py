@@ -2254,7 +2254,6 @@ def setup_dask_client():
             # process will terminate the worker
             'distributed.worker.memory.terminate': 0.99,
             'logging.distributed': 'info',
-            'logging.distributed.client': 'info'
         }
     )
     client = Client(  # noqa: F841

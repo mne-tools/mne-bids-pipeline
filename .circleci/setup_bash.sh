@@ -50,7 +50,8 @@ echo 'export PATH=~/.pyenv/libexec:$PATH' >> $BASH_ENV;
 PATH=~/.local/bin:~/.pyenv/libexec:$PATH
 echo 'export MNE_DATA=/home/circleci/mne_data' >> $BASH_ENV;
 echo 'export DISPLAY=:99' >> $BASH_ENV;
-echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV
+echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV;
+echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 mkdir -p ~/mne_data

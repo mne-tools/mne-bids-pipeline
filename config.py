@@ -2250,9 +2250,10 @@ def setup_dask_client():
     dask.config.set(
         {
             'temporary-directory': this_dask_temp_dir,
+            'distributed.worker.memory.pause': 0.9,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker
-            'distributed.worker.memory.terminate': 0.99,
+            'distributed.worker.memory.terminate': 1.0,
             # TODO spilling to disk currently doesn't work reliably for us,
             # as Dask cannot spill "unmanaged" memory – and most of what we
             # see currently is, in fact, "unmanaged". Needs thourough

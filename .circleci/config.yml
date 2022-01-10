@@ -3,7 +3,7 @@ version: 2
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.9
+    - image: cimg/python:3.9-browsers
 
 _git: &git
   name: Configure git

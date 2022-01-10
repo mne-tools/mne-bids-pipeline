@@ -75,8 +75,8 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
+            - python-venv
             - .local/bin
-            - .local/lib/python3.8/site-packages
 
   cache_ds000117:
     <<: *imageconfig

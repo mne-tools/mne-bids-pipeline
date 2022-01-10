@@ -61,7 +61,6 @@ jobs:
       #       - ~/.local/lib/python3.8/site-packages
       #       - ~/.local/bin
       # Look at what we have and fail early if there is some library conflict
-      - browser-tools/install-chrome
       - run:
           name: Check installation
           command: |
@@ -69,7 +68,6 @@ jobs:
             which python
             git-annex version
             datalad --version
-            google-chrome --version
             openneuro-py --version
             mri_convert --version
             mne_bids --version
@@ -609,6 +607,11 @@ jobs:
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
+      - browser-tools/install-chrome
+      - run:
+          name: Check chrome installation
+          command: |
+            google-chrome --version
       - run:
           name: test ERP CORE N400
           command: |

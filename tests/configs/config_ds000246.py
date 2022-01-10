@@ -18,5 +18,6 @@ contrasts = [('deviant', 'standard')]
 decode = True
 on_error = 'abort'
 parallel_backend = 'dask'
+dask_worker_memory_limit = '1.5G'
 N_JOBS = 2
 dask_temp_dir = "./.dask-worker-space"

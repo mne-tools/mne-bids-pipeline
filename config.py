@@ -2251,6 +2251,8 @@ def setup_dask_client():
         {
             'temporary-directory': this_dask_temp_dir,
             'distributed.worker.memory.limit': dask_worker_memory_limit,
+            'distributed.worker.memory.target': 0.9,
+            'distributed.worker.memory.pause': False,
             'distributed.worker.memory.spill': 0.95,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker

@@ -76,7 +76,7 @@ def get_config(
     return cfg
 
 
-# @failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(on_error=on_error, script_path=__file__)
 def main():
     """Initialize the output directories."""
     msg = 'Running: Initializing output directories.'

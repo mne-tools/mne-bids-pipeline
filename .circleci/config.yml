@@ -609,7 +609,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - browser-tools/install-chrome
       - run:
-          name: Check chrome installation
+          name: Check Chrome installation
           command: |
             google-chrome --version
       - run:

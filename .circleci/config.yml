@@ -1,5 +1,8 @@
 version: 2
 
+orbs:
+  browser-tools: circleci/browser-tools@1.2
+
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
@@ -58,6 +61,7 @@ jobs:
       #       - ~/.local/lib/python3.8/site-packages
       #       - ~/.local/bin
       # Look at what we have and fail early if there is some library conflict
+      - browser-tools/install-chrome
       - run:
           name: Check installation
           command: |
@@ -65,6 +69,7 @@ jobs:
             which python
             git-annex version
             datalad --version
+            google-chrome --version
             openneuro-py --version
             mri_convert --version
             mne_bids --version

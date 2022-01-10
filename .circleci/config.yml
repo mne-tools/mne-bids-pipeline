@@ -61,6 +61,7 @@ jobs:
       - run:
           name: Check installation
           command: |
+            source ~/python-venv/bin/activate
             which python
             git-annex version
             datalad --version

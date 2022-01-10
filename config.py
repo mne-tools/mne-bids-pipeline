@@ -2252,7 +2252,9 @@ def setup_dask_client():
             'temporary-directory': this_dask_temp_dir,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker
-            'distributed.worker.memory.terminate': 0.99
+            'distributed.worker.memory.terminate': 0.99,
+            'logging.distributed': 'info',
+            'logging.distributed.client': 'info'
         }
     )
     client = Client(  # noqa: F841

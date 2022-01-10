@@ -69,7 +69,7 @@ run_source_estimation = False
 on_error = 'abort'
 on_rename_missing_events = 'warn'
 parallel_backend = 'dask'
-dask_worker_memory_limit = '1.5G'
+dask_worker_memory_limit = '2G'
 N_JOBS = 2
 
 if task == 'N400':

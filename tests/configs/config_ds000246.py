@@ -19,6 +19,6 @@ decode = True
 on_error = 'abort'
 parallel_backend = 'dask'
 dask_worker_memory_limit = '2G'
-N_JOBS = 2
 dask_temp_dir = "./.dask-worker-space"
 dask_open_dashboard = True
+N_JOBS = 2

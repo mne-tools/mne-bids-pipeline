@@ -841,8 +841,8 @@ jobs:
       - run:
           name: Build documentation
           command: |
-          source ~/python-venv/bin/activate
-          ./docs/build-docs.sh
+            source ~/python-venv/bin/activate
+            ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site

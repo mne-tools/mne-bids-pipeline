@@ -46,7 +46,8 @@ echo "set -e" >> $BASH_ENV;
 echo 'export OPENBLAS_NUM_THREADS=4' >> $BASH_ENV;
 echo 'shopt -s globstar' >> $BASH_ENV;  # Enable recursive globbing via **
 echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV;
-PATH=~/.local/bin:$PATH
+echo 'export PATH=~/.pyenv/libexec:$PATH' >> $BASH_ENV;
+PATH=~/.local/bin:~/.pyenv/libexec:$PATH
 echo 'export MNE_DATA=/home/circleci/mne_data' >> $BASH_ENV;
 echo 'export DISPLAY=:99' >> $BASH_ENV;
 echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV

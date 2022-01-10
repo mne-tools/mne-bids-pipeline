@@ -2250,16 +2250,14 @@ def setup_dask_client():
     dask.config.set(
         {
             'temporary-directory': this_dask_temp_dir,
-            'distributed.worker.memory.limit': dask_worker_memory_limit,
-            'distributed.worker.memory.target': 0.9,
-            'distributed.worker.memory.pause': False,
-            'distributed.worker.memory.spill': 0.95,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker
-            'distributed.worker.memory.terminate': 0.99
+            'distributed.worker.memory.terminate': 0.99,
+            'distributed.worker.memory.spill': False
         }
     )
     client = Client(  # noqa: F841
+        memory_limit=dask_worker_memory_limit,
         n_workers=n_workers,
         threads_per_worker=1,
         name='mne-bids-pipeline'

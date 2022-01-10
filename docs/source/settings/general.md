@@ -26,6 +26,6 @@
 ::: config.plot_psd_for_runs
 ::: config.N_JOBS
 ::: config.parallel_backend
-::: config.open_dask_dashboard
+::: config.dask_open_dashboard
 ::: config.dask_temp_dir
 ::: config.dask_worker_memory_limit

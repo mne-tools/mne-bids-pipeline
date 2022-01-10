@@ -73,7 +73,7 @@ dask_worker_memory_limit = '1.5G'
 N_JOBS = 2
 
 if task == 'N400':
-    open_dask_dashboard = True
+    dask_open_dashboard = True
 
     rename_events = {
         'response/201': 'response/correct',

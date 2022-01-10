@@ -1578,7 +1578,7 @@ default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
 be installed. Ignored if [`N_JOBS`][config.N_JOBS] is set to `1`.
 """
 
-open_dask_dashboard: bool = False
+dask_open_dashboard: bool = False
 """
 Whether to open the Dask dashboard in the default webbrowser automatically.
 Ignored if `parallel_backend` is not `'dask'`.
@@ -2250,19 +2250,16 @@ def setup_dask_client():
     dask.config.set(
         {
             'temporary-directory': this_dask_temp_dir,
+            'distributed.worker.memory.limit': dask_worker_memory_limit,
+            'distributed.worker.memory.spill': 0.95,
             # fraction of memory that can be utilized before the nanny
             # process will terminate the worker
-            'distributed.worker.memory.terminate': 0.99,
-            'logging.distributed': 'info',
+            'distributed.worker.memory.terminate': 0.99
         }
     )
     client = Client(  # noqa: F841
         n_workers=n_workers,
         threads_per_worker=1,
-        memory_limit=dask_worker_memory_limit,
-        memory_target_fraction=False,
-        memory_spill_fraction=False,
-        memory_pause_fraction=False,
         name='mne-bids-pipeline'
     )
     client.auto_restart = False  # don't restart killed workers
@@ -2273,7 +2270,7 @@ def setup_dask_client():
         f'to monitor the workers.\n'
     )
 
-    if open_dask_dashboard:
+    if dask_open_dashboard:
         import webbrowser
         webbrowser.open(url=dashboard_url, autoraise=True)
 

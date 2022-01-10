@@ -38,7 +38,7 @@ fi
 
 # Set up image
 sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
-wget -q -O- http://neuro.debian.net/lists/buster.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+wget -q -O- http://neuro.debian.net/lists/focal.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
 sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
 sudo apt-get -qq update
 sudo apt install -qq tcsh git-annex-standalone libosmesa6 libglx-mesa0 libopengl0 libglx0 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xinerama0

@@ -121,10 +121,6 @@ def get_config() -> BunchConst:
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
-    if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
-        return
 
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
@@ -155,6 +151,11 @@ def run_group_average_source(*, cfg, subject='average'):
 
 
 def main():
+    if not config.run_source_estimation:
+        msg = '    … skipping: run_source_estimation is set to False.'
+        logger.info(**gen_log_kwargs(message=msg))
+        return
+
     log = run_group_average_source(cfg=get_config())
     config.save_logs([log])
 

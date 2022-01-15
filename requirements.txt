@@ -3,7 +3,7 @@ psutil
 numpy
 scipy
 joblib >= 0.14
-dask[distributed,diagnostics]
+dask[distributed]
 jupyter-server-proxy
 scikit-learn
 pandas
@@ -16,6 +16,7 @@ coloredlogs
 python-picard
 fire
 pyqt5
+pyvista
 pyvistaqt
 autoreject
 openpyxl

@@ -1009,7 +1009,6 @@ def get_config(
         use_template_mri=config.use_template_mri,
         interactive=config.interactive,
         plot_psd_for_runs=config.plot_psd_for_runs,
-        ica_reject=config.ica_reject
     )
     return cfg
 

@@ -12,17 +12,17 @@ from pathlib import Path
 import itertools
 import logging
 from typing import Tuple, Union, Optional
+from types import SimpleNamespace
 
 from scipy.io import loadmat
-
 import mne
-from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -190,7 +190,7 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
 
 def _gen_empty_report(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str]
 ) -> mne.Report:
@@ -206,7 +206,7 @@ def _gen_empty_report(
 
 def run_report_preprocessing(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: Optional[mne.Report]
@@ -420,7 +420,7 @@ def run_report_preprocessing(
 
 def run_report_sensor(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: mne.Report
@@ -603,7 +603,7 @@ def run_report_sensor(
 
 def run_report_source(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     report: mne.Report
@@ -725,7 +725,7 @@ def run_report_source(
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_report(
     *,
-    cfg: BunchConst,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
 ):
@@ -961,7 +961,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
+) -> SimpleNamespace:
     # Deal with configurations where `deriv_root` was specified, but not
     # `fs_subjects_dir`. We normally raise an exception in this case in
     # `get_fs_subjects_dir()`. However, in situations where users only run the
@@ -981,7 +981,7 @@ def get_config(
     else:
         fs_subject = config.get_fs_subject(subject=subject)
 
-    cfg = BunchConst(
+    cfg = SimpleNamespace(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
@@ -994,6 +994,7 @@ def get_config(
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,
+        ica_reject=config.ica_reject,
         conditions=config.conditions,
         contrasts=config.contrasts,
         time_frequency_conditions=config.time_frequency_conditions,
@@ -1015,34 +1016,41 @@ def get_config(
 
 def main():
     """Make reports."""
-    parallel, run_func, _ = parallel_func(run_report,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject,
-                 session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
-
-    config.save_logs(logs)
-
-    sessions = config.get_sessions()
-    if not sessions:
-        sessions = [None]
-
-    if (config.get_task() is not None and
-            config.get_task().lower() == 'rest'):
-        msg = '    … skipping "average" report for "rest" task.'
-        logger.info(**gen_log_kwargs(message=msg))
-        return
-
-    for session in sessions:
-        run_report_average(
-            cfg=get_config(subject='average'),
-            subject='average',
-            session=session
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(
+            run_report,
+            n_jobs=config.get_n_jobs()
         )
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
+
+        config.save_logs(logs)
+
+        sessions = config.get_sessions()
+        if not sessions:
+            sessions = [None]
+
+        if (config.get_task() is not None and
+                config.get_task().lower() == 'rest'):
+            msg = '    … skipping "average" report for "rest" task.'
+            logger.info(**gen_log_kwargs(message=msg))
+            return
+
+        for session in sessions:
+            run_report_average(
+                cfg=get_config(subject='average'),
+                subject='average',
+                session=session
+            )
 
 
 if __name__ == '__main__':

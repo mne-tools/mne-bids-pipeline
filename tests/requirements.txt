@@ -6,6 +6,9 @@ datalad
 numpy
 scipy
 scikit-learn
+joblib >= 0.14
+dask[distributed,diagnostics]
+jupyter-server-proxy
 pandas
 json_tricks
 h5py

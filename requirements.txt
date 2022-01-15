@@ -2,6 +2,9 @@ typing_extensions
 psutil
 numpy
 scipy
+joblib >= 0.14
+dask[distributed,diagnostics]
+jupyter-server-proxy
 scikit-learn
 pandas
 json_tricks

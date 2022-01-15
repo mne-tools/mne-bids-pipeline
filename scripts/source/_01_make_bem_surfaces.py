@@ -13,13 +13,13 @@ be used for visualization of the sensor alignment (coregistration).
 import logging
 from pathlib import Path
 from typing import Optional
+from types import SimpleNamespace
 
 import mne
-from mne.utils import BunchConst
-from mne.parallel import parallel_func
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -106,8 +106,8 @@ def make_scalp_surface(*, cfg, subject):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         recreate_bem=config.recreate_bem,
@@ -137,14 +137,17 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(make_bem_and_scalp_surface,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject)
-        for subject in config.get_subjects()
-    )
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(
+            make_bem_and_scalp_surface,
+            n_jobs=config.get_n_jobs()
+        )
+        logs = parallel(
+            run_func(cfg=get_config(subject=subject), subject=subject)
+            for subject in config.get_subjects()
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

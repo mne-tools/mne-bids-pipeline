@@ -21,20 +21,21 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
 
 import mne
-from mne.utils import BunchConst
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
 from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
                     annotations_to_events)
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -482,8 +483,8 @@ def run_ica(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         conditions=config.conditions,
         task=config.get_task(),
         datatype=config.get_datatype(),
@@ -522,17 +523,24 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_ica,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject,
-                 session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(
+            run_ica,
+            n_jobs=config.get_n_jobs()
+        )
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

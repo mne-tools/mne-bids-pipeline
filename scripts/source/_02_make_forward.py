@@ -9,15 +9,15 @@ Calculate forward solution for MEG channels.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 import mne
-from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne.datasets import fetch_fsaverage
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
+from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -142,8 +142,8 @@ def run_forward(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
@@ -171,17 +171,24 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_forward,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject,
-                 session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(
+            run_forward,
+            n_jobs=config.get_n_jobs()
+        )
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

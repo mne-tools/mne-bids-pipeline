@@ -10,17 +10,18 @@ The average power and inter-trial coherence are computed and saved to disk.
 import itertools
 import logging
 from typing import Optional
+from types import SimpleNamespace
 
 import numpy as np
 
 import mne
-from mne.utils import BunchConst
-from mne.parallel import parallel_func
 
 from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -82,8 +83,8 @@ def run_time_frequency(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
         acq=config.acq,

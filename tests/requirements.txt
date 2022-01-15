@@ -1,26 +1,5 @@
-setuptools
-pip
-typing_extensions
 psutil
 datalad
-numpy
-scipy
-scikit-learn
-joblib >= 0.14
-dask[distributed,diagnostics]
-jupyter-server-proxy
-pandas
-json_tricks
-h5py
-matplotlib
-seaborn
-nibabel
-coloredlogs
-python-picard
-fire
-pyqt5
-pyvista
-pyvistaqt
 mkdocs
 mkdocs-material
 mkdocs-material-extensions
@@ -28,12 +7,6 @@ mkdocs-macros-plugin
 mkdocstrings >= 0.16
 pytkdocs >= 0.11
 livereload
-coloredlogs
-autoreject
-openpyxl
 openneuro-py
-pooch
 httpx >= 0.20
 tqdm
-mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
-mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

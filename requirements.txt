@@ -22,5 +22,5 @@ autoreject
 openpyxl
 pooch
 tqdm
-mne @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
+mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
 mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

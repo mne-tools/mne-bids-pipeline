@@ -1,9 +1,12 @@
-version: 2
+version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@1.2
 
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: circleci/python:3.8-buster
+    - image: cimg/python:3.9-browsers
 
 _git: &git
   name: Configure git
@@ -33,28 +36,14 @@ jobs:
           <<: *bashenv
       - run:
           <<: *git
-      # - restore_cache:
-      #     keys:
-      #       - pip-cache
-      # - restore_cache:
-      #     keys:
-      #       - user-install-bin-cache
       - run:
           name: Get Python running
           command: |
-            python -m pip install --user --upgrade --progress-bar off pip setuptools
+            python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
+            python -m pip install --user --upgrade --progress-bar off -r requirements.txt
             python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
-      # - save_cache:
-      #     key: pip-cache
-      #     paths:
-      #       - ~/.cache/pip
-      # - save_cache:
-      #     key: user-install-bin-cache
-      #     paths:
-      #       - ~/.local/lib/python3.8/site-packages
-      #       - ~/.local/bin
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -73,7 +62,7 @@ jobs:
             - mne_data
             - minimal_cmds
             - .local/bin
-            - .local/lib/python3.8/site-packages
+            - .local/lib
 
   cache_ds000117:
     <<: *imageconfig
@@ -579,6 +568,11 @@ jobs:
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
+      - browser-tools/install-chrome
+      - run:
+          name: Check Chrome installation
+          command: |
+            google-chrome --version
       - run:
           name: test ERP CORE N400
           command: |
@@ -800,7 +794,8 @@ jobs:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
-          command: ./docs/build-docs.sh
+          command: |
+            ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site

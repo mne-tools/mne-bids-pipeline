@@ -27,9 +27,9 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'exclude': []
     },
     'eeg_matchingpennies': {
-        'git': 'https://github.com/sappelhoff/eeg_matchingpennies',
+        'git': 'https://gin.g-node.org/sappelhoff/eeg_matchingpennies',
         'openneuro': '',
-        'osf': '',
+        'osf': '',  # original dataset: 'cj2dr'
         'web': '',
         'include': ['sub-05'],
         'exclude': []

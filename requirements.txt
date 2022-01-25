@@ -2,6 +2,9 @@ typing_extensions
 psutil
 numpy
 scipy
+joblib >= 0.14
+dask[distributed]
+jupyter-server-proxy
 scikit-learn
 pandas
 json_tricks
@@ -13,6 +16,7 @@ coloredlogs
 python-picard
 fire
 pyqt5
+pyvista
 pyvistaqt
 autoreject
 openpyxl

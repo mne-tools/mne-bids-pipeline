@@ -119,7 +119,7 @@ def run_ssp(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
-    mne.write_proj(proj_fname_out, eog_projs + ecg_projs)
+    mne.write_proj(proj_fname_out, eog_projs + ecg_projs, overwrite=True)
 
 
 def get_config(

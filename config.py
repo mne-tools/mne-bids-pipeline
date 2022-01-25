@@ -2621,24 +2621,32 @@ def get_mf_ctc_fname(
 
 def make_epochs(
     *,
+    task: str,
+    subject: str,
+    session: Optional[str],
     raw: mne.io.BaseRaw,
-    event_id: Optional[Dict[str, int]] = None,
+    event_id: Optional[Union[Dict[str, int], Literal['auto']]],
+    conditions: Union[Iterable[str], Dict[str, str]],
     tmin: float,
     tmax: float,
-    metadata_tmin: Optional[float] = None,
-    metadata_tmax: Optional[float] = None,
-    metadata_keep_first: Optional[Iterable[str]] = None,
-    metadata_keep_last: Optional[Iterable[str]] = None,
+    metadata_tmin: Optional[float],
+    metadata_tmax: Optional[float],
+    metadata_keep_first: Optional[Iterable[str]],
+    metadata_keep_last: Optional[Iterable[str]],
+    metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
     decim: int
 ) -> mne.Epochs:
     """Generate Epochs from raw data.
 
-    No EEG reference will be set and no projectors will be applied. No
-    rejection thresholds will be applied. No baseline-correction will be
-    performed.
+    - Only events corresponding to `conditions` will be used to create epochs.
+    - Metadata queries to subset epochs will be performed.
+
+    - No EEG reference will be set and no projectors will be applied.
+    - No rejection thresholds will be applied.
+    - No baseline-correction will be performed.
     """
-    if get_task().lower() == 'rest':
+    if task.lower() == 'rest':
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -2649,25 +2657,45 @@ def make_epochs(
             overlap=rest_epochs_overlap,
             stop=stop)
         event_id = dict(rest=3000)
+        metadata = None
     else:  # Events for task runs
         if event_id is None:
             event_id = 'auto'
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
-    # Construct metadata from the epochs
-    if metadata_tmin is None:
-        metadata_tmin = tmin
+        # Construct metadata
+        #
+        # We only keep conditions that will be analyzed.
+        if isinstance(conditions, dict):
+            conditions = list(conditions.keys())
+        else:
+            conditions = list(conditions)  # Ensure we have a list
 
-    if metadata_tmax is None:
-        metadata_tmax = tmax
+        # Handle grouped / hierarchical event names.
+        row_event_names = mne.event.match_event_names(
+            event_names=event_id,
+            keys=conditions
+        )
 
-    metadata, _, _ = mne.epochs.make_metadata(
-        events=events, event_id=event_id,
-        tmin=metadata_tmin, tmax=metadata_tmax,
-        keep_first=metadata_keep_first,
-        keep_last=metadata_keep_last,
-        sfreq=raw.info['sfreq'])
+        if metadata_tmin is None:
+            metadata_tmin = tmin
+        if metadata_tmax is None:
+            metadata_tmax = tmax
+
+        # The returned `events` and `event_id` will only contain
+        # the events from `row_event_names` – which is basically equivalent to
+        # what the user requested via `config.conditions` (only with potential
+        # nested event names expanded, e.g. `visual` might now be
+        # `visual/left` and `visual/right`)
+        metadata, events, event_id = mne.epochs.make_metadata(
+            row_events=row_event_names,
+            events=events, event_id=event_id,
+            tmin=metadata_tmin, tmax=metadata_tmax,
+            keep_first=metadata_keep_first,
+            keep_last=metadata_keep_last,
+            sfreq=raw.info['sfreq']
+        )
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
@@ -2678,6 +2706,33 @@ def make_epochs(
                         metadata=metadata,
                         event_repeated=event_repeated,
                         reject=None)
+
+    # Now, select a subset of epochs based on metadata.
+    # All epochs that are omitted by the query will get a corresponding
+    # entry in epochs.drop_log, allowing us to keep track of how many (and
+    # which) epochs got omitted. We're first generating an index which we can
+    # then pass to epochs.drop(); this allows us to specify a custom drop
+    # reason.
+    if metadata_query is not None:
+        import pandas.core
+        assert epochs.metadata is not None
+
+        try:
+            idx_keep = epochs.metadata.eval(metadata_query, engine='python')
+        except pandas.core.computation.ops.UndefinedVariableError:
+            msg = (f'Metadata query failed to select any columns: '
+                   f'{epochs_metadata_query}')
+            logger.warn(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
+            return epochs
+
+        idx_drop = epochs.metadata.index[~idx_keep]
+        epochs.drop(
+            indices=idx_drop,
+            reason='metadata query',
+            verbose=False
+        )
+        del idx_keep, idx_drop
 
     return epochs
 

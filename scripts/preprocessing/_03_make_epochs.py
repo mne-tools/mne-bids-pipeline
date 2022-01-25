@@ -78,27 +78,22 @@ def run_epochs(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         epochs = make_epochs(
+            subject=subject,
+            session=session,
+            task=cfg.task,
             raw=raw,
             event_id=event_id,
+            conditions=cfg.conditions,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
             metadata_tmin=cfg.epochs_metadata_tmin,
             metadata_tmax=cfg.epochs_metadata_tmax,
             metadata_keep_first=cfg.epochs_metadata_keep_first,
             metadata_keep_last=cfg.epochs_metadata_keep_last,
+            metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
-
-        # Only keep conditions that will be analyzed. Note that epochs
-        # selection based on metadata will take place later (after
-        # concatenation) to reduce the amount of logging output.
-        if cfg.task != 'rest':
-            if isinstance(cfg.conditions, dict):
-                conditions = list(cfg.conditions.keys())
-            else:
-                conditions = cfg.conditions
-            epochs = epochs[conditions]
 
         epochs.load_data()  # Remove reference to raw
         del raw  # free memory
@@ -121,37 +116,13 @@ def run_epochs(*, cfg, subject, session=None):
         projection = True if cfg.eeg_reference == 'average' else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    msg = (f'Created {len(epochs)} epochs with time interval: '
-           f'{epochs.tmin} – {epochs.tmax} sec')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    n_epochs_before_metadata_query = len(epochs.drop_log)
 
-    # Now, select a subset of epochs based on metadata.
-    # TODO Since epochs indexing will yield copies, we should profile whether
-    # this actually causes excessize memory usage. If it turns out to be an
-    # actual problem, we should do the metadata-based epochs selection on a
-    # per-run basis instead of on the concatenated and preloaded data.
-    if cfg.epochs_metadata_query is not None:
-        msg = 'Excluding epochs based on metadata …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
-
-        n_epochs_before = len(epochs)
-        try:
-            epochs = epochs[cfg.epochs_metadata_query]
-        except KeyError:
-            msg = (f'Metadata query failed to select any columns: '
-                   f'{cfg.epochs_metadata_query}')
-            logger.warn(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
-
-        n_epochs_after = len(epochs)
-        n_epochs_diff = n_epochs_before - n_epochs_after
-        msg = f'Removed {n_epochs_diff} epochs based on metadata.'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
-
-    msg = f'Writing {len(epochs)} epochs to disk.'
+    msg = (f'Created {n_epochs_before_metadata_query} epochs with time '
+           f'interval: {epochs.tmin} – {epochs.tmax} sec.\n'
+           f'Selected {len(epochs)} epochs via metadata query: '
+           f'{cfg.epochs_metadata_query}\n'
+           f'Writing {len(epochs)} epochs to disk.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)

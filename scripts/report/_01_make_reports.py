@@ -996,7 +996,6 @@ def get_config(
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,
-        ica_reject=config.ica_reject,
         conditions=config.conditions,
         contrasts=config.contrasts,
         ica_reject=config.get_ica_reject(),

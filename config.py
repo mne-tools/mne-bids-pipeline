@@ -2527,9 +2527,10 @@ def make_epochs(
         else:
             conditions = list(conditions)  # Ensure we have a list
 
-        # TODO This function should be made public upstream
-        row_event_names = mne.utils.mixin._hid_match(
-            event_id=event_id, keys=conditions
+        # Handle grouped / hierarchical event names.
+        row_event_names = mne.event.match_event_names(
+            event_names=event_id,
+            keys=conditions
         )
 
         if metadata_tmin is None:

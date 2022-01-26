@@ -23,7 +23,7 @@ extra:
           link: https://twitter.com/mne_news
           name: MNE news on Twitter
 
-copyright: Copyright &copy; MNE-BIDS-Pipelie authors
+copyright: Copyright &copy; MNE-BIDS-Pipeline authors
 
 extra_css:
     - css/extra.css

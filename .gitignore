@@ -11,4 +11,5 @@ docs/source/examples/*
 !docs/source/examples/examples.md
 .pytest_cache/
 __pycache__/
+.dask-worker-space/
 mprofile_*.dat

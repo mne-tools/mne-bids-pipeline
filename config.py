@@ -14,6 +14,7 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
 else:
@@ -462,7 +463,7 @@ to control this behavior.
     ```python
     min_break_duration = 15.
     ```
-"""
+"""  # noqa : E501
 
 t_break_annot_start_after_previous_event: float = 5.
 """
@@ -618,7 +619,7 @@ location is used.
     ```python
     mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
     ```
-"""
+"""  # noqa : E501
 
 mf_ctc_fname: Optional[str] = None
 """
@@ -632,7 +633,7 @@ warning:
     ```python
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
-"""
+"""  # noqa : E501
 
 ###############################################################################
 # STIMULATION ARTIFACT
@@ -864,7 +865,7 @@ is not `'rest'`, we will raise an error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
-"""
+"""  # noqa : E501
 
 epochs_tmin: float = -0.2
 """
@@ -1670,7 +1671,39 @@ parameters.
 
 N_JOBS: int = 1
 """
-Specifies how many subjects you want to process in parallel.
+Specifies how many subjects you want to process in parallel. If `1`, disables
+parallel processing.
+"""
+
+parallel_backend: Literal['loky', 'dask'] = 'loky'
+"""
+Specifies which backend to use for parallel job execution. `loky` is the
+default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
+be installed. Ignored if [`N_JOBS`][config.N_JOBS] is set to `1`.
+"""
+
+dask_open_dashboard: bool = False
+"""
+Whether to open the Dask dashboard in the default webbrowser automatically.
+Ignored if `parallel_backend` is not `'dask'`.
+"""
+
+dask_temp_dir: Optional[PathLike] = None
+"""
+The temporary directory to use by Dask. Dask places lock-files in this
+directory, and also uses it to "spill" RAM contents to disk if the amount of
+free memory in the system hits a critical low. It is recommended to point this
+to a location on a fast, local disk (i.e., not a network-attached storage) to
+ensure good performance. The directory needs to be writable and will be created
+if it does not exist.
+
+If `None`, will use `.dask-worker-space` inside of
+[`deriv_root`][config.deriv_root].
+"""
+
+dask_worker_memory_limit: str = '10G'
+"""
+The maximum amount of RAM per Dask worker.
 """
 
 random_state: Optional[int] = 42
@@ -1882,6 +1915,12 @@ if not interactive:
 # CHECKS
 # ------
 
+if parallel_backend not in ('dask', 'loky'):
+    raise ValueError(
+        f'parallel_backend must be one of "dask" and "loky", but got: '
+        f'{parallel_backend}'
+    )
+
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
     raise ValueError('Cannot use maxwell filter without MEG channels.')
@@ -2077,8 +2116,8 @@ def _get_entity_vals_cached(*args, **kwargs):
 
 
 def get_bids_root() -> pathlib.Path:
-    # BIDS_ROOT environment variable takes precedence over any configuration file
-    # values.
+    # BIDS_ROOT environment variable takes precedence over any configuration
+    # file values.
     root = os.getenv('BIDS_ROOT')
     if root is not None:
         return (pathlib.Path(root)
@@ -2319,6 +2358,112 @@ def get_n_jobs() -> int:
         n_jobs = N_JOBS
 
     return n_jobs
+
+
+dask_client = None
+
+
+def setup_dask_client():
+    global dask_client
+
+    import dask
+    from dask.distributed import Client
+
+    if dask_client is not None:
+        return
+
+    # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
+    n_workers = get_n_jobs()
+    logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
+
+    if dask_temp_dir is None:
+        this_dask_temp_dir = get_deriv_root() / ".dask-worker-space"
+    else:
+        this_dask_temp_dir = dask_temp_dir
+
+    logger.info(f'📂 Temporary directory is: {this_dask_temp_dir}')
+    dask.config.set(
+        {
+            'temporary-directory': this_dask_temp_dir,
+            'distributed.worker.memory.pause': 0.8,
+            # fraction of memory that can be utilized before the nanny
+            # process will terminate the worker
+            'distributed.worker.memory.terminate': 1.0,
+            # TODO spilling to disk currently doesn't work reliably for us,
+            # as Dask cannot spill "unmanaged" memory – and most of what we
+            # see currently is, in fact, "unmanaged". Needs thourough
+            # investigation.
+            'distributed.worker.memory.spill': False
+        }
+    )
+    client = Client(  # noqa: F841
+        memory_limit=dask_worker_memory_limit,
+        n_workers=n_workers,
+        threads_per_worker=1,
+        name='mne-bids-pipeline'
+    )
+    client.auto_restart = False  # don't restart killed workers
+
+    dashboard_url = client.dashboard_link
+    logger.info(
+        f'⏱  The Dask client is ready. Open {dashboard_url} '
+        f'to monitor the workers.\n'
+    )
+
+    if dask_open_dashboard:
+        import webbrowser
+        webbrowser.open(url=dashboard_url, autoraise=True)
+
+    # Update global variable
+    dask_client = client
+
+
+def get_parallel_backend_name() -> Literal['dask', 'loky']:
+    if parallel_backend == 'loky' or get_n_jobs() == 1:
+        return 'loky'
+    elif parallel_backend == 'dask':
+        # Disable interactive plotting backend
+        import matplotlib
+        matplotlib.use('Agg')
+        return 'dask'
+    else:
+        raise ValueError(f'Unknown parallel backend: {parallel_backend}')
+
+
+def get_parallel_backend():
+    from joblib import parallel_backend
+    backend = get_parallel_backend_name()
+    kwargs = {}
+    if backend == "loky":
+        kwargs = {"inner_max_num_threads": 1}
+    else:
+        setup_dask_client()
+
+    return parallel_backend(
+        backend,
+        **kwargs
+    )
+
+
+def parallel_func(func, n_jobs):
+    if get_parallel_backend() == 'loky':
+        if n_jobs == 1:
+            n_jobs = 1
+            my_func = func
+            parallel = list
+        else:
+            from joblib import Parallel, delayed, cpu_count
+            if n_jobs < 0:
+                n_cores = cpu_count()
+                n_jobs = min(n_cores + n_jobs + 1, n_cores)
+            parallel = Parallel(n_jobs=n_jobs)
+            my_func = delayed(func)
+    else:  # Dask
+        from joblib import Parallel, delayed
+        parallel = Parallel(n_jobs=n_jobs)
+        my_func = delayed(func)
+
+    return parallel, my_func, n_jobs
 
 
 def _get_reject(
@@ -2612,24 +2757,32 @@ def get_mf_ctc_fname(
 
 def make_epochs(
     *,
+    task: str,
+    subject: str,
+    session: Optional[str],
     raw: mne.io.BaseRaw,
-    event_id: Optional[Dict[str, int]] = None,
+    event_id: Optional[Union[Dict[str, int], Literal['auto']]],
+    conditions: Union[Iterable[str], Dict[str, str]],
     tmin: float,
     tmax: float,
-    metadata_tmin: Optional[float] = None,
-    metadata_tmax: Optional[float] = None,
-    metadata_keep_first: Optional[Iterable[str]] = None,
-    metadata_keep_last: Optional[Iterable[str]] = None,
+    metadata_tmin: Optional[float],
+    metadata_tmax: Optional[float],
+    metadata_keep_first: Optional[Iterable[str]],
+    metadata_keep_last: Optional[Iterable[str]],
+    metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
     decim: int
 ) -> mne.Epochs:
     """Generate Epochs from raw data.
 
-    No EEG reference will be set and no projectors will be applied. No
-    rejection thresholds will be applied. No baseline-correction will be
-    performed.
+    - Only events corresponding to `conditions` will be used to create epochs.
+    - Metadata queries to subset epochs will be performed.
+
+    - No EEG reference will be set and no projectors will be applied.
+    - No rejection thresholds will be applied.
+    - No baseline-correction will be performed.
     """
-    if get_task().lower() == 'rest':
+    if task.lower() == 'rest':
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -2640,25 +2793,45 @@ def make_epochs(
             overlap=rest_epochs_overlap,
             stop=stop)
         event_id = dict(rest=3000)
+        metadata = None
     else:  # Events for task runs
         if event_id is None:
             event_id = 'auto'
 
         events, event_id = mne.events_from_annotations(raw, event_id=event_id)
 
-    # Construct metadata from the epochs
-    if metadata_tmin is None:
-        metadata_tmin = tmin
+        # Construct metadata
+        #
+        # We only keep conditions that will be analyzed.
+        if isinstance(conditions, dict):
+            conditions = list(conditions.keys())
+        else:
+            conditions = list(conditions)  # Ensure we have a list
 
-    if metadata_tmax is None:
-        metadata_tmax = tmax
+        # Handle grouped / hierarchical event names.
+        row_event_names = mne.event.match_event_names(
+            event_names=event_id,
+            keys=conditions
+        )
 
-    metadata, _, _ = mne.epochs.make_metadata(
-        events=events, event_id=event_id,
-        tmin=metadata_tmin, tmax=metadata_tmax,
-        keep_first=metadata_keep_first,
-        keep_last=metadata_keep_last,
-        sfreq=raw.info['sfreq'])
+        if metadata_tmin is None:
+            metadata_tmin = tmin
+        if metadata_tmax is None:
+            metadata_tmax = tmax
+
+        # The returned `events` and `event_id` will only contain
+        # the events from `row_event_names` – which is basically equivalent to
+        # what the user requested via `config.conditions` (only with potential
+        # nested event names expanded, e.g. `visual` might now be
+        # `visual/left` and `visual/right`)
+        metadata, events, event_id = mne.epochs.make_metadata(
+            row_events=row_event_names,
+            events=events, event_id=event_id,
+            tmin=metadata_tmin, tmax=metadata_tmax,
+            keep_first=metadata_keep_first,
+            keep_last=metadata_keep_last,
+            sfreq=raw.info['sfreq']
+        )
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
@@ -2669,6 +2842,33 @@ def make_epochs(
                         metadata=metadata,
                         event_repeated=event_repeated,
                         reject=None)
+
+    # Now, select a subset of epochs based on metadata.
+    # All epochs that are omitted by the query will get a corresponding
+    # entry in epochs.drop_log, allowing us to keep track of how many (and
+    # which) epochs got omitted. We're first generating an index which we can
+    # then pass to epochs.drop(); this allows us to specify a custom drop
+    # reason.
+    if metadata_query is not None:
+        import pandas.core
+        assert epochs.metadata is not None
+
+        try:
+            idx_keep = epochs.metadata.eval(metadata_query, engine='python')
+        except pandas.core.computation.ops.UndefinedVariableError:
+            msg = (f'Metadata query failed to select any columns: '
+                   f'{epochs_metadata_query}')
+            logger.warn(**gen_log_kwargs(message=msg, subject=subject,
+                                         session=session))
+            return epochs
+
+        idx_drop = epochs.metadata.index[~idx_keep]
+        epochs.drop(
+            indices=idx_drop,
+            reason='metadata query',
+            verbose=False
+        )
+        del idx_keep, idx_drop
 
     return epochs
 

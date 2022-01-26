@@ -11,6 +11,7 @@ subjects = ['01']
 rename_events = {'Smiley': 'Emoji',
                  'Button': 'Switch'}
 conditions = ['Auditory', 'Visual', 'Auditory/Left', 'Auditory/Right']
+epochs_metadata_query = 'index > 0'  # Just for testing!
 contrasts = [('Visual', 'Auditory'),
              ('Auditory/Right', 'Auditory/Left')]
 
@@ -34,6 +35,7 @@ bem_mri_images = 'FLASH'
 recreate_bem = True
 recreate_scalp_surface = True
 
+N_JOBS = 2
 
 def mri_t1_path_generator(bids_path):
     # don't really do any modifications – just for testing!

@@ -107,9 +107,13 @@ authors:
 - Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
-- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed   
+- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed
   and data-independent diagonal noise covariance matrix for source imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
+- Processing can now be parallelized using [Dask](https://dask.org). To use
+  Dask, set the new configuration setting [`parallel_backend`][config.parallel_backend]
+  to `'dask'`.
+  ({{ gh(472) }} by {{ authors.agramfort }} and  {{ authors.hoechenberger }})
 - Drastically reduce memory usage during the epoching and ICA steps.
   ({{ gh(477) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 - The new [`plot_psd_for_runs`][config.plot_psd_for_runs] setting can be used
@@ -196,9 +200,11 @@ authors:
   [`inverse_targets`][config.inverse_targets].
   ({{ gh(452) }} by {{ authors.apmellot }})
 - All processing scripts have been renamed and can be imported like regular
-  Python modules. This also prepares the code for using Dask for out-of-core
-  and parallelized computations.
+  Python modules.
   ({{ gh(470) }} by {{ authors.agramfort }})
+- For storing configuration values, we switched from using `BunchConst` to
+  Python's built-in `SimpleNamespace`.
+  ({{ gh(472) }} by {{ authors.agramfort }})
 
 ### Bug fixes
 
@@ -255,8 +261,8 @@ authors:
 - Report tags are now better sanitized.
   ({{ gh(471) }} by {{ authors.hoechenberger }})
 - When creating epochs, we now ensure that the trigger codes provided via the
-  [`event_id`][config.event_id] setting are retained; previously, new trigger
-  codes were generated in certain situations.
+  `*_events.tsv` file are retained; previously, new trigger codes were
+  generated in certain situations.
   ({{ gh(471) }} by {{ authors.hoechenberger }})
 - ICA overlay plots in the report used the cleaned epochs, resulting in no
   visible ICA cleaning effects. This has been corrected.

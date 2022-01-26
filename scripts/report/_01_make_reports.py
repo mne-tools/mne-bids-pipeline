@@ -685,6 +685,7 @@ def run_report_source(
         title='Sensor alignment',
         subject=cfg.fs_subject,
         subjects_dir=cfg.fs_subjects_dir,
+        alpha=1
     )
 
     for condition in conditions:

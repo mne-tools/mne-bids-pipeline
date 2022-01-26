@@ -21,20 +21,21 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
 
 import mne
-from mne.utils import BunchConst
 from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
 from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
                     annotations_to_events)
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -326,22 +327,22 @@ def run_ica(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         epochs = make_epochs(
+            subject=subject,
+            session=session,
+            task=cfg.task,
+            conditions=cfg.conditions,
             raw=raw,
             event_id=event_id,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
+            metadata_tmin=cfg.epochs_metadata_tmin,
+            metadata_tmax=cfg.epochs_metadata_tmax,
+            metadata_keep_first=cfg.epochs_metadata_keep_first,
+            metadata_keep_last=cfg.epochs_metadata_keep_last,
+            metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
             decim=cfg.decim
         )
-
-        # Only keep epochs that will be analyzed -> Keeps ICA in sync with
-        # epochs generated in the make_epochs script (save preserves memory)!
-        if cfg.task != 'rest':
-            if isinstance(cfg.conditions, dict):
-                conditions = list(cfg.conditions.keys())
-            else:
-                conditions = cfg.conditions
-            epochs = epochs[conditions]
 
         epochs.load_data()  # Remove reference to raw
         del raw  # free memory
@@ -372,7 +373,6 @@ def run_ica(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    # Reject epochs based on peak-to-peak amplitude
     epochs.drop_bad(reject=cfg.ica_reject)
     if epochs_eog is not None:
         epochs_eog.drop_bad(reject=cfg.ica_reject)
@@ -452,7 +452,8 @@ def run_ica(*, cfg, subject, session=None):
     report = Report(info_fname=epochs, title=title, verbose=False)
     report.add_epochs(
         epochs=epochs,
-        title='Epochs used for ICA fitting'
+        title='Epochs used for ICA fitting',
+        drop_log_ignore=()
     )
 
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
@@ -482,8 +483,8 @@ def run_ica(*, cfg, subject, session=None):
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         conditions=config.conditions,
         task=config.get_task(),
         datatype=config.get_datatype(),
@@ -509,6 +510,11 @@ def get_config(
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
+        epochs_metadata_tmin=config.epochs_metadata_tmin,
+        epochs_metadata_tmax=config.epochs_metadata_tmax,
+        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
+        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
+        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=config.get_eeg_reference(),
         eog_channels=config.eog_channels
     )
@@ -522,17 +528,24 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_ica,
-                                          n_jobs=config.get_n_jobs())
-    logs = parallel(
-        run_func(cfg=get_config(subject=subject), subject=subject,
-                 session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(
+            run_ica,
+            n_jobs=config.get_n_jobs()
+        )
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

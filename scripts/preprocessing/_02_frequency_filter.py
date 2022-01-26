@@ -21,21 +21,23 @@ If config.interactive = True plots raw data and power spectral density.
 import sys
 import itertools
 import logging
+
 import numpy as np
 from typing import Optional, Union
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+from types import SimpleNamespace
 
 import mne
-from mne.utils import BunchConst
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data)
+from config import parallel_func
+
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -200,8 +202,8 @@ def filter_data(
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
@@ -240,27 +242,32 @@ def get_config(
 
 def main():
     """Run filter."""
-    parallel, run_func, _ = parallel_func(filter_data,
-                                          n_jobs=config.get_n_jobs())
 
-    # Enabling different runs for different subjects
-    sub_run_ses = []
-    for subject in config.get_subjects():
-        sub_run_ses += list(itertools.product(
-            [subject],
-            config.get_runs(subject=subject),
-            config.get_sessions()))
+    with config.get_parallel_backend():
+        parallel, run_func, _ = parallel_func(filter_data,
+                                              n_jobs=config.get_n_jobs())
 
-    logs = parallel(
-        run_func(
-            cfg=get_config(subject),
-            subject=subject,
-            run=run,
-            session=session
-        ) for subject, run, session in sub_run_ses
-    )
+        # Enabling different runs for different subjects
+        sub_run_ses = []
+        for subject in config.get_subjects():
+            sub_run_ses += list(
+                itertools.product(
+                    [subject],
+                    config.get_runs(subject=subject),
+                    config.get_sessions()
+                )
+            )
 
-    config.save_logs(logs)
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject),
+                subject=subject,
+                run=run,
+                session=session
+            ) for subject, run, session in sub_run_ses
+        )
+
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

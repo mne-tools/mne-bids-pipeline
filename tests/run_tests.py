@@ -246,7 +246,7 @@ def run_tests(test_suite, download):
         sys.argv = [arg for arg in sys.argv if arg != '']
         # We have to use run_path because run_module doesn't allow
         # relative imports.
-        runpy.run_path(run_script, run_name='__main__')
+        runpy.run_path(str(run_script), run_name='__main__')
         sys.argv = argv_orig
 
 

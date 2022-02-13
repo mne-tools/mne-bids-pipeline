@@ -55,6 +55,15 @@ def _prepare_forward(cfg, bids_path, fname_trans):
         if t1_bids_path.datatype is None:
             t1_bids_path.update(datatype='anat')
 
+
+    if config.mri_landmarks_kind is None:
+        landmarks_kind = None
+    else:
+        landmarks_kind = config.mri_landmarks_kind(
+            BIDSPath(subject=subject, session=session)
+        )
+
+
     msg = 'Estimating head ↔ MRI transform'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
@@ -65,7 +74,8 @@ def _prepare_forward(cfg, bids_path, fname_trans):
                                 extension=None),
         t1_bids_path=t1_bids_path,
         fs_subject=cfg.fs_subject,
-        fs_subjects_dir=cfg.fs_subjects_dir)
+        fs_subjects_dir=cfg.fs_subjects_dir,
+        kind=landmarks_kind)
 
     # Create the source space.
     msg = 'Creating source space'

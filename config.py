@@ -1424,6 +1424,10 @@ Note: Note
     ```
 """
 
+mri_landmarks_kind: Optional[Callable] = None
+"""XXX
+"""
+
 spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
 """
 The spacing to use. Can be ``'ico#'`` for a recursively subdivided

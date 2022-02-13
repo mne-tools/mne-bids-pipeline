@@ -50,7 +50,7 @@ def run_inverse(*, cfg, subject, session=None):
     forward = mne.read_forward_solution(fname_fwd)
     inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
                                              depth=0.8, rank='info')
-    write_inverse_operator(fname_inv, inverse_operator)
+    write_inverse_operator(fname_inv, inverse_operator, overwrite=True)
 
     # Apply inverse
     snr = 3.0

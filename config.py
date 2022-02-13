@@ -1425,7 +1425,20 @@ Note: Note
 """
 
 mri_landmarks_kind: Optional[Callable] = None
-"""XXX
+"""
+This config option allows to look for specific landmarks in the json
+sidecar file of the T1 MRI file. This can be useful when we have different
+fiducials coordinates e.g. the manually positioned fiducials or the
+fiducials derived for the coregistration transformation of a given session.
+
+???+ example "Example"
+    We have one MRI session and we have landmarks with a kind
+    indicating how to find the landmarks for each session:
+
+    ```python
+    def mri_landmarks_kind(bids_path):
+        return f"ses-{bids_path.session}"
+    ```
 """
 
 spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'

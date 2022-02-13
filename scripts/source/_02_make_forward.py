@@ -55,14 +55,12 @@ def _prepare_forward(cfg, bids_path, fname_trans):
         if t1_bids_path.datatype is None:
             t1_bids_path.update(datatype='anat')
 
-
     if config.mri_landmarks_kind is None:
         landmarks_kind = None
     else:
         landmarks_kind = config.mri_landmarks_kind(
             BIDSPath(subject=subject, session=session)
         )
-
 
     msg = 'Estimating head ↔ MRI transform'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,

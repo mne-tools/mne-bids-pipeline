@@ -2796,7 +2796,7 @@ def annotations_to_events(
     return event_name_to_code_map
 
 
-def _rename_events_func(cfg, raw, subject, session) -> None:
+def _rename_events_func(cfg, raw, subject, session, run) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
 
     Modifies ``raw`` in-place.
@@ -2820,13 +2820,15 @@ def _rename_events_func(cfg, raw, subject, session) -> None:
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=subject, session=session, run=run)
+    )
     descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         for idx, description in enumerate(descriptions.copy()):
             if description == old_event_name:
                 descriptions[idx] = new_event_name
@@ -2854,7 +2856,7 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
                'Maxwell filtering.')
 
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+                                 session=session, run=run))
 
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -2882,21 +2884,34 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     bads = preexisting_bads.copy()
 
     if find_flat_channels_meg:
-        msg = f'Found {len(auto_flat_chs)} flat channels.'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        if auto_flat_chs:
+            msg = (f'Found {len(auto_flat_chs)} flat channels: '
+                   f'{", ".join(auto_flat_chs)}')
+        else:
+            msg = 'Found no flat channels.'
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         bads.extend(auto_flat_chs)
+
     if find_noisy_channels_meg:
-        msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        if auto_noisy_chs:
+            msg = (f'Found {len(auto_noisy_chs)} noisy channels: '
+                   f'{", ".join(auto_noisy_chs)}')
+        else:
+            msg = 'Found no noisy channels.'
+
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
     raw.info['bads'] = bads
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(**gen_log_kwargs(message=msg,
-                                 subject=subject, session=session))
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=subject, session=session, run=run)
+    )
 
     if find_noisy_channels_meg:
         auto_scores_fname = bids_path.copy().update(
@@ -2983,20 +2998,22 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
         raw.drop_channels(cfg.drop_channels)
 
 
-def _create_bipolar_channels(cfg, raw, subject, session) -> None:
+def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.
     """
     if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
+            logger.info(**gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=run)
+            )
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
@@ -3010,18 +3027,19 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
                 any([eog_ch_name in cfg.eeg_bipolar_channels
                      for eog_ch_name in eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
+            logger.info(**gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=run)
+            )
         for eog_ch_name in eog_channels:
             if eog_ch_name in cfg.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
-                logger.info(**gen_log_kwargs(message=msg,
-                                             subject=subject,
-                                             session=session))
+                logger.info(**gen_log_kwargs(
+                    message=msg, subject=subject, session=session, run=run)
+                )
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
-def _set_eeg_montage(cfg, raw, subject, session) -> None:
+def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
     """Set an EEG template montage if requested.
 
     Modifies ``raw`` in-place.
@@ -3033,8 +3051,9 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
     if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage}.')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         if not is_mne_montage:
             montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
@@ -3099,11 +3118,15 @@ def import_experimental_data(
                                                check=False)
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
-    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session)
+    _set_eeg_montage(
+        cfg=cfg, raw=raw, subject=subject, session=session, run=run
+    )
     _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
-                             session=session)
+                             session=session, run=run)
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
-    _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _rename_events_func(
+        cfg=cfg, raw=raw, subject=subject, session=session, run=run
+    )
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
                       run=run)
     _fix_stim_artifact_func(cfg=cfg, raw=raw)

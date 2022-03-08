@@ -1,6 +1,6 @@
 typing_extensions
 psutil
-numpy
+numpy >=1.20
 scipy
 joblib >= 0.14
 dask[distributed]

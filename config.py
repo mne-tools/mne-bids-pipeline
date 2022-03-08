@@ -22,6 +22,7 @@ else:
 
 import coloredlogs
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
@@ -1307,6 +1308,22 @@ Maximum frequency for the time frequency analysis, in Hz.
     ```python
     time_frequency_freq_max = 22.3  # 22.3 Hz
     ```
+"""
+
+time_frequency_cycles: Optional[Union[float, ArrayLike]] = None
+"""
+The number of cycles to use in the Morlet wavelet. This can be a single number
+or one per frequency, where frequencies are calculated via
+`np.arange(time_frequency_freq_min, time_frequency_freq_max)`.
+If `None`, uses
+`np.arange(time_frequency_freq_min, time_frequency_freq_max) / 3`.
+"""
+
+time_frequency_subtract_evoked: bool = False
+"""
+Whether to subtract the evoked signal (averaged across all epochs) from the
+epochs before passing them to time-frequency analysis. Set this to `True` to
+highlight induced activity.
 """
 
 ###############################################################################

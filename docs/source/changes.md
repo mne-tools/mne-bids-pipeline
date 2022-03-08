@@ -124,6 +124,16 @@ authors:
 - The new [`epochs_metadata_query][config.epochs_metadata_query] setting
   allows to select epochs based on metadata query strings.
   ({{ gh(495) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- The new [`time_frequency_cycles`][config.time_frequency_cycles] setting
+  allows for customization of the number of Morlet wavelet cycles used in
+  time-frequency analysis.
+  ({{ gh(516) }} by {{ authors.hoechenberger }})
+- To analyze induced (as opposed to evoked) activity in the time-frequency
+  domain, the new setting
+  [`time_frequency_subtract_evoked`][config.time_frequency_subtract_evoked]
+  has been added, allowing to subtract the evoked signal from the epochs
+  before performing time-frequency analysis.
+  ({{ gh(516) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

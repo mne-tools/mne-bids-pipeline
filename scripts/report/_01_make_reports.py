@@ -468,6 +468,10 @@ def run_report_sensor(
         suffix='power+condition+tfr',
         extension='.h5'
     )
+    fname_tfr_itc = bids_path.copy().update(
+        suffix='itc+condition+tfr',
+        extension='.h5'
+    )
 
     ###########################################################################
     #
@@ -589,16 +593,32 @@ def run_report_sensor(
         cond = config.sanitize_cond_name(condition)
         fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
                                                                f"+{cond}+")
-        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond)
-        fig = power[0].plot_topo(show=False, fig_facecolor='w', font_color='k',
-                                 border='k')
+        fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
+                                                               f"+{cond}+")
+        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond, condition=0)
+        kwargs = dict(
+            show=False, fig_facecolor='w', font_color='k', border='k'
+        )
+        fig_power = power.plot_topo(**kwargs)
         report.add_figure(
-            fig=fig,
-            title=f'TFR: {condition}',
+            fig=fig_power,
+            title=f'TFR Power: {condition}',
             caption=f'TFR Power: {condition}',
             tags=('time-frequency', condition.lower().replace(' ', '-'))
         )
-        plt.close(fig)
+        plt.close(fig_power)
+        del power
+
+        itc = mne.time_frequency.read_tfrs(fname_tfr_itc_cond, condition=0)
+        fig_itc = itc.plot_topo(**kwargs)
+        report.add_figure(
+            fig=fig_itc,
+            title=f'TFR ITC: {condition}',
+            caption=f'TFR Inter-Trial Coherence: {condition}',
+            tags=('time-frequency', condition.lower().replace(' ', '-'))
+        )
+        plt.close(fig_power)
+        del itc
 
     return report
 

@@ -60,14 +60,21 @@ def run_time_frequency(*, cfg, subject, session=None):
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
 
+    if cfg.time_frequency_subtract_evoked:
+        epochs.subtract_evoked()
+
     freqs = np.arange(cfg.time_frequency_freq_min,
                       cfg.time_frequency_freq_max)
-    n_cycles = freqs / 3.
+
+    time_frequency_cycles = cfg.time_frequency_cycles
+    if time_frequency_cycles is None:
+        time_frequency_cycles = freqs / 3.
 
     for condition in cfg.time_frequency_conditions:
         this_epochs = epochs[condition]
         power, itc = mne.time_frequency.tfr_morlet(
-            this_epochs, freqs=freqs, return_itc=True, n_cycles=n_cycles
+            this_epochs, freqs=freqs, return_itc=True,
+            n_cycles=time_frequency_cycles
         )
 
         condition_str = sanitize_cond_name(condition)
@@ -97,7 +104,9 @@ def get_config(
         ch_types=config.ch_types,
         eeg_reference=config.get_eeg_reference(),
         time_frequency_freq_min=config.time_frequency_freq_min,
-        time_frequency_freq_max=config.time_frequency_freq_max
+        time_frequency_freq_max=config.time_frequency_freq_max,
+        time_frequency_cycles=config.time_frequency_cycles,
+        time_frequency_subtract_evoked=config.time_frequency_subtract_evoked
     )
     return cfg
 

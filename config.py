@@ -1989,7 +1989,7 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"but received: {on_error}.")
     logger.info(**gen_log_kwargs(message=msg))
 
-if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc'):
+if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc', 'rest'):
     msg = (f"noise_cov must be a tuple, 'emptyroom' or 'ad-hoc', but received "
            f"{noise_cov}")
     raise ValueError(msg)

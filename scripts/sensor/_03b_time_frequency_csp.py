@@ -320,6 +320,7 @@ def plot_patterns(
         title=f'{section}: {title}',
         tags=('csp',)
     )
+    plt.close(fig)
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -499,6 +500,7 @@ def one_subject_decoding(
         title=title,
         tags=('csp',)
     )
+    plt.close(fig)
 
     # Time frequency savings
     np.save(file=pth.tf_scores(subject, session, contrast), arr=tf_scores)
@@ -513,6 +515,7 @@ def one_subject_decoding(
         title=title,
         tags=('csp',)
     )
+    plt.close(fig)
     report.save(pth.report(subject, session, contrast), overwrite=True,
                 open_browser=config.interactive)
 
@@ -774,6 +777,7 @@ def group_analysis(
         title=section + ' sub-average',
         tags=('csp',)
     )
+    plt.close(fig)
 
     # Average time-Frequency analysis
     all_tf_scores = load_and_average(
@@ -788,6 +792,7 @@ def group_analysis(
         title=section + ' sub-average',
         tags=('csp',)
     )
+    plt.close(fig)
 
     ######################################################################
     # 2. Statistical tests
@@ -854,6 +859,7 @@ def group_analysis(
             title=section + ' sub-average',
             tags=('csp',)
         )
+        plt.close(fig)
 
     pth_report = pth.report("average", session=None, contrast=contrast)
     if not pth_report.fpath.parent.exists():

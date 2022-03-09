@@ -357,6 +357,8 @@ def one_subject_decoding(
     report = Report(title=f"csp-permutations-sub-{subject}")
 
     epochs = read_epochs(pth.file(subject=subject, session=session))
+    epochs.subtract_evoked()
+
     tf.check_csp_times(epochs)
 
     # Compute maximal decimation possible
@@ -390,7 +392,7 @@ def one_subject_decoding(
         norm_trace=False
     )
     clf = make_pipeline(csp, LinearDiscriminantAnalysis())
-    random_state = None if cfg.csp_shuffle_cv is False else cfg.random_state 
+    random_state = None if cfg.csp_shuffle_cv is False else cfg.random_state
     cv = StratifiedKFold(
         n_splits=cfg.decoding_n_splits,
         shuffle=cfg.csp_shuffle_cv,

@@ -54,6 +54,7 @@ nav:
         - Sensor-level analysis:
             - Statistics: settings/sensor/statistics.md
             - Time-frequency analysis: settings/sensor/time_freq.md
+            - Group-level analysis: settings/sensor/group_level.md
         - Source-level analysis:
             - General settings: settings/source/general.md
             - BEM surface: settings/source/bem.md

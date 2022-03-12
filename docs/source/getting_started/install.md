@@ -17,7 +17,6 @@ pip install -r https://raw.githubusercontent.com/mne-tools/mne-bids-pipeline/mai
 ```
 
 ??? info "Detailed list of dependencies"
-    - `mne[hdf5]` to do the data processing with hdf5 support.
     - `mne-bids[full]` to operate on BIDS data with all dependencies
     - `autoreject` to automatically detect problematic epochs based on
       peak-to-peak (PTP) amplitudes

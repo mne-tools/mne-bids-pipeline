@@ -60,7 +60,7 @@ nav:
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
     - Examples:
-        - About examples: examples/examples.md
+        - Examples Gallery: examples/examples.md
         - examples/ds003392.md
         - examples/ds000246.md
         - examples/ds000247.md

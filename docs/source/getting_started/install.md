@@ -16,7 +16,7 @@ Run in your terminal:
 pip install -r https://raw.githubusercontent.com/mne-tools/mne-bids-pipeline/main/requirements.txt
 ```
 
-??? info "Detailed list of dependencies"
+??? info "Detailed list of additional dependencies"
     - `mne-bids[full]` to operate on BIDS data with all dependencies
     - `autoreject` to automatically detect problematic epochs based on
       peak-to-peak (PTP) amplitudes
@@ -32,7 +32,9 @@ pip install -r https://raw.githubusercontent.com/mne-tools/mne-bids-pipeline/mai
     - `python-picard` for using Picard as ICA method
     - `dask[distributed]` for parallel processing using [Dask](https://dask.org)
 
-Download MNE-BIDS-Pipeline
---------------------------
+Now that everything is installed
+--------------------------------
 
-Download and extract the [the code](https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip)
+[Download and extract the code :fontawesome-solid-floppy-disk:](https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip){: .md-button .md-button--primary }
+
+[Discover Basic Usage :fontawesome-solid-rocket:](basic_usage.html){: .md-button .md-button--primary }

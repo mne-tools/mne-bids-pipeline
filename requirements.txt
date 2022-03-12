@@ -18,7 +18,7 @@ fire
 pyqt5
 pyvista
 pyvistaqt
-autoreject
+autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master
 openpyxl
 pooch
 tqdm

@@ -42,10 +42,8 @@ jobs:
             python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
-            make install
-            make install_tests
-            # python -m pip install --user --upgrade --progress-bar off -r requirements.txt
-            # python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+            make install_user
+            make install_user_tests
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

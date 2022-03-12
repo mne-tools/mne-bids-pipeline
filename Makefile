@@ -23,15 +23,17 @@ test: in
 	rm -f .coverage
 	$(PYTESTS) -m 'not ultraslowtest' mne
 
+install_user:
+	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
+
+install_user_tests:
+	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+
 install:
 	$(PYTHON) -m pip install --upgrade --progress-bar off -r requirements.txt
-	# $(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
-	# pip install -U -r requirements.txt
 
 install_tests:
 	$(PYTHON) -m pip install --upgrade --progress-bar off -r tests/requirements.txt
-	# $(PYTHON) -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
-	# pip install -U -r tests/requirements.txt
 
 doc:
 	./docs/build-docs.sh
@@ -44,7 +46,6 @@ check:
 	mri_convert --version
 	mne_bids --version
 	mne sys_info
-
 
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'

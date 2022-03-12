@@ -24,11 +24,13 @@ test: in
 	$(PYTESTS) -m 'not ultraslowtest' mne
 
 install:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
+	$(PYTHON) -m pip install --upgrade --progress-bar off -r requirements.txt
+	# $(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
 	# pip install -U -r requirements.txt
 
 install_tests:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+	$(PYTHON) -m pip install --upgrade --progress-bar off -r tests/requirements.txt
+	# $(PYTHON) -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
 	# pip install -U -r tests/requirements.txt
 
 doc:

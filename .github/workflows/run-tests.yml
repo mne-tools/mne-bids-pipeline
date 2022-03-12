@@ -27,6 +27,6 @@ jobs:
     - name: Lint config.py with flake8
       run: make flake-config
     - name: Install codespell
-      run: conda install -y codespell
+      run: pip install codespell
     - name: Run codespell
       run: make codespell-error

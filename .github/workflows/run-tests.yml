@@ -23,6 +23,10 @@ jobs:
     - name: Install flake8
       run: conda install -y flake8
     - name: Lint scripts with flake8
-      run: flake8 ./run*.py ./scripts --exclude ./scripts/freesurfer/contrib
+      run: make flake-code
     - name: Lint config.py with flake8
-      run: flake8 ./config.py --ignore=E501,W503,W504
+      run: make flake-config
+    - name: Install codespell
+      run: conda install -y codespell
+    - name: Run codespell
+      run: make codespell-error

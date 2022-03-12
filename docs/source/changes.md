@@ -49,7 +49,7 @@ authors:
   essentially just copy the input data to the derivatives root without doing
   any processing. Now, in such situations, the Maxwell-filtering step is
   skipped entirely, and we start with frequency filtering right away. This
-  speeds up processing by avoiding unncessary disk I/O and can help preserve
+  speeds up processing by avoiding unnecessary disk I/O and can help preserve
   large quantities of storage space for big datasets.
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 - Break periods in the continuous data can now be automatically detected and

@@ -1,17 +1,12 @@
 typing_extensions
-psutil
-numpy >=1.20
-scipy
+psutil  # for joblib
 joblib >= 0.14
 dask[distributed]
-jupyter-server-proxy
+jupyter-server-proxy  # to have dask and jupyter working together
 scikit-learn
 pandas
-json_tricks
-h5py
-matplotlib
 seaborn
-nibabel
+json_tricks
 coloredlogs
 python-picard
 fire
@@ -20,7 +15,5 @@ pyvista
 pyvistaqt
 autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master
 openpyxl
-pooch
-tqdm
 mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
-mne-bids @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main
+mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

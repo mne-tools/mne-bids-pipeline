@@ -21,19 +21,15 @@ create the above-mentioned 3D surfaces and parcellations. This is done using
 the [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/) tool. FreeSurfer
 is a free software package that runs on macOS and Linux.
 
-To install FreeSurfer 6, follow the [official download and installation
+To install FreeSurfer, follow the [official download and installation
 nstructions](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads).
 
 !!! info
-    The only currently supported FreeSurfer version is **6.0**.
+    The only currently tested FreeSurfer version is **6.0**.
 
 !!! warning
     FreeSurfer does not natively run on Windows. We are currently working on
     ways to make it possible to use it on Windows, too.
-
-!!! warning
-    FreeSurfer cannot currently be used on macOS Big Sur (other macOS versions
-    work fine). We are working on a solution.
 
 ## Generate surfaces and brain parcellation
 

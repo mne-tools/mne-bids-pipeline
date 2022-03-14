@@ -42,19 +42,13 @@ jobs:
             python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
-            python -m pip install --user --upgrade --progress-bar off -r requirements.txt
-            python -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
+            make install_user
+            make install_user_tests
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
           command: |
-            which python
-            git-annex version
-            datalad --version
-            openneuro-py --version
-            mri_convert --version
-            mne_bids --version
-            mne sys_info
+            make check
       - persist_to_workspace:
           root: ~/
           paths:
@@ -795,7 +789,7 @@ jobs:
       - run:
           name: Build documentation
           command: |
-            ./docs/build-docs.sh
+            make doc
       - store_artifacts:
           path: docs/site
           destination: site

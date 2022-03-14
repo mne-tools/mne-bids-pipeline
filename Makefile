@@ -19,10 +19,6 @@ clean-cache:
 
 clean: clean-build clean-pyc clean-so clean-cache
 
-test: in
-	rm -f .coverage
-	$(PYTESTS) -m 'not ultraslowtest' mne
-
 install_user:
 	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
 

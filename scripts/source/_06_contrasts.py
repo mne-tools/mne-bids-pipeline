@@ -38,17 +38,17 @@ logger = logging.getLogger('mne-bids-pipeline')
 # You have to  create the result folder beforehand
 freq_bands = {
     'alpha': {
-        'range': (8, 12),
+        'range': (8, 12.5),
         'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/alpha')
     },
     'beta': {
-        'range': (12, 30),
+        'range': (12.5, 30),
         'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
     },
-    'gamma': {
-        'range': (30, 100),
-        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/gamma')
-    }
+    # 'gamma': {
+    #     'range': (30, 100),
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/gamma')
+    # }
 }
 
 
@@ -65,8 +65,8 @@ def plot_source(stc, filename):
         subjects_dir=config.get_fs_subjects_dir(),
         hemi="split", size=(1600, 800),
         colormap="seismic",
-        # clim=dict(kind="percent", pos_lims=[20, 50, 80])
-        clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+        clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
     )
     brain.save_image(filename=filename, mode='rgb')
 
@@ -194,8 +194,8 @@ def group_analysis(subjects, sessions, cfg, freq_band):
         hemi="split", size=(1600, 800), backend="pyvistaqt",
         colormap="seismic",
         # No need to calibrate the colorbar here, you can just use the visualization script
-        clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
-        # clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
+        clim=dict(kind="percent", pos_lims=[20, 50, 80])
     )
     filename = f"brain_contrast_morphed_sub-{subject}.png"
     brain.save_image(
@@ -210,7 +210,7 @@ def group_analysis(subjects, sessions, cfg, freq_band):
     print(temp.shape)
     stc_avg.data = temp
     stc_avg.time = np.linspace(0, 1, len(subjects))
-    
+
     stc_avg.save(join(res_path, "stc_all.stc"), overwrite=True)
 
 

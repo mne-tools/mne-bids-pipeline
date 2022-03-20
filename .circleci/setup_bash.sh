@@ -52,6 +52,12 @@ echo 'export MNE_DATA=/home/circleci/mne_data' >> $BASH_ENV;
 echo 'export DISPLAY=:99' >> $BASH_ENV;
 echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV;
 echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
+
+# Disable fancy 3D rendering options
+echo 'export MNE_3D_OPTION_ANTIALIAS=false' >> $BASH_ENV;
+echo 'export MNE_3D_OPTION_DEPTH_PEELING=false' >> $BASH_ENV;
+echo 'export MNE_3D_OPTION_SMOOTH_SHADING=false' >> $BASH_ENV;
+
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 mkdir -p ~/mne_data

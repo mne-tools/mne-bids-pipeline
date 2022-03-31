@@ -1346,7 +1346,9 @@ Note that the template MRI subject must be available as a subject
 in your subjects_dir. You can use for example a scaled version
 of fsaverage that could get with
 [`mne.scale_mri`](https://mne.tools/stable/generated/mne.scale_mri.html).
-Scaling fsaverage can be a solution to problems that occur when the head of a subject is small compared to fsaverage and, therefore, the default coregistration mislocalizes MEG sensors inside the head. 
+Scaling fsaverage can be a solution to problems that occur when the head of a
+subject is small compared to `fsaverage` and, therefore, the default
+coregistration mislocalizes MEG sensors inside the head.
 
 ???+ example "Example"
     ```python

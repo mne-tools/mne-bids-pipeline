@@ -1336,11 +1336,37 @@ run_source_estimation: bool = True
 Whether to run source estimation processing steps if not explicitly requested.
 """
 
-use_template_mri: bool = False
+use_template_mri: Optional[str] = None
 """
-Whether to use FreeSurfer's `fsaverage` subject as MRI template. This may
-come in handy if you don't haver individual MR scans of your participants, as
-is often the case in EEG studies.
+Whether to use a template MRI subject such as FreeSurfer's `fsaverage` subject.
+This may come in handy if you don't have individual MR scans of your
+participants, as is often the case in EEG studies.
+
+Note that the template MRI subject must be available as a subject
+in your subjects_dir. You can use for example a scaled version
+of fsaverage that could get with
+[`mne.scale_mri`](https://mne.tools/stable/generated/mne.scale_mri.html).
+Scaling fsaverage can be a solution to problems that occur when the head of a
+subject is small compared to `fsaverage` and, therefore, the default
+coregistration mislocalizes MEG sensors inside the head.
+
+???+ example "Example"
+    ```python
+    use_template_mri = "fsaverage"
+    ```
+"""
+
+adjust_coreg: bool = False
+"""
+Whether to adjust the coregistration between the MRI and the channels
+locations, possibly combined with the digitized head shape points.
+Setting it to True is mandatory if you use a template MRI subject
+that is different from `fsaverage`.
+
+???+ example "Example"
+    ```python
+    adjust_coreg = True
+    ```
 """
 
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
@@ -2590,8 +2616,8 @@ def get_channels_to_analyze(info) -> List[str]:
 def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
 
-    if use_template_mri:
-        return 'fsaverage'
+    if use_template_mri is not None:
+        return use_template_mri
 
     if (pathlib.Path(subjects_dir) / subject).exists():
         return subject

@@ -132,7 +132,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    if config.use_template_mri:
+    if config.use_template_mri is not None:
         msg = '    … skipping BEM computating when using MRI template.'
         logger.info(**gen_log_kwargs(message=msg))
         return

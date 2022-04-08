@@ -358,7 +358,7 @@ def one_subject_decoding(
     report = Report(title=f"csp-permutations-sub-{subject}")
 
     epochs = read_epochs(pth.file(subject=subject, session=session))
-    epochs.subtract_evoked()
+    epochs.subtract_evoked()  # TODO use setting from config to check whether to do this!!!
 
     tf.check_csp_times(epochs)
 

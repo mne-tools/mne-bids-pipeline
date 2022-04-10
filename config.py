@@ -14,6 +14,7 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+from types import SimpleNamespace
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -2863,13 +2864,31 @@ def _rename_events_func(cfg, raw, subject, session, run) -> None:
     raw.annotations.description = descriptions
 
 
-def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
+def _find_bad_channels_in_one_run(
+    *,
+    cfg: SimpleNamespace,
+    bids_path: BIDSPath,
+    ref_dev_head_t: Optional[mne.Transform] = None,
+    ref_montage: Optional[mne.channels.DigMontage] = None
+) -> List[str]:
     """Find and mark bad MEG channels.
 
     Modifies ``raw`` in-place.
+
+    Parameters
+    ----------
+    cfg
+        The configuration namespace to use.
+    bids_path
+        The run to process.
+    ref_dev_head_t
+        The reference device-to-head transformation to inject into an
+        empty-room recording.
+    ref_montage
+        The reference montage to inject into an empty-room recording.
     """
     if not (cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg):
-        return
+        return []
 
     if (cfg.find_flat_channels_meg and
             not cfg.find_noisy_channels_meg):
@@ -2881,20 +2900,23 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
         msg = ('Finding flat channels, and noisy channels using '
                'Maxwell filtering.')
 
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=bids_path.subject,
+        session=bids_path.session, run=bids_path.run)
+    )
+    raw = _load_data(cfg=cfg, bids_path=bids_path, preload=False)
+    _drop_channels_func(
+        cfg=cfg, raw=raw, subject=bids_path.subject, session=bids_path.session
+    )
+    _fix_stim_artifact_func(cfg=cfg, raw=raw)
 
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=task,
-                         run=run,
-                         acquisition=acq,
-                         processing=proc,  # XXX : what is proc?
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         suffix=cfg.datatype,
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root)
+    # Apply dev_head_t and montage from reference run to emoty-room recording.
+    if bids_path.subject == 'emptyroom':
+        assert ref_dev_head_t is not None
+        assert ref_montage is not None
+
+        raw.info['dev_head_t'] = ref_dev_head_t
+        raw.set_montage(ref_montage)
 
     auto_noisy_chs, auto_flat_chs, auto_scores = \
         mne.preprocessing.find_bad_channels_maxwell(
@@ -2916,7 +2938,8 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
         else:
             msg = 'Found no flat channels.'
         logger.info(**gen_log_kwargs(
-            message=msg, subject=subject, session=session, run=run)
+            message=msg, subject=bids_path.subject, session=bids_path.session,
+            run=bids_path.run)
         )
         bads.extend(auto_flat_chs)
 
@@ -2928,20 +2951,20 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
             msg = 'Found no noisy channels.'
 
         logger.info(**gen_log_kwargs(
-            message=msg, subject=subject, session=session, run=run)
+            message=msg, subject=bids_path.subject, session=bids_path.session,
+            run=bids_path.run)
         )
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
-    raw.info['bads'] = bads
-    msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(**gen_log_kwargs(
-        message=msg, subject=subject, session=session, run=run)
-    )
+
+    bids_path_out = bids_path.copy().update(root=cfg.deriv_root)
+    bids_path_out.mkdir(exist_ok=True)
 
     if find_noisy_channels_meg:
-        auto_scores_fname = bids_path.copy().update(
-            suffix='scores', extension='.json', check=False)
+        auto_scores_fname = bids_path_out.copy().update(
+            processing='bads', suffix='scores', extension='.json', check=False
+        )
         with open(auto_scores_fname, 'w') as f:
             json_tricks.dump(auto_scores, fp=f, allow_nan=True,
                              sort_keys=False)
@@ -2952,9 +2975,11 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
             plt.show()
 
     # Write the bad channels to disk.
-    bads_tsv_fname = bids_path.copy().update(suffix='bads',
-                                             extension='.tsv',
-                                             check=False)
+    bads_tsv_fname = bids_path_out.copy().update(
+        suffix='bads',
+        extension='.tsv',
+        check=False
+    )
     bads_for_tsv = []
     reasons = []
 
@@ -2978,8 +3003,15 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     tsv_data = tsv_data.sort_values(by='name')
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
+    return bads
 
-def _load_data(cfg, bids_path):
+
+def _load_data(
+    cfg: SimpleNamespace,
+    bids_path: BIDSPath,
+    *,
+    preload: bool
+) -> mne.io.Raw:
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -2996,10 +3028,11 @@ def _load_data(cfg, bids_path):
 
     _crop_data(cfg, raw=raw, subject=subject)
 
-    raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
         raw.fix_mag_coil_types()
 
+    if preload:
+        raw.load_data()
     return raw
 
 
@@ -3085,7 +3118,7 @@ def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
+def _fix_stim_artifact_func(cfg: SimpleNamespace, raw: mne.io.BaseRaw) -> None:
     """Fix stimulation artifact in the data."""
     if not cfg.fix_stim_artifact:
         return
@@ -3099,27 +3132,110 @@ def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
     )
 
 
+def get_bad_channels(
+    *,
+    subject: str,
+    session: str,
+    cfg: SimpleNamespace
+) -> List[str]:
+    """Get the union of bad channels across all recordings.
+
+    Will run automated bad channel detection if requested.
+
+    Parameters
+    ----------
+    cfg
+        The local configuration.
+
+    Returns
+    -------
+    all_bads
+        The union of all bad channels.
+    """
+    bids_paths = [
+        BIDSPath(
+            subject=subject,
+            session=session,
+            run=run,
+            task=cfg.task,
+            acquisition=cfg.acq,
+            processing=cfg.proc,
+            recording=cfg.rec,
+            space=cfg.space,
+            suffix=cfg.datatype,
+            datatype=cfg.datatype,
+            root=cfg.bids_root
+        )
+        for run in cfg.runs
+    ]
+
+    # Append the empty-room recording too
+    if (
+        hasattr(cfg, 'process_er') and
+        cfg.process_er and
+        hasattr(cfg, 'mf_reference_run')
+    ):
+        bids_path_ref = bids_paths[0].copy().update(run=cfg.mf_reference_run)
+        bids_path_er = bids_path_ref.find_empty_room()
+        bids_paths.append(bids_path_er)
+        del bids_path_ref, bids_path_er
+
+    # We need to inject the reference run parameters into the empty-room
+    # recording.
+    reference_run_params = get_reference_run_params(
+        subject=subject, session=session, run=cfg.mf_reference_run
+    )
+    ref_dev_head_t = reference_run_params['dev_head_t']
+    ref_montage = reference_run_params['montage']
+    del reference_run_params
+
+    all_bads = []
+    for bids_path in bids_paths:
+        bads = _find_bad_channels_in_one_run(
+            cfg=cfg,
+            bids_path=bids_path,
+            ref_dev_head_t=ref_dev_head_t,
+            ref_montage=ref_montage
+        )
+        all_bads.extend(bads)
+
+    all_bads = sorted(set(all_bads))
+
+    msg = (
+        f'Marking {len(all_bads)} channels as bad for all runs: '
+        f'{", ".join(all_bads)}.'
+    )
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+
+    return all_bads
+
+
 def import_experimental_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
-    run: Optional[str] = None,
+    session: Optional[str],
+    run: Optional[str],
+    bads: Optional[List[str]],
     save: bool = False
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
-    subject : str
+    subject
         The subject to import.
-    session : str | None
+    session
         The session to import.
-    run : str | None
+    run
         The run to import.
-    save : bool
+    bads
+        The list of bad channels to apply. If `None`, use the existing bads
+        from `info['bads']` for the respective recording.
+    save
         Whether to save the data to disk or not.
 
     Returns
@@ -3143,21 +3259,24 @@ def import_experimental_data(
                                                root=cfg.deriv_root,
                                                check=False)
 
-    raw = _load_data(cfg=cfg, bids_path=bids_path_in)
+    raw = _load_data(cfg=cfg, bids_path=bids_path_in, preload=True)
+    _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _fix_stim_artifact_func(cfg=cfg, raw=raw)
+
+    # Inject bad channels.
+    if bads:
+        raw.info['bads'] = bads
+
     _set_eeg_montage(
         cfg=cfg, raw=raw, subject=subject, session=session, run=run
     )
     _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
                              session=session, run=run)
-    _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
+                      run=run)
     _rename_events_func(
         cfg=cfg, raw=raw, subject=subject, session=session, run=run
     )
-    _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
-                      run=run)
-    _fix_stim_artifact_func(cfg=cfg, raw=raw)
-    _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
-                       task=get_task(), run=run)
 
     # Save the data.
     if save:
@@ -3168,9 +3287,9 @@ def import_experimental_data(
 
 def import_er_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: Optional[str],
     bads: List[str],
     save: bool = False
 ) -> mne.io.BaseRaw:
@@ -3178,7 +3297,7 @@ def import_er_data(
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
     subject
         The subject for whom to import the empty-room data.
@@ -3208,6 +3327,7 @@ def import_er_data(
         datatype=cfg.datatype,
         root=cfg.bids_root
     ).find_empty_room()
+    assert bids_path_er_in is not None
 
     bids_path_er_out = (bids_path_er_in.copy()
                         .update(task='noise',
@@ -3220,15 +3340,15 @@ def import_er_data(
     if bads is None:
         bads = []
 
-    raw_er = _load_data(cfg, bids_path_er_in)
+    raw_er = _load_data(cfg, bids_path_er_in, preload=True)
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
-    # Set same set of bads as in the experimental run, but only for MEG
+    # Set same set of bads as in the experimental runs, but only for MEG
     # channels (we might not have non-MEG channels in empty-room recordings).
     raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
 
     # Only keep MEG channels.
-    raw_er.pick_types(meg=True)
+    raw_er.pick_types(meg=True, exclude=[])
 
     # Save the data.
     if save:
@@ -3250,7 +3370,7 @@ def get_reference_run_params(
     run: str
 ) -> ReferenceRunParams:
 
-    msg = f'Loading info for run: {run}.'
+    msg = f'Loading info for reference run: {run}.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session, run=run))
 

@@ -29,7 +29,7 @@ from mne_bids import BIDSPath
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data,
-                    get_reference_run_params)
+                    get_reference_run_params, get_bad_channels)
 from config import parallel_func
 
 
@@ -56,6 +56,18 @@ def run_maxwell_filter(*, cfg, subject, session=None):
                              root=cfg.deriv_root,
                              check=False)
 
+    # Get the union of all bad channels across all runs (including the
+    # empty-room recording, in case we process it).
+    # Warn if no bad channels are set before Maxwell filter.
+
+    bads = get_bad_channels(cfg=cfg, subject=subject, session=session)
+    if not bads:
+        msg = ('No channels were marked as bad. Please carefully check '
+               'your data to ensure this is correct; otherwise, Maxwell '
+               'filtering WILL cause problems.')
+        logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                        session=session))
+
     # Load dev_head_t and digitization points from MaxFilter reference run.
     # Re-use in all runs and for processing empty-room recording.
     msg = f'Loading reference run: {cfg.mf_reference_run}.'
@@ -77,6 +89,7 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             subject=subject,
             session=session,
             run=run,
+            bads=bads,
             save=False
         )
 
@@ -89,17 +102,6 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             msg += 'SSS.'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
-
-        # Warn if no bad channels are set before Maxwell filter
-        # Create a copy, we'll need this later for setting the bads of the
-        # empty-room recording
-        bads = raw.info['bads'].copy()
-        if not bads:
-            msg = ('No channels were marked as bad. Please carefully check '
-                   'your data to ensure this is correct; otherwise, Maxwell '
-                   'filtering WILL cause problems.')
-            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                            session=session, run=run))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.
@@ -129,11 +131,9 @@ def run_maxwell_filter(*, cfg, subject, session=None):
             raw.plot(n_channels=50, butterfly=True)
 
         # Empty-room processing.
-        # Only process empty-room data once – we ensure this by simply checking
-        # if the current run is the reference run, and only then initiate
-        # empty-room processing. No sophisticated logic behind this – it's just
-        # convenient to code it this way.
-        if cfg.process_er and run == cfg.mf_reference_run:
+        # Only process empty-room data once. No sophisticated logic behind
+        # this – it's just convenient to code it this way.
+        if cfg.process_er and run == cfg.runs[-1]:
             msg = 'Processing empty-room recording …'
             logger.info(**gen_log_kwargs(subject=subject,
                                          session=session, message=msg))

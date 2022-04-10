@@ -134,9 +134,14 @@ def filter_data(
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
     else:
-        raw = import_experimental_data(cfg=cfg,
-                                       subject=subject, session=session,
-                                       run=run, save=False)
+        raw = import_experimental_data(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=run,
+            bads=None,
+            save=False
+        )
 
     raw_fname_out = bids_path.copy().update(processing='filt')
 

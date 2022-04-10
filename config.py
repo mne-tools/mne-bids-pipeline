@@ -3291,6 +3291,8 @@ def import_er_data(
     subject: str,
     session: Optional[str],
     bads: List[str],
+    ref_dev_head_t: Optional[mne.Transform] = None,
+    ref_montage: Optional[mne.channels.DigMontage] = None,
     save: bool = False
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
@@ -3306,6 +3308,11 @@ def import_er_data(
     bads
         The selection of bad channels from the corresponding experimental
         recording.
+    ref_dev_head_t
+        The reference device-to-head transformation to inject into an
+        empty-room recording.
+    ref_montage
+        The reference montage to inject into an empty-room recording.
     save
         Whether to save the data to disk or not.
 
@@ -3341,6 +3348,18 @@ def import_er_data(
         bads = []
 
     raw_er = _load_data(cfg, bids_path_er_in, preload=True)
+
+    # We want to ensure we use the same coordinate frame origin in
+    # empty-room and experimental data processing. To do this, we
+    # inject the sensor locations and the head <> device transform
+    # into the empty-room recording's info, and leave all other
+    # parameters the same as for the experimental data. This is not
+    # very clean, as we normally should not alter info manually,
+    # except for info['bads']. Will need improvement upstream in
+    # MNE-Python.
+    raw_er.set_montage(montage=ref_montage)
+    raw_er.info['dev_head_t'] = ref_dev_head_t
+
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Set same set of bads as in the experimental runs, but only for MEG

@@ -143,24 +143,21 @@ def run_maxwell_filter(*, cfg, subject, session=None):
                 subject=subject,
                 session=session,
                 bads=bads,
+                ref_dev_head_t=dev_head_t,
+                ref_montage=montage,
                 save=False
             )
+
+            # XXX Remove before merging
+            assert bads == raw_er.info['bads'] == raw.info['bads']
+            assert raw_er.info['dev_head_t'] is not None
+            assert raw.get_montage().dig[3:] == raw_er.get_montage().dig[3:]
 
             # Maxwell-filter empty-room data.
             msg = 'Applying Maxwell filter to empty-room recording'
             logger.info(**gen_log_kwargs(message=msg,
                                          subject=subject, session=session))
 
-            # We want to ensure we use the same coordinate frame origin in
-            # empty-room and experimental data processing. To do this, we
-            # inject the sensor locations and the head <> device transform
-            # into the empty-room recording's info, and leave all other
-            # parameters the same as for the experimental data. This is not
-            # very clean, as we normally should not alter info manually,
-            # except for info['bads']. Will need improvement upstream in
-            # MNE-Python.
-            raw_er.set_montage(montage=montage)
-            raw_er.info['dev_head_t'] = dev_head_t
             raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
                                                           **common_mf_kws)
 

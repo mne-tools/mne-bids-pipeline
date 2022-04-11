@@ -2496,8 +2496,12 @@ def failsafe_run(
                 kwargs_copy["cfg"] = json_tricks.dumps(
                     kwargs_copy["cfg"], sort_keys=False, indent=4
                 )
-            log_info = pd.Series(kwargs_copy)
-            log_info['time'] = np.nan  # put time before success & err columns
+            log_info = pd.concat([
+                 pd.Series(kwargs_copy, dtype=object),
+                 pd.Series(index=['time', 'success', 'error_message'],
+                           dtype=object)
+            ])
+
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)

@@ -2497,9 +2497,9 @@ def failsafe_run(
                     kwargs_copy["cfg"], sort_keys=False, indent=4
                 )
             log_info = pd.concat([
-                 pd.Series(kwargs_copy, dtype=object),
-                 pd.Series(index=['time', 'success', 'error_message'],
-                           dtype=object)
+                pd.Series(kwargs_copy, dtype=object),
+                pd.Series(index=['time', 'success', 'error_message'],
+                          dtype=object)
             ])
 
             try:

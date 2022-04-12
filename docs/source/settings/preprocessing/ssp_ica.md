@@ -1,6 +1,10 @@
 ::: config.spatial_filter
+::: config.min_ecg_epochs
+::: config.min_eog_epochs
 ::: config.n_proj_eog
 ::: config.n_proj_ecg
+::: config.ecg_proj_from_average
+::: config.eog_proj_from_average
 ::: config.ssp_reject_eog
 ::: config.ssp_reject_ecg
 ::: config.ica_reject

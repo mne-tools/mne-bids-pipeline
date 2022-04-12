@@ -497,7 +497,7 @@ elif args.analysis_level == "group2":  # running stats tables
         os.makedirs(table_dir)
     print("Writing stats tables to %s." % table_dir)
 
-    # To make the group analysis independet of participant_level --multiple_sessions option, we are looking for
+    # To make the group analysis independent of participant_level --multiple_sessions option, we are looking for
     # *long* folders in the output_dir. If there exists one, we assume the study is longitudinal and we only
     # consider *long* freesurfer folders. Else we search for sub-<subject_label> freesurfer folders. If subjects
     #  cannot be found in freesurfer folder, an exception is raised.

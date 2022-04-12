@@ -49,7 +49,7 @@ authors:
   essentially just copy the input data to the derivatives root without doing
   any processing. Now, in such situations, the Maxwell-filtering step is
   skipped entirely, and we start with frequency filtering right away. This
-  speeds up processing by avoiding unncessary disk I/O and can help preserve
+  speeds up processing by avoiding unnecessary disk I/O and can help preserve
   large quantities of storage space for big datasets.
   ({{ gh(378) }} by {{ authors.dengemann }} and {{ authors.hoechenberger }})
 - Break periods in the continuous data can now be automatically detected and
@@ -61,7 +61,7 @@ authors:
   in cases where you don't have participant-specific MR scans available, as is
   often the case in EEG studies. The behavior can be enabled using the new
   configuration option [`use_template_mri`][config.use_template_mri].
-  ({{ gh(387) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
+  ({{ gh(387), gh(526) }} by {{ authors.agramfort }} and {{ authors.hoechenberger }})
 - You can now specify rejection parameters and the number of projection
   vectors per channel type for SSP via
   [`n_proj_eog`][config.n_proj_eog], [`n_proj_ecg`][config.n_proj_ecg],
@@ -124,6 +124,19 @@ authors:
 - The new [`epochs_metadata_query][config.epochs_metadata_query] setting
   allows to select epochs based on metadata query strings.
   ({{ gh(495) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- The new [`time_frequency_cycles`][config.time_frequency_cycles] setting
+  allows for customization of the number of Morlet wavelet cycles used in
+  time-frequency analysis.
+  ({{ gh(516) }} by {{ authors.hoechenberger }})
+- To analyze induced (as opposed to evoked) activity in the time-frequency
+  domain, the new setting
+  [`time_frequency_subtract_evoked`][config.time_frequency_subtract_evoked]
+  has been added, allowing to subtract the evoked signal from the epochs
+  before performing time-frequency analysis.
+  ({{ gh(516) }} by {{ authors.hoechenberger }})
+- The covariance matrix and corresponding SVD figures, as well as whitened
+  evoked data plots are now added to the reports.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})
 - Time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
   (CSP).
   ({{ gh(479) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
@@ -267,3 +280,8 @@ authors:
 - ICA overlay plots in the report used the cleaned epochs, resulting in no
   visible ICA cleaning effects. This has been corrected.
   ({{ gh(478) }} by {{ authors.hoechenberger }})
+- Ensure we don't over-estimate the rank of Maxwell-filtered data consisting
+  of multiple runs.
+  ({{ gh(530) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- Don't drop bad channels from empty-room data on import.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})

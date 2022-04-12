@@ -22,6 +22,7 @@ else:
 
 import coloredlogs
 import numpy as np
+from numpy.typing import ArrayLike
 import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
@@ -1366,6 +1367,22 @@ Maximum frequency for the time frequency analysis, in Hz.
     ```
 """
 
+time_frequency_cycles: Optional[Union[float, ArrayLike]] = None
+"""
+The number of cycles to use in the Morlet wavelet. This can be a single number
+or one per frequency, where frequencies are calculated via
+`np.arange(time_frequency_freq_min, time_frequency_freq_max)`.
+If `None`, uses
+`np.arange(time_frequency_freq_min, time_frequency_freq_max) / 3`.
+"""
+
+time_frequency_subtract_evoked: bool = False
+"""
+Whether to subtract the evoked signal (averaged across all epochs) from the
+epochs before passing them to time-frequency analysis. Set this to `True` to
+highlight induced activity.
+"""
+
 ###############################################################################
  # TIME-FREQUENCY CSP
  # ------------------
@@ -1423,11 +1440,37 @@ run_source_estimation: bool = True
 Whether to run source estimation processing steps if not explicitly requested.
 """
 
-use_template_mri: bool = False
+use_template_mri: Optional[str] = None
 """
-Whether to use FreeSurfer's `fsaverage` subject as MRI template. This may
-come in handy if you don't haver individual MR scans of your participants, as
-is often the case in EEG studies.
+Whether to use a template MRI subject such as FreeSurfer's `fsaverage` subject.
+This may come in handy if you don't have individual MR scans of your
+participants, as is often the case in EEG studies.
+
+Note that the template MRI subject must be available as a subject
+in your subjects_dir. You can use for example a scaled version
+of fsaverage that could get with
+[`mne.scale_mri`](https://mne.tools/stable/generated/mne.scale_mri.html).
+Scaling fsaverage can be a solution to problems that occur when the head of a
+subject is small compared to `fsaverage` and, therefore, the default
+coregistration mislocalizes MEG sensors inside the head.
+
+???+ example "Example"
+    ```python
+    use_template_mri = "fsaverage"
+    ```
+"""
+
+adjust_coreg: bool = False
+"""
+Whether to adjust the coregistration between the MRI and the channels
+locations, possibly combined with the digitized head shape points.
+Setting it to True is mandatory if you use a template MRI subject
+that is different from `fsaverage`.
+
+???+ example "Example"
+    ```python
+    adjust_coreg = True
+    ```
 """
 
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
@@ -1525,6 +1568,23 @@ Note: Note
 
 
     mri_t1_path_generator = get_t1_from_meeg
+    ```
+"""
+
+mri_landmarks_kind: Optional[Callable] = None
+"""
+This config option allows to look for specific landmarks in the json
+sidecar file of the T1 MRI file. This can be useful when we have different
+fiducials coordinates e.g. the manually positioned fiducials or the
+fiducials derived for the coregistration transformation of a given session.
+
+???+ example "Example"
+    We have one MRI session and we have landmarks with a kind
+    indicating how to find the landmarks for each session:
+
+    ```python
+    def mri_landmarks_kind(bids_path):
+        return f"ses-{bids_path.session}"
     ```
 """
 
@@ -2571,8 +2631,12 @@ def failsafe_run(
                 kwargs_copy["cfg"] = json_tricks.dumps(
                     kwargs_copy["cfg"], sort_keys=False, indent=4
                 )
-            log_info = pd.Series(kwargs_copy)
-            log_info['time'] = np.nan  # put time before success & err columns
+            log_info = pd.concat([
+                pd.Series(kwargs_copy, dtype=object),
+                pd.Series(index=['time', 'success', 'error_message'],
+                          dtype=object)
+            ])
+
             try:
                 assert len(args) == 0  # make sure params are only kwargs
                 out = func(*args, **kwargs)
@@ -2691,8 +2755,8 @@ def get_channels_to_analyze(info) -> List[str]:
 def get_fs_subject(subject) -> str:
     subjects_dir = get_fs_subjects_dir()
 
-    if use_template_mri:
-        return 'fsaverage'
+    if use_template_mri is not None:
+        return use_template_mri
 
     if (pathlib.Path(subjects_dir) / subject).exists():
         return subject
@@ -2898,7 +2962,7 @@ def annotations_to_events(
     return event_name_to_code_map
 
 
-def _rename_events_func(cfg, raw, subject, session) -> None:
+def _rename_events_func(cfg, raw, subject, session, run) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
 
     Modifies ``raw`` in-place.
@@ -2922,13 +2986,15 @@ def _rename_events_func(cfg, raw, subject, session) -> None:
 
     # Do the actual event renaming.
     msg = 'Renaming events …'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=subject, session=session, run=run)
+    )
     descriptions = list(raw.annotations.description)
     for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f'… {old_event_name} -> {new_event_name}'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         for idx, description in enumerate(descriptions.copy()):
             if description == old_event_name:
                 descriptions[idx] = new_event_name
@@ -2956,7 +3022,7 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
                'Maxwell filtering.')
 
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+                                 session=session, run=run))
 
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -2984,21 +3050,34 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     bads = preexisting_bads.copy()
 
     if find_flat_channels_meg:
-        msg = f'Found {len(auto_flat_chs)} flat channels.'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        if auto_flat_chs:
+            msg = (f'Found {len(auto_flat_chs)} flat channels: '
+                   f'{", ".join(auto_flat_chs)}')
+        else:
+            msg = 'Found no flat channels.'
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         bads.extend(auto_flat_chs)
+
     if find_noisy_channels_meg:
-        msg = f'Found {len(auto_noisy_chs)} noisy channels.'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session))
+        if auto_noisy_chs:
+            msg = (f'Found {len(auto_noisy_chs)} noisy channels: '
+                   f'{", ".join(auto_noisy_chs)}')
+        else:
+            msg = 'Found no noisy channels.'
+
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
     raw.info['bads'] = bads
     msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(**gen_log_kwargs(message=msg,
-                                 subject=subject, session=session))
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=subject, session=session, run=run)
+    )
 
     if find_noisy_channels_meg:
         auto_scores_fname = bids_path.copy().update(
@@ -3085,20 +3164,22 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
         raw.drop_channels(cfg.drop_channels)
 
 
-def _create_bipolar_channels(cfg, raw, subject, session) -> None:
+def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.
     """
     if ch_types == ['eeg'] and cfg.eeg_bipolar_channels:
         msg = 'Creating bipolar channels …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
+            logger.info(**gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=run)
+            )
             mne.set_bipolar_reference(raw, anode=anode, cathode=cathode,
                                       ch_name=ch_name, drop_refs=False,
                                       copy=False)
@@ -3112,18 +3193,19 @@ def _create_bipolar_channels(cfg, raw, subject, session) -> None:
                 any([eog_ch_name in cfg.eeg_bipolar_channels
                      for eog_ch_name in eog_channels])):
             msg = 'Setting channel type of new bipolar EOG channel(s) …'
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
+            logger.info(**gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=run)
+            )
         for eog_ch_name in eog_channels:
             if eog_ch_name in cfg.eeg_bipolar_channels:
                 msg = f'    {eog_ch_name} -> eog'
-                logger.info(**gen_log_kwargs(message=msg,
-                                             subject=subject,
-                                             session=session))
+                logger.info(**gen_log_kwargs(
+                    message=msg, subject=subject, session=session, run=run)
+                )
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
-def _set_eeg_montage(cfg, raw, subject, session) -> None:
+def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
     """Set an EEG template montage if requested.
 
     Modifies ``raw`` in-place.
@@ -3135,8 +3217,9 @@ def _set_eeg_montage(cfg, raw, subject, session) -> None:
     if cfg.datatype == 'eeg' and montage:
         msg = (f'Setting EEG channel locations to template montage: '
                f'{montage}.')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run)
+        )
         if not is_mne_montage:
             montage = mne.channels.make_standard_montage(montage_name)
         raw.set_montage(montage, match_case=False, on_missing='warn')
@@ -3201,11 +3284,15 @@ def import_experimental_data(
                                                check=False)
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
-    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session)
+    _set_eeg_montage(
+        cfg=cfg, raw=raw, subject=subject, session=session, run=run
+    )
     _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
-                             session=session)
+                             session=session, run=run)
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
-    _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    _rename_events_func(
+        cfg=cfg, raw=raw, subject=subject, session=session, run=run
+    )
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
                       run=run)
     _fix_stim_artifact_func(cfg=cfg, raw=raw)
@@ -3281,7 +3368,7 @@ def import_er_data(
     raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
 
     # Only keep MEG channels.
-    raw_er.pick_types(meg=True)
+    raw_er.pick_types(meg=True, exclude=[])
 
     # Save the data.
     if save:

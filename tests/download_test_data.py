@@ -31,10 +31,13 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
 
 
 def _download_via_openneuro(*, ds_name: str, ds_path: Path):
-    openneuro.download(dataset=DATASET_OPTIONS[ds_name]['openneuro'],
-                       target_dir=ds_path,
-                       include=DATASET_OPTIONS[ds_name]['include'],
-                       exclude=DATASET_OPTIONS[ds_name]['exclude'])
+    openneuro.download(
+        dataset=DATASET_OPTIONS[ds_name]['openneuro'],
+        target_dir=ds_path,
+        include=DATASET_OPTIONS[ds_name]['include'],
+        exclude=DATASET_OPTIONS[ds_name]['exclude'],
+        verify_size=False
+    )
 
 
 def _download_from_web(*, ds_name: str, ds_path: Path):

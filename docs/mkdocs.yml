@@ -54,13 +54,14 @@ nav:
         - Sensor-level analysis:
             - Statistics: settings/sensor/statistics.md
             - Time-frequency analysis: settings/sensor/time_freq.md
+            - Group-level analysis: settings/sensor/group_level.md
         - Source-level analysis:
             - General settings: settings/source/general.md
             - BEM surface: settings/source/bem.md
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
     - Examples:
-        - About examples: examples/examples.md
+        - Examples Gallery: examples/examples.md
         - examples/ds003392.md
         - examples/ds000246.md
         - examples/ds000247.md

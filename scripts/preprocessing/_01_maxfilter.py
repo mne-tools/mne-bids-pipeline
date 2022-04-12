@@ -81,7 +81,12 @@ def run_maxwell_filter(*, cfg, subject, session=None):
         )
 
         # Maxwell-filter experimental data.
-        msg = 'Applying Maxwell filter to experimental data.'
+        msg = 'Applying Maxwell filter to experimental data: '
+
+        if cfg.mf_st_duration:
+            msg += f'tSSS (st_duration: {cfg.mf_st_duration} sec).'
+        else:
+            msg += 'SSS.'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
@@ -90,15 +95,11 @@ def run_maxwell_filter(*, cfg, subject, session=None):
         # empty-room recording
         bads = raw.info['bads'].copy()
         if not bads:
-            msg = 'Found no bad channels.'
+            msg = ('No channels were marked as bad. Please carefully check '
+                   'your data to ensure this is correct; otherwise, Maxwell '
+                   'filtering WILL cause problems.')
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,
                                             session=session, run=run))
-
-        if cfg.mf_st_duration:
-            msg = '    st_duration=%d' % (cfg.mf_st_duration)
-            logger.info(**gen_log_kwargs(message=msg,
-                                         subject=subject, session=session,
-                                         run=run))
 
         # Keyword arguments shared between Maxwell filtering of the
         # experimental and the empty-room data.

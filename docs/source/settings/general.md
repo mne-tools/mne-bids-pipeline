@@ -29,3 +29,8 @@
 ::: config.dask_open_dashboard
 ::: config.dask_temp_dir
 ::: config.dask_worker_memory_limit
+::: config.random_state
+::: config.shortest_event
+::: config.log_level
+::: config.mne_log_level
+::: config.on_error

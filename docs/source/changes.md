@@ -134,6 +134,9 @@ authors:
   has been added, allowing to subtract the evoked signal from the epochs
   before performing time-frequency analysis.
   ({{ gh(516) }} by {{ authors.hoechenberger }})
+- The covariance matrix and corresponding SVD figures, as well as whitened
+  evoked data plots are now added to the reports.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 
@@ -276,3 +279,5 @@ authors:
 - Ensure we don't over-estimate the rank of Maxwell-filtered data consisting
   of multiple runs.
   ({{ gh(530) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
+- Don't drop bad channels from empty-room data on import.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})

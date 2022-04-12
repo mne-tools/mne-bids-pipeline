@@ -276,3 +276,5 @@ authors:
 - ICA overlay plots in the report used the cleaned epochs, resulting in no
   visible ICA cleaning effects. This has been corrected.
   ({{ gh(478) }} by {{ authors.hoechenberger }})
+- Don't drop bad channels from empty-room data on import.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})

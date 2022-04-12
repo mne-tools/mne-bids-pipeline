@@ -134,6 +134,9 @@ authors:
   has been added, allowing to subtract the evoked signal from the epochs
   before performing time-frequency analysis.
   ({{ gh(516) }} by {{ authors.hoechenberger }})
+- The covariance matrix and corresponding SVD, as well as whitened evoked data
+  plots are now added to the reports.
+  ({{ gh(532) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

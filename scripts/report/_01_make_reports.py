@@ -507,7 +507,7 @@ def run_report_sensor(
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
-        noise_cov = mne.read_cov(fname_noise_cov)
+        noise_cov = fname_noise_cov
     else:
         msg = 'No noise covariance matrix found, not rendering whitened data'
         logger.info(

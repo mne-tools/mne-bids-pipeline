@@ -53,7 +53,7 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
     cov.save(cov_fname, overwrite=True)
 
 
-def compute_cov_from_empty_room(cfg, subject, session):
+def compute_cov_from_empty_room_or_rest(cfg, subject, session):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -66,24 +66,36 @@ def compute_cov_from_empty_room(cfg, subject, session):
                          root=cfg.deriv_root,
                          check=False)
 
-    raw_er_fname = bids_path.copy().update(processing='filt', task='noise',
-                                           suffix='raw')
+    if cfg.noise_cov == 'rest':
+        raw_fname = bids_path.copy().update(processing='filt', task='rest',
+                                            suffix='raw')
+        data_type = 'resting-state'
+    else:
+        assert cfg.noise_cov == 'emptyroom'
+        raw_fname = bids_path.copy().update(processing='filt', task='noise',
+                                            suffix='raw')
+        data_type = 'empty-room'
+
     cov_fname = bids_path.copy().update(suffix='cov')
 
-    msg = (f'Computing regularized covariance based on empty-room recording. '
-           f'Input: {raw_er_fname}, Output: {cov_fname}')
+    msg = (f'Computing regularized covariance based on {data_type} recording. '
+           f'Input: {raw_fname}, Output: {cov_fname}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
+    raw_er = mne.io.read_raw_fif(raw_fname, preload=True)
     cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
     cov.save(cov_fname, overwrite=True)
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_covariance(*, cfg, subject, session=None):
-    if cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
-        compute_cov_from_empty_room(cfg=cfg, subject=subject, session=session)
+    if (
+        (cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types) or
+        cfg.noise_cov == 'rest'
+    ):
+        compute_cov_from_empty_room_or_rest(cfg=cfg, subject=subject,
+                                            session=session)
     else:
         tmin, tmax = cfg.noise_cov
         compute_cov_from_epochs(cfg=cfg, subject=subject, session=session,

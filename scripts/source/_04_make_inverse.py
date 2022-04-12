@@ -41,15 +41,22 @@ def run_inverse(*, cfg, subject, session=None):
     fname_fwd = bids_path.copy().update(suffix='fwd')
     fname_cov = bids_path.copy().update(suffix='cov')
     fname_inv = bids_path.copy().update(suffix='inv')
+    fname_epo = bids_path.copy().update(processing='clean', suffix='epo')
 
     info = mne.io.read_info(fname_info)
     if cfg.noise_cov == "ad-hoc":
         cov = mne.make_ad_hoc_cov(info)
+        rank = 'info'
     else:
         cov = mne.read_cov(fname_cov)
+        epo = mne.read_epochs(fname_epo)
+        rank_epo = mne.compute_rank(epo, rank='info')['meg']
+        rank_cov = mne.compute_rank(cov, info=epo.info)['meg']
+        rank = {'meg': min(rank_epo, rank_cov)}
+
     forward = mne.read_forward_solution(fname_fwd)
     inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
-                                             depth=0.8, rank='info')
+                                             depth=0.8, rank=rank)
     write_inverse_operator(fname_inv, inverse_operator, overwrite=True)
 
     # Apply inverse

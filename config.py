@@ -3232,7 +3232,7 @@ def import_er_data(
     raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
 
     # Only keep MEG channels.
-    raw_er.pick_types(meg=True)
+    raw_er.pick_types(meg=True, exclude=[])
 
     # Save the data.
     if save:

@@ -11,7 +11,7 @@ frequency that can may contain brain signal. It can also act as
 a replacement for baseline correction in Epochs. See below.
 
 If you use this pipeline for time-frequency analysis, a default filtering
-coult be a high-pass filter cut-off of l_freq = 1 Hz
+could be a high-pass filter cut-off of l_freq = 1 Hz
 a low-pass filter cut-off of h_freq = 120 Hz
 so you would preserve only the power in the 1Hz to 120 Hz band.
 

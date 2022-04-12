@@ -62,7 +62,7 @@ def morph_stc(cfg, subject, fs_subject, session=None):
             stc, subject_from=fs_subject, subject_to='fsaverage',
             subjects_dir=cfg.fs_subjects_dir)
         stc_fsaverage = morph.apply(stc)
-        stc_fsaverage.save(fname_stc_fsaverage)
+        stc_fsaverage.save(fname_stc_fsaverage, overwrite=True)
         morphed_stcs.append(stc_fsaverage)
 
         del fname_stc, fname_stc_fsaverage
@@ -98,7 +98,7 @@ def run_average(cfg, session, mean_morphed_stcs):
 
         fname_stc_avg = bids_path.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
-        stc.save(fname_stc_avg)
+        stc.save(fname_stc_avg, overwrite=True)
 
 
 def get_config() -> SimpleNamespace:

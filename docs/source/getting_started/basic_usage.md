@@ -1,6 +1,7 @@
 Prepare your dataset
 --------------------
-MNE-BIDS-Pipeline **only** works with BIDS-formatted raw data. To find out
+MNE-BIDS-Pipeline **only** works with
+[BIDS-formatted raw data](https://bids-specification.readthedocs.io/en/stable/). To find out
 more about BIDS and how to convert your data to the BIDS format, please see
 [the documentation of MNE-BIDS](https://mne.tools/mne-bids/stable/index.html).
 
@@ -30,10 +31,12 @@ We recommend that
         reconsidered, please get in touch with the developers.
 
     ??? tip "How?"
-        The `write_raw_bids` function of MNE-BIDS accepts an `anonymize`
-        parameter that can be used to anonymize your data by removing
-        subject-identifying information and shifting the measurement date by
-        a given number of days. For example, you could use
+        If you already have BIDS formatted data you can use
+        [`mne_bids.anonymize_dataset`](https://mne.tools/mne-bids/stable/generated/mne_bids.anonymize_dataset.html#mne-bids-anonymize-dataset).
+        Otherwise you can use the [`mne_bids.write_raw_bids`](https://mne.tools/mne-bids/stable/generated/mne_bids.write_raw_bids.html)
+        function of MNE-BIDS that accepts an `anonymize` parameter and can be used
+        to anonymize your data by removing subject-identifying information and shifting
+        the measurement date by a given number of days. For example, you could use
         ```python
         from mne_bids import write_raw_bids
 
@@ -41,17 +44,26 @@ We recommend that
         ```
         to shift the recording date 1000 days into the past. By default,
         information like participant handedness etc. will be removed as well.
-        Please see [the documentation](https://mne.tools/mne-bids/stable/generated/mne_bids.write_raw_bids.html) of `write_raw_bids` for more information.
+
+        You can also deface your MRIs with [`mne_bids.write_anat`](https://mne.tools/mne-bids/stable/generated/mne_bids.write_anat.html):
+        ```python
+        from mne_bids import write_anat
+
+        write_anat(..., landmarks=landmarks, deface=True)
+        ```
+        Please see [the tutorials of `mne_bids`](https://mne.tools/mne-bids/stable/use.html) for more information.
 
 Adjust your configuration file
 ------------------------------
-The pipeline ships with a default configuration file, `config.py`.
+
+The pipeline ships with a default configuration file,
+[`config.py`](https://github.com/mne-tools/mne-bids-pipeline/blob/main/config.py).
 You need to **create a copy** of that configuration file and adjust all
 parameters that are relevant to your data processing and analysis.
 
-!!! warning "Avoid modifying the scripts"
-    You should **only** need to modify the copy of the configuration file.
-    None of the scripts should be edited.
+!!! warning "Do not modify the scripts and default configuration file."
+    You should **only** need to modify the **copy** of the configuration file.
+    **None of the scripts from the pipeline should be edited!**
 
 Run the pipeline
 ----------------
@@ -86,14 +98,15 @@ Run the pipeline
 
     (Re-)run ICA:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py \
-                  --steps=preprocessing/ica
+    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing/ica
     ```
 
     You can also run multiple steps with one command by separating different
     steps by a comma. For example, to run preprocessing and sensor-level
     processing steps using a single command, do:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py \
-                  --steps=preprocessing,sensor
+    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing,sensor
     ```
+
+You can directly visit our [examples page](../examples/examples.html) to see some configuration files
+and the corresponding results.

@@ -13,7 +13,7 @@ Preprocessing
 | `preprocessing/import_and_maxfilter` | Import raw data and apply Maxwell filter. |
 | `preprocessing/frequency_filter`     | Apply low- and high-pass filters. |
 | `preprocessing/make_epochs`          | Extract epochs. |
-| `preprocessing/run_ica`              | Run Independant Component Analysis (ICA) for artifact correction. |
+| `preprocessing/run_ica`              | Run Independent Component Analysis (ICA) for artifact correction. |
 | `preprocessing/run_ssp`              | Run Signal Subspace Projections (SSP) for artifact correction. These are often also referred to as PCA vectors. |
 | `preprocessing/apply_ica`            | As an alternative to ICA, you can use SSP projections to correct for eye blink and heart beat artifacts. |
 | `preprocessing/apply_ssp`            | Apply SSP projections and obtain the cleaned epochs. |

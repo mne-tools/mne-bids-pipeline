@@ -73,7 +73,7 @@ def plot_source(stc, filename):
 
 def one_subject(subject, session, cfg, freq_band):
     """Compute the contrast and morph it to the fsavg."""
-    print(f'processing subject {subject}')
+    print(f'processing subject {subject} (range: {freq_band["range"]} Hz)')
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -114,8 +114,8 @@ def one_subject(subject, session, cfg, freq_band):
     res_path.mkdir(exist_ok=True)
 
     stc_cond = []
+    print(f'    ... contrast: {config.contrasts[0][1]} / {config.contrasts[0][0]}')
     for cond in config.contrasts[0]:  # FIXME iterate over ALL contrasts
-        print(cond)
         epochs_filter = epochs[cond].filter(l_freq, h_freq)
         epochs_filter.crop(tmin=1, tmax=3)
 
@@ -143,7 +143,7 @@ def one_subject(subject, session, cfg, freq_band):
 
     # import ipdb
     # ipdb.set_trace()
-    print("subject", subject, np.max(stc_contrast.data), np.min(stc_contrast.data))
+    # print("subject", subject, np.max(stc_contrast.data), np.min(stc_contrast.data))
 
     filename = f"brain_contrast_sub-{subject}-ses-{session}.png"
     plot_source(stc_contrast, join(res_path, filename))

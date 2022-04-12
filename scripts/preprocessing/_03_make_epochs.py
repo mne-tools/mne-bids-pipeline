@@ -56,6 +56,14 @@ def run_epochs(*, cfg, subject, session=None):
         event_name_to_code_map = config.annotations_to_events(
             raw_paths=raw_fnames)
 
+    # Store the rank & corresponding info of the run with the smallest rank.
+    # We'll later manually inject this info into concatenated epochs.
+    # This is ONLY relevant for Maxwell-filtered MEG data and ensures that
+    # we later don't assume a rank that is too large when whitening the data
+    # or performing the inverse modeling.
+    smallest_rank = None
+    smallest_rank_info = None
+
     # Now, generate epochs from each individual run.
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
@@ -105,11 +113,27 @@ def run_epochs(*, cfg, subject, session=None):
                 [epochs_all_runs, epochs], on_mismatch='warn'
             )
 
+        if cfg.use_maxwell_filter:
+            # Keep track of the info corresponding to the run with the smallest
+            # data rank.
+            new_rank = mne.compute_rank(epochs, rank='info')['meg']
+            if (
+                (smallest_rank is None) or
+                (new_rank < smallest_rank)
+            ):
+                smallest_rank = new_rank
+                smallest_rank_info = epochs.info.copy()
+
         del epochs
 
     # Clean up namespace
     epochs = epochs_all_runs
     del epochs_all_runs
+
+    if cfg.use_maxwell_filter:
+        # Inject the info corresponding to the run with the smallest data rank
+        assert smallest_rank_info is not None
+        epochs.info = smallest_rank_info
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:

@@ -195,7 +195,7 @@ def group_analysis(subjects, sessions, cfg, freq_band):
         colormap="seismic",
         # No need to calibrate the colorbar here, you can just use the visualization script
         # clim=dict(kind="percent", pos_lims=[30, 80, 95])  # Charbel
-        clim=dict(kind="percent", pos_lims=[20, 50, 80])
+        clim=dict(kind="percent", pos_lims=[10, 50, 90])
     )
     filename = f"brain_contrast_morphed_sub-{subject}.png"
     brain.save_image(

@@ -29,6 +29,7 @@ from mne_bids import BIDSPath
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data,
+                    import_rest_data_for_noise_cov,
                     get_reference_run_params)
 from config import parallel_func
 
@@ -69,26 +70,50 @@ def run_maxwell_filter(*, cfg, subject, session=None):
     montage = reference_run_params['montage']
     del reference_run_params
 
-    for run in cfg.runs:
-        bids_path_out.update(run=run)
+    # Keyword arguments shared between Maxwell filtering of the
+    # experimental and the empty-room data.
+    common_mf_kws = dict(
+        calibration=cfg.mf_cal_fname,
+        cross_talk=cfg.mf_ctc_fname,
+        st_duration=cfg.mf_st_duration,
+        origin=cfg.mf_head_origin,
+        coord_frame='head',
+        destination=dev_head_t
+    )
 
-        raw = import_experimental_data(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            run=run,
-            save=False
-        )
+    if cfg.noise_cov == 'rest':
+        cfg.runs = cfg.runs + ['_rest']
+
+    for run in cfg.runs:
+        if run == '_rest':
+            bids_path_out.update(run=None, task='rest')
+            raw = import_rest_data_for_noise_cov(
+                cfg=cfg,
+                subject=subject,
+                session=session
+            )
+        else:
+            bids_path_out.update(run=run)
+            raw = import_experimental_data(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                run=run,
+                save=False
+            )
 
         # Maxwell-filter experimental data.
-        msg = 'Applying Maxwell filter to experimental data: '
+        data_type = 'resting-state' if run == '_rest' else 'experimental'
+        msg = f'Applying Maxwell filter to {data_type} data: '
 
         if cfg.mf_st_duration:
             msg += f'tSSS (st_duration: {cfg.mf_st_duration} sec).'
         else:
             msg += 'SSS.'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session,
+            run=None if run == '_rest' else run)
+        )
 
         # Warn if no bad channels are set before Maxwell filter
         # Create a copy, we'll need this later for setting the bads of the
@@ -100,17 +125,6 @@ def run_maxwell_filter(*, cfg, subject, session=None):
                    'filtering WILL cause problems.')
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,
                                             session=session, run=run))
-
-        # Keyword arguments shared between Maxwell filtering of the
-        # experimental and the empty-room data.
-        common_mf_kws = dict(
-            calibration=cfg.mf_cal_fname,
-            cross_talk=cfg.mf_ctc_fname,
-            st_duration=cfg.mf_st_duration,
-            origin=cfg.mf_head_origin,
-            coord_frame='head',
-            destination=dev_head_t
-        )
 
         raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
 
@@ -200,6 +214,7 @@ def get_config(
         mf_head_origin=config.mf_head_origin,
         process_er=config.process_er,
         runs=config.get_runs(subject=subject),  # XXX needs to accept session!
+        noise_cov=config.noise_cov,
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),

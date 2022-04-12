@@ -20,6 +20,8 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, TypedDict
 
+from types import SimpleNamespace
+
 import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
@@ -1526,8 +1528,10 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[Tuple[Optional[float], Optional[float]],
-                 Literal['emptyroom']] = (None, 0)
+noise_cov: Union[
+    Tuple[Optional[float], Optional[float]],
+    Literal['emptyroom', 'rest', 'ad-hoc'],
+] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
@@ -1539,12 +1543,14 @@ tuple is ``None``, the considered period ends at the end of the epoch.
 The default, ``(None, 0)``, includes the entire period before the event,
 which is typically the pre-stimulus period.
 
-If ``emptyroom``, the noise covariance matrix will be estimated from an
+If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-Please note that when processing data that contains EEG channels, the noise
-covariance can ONLY be estimated from the pre-stimulus period.
+If ``'rest'``, the noise covariance matrix will be estimated from a
+resting-state recording.
+
+If ``'ad-hoc'``, creates an ad-hoc diagonal noise covariance matrix.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -1563,12 +1569,37 @@ covariance can ONLY be estimated from the pre-stimulus period.
     noise_cov = 'emptyroom'
     ```
 
+    Use a resting-state recording:
+    ```python
+    noise_cov = 'rest'
+
     Use an ad-hoc covariance:
     ```python
     noise_cov = 'ad-hoc'
     ```
 """
 
+noise_cov_input_prepare: Optional[
+    Callable[[mne.io.BaseRaw], mne.io.BaseRaw]
+] = None
+"""
+A function that accepts the raw data containing the noise source, and returns
+raw data from which the noise covariance matrix will be estimated. This allows
+you to modify the data on which noise covariance matrix estimation is
+performed; e.g., to crop it.
+
+This functionality can only be used if `noise_cov` is ``'emptyroom'`` or
+``'rest'``.
+
+???+ example "Example"
+    Omit the first 10 seconds of the raw data during noise covariance
+    estimation:
+    ```python
+    def prepare_raw_for_noise_cov_estimation(raw):
+        raw.crop(10, None)  # mofidies in-place – this is okay!
+        return raw          # but we still need to return a raw object
+    ```
+"""
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """
@@ -1945,7 +1976,10 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"but received: {on_error}.")
     logger.info(**gen_log_kwargs(message=msg))
 
-if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc'):
+if (
+    isinstance(noise_cov, str) and
+    noise_cov not in ('emptyroom', 'rest', 'ad-hoc')
+):
     msg = (f"noise_cov must be a tuple, 'emptyroom' or 'ad-hoc', but received "
            f"{noise_cov}")
     raise ValueError(msg)
@@ -3105,7 +3139,7 @@ def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
 
 def import_experimental_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None,
@@ -3170,9 +3204,32 @@ def import_experimental_data(
     return raw
 
 
+def import_rest_data_for_noise_cov(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str] = None
+) -> mne.io.BaseRaw:
+    """
+    Import resting-state data to calculate the noise covariance matrix on.
+    """
+    cfg = copy.deepcopy(cfg)
+    cfg.task = 'rest'
+    raw = import_experimental_data(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=None,
+        save=False
+    )
+    if noise_cov_input_prepare is not None:
+        raw = noise_cov_input_prepare(raw)
+    return raw
+
+
 def import_er_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     bads: List[str],

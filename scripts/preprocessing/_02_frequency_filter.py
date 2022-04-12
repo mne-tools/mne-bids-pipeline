@@ -35,7 +35,8 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data)
+                    import_experimental_data, import_er_data,
+                    import_rest_data_for_noise_cov)
 from config import parallel_func
 
 
@@ -51,7 +52,7 @@ def filter(
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
     h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    data_type: Literal['experimental', 'empty-room']
+    data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -85,7 +86,7 @@ def resample(
     session: Optional[str],
     run: Optional[str],
     sfreq: Optional[float],
-    data_type: Literal['experimental', 'empty-room']
+    data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     if not sfreq:
         return
@@ -111,9 +112,9 @@ def filter_data(
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
     bids_path = BIDSPath(subject=subject,
-                         run=run,
+                         run=None if run == '_rest' else run,
                          session=session,
-                         task=cfg.task,
+                         task='rest' if run == '_rest' else cfg.task,
                          acquisition=cfg.acq,
                          processing=cfg.proc,
                          recording=cfg.rec,
@@ -133,10 +134,25 @@ def filter_data(
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
+        if run == '_rest':
+            data_type = 'resting-state'
+        else:
+            data_type = 'experimental'
     else:
-        raw = import_experimental_data(cfg=cfg,
-                                       subject=subject, session=session,
-                                       run=run, save=False)
+        if run == '_rest':
+            raw = import_rest_data_for_noise_cov(
+                cfg=cfg,
+                subject=subject,
+                session=session
+            )
+            data_type = 'resting-state'
+        else:
+            raw = import_experimental_data(
+                cfg=cfg,
+                subject=subject, session=session,
+                run=run, save=False
+            )
+            data_type = 'experimental'
 
     raw_fname_out = bids_path.copy().update(processing='filt')
 
@@ -146,10 +162,10 @@ def filter_data(
         h_freq=cfg.h_freq, l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        data_type='experimental'
+        data_type=data_type
     )
     resample(raw=raw, subject=subject, session=session, run=run,
-             sfreq=cfg.resample_sfreq, data_type='experimental')
+             sfreq=cfg.resample_sfreq, data_type=data_type)
 
     raw.save(raw_fname_out, overwrite=True, split_naming='bids')
     if cfg.interactive:
@@ -209,6 +225,7 @@ def get_config(
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=config.get_task(),
+        noise_cov=config.noise_cov,
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
@@ -250,10 +267,15 @@ def main():
         # Enabling different runs for different subjects
         sub_run_ses = []
         for subject in config.get_subjects():
+            runs = config.get_runs(subject=subject)
+            cfg = get_config(subject)
+            if cfg.noise_cov == 'rest':
+                cfg.runs = cfg.runs + ['_rest']
+
             sub_run_ses += list(
                 itertools.product(
                     [subject],
-                    config.get_runs(subject=subject),
+                    runs,
                     config.get_sessions()
                 )
             )

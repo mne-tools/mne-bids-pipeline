@@ -54,6 +54,10 @@ def run_inverse(*, cfg, subject, session=None):
         rank_cov = mne.compute_rank(cov, info=epo.info)['meg']
         rank = {'meg': min(rank_epo, rank_cov)}
 
+        msg = f'    Exp rank: {rank_epo}, noise rank: {rank_cov}.'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
+
+
     forward = mne.read_forward_solution(fname_fwd)
     inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
                                              depth=0.8, rank=rank)

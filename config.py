@@ -1407,7 +1407,9 @@ freesurfer_verbose: bool = False
 Whether to print the complete output of FreeSurfer commands. Note that if
 ``False``, no FreeSurfer output might be displayed at all!"""
 
-mri_t1_path_generator: Optional[Callable] = None
+mri_t1_path_generator: Optional[
+    Callable[[BIDSPath], BIDSPath]
+] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
 transformation matrix that translates coordinates from MEG and EEG sensor
@@ -1467,7 +1469,9 @@ Note: Note
     ```
 """
 
-mri_landmarks_kind: Optional[Callable] = None
+mri_landmarks_kind: Optional[
+    Callable[[BIDSPath], str]
+] = None
 """
 This config option allows to look for specific landmarks in the json
 sidecar file of the T1 MRI file. This can be useful when we have different
@@ -1526,8 +1530,11 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[Tuple[Optional[float], Optional[float]],
-                 Literal['emptyroom']] = (None, 0)
+noise_cov: Union[
+    Tuple[Optional[float], Optional[float]],
+    Literal['emptyroom', 'ad-hoc'],
+    Callable[[BIDSPath], mne.Covariance]
+] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
@@ -1543,8 +1550,11 @@ If ``emptyroom``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-Please note that when processing data that contains EEG channels, the noise
-covariance can ONLY be estimated from the pre-stimulus period.
+If ``ad-hoc``, the a diagonal ad-hoc noise covariance matrix will be used.
+
+You can also pass a function that accepts a `BIDSPath` and returns an
+`mne.Covariance` instance. The `BIDSPath` will point to the file containing
+the generated evoked data.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -1567,8 +1577,16 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'ad-hoc'
     ```
-"""
 
+    Use a custom covariance:
+    ```python
+    def noise_cov(bids_path):
+        bp = bids_path.copy().update(task='rest', run=None, suffix='meg')
+        raw_rest = mne_bids.read_raw_bids(bp)
+        raw.crop(tmin=5, tmax=60)
+        cov = mne.compute_raw_covariance(raw, rank='info')
+        return cov
+"""
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """

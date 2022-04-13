@@ -37,12 +37,17 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 # You have to  create the result folder beforehand
 freq_bands = {
-    'alpha': {
-        'range': (8, 12.5),
-        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/alpha')
-    },
-    'beta': {
-        'range': (12.5, 30),
+    # 'alpha': {
+    #     'range': (8, 12.5),
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/alpha')
+    # },
+    # 'beta': {
+    #     'range': (12.5, 30),
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
+    # },
+
+    'sign': {
+        'range': (8, 25),
         'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
     },
     # 'gamma': {
@@ -117,7 +122,7 @@ def one_subject(subject, session, cfg, freq_band):
     print(f'    ... contrast: {config.contrasts[0][1]} / {config.contrasts[0][0]}')
     for cond in config.contrasts[0]:  # FIXME iterate over ALL contrasts
         epochs_filter = epochs[cond].filter(l_freq, h_freq)
-        epochs_filter.crop(tmin=1, tmax=3)
+        epochs_filter.crop(tmin=1, tmax=2.5)
 
         data_cov = mne.compute_covariance(epochs_filter)
 
@@ -253,14 +258,14 @@ def main():
     parallel(
         run_func(cfg=cfg, subject=subject, session=session, freq_band=freq_band)
         for subject, session, freq_band in
-        itertools.product(subjects, sessions, [freq_bands['alpha'], freq_bands['beta']])
+        itertools.product(subjects, sessions, [freq_bands['sign']])
     )
 
     parallel, run_func, _ = parallel_func(group_analysis,
                                           n_jobs=config.get_n_jobs())
     parallel(
         run_func(subjects, sessions, cfg, freq_band)
-        for freq_band in [freq_bands['alpha'], freq_bands['beta']]
+        for freq_band in [freq_bands['sign']]
         # for subjects, sessions, cfg in subjects, sessions, cfg)
     )
 

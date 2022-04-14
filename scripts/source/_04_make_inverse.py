@@ -111,6 +111,7 @@ def get_config(
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
+        proc=config.proc,
         space=config.space,
         source_info_path_update=config.source_info_path_update,
         inverse_targets=config.inverse_targets,

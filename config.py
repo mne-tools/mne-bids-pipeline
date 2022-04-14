@@ -1579,7 +1579,7 @@ the generated evoked data.
     noise_cov = 'ad-hoc'
     ```
 
-    Use a custom covariance:
+    Use a custom covariance derived from raw data:
     ```python
     def noise_cov(bids_path):
         bp = bids_path.copy().update(task='rest', run=None, suffix='meg')

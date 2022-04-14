@@ -20,6 +20,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, TypedDict
 
+from types import SimpleNamespace
 import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
@@ -1407,7 +1408,9 @@ freesurfer_verbose: bool = False
 Whether to print the complete output of FreeSurfer commands. Note that if
 ``False``, no FreeSurfer output might be displayed at all!"""
 
-mri_t1_path_generator: Optional[Callable] = None
+mri_t1_path_generator: Optional[
+    Callable[[BIDSPath], BIDSPath]
+] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
 transformation matrix that translates coordinates from MEG and EEG sensor
@@ -1467,7 +1470,9 @@ Note: Note
     ```
 """
 
-mri_landmarks_kind: Optional[Callable] = None
+mri_landmarks_kind: Optional[
+    Callable[[BIDSPath], str]
+] = None
 """
 This config option allows to look for specific landmarks in the json
 sidecar file of the T1 MRI file. This can be useful when we have different
@@ -1526,8 +1531,11 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[Tuple[Optional[float], Optional[float]],
-                 Literal['emptyroom']] = (None, 0)
+noise_cov: Union[
+    Tuple[Optional[float], Optional[float]],
+    Literal['emptyroom', 'ad-hoc'],
+    Callable[[BIDSPath], mne.Covariance]
+] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
@@ -1543,8 +1551,11 @@ If ``emptyroom``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-Please note that when processing data that contains EEG channels, the noise
-covariance can ONLY be estimated from the pre-stimulus period.
+If ``ad-hoc``, the a diagonal ad-hoc noise covariance matrix will be used.
+
+You can also pass a function that accepts a `BIDSPath` and returns an
+`mne.Covariance` instance. The `BIDSPath` will point to the file containing
+the generated evoked data.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -1567,8 +1578,16 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'ad-hoc'
     ```
-"""
 
+    Use a custom covariance derived from raw data:
+    ```python
+    def noise_cov(bids_path):
+        bp = bids_path.copy().update(task='rest', run=None, suffix='meg')
+        raw_rest = mne_bids.read_raw_bids(bp)
+        raw.crop(tmin=5, tmax=60)
+        cov = mne.compute_raw_covariance(raw, rank='info')
+        return cov
+"""
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """
@@ -2270,6 +2289,61 @@ def get_task() -> Optional[str]:
             return _valid_tasks[0]
     else:
         return task
+
+
+def get_noise_cov_bids_path(
+    noise_cov: Union[
+        Tuple[Optional[float], Optional[float]],
+        Literal['emptyroom', 'ad-hoc'],
+        Callable[[BIDSPath], mne.Covariance]
+    ],
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str]
+) -> BIDSPath:
+    """Retrieve the path to the noise covariance file.
+
+    Parameters
+    ----------
+    noise_cov
+        The ``noise_cov`` parameter from the configuration file.
+    cfg
+        The local configuration.
+    subject
+        The subject identifier.
+    session
+        The session identifier.
+
+    Returns
+    -------
+    BIDSPath
+        _description_
+    """
+    noise_cov_bp = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='cov',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+    if callable(noise_cov):
+        noise_cov_bp.processing = 'custom'
+    elif noise_cov == 'emptyroom':
+        noise_cov_bp.task = 'noise'
+    elif noise_cov == 'ad-hoc':
+        noise_cov_bp.processing = 'adhoc'
+    else:  # estimated from a time period
+        pass
+
+    return noise_cov_bp
 
 
 def get_n_jobs() -> int:

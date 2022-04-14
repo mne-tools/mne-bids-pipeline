@@ -107,8 +107,9 @@ authors:
 - Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
-- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed
-  and data-independent diagonal noise covariance matrix for source imaging.
+- The [`noise_cov`][config.noise_cov] option can now be set to `ad-hoc` to use
+  a fixed and data-independent diagonal noise covariance matrix for source
+  imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
 - Processing can now be parallelized using [Dask](https://dask.org). To use
   Dask, set the new configuration setting [`parallel_backend`][config.parallel_backend]
@@ -137,6 +138,9 @@ authors:
 - The covariance matrix and corresponding SVD figures, as well as whitened
   evoked data plots are now added to the reports.
   ({{ gh(532) }} by {{ authors.hoechenberger }})
+- The [`noise_cov`][config.noise_cov] option can now be set to a function to
+  allow working with arbitrarily-generated covariance matrices.
+  ({{ gh(535) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }}
 
 ### Behavior changes
 

@@ -1,6 +1,7 @@
 """
 MNE Sample Data
 """
+import mne
 
 study_name = 'ds000248'
 bids_root = '~/mne_data/ds000248'
@@ -22,8 +23,16 @@ mf_reference_run = '01'
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
-process_er = True
-noise_cov = 'emptyroom'
+process_er = False
+
+
+def noise_cov(bp):
+    # Use pre-stimulus period as noise source
+    bp = bp.copy().update(processing='clean', suffix='epo')
+    epo = mne.read_epochs(bp)
+    cov = mne.compute_covariance(epo, rank='info', tmax=0)
+    return cov
+
 
 spatial_filter = 'ssp'
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=1)

@@ -40,6 +40,9 @@ def run_inverse(*, cfg, subject, session=None):
     fname_info = bids_path.copy().update(**cfg.source_info_path_update)
     fname_fwd = bids_path.copy().update(suffix='fwd')
     fname_cov = bids_path.copy().update(suffix='cov')
+    if callable(config.noise_cov):
+        fname_cov.processing = 'custom'
+
     fname_inv = bids_path.copy().update(suffix='inv')
 
     info = mne.io.read_info(fname_info)

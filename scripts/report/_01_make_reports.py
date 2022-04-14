@@ -473,6 +473,8 @@ def run_report_sensor(
         extension='.h5'
     )
     fname_noise_cov = bids_path.copy().update(suffix='cov')
+    if callable(config.noise_cov):
+        fname_noise_cov.processing = 'custom'
 
     ###########################################################################
     #
@@ -687,6 +689,8 @@ def run_report_source(
         return report
 
     fname_noise_cov = bids_path.copy().update(suffix='cov')
+    if callable(config.noise_cov):
+        fname_noise_cov.processing = 'custom'
 
     ###########################################################################
     #

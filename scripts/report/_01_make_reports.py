@@ -20,8 +20,10 @@ from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import (
+    gen_log_kwargs, on_error, failsafe_run, parallel_func,
+    get_noise_cov_bids_path
+)
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -472,9 +474,12 @@ def run_report_sensor(
         suffix='itc+condition+tfr',
         extension='.h5'
     )
-    fname_noise_cov = bids_path.copy().update(suffix='cov')
-    if callable(config.noise_cov):
-        fname_noise_cov.processing = 'custom'
+    fname_noise_cov = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
 
     ###########################################################################
     #
@@ -688,9 +693,12 @@ def run_report_source(
                                      subject=subject, session=session))
         return report
 
-    fname_noise_cov = bids_path.copy().update(suffix='cov')
-    if callable(config.noise_cov):
-        fname_noise_cov.processing = 'custom'
+    fname_noise_cov = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
 
     ###########################################################################
     #

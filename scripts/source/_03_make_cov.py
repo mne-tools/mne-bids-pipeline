@@ -15,8 +15,10 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import (
+    gen_log_kwargs, on_error, failsafe_run, parallel_func,
+    get_noise_cov_bids_path
+)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -40,7 +42,12 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
         processing = 'clean'
 
     epo_fname = bids_path.copy().update(processing=processing, suffix='epo')
-    cov_fname = bids_path.copy().update(suffix='cov')
+    cov_fname = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
            f"periods. Input: {epo_fname.fpath.name}, "
@@ -69,7 +76,12 @@ def compute_cov_from_empty_room(cfg, subject, session):
 
     raw_er_fname = bids_path.copy().update(processing='filt', task='noise',
                                            suffix='raw')
-    cov_fname = bids_path.copy().update(suffix='cov')
+    cov_fname = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
 
     msg = (f'Computing regularized covariance based on empty-room recording. '
            f'Input: {raw_er_fname}, Output: {cov_fname.fpath.name}')
@@ -103,8 +115,11 @@ def retrieve_custom_cov(
         root=cfg.deriv_root,
         check=False
     )
-    cov_fname = evoked_bids_path.copy().update(
-        processing='custom', suffix='cov'
+    cov_fname = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
     )
 
     msg = (f'Retrieving noise covariance matrix from custom user-supplied '

@@ -17,8 +17,10 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
-from config import parallel_func
+from config import (
+    gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name, parallel_func,
+    get_noise_cov_bids_path
+)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -39,9 +41,12 @@ def run_inverse(*, cfg, subject, session=None):
 
     fname_info = bids_path.copy().update(**cfg.source_info_path_update)
     fname_fwd = bids_path.copy().update(suffix='fwd')
-    fname_cov = bids_path.copy().update(suffix='cov')
-    if callable(config.noise_cov):
-        fname_cov.processing = 'custom'
+    fname_cov = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
 
     fname_inv = bids_path.copy().update(suffix='inv')
 

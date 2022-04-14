@@ -20,6 +20,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, TypedDict
 
+from types import SimpleNamespace
 import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
@@ -2288,6 +2289,61 @@ def get_task() -> Optional[str]:
             return _valid_tasks[0]
     else:
         return task
+
+
+def get_noise_cov_bids_path(
+    noise_cov: Union[
+        Tuple[Optional[float], Optional[float]],
+        Literal['emptyroom', 'ad-hoc'],
+        Callable[[BIDSPath], mne.Covariance]
+    ],
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str]
+) -> BIDSPath:
+    """Retrieve the path to the noise covariance file.
+
+    Parameters
+    ----------
+    noise_cov
+        The ``noise_cov`` parameter from the configuration file.
+    cfg
+        The local configuration.
+    subject
+        The subject identifier.
+    session
+        The session identifier.
+
+    Returns
+    -------
+    BIDSPath
+        _description_
+    """
+    noise_cov_bp = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='cov',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+    if callable(noise_cov):
+        noise_cov_bp.processing = 'custom'
+    elif noise_cov == 'emptyroom':
+        noise_cov_bp.task = 'noise'
+    elif noise_cov == 'ad-hoc':
+        noise_cov_bp.processing = 'adhoc'
+    else:  # estimated from a time period
+        pass
+
+    return noise_cov_bp
 
 
 def get_n_jobs() -> int:

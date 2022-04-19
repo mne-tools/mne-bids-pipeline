@@ -8,6 +8,7 @@ authors:
   crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
   dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
   apmellot: "[Apolline Mellot](https://github.com/apmellot)"
+  mathias-sm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
 ---
 
 
@@ -141,6 +142,12 @@ authors:
 - The [`noise_cov`][config.noise_cov] option can now be set to a function to
   allow working with arbitrarily-generated covariance matrices.
   ({{ gh(535) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }}
+- Arbitrary contrasts can be used in [`contrasts`][config.contrasts]. The list
+  now accepts as valid items, in addition to tupples which kept their behavior,
+  dicts specifying a name, a condition list and a weights list to use to
+  `combine_evoked`. Decoding steps ignores contrasts with more than two
+  elements.
+  ({{ gh(536) }} by {{ authors.mathias-sm }}
 
 ### Behavior changes
 

@@ -143,7 +143,7 @@ authors:
   allow working with arbitrarily-generated covariance matrices.
   ({{ gh(535) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }}
 - Arbitrary contrasts can be used in [`contrasts`][config.contrasts]. The list
-  now accepts as valid items, in addition to tupples which kept their behavior,
+  now accepts as valid items, in addition to tuples which kept their behavior,
   dicts specifying a name, a condition list and a weights list to use to
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.

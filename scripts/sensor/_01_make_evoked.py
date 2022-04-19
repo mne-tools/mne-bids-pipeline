@@ -69,9 +69,9 @@ def run_evoked(*, cfg, subject, session=None):
                                      session=session))
 
         for contrast in cfg.contrasts:
-            # TODO should this use `all_evoked`? This is not clear, one may have
-            # a contrast over many conditions and rich contrasts, and not want
-            # all conditions to populate the reports
+            # TODO should this use `all_evoked`? This is not clear, one may
+            # have a contrast over many conditions and rich contrasts, and not
+            # want all conditions to populate the reports
             conditions = [epochs[x].average() for x in contrast["conditions"]]
             evoked_diff = mne.combine_evoked(conditions,
                                              weights=contrast["weights"])

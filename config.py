@@ -2600,7 +2600,7 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
                 'name': contrast[0] + "+" + contrast[1],
                 'conditions': list(contrast),
                 'weights': [1, -1],
-                })
+            })
         else:
             normalized_contrasts.append(contrast)
     if len(normalized_contrasts) == 0:

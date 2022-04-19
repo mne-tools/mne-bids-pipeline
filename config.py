@@ -36,6 +36,12 @@ from mne_bids import BIDSPath, read_raw_bids
 PathLike = Union[str, pathlib.Path]
 
 
+class ArbitraryContrast(TypedDict):
+    name: str
+    conditions: List[str]
+    weights: List[float]
+
+
 study_name: str = ''
 """
 Specify the name of your study. It will be used to populate filenames for
@@ -910,12 +916,14 @@ if ``None``, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[Tuple[str, str]] = []
+contrasts: Iterable[Union[Tuple[str, str], ArbitraryContrast]] = []
 """
-The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
-in the list corresponds to one contrast. The condition names must be
-specified in ``conditions`` above. Pass an empty list to avoid calculation
-of contrasts.
+The conditions to contrast via a subtraction of ERPs / ERFs. The list has either
+tuples, or ArbitraryContrast dicts. Each element in the list corresponds to one
+contrast. A tuple is a one vs one contrast. A ArbitraryContrast is a dict that
+defines a name, a list of conditions, and the list of associated weights. Pass
+an empty list to avoid calculation of contrasts.
+TODO : The condition names must be specified in ``conditions`` above.
 
 ???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating
@@ -933,6 +941,18 @@ of contrasts.
     contrasts = [('auditory/left', 'auditory/right'),
                  ('visual/left', 'visual/right'),
                  ('auditory', 'visual')]
+    ```
+
+    Contrast the "left" and the "right" regardless of side, and compute an
+    arbitrary contrast with a gradient of weights:
+    ```python
+    conditions = ['auditory/left', 'auditory/right',
+                  'visual/left', 'visual/right']
+    contrasts = [('auditory/left', 'auditory/right'),
+                 {'name': 'gradedContrast',
+                  'conditions': ['auditory/left', 'auditory/right',
+                                 'visual/left', 'visual/right'],
+                  'weights': [-1.5, -.5, .5, 1.5]}]
     ```
 """
 
@@ -2554,6 +2574,47 @@ def get_fs_subjects_dir():
         return (pathlib.Path(subjects_dir)
                 .expanduser()
                 .resolve())
+
+
+def get_all_contrasts() -> Iterable[ArbitraryContrast]:
+    normalized_contrasts = []
+    for contrast in contrasts:
+        if isinstance(contrast, tuple) and len(contrast) == 2:
+            normalized_contrasts.append({
+                'name': contrast[0] + "+" + contrast[1],
+                'conditions': list(contrast),
+                'weights': [1, -1],
+                })
+        else:
+            if len(contrast["conditions"]) != len(contrast["weights"]):
+                # TODO : ignore, or error better
+                assert(False)
+            normalized_contrasts.append(contrast)
+    if len(normalized_contrasts) == 0:
+        return None
+    else:
+        return normalized_contrasts
+
+
+def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
+    normalized_contrasts = []
+    for contrast in contrasts:
+        if isinstance(contrast, tuple) and len(contrast) == 2:
+            normalized_contrasts.append(contrast)
+        else:
+            if len(contrast["conditions"]) != len(contrast["weights"]):
+                # TODO : ignore, or error better
+                assert(False)
+            check_len = len(contrast["conditions"]) == 2
+            check_sum = np.isclose(np.sum(contrast["weights"]), 0)
+            if check_len and check_sum:
+                cond_1 = contrast["conditions"][0]
+                cond_2 = contrast["conditions"][1]
+                normalized_contrasts.append((cond_1, cond_2))
+    if len(normalized_contrasts) == 0:
+        return None
+    else:
+        return normalized_contrasts
 
 
 def failsafe_run(

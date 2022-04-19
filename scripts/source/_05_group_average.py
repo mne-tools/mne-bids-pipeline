@@ -44,6 +44,9 @@ def morph_stc(cfg, subject, fs_subject, session=None):
         else:
             conditions = cfg.conditions
 
+    if cfg.contrasts:
+        conditions.extend([c["name"] for c in cfg.contrasts])
+
     for condition in conditions:
         method = cfg.inverse_method
         cond_str = sanitize_cond_name(condition)
@@ -89,6 +92,9 @@ def run_average(cfg, session, mean_morphed_stcs):
     else:
         conditions = cfg.conditions
 
+    if cfg.contrasts:
+        conditions.extend([c["name"] for c in cfg.contrasts])
+
     for condition, stc in zip(conditions, mean_morphed_stcs):
         method = cfg.inverse_method
         cond_str = sanitize_cond_name(condition)
@@ -110,6 +116,7 @@ def get_config() -> SimpleNamespace:
         space=config.space,
         proc=config.proc,
         conditions=config.conditions,
+        contrasts=config.get_all_contrasts(),
         inverse_method=config.inverse_method,
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),

@@ -148,7 +148,7 @@ def get_config(
         space=config.space,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
-        contrasts=config.contrasts,
+        contrasts=config.get_decoding_contrasts(),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
@@ -176,10 +176,11 @@ def main():
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
     logs = []
+    contrasts = config.get_decoding_contrasts()
     for subject, session, (cond_1, cond_2) in itertools.product(
         config.get_subjects(),
         config.get_sessions(),
-        config.contrasts
+        contrasts
     ):
         log = run_time_decoding(
             cfg=get_config(), subject=subject,

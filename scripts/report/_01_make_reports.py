@@ -492,7 +492,8 @@ def run_report_sensor(
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend(cfg.contrasts)
+    if cfg.all_contrasts:
+        conditions.extend([c["name"] for c in cfg.all_contrasts])
 
     if conditions:
         evokeds = mne.read_evokeds(fname_ave)
@@ -530,12 +531,11 @@ def run_report_sensor(
             title = f'Condition: {condition}'
             tags = ('evoked', condition.lower().replace(' ', '-'))
         else:  # It's a contrast of two conditions.
-            title = f'Contrast: {condition[0]} – {condition[1]}'
+            title = f'Contrast: {condition}'
             tags = (
                 'evoked',
                 'contrast',
-                f"{condition[0].lower().replace(' ', '-')}-"
-                f"{condition[1].lower().replace(' ', '-')}"
+                condition.lower().replace(' ', '-')
             )
 
         report.add_evokeds(
@@ -557,7 +557,7 @@ def run_report_sensor(
 
         epochs = mne.read_epochs(fname_epo_clean)
 
-        for contrast in cfg.contrasts:
+        for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{cfg.decoding_metric}'
@@ -712,7 +712,8 @@ def run_report_source(
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend(cfg.contrasts)
+    if cfg.all_contrasts:
+        conditions.extend([c["name"] for c in cfg.all_contrasts])
 
     msg = 'Rendering MRI slices with BEM contours.'
     logger.info(**gen_log_kwargs(message=msg,
@@ -752,10 +753,9 @@ def run_report_source(
                                      subject=subject, session=session))
 
         if condition in cfg.conditions:
-            title = f'Source: {config.sanitize_cond_name(condition)}'
+            title = f'Condition: {config.sanitize_cond_name(condition)}'
         else:  # It's a contrast of two conditions.
-            # XXX Will change once we process contrasts here too
-            continue
+            title = f'Contrast: {config.sanitize_cond_name(condition)}'
 
         method = cfg.inverse_method
         cond_str = config.sanitize_cond_name(condition)
@@ -906,7 +906,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend(cfg.contrasts)
+    if cfg.all_contrasts:
+        conditions.extend([c["name"] for c in cfg.all_contrasts])
 
     #######################################################################
     #
@@ -926,12 +927,11 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
-            title = f'Average Contrast: {condition[0]} – {condition[1]}'
+            title = f'Average Contrast: {condition}'
             tags = (
                 'evoked',
-                f'{config.sanitize_cond_name(condition[0])} – '
-                f'{config.sanitize_cond_name(condition[1])}'
-                .lower().replace(' ', '')
+                'contrast',
+                config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
 
         report.add_evokeds(
@@ -947,7 +947,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Visualize decoding results.
     #
     if cfg.decode:
-        for contrast in cfg.contrasts:
+        for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
             processing = f'{a_vs_b}+{cfg.decoding_metric}'
@@ -996,8 +996,13 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
-            # XXX Will change once we process contrasts here too
-            continue
+            title = f'Average contrast: {condition}'
+            cond_str = config.sanitize_cond_name(condition)
+            tags = (
+                'source-estimate',
+                'contrast',
+                config.sanitize_cond_name(condition).lower().replace(' ', '')
+            )
 
         fname_stc_avg = evoked_fname.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
@@ -1056,7 +1061,8 @@ def get_config(
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,
         conditions=config.conditions,
-        contrasts=config.contrasts,
+        all_contrasts=config.get_all_contrasts(),
+        decoding_contrasts=config.get_decoding_contrasts(),
         ica_reject=config.get_ica_reject(),
         time_frequency_conditions=config.time_frequency_conditions,
         decode=config.decode,

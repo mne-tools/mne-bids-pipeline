@@ -2007,6 +2007,22 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
 
+if contrasts:
+    for contrast in contrasts:
+        if isinstance(contrast, tuple):
+            if len(contrast) != 2:
+                raise ValueError("Contrasts' tuples MUST be two conditions")
+        else:
+            if "name" not in contrast.keys():
+                raise ValueError("One contrast is missing a name")
+            if "conditions" not in contrast.keys():
+                raise ValueError("One contrast is missing a condition list")
+            if "weights" not in contrast.keys():
+                raise ValueError("One contrast is missing a weight list")
+            if len(contrast["conditions"]) != len(contrast["weights"]):
+                raise ValueError(f"Contrast {contrast['name']} has an"
+                                 f"inconsistent number of conditions/weights")
+
 
 def check_baseline(
     *,
@@ -2586,9 +2602,6 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
                 'weights': [1, -1],
                 })
         else:
-            if len(contrast["conditions"]) != len(contrast["weights"]):
-                # TODO : ignore, or error better
-                assert(False)
             normalized_contrasts.append(contrast)
     if len(normalized_contrasts) == 0:
         return None
@@ -2602,9 +2615,6 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
         if isinstance(contrast, tuple) and len(contrast) == 2:
             normalized_contrasts.append(contrast)
         else:
-            if len(contrast["conditions"]) != len(contrast["weights"]):
-                # TODO : ignore, or error better
-                assert(False)
             check_len = len(contrast["conditions"]) == 2
             check_sum = np.isclose(np.sum(contrast["weights"]), 0)
             if check_len and check_sum:

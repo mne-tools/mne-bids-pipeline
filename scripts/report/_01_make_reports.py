@@ -549,7 +549,7 @@ def run_report_sensor(
     #
     # Visualize decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    if cfg.decode:
         msg = 'Adding time-by-time decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -946,7 +946,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     #
     # Visualize decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    if cfg.decode:
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')

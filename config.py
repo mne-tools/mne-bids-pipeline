@@ -923,21 +923,20 @@ tuples, or ArbitraryContrast dicts. Each element in the list corresponds to one
 contrast. A tuple is a one vs one contrast. A ArbitraryContrast is a dict that
 defines a name, a list of conditions, and the list of associated weights. Pass
 an empty list to avoid calculation of contrasts.
-TODO : The condition names must be specified in ``conditions`` above.
+For the contrasts to be computed, the appropriate condutions must have been
+epoched, and therefore the conditions should either match or be subsets of
+`conditions` above
 
 ???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating
     ``left - right`` at every time point of the evoked responses:
     ```python
-    conditions = ['left', 'right']
     contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
     ```
 
     Contrast the "left" and the "right" conditions within the "auditory" and
     the "visual" modality, and "auditory" vs "visual" regardless of side:
     ```python
-    conditions = ['auditory/left', 'auditory/right',
-                  'visual/left', 'visual/right']
     contrasts = [('auditory/left', 'auditory/right'),
                  ('visual/left', 'visual/right'),
                  ('auditory', 'visual')]
@@ -946,8 +945,6 @@ TODO : The condition names must be specified in ``conditions`` above.
     Contrast the "left" and the "right" regardless of side, and compute an
     arbitrary contrast with a gradient of weights:
     ```python
-    conditions = ['auditory/left', 'auditory/right',
-                  'visual/left', 'visual/right']
     contrasts = [
         ('auditory/left', 'auditory/right'),
         {

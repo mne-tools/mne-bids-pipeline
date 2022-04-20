@@ -2007,7 +2007,8 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
            f'are: "FLASH", "T1", and "auto".')
     raise ValueError(msg)
 
-if contrasts:
+
+def _validate_contrasts(contrasts):
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:
@@ -2593,6 +2594,7 @@ def get_fs_subjects_dir():
 
 
 def get_all_contrasts() -> Iterable[ArbitraryContrast]:
+    _validate_contrasts(contrasts)
     normalized_contrasts = []
     for contrast in contrasts:
         if isinstance(contrast, tuple) and len(contrast) == 2:
@@ -2607,6 +2609,7 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
 
 
 def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
+    _validate_contrasts(contrasts)
     normalized_contrasts = []
     for contrast in contrasts:
         if isinstance(contrast, tuple) and len(contrast) == 2:

@@ -948,11 +948,19 @@ TODO : The condition names must be specified in ``conditions`` above.
     ```python
     conditions = ['auditory/left', 'auditory/right',
                   'visual/left', 'visual/right']
-    contrasts = [('auditory/left', 'auditory/right'),
-                 {'name': 'gradedContrast',
-                  'conditions': ['auditory/left', 'auditory/right',
-                                 'visual/left', 'visual/right'],
-                  'weights': [-1.5, -.5, .5, 1.5]}]
+    contrasts = [
+        ('auditory/left', 'auditory/right'),
+        {
+            'name': 'gradedContrast',
+            'conditions': [
+                'auditory/left',
+                'auditory/right',
+                'visual/left',
+                'visual/right'
+            ],
+            'weights': [-1.5, -.5, .5, 1.5]
+        }
+    ]
     ```
 """
 

@@ -2603,10 +2603,7 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
             })
         else:
             normalized_contrasts.append(contrast)
-    if len(normalized_contrasts) == 0:
-        return None
-    else:
-        return normalized_contrasts
+    return normalized_contrasts
 
 
 def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
@@ -2621,10 +2618,7 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
                 cond_1 = contrast["conditions"][0]
                 cond_2 = contrast["conditions"][1]
                 normalized_contrasts.append((cond_1, cond_2))
-    if len(normalized_contrasts) == 0:
-        return None
-    else:
-        return normalized_contrasts
+    return normalized_contrasts
 
 
 def failsafe_run(

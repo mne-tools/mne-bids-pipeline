@@ -2617,7 +2617,7 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
     _validate_contrasts(contrasts)
     normalized_contrasts = []
     for contrast in contrasts:
-        if isinstance(contrast, tuple) and len(contrast) == 2:
+        if isinstance(contrast, tuple):
             normalized_contrasts.append({
                 'name': contrast[0] + "+" + contrast[1],
                 'conditions': list(contrast),
@@ -2632,7 +2632,7 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
     _validate_contrasts(contrasts)
     normalized_contrasts = []
     for contrast in contrasts:
-        if isinstance(contrast, tuple) and len(contrast) == 2:
+        if isinstance(contrast, tuple):
             normalized_contrasts.append(contrast)
         else:
             check_len = len(contrast["conditions"]) == 2

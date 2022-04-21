@@ -923,14 +923,24 @@ contrasts: Iterable[
     ]
 ] = []
 """
-The conditions to contrast via a subtraction of ERPs / ERFs. The list has either
-tuples, or ArbitraryContrast dicts. Each element in the list corresponds to one
-contrast. A tuple is a one vs one contrast. A ArbitraryContrast is a dict that
-defines a name, a list of conditions, and the list of associated weights. Pass
-an empty list to avoid calculation of contrasts.
-For the contrasts to be computed, the appropriate condutions must have been
+The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
+can either be tuples or dictionaries (or a mix of both). Each element in the
+list corresponds to a single contrast.
+
+A tuple specifies a one-vs-one contrast, where the second condition is
+subtraced from the first.
+
+If a dictionary, must contain the following keys:
+
+- `name`: a custom name of the contrast
+- `conditions`: the conditions to contrast
+- `weights`: the weights associated with each condition.
+
+Pass an empty list to avoid calculation of any contrasts.
+
+For the contrasts to be computed, the appropriate conditions must have been
 epoched, and therefore the conditions should either match or be subsets of
-`conditions` above
+`conditions` above.
 
 ???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating

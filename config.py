@@ -916,7 +916,12 @@ if ``None``, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[Union[Tuple[str, str], ArbitraryContrast]] = []
+contrasts: Iterable[
+    Union[
+        Tuple[str, str],
+        ArbitraryContrast
+    ]
+] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list has either
 tuples, or ArbitraryContrast dicts. Each element in the list corresponds to one

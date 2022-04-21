@@ -492,7 +492,7 @@ def run_report_sensor(
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend([c["name"] for c in cfg.all_contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.all_contrasts])
 
     if conditions:
         evokeds = mne.read_evokeds(fname_ave)
@@ -711,7 +711,7 @@ def run_report_source(
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend([c["name"] for c in cfg.all_contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.all_contrasts])
 
     msg = 'Rendering MRI slices with BEM contours.'
     logger.info(**gen_log_kwargs(message=msg,
@@ -904,7 +904,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     else:
         conditions = cfg.conditions.copy()
 
-    conditions.extend([c["name"] for c in cfg.all_contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.all_contrasts])
 
     #######################################################################
     #

@@ -44,7 +44,7 @@ def morph_stc(cfg, subject, fs_subject, session=None):
         else:
             conditions = cfg.conditions
 
-    conditions.extend([c["name"] for c in cfg.contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.contrasts])
 
     for condition in conditions:
         method = cfg.inverse_method
@@ -91,7 +91,7 @@ def run_average(cfg, session, mean_morphed_stcs):
     else:
         conditions = cfg.conditions
 
-    conditions.extend([c["name"] for c in cfg.contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.contrasts])
 
     for condition, stc in zip(conditions, mean_morphed_stcs):
         method = cfg.inverse_method

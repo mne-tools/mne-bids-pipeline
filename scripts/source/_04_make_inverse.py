@@ -74,7 +74,7 @@ def run_inverse(*, cfg, subject, session=None):
     else:
         conditions = cfg.conditions
 
-    conditions.extend([c["name"] for c in cfg.contrasts])
+    conditions.extend([contrast["name"] for contrast in cfg.contrasts])
 
     if 'evoked' in cfg.inverse_targets:
         fname_ave = bids_path.copy().update(suffix='ave')

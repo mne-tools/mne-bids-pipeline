@@ -69,8 +69,8 @@ def run_evoked(*, cfg, subject, session=None):
                                      session=session))
 
         for contrast in cfg.contrasts:
-            conditions = [epochs[x].average() for x in contrast["conditions"]]
-            evoked_diff = mne.combine_evoked(conditions,
+            all_evoked = [epochs[x].average() for x in contrast["conditions"]]
+            evoked_diff = mne.combine_evoked(all_evoked,
                                              weights=contrast["weights"])
             all_evoked[contrast["name"]] = evoked_diff
 

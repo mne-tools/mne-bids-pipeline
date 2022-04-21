@@ -2635,6 +2635,10 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
         if isinstance(contrast, tuple):
             normalized_contrasts.append(contrast)
         else:
+            # If a contrast is an `ArbitraryContrast` and satisfies
+            # * has exactly two conditions (`check_len`)
+            # * weights sum to 0 (`check_sum`)
+            # Then the two conditions are used to perform decoding
             check_len = len(contrast["conditions"]) == 2
             check_sum = np.isclose(np.sum(contrast["weights"]), 0)
             if check_len and check_sum:

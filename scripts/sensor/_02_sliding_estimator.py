@@ -176,11 +176,10 @@ def main():
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
     logs = []
-    contrasts = config.get_decoding_contrasts()
     for subject, session, (cond_1, cond_2) in itertools.product(
         config.get_subjects(),
         config.get_sessions(),
-        contrasts
+        config.get_decoding_contrasts()
     ):
         log = run_time_decoding(
             cfg=get_config(), subject=subject,

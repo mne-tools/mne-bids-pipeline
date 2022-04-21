@@ -751,9 +751,10 @@ def run_report_source(
                                      subject=subject, session=session))
 
         if condition in cfg.conditions:
-            title = f'Condition: {config.sanitize_cond_name(condition)}'
+            title = f'Source: {config.sanitize_cond_name(condition)}'
         else:  # It's a contrast of two conditions.
-            title = f'Contrast: {config.sanitize_cond_name(condition)}'
+            # XXX Will change once we process contrasts here too
+            continue
 
         method = cfg.inverse_method
         cond_str = config.sanitize_cond_name(condition)
@@ -924,12 +925,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 config.sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
-            title = f'Average Contrast: {condition}'
-            tags = (
-                'evoked',
-                'contrast',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
-            )
+            # XXX Will change once we process contrasts here too
+            continue
 
         report.add_evokeds(
             evokeds=evoked,

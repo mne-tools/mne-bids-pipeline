@@ -2028,21 +2028,22 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     raise ValueError(msg)
 
 
+_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+
+
 def _validate_contrasts(contrasts):
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:
                 raise ValueError("Contrasts' tuples MUST be two conditions")
-        else:
-            if "name" not in contrast.keys():
-                raise ValueError("One contrast is missing a name")
-            if "conditions" not in contrast.keys():
-                raise ValueError("One contrast is missing a condition list")
-            if "weights" not in contrast.keys():
-                raise ValueError("One contrast is missing a weight list")
+        elif isinstance(contrast, dict):
+            if not _keys_arbitrary_contrast.issubset(set(contrast.keys())):
+                raise ValueError(f"Missing key(s) in contrast {contrast}")
             if len(contrast["conditions"]) != len(contrast["weights"]):
-                raise ValueError(f"Contrast {contrast['name']} has an"
+                raise ValueError(f"Contrast {contrast['name']} has an "
                                  f"inconsistent number of conditions/weights")
+        else:
+            raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
 def check_baseline(
@@ -2618,11 +2619,13 @@ def get_all_contrasts() -> Iterable[ArbitraryContrast]:
     normalized_contrasts = []
     for contrast in contrasts:
         if isinstance(contrast, tuple):
-            normalized_contrasts.append({
-                'name': contrast[0] + "+" + contrast[1],
-                'conditions': list(contrast),
-                'weights': [1, -1],
-            })
+            normalized_contrasts.append(
+                ArbitraryContrast(
+                    name=(contrast[0] + "+" + contrast[1]),
+                    conditions=list(contrast),
+                    weights=[1, -1]
+                )
+            )
         else:
             normalized_contrasts.append(contrast)
     return normalized_contrasts

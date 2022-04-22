@@ -74,8 +74,6 @@ def run_inverse(*, cfg, subject, session=None):
     else:
         conditions = cfg.conditions
 
-    conditions.extend([contrast["name"] for contrast in cfg.contrasts])
-
     if 'evoked' in cfg.inverse_targets:
         fname_ave = bids_path.copy().update(suffix='ave')
         evokeds = mne.read_evokeds(fname_ave)
@@ -119,7 +117,6 @@ def get_config(
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,
-        contrasts=config.get_all_contrasts(),
         inverse_method=config.inverse_method,
         deriv_root=config.get_deriv_root(),
     )

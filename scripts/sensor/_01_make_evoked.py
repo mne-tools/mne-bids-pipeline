@@ -69,11 +69,10 @@ def run_evoked(*, cfg, subject, session=None):
                                      session=session))
 
         for contrast in cfg.contrasts:
-            cond_1, cond_2 = contrast
-            evoked_diff = mne.combine_evoked([all_evoked[cond_1],
-                                              all_evoked[cond_2]],
-                                             weights=[1, -1])
-            all_evoked[contrast] = evoked_diff
+            all_evoked = [epochs[x].average() for x in contrast["conditions"]]
+            evoked_diff = mne.combine_evoked(all_evoked,
+                                             weights=contrast["weights"])
+            all_evoked[contrast["name"]] = evoked_diff
 
     evokeds = list(all_evoked.values())
     mne.write_evokeds(fname_out, evokeds, overwrite=True)
@@ -103,7 +102,7 @@ def get_config(
         space=config.space,
         deriv_root=config.get_deriv_root(),
         conditions=config.conditions,
-        contrasts=config.contrasts,
+        contrasts=config.get_all_contrasts(),
         interactive=config.interactive,
     )
     return cfg

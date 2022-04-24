@@ -2030,7 +2030,7 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
 
 try:
     _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
-except:
+except Exception:
     _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
 
 

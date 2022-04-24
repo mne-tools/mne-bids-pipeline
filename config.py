@@ -2028,7 +2028,10 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     raise ValueError(msg)
 
 
-_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+try:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+except:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
 
 
 def _validate_contrasts(contrasts):

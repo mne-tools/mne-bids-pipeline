@@ -8,7 +8,7 @@ authors:
   crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
   dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
   apmellot: "[Apolline Mellot](https://github.com/apmellot)"
-  mathias-sm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
+  mathiassm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
 ---
 
 
@@ -147,7 +147,7 @@ authors:
   dicts specifying a name, a condition list and a weights list to use to
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.
-  ({{ gh(536) }} by {{ authors.mathias-sm }}
+  ({{ gh(536) }} by {{ authors.mathiassm }}
 
 ### Behavior changes
 

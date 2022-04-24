@@ -1670,6 +1670,30 @@ empty list, `[]`.
 # ADVANCED
 # --------
 
+report_evoked_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each evoked
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 time points per evoked
+    ```python
+    report_evoked_n_time_points = 5
+    ```
+"""
+
+report_stc_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each source estimates
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 images per source estimate:
+    ```python
+    report_stc_n_time_points = 5
+    ```
+"""
+
 l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
 Specifies the transition bandwidth of the

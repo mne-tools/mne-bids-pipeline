@@ -541,6 +541,7 @@ def run_report_sensor(
             evokeds=evoked,
             titles=title,
             noise_cov=noise_cov,
+            n_time_points=cfg.report_evoked_n_time_points,
             tags=tags
         )
 
@@ -775,6 +776,7 @@ def run_report_source(
                 title=title,
                 subject=cfg.fs_subject,
                 subjects_dir=cfg.fs_subjects_dir,
+                n_time_points=cfg.report_stc_n_time_points,
                 tags=tags
             )
 
@@ -933,6 +935,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             titles=title,
             projs=False,
             tags=tags,
+            n_time_points=cfg.report_evoked_n_time_points,
             # captions=evoked.comment  # TODO upstream
         )
 
@@ -1008,6 +1011,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 title=title,
                 subject='fsaverage',
                 subjects_dir=cfg.fs_subjects_dir,
+                n_time_points=cfg.report_stc_n_time_points,
                 tags=tags
             )
 
@@ -1063,6 +1067,8 @@ def get_config(
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
         inverse_method=config.inverse_method,
+        report_stc_n_time_points=config.report_stc_n_time_points,
+        report_evoked_n_time_points=config.report_evoked_n_time_points,
         fs_subject=fs_subject,
         fs_subjects_dir=fs_subjects_dir,
         deriv_root=config.get_deriv_root(),

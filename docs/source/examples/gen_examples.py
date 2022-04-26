@@ -2,7 +2,11 @@ import os
 import shutil
 from pathlib import Path
 import runpy
+import logging
 from typing import Union, Iterable
+
+
+logger = logging.getLogger()
 
 
 dataset_opts_path = Path('tests/datasets.py')
@@ -62,8 +66,9 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
 
 # Copy reports to the correct place.
 datasets_without_html = []
-for test_name, test_opt in test_options.items():
-    dataset_name = test_opt['dataset']
+for test_name, test_dataset_options in test_options.items():
+    # dataset_name = test_opt['dataset']
+    dataset_name = test_name
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
@@ -79,12 +84,15 @@ for test_name, test_opt in test_options.items():
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
-for test_name, test_opt in test_options.items():
-    dataset_name = test_opt['dataset']
+for test_dataset_name, test_dataset_options in test_options.items():
+    dataset_name = test_dataset_name
+    del test_dataset_name
+
     if dataset_name in datasets_without_html:
+        logger.warning(f'Dataset {dataset_name} has no HTML report.')
         continue
 
-    options = dataset_options[dataset_name]
+    options = dataset_options[test_dataset_options['dataset']]
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')

@@ -84,16 +84,11 @@ plugins:
         default_handler: python
         handlers:
             python:
-                # setup_commands:
-                #     - import os
-                #     - os.environ["MNE_BIDS_STUDY_CONFIG"] = "./source/doc-config.py"
-                #     - import sys
-                #     - sys.path.insert(0, "..")
                 rendering:
                     show_source: true
                     show_if_no_docstring: false
                     show_root_heading: true
-                    # show_root_full_path: false
+                    show_root_full_path: false
                     separate_signature: true
                     show_bases: false
                 selection:

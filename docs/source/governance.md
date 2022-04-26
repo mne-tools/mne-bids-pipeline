@@ -10,4 +10,4 @@ with the exception that the Steering Council and Institutional Partners differ, 
 
 ## Institutional Partners
 
-- [Institut national de recherche en informatique et en automatique (INRIA)](https://www.inria.fr/)
+- [Inria](https://www.inria.fr/)

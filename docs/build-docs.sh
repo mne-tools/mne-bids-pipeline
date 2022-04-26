@@ -8,7 +8,7 @@ echo "Generating example templates …"
 python docs/source/examples/gen_examples.py
 
 
-echo "Bulding the documentation …"
+echo "Building the documentation …"
 cd docs
 PYTHONPATH=../ mkdocs build  # ensure ../config.py can be found
 cd ..

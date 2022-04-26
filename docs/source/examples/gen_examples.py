@@ -67,13 +67,18 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
 # Copy reports to the correct place.
 datasets_without_html = []
 for test_name, test_dataset_options in test_options.items():
-    # dataset_name = test_opt['dataset']
-    dataset_name = test_name
+    if 'ERP_CORE' in test_name:
+        dataset_name = test_dataset_options['dataset']
+    else:
+        dataset_name = test_name
+
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
-    example_source_dir = Path(f'~/mne_data/derivatives/mne-bids-pipeline/'
-                              f'{dataset_name}').expanduser()
+    example_source_dir = Path(
+        f'~/mne_data/derivatives/mne-bids-pipeline/{dataset_name}'
+    ).expanduser()
+
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 
     if not html_report_fnames:
@@ -81,16 +86,23 @@ for test_name, test_dataset_options in test_options.items():
         continue
 
     for fname in html_report_fnames:
+        logger.info(f'Copying {fname} to {example_target_dir}')
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
 for test_dataset_name, test_dataset_options in test_options.items():
-    dataset_name = test_dataset_name
+    if 'ERP_CORE' in test_dataset_name:
+        dataset_name = test_dataset_options['dataset']
+    else:
+        dataset_name = test_dataset_name
+
     del test_dataset_name
 
     if dataset_name in datasets_without_html:
         logger.warning(f'Dataset {dataset_name} has no HTML report.')
         continue
+
+    logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
     options = dataset_options[test_dataset_options['dataset']]
 

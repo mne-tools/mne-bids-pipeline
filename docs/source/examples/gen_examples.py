@@ -112,7 +112,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if fnames_cleaning:
         report_str += '??? info "Data cleaning"\n'
@@ -120,7 +120,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if fnames_other:
         report_str += '??? info "Other output"\n'
@@ -128,7 +128,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if options['openneuro']:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'

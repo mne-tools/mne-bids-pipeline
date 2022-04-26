@@ -75,7 +75,6 @@ nav:
         - examples/ds000117.md
         - examples/ERP_CORE.md
     - What's new: changes.md
-    - Project Governance: governance.md
 
 plugins:
     - search

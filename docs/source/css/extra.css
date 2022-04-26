@@ -78,3 +78,8 @@ td p {
   width: 70%;
   min-width: 200px;
 }
+
+/* Hide "module-attribute" annotation */
+span.doc-properties {
+  display: none;
+}

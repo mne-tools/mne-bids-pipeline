@@ -29,14 +29,13 @@ extra_css:
     - css/extra.css
 nav:
     - Home: index.md
-    - What's new: changes.md
-    - Features:
-        - What the pipeline can do: features/features.md
-        - List of processing steps: features/steps.md
     - Getting started:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/basic_usage.md
         - Preparations for source-level analyses: getting_started/freesurfer.md
+    - Features:
+        - What the pipeline can do: features/features.md
+        - List of processing steps: features/steps.md
     - Configuration Options:
         - General settings: settings/general.md
         - Preprocessing:
@@ -75,6 +74,7 @@ nav:
         - examples/ds001810.md
         - examples/ds000117.md
         - examples/ERP_CORE.md
+    - What's new: changes.md
     - Project Governance: governance.md
 
 plugins:

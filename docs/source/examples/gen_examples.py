@@ -56,7 +56,7 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
                  f'{_bool_to_icon(config["recreate_bem"])}')
     funcs.append(f'Template MRI | {_bool_to_icon(config["use_template_mri"])}')
 
-    funcs = '\n'.join(funcs) + '\n'
+    funcs = '\n'.join(funcs) + '\n\n'
     return funcs
 
 
@@ -183,7 +183,7 @@ for test_name, test_opt in test_options.items():
     with out_path.open('w', encoding='utf-8') as f:
         f.write(config_descr)
         f.write(demonstrated_funcs_str)
-        f.write(report_str)
         f.write(source_str)
         f.write(download_str)
         f.write(config_str)
+        f.write(report_str)

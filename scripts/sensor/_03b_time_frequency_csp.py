@@ -160,7 +160,11 @@ def prepare_epochs_and_y(
     # filtering out the conditions we are not interested in.
     # So we ensure here we have a valid partition between the
     # condition of the contrast.
-    epochs_filter = epochs_filter[contrast]
+    # XXX HACK
+    if contrast[0].startswith('event_name.isin'):
+        epochs_filter = epochs_filter[f'{contrast[0]} or {contrast[1]}']
+    else:
+        epochs_filter = epochs_filter[contrast]
 
     # We frequency filter after droping channel,
     # because filtering is costly
@@ -275,6 +279,7 @@ def plot_time_frequency_decoding(
         [0],  # [0] We do not have multiple channels here.
         vmax=chance + max_abs_v,
         vmin=chance - max_abs_v,
+        cmap='bwr',
         title="Time-Frequency Decoding ROC-AUC Scores",
     )
     return figs[0]
@@ -601,30 +606,61 @@ def plot_axis_time_frequency_statistics(
     None. inplace modification of the axis.
     """
     ax.set_title(f"{value_type}-value")
-    array = np.maximum(array, 1e-7) if value_type == "p" else array
+    # array = np.maximum(array, 1e-7) if value_type == "p" else array
     array = np.reshape(array, (tf.n_freq_windows, tf.n_time_windows))
-    array = -np.log10(array) if value_type == "p" else array
+    # array = -np.log10(array) if value_type == "p" else array
 
     # Adaptive color
-    lims = np.array([np.min(array), np.max(array)])
+    if value_type == "t":
+        if array.min() <= 0 and array.max() <= 0:
+            vmin = array.min()
+            vmax = array.max()
+        elif array.min() >= 0 and array.max() >= 0:
+            vmin = array.min()
+            vmax = array.max()
+        else:
+            vmin = -np.max(np.abs(array))
+            vmax = -vmin
+        lims = np.array([vmin, vmax])
+        cmap = 'bwr'
+    else:
+        lims = [0, 1]
+        N_colors = 256
+        colors = [  # white to red by manipulation of the alpha channel
+            [1, 0, 0, i] for i in np.geomspace(0.0001, 1, N_colors)
+        ]
+        cmap = matplotlib.colors.ListedColormap(colors)
+        cmap = cmap.reversed()  # smallest: red; largest: white
 
-    img = ax.imshow(array, cmap='Reds', origin='lower',
+    img = ax.imshow(array, cmap=cmap, origin='lower',
                     vmin=lims[0], vmax=lims[1], aspect='auto',
                     extent=[np.min(tf.times), np.max(tf.times),
                             np.min(tf.freqs), np.max(tf.freqs)])
 
+    # decimals = 3 if value_type == 'p' else 1
+    # for x in range(array.shape[0]):
+    #     for y in range(array.shape[1]):
+    #         val = np.round(array[x, y], decimals=decimals)
+    #         if np.isclose(val, 0):
+    #             val = 0
+
+    #         img.axes.text(
+    #             x=y,
+    #             y=x,
+    #             s=val,
+    #             ha="center", va="center", color="black"
+    #         )
+
     ax.set_xlabel('time')
-    ax.set_ylabel('frequencies')
+    ax.set_ylabel('frequency')
+
     cbar = plt.colorbar(ax=ax, shrink=0.75, orientation='horizontal',
                         mappable=img, )
     cbar.set_ticks(lims)
+    cbar.set_ticklabels([f'{round(lim, 1)}' for lim in lims])
+    cbar.set_label(f'{value_type}-value')
 
-    cbar.set_ticklabels([f'10$^{{{-round(lim, 1)}}}$' for lim in lims])
     cbar.ax.get_xaxis().set_label_coords(0.5, -0.3)
-    if value_type == "p":
-        cbar.set_label(r'p-value')
-    if value_type == "t":
-        cbar.set_label(r't-value')
 
 
 def plot_t_and_p_values(

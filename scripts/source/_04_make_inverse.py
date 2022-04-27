@@ -17,8 +17,10 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
-from config import parallel_func
+from config import (
+    gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name, parallel_func,
+    get_noise_cov_bids_path
+)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -39,14 +41,25 @@ def run_inverse(*, cfg, subject, session=None):
 
     fname_info = bids_path.copy().update(**cfg.source_info_path_update)
     fname_fwd = bids_path.copy().update(suffix='fwd')
-    fname_cov = bids_path.copy().update(suffix='cov')
+    fname_cov = get_noise_cov_bids_path(
+        noise_cov=config.noise_cov,
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
+
     fname_inv = bids_path.copy().update(suffix='inv')
 
     info = mne.io.read_info(fname_info)
-    if cfg.noise_cov == "ad-hoc":
+
+    # Note that we're using config.noise_cov here and not adding it to
+    # cfg, as in case it's a function, it won't work when running parallel jobs
+
+    if config.noise_cov == "ad-hoc":
         cov = mne.make_ad_hoc_cov(info)
     else:
         cov = mne.read_cov(fname_cov)
+
     forward = mne.read_forward_solution(fname_fwd)
     inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
                                              depth=0.8, rank='info')
@@ -98,10 +111,10 @@ def get_config(
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
+        proc=config.proc,
         space=config.space,
         source_info_path_update=config.source_info_path_update,
         inverse_targets=config.inverse_targets,
-        noise_cov=config.noise_cov,
         ch_types=config.ch_types,
         conditions=config.conditions,
         inverse_method=config.inverse_method,

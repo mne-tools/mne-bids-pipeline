@@ -37,4 +37,4 @@ Now that everything is installed
 
 [Download and extract the code :fontawesome-solid-floppy-disk:](https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip){: .md-button .md-button--primary }
 
-[Discover Basic Usage :fontawesome-solid-rocket:](basic_usage.html){: .md-button .md-button--primary }
+[Discover Basic Usage :fontawesome-solid-rocket:](basic_usage.md){: .md-button .md-button--primary }

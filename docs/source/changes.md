@@ -8,6 +8,7 @@ authors:
   crsegerie: "[Charbel-Raphaël Segerie](https://github.com/crsegerie)"
   dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
   apmellot: "[Apolline Mellot](https://github.com/apmellot)"
+  mathiassm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
 ---
 
 
@@ -107,8 +108,9 @@ authors:
 - Add a new configuration setting [`freesurfer_verbose`][config.freesurfer_verbose]
   to control whether to display of FreeSurfer output.
   ({{ gh(459) }} by {{ authors.hoechenberger }})
-- The [`noise_cov`][config.noise_cov] can now be set to `ad-hoc` to use a fixed
-  and data-independent diagonal noise covariance matrix for source imaging.
+- The [`noise_cov`][config.noise_cov] option can now be set to `ad-hoc` to use
+  a fixed and data-independent diagonal noise covariance matrix for source
+  imaging.
   ({{ gh(460) }} by {{ authors.agramfort }} and  {{ authors.apmellot }})
 - Processing can now be parallelized using [Dask](https://dask.org). To use
   Dask, set the new configuration setting [`parallel_backend`][config.parallel_backend]
@@ -137,6 +139,15 @@ authors:
 - The covariance matrix and corresponding SVD figures, as well as whitened
   evoked data plots are now added to the reports.
   ({{ gh(532) }} by {{ authors.hoechenberger }})
+- The [`noise_cov`][config.noise_cov] option can now be set to a function to
+  allow working with arbitrarily-generated covariance matrices.
+  ({{ gh(535) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }}
+- Arbitrary contrasts can be used in [`contrasts`][config.contrasts]. The list
+  now accepts as valid items, in addition to tuples which kept their behavior,
+  dicts specifying a name, a condition list and a weights list to use to
+  `combine_evoked`. Decoding steps ignores contrasts with more than two
+  elements.
+  ({{ gh(536) }} by {{ authors.mathiassm }}
 
 ### Behavior changes
 

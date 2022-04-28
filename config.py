@@ -20,6 +20,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, TypedDict
 
+from types import SimpleNamespace
 import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
@@ -33,6 +34,12 @@ import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
 
 PathLike = Union[str, pathlib.Path]
+
+
+class ArbitraryContrast(TypedDict):
+    name: str
+    conditions: List[str]
+    weights: List[float]
 
 
 study_name: str = ''
@@ -909,29 +916,63 @@ if ``None``, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[Tuple[str, str]] = []
+contrasts: Iterable[
+    Union[
+        Tuple[str, str],
+        ArbitraryContrast
+    ]
+] = []
 """
-The conditions to contrast via a subtraction of ERPs / ERFs. Each tuple
-in the list corresponds to one contrast. The condition names must be
-specified in ``conditions`` above. Pass an empty list to avoid calculation
-of contrasts.
+The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
+can either be tuples or dictionaries (or a mix of both). Each element in the
+list corresponds to a single contrast.
+
+A tuple specifies a one-vs-one contrast, where the second condition is
+subtraced from the first.
+
+If a dictionary, must contain the following keys:
+
+- `name`: a custom name of the contrast
+- `conditions`: the conditions to contrast
+- `weights`: the weights associated with each condition.
+
+Pass an empty list to avoid calculation of any contrasts.
+
+For the contrasts to be computed, the appropriate conditions must have been
+epoched, and therefore the conditions should either match or be subsets of
+`conditions` above.
 
 ???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating
     ``left - right`` at every time point of the evoked responses:
     ```python
-    conditions = ['left', 'right']
     contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
     ```
 
     Contrast the "left" and the "right" conditions within the "auditory" and
     the "visual" modality, and "auditory" vs "visual" regardless of side:
     ```python
-    conditions = ['auditory/left', 'auditory/right',
-                  'visual/left', 'visual/right']
     contrasts = [('auditory/left', 'auditory/right'),
                  ('visual/left', 'visual/right'),
                  ('auditory', 'visual')]
+    ```
+
+    Contrast the "left" and the "right" regardless of side, and compute an
+    arbitrary contrast with a gradient of weights:
+    ```python
+    contrasts = [
+        ('auditory/left', 'auditory/right'),
+        {
+            'name': 'gradedContrast',
+            'conditions': [
+                'auditory/left',
+                'auditory/right',
+                'visual/left',
+                'visual/right'
+            ],
+            'weights': [-1.5, -.5, .5, 1.5]
+        }
+    ]
     ```
 """
 
@@ -1407,7 +1448,9 @@ freesurfer_verbose: bool = False
 Whether to print the complete output of FreeSurfer commands. Note that if
 ``False``, no FreeSurfer output might be displayed at all!"""
 
-mri_t1_path_generator: Optional[Callable] = None
+mri_t1_path_generator: Optional[
+    Callable[[BIDSPath], BIDSPath]
+] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
 transformation matrix that translates coordinates from MEG and EEG sensor
@@ -1467,7 +1510,9 @@ Note: Note
     ```
 """
 
-mri_landmarks_kind: Optional[Callable] = None
+mri_landmarks_kind: Optional[
+    Callable[[BIDSPath], str]
+] = None
 """
 This config option allows to look for specific landmarks in the json
 sidecar file of the T1 MRI file. This can be useful when we have different
@@ -1526,8 +1571,11 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[Tuple[Optional[float], Optional[float]],
-                 Literal['emptyroom']] = (None, 0)
+noise_cov: Union[
+    Tuple[Optional[float], Optional[float]],
+    Literal['emptyroom', 'ad-hoc'],
+    Callable[[BIDSPath], mne.Covariance]
+] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
@@ -1543,8 +1591,11 @@ If ``emptyroom``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-Please note that when processing data that contains EEG channels, the noise
-covariance can ONLY be estimated from the pre-stimulus period.
+If ``ad-hoc``, the a diagonal ad-hoc noise covariance matrix will be used.
+
+You can also pass a function that accepts a `BIDSPath` and returns an
+`mne.Covariance` instance. The `BIDSPath` will point to the file containing
+the generated evoked data.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -1567,8 +1618,16 @@ covariance can ONLY be estimated from the pre-stimulus period.
     ```python
     noise_cov = 'ad-hoc'
     ```
-"""
 
+    Use a custom covariance derived from raw data:
+    ```python
+    def noise_cov(bids_path):
+        bp = bids_path.copy().update(task='rest', run=None, suffix='meg')
+        raw_rest = mne_bids.read_raw_bids(bp)
+        raw.crop(tmin=5, tmax=60)
+        cov = mne.compute_raw_covariance(raw, rank='info')
+        return cov
+"""
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
 """
@@ -1969,6 +2028,27 @@ if bem_mri_images not in ('FLASH', 'T1', 'auto'):
     raise ValueError(msg)
 
 
+try:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+except Exception:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
+
+
+def _validate_contrasts(contrasts):
+    for contrast in contrasts:
+        if isinstance(contrast, tuple):
+            if len(contrast) != 2:
+                raise ValueError("Contrasts' tuples MUST be two conditions")
+        elif isinstance(contrast, dict):
+            if not _keys_arbitrary_contrast.issubset(set(contrast.keys())):
+                raise ValueError(f"Missing key(s) in contrast {contrast}")
+            if len(contrast["conditions"]) != len(contrast["weights"]):
+                raise ValueError(f"Contrast {contrast['name']} has an "
+                                 f"inconsistent number of conditions/weights")
+        else:
+            raise ValueError("Contrasts must be tuples or well-formed dicts")
+
+
 def check_baseline(
     *,
     baseline: Optional[Tuple[Optional[float], Optional[float]]],
@@ -2272,6 +2352,61 @@ def get_task() -> Optional[str]:
         return task
 
 
+def get_noise_cov_bids_path(
+    noise_cov: Union[
+        Tuple[Optional[float], Optional[float]],
+        Literal['emptyroom', 'ad-hoc'],
+        Callable[[BIDSPath], mne.Covariance]
+    ],
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str]
+) -> BIDSPath:
+    """Retrieve the path to the noise covariance file.
+
+    Parameters
+    ----------
+    noise_cov
+        The ``noise_cov`` parameter from the configuration file.
+    cfg
+        The local configuration.
+    subject
+        The subject identifier.
+    session
+        The session identifier.
+
+    Returns
+    -------
+    BIDSPath
+        _description_
+    """
+    noise_cov_bp = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='cov',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+    if callable(noise_cov):
+        noise_cov_bp.processing = 'custom'
+    elif noise_cov == 'emptyroom':
+        noise_cov_bp.task = 'noise'
+    elif noise_cov == 'ad-hoc':
+        noise_cov_bp.processing = 'adhoc'
+    else:  # estimated from a time period
+        pass
+
+    return noise_cov_bp
+
+
 def get_n_jobs() -> int:
     env = os.environ
 
@@ -2480,6 +2615,43 @@ def get_fs_subjects_dir():
         return (pathlib.Path(subjects_dir)
                 .expanduser()
                 .resolve())
+
+
+def get_all_contrasts() -> Iterable[ArbitraryContrast]:
+    _validate_contrasts(contrasts)
+    normalized_contrasts = []
+    for contrast in contrasts:
+        if isinstance(contrast, tuple):
+            normalized_contrasts.append(
+                ArbitraryContrast(
+                    name=(contrast[0] + "+" + contrast[1]),
+                    conditions=list(contrast),
+                    weights=[1, -1]
+                )
+            )
+        else:
+            normalized_contrasts.append(contrast)
+    return normalized_contrasts
+
+
+def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
+    _validate_contrasts(contrasts)
+    normalized_contrasts = []
+    for contrast in contrasts:
+        if isinstance(contrast, tuple):
+            normalized_contrasts.append(contrast)
+        else:
+            # If a contrast is an `ArbitraryContrast` and satisfies
+            # * has exactly two conditions (`check_len`)
+            # * weights sum to 0 (`check_sum`)
+            # Then the two conditions are used to perform decoding
+            check_len = len(contrast["conditions"]) == 2
+            check_sum = np.isclose(np.sum(contrast["weights"]), 0)
+            if check_len and check_sum:
+                cond_1 = contrast["conditions"][0]
+                cond_2 = contrast["conditions"][1]
+                normalized_contrasts.append((cond_1, cond_2))
+    return normalized_contrasts
 
 
 def failsafe_run(

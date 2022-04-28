@@ -12,7 +12,8 @@ p {
 /* Larger font in tables */
 .md-typeset table td,
 .md-typeset table th {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
+  line-height: 0.5;
 }
 
 /* Larger font in code, example, info, warning blocks */
@@ -76,4 +77,9 @@ td p {
   text-align: center;
   width: 70%;
   min-width: 200px;
+}
+
+/* Hide "module-attribute" annotation */
+span.doc-properties {
+  display: none;
 }

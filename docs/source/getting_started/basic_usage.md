@@ -15,7 +15,7 @@ We recommend that
         obviously problematic channels as such in the BIDS dataset.
 
     ??? tip "How?"
-        MNE-BIDS provides a convenient way to visually inspect raw data and 
+        MNE-BIDS provides a convenient way to visually inspect raw data and
         interactively mark problematic channels as bad by using the command
         ```shell
         mne-bids inspect
@@ -108,5 +108,5 @@ Run the pipeline
     python run.py --config=/path/to/your/custom_config.py --steps=preprocessing,sensor
     ```
 
-You can directly visit our [examples page](../examples/examples.html) to see some configuration files
+You can directly visit our [examples page](../examples/examples.md) to see some configuration files
 and the corresponding results.

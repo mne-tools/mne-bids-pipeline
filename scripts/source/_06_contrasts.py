@@ -37,6 +37,28 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 # You have to  create the result folder beforehand
 freq_bands = {
+    # 'short_vs_long_cluster_1': {
+    #     'range': [8.5, 12],
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/short_vs_long/cluster_1')
+    # },
+    # 'short_vs_long_cluster_2': {
+    #     'range': [17.25, 20.75],
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/short_vs_long/cluster_2')
+    # }
+
+    '1_vs_3_cluster': {
+        'range': [5, 26],
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/1_vs_3/cluster')
+    },
+    '1_vs_3_alpha': {
+        'range': [8, 12.5],
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/1_vs_3/alpha')
+    },
+    '1_vs_3_beta': {
+        'range': [12.5, 30],
+        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/1_vs_3/beta')
+    },
+
     # 'alpha': {
     #     'range': (8, 12.5),
     #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/alpha')
@@ -46,10 +68,10 @@ freq_bands = {
     #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
     # },
 
-    'sign': {
-        'range': (8, 25),
-        'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
-    },
+    # 'sign': {
+    #     'range': (8, 25),
+    #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/beta')
+    # },
     # 'gamma': {
     #     'range': (30, 100),
     #     'outdir': Path('/storage/store2/derivatives/time_in_wm/source_contrast/gamma')
@@ -78,6 +100,7 @@ def plot_source(stc, filename):
 
 def one_subject(subject, session, cfg, freq_band):
     """Compute the contrast and morph it to the fsavg."""
+    print(freq_band)
     print(f'processing subject {subject} (range: {freq_band["range"]} Hz)')
     bids_path = BIDSPath(
         subject=subject,
@@ -122,7 +145,7 @@ def one_subject(subject, session, cfg, freq_band):
     print(f'    ... contrast: {config.contrasts[0][1]} / {config.contrasts[0][0]}')
     for cond in config.contrasts[0]:  # FIXME iterate over ALL contrasts
         epochs_filter = epochs[cond].filter(l_freq, h_freq)
-        epochs_filter.crop(tmin=1, tmax=2.5)
+        epochs_filter.crop(tmin=1, tmax=3)
 
         data_cov = mne.compute_covariance(epochs_filter)
 
@@ -258,14 +281,14 @@ def main():
     parallel(
         run_func(cfg=cfg, subject=subject, session=session, freq_band=freq_band)
         for subject, session, freq_band in
-        itertools.product(subjects, sessions, [freq_bands['sign']])
+        itertools.product(subjects, sessions, list(freq_bands.values()))
     )
 
     parallel, run_func, _ = parallel_func(group_analysis,
                                           n_jobs=config.get_n_jobs())
     parallel(
         run_func(subjects, sessions, cfg, freq_band)
-        for freq_band in [freq_bands['sign']]
+        for freq_band in freq_bands.values()
         # for subjects, sessions, cfg in subjects, sessions, cfg)
     )
 

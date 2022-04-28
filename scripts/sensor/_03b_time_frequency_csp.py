@@ -613,23 +613,38 @@ def plot_axis_time_frequency_statistics(
     # Adaptive color
     if value_type == "t":
         if array.min() <= 0 and array.max() <= 0:
-            vmin = array.min()
-            vmax = array.max()
+            lims = np.array([array.min(), array.max()])
+            N_colors = 256
+            colors = [  # white to red by manipulation of the alpha channel
+                [1, 0, 0, i] for i in np.linspace(0, np.abs(array.min()), N_colors)
+            ]
+            cmap = matplotlib.colors.ListedColormap(colors).copy()
+            cmap = cmap.reversed()  # smallest: red; largest: white
         elif array.min() >= 0 and array.max() >= 0:
-            vmin = array.min()
-            vmax = array.max()
+            lims = np.array([array.min(), array.max()])
+            N_colors = 256
+            colors = [  # white to red by manipulation of the alpha channel
+                [1, 0, 0, i] for i in np.linspace(0, np.abs(array.max()), N_colors)
+            ]
+            cmap = matplotlib.colors.ListedColormap(colors).copy()
         else:
             vmin = -np.max(np.abs(array))
             vmax = -vmin
-        lims = np.array([vmin, vmax])
-        cmap = 'bwr'
+            lims = np.array([vmin, vmax])
+            cmap = 'bwr'
     else:
         lims = [0, 1]
+        # N_colors = 256
+        # colors = [  # white to red by manipulation of the alpha channel
+        #     [1, 0, 0, i] for i in np.geomspace(0.0001, 1, N_colors)
+        # ]
+        # cmap = matplotlib.colors.ListedColormap(colors)
+        # cmap = cmap.reversed()  # smallest: red; largest: white
         N_colors = 256
         colors = [  # white to red by manipulation of the alpha channel
-            [1, 0, 0, i] for i in np.geomspace(0.0001, 1, N_colors)
+            [1, 0, 0, i] for i in np.linspace(0, np.abs(array.max()), N_colors)
         ]
-        cmap = matplotlib.colors.ListedColormap(colors)
+        cmap = matplotlib.colors.ListedColormap(colors).copy()
         cmap = cmap.reversed()  # smallest: red; largest: white
 
     img = ax.imshow(array, cmap=cmap, origin='lower',
@@ -850,12 +865,16 @@ def group_analysis(
     titles.append('Clustering')
     # Compute threshold from t distribution (this is also the default)
     threshold = stats.distributions.t.ppf(  # type: ignore
-        1 - cfg.cluster_t_dist_alpha_thres, len(subjects) - 1)
+        1 - cfg.cluster_t_dist_alpha_thres,
+        len(subjects) - 1
+    )
     t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
         X, n_jobs=1,
         threshold=threshold,
         adjacency=None,  # a regular lattice adjacency is assumed
-        n_permutations=cfg.n_permutations, out_type='mask')
+        n_permutations=cfg.n_permutations,
+        out_type='mask'
+    )
 
     msg = "Permutations performed successfully"
     logger.info(**gen_log_kwargs(msg))
@@ -964,17 +983,17 @@ def main():
 
     for contrast in config.contrasts:
 
-        parallel, run_func, _ = parallel_func(
-            one_subject_decoding, n_jobs=config.get_n_jobs())
-        logs = parallel(
-            run_func(cfg=cfg, tf=tf, pth=pth,
-                     subject=subject,
-                     session=session,
-                     contrast=contrast)
-            for subject, session in
-            itertools.product(subjects, sessions)
-        )
-        config.save_logs(logs)
+        # parallel, run_func, _ = parallel_func(
+        #     one_subject_decoding, n_jobs=config.get_n_jobs())
+        # logs = parallel(
+        #     run_func(cfg=cfg, tf=tf, pth=pth,
+        #              subject=subject,
+        #              session=session,
+        #              contrast=contrast)
+        #     for subject, session in
+        #     itertools.product(subjects, sessions)
+        # )
+        # config.save_logs(logs)
 
         # Once every subject has been calculated,
         # the group_analysis is very fast to compute.

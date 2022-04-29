@@ -208,6 +208,12 @@ authors:
 - In [`interactive`][config.interactive] mode, the Matplotlib `Agg` backend
   will be used.
   ({{ gh(497) }} by {{ authors.hoechenberger }})
+- We added new configuration options to control the number of time points to
+  use when creating topographic maps of evoked signals and brain plots for
+  source estimates:
+  [`report_evoked_n_time_points`][config.report_evoked_n_time_points] and
+  [`report_stc_n_time_points`][config.report_stc_n_time_points], respectively.
+  ({{ gh(542) }} by {{ authors.agramfort }})
 
 ### Code health
 

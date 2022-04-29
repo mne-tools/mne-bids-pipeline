@@ -8,12 +8,12 @@ site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
 theme:
     name: material
-    custom_dir: overrides
     logo: assets/mne.svg
     favicon: assets/favicon.ico
     features:
         - navigation.tabs
         - navigation.instant  # Load pages via XMLHttpRequest (XHR)
+        - navigation.tracking
 extra:
     social:
         - icon: fontawesome/brands/github
@@ -29,14 +29,13 @@ extra_css:
     - css/extra.css
 nav:
     - Home: index.md
-    - What's new: changes.md
-    - Features:
-        - What the pipeline can do: features/features.md
-        - List of processing steps: features/steps.md
     - Getting started:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/basic_usage.md
         - Preparations for source-level analyses: getting_started/freesurfer.md
+    - Features:
+        - What the pipeline can do: features/features.md
+        - List of processing steps: features/steps.md
     - Configuration Options:
         - General settings: settings/general.md
         - Preprocessing:
@@ -77,6 +76,7 @@ nav:
         - examples/ds001810.md
         - examples/ds000117.md
         - examples/ERP_CORE.md
+    - What's new: changes.md
 
 plugins:
     - search
@@ -85,16 +85,15 @@ plugins:
         default_handler: python
         handlers:
             python:
-                setup_commands:
-                    - import os
-                    - os.environ["MNE_BIDS_STUDY_CONFIG"] = "./source/doc-config.py"
-                    - import sys
-                    - sys.path.insert(0, "..")
                 rendering:
                     show_source: true
                     show_if_no_docstring: false
                     show_root_heading: true
                     show_root_full_path: false
+                    separate_signature: true
+                    show_bases: false
+                selection:
+                    docstring_style: numpy
         watch:
             - .
             - ./config.py

@@ -2,7 +2,11 @@ import os
 import shutil
 from pathlib import Path
 import runpy
+import logging
 from typing import Union, Iterable
+
+
+logger = logging.getLogger()
 
 
 dataset_opts_path = Path('tests/datasets.py')
@@ -56,19 +60,25 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
                  f'{_bool_to_icon(config["recreate_bem"])}')
     funcs.append(f'Template MRI | {_bool_to_icon(config["use_template_mri"])}')
 
-    funcs = '\n'.join(funcs) + '\n'
+    funcs = '\n'.join(funcs) + '\n\n'
     return funcs
 
 
 # Copy reports to the correct place.
 datasets_without_html = []
-for test_name, test_opt in test_options.items():
-    dataset_name = test_opt['dataset']
+for test_name, test_dataset_options in test_options.items():
+    if 'ERP_CORE' in test_name:
+        dataset_name = test_dataset_options['dataset']
+    else:
+        dataset_name = test_name
+
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
 
-    example_source_dir = Path(f'~/mne_data/derivatives/mne-bids-pipeline/'
-                              f'{dataset_name}').expanduser()
+    example_source_dir = Path(
+        f'~/mne_data/derivatives/mne-bids-pipeline/{dataset_name}'
+    ).expanduser()
+
     html_report_fnames = list(example_source_dir.rglob('*.html'))
 
     if not html_report_fnames:
@@ -76,15 +86,25 @@ for test_name, test_opt in test_options.items():
         continue
 
     for fname in html_report_fnames:
+        logger.info(f'Copying {fname} to {example_target_dir}')
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
-for test_name, test_opt in test_options.items():
-    dataset_name = test_opt['dataset']
+for test_dataset_name, test_dataset_options in test_options.items():
+    if 'ERP_CORE' in test_dataset_name:
+        dataset_name = test_dataset_options['dataset']
+    else:
+        dataset_name = test_dataset_name
+
+    del test_dataset_name
+
     if dataset_name in datasets_without_html:
+        logger.warning(f'Dataset {dataset_name} has no HTML report.')
         continue
 
-    options = dataset_options[dataset_name]
+    logger.warning(f'Generating markdown file for dataset: {dataset_name}')
+
+    options = dataset_options[test_dataset_options['dataset']]
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
@@ -112,7 +132,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if fnames_cleaning:
         report_str += '??? info "Data cleaning"\n'
@@ -120,7 +140,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if fnames_other:
         report_str += '??? info "Other output"\n'
@@ -128,7 +148,7 @@ for test_name, test_opt in test_options.items():
         link_target = Path(dataset_name) / fname.name
         report_str += (f'    <a href="{link_target}" target="_blank" '
                        f'class="report-button md-button md-button--primary">'
-                       f'{fname.name} :fontawesome-solid-poll:</a>\n\n')
+                       f'{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n')
 
     if options['openneuro']:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
@@ -183,7 +203,7 @@ for test_name, test_opt in test_options.items():
     with out_path.open('w', encoding='utf-8') as f:
         f.write(config_descr)
         f.write(demonstrated_funcs_str)
-        f.write(report_str)
         f.write(source_str)
         f.write(download_str)
         f.write(config_str)
+        f.write(report_str)

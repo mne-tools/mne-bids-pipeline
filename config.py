@@ -3474,7 +3474,7 @@ def get_reference_run_params(
     raw = read_raw_bids(bids_path=bids_path)
     params = ReferenceRunParams(
         montage=raw.get_montage(),
-        dev_head_t=raw.info['dev_head_t']
+        dev_head_t=raw.info['dev_head_t'].copy()
     )
     return params
 

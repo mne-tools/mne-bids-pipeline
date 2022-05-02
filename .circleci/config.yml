@@ -559,9 +559,6 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
-      - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
       - browser-tools/install-chrome
       - run:
           name: Check Chrome installation
@@ -593,9 +590,6 @@ jobs:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
-      - run:
           name: test ERP CORE ERN
           command: |
             mkdir -p ~/reports/ERP_CORE
@@ -620,9 +614,6 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
-      - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE LRP
           command: |
@@ -649,9 +640,6 @@ jobs:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
-      - run:
           name: test ERP CORE MMN
           command: |
             mkdir -p ~/reports/ERP_CORE
@@ -676,9 +664,6 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
-      - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N2pc
           command: |
@@ -705,9 +690,6 @@ jobs:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
       - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
-      - run:
           name: test ERP CORE N170
           command: |
             mkdir -p ~/reports/ERP_CORE
@@ -732,9 +714,6 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-{{ .Revision }}
-      - run:
-          name: prepare PyVista settings dir
-          command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE P3
           command: |

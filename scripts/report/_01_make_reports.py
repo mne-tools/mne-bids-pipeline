@@ -793,7 +793,7 @@ def run_report(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
-    sys_info: str
+    # sys_info: str
 ):
     report = _gen_empty_report(
         cfg=cfg,
@@ -810,9 +810,9 @@ def run_report(
     # Add configuration and system info.
     #
     add_config_contents(report)
-    report.add_code(
-        code=sys_info, title='System information', tags=('mne-sysinfo',)
-    )
+    # report.add_code(
+    #     code=sys_info, title='System information', tags=('mne-sysinfo',)
+    # )
 
     ###########################################################################
     #
@@ -900,7 +900,7 @@ def run_report_average(
     cfg: SimpleNamespace,
     subject: str,
     session: str,
-    sys_info: str
+    # sys_info: str
 ) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -1063,9 +1063,9 @@ def run_report_average(
     # Add configuration and system info.
     #
     add_config_contents(report)
-    report.add_code(
-        code=sys_info, title='System information', tags=('mne-sysinfo',)
-    )
+    # report.add_code(
+    #     code=sys_info, title='System information', tags=('mne-sysinfo',)
+    # )
 
     ###########################################################################
     #
@@ -1142,7 +1142,7 @@ def main():
     # Get the system information only once to preserve resources
     msg = 'Gathering system information …'
     logger.info(**gen_log_kwargs(message=msg))
-    sys_info = get_system_info()
+    # sys_info = get_system_info()
 
     with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
@@ -1151,8 +1151,10 @@ def main():
         )
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session, sys_info=sys_info
+                cfg=get_config(subject=subject),
+                subject=subject,
+                session=session,
+                # sys_info=sys_info
             )
             for subject, session in
             itertools.product(
@@ -1177,7 +1179,7 @@ def main():
                 cfg=get_config(subject='average'),
                 subject='average',
                 session=session,
-                sys_info=sys_info
+                # sys_info=sys_info
             )
 
 

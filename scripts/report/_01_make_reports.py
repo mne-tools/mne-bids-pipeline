@@ -900,7 +900,7 @@ def run_report_average(
     cfg: SimpleNamespace,
     subject: str,
     session: str,
-    sys_info:str
+    sys_info: str
 ) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib

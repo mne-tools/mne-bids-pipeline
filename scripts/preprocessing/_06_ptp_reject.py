@@ -46,7 +46,7 @@ def drop_ptp(*, cfg, subject, session=None):
     fname_in = bids_path.copy().update(processing=infile_processing)
     fname_out = bids_path.copy().update(processing='clean')
 
-    msg = f'Input: {fname_in}, Output: {fname_out}'
+    msg = f'Input: {fname_in.fpath.name}, Output: {fname_out.fpath.name}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

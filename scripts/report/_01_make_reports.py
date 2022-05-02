@@ -7,6 +7,8 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import contextlib
+from io import StringIO
 import os
 import os.path as op
 from pathlib import Path
@@ -791,6 +793,7 @@ def run_report(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
+    sys_info: str
 ):
     report = _gen_empty_report(
         cfg=cfg,
@@ -806,7 +809,10 @@ def run_report(
     #
     # Add configuration and system info.
     #
-    add_system_info(report)
+    add_config_contents(report)
+    report.add_code(
+        code=sys_info, title='System information', tags=('mne-sysinfo',)
+    )
 
     ###########################################################################
     #
@@ -868,9 +874,17 @@ def add_event_counts(*,
         report.add_custom_css(css=css)
 
 
-def add_system_info(report: mne.Report):
-    """Add system information and the pipeline configuration to the report."""
+def get_system_info() -> str:
+    """Get system information."""
+    with contextlib.redirect_stdout(StringIO()) as f:
+        mne.sys_info()
 
+    info = f.getvalue()
+    return info
+
+
+def add_config_contents(report: mne.Report):
+    """Add the pipeline configuration file to the report."""
     config_path = Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
     report.add_code(
         code=config_path,
@@ -881,7 +895,13 @@ def add_system_info(report: mne.Report):
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
-def run_report_average(*, cfg, subject: str, session: str) -> None:
+def run_report_average(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: str,
+    sys_info:str
+) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -1042,7 +1062,10 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     #
     # Add configuration and system info.
     #
-    add_system_info(report)
+    add_config_contents(report)
+    report.add_code(
+        code=sys_info, title='System information', tags=('mne-sysinfo',)
+    )
 
     ###########################################################################
     #
@@ -1115,6 +1138,12 @@ def get_config(
 
 def main():
     """Make reports."""
+
+    # Get the system information only once to preserve resources
+    msg = 'Gathering system information …'
+    logger.info(**gen_log_kwargs(message=msg))
+    sys_info = get_system_info()
+
     with config.get_parallel_backend():
         parallel, run_func, _ = parallel_func(
             run_report,
@@ -1123,7 +1152,7 @@ def main():
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,
-                session=session
+                session=session, sys_info=sys_info
             )
             for subject, session in
             itertools.product(
@@ -1140,15 +1169,15 @@ def main():
 
         if (config.get_task() is not None and
                 config.get_task().lower() == 'rest'):
-            msg = '    … skipping "average" report for "rest" task.'
-            logger.info(**gen_log_kwargs(message=msg))
+
             return
 
         for session in sessions:
             run_report_average(
                 cfg=get_config(subject='average'),
                 subject='average',
-                session=session
+                session=session,
+                sys_info=sys_info
             )
 
 

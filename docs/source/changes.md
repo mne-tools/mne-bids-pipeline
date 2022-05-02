@@ -148,6 +148,9 @@ authors:
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.
   ({{ gh(536) }} by {{ authors.mathiassm }}
+- The pipeline configuration and MNE system information are now automatically
+  added to the report.
+  ({{ gh(544) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 

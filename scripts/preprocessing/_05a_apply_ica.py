@@ -77,7 +77,8 @@ def apply_ica(*, cfg, subject, session):
                    .to_list())
 
     # Load epochs to reject ICA components.
-    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
+    msg = (f'Input: {fname_epo_in.fpath.name}, '
+           f'Output: {fname_epo_out.fpath.name}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

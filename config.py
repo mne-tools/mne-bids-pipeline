@@ -364,7 +364,9 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```
 """
 
-eeg_template_montage: Optional[str] = None
+eeg_template_montage: Optional[
+    Tuple[str, mne.channels.DigMontage]
+] = None
 """
 In situations where you wish to process EEG data and no individual
 digitization points (measured channel locations) are available, you can apply
@@ -379,6 +381,8 @@ If ``None``, do not apply a template montage. If a string, must be the
 name of a built-in template montage in MNE-Python.
 You can find an overview of supported template montages at
 https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
+
+Can also be a `DigMontage`.
 
 ???+ example "Example"
     Do not apply template montage:
@@ -3275,8 +3279,7 @@ def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
                                 mne.channels.montage.DigMontage)
     montage_name = 'custom_montage' if is_mne_montage else montage
     if cfg.datatype == 'eeg' and montage:
-        msg = (f'Setting EEG channel locations to template montage: '
-               f'{montage}.')
+        msg = 'Setting EEG channel locations to template montage.'
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run)
         )

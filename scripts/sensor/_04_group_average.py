@@ -44,7 +44,7 @@ def average_evokeds(cfg, session):
                             root=cfg.deriv_root,
                             check=False)
 
-        msg = f'Input: {fname_in}'
+        msg = f'Input: {fname_in.fpath.name}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 

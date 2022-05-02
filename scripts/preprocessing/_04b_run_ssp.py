@@ -46,7 +46,8 @@ def run_ssp(*, cfg, subject, session=None):
     proj_fname_out = bids_path.copy().update(run=None, suffix='proj',
                                              check=False)
 
-    msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
+    msg = (f'Input: {raw_fname_in.fpath.name}, '
+           f'Output: {proj_fname_out.fpath.name}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

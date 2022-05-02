@@ -1,6 +1,6 @@
 typing_extensions
 psutil  # for joblib
-joblib >= 0.14
+joblib @ https://github.com/joblib/joblib/archive/refs/heads/master.zip
 dask[distributed]
 jupyter-server-proxy  # to have dask and jupyter working together
 scikit-learn

@@ -108,6 +108,7 @@ if task == 'N400':
 
     contrasts = [('unrelated', 'related')]
 elif task == 'ERN':
+    parallel_backend = 'loky'
     rename_events = {
         'stimulus/11': 'compatible/left',
         'stimulus/12': 'compatible/right',

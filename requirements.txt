@@ -1,5 +1,5 @@
 typing_extensions
-psutil  # for joblib
+# psutil  # for joblib
 joblib @ https://github.com/joblib/joblib/archive/refs/heads/master.zip
 dask[distributed]
 jupyter-server-proxy  # to have dask and jupyter working together

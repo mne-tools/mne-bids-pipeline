@@ -7,6 +7,7 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import os
 import os.path as op
 from pathlib import Path
 import itertools
@@ -801,6 +802,16 @@ def run_report(
     report = run_report_sensor(**kwargs)
     report = run_report_source(**kwargs)
 
+    ###########################################################################
+    #
+    # Add configuration and system info.
+    #
+    add_system_info(report)
+
+    ###########################################################################
+    #
+    # Save the report.
+    #
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -855,6 +866,18 @@ def add_event_counts(*,
                '  text-align: center;\n'
                '}\n')
         report.add_custom_css(css=css)
+
+
+def add_system_info(report: mne.Report):
+    """Add system information and the pipeline configuration to the report."""
+
+    config_path = Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
+    report.add_code(
+        code=config_path,
+        title='Configuration file',
+        tags=('configuration',)
+    )
+    report.add_sys_info(title='System information')
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -1015,6 +1038,16 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 tags=tags
             )
 
+    ###########################################################################
+    #
+    # Add configuration and system info.
+    #
+    add_system_info(report)
+
+    ###########################################################################
+    #
+    # Save the report.
+    #
     fname_report = evoked_fname.copy().update(
         task=cfg.task, suffix='report', extension='.html')
     report.save(fname=fname_report, open_browser=False, overwrite=True)

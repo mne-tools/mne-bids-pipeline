@@ -15,5 +15,5 @@ pyvista
 pyvistaqt
 autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master
 openpyxl
-mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main
+mne[hdf5] @ git+https://github.com/mne-tools/mne-python.git@f059f8f1edaee3f9b6954e7987dd1e6d482bba27
 mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main

@@ -529,7 +529,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func= parallel_func(run_ica)
+        parallel, run_func = parallel_func(run_ica)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

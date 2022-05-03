@@ -3424,17 +3424,23 @@ def import_er_data(
                                 check=False))
 
     raw_er = _load_data(cfg, bids_path_er_in)
+    raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
+
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
 
     if cfg.use_maxwell_filter:
-        raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
             raw=raw_ref
         )
+    else:
+        # Set same set of bads as in the experimental run, but only for MEG
+        # channels (we might not have non-MEG channels in empty-room recordings).
+        raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
+                               if ch.startswith('MEG')]
 
     # Save the data.
     if save:

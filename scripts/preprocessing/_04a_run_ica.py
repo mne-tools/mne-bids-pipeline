@@ -58,7 +58,7 @@ def filter_for_ica(
         msg = f'Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
-        raw.filter(l_freq=cfg.ica_l_freq, h_freq=None)
+        raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
 
 
 def fit_ica(

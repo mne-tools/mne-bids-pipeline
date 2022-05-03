@@ -76,7 +76,7 @@ def filter(
                l_trans_bandwidth=l_trans_bandwidth,
                h_trans_bandwidth=h_trans_bandwidth,
                filter_length='auto', phase='zero', fir_window='hamming',
-               fir_design='firwin')
+               fir_design='firwin', n_jobs=1)
 
 
 def resample(

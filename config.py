@@ -2539,7 +2539,7 @@ def get_parallel_backend():
 
 
 def parallel_func(func):
-    if get_parallel_backend() == 'loky':
+    if get_parallel_backend_name() == 'loky':
         if get_n_jobs() == 1:
             my_func = func
             parallel = list

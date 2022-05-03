@@ -2539,9 +2539,18 @@ def get_parallel_backend():
 
 
 def parallel_func(func):
-    from joblib import Parallel, delayed
-    parallel = Parallel()
-    my_func = delayed(func)
+    if get_parallel_backend() == 'loky':
+        if get_n_jobs() == 1:
+            my_func = func
+            parallel = list
+        else:
+            from joblib import Parallel, delayed
+            parallel = Parallel()
+            my_func = delayed(func)
+    else:  # Dask
+        from joblib import Parallel, delayed
+        parallel = Parallel()
+        my_func = delayed(func)
 
     return parallel, my_func
 

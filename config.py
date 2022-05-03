@@ -3101,6 +3101,9 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
                          datatype=cfg.datatype,
                          root=cfg.deriv_root)
 
+    # Filter the data manually before passing it to find_bad_channels_maxwell()
+    # This reduces memory usage!
+    raw.filter(l_freq=None, h_freq=40)
     auto_noisy_chs, auto_flat_chs, auto_scores = \
         mne.preprocessing.find_bad_channels_maxwell(
             raw=raw,
@@ -3108,7 +3111,8 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
             cross_talk=cfg.mf_ctc_fname,
             origin=mf_head_origin,
             coord_frame='head',
-            return_scores=True
+            return_scores=True,
+            h_freq=None  # We filtered manually before! So don't filter again.
         )
 
     preexisting_bads = raw.info['bads'].copy()

@@ -3203,7 +3203,8 @@ def _load_data(cfg, bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    _crop_data(cfg, raw=raw, subject=subject)
+    if bids_path.subject != 'emptyroom':
+        _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
@@ -3310,7 +3311,7 @@ def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
 
 def import_experimental_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None,
@@ -3320,15 +3321,15 @@ def import_experimental_data(
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
-    subject : str
+    subject
         The subject to import.
-    session : str | None
+    session
         The session to import.
-    run : str | None
+    run
         The run to import.
-    save : bool
+    save
         Whether to save the data to disk or not.
 
     Returns
@@ -3377,25 +3378,21 @@ def import_experimental_data(
 
 def import_er_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
-    bads: List[str],
     save: bool = False
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
     subject
         The subject for whom to import the empty-room data.
     session
         The session for which to import the empty-room data.
-    bads
-        The selection of bad channels from the corresponding experimental
-        recording.
     save
         Whether to save the data to disk or not.
 
@@ -3404,10 +3401,10 @@ def import_er_data(
     raw_er
         The imported data.
     """
-    bids_path_er_in = BIDSPath(
+    bids_path_reference_run = BIDSPath(
         subject=subject,
         session=session,
-        run=cfg.runs[0],
+        run=cfg.mf_reference_run,
         task=cfg.task,
         acquisition=cfg.acq,
         processing=cfg.proc,
@@ -3416,8 +3413,8 @@ def import_er_data(
         suffix=cfg.datatype,
         datatype=cfg.datatype,
         root=cfg.bids_root
-    ).find_empty_room()
-
+    )
+    bids_path_er_in = bids_path_reference_run.find_empty_room()
     bids_path_er_out = (bids_path_er_in.copy()
                         .update(task='noise',
                                 run=None,
@@ -3426,18 +3423,18 @@ def import_er_data(
                                 root=cfg.deriv_root,
                                 check=False))
 
-    if bads is None:
-        bads = []
-
     raw_er = _load_data(cfg, bids_path_er_in)
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
-    # Set same set of bads as in the experimental run, but only for MEG
-    # channels (we might not have non-MEG channels in empty-room recordings).
-    raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
-
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
+
+    if cfg.use_maxwell_filter:
+        raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
+        raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
+            raw_er=raw_er,
+            raw=raw_ref
+        )
 
     # Save the data.
     if save:

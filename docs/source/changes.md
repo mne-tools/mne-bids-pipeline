@@ -151,6 +151,12 @@ authors:
 - The pipeline configuration and MNE system information are now automatically
   added to the report.
   ({{ gh(544) }} by {{ authors.hoechenberger }}
+- More robust empty-room data processing for use with Maxwell filter. We are
+  now relying on `mne.preprocessing.maxwell_filter_prepare_emptyroom`.
+  ({{ gh(xxx) }} by {{ authors.hoechenberger }}
+- Maxwell filtering now also parallelizes across runs (previously only across
+  subjects and sessions).
+  ({{ gh(xxx) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 

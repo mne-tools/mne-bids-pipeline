@@ -39,5 +39,3 @@ contrasts = [('incoherent', 'coherent')]
 # Noise estimation
 process_er = True
 noise_cov = 'emptyroom'
-
-N_JOBS = 2

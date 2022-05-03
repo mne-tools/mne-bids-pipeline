@@ -106,8 +106,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
 
         se = SlidingEstimator(
             clf,
-            scoring=cfg.decoding_metric,
-            n_jobs=cfg.n_jobs
+            scoring=cfg.decoding_metric
         )
 
         from sklearn.model_selection import StratifiedKFold
@@ -155,8 +154,7 @@ def get_config(
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference(),
-        n_jobs=config.get_n_jobs()
+        eeg_reference=config.get_eeg_reference()
     )
     return cfg
 

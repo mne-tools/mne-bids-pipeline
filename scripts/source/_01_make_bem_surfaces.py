@@ -138,10 +138,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            make_bem_and_scalp_surface,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(make_bem_and_scalp_surface)
         logs = parallel(
             run_func(cfg=get_config(subject=subject), subject=subject)
             for subject in config.get_subjects()

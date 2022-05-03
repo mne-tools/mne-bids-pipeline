@@ -115,7 +115,7 @@ def get_config(
 
 def main():
     """Run epochs."""
-    parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
+    parallel, run_func = parallel_func(drop_ptp)
 
     with config.get_parallel_backend():
         logs = parallel(

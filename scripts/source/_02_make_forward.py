@@ -54,8 +54,7 @@ def _prepare_forward_template(cfg, fname_info):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False,
-                                 n_jobs=cfg.n_jobs)
+                                 add_dist=False)
     return src, trans, bem_sol
 
 
@@ -126,8 +125,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False,
-                                 n_jobs=cfg.n_jobs)
+                                 add_dist=False)
 
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.
@@ -194,8 +192,7 @@ def get_config(
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
         deriv_root=config.get_deriv_root(),
-        bids_root=config.get_bids_root(),
-        n_jobs=config.get_n_jobs()
+        bids_root=config.get_bids_root()
     )
     return cfg
 
@@ -208,10 +205,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_forward,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_forward)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

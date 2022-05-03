@@ -76,7 +76,7 @@ def filter(
                l_trans_bandwidth=l_trans_bandwidth,
                h_trans_bandwidth=h_trans_bandwidth,
                filter_length='auto', phase='zero', fir_window='hamming',
-               fir_design='firwin')
+               fir_design='firwin', n_jobs=1)
 
 
 def resample(
@@ -244,8 +244,7 @@ def main():
     """Run filter."""
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(filter_data,
-                                              n_jobs=config.get_n_jobs())
+        parallel, run_func = parallel_func(filter_data)
 
         # Enabling different runs for different subjects
         sub_run_ses = []

@@ -118,8 +118,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_time_frequency,
-                                          n_jobs=config.get_n_jobs())
+    parallel, run_func = parallel_func(run_time_frequency)
     logs = parallel(
         run_func(cfg=get_config(), subject=subject, session=session)
         for subject, session in

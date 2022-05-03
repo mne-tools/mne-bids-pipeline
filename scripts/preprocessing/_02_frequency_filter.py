@@ -244,8 +244,7 @@ def main():
     """Run filter."""
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(filter_data,
-                                              n_jobs=config.get_n_jobs())
+        parallel, run_func = parallel_func(filter_data)
 
         # Enabling different runs for different subjects
         sub_run_ses = []

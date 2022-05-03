@@ -1116,10 +1116,7 @@ def get_config(
 def main():
     """Make reports."""
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_report,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

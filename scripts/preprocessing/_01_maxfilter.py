@@ -236,10 +236,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_maxwell_filter,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_maxwell_filter)
         logs = parallel(
             run_func(
                 cfg=get_config(subject, session),

@@ -2432,6 +2432,7 @@ def get_noise_cov_bids_path(
 
 
 def get_n_jobs() -> int:
+    import joblib
     env = os.environ
 
     if interactive:
@@ -2440,6 +2441,10 @@ def get_n_jobs() -> int:
         n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])
     else:
         n_jobs = N_JOBS
+
+    if n_jobs < 0:
+        n_cores = joblib.cpu_count()
+        n_jobs = min(n_cores + n_jobs + 1, n_cores)
 
     return n_jobs
 
@@ -2515,39 +2520,42 @@ def get_parallel_backend_name() -> Literal['dask', 'loky']:
 
 
 def get_parallel_backend():
-    from joblib import parallel_backend
+    import joblib
+
     backend = get_parallel_backend_name()
-    kwargs = {}
+    kwargs = {
+        'n_jobs': get_n_jobs()
+    }
+
     if backend == "loky":
-        kwargs = {"inner_max_num_threads": 1}
+        kwargs['inner_max_num_threads'] = 1
     else:
         setup_dask_client()
 
-    return parallel_backend(
+    return joblib.parallel_backend(
         backend,
         **kwargs
     )
 
 
-def parallel_func(func, n_jobs):
+def parallel_func(func):
+    n_jobs = get_n_jobs()
+
     if get_parallel_backend() == 'loky':
         if n_jobs == 1:
             n_jobs = 1
             my_func = func
             parallel = list
         else:
-            from joblib import Parallel, delayed, cpu_count
-            if n_jobs < 0:
-                n_cores = cpu_count()
-                n_jobs = min(n_cores + n_jobs + 1, n_cores)
-            parallel = Parallel(n_jobs=n_jobs)
+            from joblib import Parallel, delayed
+            parallel = Parallel()
             my_func = delayed(func)
     else:  # Dask
         from joblib import Parallel, delayed
-        parallel = Parallel(n_jobs=n_jobs)
+        parallel = Parallel(n_jobs)
         my_func = delayed(func)
 
-    return parallel, my_func, n_jobs
+    return parallel, my_func
 
 
 def _get_reject(

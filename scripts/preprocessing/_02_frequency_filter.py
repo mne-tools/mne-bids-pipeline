@@ -51,8 +51,7 @@ def filter(
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
     h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    data_type: Literal['experimental', 'empty-room'],
-    n_jobs: Optional[int]
+    data_type: Literal['experimental', 'empty-room']
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -77,7 +76,7 @@ def filter(
                l_trans_bandwidth=l_trans_bandwidth,
                h_trans_bandwidth=h_trans_bandwidth,
                filter_length='auto', phase='zero', fir_window='hamming',
-               fir_design='firwin', n_jobs=n_jobs)
+               fir_design='firwin')
 
 
 def resample(
@@ -141,19 +140,13 @@ def filter_data(
 
     raw_fname_out = bids_path.copy().update(processing='filt')
 
-    if cfg.parallel_backend_name == 'dask':
-        n_jobs = 1
-    else:
-        n_jobs = None
-
     raw.load_data()
     filter(
         raw=raw, subject=subject, session=session, run=run,
         h_freq=cfg.h_freq, l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        data_type='experimental',
-        n_jobs=n_jobs
+        data_type='experimental'
     )
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=cfg.resample_sfreq, data_type='experimental')
@@ -193,8 +186,7 @@ def filter_data(
             h_freq=cfg.h_freq, l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth,
-            data_type='empty-room',
-            n_jobs=n_jobs
+            data_type='empty-room'
         )
         resample(raw=raw_er, subject=subject, session=session, run=None,
                  sfreq=cfg.resample_sfreq, data_type='empty-room')
@@ -244,7 +236,6 @@ def get_config(
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
-        parallel_backend_name=config.get_parallel_backend_name(),
     )
     return cfg
 

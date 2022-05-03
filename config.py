@@ -3108,7 +3108,8 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
             cross_talk=cfg.mf_ctc_fname,
             origin=mf_head_origin,
             coord_frame='head',
-            return_scores=True
+            return_scores=True,
+            h_freq=None  # XXX remove
         )
 
     preexisting_bads = raw.info['bads'].copy()

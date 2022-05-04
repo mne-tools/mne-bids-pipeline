@@ -283,7 +283,7 @@ def run_report_preprocessing(
             butterfly=5,
             psd=plot_raw_psd,
             tags=('raw', 'filtered', f'run-{fname.run}')
-            # caption=fname.fpath.name  # TODO upstream
+            # caption=fname.basename  # TODO upstream
         )
         del plot_raw_psd
 
@@ -301,7 +301,7 @@ def run_report_preprocessing(
             title='Empty-Room',
             butterfly=5,
             tags=('raw', 'empty-room')
-            # caption=er_path.fpath.name  # TODO upstream
+            # caption=er_path.basename  # TODO upstream
         )
 
     # Visualize automated noisy channel detection.
@@ -511,7 +511,7 @@ def run_report_sensor(
     )
 
     if fname_noise_cov.fpath.exists():
-        msg = f'Reading noise covariance: {fname_noise_cov.fpath.name}'
+        msg = f'Reading noise covariance: {fname_noise_cov.basename}'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )

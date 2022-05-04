@@ -272,7 +272,8 @@ def run_ica(*, cfg, subject, session=None):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
+        msg = (f'Loading filtered raw data from {raw_fname.basename} and '
+               f'creating epochs')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 

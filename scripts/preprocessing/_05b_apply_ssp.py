@@ -46,7 +46,7 @@ def apply_ssp(*, cfg, subject, session=None):
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
-    msg = f'Input: {fname_in}, Output: {fname_out}'
+    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

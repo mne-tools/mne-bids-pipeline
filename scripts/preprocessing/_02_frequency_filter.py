@@ -129,7 +129,7 @@ def filter_data(
         raw_fname_in = bids_path.copy().update(processing='sss')
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
-        msg = f'Reading: {raw_fname_in.fpath.name}'
+        msg = f'Reading: {raw_fname_in.basename}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)
@@ -158,25 +158,22 @@ def filter_data(
         fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
-    if cfg.process_er and run == cfg.runs[0]:
-        # Ensure empty-room data has the same bad channel selection set as the
-        # experimental data
-        bads = raw.info['bads'].copy()
-        del raw  # free memory
+    del raw
 
+    if cfg.process_er and run == cfg.runs[0]:
         bids_path_er = bids_path.copy().update(run=None, task='noise')
         if cfg.use_maxwell_filter:
             raw_er_fname_in = bids_path_er.copy().update(processing='sss')
             if raw_er_fname_in.copy().update(split='01').fpath.exists():
                 raw_er_fname_in.update(split='01')
-            msg = f'Reading empty-room recording: {raw_er_fname_in}'
+            msg = f'Reading empty-room recording: {raw_er_fname_in.basename}'
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
             raw_er = mne.io.read_raw_fif(raw_er_fname_in)
-            raw_er.info['bads'] = bads
         else:
-            raw_er = import_er_data(cfg=cfg, subject=subject, session=session,
-                                    bads=bads, save=False)
+            raw_er = import_er_data(
+                cfg=cfg, subject=subject, session=session, save=False
+            )
 
         raw_er_fname_out = bids_path_er.copy().update(processing='filt')
 

@@ -95,34 +95,36 @@ def _decoding_cluster_permutation_test(
     cluster_forming_t_threshold: Optional[float],
     n_permutations: int,
 ) -> Tuple[
-    np.ndarray, List[ClusterAcrossTime]
+    np.ndarray, List[ClusterAcrossTime], int
 ]:
     """Perform a cluster permutation test on decoding scores.
 
     The clusters are formed across time points.
     """
-    t_vals, all_clusters, p_vals, _ = mne.stats.permutation_cluster_1samp_test(
-        X=scores,
-        threshold=cluster_forming_t_threshold,
-        n_permutations=n_permutations,
-        adjacency=None,  # each time point is "connected" to its neighbors
-        out_type='mask',
-        tail=0,  # two-sided test
-        verbose=True
-    )
+    t_vals, all_clusters, cluster_p_vals, H0 = \
+        mne.stats.permutation_cluster_1samp_test(
+            X=scores,
+            threshold=cluster_forming_t_threshold,
+            n_permutations=n_permutations,
+            adjacency=None,  # each time point is "connected" to its neighbors
+            out_type='mask',
+            tail=0,  # two-sided test
+            verbose=True
+        )
+    n_permutations = H0.size - 1
 
     # Convert to a list of Clusters
     clusters = []
     for cluster_idx, cluster_time_slice in enumerate(all_clusters):
         cluster_times = times[cluster_time_slice]
-        cluster_p_val = p_vals[cluster_idx]
+        cluster_p_val = cluster_p_vals[cluster_idx]
         cluster = ClusterAcrossTime(
             times=cluster_times,
             p_value=cluster_p_val
         )
         clusters.append(cluster)
 
-    return t_vals, clusters
+    return t_vals, clusters, n_permutations
 
 
 def average_decoding(cfg, session):
@@ -158,7 +160,8 @@ def average_decoding(cfg, session):
             'mean_se': np.empty(len(times)),
             'mean_ci_lower': np.empty(len(times)),
             'mean_ci_upper': np.empty(len(times)),
-            't_values': np.empty(len(times)),
+            't_values': np.array([]),
+            'n_permutations': 0,
             'clusters': list()
         }
 
@@ -196,9 +199,9 @@ def average_decoding(cfg, session):
             # performing a 1-sample test (i.e., test against 0)!
             idx = np.where(times >= 0)[0]
             cluster_permutation_scores = mean_scores[:, idx] - 0.5
-            cluster_permutation_times =  times[idx]
+            cluster_permutation_times = times[idx]
 
-            t_vals, clusters = _decoding_cluster_permutation_test(
+            t_vals, clusters, n_perm = _decoding_cluster_permutation_test(
                 scores=cluster_permutation_scores,
                 times=cluster_permutation_times,
                 cluster_forming_t_threshold=cfg.cluster_forming_t_threshold,
@@ -206,8 +209,8 @@ def average_decoding(cfg, session):
             )
             contrast_score_stats['t_values'] = t_vals
             contrast_score_stats['clusters'] = clusters
-            del cluster_permutation_scores, cluster_permutation_times
-
+            contrast_score_stats['n_permutations'] = n_perm
+            del cluster_permutation_scores, cluster_permutation_times, n_perm
 
         # Now we can calculate some descriptive statistics on the mean scores.
         # We use the [:] here as a safeguard to ensure we don't mess up the

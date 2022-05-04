@@ -3461,11 +3461,6 @@ def get_reference_run_params(
     session: Optional[str] = None,
     run: str
 ) -> ReferenceRunParams:
-
-    msg = f'Loading info for run: {run}.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
-
     bids_path = BIDSPath(
         subject=subject,
         session=session,

@@ -87,10 +87,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                                  session=session, run=run))
 
     # Warn if no bad channels are set before Maxwell filter
-    # Create a copy, we'll need this later for setting the bads of the
-    # empty-room recording
-    bads = raw.info['bads'].copy()
-    if not bads:
+    if not raw.info['bads']:
         msg = ('No channels were marked as bad. Please carefully check '
                'your data to ensure this is correct; otherwise, Maxwell '
                'filtering WILL cause problems.')
@@ -114,6 +111,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # channels marked as "bad").
     # We do not run `raw_sss.pick()` here because it uses too much memory.
     picks = config.get_channels_to_analyze(raw.info)
+    del raw
     raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
                  overwrite=True)
     del raw_sss
@@ -121,8 +119,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     if cfg.interactive:
         # Load the data we have just written, because it contains only
         # the relevant channels.
-        raw = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
-        raw.plot(n_channels=50, butterfly=True)
+        raw_sss = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
+        raw_sss.plot(n_channels=50, butterfly=True, block=True)
+        del raw_sss
 
     # Empty-room processing.
     # Only process empty-room data once – we ensure this by simply checking

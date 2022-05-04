@@ -46,7 +46,7 @@ def run_time_frequency(*, cfg, subject, session=None):
     fname_in = bids_path.copy().update(suffix='epo', processing=processing,
                                        extension='.fif')
 
-    msg = f'Input: {fname_in}'
+    msg = f'Input: {fname_in.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

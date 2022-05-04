@@ -44,7 +44,7 @@ def average_evokeds(cfg, session):
                             root=cfg.deriv_root,
                             check=False)
 
-        msg = f'Input: {fname_in}'
+        msg = f'Input: {fname_in.basename}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
@@ -77,7 +77,7 @@ def average_evokeds(cfg, session):
     if not fname_out.fpath.parent.exists():
         os.makedirs(fname_out.fpath.parent)
 
-    msg = f'Saving grand-averaged evoked sensor data: {fname_out}'
+    msg = f'Saving grand-averaged evoked sensor data: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     mne.write_evokeds(fname_out, list(all_evokeds.values()), overwrite=True)

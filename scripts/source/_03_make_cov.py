@@ -50,8 +50,8 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
     )
 
     msg = (f"Computing regularized covariance based on epochs' baseline "
-           f"periods. Input: {epo_fname.fpath.name}, "
-           f"Output: {cov_fname.fpath.name}")
+           f"periods. Input: {epo_fname.basename}, "
+           f"Output: {cov_fname.basename}")
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -84,7 +84,7 @@ def compute_cov_from_empty_room(cfg, subject, session):
     )
 
     msg = (f'Computing regularized covariance based on empty-room recording. '
-           f'Input: {raw_er_fname}, Output: {cov_fname.fpath.name}')
+           f'Input: {raw_er_fname}, Output: {cov_fname.basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -123,7 +123,7 @@ def retrieve_custom_cov(
     )
 
     msg = (f'Retrieving noise covariance matrix from custom user-supplied '
-           f'function, Output: {cov_fname.fpath.name}')
+           f'function, Output: {cov_fname.basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

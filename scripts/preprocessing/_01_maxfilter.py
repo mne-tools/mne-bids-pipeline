@@ -111,10 +111,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # channels marked as "bad").
     # We do not run `raw_sss.pick()` here because it uses too much memory.
     picks = config.get_channels_to_analyze(raw.info)
-    del raw
     raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
                  overwrite=True)
-    del raw_sss
+    del raw, raw_sss
 
     if cfg.interactive:
         # Load the data we have just written, because it contains only

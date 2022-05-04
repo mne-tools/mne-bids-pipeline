@@ -129,7 +129,7 @@ def filter_data(
         raw_fname_in = bids_path.copy().update(processing='sss')
         if raw_fname_in.copy().update(split='01').fpath.exists():
             raw_fname_in.update(split='01')
-        msg = f'Reading: {raw_fname_in}'
+        msg = f'Reading: {raw_fname_in.fpath.name}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname_in)

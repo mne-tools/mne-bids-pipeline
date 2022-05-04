@@ -3437,7 +3437,7 @@ def import_er_data(
             raw=raw_ref
         )
     else:
-        # Set same set of bads as in the experimental run, but only for MEG
+        # Set same set of bads as in the reference run, but only for MEG
         # channels (we might not have non-MEG channels in empty-room recordings).
         raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
                                if ch.startswith('MEG')]

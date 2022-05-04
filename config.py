@@ -1302,6 +1302,21 @@ The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding score.
 """
 
+n_permutations: int = 10_000
+"""
+The maximum number of  permutations to perform in a cluster-based permutation
+test to determine the significance of the decoding scores across participants.
+"""
+
+cluster_forming_t_threshold: Optional[float] = None
+"""
+The t-value threshold to use for forming clusters in the cluster-based
+permutation test. Data points with t-values greater than this value will be
+used to form clusters. If `None`, the threshold will be automatically
+determined to correspond to a p-value of 0.05 for the given number of
+participants.
+"""
+
 ###############################################################################
 # GROUP AVERAGE SENSORS
 # ---------------------

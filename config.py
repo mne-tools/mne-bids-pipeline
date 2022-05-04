@@ -2267,6 +2267,12 @@ def get_runs_all_subjects() -> dict:
             get_bids_root() / f'sub-{subject}', entity_key='run',
             ignore_datatypes=tuple(_ignore_datatypes)
         )
+
+        # If we don't have any `run` entities, just set it to None, as we
+        # commonly do when creating a BIDSPath.
+        if not valid_runs_subj:
+            valid_runs_subj = [None]
+
         if exclude_runs and subject in exclude_runs:
             valid_runs_subj = [r for r in valid_runs_subj
                                if r not in exclude_runs[subject]]
@@ -2350,9 +2356,11 @@ def get_mf_reference_run() -> str:
         if inter_runs:
             return inter_runs[0]
         else:
-            ValueError("The intersection of runs by subjects is empty. "
-                       "Check the list of runs: "
-                       f"{get_runs_all_subjects()}")
+            raise ValueError(
+                f"The intersection of runs by subjects is empty. "
+                f"Check the list of runs: "
+                f"{get_runs_all_subjects()}"
+            )
     else:
         return mf_reference_run
 

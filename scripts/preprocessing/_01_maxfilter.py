@@ -58,9 +58,11 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                              check=False)
 
     # Load dev_head_t and digitization points from MaxFilter reference run.
-    msg = f'Loading reference run: {cfg.mf_reference_run}.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
+    if cfg.mf_reference_run is not None:
+        # Only log if we have more than just a single run
+        msg = f'Loading reference run: {cfg.mf_reference_run}.'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                     session=session, run=run))
 
     reference_run_params = get_reference_run_params(
         subject=subject, session=session, run=cfg.mf_reference_run

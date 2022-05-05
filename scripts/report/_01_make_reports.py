@@ -1122,6 +1122,8 @@ def add_decoding_grand_average(
         decoding_data = loadmat(fname_decoding)
         del fname_decoding, processing, a_vs_b
 
+        figs = []
+        captions = []
         # Plot scores
         fig_scores = plot_decoding_scores_gavg(
             cfg=cfg, decoding_data=decoding_data
@@ -1137,22 +1139,29 @@ def add_decoding_grand_average(
             f'({decoding_data["cluster_n_permutations"].squeeze()} '
             f'permutations).'
         )
+        figs.append(fig_scores)
+        captions.append(caption_scores)
 
         # Plot t-values used to form clusters
-        fig_t_vals = plot_decoding_scores_t_values(decoding_data=decoding_data)
-        t_threshold = np.asscalar(
-            np.round(decoding_data['cluster_t_threshold'], 3)
-        )
-        caption_t_vals = (
-            f'Observed t-values. Time points with t-values > {t_threshold} '
-            f'were used to form clusters.'
-        )
+        if len(config.get_subjects()) > 1:
+            fig_t_vals = plot_decoding_scores_t_values(
+                decoding_data=decoding_data
+            )
+            t_threshold = np.asscalar(
+                np.round(decoding_data['cluster_t_threshold'], 3)
+            )
+            caption_t_vals = (
+                f'Observed t-values. Time points with '
+                f't-values > {t_threshold} were used to form clusters.'
+            )
+            figs.append(fig_t_vals)
+            captions.append(caption_t_vals)
 
         title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
         report.add_figure(
-                fig=[fig_scores, fig_t_vals],
+                fig=figs,
                 title=title,
-                caption=[caption_scores, caption_t_vals],
+                caption=captions,
                 tags=(
                     'decoding',
                     'contrast',

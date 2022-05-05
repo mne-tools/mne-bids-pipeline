@@ -1314,7 +1314,13 @@ Note: Note
     Only points with the same sign will be clustered together.
 """
 
-cluster_p_threshold: float = 0.05
+cluster_n_permutations: int = 10_000
+"""
+The maximum number of permutations to perform in a cluster-based permutation
+test to determine the significance of the decoding scores across participants.
+"""
+
+cluster_permutation_p_threshold: float = 0.05
 """
 The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
 that the clusters show no significant difference between conditions. This is
@@ -1323,12 +1329,6 @@ used in the permutation test which takes place after forming the clusters.
 Note: Note
     To control how clusters are formed, see
     [`cluster_forming_t_threshold`][config.cluster_forming_t_threshold].
-"""
-
-cluster_n_permutations: int = 10_000
-"""
-The maximum number of  permutations to perform in a cluster-based permutation
-test to determine the significance of the decoding scores across participants.
 """
 
 ###############################################################################

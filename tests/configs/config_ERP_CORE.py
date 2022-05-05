@@ -113,8 +113,8 @@ if task == 'N400':
                      'first_response == "correct"'
     }
     contrasts = [('unrelated', 'related')]
-    cluster_forming_t_threshold = 1.5  # Only for testing!
-    cluster_p_threshold = 0.1              # Only for testing!
+    cluster_forming_t_threshold = 1.5      # Only for testing!
+    cluster_permutation_p_threshold = 0.1  # Only for testing!
 elif task == 'ERN':
     rename_events = {
         'stimulus/11': 'compatible/left',

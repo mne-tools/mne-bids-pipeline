@@ -177,12 +177,13 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     for cluster in clusters:
         cluster_times = cluster['times'][0][0].squeeze()
         cluster_p = np.asscalar(cluster['p_value'][0][0])
-        if cluster_p >= cfg.cluster_p_threshold:
+        if cluster_p >= cfg.cluster_permutation_p_threshold:
             continue
 
         # Only add the label once
         if n_significant_clusters_plotted == 0:
-            label = f'$p$ < {cfg.cluster_p_threshold} (cluster pemutation)'
+            label = (f'$p$ < {cfg.cluster_permutation_p_threshold} '
+                     f'(cluster pemutation)')
         else:
             label = None
 
@@ -1148,8 +1149,8 @@ def add_decoding_grand_average(
             np.round(decoding_data['cluster_t_threshold'], 3)
         )
         caption_t_vals = (
-            f'Observed t-values. Time points with {t_threshold} were used '
-            f'to form clusters.'
+            f'Observed t-values. Time points with t-values > {t_threshold} '
+            f'were used to form clusters.'
         )
 
         title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
@@ -1214,7 +1215,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
-        cluster_p_threshold=config.cluster_p_threshold,
+        cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,
         report_stc_n_time_points=config.report_stc_n_time_points,
         report_evoked_n_time_points=config.report_evoked_n_time_points,

@@ -1141,7 +1141,7 @@ def add_decoding_grand_average(
             f'resamples. CI must not be used for statistical inference here, '
             f'as it is not corrected for multiple testing. Time periods with '
             f'decoding performance significantly above chance, if any, were '
-            f'derived with a cluster-based permutation test '
+            f'derived with a one-tailed cluster-based permutation test '
             f'({decoding_data["cluster_n_permutations"].squeeze()} '
             f'permutations).'
         )

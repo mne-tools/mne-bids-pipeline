@@ -195,6 +195,7 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
             alpha=0.15,
             label=label
         )
+        n_significant_clusters_plotted += 1
 
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
     if times.min() < 0 < times.max():

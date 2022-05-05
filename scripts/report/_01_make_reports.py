@@ -173,19 +173,14 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
 
     # Start with plotting the significant time periods according to the
     # cluster-based permutation test
-    n_significant_clusters_plotted = 0
     for cluster in clusters:
         cluster_times = cluster['times'][0][0].squeeze()
         cluster_p = np.asscalar(cluster['p_value'][0][0])
         if cluster_p >= cfg.cluster_permutation_p_threshold:
             continue
 
-        # Only add the label once
-        if n_significant_clusters_plotted == 0:
-            label = (f'$p$ < {cfg.cluster_permutation_p_threshold} '
-                     f'(cluster pemutation)')
-        else:
-            label = None
+        label = (f'$p$ < {cfg.cluster_permutation_p_threshold} '
+                 f'(cluster pemutation)')
 
         ax.fill_betweenx(
             y=ax.get_ylim(),

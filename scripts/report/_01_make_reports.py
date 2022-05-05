@@ -166,7 +166,7 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
     metric = cfg.decoding_metric
-    clusters = decoding_data['clusters'].squeeze()
+    clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
     fig, ax = plt.subplots()
     ax.set_ylim((-0.025, 1.025))

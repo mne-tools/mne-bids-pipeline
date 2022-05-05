@@ -16,6 +16,8 @@ from typing import Tuple, Union, Optional
 from types import SimpleNamespace
 
 from scipy.io import loadmat
+import numpy as np
+
 import mne
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -164,13 +166,43 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
     metric = cfg.decoding_metric
+    clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
     fig, ax = plt.subplots()
+    ax.set_ylim((-0.025, 1.025))
+
+    # Start with plotting the significant time periods according to the
+    # cluster-based permutation test
+    n_significant_clusters_plotted = 0
+    for cluster in clusters:
+        cluster_times = cluster['times'][0][0].squeeze()
+        cluster_p = np.asscalar(cluster['p_value'][0][0])
+        if cluster_p >= cfg.cluster_permutation_p_threshold:
+            continue
+
+        # Only add the label once
+        if n_significant_clusters_plotted == 0:
+            label = (f'$p$ < {cfg.cluster_permutation_p_threshold} '
+                     f'(cluster pemutation)')
+        else:
+            label = None
+
+        ax.fill_betweenx(
+            y=ax.get_ylim(),
+            x1=cluster_times[0],
+            x2=cluster_times[-1],
+            facecolor='orange',
+            alpha=0.15,
+            label=label
+        )
+        n_significant_clusters_plotted += 1
+
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
     if times.min() < 0 < times.max():
         ax.axvline(0, ls='-', lw=0.5, color='black')
     ax.fill_between(x=times, y1=ci_lower, y2=ci_upper, color='lightgray',
                     alpha=0.5, label='95% confidence interval')
+
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
     ax.plot(times, se_lower, ls='-.', lw=0.5, color='gray',
@@ -184,10 +216,47 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
-    ax.set_ylim((-0.025, 1.025))
     ax.legend(loc='lower right')
     fig.tight_layout()
 
+    return fig
+
+
+def plot_decoding_scores_t_values(decoding_data):
+    """Plot the t-values used to form clusters for the permutation test.
+    """
+    import matplotlib.pyplot as plt
+
+    # We squeeze() to make Matplotlib happy.
+    all_times = decoding_data['cluster_all_times'].squeeze()
+    all_t_values = decoding_data['cluster_all_t_values'].squeeze()
+    t_threshold = decoding_data['cluster_t_threshold']
+
+    fig, ax = plt.subplots()
+    ax.plot(all_times, all_t_values, ls='-', color='black',
+            label='observed $t$-values')
+    ax.axhline(t_threshold, ls='--', color='red', label='threshold')
+
+    ax.text(0.05, 0.05, s=f'$N$={decoding_data["N"].squeeze()}',
+            fontsize='x-large', horizontalalignment='left',
+            verticalalignment='bottom', transform=ax.transAxes)
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('$t$-value')
+    ax.legend(loc='lower right')
+
+    if all_t_values.min() < 0 and all_t_values.max() > 0:
+        # center the y axis around 0
+        y_max = np.abs(ax.get_ylim()).max()
+        ax.set_ylim(ymin=-y_max, ymax=y_max)
+    elif all_t_values.min() > 0 and all_t_values.max() > 0:
+        # start y axis at zero
+        ax.set_ylim(ymin=0, ymax=all_t_values.max())
+    elif all_t_values.min() < 0 and all_t_values.max() < 0:
+        # start y axis at zero
+        ax.set_ylim(ymin=all_t_values.min(), ymax=0)
+
+    fig.tight_layout()
     return fig
 
 
@@ -967,40 +1036,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Visualize decoding results.
     #
     if cfg.decode:
-        for contrast in cfg.decoding_contrasts:
-            cond_1, cond_2 = contrast
-            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{cfg.decoding_metric}'
-            processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = evoked_fname.copy().update(
-                processing=processing,
-                suffix='decoding',
-                extension='.mat'
-            )
-            decoding_data = loadmat(fname_decoding_)
-            del fname_decoding_, processing, a_vs_b
-
-            fig = plot_decoding_scores_gavg(cfg=cfg,
-                                            decoding_data=decoding_data)
-            title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-            caption = (f'Based on N={decoding_data["N"].squeeze()} '
-                       f'subjects. Standard error and confidence interval '
-                       f'of the mean were bootstrapped with {cfg.n_boot} '
-                       f'resamples.')
-            report.add_figure(
-                fig=fig,
-                title=title,
-                caption=caption,
-                tags=(
-                    'decoding',
-                    'contrast',
-                    f'{config.sanitize_cond_name(cond_1)} – '
-                    f'{config.sanitize_cond_name(cond_2)}'
-                    .lower().replace(' ', '-')
-                )
-            )
-            plt.close(fig)
-            del decoding_data, cond_1, cond_2, caption, title
+        add_decoding_grand_average(session=session, cfg=cfg, report=report)
 
     #######################################################################
     #
@@ -1052,7 +1088,101 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         task=cfg.task, suffix='report', extension='.html')
     report.save(fname=fname_report, open_browser=False, overwrite=True)
 
-    plt.close('all')  # close all figures to save memory
+    plt.close('all')
+
+
+def add_decoding_grand_average(
+    *,
+    session: str,
+    cfg: SimpleNamespace,
+    report: mne.Report,
+):
+    """Add time-by-time decoding results to the grand average report."""
+    import matplotlib.pyplot as plt
+
+    bids_path = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='ave',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_decoding = bids_path.copy().update(
+            processing=processing,
+            suffix='decoding',
+            extension='.mat'
+        )
+        decoding_data = loadmat(fname_decoding)
+        del fname_decoding, processing, a_vs_b
+
+        figs = []
+        captions = []
+        # Plot scores
+        fig_scores = plot_decoding_scores_gavg(
+            cfg=cfg, decoding_data=decoding_data
+        )
+        caption_scores = (
+            f'Based on N={decoding_data["N"].squeeze()} '
+            f'subjects. Standard error and confidence interval '
+            f'of the mean were bootstrapped with {cfg.n_boot} '
+            f'resamples. CI must not be used for statistical inference here, '
+            f'as it is not corrected for multiple testing.'
+        )
+        if len(config.get_subjects()) > 1:
+            caption_scores += (
+                f' Time periods with decoding performance significantly above '
+                f'chance, if any, were derived with a one-tailed '
+                f'cluster-based permutation test '
+                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f'permutations).'
+            )
+        figs.append(fig_scores)
+        captions.append(caption_scores)
+
+        # Plot t-values used to form clusters
+        if len(config.get_subjects()) > 1:
+            fig_t_vals = plot_decoding_scores_t_values(
+                decoding_data=decoding_data
+            )
+            t_threshold = np.asscalar(
+                np.round(decoding_data['cluster_t_threshold'], 3)
+            )
+            caption_t_vals = (
+                f'Observed t-values. Time points with '
+                f't-values > {t_threshold} were used to form clusters.'
+            )
+            figs.append(fig_t_vals)
+            captions.append(caption_t_vals)
+
+        title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
+        report.add_figure(
+                fig=figs,
+                title=title,
+                caption=captions,
+                tags=(
+                    'decoding',
+                    'contrast',
+                    f'{config.sanitize_cond_name(cond_1)} – '
+                    f'{config.sanitize_cond_name(cond_2)}'
+                    .lower().replace(' ', '-')
+                )
+            )
+
+        # close all figures to save memory
+        plt.close(fig_scores)
 
 
 def get_config(
@@ -1099,6 +1229,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
+        cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,
         report_stc_n_time_points=config.report_stc_n_time_points,
         report_evoked_n_time_points=config.report_evoked_n_time_points,

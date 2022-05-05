@@ -1139,12 +1139,16 @@ def add_decoding_grand_average(
             f'subjects. Standard error and confidence interval '
             f'of the mean were bootstrapped with {cfg.n_boot} '
             f'resamples. CI must not be used for statistical inference here, '
-            f'as it is not corrected for multiple testing. Time periods with '
-            f'decoding performance significantly above chance, if any, were '
-            f'derived with a one-tailed cluster-based permutation test '
-            f'({decoding_data["cluster_n_permutations"].squeeze()} '
-            f'permutations).'
+            f'as it is not corrected for multiple testing.'
         )
+        if len(config.get_subjects()) > 1:
+            caption_scores += (
+                f' Time periods with decoding performance significantly above '
+                f'chance, if any, were derived with a one-tailed '
+                f'cluster-based permutation test '
+                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f'permutations).'
+            )
         figs.append(fig_scores)
         captions.append(caption_scores)
 

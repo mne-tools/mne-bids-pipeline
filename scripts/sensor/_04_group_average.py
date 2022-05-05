@@ -94,6 +94,7 @@ def _decoding_cluster_permutation_test(
     times: np.ndarray,
     cluster_forming_t_threshold: Optional[float],
     n_permutations: int,
+    random_seed: int
 ) -> Tuple[
     np.ndarray, List[ClusterAcrossTime], int
 ]:
@@ -108,7 +109,8 @@ def _decoding_cluster_permutation_test(
             n_permutations=n_permutations,
             adjacency=None,  # each time point is "connected" to its neighbors
             out_type='mask',
-            tail=0,  # two-sided test
+            tail=1,  # one-sided: significantly above chance level
+            seed=random_seed,
             verbose=True
         )
     n_permutations = H0.size - 1
@@ -160,8 +162,10 @@ def average_decoding(cfg, session):
             'mean_se': np.empty(len(times)),
             'mean_ci_lower': np.empty(len(times)),
             'mean_ci_upper': np.empty(len(times)),
-            't_values': np.array([]),
-            'n_permutations': 0,
+            'cluster_all_times': np.array([]),
+            'cluster_all_t_values': np.array([]),
+            'cluster_t_threshold': np.nan,
+            'cluster_n_permutations': np.nan,
             'clusters': list()
         }
 
@@ -200,16 +204,31 @@ def average_decoding(cfg, session):
             idx = np.where(times >= 0)[0]
             cluster_permutation_scores = mean_scores[:, idx] - 0.5
             cluster_permutation_times = times[idx]
+            if cfg.cluster_forming_t_threshold is None:
+                import scipy.stats
+                cluster_forming_t_threshold = scipy.stats.t.ppf(
+                    1 - 0.05,
+                    len(cluster_permutation_scores) - 1
+                )
+            else:
+                cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
 
             t_vals, clusters, n_perm = _decoding_cluster_permutation_test(
                 scores=cluster_permutation_scores,
                 times=cluster_permutation_times,
-                cluster_forming_t_threshold=cfg.cluster_forming_t_threshold,
-                n_permutations=cfg.n_permutations
+                cluster_forming_t_threshold=cluster_forming_t_threshold,
+                n_permutations=cfg.n_permutations,
+                random_seed=cfg.random_state
             )
-            contrast_score_stats['t_values'] = t_vals
-            contrast_score_stats['clusters'] = clusters
-            contrast_score_stats['n_permutations'] = n_perm
+
+            contrast_score_stats.update({
+                'cluster_all_times': cluster_permutation_times,
+                'cluster_all_t_values': t_vals,
+                'cluster_t_threshold': cluster_forming_t_threshold,
+                'clusters': clusters,
+                'cluster_n_permutations': n_perm
+            })
+
             del cluster_permutation_scores, cluster_permutation_times, n_perm
 
         # Now we can calculate some descriptive statistics on the mean scores.
@@ -223,7 +242,6 @@ def average_decoding(cfg, session):
         # SD of the bootstrapped distribution: this is the standard error of
         # the mean. We also derive 95% confidence intervals.
         rng = np.random.default_rng(seed=cfg.random_state)
-
         for time_idx in tqdm(range(len(times)), desc='Bootstrapping means'):
             scores_resampled = rng.choice(mean_scores[:, time_idx],
                                           size=(cfg.n_boot, len(subjects)),
@@ -267,7 +285,7 @@ def get_config(
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,
-        n_permutations=config.n_permutations,
+        n_permutations=config.cluster_n_permutations,
         analyze_channels=config.analyze_channels,
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,

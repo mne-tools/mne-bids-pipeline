@@ -127,7 +127,7 @@ def plot_auto_scores(cfg, subject, session):
 def plot_decoding_scores(times, cross_val_scores, metric):
     """Plot cross-validation results from time-by-time decoding.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     mean_scores = cross_val_scores.mean(axis=0)
     max_scores = cross_val_scores.max(axis=0)
@@ -156,7 +156,7 @@ def plot_decoding_scores(times, cross_val_scores, metric):
 def plot_decoding_scores_gavg(cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
@@ -219,6 +219,33 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     ax.legend(loc='lower right')
     fig.tight_layout()
 
+    return fig
+
+
+def plot_decoding_significant_clusters_evoked(
+    cfg: SimpleNamespace,
+    evoked: mne.EvokedArray,
+    decoding_data,
+):
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    # Extract significant time periods according to the cluster-based
+    # permutation test
+    # We squeeze() to make Matplotlib happy.
+    clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
+    significant_time_periods = []
+    for cluster in clusters:
+        cluster_times = cluster['times'][0][0].squeeze()
+        cluster_p = np.asscalar(cluster['p_value'][0][0])
+        if cluster_p >= cfg.cluster_permutation_p_threshold:
+            continue
+        significant_time_periods.append([cluster_times[0], cluster_times[-1]])
+
+    fig = evoked.plot(
+        spatial_colors=True,
+        show=False,
+        highlight=significant_time_periods,
+    )
     return fig
 
 
@@ -1098,7 +1125,7 @@ def add_decoding_grand_average(
     report: mne.Report,
 ):
     """Add time-by-time decoding results to the grand average report."""
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     bids_path = BIDSPath(
         subject='average',
@@ -1115,7 +1142,16 @@ def add_decoding_grand_average(
         check=False
     )
 
-    for contrast in cfg.decoding_contrasts:
+    bids_path_evokeds = bids_path.copy().update(suffix='ave')
+    evoked_contrasts_idx = list(
+        range(len(cfg.conditions),
+              len(cfg.conditions) + len(cfg.decoding_contrasts))
+    )
+    evoked_contrasts = mne.read_evokeds(
+        bids_path_evokeds, condition=evoked_contrasts_idx
+    )
+
+    for contrast, evoked in zip(cfg.decoding_contrasts, evoked_contrasts):
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
         processing = f'{a_vs_b}+{cfg.decoding_metric}'
@@ -1166,6 +1202,26 @@ def add_decoding_grand_average(
             )
             figs.append(fig_t_vals)
             captions.append(caption_t_vals)
+
+        # Plot ERP with highlighted significant clusters
+        if cfg.analyze_channels:
+            evoked.pick(cfg.analyze_channels)
+        fig_evoked = plot_decoding_significant_clusters_evoked(
+            cfg=cfg,
+            decoding_data=decoding_data,
+            evoked=evoked
+        )
+        caption_evoked = 'Evoked contrast.'
+        if len(config.get_subjects()) > 1:
+            caption_evoked += (
+                f' Time periods with decoding performance significantly above '
+                f'chance, if any, were derived with a one-tailed '
+                f'cluster-based permutation test '
+                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f'permutations).'
+            )
+        figs.append(fig_evoked)
+        captions.append(caption_evoked)
 
         title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
         report.add_figure(

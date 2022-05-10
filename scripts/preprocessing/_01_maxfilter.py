@@ -179,11 +179,16 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
         rank_noise = mne.compute_rank(raw_noise_sss, rank='info')['meg']
 
-        if config.noise_cov == 'rest' and rank_exp > rank_noise:
-            msg = (f'Resting-state data rank ({rank_noise}) is lower than '
-                   f'experimental data rank ({rank_exp}). This will lead '
-                   f'to issues during source estimation.')
-            raise RuntimeError(msg)
+        if config.noise_cov == 'rest':
+            if rank_exp > rank_noise:
+                msg = (
+                    f'Resting-state data rank ({rank_noise}) is lower than '
+                    f'experimental data rank ({rank_exp}). This will lead '
+                    f'to issues during source estimation.'
+                )
+                raise RuntimeError(msg)
+            else:
+                pass  # Should cause no problems!
         elif not np.isclose(rank_exp, rank_noise):
             msg = (f'Experimental data rank {rank_exp:.1f} does not '
                    f'match {recording_type} data rank {rank_noise:.1f} after '

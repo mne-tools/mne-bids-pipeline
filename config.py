@@ -2747,7 +2747,7 @@ def failsafe_run(
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
-                del kwargs_copy['cfg']
+                del kwargs_copy['cfg']  # gen_log_kwargs() cannot handle this
                 message = (
                     f'A critical error occured. '
                     f'The error message was: {str(e)}'

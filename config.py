@@ -2747,21 +2747,33 @@ def failsafe_run(
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
-                message = 'A critical error occurred.'
+                del kwargs_copy['cfg']  # gen_log_kwargs() cannot handle this
+                message = (
+                    f'A critical error occured. '
+                    f'The error message was: {str(e)}'
+                )
                 log_info['success'] = False
                 log_info['error_message'] = str(e)
 
                 if on_error == 'abort':
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nAborting pipeline run.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
                     raise(e)
                 elif on_error == 'debug':
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nStarting post-mortem debugger.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
                 else:
-                    message = f'{message} The error message was:\n{str(e)}'
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nContinuing pipeline run.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
             log_info['time'] = round(time.time() - t0, ndigits=1)
             return log_info
         return wrapper

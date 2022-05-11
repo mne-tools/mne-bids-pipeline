@@ -131,6 +131,32 @@ def run_epochs(*, cfg, subject, session=None):
     epochs = epochs_all_runs
     del epochs_all_runs
 
+    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+        bp_raw_rest = (bids_path.copy()
+                       .update(
+                           run=None,
+                           task='rest',
+                           processing='filt',
+                           suffix='raw',
+                           check=False
+                        ))
+        raw_rest_filt = mne.io.read_raw(bp_raw_rest)
+        rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
+        if rank_rest < smallest_rank:
+            msg = (
+                f'The rank of the resting state data ({rank_rest}) is smaller '
+                f'than the smallest rank of the "{cfg.task}" epochs '
+                f'({smallest_rank}). Replacing the "info" object of the '
+                f'concatenated "{cfg.task}" epochs with the one from the '
+                f'resting-state run.'
+            )
+            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                            session=session))
+            smallest_rank = rank_rest
+            smallest_rank_info = raw_rest_filt.info.copy()
+
+        del raw_rest_filt
+
     if cfg.use_maxwell_filter:
         # Inject the info corresponding to the run with the smallest data rank
         assert smallest_rank_info is not None

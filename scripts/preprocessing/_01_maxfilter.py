@@ -182,15 +182,17 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         if config.noise_cov == 'rest':
             if rank_exp > rank_noise:
                 msg = (
-                    f'Resting-state data rank ({rank_noise}) is lower than '
-                    f'experimental data rank ({rank_exp}). This will lead '
-                    f'to issues during source estimation.'
+                    f'Resting-state rank ({rank_noise}) is lower than '
+                    f'reference run data rank ({rank_exp}). We will try to '
+                    f'take care of this during epoching of the experimental '
+                    f'data.'
                 )
-                raise RuntimeError(msg)
+                logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                                session=session))
             else:
                 pass  # Should cause no problems!
         elif not np.isclose(rank_exp, rank_noise):
-            msg = (f'Experimental data rank {rank_exp:.1f} does not '
+            msg = (f'Reference run data rank {rank_exp:.1f} does not '
                    f'match {recording_type} data rank {rank_noise:.1f} after '
                    f'Maxwell filtering. This indicates that the data '
                    f'were processed  differently.')

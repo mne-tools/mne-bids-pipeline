@@ -35,7 +35,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data)
+                    import_experimental_data, import_er_data, import_rest_data)
 from config import parallel_func
 
 
@@ -163,7 +163,7 @@ def filter_data(
     if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
         data_type = ('resting-state' if config.noise_cov == 'rest'
                      else 'empty-room')
-        if config.noise_cov == 'rest':
+        if data_type == 'resting-state':
             bids_path_noise = bids_path.copy().update(run=None, task='rest')
         else:
             bids_path_noise = bids_path.copy().update(run=None, task='noise')
@@ -178,9 +178,13 @@ def filter_data(
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
             raw_noise = mne.io.read_raw_fif(raw_noise_fname_in)
-        else:
+        elif data_type == 'empty-room':
             raw_noise = import_er_data(
                 cfg=cfg, subject=subject, session=session, save=False
+            )
+        else:
+            raw_noise = import_rest_data(
+                cfg=cfg, subject=subject, session=session
             )
 
         raw_noise_fname_out = bids_path_noise.copy().update(processing='filt')

@@ -107,11 +107,6 @@ def compute_cov_from_raw(cfg, subject, session):
         processing=None,
         suffix='epo'
     )
-    epochs = mne.read_epochs(bids_path_epochs)
-    rank_noise = mne.compute_rank(raw_noise, rank='info')
-    rank_epochs = mne.compute_rank(epochs, rank='info')
-    print(rank_noise)
-    print(rank_epochs)
     cov = mne.compute_raw_covariance(raw_noise, method='shrunk', rank='info')
     cov.save(cov_fname, overwrite=True)
 

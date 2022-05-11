@@ -173,7 +173,6 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         # We're treating the two cases differently, because we don't
         # copy the bad channel selection from the reference run over to
         # the resting-state recording.
-        # TODO: This decision is open for discussion!
 
         raw_sss = mne.io.read_raw_fif(bids_path_out)
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']

@@ -100,13 +100,6 @@ def compute_cov_from_raw(cfg, subject, session):
                                  session=session))
 
     raw_noise = mne.io.read_raw_fif(bids_path_raw_noise, preload=True)
-
-    bids_path_epochs = bids_path_raw_noise.copy().update(
-        task=cfg.task,
-        # processing='clean',
-        processing=None,
-        suffix='epo'
-    )
     cov = mne.compute_raw_covariance(raw_noise, method='shrunk', rank='info')
     cov.save(cov_fname, overwrite=True)
 

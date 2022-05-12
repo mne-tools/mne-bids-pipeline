@@ -114,7 +114,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         )
 
         from sklearn.model_selection import StratifiedKFold
-        cv = StratifiedKFold(shuffle=True)
+        cv = StratifiedKFold(shuffle=True, n_splits=cfg.decoding_n_splits)
         scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
                                       n_jobs=1)
 

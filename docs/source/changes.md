@@ -312,3 +312,6 @@ authors:
   ({{ gh(530) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 - Don't drop bad channels from empty-room data on import.
   ({{ gh(532) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the
+  [`decoding_n_splits`][config.decoding_n_splits] setting.
+  ({{ gh(xxx) }} by {{ authors.hoechenberger }})

@@ -1602,7 +1602,7 @@ solution.
 
 noise_cov: Union[
     Tuple[Optional[float], Optional[float]],
-    Literal['emptyroom', 'ad-hoc'],
+    Literal['emptyroom', 'rest', 'ad-hoc'],
     Callable[[BIDSPath], mne.Covariance]
 ] = (None, 0)
 """
@@ -1616,11 +1616,15 @@ tuple is ``None``, the considered period ends at the end of the epoch.
 The default, ``(None, 0)``, includes the entire period before the event,
 which is typically the pre-stimulus period.
 
-If ``emptyroom``, the noise covariance matrix will be estimated from an
+If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-If ``ad-hoc``, the a diagonal ad-hoc noise covariance matrix will be used.
+If ``''rest'``, the noise covariance will be estimated from a resting-state
+recording (i.e., a recording with `task-rest` and without a `run` in the
+filename).
+
+If ``'ad-hoc'``, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing
@@ -1641,6 +1645,11 @@ the generated evoked data.
     Use an empty-room recording:
     ```python
     noise_cov = 'emptyroom'
+    ```
+
+    Use a resting-state recording:
+    ```python
+    noise_cov = 'rest'
     ```
 
     Use an ad-hoc covariance:
@@ -2057,9 +2066,11 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"but received: {on_error}.")
     logger.info(**gen_log_kwargs(message=msg))
 
-if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc'):
-    msg = (f"noise_cov must be a tuple, 'emptyroom' or 'ad-hoc', but received "
-           f"{noise_cov}")
+if isinstance(noise_cov, str) and noise_cov not in (
+    'emptyroom', 'ad-hoc', 'rest'
+):
+    msg = (f"noise_cov must be a tuple, 'emptyroom', 'rest', or 'ad-hoc', but "
+           f"received {noise_cov}")
     raise ValueError(msg)
 
 if noise_cov == 'emptyroom' and 'eeg' in ch_types:
@@ -2416,7 +2427,7 @@ def get_task() -> Optional[str]:
 def get_noise_cov_bids_path(
     noise_cov: Union[
         Tuple[Optional[float], Optional[float]],
-        Literal['emptyroom', 'ad-hoc'],
+        Literal['emptyroom', 'ad-hoc', 'rest'],
         Callable[[BIDSPath], mne.Covariance]
     ],
     cfg: SimpleNamespace,
@@ -2462,6 +2473,8 @@ def get_noise_cov_bids_path(
         noise_cov_bp.task = 'noise'
     elif noise_cov == 'ad-hoc':
         noise_cov_bp.processing = 'adhoc'
+    elif noise_cov == 'rest':
+        noise_cov_bp.task = 'rest'
     else:  # estimated from a time period
         pass
 
@@ -3497,6 +3510,40 @@ def import_er_data(
                     overwrite=True)
 
     return raw_er
+
+
+def import_rest_data(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str] = None,
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Import resting-state data for use as a noise source.
+
+    Parameters
+    ----------
+    cfg
+        The local configuration.
+    subject
+        The subject for whom to import the empty-room data.
+    session
+        The session for which to import the empty-room data.
+    save
+        Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw_rest
+        The imported data.
+    """
+    cfg = copy.deepcopy(cfg)
+    cfg.task = 'rest'
+
+    raw_rest = import_experimental_data(
+        cfg=cfg, subject=subject, session=session, save=save
+    )
+    return raw_rest
 
 
 class ReferenceRunParams(TypedDict):

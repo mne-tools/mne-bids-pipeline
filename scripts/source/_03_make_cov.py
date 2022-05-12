@@ -61,21 +61,31 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
     cov.save(cov_fname, overwrite=True)
 
 
-def compute_cov_from_empty_room(cfg, subject, session):
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+def compute_cov_from_raw(cfg, subject, session):
+    bids_path_raw_noise = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        processing='filt',
+        suffix='raw',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
 
-    raw_er_fname = bids_path.copy().update(processing='filt', task='noise',
-                                           suffix='raw')
+    data_type = ('resting-state' if config.noise_cov == 'rest' else
+                 'empty-room')
+
+    if data_type == 'resting-state':
+        bids_path_raw_noise.task = 'rest'
+    else:
+        bids_path_raw_noise.task = 'noise'
+
     cov_fname = get_noise_cov_bids_path(
         noise_cov=config.noise_cov,
         cfg=cfg,
@@ -83,13 +93,14 @@ def compute_cov_from_empty_room(cfg, subject, session):
         session=session
     )
 
-    msg = (f'Computing regularized covariance based on empty-room recording. '
-           f'Input: {raw_er_fname}, Output: {cov_fname.basename}')
+    msg = (f'Computing regularized covariance based on {data_type} recording. '
+           f'Input: {bids_path_raw_noise.basename}, '
+           f'Output: {cov_fname.basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    raw_er = mne.io.read_raw_fif(raw_er_fname, preload=True)
-    cov = mne.compute_raw_covariance(raw_er, method='shrunk', rank='info')
+    raw_noise = mne.io.read_raw_fif(bids_path_raw_noise, preload=True)
+    cov = mne.compute_raw_covariance(raw_noise, method='shrunk', rank='info')
     cov.save(cov_fname, overwrite=True)
 
 
@@ -138,8 +149,11 @@ def run_covariance(*, cfg, subject, session=None, custom_func=None):
         retrieve_custom_cov(
             cfg=cfg, subject=subject, session=session
         )
-    elif config.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
-        compute_cov_from_empty_room(cfg=cfg, subject=subject, session=session)
+    elif (
+        (config.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types) or
+        config.noise_cov == 'rest'
+    ):
+        compute_cov_from_raw(cfg=cfg, subject=subject, session=session)
     else:
         tmin, tmax = config.noise_cov
         compute_cov_from_epochs(cfg=cfg, subject=subject, session=session,

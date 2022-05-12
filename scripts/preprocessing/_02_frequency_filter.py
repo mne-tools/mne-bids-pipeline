@@ -35,7 +35,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data)
+                    import_experimental_data, import_er_data, import_rest_data)
 from config import parallel_func
 
 
@@ -51,7 +51,7 @@ def filter(
     h_freq: Optional[float],
     l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
     h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    data_type: Literal['experimental', 'empty-room']
+    data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -85,7 +85,7 @@ def resample(
     session: Optional[str],
     run: Optional[str],
     sfreq: Optional[float],
-    data_type: Literal['experimental', 'empty-room']
+    data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     if not sfreq:
         return
@@ -160,40 +160,54 @@ def filter_data(
 
     del raw
 
-    if cfg.process_er and run == cfg.runs[0]:
-        bids_path_er = bids_path.copy().update(run=None, task='noise')
+    if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
+        data_type = ('resting-state' if config.noise_cov == 'rest'
+                     else 'empty-room')
+        if data_type == 'resting-state':
+            bids_path_noise = bids_path.copy().update(run=None, task='rest')
+        else:
+            bids_path_noise = bids_path.copy().update(run=None, task='noise')
+
         if cfg.use_maxwell_filter:
-            raw_er_fname_in = bids_path_er.copy().update(processing='sss')
-            if raw_er_fname_in.copy().update(split='01').fpath.exists():
-                raw_er_fname_in.update(split='01')
-            msg = f'Reading empty-room recording: {raw_er_fname_in.basename}'
+            raw_noise_fname_in = (bids_path_noise.copy()
+                                  .update(processing='sss'))
+            if raw_noise_fname_in.copy().update(split='01').fpath.exists():
+                raw_noise_fname_in.update(split='01')
+            msg = (f'Reading {data_type} recording: '
+                   f'{raw_noise_fname_in.basename}')
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
-            raw_er = mne.io.read_raw_fif(raw_er_fname_in)
-        else:
-            raw_er = import_er_data(
+            raw_noise = mne.io.read_raw_fif(raw_noise_fname_in)
+        elif data_type == 'empty-room':
+            raw_noise = import_er_data(
                 cfg=cfg, subject=subject, session=session, save=False
             )
+        else:
+            raw_noise = import_rest_data(
+                cfg=cfg, subject=subject, session=session
+            )
 
-        raw_er_fname_out = bids_path_er.copy().update(processing='filt')
+        raw_noise_fname_out = bids_path_noise.copy().update(processing='filt')
 
-        raw_er.load_data()
+        raw_noise.load_data()
         filter(
-            raw=raw_er, subject=subject, session=session, run=None,
+            raw=raw_noise, subject=subject, session=session, run=None,
             h_freq=cfg.h_freq, l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth,
-            data_type='empty-room'
+            data_type=data_type
         )
-        resample(raw=raw_er, subject=subject, session=session, run=None,
-                 sfreq=cfg.resample_sfreq, data_type='empty-room')
+        resample(raw=raw_noise, subject=subject, session=session, run=None,
+                 sfreq=cfg.resample_sfreq, data_type=data_type)
 
-        raw_er.save(raw_er_fname_out, overwrite=True, split_naming='bids')
+        raw_noise.save(
+            raw_noise_fname_out, overwrite=True, split_naming='bids'
+        )
         if cfg.interactive:
             # Plot raw data and power spectral density.
-            raw_er.plot(n_channels=50, butterfly=True)
+            raw_noise.plot(n_channels=50, butterfly=True)
             fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
-            raw_er.plot_psd(fmax=fmax)
+            raw_noise.plot_psd(fmax=fmax)
 
 
 def get_config(

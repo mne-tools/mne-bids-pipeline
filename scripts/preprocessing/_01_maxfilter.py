@@ -28,7 +28,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data,
+                    import_experimental_data, import_er_data, import_rest_data,
                     get_reference_run_params)
 from config import parallel_func
 
@@ -124,54 +124,92 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         raw_sss.plot(n_channels=50, butterfly=True, block=True)
         del raw_sss
 
-    # Empty-room processing.
+    # Noise data processing.
     # Only process empty-room data once – we ensure this by simply checking
     # if the current run is the reference run, and only then initiate
-    # empty-room processing. No sophisticated logic behind this – it's just
-    # convenient to code it this way.
-    if cfg.process_er and run == cfg.mf_reference_run:
-        msg = 'Processing empty-room recording …'
+    # processing. No sophisticated logic behind this – it's just convenient to
+    # code it this way.
+    if (
+        (cfg.process_er or config.noise_cov == 'rest') and
+        run == cfg.mf_reference_run
+    ):
+        if config.noise_cov == 'rest':
+            recording_type = 'resting-state'
+        else:
+            recording_type = 'empty-room'
+
+        msg = f'Processing {recording_type} recording …'
         logger.info(**gen_log_kwargs(subject=subject,
                                      session=session, run=run, message=msg))
 
-        raw_er = import_er_data(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            save=False
-        )
+        if config.noise_cov == 'rest':
+            raw_noise = import_rest_data(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                save=False
+            )
+        else:
+            raw_noise = import_er_data(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                save=False
+            )
 
-        # Maxwell-filter empty-room data.
-        msg = 'Applying Maxwell filter to empty-room recording'
+        # Maxwell-filter noise data.
+        msg = f'Applying Maxwell filter to {recording_type} recording'
         logger.info(**gen_log_kwargs(message=msg,
                                      subject=subject, session=session,
                                      run=run))
-        raw_er_sss = mne.preprocessing.maxwell_filter(raw_er,
-                                                      **common_mf_kws)
+        raw_noise_sss = mne.preprocessing.maxwell_filter(
+            raw_noise, **common_mf_kws
+        )
 
-        # Perform a sanity check: empty-room rank should match the
-        # experimental data rank after Maxwell filtering.
+        # Perform a sanity check: empty-room rank should exactly match the
+        # experimental data rank after Maxwell filtering; resting-state rank
+        # should be equal or be greater than experimental data rank.
+        #
+        # We're treating the two cases differently, because we don't
+        # copy the bad channel selection from the reference run over to
+        # the resting-state recording.
+
         raw_sss = mne.io.read_raw_fif(bids_path_out)
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
-        rank_er = mne.compute_rank(raw_er_sss, rank='info')['meg']
-        if not np.isclose(rank_exp, rank_er):
-            msg = (f'Experimental data rank {rank_exp:.1f} does not '
-                   f'match empty-room data rank {rank_er:.1f} after '
+        rank_noise = mne.compute_rank(raw_noise_sss, rank='info')['meg']
+
+        if config.noise_cov == 'rest':
+            if rank_exp > rank_noise:
+                msg = (
+                    f'Resting-state rank ({rank_noise}) is lower than '
+                    f'reference run data rank ({rank_exp}). We will try to '
+                    f'take care of this during epoching of the experimental '
+                    f'data.'
+                )
+                logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                                session=session))
+            else:
+                pass  # Should cause no problems!
+        elif not np.isclose(rank_exp, rank_noise):
+            msg = (f'Reference run data rank {rank_exp:.1f} does not '
+                   f'match {recording_type} data rank {rank_noise:.1f} after '
                    f'Maxwell filtering. This indicates that the data '
                    f'were processed  differently.')
             raise RuntimeError(msg)
 
-        raw_er_fname_out = bids_path_out.copy().update(
-            task='noise',
+        raw_noise_fname_out = bids_path_out.copy().update(
+            task='rest' if config.noise_cov == 'rest' else 'noise',
             run=None,
             processing='sss'
         )
 
         # Save only the channel types we wish to analyze
         # (same as for experimental data above).
-        raw_er_sss.save(raw_er_fname_out, picks=picks,
-                        overwrite=True, split_naming='bids')
-        del raw_er_sss
+        raw_noise_sss.save(
+            raw_noise_fname_out, picks=picks, overwrite=True,
+            split_naming='bids'
+        )
+        del raw_noise_sss
 
 
 def get_config(

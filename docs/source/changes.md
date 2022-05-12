@@ -157,6 +157,11 @@ authors:
 - Maxwell filtering now also parallelizes across runs (previously only across
   subjects and sessions).
   ({{ gh(550) }} by {{ authors.hoechenberger }}
+- It is now possible to estimate the noise covariance matrix based on a
+  resting-state recording and use it for inverse modeling, just like one could
+  previously do with empty-room recordings.
+  ({{ gh(554) }} by {{ authors.hoechenberger }}
+
 
 ### Behavior changes
 

@@ -131,10 +131,49 @@ def run_epochs(*, cfg, subject, session=None):
     epochs = epochs_all_runs
     del epochs_all_runs
 
+    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+        bp_raw_rest = (bids_path.copy()
+                       .update(
+                           run=None,
+                           task='rest',
+                           processing='filt',
+                           suffix='raw',
+                           check=False
+                        ))
+        raw_rest_filt = mne.io.read_raw(bp_raw_rest)
+        rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
+        if rank_rest < smallest_rank:
+            msg = (
+                f'The rank of the resting state data ({rank_rest}) is smaller '
+                f'than the smallest rank of the "{cfg.task}" epochs '
+                f'({smallest_rank}). Replacing part of the  "info" object of '
+                f'the concatenated "{cfg.task}" epochs with information from '
+                f'the resting-state run.'
+            )
+            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                            session=session, run='rest'))
+            smallest_rank = rank_rest
+            smallest_rank_info = raw_rest_filt.info.copy()
+
+        del raw_rest_filt
+
     if cfg.use_maxwell_filter:
-        # Inject the info corresponding to the run with the smallest data rank
+        # Inject the Maxwell filter info corresponding to the run with the
+        # smallest data rank, so when deducing the rank of the data from the
+        # info, it will be the smallest rank of any bit of data we're
+        # processing. This is to prevent issues during the source estimation
+        # step.
         assert smallest_rank_info is not None
-        epochs.info = smallest_rank_info
+        assert epochs.info['ch_names'] == smallest_rank_info['ch_names']
+        with epochs.info._unlock():
+            epochs.info['proc_history'] = smallest_rank_info['proc_history']
+            rank_epochs_new = mne.compute_rank(epochs, rank='info')['meg']
+            msg = (
+                f'The rank of the "{cfg.task}" epochs is now: '
+                f'{rank_epochs_new}'
+            )
+            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                            session=session))
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:

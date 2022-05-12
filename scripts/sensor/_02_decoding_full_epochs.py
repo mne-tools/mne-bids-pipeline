@@ -1,14 +1,10 @@
 """
-=================================================
-Time-by-time decoding using a "sliding" estimator
-=================================================
+=================
+Decoding pairs of conditions based on entire epochs.
+=================
 
 A sliding estimator fits a separate logistic regression model for every time
 point. The end result is an averaging effect across sensors.
-
-This approach is different from the one taken in the decoding script for
-entire epochs. Here, the classifier is traines on the entire epoch, and hence
-can learn about the entire time course of the signal.
 """
 
 ###############################################################################
@@ -24,15 +20,14 @@ import numpy as np
 import pandas as pd
 from scipy.io import savemat
 
-import mne
-from mne.decoding import SlidingEstimator, cross_val_multiscore
-
-from mne_bids import BIDSPath
-
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
+
+import mne
+from mne.decoding import Scaler, Vectorizer
+from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
@@ -51,7 +46,7 @@ class LogReg(LogisticRegression):
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
-def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
+def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
@@ -97,47 +92,55 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     # not work.
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]],
                                      epochs[epochs_conds[1]]])
+
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
+
     with config.get_parallel_backend():
-        clf = make_pipeline(
-            StandardScaler(),
-            LogReg(
-                solver='liblinear',
-                random_state=cfg.random_state,
+        classification_pipeline = make_pipeline(
+            Scaler(scalings='mean'),
+            Vectorizer(),  # So we can pass the data to scikit-learn
+            LogisticRegression(
+                solver='liblinear',  # much faster than the default
                 n_jobs=1
             )
         )
 
-        se = SlidingEstimator(
-            clf,
-            scoring=cfg.decoding_metric
-        )
+        # Now, actually run the classification, and evaluate it via a
+        # cross-validation procedure.
         cv = StratifiedKFold(shuffle=True, n_splits=cfg.decoding_n_splits)
-        scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
-                                      n_jobs=1)
+        scores = cross_val_score(
+            estimator=classification_pipeline,
+            X=X,
+            y=y,
+            cv=cv,
+            scoring='roc_auc',
+            n_jobs=1
+        )
 
-        # let's save the scores now
+        # Save the scores
         a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+        processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
 
         fname_mat = fname_epochs.copy().update(suffix='decoding',
                                                processing=processing,
                                                extension='.mat')
-        savemat(fname_mat, {'scores': scores, 'times': epochs.times})
+        savemat(fname_mat, {'scores': scores})
 
         fname_tsv = fname_mat.copy().update(extension='.tsv')
-        tabular_data = pd.DataFrame(
-            dict(cond_1=[cond_names[0]] * len(epochs.times),
-                 cond_2=[cond_names[1]] * len(epochs.times),
-                 time=epochs.times,
-                 mean_crossval_score=scores.mean(axis=0),
-                 metric=[cfg.decoding_metric] * len(epochs.times))
+        tabular_data = pd.Series(
+            {
+                'cond_1': cond_names[0],
+                'cond_2': cond_names[1],
+                'mean_crossval_score': scores.mean(axis=0),
+                'metric': cfg.decoding_metric
+            }
         )
+        tabular_data = pd.DataFrame(tabular_data).T
         tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
@@ -185,7 +188,7 @@ def main():
         config.get_sessions(),
         config.get_decoding_contrasts()
     ):
-        log = run_time_decoding(
+        log = run_epochs_decoding(
             cfg=get_config(), subject=subject,
             condition1=cond_1, condition2=cond_2,
             session=session

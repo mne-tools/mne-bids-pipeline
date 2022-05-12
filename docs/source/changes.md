@@ -161,7 +161,8 @@ authors:
   resting-state recording and use it for inverse modeling, just like one could
   previously do with empty-room recordings.
   ({{ gh(554) }} by {{ authors.hoechenberger }}
-
+- Added full-epochs decoding.
+  ({{ gh(558) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 
@@ -314,4 +315,4 @@ authors:
   ({{ gh(532) }} by {{ authors.hoechenberger }})
 - Time-by-time decoding now respects the
   [`decoding_n_splits`][config.decoding_n_splits] setting.
-  ({{ gh(xxx) }} by {{ authors.hoechenberger }})
+  ({{ gh(558) }} by {{ authors.hoechenberger }})

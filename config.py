@@ -1624,7 +1624,7 @@ If ``''rest'``, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
 filename).
 
-If ``'ad-hoc'``, the a diagonal ad-hoc noise covariance matrix will be used.
+If ``'ad-hoc'``, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing

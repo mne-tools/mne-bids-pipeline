@@ -1,10 +1,14 @@
 """
-=====================
-07. Sliding estimator
-=====================
+=================================================
+Time-by-time decoding using a "sliding" estimator
+=================================================
 
-A sliding estimator fits a logistic regression model for every time point.
-The end result is an averaging effect across sensors.
+A sliding estimator fits a separate logistic regression model for every time
+point. The end result is an averaging effect across sensors.
+
+This approach is different from the one taken in the decoding script for
+entire epochs. Here, the classifier is traines on the entire epoch, and hence
+can learn about the entire time course of the signal.
 """
 
 ###############################################################################
@@ -160,7 +164,7 @@ def get_config(
 
 
 def main():
-    """Run sliding estimator."""
+    """Run time-by-time decoding."""
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))

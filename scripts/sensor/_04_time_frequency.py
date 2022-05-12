@@ -53,7 +53,7 @@ def run_time_frequency(*, cfg, subject, session=None):
     epochs = mne.read_epochs(fname_in)
     if cfg.analyze_channels:
         # We special-case the average reference here.
-        # See 02-sliding_estimator.py for more info.
+        # See time-by-time decoding script for more info.
         if 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
             epochs.set_eeg_reference('average')
         else:

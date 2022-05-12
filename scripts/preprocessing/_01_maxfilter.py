@@ -168,7 +168,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
 
         # Perform a sanity check: empty-room rank should exactly match the
         # experimental data rank after Maxwell filtering; resting-state rank
-        # should be eauql or be greater than experimental data rank.
+        # should be equal or be greater than experimental data rank.
         #
         # We're treating the two cases differently, because we don't
         # copy the bad channel selection from the reference run over to

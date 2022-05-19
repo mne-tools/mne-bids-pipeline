@@ -316,3 +316,7 @@ authors:
 - Time-by-time decoding now respects the
   [`decoding_n_splits`][config.decoding_n_splits] setting.
   ({{ gh(558) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the random seed specified via
+  [`random_state`][config.random_state] when generating the cross-validation
+  splits.
+  ({{ gh(558) }} by {{ authors.hoechenberger }})

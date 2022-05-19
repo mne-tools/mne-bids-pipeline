@@ -106,9 +106,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         clf = make_pipeline(
             StandardScaler(),
             LogReg(
-                solver='liblinear',
+                solver='liblinear',  # much faster than the default
                 random_state=cfg.random_state,
-                n_jobs=1
+                n_jobs=1,
             )
         )
 
@@ -116,7 +116,11 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
             clf,
             scoring=cfg.decoding_metric
         )
-        cv = StratifiedKFold(shuffle=True, n_splits=cfg.decoding_n_splits)
+        cv = StratifiedKFold(
+            shuffle=True,
+            random_state=cfg.random_state,
+            n_splits=cfg.decoding_n_splits,
+        )
         scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
                                       n_jobs=1)
 

@@ -22,7 +22,6 @@ from scipy.io import savemat
 
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 import mne
@@ -30,19 +29,10 @@ from mne.decoding import Scaler, Vectorizer
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run, LogReg
 
 
 logger = logging.getLogger('mne-bids-pipeline')
-
-
-class LogReg(LogisticRegression):
-    """Hack to avoid a warning with n_jobs != 1 when using dask
-    """
-    def fit(self, *args, **kwargs):
-        from joblib import parallel_backend
-        with parallel_backend("loky"):
-            return super().fit(*args, **kwargs)
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -103,15 +93,20 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
         classification_pipeline = make_pipeline(
             Scaler(scalings='mean'),
             Vectorizer(),  # So we can pass the data to scikit-learn
-            LogisticRegression(
+            LogReg(
                 solver='liblinear',  # much faster than the default
-                n_jobs=1
+                random_state=cfg.random_state,
+                n_jobs=1,
             )
         )
 
         # Now, actually run the classification, and evaluate it via a
         # cross-validation procedure.
-        cv = StratifiedKFold(shuffle=True, n_splits=cfg.decoding_n_splits)
+        cv = StratifiedKFold(
+            shuffle=True,
+            random_state=cfg.random_state,
+            n_splits=cfg.decoding_n_splits,
+        )
         scores = cross_val_score(
             estimator=classification_pipeline,
             X=X,

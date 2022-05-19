@@ -28,6 +28,7 @@ import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
+from sklearn.linear_model import LogisticRegression
 
 import mne
 import mne_bids
@@ -3622,6 +3623,15 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+class LogReg(LogisticRegression):
+    """Hack to avoid a warning with n_jobs != 1 when using dask
+    """
+    def fit(self, *args, **kwargs):
+        from joblib import parallel_backend
+        with parallel_backend("loky"):
+            return super().fit(*args, **kwargs)
 
 
 def save_logs(logs):

@@ -1256,7 +1256,7 @@ def add_decoding_grand_average(
         title=title,
         caption=caption,
         tags=(
-            'epochs'
+            'epochs',
             'contrast',
             'decoding',
         )
@@ -1325,10 +1325,10 @@ def add_decoding_grand_average(
                 title=title,
                 caption=captions,
                 tags=(
-                    'epochs'
+                    'epochs',
                     'contrast',
                     'decoding',
-                    f'{config.sanitize_cond_name(cond_1)} – '
+                    f'{config.sanitize_cond_name(cond_1)}–'
                     f'{config.sanitize_cond_name(cond_2)}'
                     .lower().replace(' ', '-')
                 )

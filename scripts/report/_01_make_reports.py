@@ -177,7 +177,7 @@ def _plot_full_epochs_decoding_scores_gavg(
 
     data = pd.DataFrame({
         'Contrast': np.squeeze([
-            [f'{c[0]} ./. {c[1]}'] * len(scores[0])
+            [f'{c[0]} ./.\n{c[1]}'] * len(scores[0])
             for c in contrasts
         ]),
         score_label: np.hstack(scores),
@@ -1233,7 +1233,9 @@ def add_decoding_grand_average(
             extension='.mat'
         )
         decoding_data = loadmat(fname_decoding)
-        all_decoding_scores.append(decoding_data['scores'].squeeze())
+        all_decoding_scores.append(
+            np.atleast_1d(decoding_data['scores'].squeeze())
+        )
         del fname_decoding, processing, a_vs_b, decoding_data
 
     fig = _plot_full_epochs_decoding_scores_gavg(

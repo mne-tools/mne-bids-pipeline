@@ -12,7 +12,7 @@ import os.path as op
 from pathlib import Path
 import itertools
 import logging
-from typing import Tuple, Union, Optional, List
+from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
 
 from scipy.io import loadmat
@@ -125,46 +125,47 @@ def plot_auto_scores(cfg, subject, session):
     return all_figs, all_captions
 
 
-def plot_full_epochs_decoding_scores(
-    contrast: str,
-    cross_val_scores: np.ndarray,
-    metric: str
-):
-    """Plot cross-validation results from full-epochs decoding.
-    """
-    import matplotlib.pyplot as plt  # nested import to help joblib
-    import seaborn as sns
+# def plot_full_epochs_decoding_scores(
+#     contrast: str,
+#     cross_val_scores: np.ndarray,
+#     metric: str
+# ):
+#     """Plot cross-validation results from full-epochs decoding.
+#     """
+#     import matplotlib.pyplot as plt  # nested import to help joblib
+#     import seaborn as sns
 
-    cross_val_scores = cross_val_scores.squeeze()  # Make it a 1D array
-    data = pd.DataFrame({
-        'contrast': [contrast] * len(cross_val_scores),
-        'scores': cross_val_scores,
-        'metric': [metric] * len(cross_val_scores)}
-    )
-    fig, ax = plt.subplots()
+#     cross_val_scores = cross_val_scores.squeeze()  # Make it a 1D array
+#     data = pd.DataFrame({
+#         'contrast': [contrast] * len(cross_val_scores),
+#         'scores': cross_val_scores,
+#         'metric': [metric] * len(cross_val_scores)}
+#     )
+#     fig, ax = plt.subplots()
 
-    sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
-                  label='cross-val. scores')
-    ax.set_xticklabels([])
+#     sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
+#                   label='cross-val. scores')
+#     ax.set_xticklabels([])
 
-    ax.plot(cross_val_scores.mean(), '+', color='red', ms=15,
-            label='mean score', zorder=99)
-    ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
+#     ax.plot(cross_val_scores.mean(), '+', color='red', ms=15,
+#             label='mean score', zorder=99)
+#     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
 
-    ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
-    if metric == 'roc_auc':
-        metric = 'ROC AUC'
-    ax.set_ylabel(f'Score ({metric})')
-    ax.legend(loc='center right')
-    fig.tight_layout()
+#     ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
+#     if metric == 'roc_auc':
+#         metric = 'ROC AUC'
+#     ax.set_ylabel(f'Score ({metric})')
+#     ax.legend(loc='center right')
+#     fig.tight_layout()
 
-    return fig
+#     return fig
 
 
-def _plot_full_epochs_decoding_scores_gavg(
+def _plot_full_epochs_decoding_scores(
     contrasts: List[str],
     scores: List[np.ndarray],
-    metric: str
+    metric: str,
+    kind: Literal['single-subject', 'grand-average']
 ):
     """Plot cross-validation results from full-epochs decoding.
     """
@@ -183,15 +184,33 @@ def _plot_full_epochs_decoding_scores_gavg(
         score_label: np.hstack(scores),
     })
 
-    # First create a grid of boxplots …
-    g = sns.catplot(
-        data=data, y=score_label, kind='box',
-        col='Contrast', col_wrap=3, aspect=0.33
-    )
-    # … and now add swarmplots on top to visualize every single data point.
-    g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+    if kind == 'grand-average':
+        # First create a grid of boxplots …
+        g = sns.catplot(
+            data=data, y=score_label, kind='box',
+            col='Contrast', col_wrap=3, aspect=0.33
+        )
+        # … and now add swarmplots on top to visualize every single data point.
+        g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+    else:
+        # First create a grid of swarmplots to visualize every single
+        # cross-validation score.
+        g = sns.catplot(
+            data=data, y=score_label, kind='swarm',
+            col='Contrast', col_wrap=3, aspect=0.33, color='black'
+        )
+        # And now add the mean CV score on top.
+        def _plot_mean_cv_score(x, **kwargs):
+            plt.plot(x.mean(), **kwargs)
+
+        g.map(
+            _plot_mean_cv_score, score_label, marker='+', color='red',
+            ms=15, label='mean score', zorder=99
+        )
+
     g.map(plt.axhline, y=0.5, ls='--', lw=0.5, color='black', zorder=99)
     g.set_titles('{col_name}')  # use this argument literally!
+    g.set_xlabels('')
 
     fig = g.fig
     return fig
@@ -690,10 +709,68 @@ def run_report_sensor(
 
     ###########################################################################
     #
-    # Visualize decoding results.
+    # Visualize full-epochs decoding results.
     #
     if cfg.decode and cfg.decoding_contrasts:
-        msg = 'Adding decoding results to the report.'
+        msg = 'Adding full-epochs decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        all_decoding_scores = []
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            decoding_data = loadmat(fname_decoding)
+            all_decoding_scores.append(
+                np.atleast_1d(decoding_data['scores'].squeeze())
+            )
+            del fname_decoding, processing, a_vs_b, decoding_data
+
+        fig = _plot_full_epochs_decoding_scores(
+            contrasts=cfg.decoding_contrasts,
+            scores=all_decoding_scores,
+            metric=cfg.decoding_metric,
+            kind='single-subject'
+        )
+        caption = (
+            'Each black dot represents the single cross-validation score. '
+            'The red cross is the mean of all cross-validation scores. '
+            'The dashed line is expected chance performance.'
+        )
+
+        title = 'Full-epochs Decoding'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            caption=caption,
+            tags=(
+                'epochs',
+                'contrast',
+                'decoding',
+                *[f'{config.sanitize_cond_name(cond_1)}–'
+                f'{config.sanitize_cond_name(cond_2)}'
+                .lower().replace(' ', '-')
+                for cond_1, cond_2 in cfg.decoding_contrasts]
+            )
+        )
+        # close figure to save memory
+        plt.close(fig)
+        del fig, caption, title
+
+    ###########################################################################
+    #
+    # Visualize time-by-time decoding results.
+    #
+    if cfg.decode and cfg.decoding_contrasts:
+        msg = 'Adding time-by-time decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
@@ -704,47 +781,31 @@ def run_report_sensor(
             figs = []
             captions = []
 
-            for decoding_type in ('full-epochs', 'time-by-time'):
-                cond_1, cond_2 = contrast
-                a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
 
-                if decoding_type == 'full-epochs':
-                    processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
-                else:
-                    processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
-                processing = processing.replace('_', '-').replace('-', '')
-                fname_decoding_ = (fname_decoding.copy()
-                                   .update(processing=processing))
-                decoding_data = loadmat(fname_decoding_)
-                del fname_decoding_, processing, a_vs_b
+            processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            decoding_data = loadmat(fname_decoding)
+            del fname_decoding, processing, a_vs_b
 
-                if decoding_type == 'full-epochs':
-                    fig = plot_full_epochs_decoding_scores(
-                        contrast=contrast,
-                        cross_val_scores=decoding_data['scores'],
-                        metric=cfg.decoding_metric
-                    )
-                    caption = (
-                        f'Full-epochs decoding decoding: '
-                        f'{len(epochs[cond_1])} × {cond_1} ./. '
-                        f'{len(epochs[cond_2])} × {cond_2}. Each dot '
-                        f'represents the decoding score in one '
-                        f'cross-validation fold.'
-                    )
-                else:
-                    fig = plot_time_by_time_decoding_scores(
-                        times=epochs.times,
-                        cross_val_scores=decoding_data['scores'],
-                        metric=cfg.decoding_metric
-                    )
-                    caption = (
-                        f'Time-by-time decoding: '
-                        f'{len(epochs[cond_1])} × {cond_1} ./. '
-                        f'{len(epochs[cond_2])} × {cond_2}'
-                    )
-
-                figs.append(fig)
-                captions.append(caption)
+            fig = plot_time_by_time_decoding_scores(
+                times=epochs.times,
+                cross_val_scores=decoding_data['scores'],
+                metric=cfg.decoding_metric
+            )
+            caption = (
+                f'Time-by-time decoding: '
+                f'{len(epochs[cond_1])} × {cond_1} ./. '
+                f'{len(epochs[cond_2])} × {cond_2}'
+            )
+            figs.append(fig)
+            captions.append(caption)
 
             title = f'Decoding: {cond_1} ./. {cond_2}'
             tags = (
@@ -1238,10 +1299,11 @@ def add_decoding_grand_average(
         )
         del fname_decoding, processing, a_vs_b, decoding_data
 
-    fig = _plot_full_epochs_decoding_scores_gavg(
+    fig = _plot_full_epochs_decoding_scores(
         contrasts=cfg.decoding_contrasts,
         scores=all_decoding_scores,
         metric=cfg.decoding_metric,
+        kind='grand-average'
     )
     caption = (
         f'Based on N={len(all_decoding_scores[0])} '

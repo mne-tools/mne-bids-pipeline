@@ -177,10 +177,10 @@ def _plot_full_epochs_decoding_scores(
     score_label = f'Score ({metric})'
 
     data = pd.DataFrame({
-        'Contrast': np.squeeze([
+        'Contrast': np.array([
             [f'{c[0]} ./.\n{c[1]}'] * len(scores[0])
             for c in contrasts
-        ]),
+        ]).flatten(),
         score_label: np.hstack(scores),
     })
 
@@ -199,6 +199,7 @@ def _plot_full_epochs_decoding_scores(
             data=data, y=score_label, kind='swarm',
             col='Contrast', col_wrap=3, aspect=0.33, color='black'
         )
+
         # And now add the mean CV score on top.
         def _plot_mean_cv_score(x, **kwargs):
             plt.plot(x.mean(), **kwargs)
@@ -756,9 +757,9 @@ def run_report_sensor(
                 'contrast',
                 'decoding',
                 *[f'{config.sanitize_cond_name(cond_1)}–'
-                f'{config.sanitize_cond_name(cond_2)}'
-                .lower().replace(' ', '-')
-                for cond_1, cond_2 in cfg.decoding_contrasts]
+                  f'{config.sanitize_cond_name(cond_2)}'
+                  .lower().replace(' ', '-')
+                  for cond_1, cond_2 in cfg.decoding_contrasts]
             )
         )
         # close figure to save memory

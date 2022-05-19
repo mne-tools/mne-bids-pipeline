@@ -1,10 +1,11 @@
 """
-=================
+====================================================
 Decoding pairs of conditions based on entire epochs.
-=================
+====================================================
 
-A sliding estimator fits a separate logistic regression model for every time
-point. The end result is an averaging effect across sensors.
+Entire epochs are fed into a logistic regression model. Decoding performance
+then tells how well the classifier could predict which epoch belongs to
+which condition.
 """
 
 ###############################################################################

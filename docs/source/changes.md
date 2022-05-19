@@ -161,7 +161,8 @@ authors:
   resting-state recording and use it for inverse modeling, just like one could
   previously do with empty-room recordings.
   ({{ gh(554) }} by {{ authors.hoechenberger }}
-
+- Added full-epochs decoding.
+  ({{ gh(558) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 
@@ -312,3 +313,10 @@ authors:
   ({{ gh(530) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 - Don't drop bad channels from empty-room data on import.
   ({{ gh(532) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the
+  [`decoding_n_splits`][config.decoding_n_splits] setting.
+  ({{ gh(558) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the random seed specified via
+  [`random_state`][config.random_state] when generating the cross-validation
+  splits.
+  ({{ gh(558) }} by {{ authors.hoechenberger }})

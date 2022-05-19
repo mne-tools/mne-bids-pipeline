@@ -1,10 +1,14 @@
 """
-=====================
-07. Sliding estimator
-=====================
+=================================================
+Time-by-time decoding using a "sliding" estimator
+=================================================
 
-A sliding estimator fits a logistic regression model for every time point.
-The end result is an averaging effect across sensors.
+A sliding estimator fits a separate logistic regression model for every time
+point. The end result is an averaging effect across sensors.
+
+This approach is different from the one taken in the decoding script for
+entire epochs. Here, the classifier is traines on the entire epoch, and hence
+can learn about the entire time course of the signal.
 """
 
 ###############################################################################
@@ -28,6 +32,7 @@ from mne_bids import BIDSPath
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
@@ -87,6 +92,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         epochs_conds = cond_names = [condition1, condition2]
         epochs_conds = [condition1, condition2]
 
+    # We have to use this approach because the conditions could be based on
+    # metadata selection, so simply using epochs[conds[0], conds[1]] would
+    # not work.
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]],
                                      epochs[epochs_conds[1]]])
     n_cond1 = len(epochs[epochs_conds[0]])
@@ -98,9 +106,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         clf = make_pipeline(
             StandardScaler(),
             LogReg(
-                solver='liblinear',
+                solver='liblinear',  # much faster than the default
                 random_state=cfg.random_state,
-                n_jobs=1
+                n_jobs=1,
             )
         )
 
@@ -108,15 +116,17 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
             clf,
             scoring=cfg.decoding_metric
         )
-
-        from sklearn.model_selection import StratifiedKFold
-        cv = StratifiedKFold(shuffle=True)
+        cv = StratifiedKFold(
+            shuffle=True,
+            random_state=cfg.random_state,
+            n_splits=cfg.decoding_n_splits,
+        )
         scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
                                       n_jobs=1)
 
         # let's save the scores now
         a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+{cfg.decoding_metric}'
+        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
 
         fname_mat = fname_epochs.copy().update(suffix='decoding',
@@ -160,7 +170,7 @@ def get_config(
 
 
 def main():
-    """Run sliding estimator."""
+    """Run time-by-time decoding."""
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))

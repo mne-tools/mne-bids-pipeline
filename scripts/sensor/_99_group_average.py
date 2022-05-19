@@ -129,7 +129,10 @@ def _decoding_cluster_permutation_test(
     return t_vals, clusters, n_permutations
 
 
-def average_decoding(cfg, session):
+def average_time_by_time_decoding(
+    cfg: SimpleNamespace,
+    session: str
+):
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
     fname_epo = BIDSPath(subject=cfg.subjects[0],
@@ -169,7 +172,7 @@ def average_decoding(cfg, session):
             'clusters': list()
         }
 
-        processing = (f'{cond_1}+{cond_2}+{cfg.decoding_metric}'
+        processing = (f'{cond_1}+{cond_2}+TimeByTime+{cfg.decoding_metric}'
                       .replace(op.sep, '')
                       .replace('_', '-')
                       .replace('-', ''))
@@ -264,6 +267,86 @@ def average_decoding(cfg, session):
         del contrast_score_stats, fname_out
 
 
+def average_full_epochs_decoding(
+    cfg: SimpleNamespace,
+    session: str
+):
+    for contrast in cfg.contrasts:
+        cond_1, cond_2 = contrast
+        n_subjects = len(cfg.subjects)
+
+        contrast_score_stats = {
+            'cond_1': cond_1,
+            'cond_2': cond_2,
+            'N': n_subjects,
+            'subjects': cfg.subjects,
+            'scores': np.nan,
+            'mean': np.nan,
+            'mean_min': np.nan,
+            'mean_max': np.nan,
+            'mean_se': np.nan,
+            'mean_ci_lower': np.nan,
+            'mean_ci_upper': np.nan,
+        }
+
+        processing = (f'{cond_1}+{cond_2}+FullEpochs+{cfg.decoding_metric}'
+                      .replace(op.sep, '')
+                      .replace('_', '-')
+                      .replace('-', ''))
+
+        # Extract mean CV scores from all subjects.
+        mean_scores = np.empty(n_subjects)
+        for sub_idx, subject in enumerate(cfg.subjects):
+            fname_mat = BIDSPath(subject=subject,
+                                 session=session,
+                                 task=cfg.task,
+                                 acquisition=cfg.acq,
+                                 run=None,
+                                 recording=cfg.rec,
+                                 space=cfg.space,
+                                 processing=processing,
+                                 suffix='decoding',
+                                 extension='.mat',
+                                 datatype=cfg.datatype,
+                                 root=cfg.deriv_root,
+                                 check=False)
+
+            decoding_data = loadmat(fname_mat)
+            mean_scores[sub_idx] = decoding_data['scores'].mean()
+
+        # Now we can calculate some descriptive statistics on the mean scores.
+        # We use the [:] here as a safeguard to ensure we don't mess up the
+        # dimensions.
+        contrast_score_stats['scores'] = mean_scores
+        contrast_score_stats['mean'] = mean_scores.mean()
+        contrast_score_stats['mean_min'] = mean_scores.min()
+        contrast_score_stats['mean_max'] = mean_scores.max()
+
+        # Finally, bootstrap the mean, and calculate the
+        # SD of the bootstrapped distribution: this is the standard error of
+        # the mean. We also derive 95% confidence intervals.
+        rng = np.random.default_rng(seed=cfg.random_state)
+        scores_resampled = rng.choice(mean_scores,
+                                      size=(cfg.n_boot, n_subjects),
+                                      replace=True)
+        bootstrapped_means = scores_resampled.mean(axis=1)
+
+        # SD of the bootstrapped distribution == SE of the metric.
+        se = bootstrapped_means.std(ddof=1)
+        ci_lower = np.quantile(bootstrapped_means, q=0.025)
+        ci_upper = np.quantile(bootstrapped_means, q=0.975)
+
+        contrast_score_stats['mean_se'] = se
+        contrast_score_stats['mean_ci_lower'] = ci_lower
+        contrast_score_stats['mean_ci_upper'] = ci_upper
+
+        del bootstrapped_means, se, ci_lower, ci_upper
+
+        fname_out = fname_mat.copy().update(subject='average')
+        savemat(fname_out, contrast_score_stats)
+        del contrast_score_stats, fname_out
+
+
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
@@ -314,7 +397,8 @@ def run_group_average_sensor(*, cfg, subject='average'):
                 evoked.plot()
 
         if config.decode:
-            average_decoding(cfg, session)
+            average_full_epochs_decoding(cfg, session)
+            average_time_by_time_decoding(cfg, session)
 
 
 def main():

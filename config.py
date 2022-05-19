@@ -28,6 +28,7 @@ import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
+from sklearn.linear_model import LogisticRegression
 
 import mne
 import mne_bids
@@ -1279,7 +1280,8 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-"contrasts". MVPA will be performed on the level of individual epochs.
+[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs,
+and separately on each time point for all contrasting conditions.
 """
 
 decoding_metric: str = 'roc_auc'
@@ -1299,13 +1301,14 @@ The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
 n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and
-confidence interval of the mean decoding score.
+confidence interval of the mean decoding scores.
 """
 
 cluster_forming_t_threshold: Optional[float] = None
 """
 The t-value threshold to use for forming clusters in the cluster-based
-permutation test. Data points with absolute t-values greater than this value
+permutation test run on the the time-by-time decoding scores.
+Data points with absolute t-values greater than this value
 will be used to form clusters. If `None`, the threshold will be automatically
 determined to correspond to a p-value of 0.05 for the given number of
 participants in a one-tailed test.
@@ -3620,6 +3623,15 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+class LogReg(LogisticRegression):
+    """Hack to avoid a warning with n_jobs != 1 when using dask
+    """
+    def fit(self, *args, **kwargs):
+        from joblib import parallel_backend
+        with parallel_backend("loky"):
+            return super().fit(*args, **kwargs)
 
 
 def save_logs(logs):

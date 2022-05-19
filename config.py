@@ -1279,8 +1279,8 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-"contrasts". Classifiers will be trained on entire epochs, and separately on
-each time point of each condition.
+[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs,
+and separately on each time point for all contrasting conditions.
 """
 
 decoding_metric: str = 'roc_auc'

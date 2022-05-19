@@ -1259,6 +1259,10 @@ def add_decoding_grand_average(
             'epochs',
             'contrast',
             'decoding',
+            *[f'{config.sanitize_cond_name(cond_1)}–'
+              f'{config.sanitize_cond_name(cond_2)}'
+              .lower().replace(' ', '-')
+              for cond_1, cond_2 in cfg.decoding_contrasts]
         )
     )
     # close figure to save memory

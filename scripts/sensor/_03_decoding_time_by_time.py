@@ -25,7 +25,9 @@ import pandas as pd
 from scipy.io import savemat
 
 import mne
-from mne.decoding import SlidingEstimator, cross_val_multiscore
+from mne.decoding import (
+    GeneralizingEstimator, SlidingEstimator, cross_val_multiscore
+)
 
 from mne_bids import BIDSPath
 
@@ -111,18 +113,30 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
                 n_jobs=1,
             )
         )
-
-        se = SlidingEstimator(
-            clf,
-            scoring=cfg.decoding_metric
-        )
         cv = StratifiedKFold(
             shuffle=True,
             random_state=cfg.random_state,
             n_splits=cfg.decoding_n_splits,
         )
-        scores = cross_val_multiscore(se, X=X, y=y, cv=cv,
-                                      n_jobs=1)
+
+        if cfg.decoding_time_generalization:
+            estimator = GeneralizingEstimator(
+                clf,
+                scoring=cfg.decoding_metric,
+                n_jobs=cfg.n_jobs,
+            )
+            cv_scoring_n_jobs = 1
+        else:
+            estimator = SlidingEstimator(
+                clf,
+                scoring=cfg.decoding_metric,
+                n_jobs=1,
+            )
+            cv_scoring_n_jobs = cfg.n_jobs
+
+        scores = cross_val_multiscore(
+            estimator, X=X, y=y, cv=cv, n_jobs=cv_scoring_n_jobs
+        )
 
         # let's save the scores now
         a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
@@ -134,12 +148,20 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
                                                extension='.mat')
         savemat(fname_mat, {'scores': scores, 'times': epochs.times})
 
+        if cfg.decoding_time_generalization:
+            # Only store the mean scores for the diagonal in the TSV file –
+            # we still have all time generalization results in the MAT file
+            # we just saved.
+            mean_crossval_score = np.diag(scores.mean(axis=0))
+        else:
+            mean_crossval_score = scores.mean(axis=0)
+
         fname_tsv = fname_mat.copy().update(extension='.tsv')
         tabular_data = pd.DataFrame(
             dict(cond_1=[cond_names[0]] * len(epochs.times),
                  cond_2=[cond_names[1]] * len(epochs.times),
                  time=epochs.times,
-                 mean_crossval_score=scores.mean(axis=0),
+                 mean_crossval_score=mean_crossval_score,
                  metric=[cfg.decoding_metric] * len(epochs.times))
         )
         tabular_data.to_csv(fname_tsv, sep='\t', index=False)
@@ -161,10 +183,12 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
+        decoding_time_generalization=config.decoding_time_generalization,
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference()
+        eeg_reference=config.get_eeg_reference(),
+        n_jobs=config.get_n_jobs(),
     )
     return cfg
 

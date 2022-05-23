@@ -3138,8 +3138,6 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
 
     Modifies ``raw`` in-place.
     """
-    from joblib import parallel_backend
-
     if not (cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg):
         return
 
@@ -3174,22 +3172,16 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     # raw_copy = raw.copy()
     # raw_copy.filter(l_freq=None, h_freq=40, n_jobs=1)
 
-    # find_bad_channels_maxwell() performs frequency filtering, but currently
-    # (MNE-Python 1.0) does not allow us to specify the number of jobs to use
-    # for the filtering step. This can lead to drastically increased memory
-    # usage. To enforce only using a single job, we wrap the call to
-    # find_bad_channels_maxwell() in a parallel_backend() context.
-    with parallel_backend('loky', n_jobs=1):
-        auto_noisy_chs, auto_flat_chs, auto_scores = \
-            mne.preprocessing.find_bad_channels_maxwell(
-                raw=raw,
-                calibration=cfg.mf_cal_fname,
-                cross_talk=cfg.mf_ctc_fname,
-                origin=mf_head_origin,
-                coord_frame='head',
-                return_scores=True,
-                h_freq=40
-            )
+    auto_noisy_chs, auto_flat_chs, auto_scores = \
+        mne.preprocessing.find_bad_channels_maxwell(
+            raw=raw,
+            calibration=cfg.mf_cal_fname,
+            cross_talk=cfg.mf_ctc_fname,
+            origin=mf_head_origin,
+            coord_frame='head',
+            return_scores=True,
+            h_freq=40
+        )
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()

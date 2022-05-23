@@ -3166,19 +3166,21 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
                          datatype=cfg.datatype,
                          root=cfg.deriv_root)
 
+    # XXX: Leave this here for reference for now.
     # Filter the data manually before passing it to find_bad_channels_maxwell()
     # This reduces memory usage!
-    raw_copy = raw.copy()
-    raw_copy.filter(l_freq=None, h_freq=40, n_jobs=1)
+    # raw_copy = raw.copy()
+    # raw_copy.filter(l_freq=None, h_freq=40, n_jobs=1)
+
     auto_noisy_chs, auto_flat_chs, auto_scores = \
         mne.preprocessing.find_bad_channels_maxwell(
-            raw=raw_copy,
+            raw=raw,
             calibration=cfg.mf_cal_fname,
             cross_talk=cfg.mf_ctc_fname,
             origin=mf_head_origin,
             coord_frame='head',
             return_scores=True,
-            h_freq=None  # We filtered manually before! So don't filter again.
+            h_freq=40
         )
 
     preexisting_bads = raw.info['bads'].copy()
@@ -3310,7 +3312,6 @@ def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run)
         )
-        raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
             logger.info(**gen_log_kwargs(
@@ -3361,7 +3362,10 @@ def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
+def _fix_stim_artifact_func(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw
+) -> None:
     """Fix stimulation artifact in the data."""
     if not cfg.fix_stim_artifact:
         return

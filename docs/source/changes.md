@@ -320,3 +320,7 @@ authors:
   [`random_state`][config.random_state] when generating the cross-validation
   splits.
   ({{ gh(558) }} by {{ authors.hoechenberger }})
+- When automatically finding flat or noisy MEG channels was enabled, the data
+  would always be 40-Hz-lowpass-filtered even if not explicitly requested by
+  the user. This is now fixed.
+  ({{ gh(558) }} by {{ authors.apmellot }} and {{ authors.hoechenberger }})

@@ -58,7 +58,7 @@ def filter_for_ica(
         msg = f'Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
-        raw.filter(l_freq=cfg.ica_l_freq, h_freq=None)
+        raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
 
 
 def fit_ica(
@@ -272,7 +272,8 @@ def run_ica(*, cfg, subject, session=None):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = f'Loading filtered raw data from {raw_fname} and creating epochs'
+        msg = (f'Loading filtered raw data from {raw_fname.basename} and '
+               f'creating epochs')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
@@ -529,10 +530,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_ica,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_ica)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

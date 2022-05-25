@@ -46,7 +46,7 @@ def run_ssp(*, cfg, subject, session=None):
     proj_fname_out = bids_path.copy().update(run=None, suffix='proj',
                                              check=False)
 
-    msg = f'Input: {raw_fname_in}, Output: {proj_fname_out}'
+    msg = f'Input: {raw_fname_in.basename}, Output: {proj_fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -153,10 +153,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_ssp,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_ssp)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

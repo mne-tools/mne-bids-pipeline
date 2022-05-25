@@ -46,14 +46,14 @@ def run_time_frequency(*, cfg, subject, session=None):
     fname_in = bids_path.copy().update(suffix='epo', processing=processing,
                                        extension='.fif')
 
-    msg = f'Input: {fname_in}'
+    msg = f'Input: {fname_in.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
     epochs = mne.read_epochs(fname_in)
     if cfg.analyze_channels:
         # We special-case the average reference here.
-        # See 02-sliding_estimator.py for more info.
+        # See time-by-time decoding script for more info.
         if 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
             epochs.set_eeg_reference('average')
         else:
@@ -118,8 +118,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func, _ = parallel_func(run_time_frequency,
-                                          n_jobs=config.get_n_jobs())
+    parallel, run_func = parallel_func(run_time_frequency)
     logs = parallel(
         run_func(cfg=get_config(), subject=subject, session=session)
         for subject, session in

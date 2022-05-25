@@ -41,7 +41,7 @@ def run_evoked(*, cfg, subject, session=None):
                                        check=False)
     fname_out = bids_path.copy().update(suffix='ave', check=False)
 
-    msg = f'Input: {fname_in}, Output: {fname_out}'
+    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -116,10 +116,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_evoked,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_evoked)
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in

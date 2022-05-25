@@ -222,7 +222,7 @@ def run_tests(test_suite, download):
 
         # Test the `--n_jobs` parameter
         if dataset == 'ds000117':
-            n_jobs = '2'
+            n_jobs = '1'
         else:
             n_jobs = None
 

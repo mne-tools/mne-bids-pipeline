@@ -83,8 +83,7 @@ def main() -> None:
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
     with config.get_parallel_backend():
-        n_jobs = config.get_n_jobs()
-        parallel, run_func, _ = parallel_func(run_recon, n_jobs=n_jobs)
+        parallel, run_func = parallel_func(run_recon)
         parallel(run_func(root_dir, subject, fs_bids_app)
                  for subject in subjects)
 

@@ -17,8 +17,13 @@ conditions = ['standard', 'deviant', 'button']
 contrasts = [('deviant', 'standard')]
 decode = True
 on_error = 'abort'
-parallel_backend = 'dask'
-dask_worker_memory_limit = '3G'
-dask_temp_dir = "./.dask-worker-space"
-dask_open_dashboard = True
+
+# XXX temporarily disable Dask
+#
+# parallel_backend = 'dask'
+# dask_worker_memory_limit = '3G'
+# dask_temp_dir = "./.dask-worker-space"
+# dask_open_dashboard = True
+# N_JOBS = 2
+
 N_JOBS = 2

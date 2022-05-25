@@ -46,7 +46,7 @@ def drop_ptp(*, cfg, subject, session=None):
     fname_in = bids_path.copy().update(processing=infile_processing)
     fname_out = bids_path.copy().update(processing='clean')
 
-    msg = f'Input: {fname_in}, Output: {fname_out}'
+    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -115,7 +115,7 @@ def get_config(
 
 def main():
     """Run epochs."""
-    parallel, run_func, _ = parallel_func(drop_ptp, n_jobs=config.get_n_jobs())
+    parallel, run_func = parallel_func(drop_ptp)
 
     with config.get_parallel_backend():
         logs = parallel(

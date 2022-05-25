@@ -28,6 +28,7 @@ import pandas as pd
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
+from sklearn.linear_model import LogisticRegression
 
 import mne
 import mne_bids
@@ -1279,7 +1280,8 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-"contrasts". MVPA will be performed on the level of individual epochs.
+[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs,
+and separately on each time point for all contrasting conditions.
 """
 
 decoding_metric: str = 'roc_auc'
@@ -1299,7 +1301,37 @@ The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
 n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and
-confidence interval of the mean decoding score.
+confidence interval of the mean decoding scores.
+"""
+
+cluster_forming_t_threshold: Optional[float] = None
+"""
+The t-value threshold to use for forming clusters in the cluster-based
+permutation test run on the the time-by-time decoding scores.
+Data points with absolute t-values greater than this value
+will be used to form clusters. If `None`, the threshold will be automatically
+determined to correspond to a p-value of 0.05 for the given number of
+participants in a one-tailed test.
+
+Note: Note
+    Only points with the same sign will be clustered together.
+"""
+
+cluster_n_permutations: int = 10_000
+"""
+The maximum number of permutations to perform in a cluster-based permutation
+test to determine the significance of the decoding scores across participants.
+"""
+
+cluster_permutation_p_threshold: float = 0.05
+"""
+The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
+that the clusters show no significant difference between conditions. This is
+used in the permutation test which takes place after forming the clusters.
+
+Note: Note
+    To control how clusters are formed, see
+    [`cluster_forming_t_threshold`][config.cluster_forming_t_threshold].
 """
 
 csp_n_components: int = 4
@@ -1677,7 +1709,7 @@ solution.
 
 noise_cov: Union[
     Tuple[Optional[float], Optional[float]],
-    Literal['emptyroom', 'ad-hoc'],
+    Literal['emptyroom', 'rest', 'ad-hoc'],
     Callable[[BIDSPath], mne.Covariance]
 ] = (None, 0)
 """
@@ -1691,11 +1723,15 @@ tuple is ``None``, the considered period ends at the end of the epoch.
 The default, ``(None, 0)``, includes the entire period before the event,
 which is typically the pre-stimulus period.
 
-If ``emptyroom``, the noise covariance matrix will be estimated from an
+If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time.
 
-If ``ad-hoc``, the a diagonal ad-hoc noise covariance matrix will be used.
+If ``''rest'``, the noise covariance will be estimated from a resting-state
+recording (i.e., a recording with `task-rest` and without a `run` in the
+filename).
+
+If ``'ad-hoc'``, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing
@@ -1716,6 +1752,11 @@ the generated evoked data.
     Use an empty-room recording:
     ```python
     noise_cov = 'emptyroom'
+    ```
+
+    Use a resting-state recording:
+    ```python
+    noise_cov = 'rest'
     ```
 
     Use an ad-hoc covariance:
@@ -1773,6 +1814,30 @@ empty list, `[]`.
 ###############################################################################
 # ADVANCED
 # --------
+
+report_evoked_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each evoked
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 time points per evoked
+    ```python
+    report_evoked_n_time_points = 5
+    ```
+"""
+
+report_stc_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each source estimates
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 images per source estimate:
+    ```python
+    report_stc_n_time_points = 5
+    ```
+"""
 
 l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
 """
@@ -2108,9 +2173,11 @@ if on_error not in ('continue', 'abort', 'debug'):
            f"but received: {on_error}.")
     logger.info(**gen_log_kwargs(message=msg))
 
-if isinstance(noise_cov, str) and noise_cov not in ('emptyroom', 'ad-hoc', 'rest'):
-    msg = (f"noise_cov must be a tuple, 'emptyroom' or 'ad-hoc', but received "
-           f"{noise_cov}")
+if isinstance(noise_cov, str) and noise_cov not in (
+    'emptyroom', 'ad-hoc', 'rest'
+):
+    msg = (f"noise_cov must be a tuple, 'emptyroom', 'rest', or 'ad-hoc', but "
+           f"received {noise_cov}")
     raise ValueError(msg)
 
 if noise_cov == 'emptyroom' and 'eeg' in ch_types:
@@ -2378,6 +2445,12 @@ def get_runs_all_subjects() -> dict:
             get_bids_root() / f'sub-{subject}', entity_key='run',
             ignore_datatypes=tuple(_ignore_datatypes)
         )
+
+        # If we don't have any `run` entities, just set it to None, as we
+        # commonly do when creating a BIDSPath.
+        if not valid_runs_subj:
+            valid_runs_subj = [None]
+
         if exclude_runs and subject in exclude_runs:
             valid_runs_subj = [r for r in valid_runs_subj
                                if r not in exclude_runs[subject]]
@@ -2461,9 +2534,11 @@ def get_mf_reference_run() -> str:
         if inter_runs:
             return inter_runs[0]
         else:
-            ValueError("The intersection of runs by subjects is empty. "
-                       "Check the list of runs: "
-                       f"{get_runs_all_subjects()}")
+            raise ValueError(
+                f"The intersection of runs by subjects is empty. "
+                f"Check the list of runs: "
+                f"{get_runs_all_subjects()}"
+            )
     else:
         return mf_reference_run
 
@@ -2490,7 +2565,7 @@ def get_task() -> Optional[str]:
 def get_noise_cov_bids_path(
     noise_cov: Union[
         Tuple[Optional[float], Optional[float]],
-        Literal['emptyroom', 'ad-hoc'],
+        Literal['emptyroom', 'ad-hoc', 'rest'],
         Callable[[BIDSPath], mne.Covariance]
     ],
     cfg: SimpleNamespace,
@@ -2536,6 +2611,8 @@ def get_noise_cov_bids_path(
         noise_cov_bp.task = 'noise'
     elif noise_cov == 'ad-hoc':
         noise_cov_bp.processing = 'adhoc'
+    elif noise_cov == 'rest':
+        noise_cov_bp.task = 'rest'
     else:  # estimated from a time period
         pass
 
@@ -2543,6 +2620,7 @@ def get_noise_cov_bids_path(
 
 
 def get_n_jobs() -> int:
+    import joblib
     env = os.environ
 
     if interactive:
@@ -2551,6 +2629,10 @@ def get_n_jobs() -> int:
         n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])
     else:
         n_jobs = N_JOBS
+
+    if n_jobs < 0:
+        n_cores = joblib.cpu_count()
+        n_jobs = min(n_cores + n_jobs + 1, n_cores)
 
     return n_jobs
 
@@ -2626,39 +2708,39 @@ def get_parallel_backend_name() -> Literal['dask', 'loky']:
 
 
 def get_parallel_backend():
-    from joblib import parallel_backend
+    import joblib
+
     backend = get_parallel_backend_name()
-    kwargs = {}
+    kwargs = {
+        'n_jobs': get_n_jobs()
+    }
+
     if backend == "loky":
-        kwargs = {"inner_max_num_threads": 1}
+        kwargs['inner_max_num_threads'] = 1
     else:
         setup_dask_client()
 
-    return parallel_backend(
+    return joblib.parallel_backend(
         backend,
         **kwargs
     )
 
 
-def parallel_func(func, n_jobs):
-    if get_parallel_backend() == 'loky':
-        if n_jobs == 1:
-            n_jobs = 1
+def parallel_func(func):
+    if get_parallel_backend_name() == 'loky':
+        if get_n_jobs() == 1:
             my_func = func
             parallel = list
         else:
-            from joblib import Parallel, delayed, cpu_count
-            if n_jobs < 0:
-                n_cores = cpu_count()
-                n_jobs = min(n_cores + n_jobs + 1, n_cores)
-            parallel = Parallel(n_jobs=n_jobs)
+            from joblib import Parallel, delayed
+            parallel = Parallel()
             my_func = delayed(func)
     else:  # Dask
         from joblib import Parallel, delayed
-        parallel = Parallel(n_jobs=n_jobs)
+        parallel = Parallel()
         my_func = delayed(func)
 
-    return parallel, my_func, n_jobs
+    return parallel, my_func
 
 
 def _get_reject(
@@ -2816,21 +2898,33 @@ def failsafe_run(
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
-                message = 'A critical error occurred.'
+                del kwargs_copy['cfg']  # gen_log_kwargs() cannot handle this
+                message = (
+                    f'A critical error occured. '
+                    f'The error message was: {str(e)}'
+                )
                 log_info['success'] = False
                 log_info['error_message'] = str(e)
 
                 if on_error == 'abort':
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nAborting pipeline run.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
                     raise(e)
                 elif on_error == 'debug':
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nStarting post-mortem debugger.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
                 else:
-                    message = f'{message} The error message was:\n{str(e)}'
-                    logger.critical(**gen_log_kwargs(message=message))
+                    message += '\n\nContinuing pipeline run.'
+                    logger.critical(**gen_log_kwargs(
+                        message=message, **kwargs_copy
+                    ))
             log_info['time'] = round(time.time() - t0, ndigits=1)
             return log_info
         return wrapper
@@ -3208,15 +3302,22 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
                          datatype=cfg.datatype,
                          root=cfg.deriv_root)
 
+    # Filter the data manually before passing it to find_bad_channels_maxwell()
+    # This reduces memory usage, as we can control the number of jobs used
+    # during filtering.
+    raw_filt = raw.copy().filter(l_freq=None, h_freq=40, n_jobs=1)
+
     auto_noisy_chs, auto_flat_chs, auto_scores = \
         mne.preprocessing.find_bad_channels_maxwell(
-            raw=raw,
+            raw=raw_filt,
             calibration=cfg.mf_cal_fname,
             cross_talk=cfg.mf_ctc_fname,
             origin=mf_head_origin,
             coord_frame='head',
-            return_scores=True
+            return_scores=True,
+            h_freq=None  # we filtered manually above
         )
+    del raw_filt
 
     preexisting_bads = raw.info['bads'].copy()
     bads = preexisting_bads.copy()
@@ -3306,7 +3407,8 @@ def _load_data(cfg, bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    _crop_data(cfg, raw=raw, subject=subject)
+    if bids_path.subject != 'emptyroom':
+        _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
@@ -3346,7 +3448,6 @@ def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run)
         )
-        raw.load_data()
         for ch_name, (anode, cathode) in cfg.eeg_bipolar_channels.items():
             msg = f'    {anode} – {cathode} -> {ch_name}'
             logger.info(**gen_log_kwargs(
@@ -3397,7 +3498,10 @@ def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
         raw.set_montage(montage, match_case=False, on_missing='warn')
 
 
-def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
+def _fix_stim_artifact_func(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw
+) -> None:
     """Fix stimulation artifact in the data."""
     if not cfg.fix_stim_artifact:
         return
@@ -3413,7 +3517,7 @@ def _fix_stim_artifact_func(cfg: dict, raw: mne.io.BaseRaw) -> None:
 
 def import_experimental_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None,
@@ -3423,15 +3527,15 @@ def import_experimental_data(
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
-    subject : str
+    subject
         The subject to import.
-    session : str | None
+    session
         The session to import.
-    run : str | None
+    run
         The run to import.
-    save : bool
+    save
         Whether to save the data to disk or not.
 
     Returns
@@ -3480,25 +3584,21 @@ def import_experimental_data(
 
 def import_er_data(
     *,
-    cfg: dict,
+    cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
-    bads: List[str],
     save: bool = False
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
     Parameters
     ----------
-    cfg : Bunch
+    cfg
         The local configuration.
     subject
         The subject for whom to import the empty-room data.
     session
         The session for which to import the empty-room data.
-    bads
-        The selection of bad channels from the corresponding experimental
-        recording.
     save
         Whether to save the data to disk or not.
 
@@ -3507,10 +3607,10 @@ def import_er_data(
     raw_er
         The imported data.
     """
-    bids_path_er_in = BIDSPath(
+    bids_path_reference_run = BIDSPath(
         subject=subject,
         session=session,
-        run=cfg.runs[0],
+        run=cfg.mf_reference_run,
         task=cfg.task,
         acquisition=cfg.acq,
         processing=cfg.proc,
@@ -3519,8 +3619,8 @@ def import_er_data(
         suffix=cfg.datatype,
         datatype=cfg.datatype,
         root=cfg.bids_root
-    ).find_empty_room()
-
+    )
+    bids_path_er_in = bids_path_reference_run.find_empty_room()
     bids_path_er_out = (bids_path_er_in.copy()
                         .update(task='noise',
                                 run=None,
@@ -3529,18 +3629,24 @@ def import_er_data(
                                 root=cfg.deriv_root,
                                 check=False))
 
-    if bads is None:
-        bads = []
-
     raw_er = _load_data(cfg, bids_path_er_in)
-    _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
+    raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
 
-    # Set same set of bads as in the experimental run, but only for MEG
-    # channels (we might not have non-MEG channels in empty-room recordings).
-    raw_er.info['bads'] = [ch for ch in bads if ch.startswith('MEG')]
+    _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
+
+    if cfg.use_maxwell_filter:
+        raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
+            raw_er=raw_er,
+            raw=raw_ref
+        )
+    else:
+        # Set same set of bads as in the reference run, but only for MEG
+        # channels (we might not have non-MEG channels in empty-room recordings).
+        raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
+                               if ch.startswith('MEG')]
 
     # Save the data.
     if save:
@@ -3548,6 +3654,40 @@ def import_er_data(
                     overwrite=True)
 
     return raw_er
+
+
+def import_rest_data(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str] = None,
+    save: bool = False
+) -> mne.io.BaseRaw:
+    """Import resting-state data for use as a noise source.
+
+    Parameters
+    ----------
+    cfg
+        The local configuration.
+    subject
+        The subject for whom to import the empty-room data.
+    session
+        The session for which to import the empty-room data.
+    save
+        Whether to save the data to disk or not.
+
+    Returns
+    -------
+    raw_rest
+        The imported data.
+    """
+    cfg = copy.deepcopy(cfg)
+    cfg.task = 'rest'
+
+    raw_rest = import_experimental_data(
+        cfg=cfg, subject=subject, session=session, save=save
+    )
+    return raw_rest
 
 
 class ReferenceRunParams(TypedDict):
@@ -3561,11 +3701,6 @@ def get_reference_run_params(
     session: Optional[str] = None,
     run: str
 ) -> ReferenceRunParams:
-
-    msg = f'Loading info for run: {run}.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
-
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -3629,6 +3764,15 @@ def get_eeg_reference() -> Union[Literal['average'], Iterable[str]]:
         return [eeg_reference]
     else:
         return eeg_reference
+
+
+class LogReg(LogisticRegression):
+    """Hack to avoid a warning with n_jobs != 1 when using dask
+    """
+    def fit(self, *args, **kwargs):
+        from joblib import parallel_backend
+        with parallel_backend("loky"):
+            return super().fit(*args, **kwargs)
 
 
 def save_logs(logs):

@@ -77,7 +77,7 @@ def apply_ica(*, cfg, subject, session):
                    .to_list())
 
     # Load epochs to reject ICA components.
-    msg = f'Input: {fname_epo_in}, Output: {fname_epo_out}'
+    msg = f'Input: {fname_epo_in.basename}, Output: {fname_epo_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -140,10 +140,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            apply_ica,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(apply_ica)
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in

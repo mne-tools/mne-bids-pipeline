@@ -46,7 +46,7 @@ def apply_ssp(*, cfg, subject, session=None):
 
     epochs = mne.read_epochs(fname_in, preload=True)
 
-    msg = f'Input: {fname_in}, Output: {fname_out}'
+    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -88,10 +88,7 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            apply_ssp,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(apply_ssp)
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)
             for subject, session in

@@ -125,10 +125,7 @@ def run_group_average_source(*, cfg, subject='average'):
     mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            morph_stc,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(morph_stc)
         all_morphed_stcs = parallel(
             run_func(
                 cfg=cfg, subject=subject,

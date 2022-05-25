@@ -49,10 +49,7 @@ def main():
         subjects.append('fsaverage')
 
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            make_coreg_surfaces,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(make_coreg_surfaces)
 
         parallel(
             run_func(

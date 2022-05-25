@@ -68,12 +68,19 @@ run_source_estimation = False
 
 on_error = 'abort'
 on_rename_missing_events = 'warn'
-parallel_backend = 'dask'
-dask_worker_memory_limit = '2G'
+
+# XXX temporarily disable Dask
+#
+# parallel_backend = 'dask'
+# dask_worker_memory_limit = '2G'
+# N_JOBS = 2
+
 N_JOBS = 2
 
 if task == 'N400':
-    dask_open_dashboard = True
+    # XXX temporarily disable Dask
+    #
+    # dask_open_dashboard = True
 
     rename_events = {
         'response/201': 'response/correct',
@@ -105,8 +112,9 @@ if task == 'N400':
         'unrelated': '`first_stimulus/target` == "unrelated" and '
                      'first_response == "correct"'
     }
-
     contrasts = [('unrelated', 'related')]
+    cluster_forming_t_threshold = 1.5      # Only for testing!
+    cluster_permutation_p_threshold = 0.1  # Only for testing!
 elif task == 'ERN':
     rename_events = {
         'stimulus/11': 'compatible/left',

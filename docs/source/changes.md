@@ -148,6 +148,21 @@ authors:
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.
   ({{ gh(536) }} by {{ authors.mathiassm }}
+- The pipeline configuration and MNE system information are now automatically
+  added to the report.
+  ({{ gh(544) }} by {{ authors.hoechenberger }}
+- More robust empty-room data processing for use with Maxwell filter. We are
+  now relying on `mne.preprocessing.maxwell_filter_prepare_emptyroom`.
+  ({{ gh(550) }} by {{ authors.hoechenberger }}
+- Maxwell filtering now also parallelizes across runs (previously only across
+  subjects and sessions).
+  ({{ gh(550) }} by {{ authors.hoechenberger }}
+- It is now possible to estimate the noise covariance matrix based on a
+  resting-state recording and use it for inverse modeling, just like one could
+  previously do with empty-room recordings.
+  ({{ gh(554) }} by {{ authors.hoechenberger }}
+- Added full-epochs decoding.
+  ({{ gh(558) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 
@@ -208,6 +223,12 @@ authors:
 - In [`interactive`][config.interactive] mode, the Matplotlib `Agg` backend
   will be used.
   ({{ gh(497) }} by {{ authors.hoechenberger }})
+- We added new configuration options to control the number of time points to
+  use when creating topographic maps of evoked signals and brain plots for
+  source estimates:
+  [`report_evoked_n_time_points`][config.report_evoked_n_time_points] and
+  [`report_stc_n_time_points`][config.report_stc_n_time_points], respectively.
+  ({{ gh(542) }} by {{ authors.agramfort }})
 
 ### Code health
 
@@ -292,3 +313,14 @@ authors:
   ({{ gh(530) }} by {{ authors.hoechenberger }} and {{ authors.agramfort }})
 - Don't drop bad channels from empty-room data on import.
   ({{ gh(532) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the
+  [`decoding_n_splits`][config.decoding_n_splits] setting.
+  ({{ gh(558) }} by {{ authors.hoechenberger }})
+- Time-by-time decoding now respects the random seed specified via
+  [`random_state`][config.random_state] when generating the cross-validation
+  splits.
+  ({{ gh(558) }} by {{ authors.hoechenberger }})
+- When automatically finding flat or noisy MEG channels was enabled, the data
+  would always be 40-Hz-lowpass-filtered even if not explicitly requested by
+  the user. This is now fixed.
+  ({{ gh(558) }} by {{ authors.apmellot }} and {{ authors.hoechenberger }})

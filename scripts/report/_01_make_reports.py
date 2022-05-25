@@ -7,14 +7,18 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import os
 import os.path as op
 from pathlib import Path
 import itertools
 import logging
-from typing import Tuple, Union, Optional
+from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
 
 from scipy.io import loadmat
+import numpy as np
+import pandas as pd
+
 import mne
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -121,10 +125,102 @@ def plot_auto_scores(cfg, subject, session):
     return all_figs, all_captions
 
 
-def plot_decoding_scores(times, cross_val_scores, metric):
+# def plot_full_epochs_decoding_scores(
+#     contrast: str,
+#     cross_val_scores: np.ndarray,
+#     metric: str
+# ):
+#     """Plot cross-validation results from full-epochs decoding.
+#     """
+#     import matplotlib.pyplot as plt  # nested import to help joblib
+#     import seaborn as sns
+
+#     cross_val_scores = cross_val_scores.squeeze()  # Make it a 1D array
+#     data = pd.DataFrame({
+#         'contrast': [contrast] * len(cross_val_scores),
+#         'scores': cross_val_scores,
+#         'metric': [metric] * len(cross_val_scores)}
+#     )
+#     fig, ax = plt.subplots()
+
+#     sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
+#                   label='cross-val. scores')
+#     ax.set_xticklabels([])
+
+#     ax.plot(cross_val_scores.mean(), '+', color='red', ms=15,
+#             label='mean score', zorder=99)
+#     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
+
+#     ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
+#     if metric == 'roc_auc':
+#         metric = 'ROC AUC'
+#     ax.set_ylabel(f'Score ({metric})')
+#     ax.legend(loc='center right')
+#     fig.tight_layout()
+
+#     return fig
+
+
+def _plot_full_epochs_decoding_scores(
+    contrasts: List[str],
+    scores: List[np.ndarray],
+    metric: str,
+    kind: Literal['single-subject', 'grand-average']
+):
+    """Plot cross-validation results from full-epochs decoding.
+    """
+    import matplotlib.pyplot as plt  # nested import to help joblib
+    import seaborn as sns
+
+    if metric == 'roc_auc':
+        metric = 'ROC AUC'
+    score_label = f'Score ({metric})'
+
+    data = pd.DataFrame({
+        'Contrast': np.array([
+            [f'{c[0]} ./.\n{c[1]}'] * len(scores[0])
+            for c in contrasts
+        ]).flatten(),
+        score_label: np.hstack(scores),
+    })
+
+    if kind == 'grand-average':
+        # First create a grid of boxplots …
+        g = sns.catplot(
+            data=data, y=score_label, kind='box',
+            col='Contrast', col_wrap=3, aspect=0.33
+        )
+        # … and now add swarmplots on top to visualize every single data point.
+        g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+    else:
+        # First create a grid of swarmplots to visualize every single
+        # cross-validation score.
+        g = sns.catplot(
+            data=data, y=score_label, kind='swarm',
+            col='Contrast', col_wrap=3, aspect=0.33, color='black'
+        )
+
+        # And now add the mean CV score on top.
+        def _plot_mean_cv_score(x, **kwargs):
+            plt.plot(x.mean(), **kwargs)
+
+        g.map(
+            _plot_mean_cv_score, score_label, marker='+', color='red',
+            ms=15, label='mean score', zorder=99
+        )
+
+    g.map(plt.axhline, y=0.5, ls='--', lw=0.5, color='black', zorder=99)
+    g.set_titles('{col_name}')  # use this argument literally!
+    g.set_xlabels('')
+
+    fig = g.fig
+    return fig
+
+
+def plot_time_by_time_decoding_scores(times, cross_val_scores, metric):
     """Plot cross-validation results from time-by-time decoding.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     mean_scores = cross_val_scores.mean(axis=0)
     max_scores = cross_val_scores.max(axis=0)
@@ -150,10 +246,10 @@ def plot_decoding_scores(times, cross_val_scores, metric):
     return fig
 
 
-def plot_decoding_scores_gavg(cfg, decoding_data):
+def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
@@ -163,13 +259,43 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
     metric = cfg.decoding_metric
+    clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
     fig, ax = plt.subplots()
+    ax.set_ylim((-0.025, 1.025))
+
+    # Start with plotting the significant time periods according to the
+    # cluster-based permutation test
+    n_significant_clusters_plotted = 0
+    for cluster in clusters:
+        cluster_times = cluster['times'][0][0].squeeze()
+        cluster_p = np.asscalar(cluster['p_value'][0][0])
+        if cluster_p >= cfg.cluster_permutation_p_threshold:
+            continue
+
+        # Only add the label once
+        if n_significant_clusters_plotted == 0:
+            label = (f'$p$ < {cfg.cluster_permutation_p_threshold} '
+                     f'(cluster pemutation)')
+        else:
+            label = None
+
+        ax.fill_betweenx(
+            y=ax.get_ylim(),
+            x1=cluster_times[0],
+            x2=cluster_times[-1],
+            facecolor='orange',
+            alpha=0.15,
+            label=label
+        )
+        n_significant_clusters_plotted += 1
+
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
     if times.min() < 0 < times.max():
         ax.axvline(0, ls='-', lw=0.5, color='black')
     ax.fill_between(x=times, y1=ci_lower, y2=ci_upper, color='lightgray',
                     alpha=0.5, label='95% confidence interval')
+
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
     ax.plot(times, se_lower, ls='-.', lw=0.5, color='gray',
@@ -183,10 +309,47 @@ def plot_decoding_scores_gavg(cfg, decoding_data):
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
-    ax.set_ylim((-0.025, 1.025))
     ax.legend(loc='lower right')
     fig.tight_layout()
 
+    return fig
+
+
+def plot_time_by_time_decoding_t_values(decoding_data):
+    """Plot the t-values used to form clusters for the permutation test.
+    """
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    # We squeeze() to make Matplotlib happy.
+    all_times = decoding_data['cluster_all_times'].squeeze()
+    all_t_values = decoding_data['cluster_all_t_values'].squeeze()
+    t_threshold = decoding_data['cluster_t_threshold']
+
+    fig, ax = plt.subplots()
+    ax.plot(all_times, all_t_values, ls='-', color='black',
+            label='observed $t$-values')
+    ax.axhline(t_threshold, ls='--', color='red', label='threshold')
+
+    ax.text(0.05, 0.05, s=f'$N$={decoding_data["N"].squeeze()}',
+            fontsize='x-large', horizontalalignment='left',
+            verticalalignment='bottom', transform=ax.transAxes)
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('$t$-value')
+    ax.legend(loc='lower right')
+
+    if all_t_values.min() < 0 and all_t_values.max() > 0:
+        # center the y axis around 0
+        y_max = np.abs(ax.get_ylim()).max()
+        ax.set_ylim(ymin=-y_max, ymax=y_max)
+    elif all_t_values.min() > 0 and all_t_values.max() > 0:
+        # start y axis at zero
+        ax.set_ylim(ymin=0, ymax=all_t_values.max())
+    elif all_t_values.min() < 0 and all_t_values.max() < 0:
+        # start y axis at zero
+        ax.set_ylim(ymin=all_t_values.min(), ymax=0)
+
+    fig.tight_layout()
     return fig
 
 
@@ -213,7 +376,7 @@ def run_report_preprocessing(
     session: Optional[str] = None,
     report: Optional[mne.Report]
 ) -> mne.Report:
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     msg = 'Generating preprocessing report …'
     logger.info(
@@ -282,7 +445,7 @@ def run_report_preprocessing(
             butterfly=5,
             psd=plot_raw_psd,
             tags=('raw', 'filtered', f'run-{fname.run}')
-            # caption=fname.fpath.name  # TODO upstream
+            # caption=fname.basename  # TODO upstream
         )
         del plot_raw_psd
 
@@ -300,7 +463,7 @@ def run_report_preprocessing(
             title='Empty-Room',
             butterfly=5,
             tags=('raw', 'empty-room')
-            # caption=er_path.fpath.name  # TODO upstream
+            # caption=er_path.basename  # TODO upstream
         )
 
     # Visualize automated noisy channel detection.
@@ -429,7 +592,7 @@ def run_report_sensor(
     session: Optional[str] = None,
     report: mne.Report
 ) -> mne.Report:
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     msg = 'Generating sensor-space analysis report …'
     logger.info(
@@ -510,7 +673,7 @@ def run_report_sensor(
     )
 
     if fname_noise_cov.fpath.exists():
-        msg = f'Reading noise covariance: {fname_noise_cov.fpath.name}'
+        msg = f'Reading noise covariance: {fname_noise_cov.basename}'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
@@ -541,14 +704,73 @@ def run_report_sensor(
             evokeds=evoked,
             titles=title,
             noise_cov=noise_cov,
+            n_time_points=cfg.report_evoked_n_time_points,
             tags=tags
         )
 
     ###########################################################################
     #
-    # Visualize decoding results.
+    # Visualize full-epochs decoding results.
     #
-    if cfg.decode:
+    if cfg.decode and cfg.decoding_contrasts:
+        msg = 'Adding full-epochs decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        all_decoding_scores = []
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            decoding_data = loadmat(fname_decoding)
+            all_decoding_scores.append(
+                np.atleast_1d(decoding_data['scores'].squeeze())
+            )
+            del fname_decoding, processing, a_vs_b, decoding_data
+
+        fig = _plot_full_epochs_decoding_scores(
+            contrasts=cfg.decoding_contrasts,
+            scores=all_decoding_scores,
+            metric=cfg.decoding_metric,
+            kind='single-subject'
+        )
+        caption = (
+            'Each black dot represents the single cross-validation score. '
+            'The red cross is the mean of all cross-validation scores. '
+            'The dashed line is expected chance performance.'
+        )
+
+        title = 'Full-epochs Decoding'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            caption=caption,
+            tags=(
+                'epochs',
+                'contrast',
+                'decoding',
+                *[f'{config.sanitize_cond_name(cond_1)}–'
+                  f'{config.sanitize_cond_name(cond_2)}'
+                  .lower().replace(' ', '-')
+                  for cond_1, cond_2 in cfg.decoding_contrasts]
+            )
+        )
+        # close figure to save memory
+        plt.close(fig)
+        del fig, caption, title
+
+    ###########################################################################
+    #
+    # Visualize time-by-time decoding results.
+    #
+    if cfg.decode and cfg.decoding_contrasts:
         msg = 'Adding time-by-time decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -557,38 +779,52 @@ def run_report_sensor(
         epochs = mne.read_epochs(fname_epo_clean)
 
         for contrast in cfg.decoding_contrasts:
+            figs = []
+            captions = []
+
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{cfg.decoding_metric}'
-            processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = (fname_decoding.copy()
-                               .update(processing=processing))
-            decoding_data = loadmat(fname_decoding_)
-            del fname_decoding_, processing, a_vs_b
 
-            fig = plot_decoding_scores(
+            processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            decoding_data = loadmat(fname_decoding)
+            del fname_decoding, processing, a_vs_b
+
+            fig = plot_time_by_time_decoding_scores(
                 times=epochs.times,
                 cross_val_scores=decoding_data['scores'],
                 metric=cfg.decoding_metric
             )
+            caption = (
+                f'Time-by-time decoding: '
+                f'{len(epochs[cond_1])} × {cond_1} ./. '
+                f'{len(epochs[cond_2])} × {cond_2}'
+            )
+            figs.append(fig)
+            captions.append(caption)
 
-            title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-            caption = (f'{len(epochs[cond_1])} × {cond_1} ./. '
-                       f'{len(epochs[cond_2])} × {cond_2}')
+            title = f'Decoding: {cond_1} ./. {cond_2}'
             tags = (
                 'epochs',
                 'contrast',
+                'decoding',
                 f"{contrast[0].lower().replace(' ', '-')}-"
                 f"{contrast[1].lower().replace(' ', '-')}"
             )
 
             report.add_figure(
-                fig=fig,
+                fig=figs,
                 title=title,
-                caption=caption,
+                caption=captions,
                 tags=tags
             )
-            plt.close(fig)
+            for fig in figs:
+                plt.close(fig)
             del decoding_data, cond_1, cond_2, title, caption
 
         del epochs
@@ -651,7 +887,7 @@ def run_report_source(
     session: Optional[str] = None,
     report: mne.Report
 ) -> mne.Report:
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # nested import to help joblib
 
     msg = 'Generating source-space analysis report …'
     logger.info(
@@ -775,6 +1011,7 @@ def run_report_source(
                 title=title,
                 subject=cfg.fs_subject,
                 subjects_dir=cfg.fs_subjects_dir,
+                n_time_points=cfg.report_stc_n_time_points,
                 tags=tags
             )
 
@@ -799,6 +1036,16 @@ def run_report(
     report = run_report_sensor(**kwargs)
     report = run_report_source(**kwargs)
 
+    ###########################################################################
+    #
+    # Add configuration and system info.
+    #
+    add_system_info(report)
+
+    ###########################################################################
+    #
+    # Save the report.
+    #
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -853,6 +1100,18 @@ def add_event_counts(*,
                '  text-align: center;\n'
                '}\n')
         report.add_custom_css(css=css)
+
+
+def add_system_info(report: mne.Report):
+    """Add system information and the pipeline configuration to the report."""
+
+    config_path = Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
+    report.add_code(
+        code=config_path,
+        title='Configuration file',
+        tags=('configuration',)
+    )
+    report.add_sys_info(title='System information')
 
 
 @failsafe_run(on_error=on_error, script_path=__file__)
@@ -933,6 +1192,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             titles=title,
             projs=False,
             tags=tags,
+            n_time_points=cfg.report_evoked_n_time_points,
             # captions=evoked.comment  # TODO upstream
         )
 
@@ -940,41 +1200,10 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     #
     # Visualize decoding results.
     #
-    if cfg.decode:
-        for contrast in cfg.decoding_contrasts:
-            cond_1, cond_2 = contrast
-            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            processing = f'{a_vs_b}+{cfg.decoding_metric}'
-            processing = processing.replace('_', '-').replace('-', '')
-            fname_decoding_ = evoked_fname.copy().update(
-                processing=processing,
-                suffix='decoding',
-                extension='.mat'
-            )
-            decoding_data = loadmat(fname_decoding_)
-            del fname_decoding_, processing, a_vs_b
-
-            fig = plot_decoding_scores_gavg(cfg=cfg,
-                                            decoding_data=decoding_data)
-            title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-            caption = (f'Based on N={decoding_data["N"].squeeze()} '
-                       f'subjects. Standard error and confidence interval '
-                       f'of the mean were bootstrapped with {cfg.n_boot} '
-                       f'resamples.')
-            report.add_figure(
-                fig=fig,
-                title=title,
-                caption=caption,
-                tags=(
-                    'decoding',
-                    'contrast',
-                    f'{config.sanitize_cond_name(cond_1)} – '
-                    f'{config.sanitize_cond_name(cond_2)}'
-                    .lower().replace(' ', '-')
-                )
-            )
-            plt.close(fig)
-            del decoding_data, cond_1, cond_2, caption, title
+    if cfg.decode and cfg.decoding_contrasts:
+        add_decoding_grand_average(
+            session=session, cfg=cfg, report=report
+        )
 
     #######################################################################
     #
@@ -1008,14 +1237,172 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
                 title=title,
                 subject='fsaverage',
                 subjects_dir=cfg.fs_subjects_dir,
+                n_time_points=cfg.report_stc_n_time_points,
                 tags=tags
             )
 
+    ###########################################################################
+    #
+    # Add configuration and system info.
+    #
+    add_system_info(report)
+
+    ###########################################################################
+    #
+    # Save the report.
+    #
     fname_report = evoked_fname.copy().update(
         task=cfg.task, suffix='report', extension='.html')
     report.save(fname=fname_report, open_browser=False, overwrite=True)
 
-    plt.close('all')  # close all figures to save memory
+    plt.close('all')
+
+
+def add_decoding_grand_average(
+    *,
+    session: str,
+    cfg: SimpleNamespace,
+    report: mne.Report,
+):
+    """Add decoding results to the grand average report."""
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    bids_path = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='ave',
+        extension='.fif',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    # Full-epochs decoding
+    all_decoding_scores = []
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_decoding = bids_path.copy().update(
+            processing=processing,
+            suffix='decoding',
+            extension='.mat'
+        )
+        decoding_data = loadmat(fname_decoding)
+        all_decoding_scores.append(
+            np.atleast_1d(decoding_data['scores'].squeeze())
+        )
+        del fname_decoding, processing, a_vs_b, decoding_data
+
+    fig = _plot_full_epochs_decoding_scores(
+        contrasts=cfg.decoding_contrasts,
+        scores=all_decoding_scores,
+        metric=cfg.decoding_metric,
+        kind='grand-average'
+    )
+    caption = (
+        f'Based on N={len(all_decoding_scores[0])} '
+        f'subjects. Each dot represents the mean cross-validation score '
+        f'for a single subject. The dashed line is expected chance '
+        f'performance.'
+    )
+
+    title = 'Full-epochs Decoding'
+    report.add_figure(
+        fig=fig,
+        title=title,
+        caption=caption,
+        tags=(
+            'epochs',
+            'contrast',
+            'decoding',
+            *[f'{config.sanitize_cond_name(cond_1)}–'
+              f'{config.sanitize_cond_name(cond_2)}'
+              .lower().replace(' ', '-')
+              for cond_1, cond_2 in cfg.decoding_contrasts]
+        )
+    )
+    # close figure to save memory
+    plt.close(fig)
+    del fig, caption, title
+
+    # Time-by-time decoding
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_decoding = bids_path.copy().update(
+            processing=processing,
+            suffix='decoding',
+            extension='.mat'
+        )
+        decoding_data = loadmat(fname_decoding)
+        del fname_decoding, processing, a_vs_b
+
+        figs = []
+        captions = []
+
+        # Plot scores
+        fig_scores = _plot_time_by_time_decoding_scores_gavg(
+            cfg=cfg, decoding_data=decoding_data
+        )
+        caption_scores = (
+            f'Based on N={decoding_data["N"].squeeze()} '
+            f'subjects. Standard error and confidence interval '
+            f'of the mean were bootstrapped with {cfg.n_boot} '
+            f'resamples. CI must not be used for statistical inference here, '
+            f'as it is not corrected for multiple testing.'
+        )
+        if len(config.get_subjects()) > 1:
+            caption_scores += (
+                f' Time periods with decoding performance significantly above '
+                f'chance, if any, were derived with a one-tailed '
+                f'cluster-based permutation test '
+                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f'permutations).'
+            )
+        figs.append(fig_scores)
+        captions.append(caption_scores)
+
+        # Plot t-values used to form clusters
+        if len(config.get_subjects()) > 1:
+            fig_t_vals = plot_time_by_time_decoding_t_values(
+                decoding_data=decoding_data
+            )
+            t_threshold = np.asscalar(
+                np.round(decoding_data['cluster_t_threshold'], 3)
+            )
+            caption_t_vals = (
+                f'Observed t-values. Time points with '
+                f't-values > {t_threshold} were used to form clusters.'
+            )
+            figs.append(fig_t_vals)
+            captions.append(caption_t_vals)
+
+        title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
+        report.add_figure(
+                fig=figs,
+                title=title,
+                caption=captions,
+                tags=(
+                    'epochs',
+                    'contrast',
+                    'decoding',
+                    f'{config.sanitize_cond_name(cond_1)}–'
+                    f'{config.sanitize_cond_name(cond_2)}'
+                    .lower().replace(' ', '-')
+                )
+            )
+
+        # close all figures to save memory
+        plt.close(fig_scores)
 
 
 def get_config(
@@ -1062,7 +1449,10 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         n_boot=config.n_boot,
+        cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,
+        report_stc_n_time_points=config.report_stc_n_time_points,
+        report_evoked_n_time_points=config.report_evoked_n_time_points,
         fs_subject=fs_subject,
         fs_subjects_dir=fs_subjects_dir,
         deriv_root=config.get_deriv_root(),
@@ -1077,10 +1467,7 @@ def get_config(
 def main():
     """Make reports."""
     with config.get_parallel_backend():
-        parallel, run_func, _ = parallel_func(
-            run_report,
-            n_jobs=config.get_n_jobs()
-        )
+        parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(
                 cfg=get_config(subject=subject), subject=subject,

@@ -31,3 +31,4 @@ contrasts = [('Famous', 'Scrambled'),
              ('Unfamiliar', 'Scrambled'),
              ('Famous', 'Unfamiliar')]
 decode = True
+run_source_estimation = False

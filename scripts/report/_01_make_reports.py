@@ -217,7 +217,12 @@ def _plot_full_epochs_decoding_scores(
     return fig
 
 
-def plot_time_by_time_decoding_scores(times, cross_val_scores, metric):
+def _plot_time_by_time_decoding_scores(
+    times: np.ndarray,
+    cross_val_scores: np.ndarray,
+    metric: str,
+    time_generalization: bool
+):
     """Plot cross-validation results from time-by-time decoding.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -225,6 +230,13 @@ def plot_time_by_time_decoding_scores(times, cross_val_scores, metric):
     mean_scores = cross_val_scores.mean(axis=0)
     max_scores = cross_val_scores.max(axis=0)
     min_scores = cross_val_scores.min(axis=0)
+
+    if time_generalization:
+        # Only use the diagonal values (classifiers trained and tested on the
+        # same time points).
+        mean_scores = np.diag(mean_scores)
+        max_scores = np.diag(max_scores)
+        min_scores = np.diag(min_scores)
 
     fig, ax = plt.subplots()
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
@@ -258,6 +270,16 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     se_upper = mean_scores + decoding_data['mean_se'].squeeze()
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
+
+    if cfg.decoding_time_generalization:
+        # Only use the diagonal values (classifiers trained and tested on the
+        # same time points).
+        mean_scores = np.diag(mean_scores)
+        se_lower = np.diag(se_lower)
+        se_upper = np.diag(se_upper)
+        ci_lower = np.diag(ci_lower)
+        ci_upper = np.diag(ci_upper)
+
     metric = cfg.decoding_metric
     clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
@@ -348,6 +370,56 @@ def plot_time_by_time_decoding_t_values(decoding_data):
     elif all_t_values.min() < 0 and all_t_values.max() < 0:
         # start y axis at zero
         ax.set_ylim(ymin=all_t_values.min(), ymax=0)
+
+    fig.tight_layout()
+    return fig
+
+
+def _plot_decoding_time_generalization(
+    decoding_data,
+    metric: str,
+    kind: Literal['single-subject', 'grand-average']
+):
+    """Plot time generalization matrix.
+    """
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    # We squeeze() to make Matplotlib happy.
+    times = decoding_data['times'].squeeze()
+    if kind == 'single-subject':
+        # take the mean across CV scores
+        mean_scores = decoding_data['scores'].mean(axis=0)
+    else:
+        mean_scores = decoding_data['mean']
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(
+        mean_scores,
+        extent=times[[0, -1, 0, -1]],
+        interpolation='nearest',
+        origin='lower',
+        cmap='RdBu_r',
+        vmin=0,
+        vmax=1
+    )
+
+    # Indicate time point zero
+    if times.min() < 0 < times.max():
+        ax.axvline(0, ls='--', lw=0.5, color='black')
+        ax.axhline(0, ls='--', lw=0.5, color='black')
+
+    # Indicate diagonal
+    ax.plot(times[[0, -1]], times[[0, -1]], ls='--', lw=0.5, color='black')
+
+    # Axis labels
+    ax.set_xlabel('Testing time (s)')
+    ax.set_ylabel('Training time (s)')
+
+    # Color bar
+    cbar = plt.colorbar(im, ax=ax)
+    if metric == 'roc_auc':
+        metric = 'ROC AUC'
+    cbar.set_label(f'Score ({metric})')
 
     fig.tight_layout()
     return fig
@@ -779,11 +851,16 @@ def run_report_sensor(
         epochs = mne.read_epochs(fname_epo_clean)
 
         for contrast in cfg.decoding_contrasts:
-            figs = []
-            captions = []
-
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                f"{contrast[0].lower().replace(' ', '-')}-"
+                f"{contrast[1].lower().replace(' ', '-')}"
+            )
 
             processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
@@ -795,37 +872,47 @@ def run_report_sensor(
             decoding_data = loadmat(fname_decoding)
             del fname_decoding, processing, a_vs_b
 
-            fig = plot_time_by_time_decoding_scores(
+            fig = _plot_time_by_time_decoding_scores(
                 times=epochs.times,
                 cross_val_scores=decoding_data['scores'],
-                metric=cfg.decoding_metric
+                metric=cfg.decoding_metric,
+                time_generalization=cfg.decoding_time_generalization
             )
             caption = (
                 f'Time-by-time decoding: '
                 f'{len(epochs[cond_1])} × {cond_1} ./. '
                 f'{len(epochs[cond_2])} × {cond_2}'
             )
-            figs.append(fig)
-            captions.append(caption)
-
-            title = f'Decoding: {cond_1} ./. {cond_2}'
-            tags = (
-                'epochs',
-                'contrast',
-                'decoding',
-                f"{contrast[0].lower().replace(' ', '-')}-"
-                f"{contrast[1].lower().replace(' ', '-')}"
-            )
-
             report.add_figure(
-                fig=figs,
-                title=title,
-                caption=captions,
-                tags=tags
+                fig=fig,
+                title='Decoding performance over time',
+                caption=caption,
+                section=section,
+                tags=tags,
             )
-            for fig in figs:
+            plt.close(fig)
+
+            if cfg.decoding_time_generalization:
+                fig = _plot_decoding_time_generalization(
+                    decoding_data=decoding_data,
+                    metric=cfg.decoding_metric,
+                    kind='single-subject'
+                )
+                caption = (
+                    'Time generalization (generalization across time, GAT): '
+                    'each classifier is trained on each time point, and '
+                    'tested on all other time points.'
+                )
+                report.add_figure(
+                    fig=fig,
+                    title='Time generalization',
+                    caption=caption,
+                    section=section,
+                    tags=tags,
+                )
                 plt.close(fig)
-            del decoding_data, cond_1, cond_2, title, caption
+
+            del decoding_data, cond_1, cond_2, caption
 
         del epochs
 
@@ -1336,6 +1423,15 @@ def add_decoding_grand_average(
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            f'{config.sanitize_cond_name(cond_1)}–'
+            f'{config.sanitize_cond_name(cond_2)}'
+            .lower().replace(' ', '-')
+        )
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
         fname_decoding = bids_path.copy().update(
@@ -1346,14 +1442,11 @@ def add_decoding_grand_average(
         decoding_data = loadmat(fname_decoding)
         del fname_decoding, processing, a_vs_b
 
-        figs = []
-        captions = []
-
         # Plot scores
-        fig_scores = _plot_time_by_time_decoding_scores_gavg(
+        fig = _plot_time_by_time_decoding_scores_gavg(
             cfg=cfg, decoding_data=decoding_data
         )
-        caption_scores = (
+        caption = (
             f'Based on N={decoding_data["N"].squeeze()} '
             f'subjects. Standard error and confidence interval '
             f'of the mean were bootstrapped with {cfg.n_boot} '
@@ -1361,48 +1454,63 @@ def add_decoding_grand_average(
             f'as it is not corrected for multiple testing.'
         )
         if len(config.get_subjects()) > 1:
-            caption_scores += (
+            caption += (
                 f' Time periods with decoding performance significantly above '
                 f'chance, if any, were derived with a one-tailed '
                 f'cluster-based permutation test '
                 f'({decoding_data["cluster_n_permutations"].squeeze()} '
                 f'permutations).'
             )
-        figs.append(fig_scores)
-        captions.append(caption_scores)
+            report.add_figure(
+                fig=fig,
+                title='Decoding performance over time',
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
 
         # Plot t-values used to form clusters
         if len(config.get_subjects()) > 1:
-            fig_t_vals = plot_time_by_time_decoding_t_values(
+            fig = plot_time_by_time_decoding_t_values(
                 decoding_data=decoding_data
             )
             t_threshold = np.asscalar(
                 np.round(decoding_data['cluster_t_threshold'], 3)
             )
-            caption_t_vals = (
+            caption = (
                 f'Observed t-values. Time points with '
                 f't-values > {t_threshold} were used to form clusters.'
             )
-            figs.append(fig_t_vals)
-            captions.append(caption_t_vals)
-
-        title = f'Time-by-time Decoding: {cond_1} ./. {cond_2}'
-        report.add_figure(
-                fig=figs,
-                title=title,
-                caption=captions,
-                tags=(
-                    'epochs',
-                    'contrast',
-                    'decoding',
-                    f'{config.sanitize_cond_name(cond_1)}–'
-                    f'{config.sanitize_cond_name(cond_2)}'
-                    .lower().replace(' ', '-')
-                )
+            report.add_figure(
+                fig=fig,
+                title='t-values based on decoding scores over time',
+                caption=caption,
+                section=section,
+                tags=tags,
             )
+            plt.close(fig)
 
-        # close all figures to save memory
-        plt.close(fig_scores)
+        if cfg.decoding_time_generalization:
+            fig = _plot_decoding_time_generalization(
+                decoding_data=decoding_data,
+                metric=cfg.decoding_metric,
+                kind='grand-average'
+            )
+            caption = (
+                f'Time generalization (generalization across time, GAT): '
+                f'each classifier is trained on each time point, and tested '
+                f'on all other time points. The results were averaged across '
+                f'N={np.asscalar(decoding_data["N"])} subjects.'
+            )
+            report.add_figure(
+                fig=fig,
+                title='Time generalization',
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
 
 
 def get_config(
@@ -1448,6 +1556,7 @@ def get_config(
         time_frequency_conditions=config.time_frequency_conditions,
         decode=config.decode,
         decoding_metric=config.decoding_metric,
+        decoding_time_generalization=config.decoding_time_generalization,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,

@@ -163,6 +163,10 @@ authors:
   ({{ gh(554) }} by {{ authors.hoechenberger }}
 - Added full-epochs decoding.
   ({{ gh(558) }} by {{ authors.hoechenberger }}
+- Generalization across time can now be enabled for the time-by-time decoding
+  scheme via the new configuration option
+  [`decoding_time_generalization`][config.decoding_time_generalization].
+  ({{ gh(559) }} by {{ authors.hoechenberger }}
 
 ### Behavior changes
 

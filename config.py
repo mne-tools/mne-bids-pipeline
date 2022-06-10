@@ -1301,7 +1301,7 @@ The number of folds (also called "splits") to use in the cross-validation
 scheme.
 """
 
-decoding_time_generalization: bool = False
+decoding_time_generalization: bool = True
 """
 Whether to perform time generalization.
 

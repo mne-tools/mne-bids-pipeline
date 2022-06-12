@@ -34,6 +34,7 @@ conditions = ['coherent', 'incoherent']
 
 # Decoding
 decode = True
+decoding_time_generalization = True
 contrasts = [('incoherent', 'coherent')]
 
 # Noise estimation

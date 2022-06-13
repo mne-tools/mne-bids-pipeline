@@ -19,10 +19,13 @@ The function loads machine-specific calibration files.
 
 import itertools
 import logging
+import hashlib
+from copy import deepcopy
 from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
+from joblib import Memory
 import mne
 from mne_bids import BIDSPath
 
@@ -251,6 +254,56 @@ def get_config(
     return cfg
 
 
+def hash_file_path(path):
+    with open(path, 'rb') as f:
+        md5_hash = hashlib.md5(f.read())
+        md5_hashed = md5_hash.hexdigest()
+    return md5_hashed
+
+
+class MyMemory():
+    def __init__(self, memory):
+        self.memory = memory
+
+    def cache(self, func):
+        def wrapper(*args, **kwargs):
+            cfg = deepcopy(kwargs['cfg'])
+            subject = deepcopy(kwargs['subject'])
+            session = deepcopy(kwargs['session'])
+            run = deepcopy(kwargs['run'])
+
+            bids_path_in = BIDSPath(subject=subject,
+                                    session=session,
+                                    run=run,
+                                    task=cfg.task,
+                                    acquisition=cfg.acq,
+                                    # processing='sss',
+                                    recording=cfg.rec,
+                                    space=cfg.space,
+                                    # suffix='raw',
+                                    suffix='meg',
+                                    # extension='.fif',
+                                    datatype=cfg.datatype,
+                                    root=cfg.bids_root,
+                                    check=False)
+            in_files = [bp.fpath for bp in bids_path_in.match()]
+
+            hashes = []
+            for v in in_files:
+                # hashes.append((str(v), v.lstat().st_mtime))
+                hashes.append((str(v), hash_file_path(v)))
+
+            cfg.hashes = hashes
+            kwargs['cfg'] = cfg
+
+            outputs = self.memory.cache(func)(*args, **kwargs)
+            return outputs
+        return wrapper
+
+    def clear(self):
+        self.memory.clear()
+
+
 def main():
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
@@ -258,8 +311,11 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
+    # mem = Memory(location='/tmp', verbose=3)
+    mem = MyMemory(memory=Memory(location='.', verbose=3))
+
     with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_maxwell_filter)
+        parallel, run_func = parallel_func(mem.cache(run_maxwell_filter))
         logs = parallel(
             run_func(
                 cfg=get_config(subject, session),

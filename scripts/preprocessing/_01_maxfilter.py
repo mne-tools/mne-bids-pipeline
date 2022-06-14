@@ -19,8 +19,6 @@ The function loads machine-specific calibration files.
 
 import itertools
 import logging
-import hashlib
-from copy import deepcopy
 from typing import Optional
 from types import SimpleNamespace
 
@@ -33,13 +31,42 @@ import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data, import_rest_data,
                     get_reference_run_params)
-from config import parallel_func
+from config import parallel_func, BaseMemory
 
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+class MyMemory(BaseMemory):
+    def _get_bids_path(self, **kwargs):
+        cfg = kwargs['cfg']
+        subject = kwargs['subject']
+        session = kwargs['session']
+        run = kwargs['run']
+
+        bids_path_in = BIDSPath(subject=subject,
+                                session=session,
+                                run=run,
+                                task=cfg.task,
+                                acquisition=cfg.acq,
+                                recording=cfg.rec,
+                                space=cfg.space,
+                                suffix='meg',
+                                datatype=cfg.datatype,
+                                root=cfg.bids_root,
+                                check=False)
+        return bids_path_in
+
+    def get_in_files(self, **kwargs):
+        bids_path_in = self._get_bids_path(**kwargs)
+        in_files = [bp.fpath for bp in bids_path_in.match()]
+        return in_files
+
+
+memory = MyMemory(memory=Memory(location='.', verbose=3))
+
+
+@failsafe_run(on_error=on_error, script_path=__file__, memory=memory)
 def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
@@ -60,6 +87,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                              root=cfg.deriv_root,
                              check=False)
 
+    out_files = []
     # Load dev_head_t and digitization points from MaxFilter reference run.
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
@@ -119,6 +147,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
                  overwrite=True)
     del raw, raw_sss
+    out_files.append(bids_path_out)
 
     if cfg.interactive:
         # Load the data we have just written, because it contains only
@@ -213,6 +242,8 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
             split_naming='bids'
         )
         del raw_noise_sss
+        out_files.append(raw_noise_fname_out)
+    return [o.fpath for o in out_files]
 
 
 def get_config(
@@ -254,56 +285,6 @@ def get_config(
     return cfg
 
 
-def hash_file_path(path):
-    with open(path, 'rb') as f:
-        md5_hash = hashlib.md5(f.read())
-        md5_hashed = md5_hash.hexdigest()
-    return md5_hashed
-
-
-class MyMemory():
-    def __init__(self, memory):
-        self.memory = memory
-
-    def cache(self, func):
-        def wrapper(*args, **kwargs):
-            cfg = deepcopy(kwargs['cfg'])
-            subject = deepcopy(kwargs['subject'])
-            session = deepcopy(kwargs['session'])
-            run = deepcopy(kwargs['run'])
-
-            bids_path_in = BIDSPath(subject=subject,
-                                    session=session,
-                                    run=run,
-                                    task=cfg.task,
-                                    acquisition=cfg.acq,
-                                    # processing='sss',
-                                    recording=cfg.rec,
-                                    space=cfg.space,
-                                    # suffix='raw',
-                                    suffix='meg',
-                                    # extension='.fif',
-                                    datatype=cfg.datatype,
-                                    root=cfg.bids_root,
-                                    check=False)
-            in_files = [bp.fpath for bp in bids_path_in.match()]
-
-            hashes = []
-            for v in in_files:
-                # hashes.append((str(v), v.lstat().st_mtime))
-                hashes.append((str(v), hash_file_path(v)))
-
-            cfg.hashes = hashes
-            kwargs['cfg'] = cfg
-
-            outputs = self.memory.cache(func)(*args, **kwargs)
-            return outputs
-        return wrapper
-
-    def clear(self):
-        self.memory.clear()
-
-
 def main():
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
@@ -311,11 +292,8 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # mem = Memory(location='/tmp', verbose=3)
-    mem = MyMemory(memory=Memory(location='.', verbose=3))
-
     with config.get_parallel_backend():
-        parallel, run_func = parallel_func(mem.cache(run_maxwell_filter))
+        parallel, run_func = parallel_func(run_maxwell_filter)
         logs = parallel(
             run_func(
                 cfg=get_config(subject, session),

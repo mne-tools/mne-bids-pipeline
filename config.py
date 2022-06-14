@@ -5,6 +5,7 @@ alter for your specific analysis.
 
 import importlib
 import pathlib
+import hashlib
 import functools
 import os
 import pdb
@@ -25,6 +26,7 @@ import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
+from joblib import Memory
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
@@ -2763,7 +2765,11 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 def failsafe_run(
     on_error: OnErrorT,
     script_path: PathLike,
+    memory=None,
 ):
+    if memory is None:
+        memory = Memory(location=None)
+
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
@@ -2782,8 +2788,8 @@ def failsafe_run(
 
             try:
                 assert len(args) == 0  # make sure params are only kwargs
-                out = func(*args, **kwargs)
-                assert out is None  # make sure the function returns None
+                out = memory.cache(func)(*args, **kwargs)
+                assert out is None  # nothing should be returned
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
@@ -2818,6 +2824,52 @@ def failsafe_run(
             return log_info
         return wrapper
     return failsafe_run_decorator
+
+
+def hash_file_path(path):
+    with open(path, 'rb') as f:
+        md5_hash = hashlib.md5(f.read())
+        md5_hashed = md5_hash.hexdigest()
+    return md5_hashed
+
+
+class BaseMemory():
+    def __init__(self, memory):
+        self.memory = memory
+
+    def get_in_files(self, **kwargs):
+        raise NotImplementedError("get_in_files is not implemented.")
+
+    def cache(self, func):
+        def wrapper(*args, **kwargs):
+            in_files = self.get_in_files(**kwargs)
+
+            hashes = []
+            for v in in_files:
+                hashes.append((str(v), v.lstat().st_mtime))
+                # hashes.append((str(v), hash_file_path(v)))
+
+            cfg = copy.deepcopy(kwargs['cfg'])
+            cfg.hashes = hashes
+            kwargs['cfg'] = cfg
+
+            out_files = self.memory.cache(func)(*args, **kwargs)
+            out_files_missing = [
+                o for o in out_files if not pathlib.Path(o).exists()
+            ]
+            if out_files_missing:
+                out_files_missing_msg = '\n'.join(
+                    map(lambda s: f'- {str(s)}', out_files_missing)
+                )
+                raise ValueError('Some output files do not exist: \n'
+                                 + out_files_missing_msg + '\n' +
+                                 'This should not happen unless some files '
+                                 'have been manually moved or deleted. You '
+                                 'need to flush your cache to fix this.')
+        return wrapper
+
+    def clear(self):
+        self.memory.clear()
 
 
 def plot_auto_scores(auto_scores):

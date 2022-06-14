@@ -45,7 +45,6 @@ recreate_bem = True
 recreate_scalp_surface = True
 
 N_JOBS = 2
-N_JOBS = 1
 
 
 def mri_t1_path_generator(bids_path):

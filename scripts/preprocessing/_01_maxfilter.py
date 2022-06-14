@@ -37,8 +37,8 @@ from config import parallel_func, BaseMemory
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-class MyMemory(BaseMemory):
-    def _get_bids_path(self, **kwargs):
+class MaxwellMemory(BaseMemory):
+    def get_in_files(self, **kwargs):
         cfg = kwargs['cfg']
         subject = kwargs['subject']
         session = kwargs['session']
@@ -55,15 +55,12 @@ class MyMemory(BaseMemory):
                                 datatype=cfg.datatype,
                                 root=cfg.bids_root,
                                 check=False)
-        return bids_path_in
 
-    def get_in_files(self, **kwargs):
-        bids_path_in = self._get_bids_path(**kwargs)
         in_files = [bp.fpath for bp in bids_path_in.match()]
         return in_files
 
 
-memory = MyMemory(memory=Memory(location='.', verbose=3))
+memory = MaxwellMemory(memory=Memory(location='.', verbose=3))
 
 
 @failsafe_run(on_error=on_error, script_path=__file__, memory=memory)

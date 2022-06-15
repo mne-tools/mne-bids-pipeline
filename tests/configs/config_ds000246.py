@@ -16,6 +16,7 @@ reject = dict(mag=4e-12, eog=250e-6)
 conditions = ['standard', 'deviant', 'button']
 contrasts = [('deviant', 'standard')]
 decode = True
+decoding_time_generalization = True
 on_error = 'abort'
 
 # XXX temporarily disable Dask

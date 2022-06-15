@@ -1280,8 +1280,10 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs,
-and separately on each time point for all contrasting conditions.
+[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs
+("full-epochs decoding"), and separately on each time point
+("time-by-time decoding"), trying to learn how to distinguish the contrasting
+conditions.
 """
 
 decoding_metric: str = 'roc_auc'
@@ -1295,7 +1297,29 @@ you don't need to be worried about **exactly** balancing class sizes.
 
 decoding_n_splits: int = 5
 """
-The number of folds (a.k.a. "splits") to use in the cross-validation scheme.
+The number of folds (also called "splits") to use in the cross-validation
+scheme.
+"""
+
+decoding_time_generalization: bool = False
+"""
+Whether to perform time generalization.
+
+Time generalization (also called "temporal generalization" or "generalization
+across time", GAT) is an extension of the time-by-time decoding approach.
+Again, a separate classifier is trained on each time point. But instead of just
+testing the model on the same time point in the test data, it will be tested
+on **all** time points.
+
+!!! cite ""
+    [T]he manner in which the trained classifiers generalize across time, and
+    from one experimental condition to another, sheds light on the temporal
+    organization of information-processing stages.
+
+    [DOI: 10.1016/j.tics.2014.01.002](https://doi.org/10.1016/j.tics.2014.01.002)
+
+Because each classifier is trained and tested on **all** time points, this
+procedure may take a significant amount of time.
 """
 
 n_boot: int = 5000

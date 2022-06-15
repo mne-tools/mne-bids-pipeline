@@ -163,6 +163,10 @@ authors:
   ({{ gh(554) }} by {{ authors.hoechenberger }}
 - Added full-epochs decoding.
   ({{ gh(558) }} by {{ authors.hoechenberger }}
+- Generalization across time can now be enabled for the time-by-time decoding
+  scheme via the new configuration option
+  [`decoding_time_generalization`][config.decoding_time_generalization].
+  ({{ gh(559) }} by {{ authors.hoechenberger }}
 - Time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
   (CSP).
   ({{ gh(479) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and

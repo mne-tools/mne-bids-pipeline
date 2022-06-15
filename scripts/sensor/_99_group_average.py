@@ -154,17 +154,22 @@ def average_time_by_time_decoding(
 
     for contrast in cfg.contrasts:
         cond_1, cond_2 = contrast
+        if cfg.decoding_time_generalization:
+            time_points_shape = (len(times), len(times))
+        else:
+            time_points_shape = (len(times),)
+
         contrast_score_stats = {
             'cond_1': cond_1,
             'cond_2': cond_2,
             'times': times,
             'N': len(subjects),
-            'mean': np.empty(len(times)),
-            'mean_min': np.empty(len(times)),
-            'mean_max': np.empty(len(times)),
-            'mean_se': np.empty(len(times)),
-            'mean_ci_lower': np.empty(len(times)),
-            'mean_ci_upper': np.empty(len(times)),
+            'mean': np.empty(time_points_shape),
+            'mean_min': np.empty(time_points_shape),
+            'mean_max': np.empty(time_points_shape),
+            'mean_se': np.empty(time_points_shape),
+            'mean_ci_lower': np.empty(time_points_shape),
+            'mean_ci_upper': np.empty(time_points_shape),
             'cluster_all_times': np.array([]),
             'cluster_all_t_values': np.array([]),
             'cluster_t_threshold': np.nan,
@@ -178,7 +183,8 @@ def average_time_by_time_decoding(
                       .replace('-', ''))
 
         # Extract mean CV scores from all subjects.
-        mean_scores = np.empty((len(subjects), len(times)))
+        mean_scores = np.empty((len(subjects), *time_points_shape))
+
         for sub_idx, subject in enumerate(subjects):
             fname_mat = BIDSPath(subject=subject,
                                  session=session,
@@ -199,13 +205,23 @@ def average_time_by_time_decoding(
 
         # Cluster permutation test.
         # We can only permute for two or more subjects
+        #
+        # If we've performed time generalization, we will only use the diagonal
+        # CV scores here (classifiers trained and tested at the same time
+        # points).
+
         if len(subjects) > 1:
             # Constrain cluster permutation test to time points of the
             # time-locked event or later.
             # We subtract the chance level from the scores as we'll be
             # performing a 1-sample test (i.e., test against 0)!
             idx = np.where(times >= 0)[0]
-            cluster_permutation_scores = mean_scores[:, idx] - 0.5
+
+            if cfg.decoding_time_generalization:
+                cluster_permutation_scores = mean_scores[:, idx, idx] - 0.5
+            else:
+                cluster_permutation_scores = mean_scores[:, idx] - 0.5
+
             cluster_permutation_times = times[idx]
             if cfg.cluster_forming_t_threshold is None:
                 import scipy.stats
@@ -237,6 +253,9 @@ def average_time_by_time_decoding(
         # Now we can calculate some descriptive statistics on the mean scores.
         # We use the [:] here as a safeguard to ensure we don't mess up the
         # dimensions.
+        #
+        # For time generalization, all values (each time point vs each other)
+        # are considered.
         contrast_score_stats['mean'][:] = mean_scores.mean(axis=0)
         contrast_score_stats['mean_min'][:] = mean_scores.min(axis=0)
         contrast_score_stats['mean_max'][:] = mean_scores.max(axis=0)
@@ -246,7 +265,11 @@ def average_time_by_time_decoding(
         # the mean. We also derive 95% confidence intervals.
         rng = np.random.default_rng(seed=cfg.random_state)
         for time_idx in tqdm(range(len(times)), desc='Bootstrapping means'):
-            scores_resampled = rng.choice(mean_scores[:, time_idx],
+            if cfg.decoding_time_generalization:
+                data = mean_scores[:, time_idx, time_idx]
+            else:
+                data = mean_scores[:, time_idx]
+            scores_resampled = rng.choice(data,
                                           size=(cfg.n_boot, len(subjects)),
                                           replace=True)
             bootstrapped_means = scores_resampled.mean(axis=1)
@@ -365,6 +388,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
+        decoding_time_generalization=config.decoding_time_generalization,
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,

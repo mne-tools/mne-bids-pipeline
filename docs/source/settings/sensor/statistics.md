@@ -2,6 +2,7 @@
 ::: config.decode
 ::: config.decoding_metric
 ::: config.decoding_n_splits
+::: config.decoding_time_generalization
 ::: config.n_boot
 ::: config.cluster_forming_t_threshold
 ::: config.cluster_n_permutations

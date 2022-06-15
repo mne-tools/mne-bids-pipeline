@@ -47,6 +47,7 @@ by making some approximations, such as:
 import itertools
 import os
 import copy
+from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 import logging
 
@@ -67,7 +68,6 @@ from mne import create_info, read_epochs, compute_rank
 from mne.decoding import UnsupervisedSpatialFilter, CSP
 from mne.time_frequency import AverageTFR
 from mne.parallel import parallel_func
-from mne.utils import BunchConst
 from mne.report import Report
 
 from mne_bids import BIDSPath
@@ -931,8 +931,8 @@ def group_analysis(
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
-) -> BunchConst:
-    cfg = BunchConst(
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
         # Data parameters
         datatype=config.get_datatype(),
         deriv_root=config.get_deriv_root(),
@@ -983,17 +983,17 @@ def main():
 
     for contrast in config.contrasts:
 
-        # parallel, run_func, _ = parallel_func(
-        #     one_subject_decoding, n_jobs=config.get_n_jobs())
-        # logs = parallel(
-        #     run_func(cfg=cfg, tf=tf, pth=pth,
-        #              subject=subject,
-        #              session=session,
-        #              contrast=contrast)
-        #     for subject, session in
-        #     itertools.product(subjects, sessions)
-        # )
-        # config.save_logs(logs)
+        parallel, run_func, _ = parallel_func(
+            one_subject_decoding, n_jobs=config.get_n_jobs())
+        logs = parallel(
+            run_func(cfg=cfg, tf=tf, pth=pth,
+                     subject=subject,
+                     session=session,
+                     contrast=contrast)
+            for subject, session in
+            itertools.product(subjects, sessions)
+        )
+        config.save_logs(logs)
 
         # Once every subject has been calculated,
         # the group_analysis is very fast to compute.

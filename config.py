@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 
+
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
 else:
@@ -1844,6 +1845,12 @@ processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 """
 
+memory_location: str = '.'
+"""
+If not None, caching will be enabled and the cache files will be persisted
+in the this folder.
+"""
+
 ###############################################################################
 #                                                                             #
 #                      CUSTOM CONFIGURATION ENDS HERE                         #
@@ -2765,10 +2772,13 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 def failsafe_run(
     on_error: OnErrorT,
     script_path: PathLike,
-    memory=None,
+    get_input_fnames: Optional[Callable] = None,
 ):
-    if memory is None:
-        memory = Memory(location=None)
+    if memory_location is None or get_input_fnames is None:
+        # No caching is needed
+        memory = Memory(location='.')  # no op
+    else:
+        memory = StepMemory(get_input_fnames=get_input_fnames)
 
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -2833,16 +2843,14 @@ def hash_file_path(path):
     return md5_hashed
 
 
-class BaseMemory():
-    def __init__(self, memory):
-        self.memory = memory
-
-    def get_in_files(self, **kwargs):
-        raise NotImplementedError("get_in_files is not implemented.")
+class StepMemory():
+    def __init__(self, get_input_fnames=None):
+        self.memory = Memory(location=memory_location, verbose=3)
+        self.get_input_fnames = get_input_fnames
 
     def cache(self, func):
         def wrapper(*args, **kwargs):
-            in_files = self.get_in_files(**kwargs)
+            in_files = self.get_input_fnames(**kwargs)
 
             hashes = []
             for v in in_files:

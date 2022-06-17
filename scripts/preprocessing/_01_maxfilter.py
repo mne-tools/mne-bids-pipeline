@@ -23,7 +23,6 @@ from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
-from joblib import Memory
 import mne
 from mne_bids import BIDSPath
 
@@ -31,39 +30,37 @@ import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data, import_rest_data,
                     get_reference_run_params)
-from config import parallel_func, BaseMemory
+from config import parallel_func
 
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-class MaxwellMemory(BaseMemory):
-    def get_in_files(self, **kwargs):
-        cfg = kwargs['cfg']
-        subject = kwargs['subject']
-        session = kwargs['session']
-        run = kwargs['run']
+def get_input_fnames_maxwell_filter(**kwargs):
+    """Get paths of files required by maxwell_filter function."""
+    cfg = kwargs['cfg']
+    subject = kwargs['subject']
+    session = kwargs['session']
+    run = kwargs['run']
 
-        bids_path_in = BIDSPath(subject=subject,
-                                session=session,
-                                run=run,
-                                task=cfg.task,
-                                acquisition=cfg.acq,
-                                recording=cfg.rec,
-                                space=cfg.space,
-                                suffix='meg',
-                                datatype=cfg.datatype,
-                                root=cfg.bids_root,
-                                check=False)
+    bids_path_in = BIDSPath(subject=subject,
+                            session=session,
+                            run=run,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix='meg',
+                            datatype=cfg.datatype,
+                            root=cfg.bids_root,
+                            check=False)
 
-        in_files = [bp.fpath for bp in bids_path_in.match()]
-        return in_files
-
-
-memory = MaxwellMemory(memory=Memory(location='.', verbose=3))
+    in_files = [bp.fpath for bp in bids_path_in.match()]
+    return in_files
 
 
-@failsafe_run(on_error=on_error, script_path=__file__, memory=memory)
+@failsafe_run(on_error=on_error, script_path=__file__,
+              get_input_fnames=get_input_fnames_maxwell_filter)
 def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '

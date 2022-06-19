@@ -56,6 +56,9 @@ def get_input_fnames_maxwell_filter(**kwargs):
                             check=False)
 
     in_files = [bp.fpath for bp in bids_path_in.match()]
+    in_files = {
+        'raw_{ii}': fname for ii, fname in enumerate(in_files)
+    }
     return in_files
 
 
@@ -81,7 +84,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                              root=cfg.deriv_root,
                              check=False)
 
-    out_files = []
+    out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
@@ -124,6 +127,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # Keyword arguments shared between Maxwell filtering of the
     # experimental and the empty-room data.
     common_mf_kws = dict(
+        # TODO: Add head_pos, st_correlation, eSSS
         calibration=cfg.mf_cal_fname,
         cross_talk=cfg.mf_ctc_fname,
         st_duration=cfg.mf_st_duration,
@@ -138,10 +142,10 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # channels marked as "bad").
     # We do not run `raw_sss.pick()` here because it uses too much memory.
     picks = config.get_channels_to_analyze(raw.info)
-    raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
+    out_files['sss_raw'] = bids_path_out
+    raw_sss.save(out_files['sss'], picks=picks, split_naming='bids',
                  overwrite=True)
     del raw, raw_sss
-    out_files.append(bids_path_out)
 
     if cfg.interactive:
         # Load the data we have just written, because it contains only
@@ -223,7 +227,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                    f'were processed  differently.')
             raise RuntimeError(msg)
 
-        raw_noise_fname_out = bids_path_out.copy().update(
+        out_files['sss_noise'] = bids_path_out.copy().update(
             task='rest' if config.noise_cov == 'rest' else 'noise',
             run=None,
             processing='sss'
@@ -232,12 +236,11 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         # Save only the channel types we wish to analyze
         # (same as for experimental data above).
         raw_noise_sss.save(
-            raw_noise_fname_out, picks=picks, overwrite=True,
+            out_files['sss_noise'], picks=picks, overwrite=True,
             split_naming='bids'
         )
         del raw_noise_sss
-        out_files.append(raw_noise_fname_out)
-    return [o.fpath for o in out_files]
+    return {key: pth.fpath for key, pth in out_files.items()}
 
 
 def get_config(

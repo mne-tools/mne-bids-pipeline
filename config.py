@@ -2851,9 +2851,11 @@ class StepMemory():
     def cache(self, func):
         def wrapper(*args, **kwargs):
             in_files = self.get_input_fnames(**kwargs)
+            # This is an implementation detail so we don't need a proper error
+            assert isinstance(in_files, dict), type(in_files)
 
             hashes = []
-            for v in in_files:
+            for v in in_files.values():
                 hashes.append((str(v), v.lstat().st_mtime))
                 # hashes.append((str(v), hash_file_path(v)))
 
@@ -2862,14 +2864,20 @@ class StepMemory():
             kwargs['cfg'] = cfg
 
             out_files = self.memory.cache(func)(*args, **kwargs)
-            out_files_missing = [
-                o for o in out_files if not pathlib.Path(o).exists()
-            ]
-            if out_files_missing:
+            # backward compat, but ideally this would eventually just be dict
+            assert isinstance(out_files, (dict, list))
+            if isinstance(out_files, dict):
                 out_files_missing_msg = '\n'.join(
-                    map(lambda s: f'- {str(s)}', out_files_missing)
+                    f'- {key}={fname}' for key, fname in out_files.items()
+                    if not pathlib.Path(fname).exists()
                 )
-                raise ValueError('Some output files do not exist: \n'
+            else:
+                out_files_missing_msg = '\n'.join(
+                    f'- {fname}' for fname in out_files
+                    if not pathlib.Path(fname).exists()
+                )
+            if out_files_missing_msg:
+                raise ValueError('Missing at least one output file: \n'
                                  + out_files_missing_msg + '\n' +
                                  'This should not happen unless some files '
                                  'have been manually moved or deleted. You '

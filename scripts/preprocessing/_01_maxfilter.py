@@ -143,7 +143,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # We do not run `raw_sss.pick()` here because it uses too much memory.
     picks = config.get_channels_to_analyze(raw.info)
     out_files['sss_raw'] = bids_path_out
-    raw_sss.save(out_files['sss'], picks=picks, split_naming='bids',
+    raw_sss.save(out_files['sss_raw'], picks=picks, split_naming='bids',
                  overwrite=True)
     del raw, raw_sss
 

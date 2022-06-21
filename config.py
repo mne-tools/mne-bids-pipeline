@@ -3408,8 +3408,7 @@ def import_experimental_data(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str] = None,
-    run: Optional[str] = None,
-    save: bool = False
+    run: Optional[str] = None
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
@@ -3423,8 +3422,6 @@ def import_experimental_data(
         The session to import.
     run
         The run to import.
-    save
-        Whether to save the data to disk or not.
 
     Returns
     -------
@@ -3442,10 +3439,6 @@ def import_experimental_data(
                             suffix=cfg.datatype,
                             datatype=cfg.datatype,
                             root=cfg.bids_root)
-    bids_path_out = bids_path_in.copy().update(suffix='raw',
-                                               extension='.fif',
-                                               root=cfg.deriv_root,
-                                               check=False)
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
     _set_eeg_montage(
@@ -3463,10 +3456,6 @@ def import_experimental_data(
     _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
                        task=get_task(), run=run)
 
-    # Save the data.
-    if save:
-        raw.save(fname=bids_path_out, split_naming='bids', overwrite=True)
-
     return raw
 
 
@@ -3474,8 +3463,7 @@ def import_er_data(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
-    save: bool = False
+    session: Optional[str] = None
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -3487,8 +3475,6 @@ def import_er_data(
         The subject for whom to import the empty-room data.
     session
         The session for which to import the empty-room data.
-    save
-        Whether to save the data to disk or not.
 
     Returns
     -------
@@ -3509,13 +3495,6 @@ def import_er_data(
         root=cfg.bids_root
     )
     bids_path_er_in = bids_path_reference_run.find_empty_room()
-    bids_path_er_out = (bids_path_er_in.copy()
-                        .update(task='noise',
-                                run=None,
-                                suffix='raw',
-                                extension='.fif',
-                                root=cfg.deriv_root,
-                                check=False))
 
     raw_er = _load_data(cfg, bids_path_er_in)
     raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
@@ -3536,11 +3515,6 @@ def import_er_data(
         raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
                                if ch.startswith('MEG')]
 
-    # Save the data.
-    if save:
-        raw_er.save(fname=bids_path_er_out, split_naming='bids',
-                    overwrite=True)
-
     return raw_er
 
 
@@ -3548,8 +3522,7 @@ def import_rest_data(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
-    save: bool = False
+    session: Optional[str] = None
 ) -> mne.io.BaseRaw:
     """Import resting-state data for use as a noise source.
 
@@ -3561,8 +3534,6 @@ def import_rest_data(
         The subject for whom to import the empty-room data.
     session
         The session for which to import the empty-room data.
-    save
-        Whether to save the data to disk or not.
 
     Returns
     -------
@@ -3573,7 +3544,7 @@ def import_rest_data(
     cfg.task = 'rest'
 
     raw_rest = import_experimental_data(
-        cfg=cfg, subject=subject, session=session, save=save
+        cfg=cfg, subject=subject, session=session
     )
     return raw_rest
 

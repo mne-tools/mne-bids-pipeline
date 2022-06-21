@@ -102,8 +102,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         cfg=cfg,
         subject=subject,
         session=session,
-        run=run,
-        save=False
+        run=run
     )
 
     # Maxwell-filter experimental data.
@@ -176,15 +175,13 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
             raw_noise = import_rest_data(
                 cfg=cfg,
                 subject=subject,
-                session=session,
-                save=False
+                session=session
             )
         else:
             raw_noise = import_er_data(
                 cfg=cfg,
                 subject=subject,
-                session=session,
-                save=False
+                session=session
             )
 
         # Maxwell-filter noise data.

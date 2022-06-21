@@ -136,7 +136,7 @@ def filter_data(
     else:
         raw = import_experimental_data(cfg=cfg,
                                        subject=subject, session=session,
-                                       run=run, save=False)
+                                       run=run)
 
     raw_fname_out = bids_path.copy().update(processing='filt')
 
@@ -180,7 +180,7 @@ def filter_data(
             raw_noise = mne.io.read_raw_fif(raw_noise_fname_in)
         elif data_type == 'empty-room':
             raw_noise = import_er_data(
-                cfg=cfg, subject=subject, session=session, save=False
+                cfg=cfg, subject=subject, session=session
             )
         else:
             raw_noise = import_rest_data(

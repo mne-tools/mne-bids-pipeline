@@ -24,16 +24,37 @@ from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne_bids import BIDSPath
+from mne_bids import BIDSPath, read_raw_bids
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data, import_rest_data,
-                    get_reference_run_params)
+                    import_experimental_data, import_er_data, import_rest_data)
 from config import parallel_func
 
 
 logger = logging.getLogger('mne-bids-pipeline')
+
+
+def _get_reference_run_path(
+    *,
+    subject: str,
+    session: Optional[str] = None,
+    run: str
+) -> BIDSPath:
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        run=run,
+        task=get_task(),
+        acquisition=acq,
+        recording=rec,
+        space=space,
+        suffix='meg',
+        extension='.fif',
+        datatype=get_datatype(),
+        root=get_bids_root(),
+    )
+    return bids_path
 
 
 def get_input_fnames_maxwell_filter(**kwargs):
@@ -55,20 +76,32 @@ def get_input_fnames_maxwell_filter(**kwargs):
                             root=cfg.bids_root,
                             check=False)
 
-    in_files = [bp.fpath for bp in bids_path_in.match()]
     in_files = {
-        'raw_{ii}': fname for ii, fname in enumerate(in_files)
+        f'raw_run-{bp.run}': bp.fpath for bp in bids_path_in.match()
     }
+
+    ref_bids_path = bids_path_in.copy().update(
+        run=cfg.mf_reference_run,
+        extension='.fif',
+        check=True
+    )
+
+    in_files["raw_ref_run"] = ref_bids_path
+    in_files["mf_cal_fname"] = cfg.mf_cal_fname
+    in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
     return in_files
 
 
 @failsafe_run(on_error=on_error, script_path=__file__,
               get_input_fnames=get_input_fnames_maxwell_filter)
-def run_maxwell_filter(*, cfg, subject, session=None, run=None):
+def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
+
+    # del subject, session, run
+    assert in_files is not None
 
     bids_path_out = BIDSPath(subject=subject,
                              session=session,
@@ -92,17 +125,13 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
-    reference_run_params = get_reference_run_params(
-        subject=subject, session=session, run=cfg.mf_reference_run
-    )
-    dev_head_t = reference_run_params['dev_head_t']
-    del reference_run_params
+    raw = read_raw_bids(bids_path=in_files["raw_ref_run"])
+    dev_head_t = raw.info['dev_head_t']
+    del raw
 
     raw = import_experimental_data(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        run=run
+        in_files[f"raw_run-{run}"],
+        cfg=cfg
     )
 
     # Maxwell-filter experimental data.
@@ -127,8 +156,8 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # experimental and the empty-room data.
     common_mf_kws = dict(
         # TODO: Add head_pos, st_correlation, eSSS
-        calibration=cfg.mf_cal_fname,
-        cross_talk=cfg.mf_ctc_fname,
+        calibration=in_files["mf_cal_fname"],
+        cross_talk=in_files["mf_ctc_fname"],
         st_duration=cfg.mf_st_duration,
         origin=cfg.mf_head_origin,
         coord_frame='head',

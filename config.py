@@ -2863,6 +2863,8 @@ class StepMemory():
             cfg.hashes = hashes
             kwargs['cfg'] = cfg
 
+            # XXX we should also hash the sidecar files
+
             out_files = self.memory.cache(func)(*args, **kwargs)
             # backward compat, but ideally this would eventually just be dict
             assert isinstance(out_files, (dict, list))
@@ -3474,6 +3476,7 @@ def _fix_stim_artifact_func(
 def import_experimental_data(
     *,
     cfg: SimpleNamespace,
+    bids_path_in: BIDSPath = None,
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None
@@ -3484,6 +3487,8 @@ def import_experimental_data(
     ----------
     cfg
         The local configuration.
+    bids_path_in
+        XXX
     subject
         The subject to import.
     session
@@ -3496,18 +3501,23 @@ def import_experimental_data(
     raw
         The imported data.
     """
-    bids_path_in = BIDSPath(subject=subject,
-                            session=session,
-                            run=run,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            processing=cfg.proc,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix=cfg.datatype,
-                            datatype=cfg.datatype,
-                            root=cfg.bids_root)
+    if bids_path_in is None:
+        # XXX cleanup
+        bids_path_in = BIDSPath(subject=subject,
+                                session=session,
+                                run=run,
+                                task=cfg.task,
+                                acquisition=cfg.acq,
+                                processing=cfg.proc,
+                                recording=cfg.rec,
+                                space=cfg.space,
+                                suffix=cfg.datatype,
+                                datatype=cfg.datatype,
+                                root=cfg.bids_root)
 
+    subject = bids_path_in.subject
+    session = bids_path_in.session
+    run = bids_path_in.run
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
     _set_eeg_montage(
         cfg=cfg, raw=raw, subject=subject, session=session, run=run
@@ -3620,34 +3630,6 @@ def import_rest_data(
 class ReferenceRunParams(TypedDict):
     montage: mne.channels.DigMontage
     dev_head_t: mne.Transform
-
-
-def get_reference_run_params(
-    *,
-    subject: str,
-    session: Optional[str] = None,
-    run: str
-) -> ReferenceRunParams:
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        run=run,
-        task=get_task(),
-        acquisition=acq,
-        recording=rec,
-        space=space,
-        suffix='meg',
-        extension='.fif',
-        datatype=get_datatype(),
-        root=get_bids_root(),
-    )
-
-    raw = read_raw_bids(bids_path=bids_path)
-    params = ReferenceRunParams(
-        montage=raw.get_montage(),
-        dev_head_t=raw.info['dev_head_t']
-    )
-    return params
 
 
 def _find_breaks_func(

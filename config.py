@@ -1358,61 +1358,12 @@ Note: Note
     [`cluster_forming_t_threshold`][config.cluster_forming_t_threshold].
 """
 
-csp_n_components: int = 4
-"""
-The number of components used in the CSP.
-"""
-
-csp_shuffle_cv: bool = True
-"""
-Whether to shuffle each class's samples before splitting into batches for
-cross-validation.
-
-Note: Note
-    The samples within each split will **not** be shuffled.
-"""
-
-csp_reg: float = 0.1
-"""
-Regularization used in the covariance estimator when calculating CSPs. Must be
-between 0 and 1.
-"""
-
-csp_quick: bool = True
-"""
-Enables to decimate the data when performing the time_frequency_csp analysis.
-Disable it when you have finished calibrating the pipeline.
-But the difference with and without it is nearly negligible.
-"""
-
 csp_plot_patterns: bool = True
 """
 Whether to add the CSP patterns to the report. Note that depending on
 [`csp_times`][config.csp_times], [`csp_freqs`][config.csp_freqs], and
 [`csp_n_components`][config.csp_n_components], a lot of patterns may be
 generated.
-"""
-
-cluster_stats_alpha: float = 0.05
-"""
-Statistic level used in the time frequency script.
-"""
-
-cluster_t_dist_alpha_thres: float = 0.1
-"""
-The percentile of the t-distribution to use as the threshold when creating the
-clusters. The t-distribution is created with `number of subjects - 1` degrees
-of freedom. For example, if you set this value to `0.05` and your analysis
-includes 10 subjects, the value of the 95th percentile of the t-distribution
-`t(10)` will be used for thresholding the clusters.
-Theoretically, you can tweak this value as you want to choose the size of
-the cluster, but for good science practices we advise to choose this value
-preliminary to seing the results.
-"""
-
-n_permutations: int = 10_000
-"""
-Number of permutations used when estimating the p-values.
 """
 
 ###############################################################################
@@ -1446,7 +1397,7 @@ The conditions to compute time-frequency decomposition on.
     ```
 """
 
-time_frequency_freq_min: Optional[float] = 10
+time_frequency_freq_min: Optional[float] = 8
 """
 Minimum frequency for the time frequency analysis, in Hz.
 ???+ example "Example"
@@ -1478,51 +1429,110 @@ time_frequency_subtract_evoked: bool = False
 Whether to subtract the evoked signal (averaged across all epochs) from the
 epochs before passing them to time-frequency analysis. Set this to `True` to
 highlight induced activity.
+
+Note: Note
+    This also applies to CSP analysis.
 """
 
 ###############################################################################
  # TIME-FREQUENCY CSP
  # ------------------
 
-from numpy.typing import ArrayLike
+decoding_csp: bool = False
+"""
+Whether to run decoding via Common Spatial Patterns (CSP) analysis on the
+time-frequency representation of the data.
+"""
 
-csp_freqs: ArrayLike = np.linspace(
-    time_frequency_freq_min,
-    time_frequency_freq_max,
-    num=2
+decoding_csp_times: Optional[ArrayLike] = np.linspace(
+    max(0, epochs_tmin),
+    epochs_tmax,
+    num=6
 )
 """
-List of frequencies used in the csp-decoding script.
-We will then decode inside each bin.
-The first element of the list will be the lower bound frequency
-The last element will be the higher frequency.
-The list needs to contain at least those two elements.
+The edges of the time bins to use for CSP decoding.
+Must contain at least two elements. By default, 4 equally-spaced bins are
+created across the non-negative time range of the epochs.
+
+All specified time points must be contained in the epochs interval.
+
+If `None`, do not perform time-frequency analysis, and only run CSP on
+frequency data.
+
 ???+ example "Example"
+    Create 3 equidistant time bins (0–0.2, 0.2–0.4, 0.4–0.6 sec):
     ```python
-    # in order to create the bins [(4,8), (8,14), (14,16), (16,20)]
-    # Two solutions:
-    csp_freqs = [4., 8., 14., 16., 20.]
-    csp_freqs = np.linspace(start=4, stop=25, num=5)
+    decoding_csp_times = np.linspace(start=0, stop=0.6, num=4)
+    ```
+    Create 2 time bins of different durations (0–0.4, 0.4–0.6 sec):
+    ```python
+    decoding_csp_times = [0, 0.4, 0.6]
     ```
 """
 
-csp_times: ArrayLike = np.linspace(
-    epochs_tmin,
-    epochs_tmax,
-    num=3
-)
+decoding_csp_freqs: Union[
+    ArrayLike,
+    Dict[str, ArrayLike]
+] = [
+    time_frequency_freq_min,
+    (time_frequency_freq_max - time_frequency_freq_min) / 2 + time_frequency_freq_min,  # noqa: E501
+    time_frequency_freq_max,
+]
 """
-List of times used in the csp-decoding script.
-We will then decode inside each bin.
-The list needs to contain at least two elements.
-The elements of the list must be contained in the epochs interval.
+The edges of the frequency bins to use for CSP decoding.
+This can either be
+
+- a list-like object containing at least two scalar values,
+- a list-like object containing tuples of two scalars, or
+- a dictionary with they keys specifying the "name" to use for the frequency
+  range, and the value being any of the two above. The names will appear in the
+  report.
+
+Defaults to two frequency bins, one from
+[`time_frequency_freq_min`][config.time_frequency_freq_min] to the mindpoint
+between this value and
+[`time_frequency_freq_max`][config.time_frequency_freq_max]; and the other from
+that midpoint to `time_frequency_freq_max`.
+
 ???+ example "Example"
+    Create two frquency bins, one for 4–8 Hz, and another for 8–14 Hz:
     ```python
-    # If epochs_tmin = 0, and epochs_tmax = 0.6
-    # in order to create the bins [(0,0.2), (0.2,0.4), (0.4,0.6)]
-    # Two solutions:
-    csp_times = [0.0, 0.2, 0.4, 0.6]
-    csp_times = np.linspace(start=0, stop=0.6, num=4)
+    decoding_csp_freqs = [4, 8, 14]
+    ```
+
+    Create 5 equidistant frequency bins from 4 to 14 Hz:
+    ```python
+    decoding_csp_freqs = np.linspace(
+        start=4,
+        stop=14,
+        num=5+1  # We need one more to account for the endpoint!
+    )
+    ```
+
+    Create two frquency bins with a "gap" between them, one for 4–8 Hz,
+    and another for 10–14 Hz:
+    ```python
+    decoding_csp_freqs = [
+        (4, 8),
+        (10, 14)
+    ]
+    ```
+
+    Create partially overlapping frequency bins, one for 4–10 Hz, and another
+    for 8–14 Hz:
+    ```python
+    decoding_csp_freqs = [
+        (4, 10),
+        (8, 14)
+    ]
+    ```
+
+    Create two "named" frequency ranges:
+    ```python
+    decoding_csp_freqs = {
+        'alpha': np.linspace(start=8, stop=12, num=4+1),
+        'beta': np.linspace(start=12.5, stop=30, num=10+1)
+    }
     ```
 """
 
@@ -2308,30 +2318,32 @@ if (spatial_filter == 'ica' and
 if decoding_n_splits < 2:
     raise ValueError('decoding_n_splits should be at least 2.')
 
-if len(csp_times) < 2:
-    raise ValueError('csp_times should contain at least 2 values.')
+if len(decoding_csp_times) < 2:
+    raise ValueError('decoding_csp_times should contain at least 2 values.')
 
-if list(csp_times) != sorted(csp_times):
-    ValueError("csp_times should be sorted.")
+if list(decoding_csp_times) != sorted(decoding_csp_times):
+    ValueError("decoding_csp_times should be sorted.")
 
-if list(csp_freqs) != sorted(csp_freqs):
-    ValueError("csp_freqs should be sorted.")
+if list(decoding_csp_freqs) != sorted(decoding_csp_freqs):
+    ValueError("decoding_csp_freqs should be sorted.")
 
-if min(csp_freqs) < 0:
-    ValueError("csp_freqs should contain only positive values.")
+if min(decoding_csp_freqs) < 0:
+    ValueError("decoding_csp_freqs should contain only positive values.")
 
 
-if len(csp_freqs) < 2:
-    raise ValueError('csp_freqs should contain at least 2 values.')
+if len(decoding_csp_freqs) < 2:
+    raise ValueError('decoding_csp_freqs should contain at least 2 values.')
 
-if not 0 < cluster_stats_alpha < 1:
-    raise ValueError("alpha should be in the (0, 1) interval.")
+if not 0 < cluster_permutation_p_threshold < 1:
+    raise ValueError(
+        "cluster_permutation_p_threshold should be in the (0, 1) interval."
+    )
 
-if n_permutations < 10 / cluster_stats_alpha:
-    raise ValueError("n_permutations is not big enough to calculate "
-                     "accurately the p-values.")
+if cluster_n_permutations < 10 / cluster_permutation_p_threshold:
+    raise ValueError("cluster_n_permutations is not big enough to calculate "
+                     "the p-values accurately.")
 
-if decoding_metric != "roc_auc":
+if decoding_metric != "roc_auc" and decoding_csp:
     msg = f"{decoding_metric} is not supported for csp decoding."
     logger.warning(msg)
 
@@ -2922,7 +2934,11 @@ def failsafe_run(
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
-                del kwargs_copy['cfg']  # gen_log_kwargs() cannot handle this
+                # Only keep what gen_log_kwargs() can handle
+                kwargs_copy = {
+                    k: v for k, v in kwargs_copy.items()
+                    if k in ('subject', 'session', 'task', 'run')
+                }
                 message = (
                     f'A critical error occured. '
                     f'The error message was: {str(e)}'
@@ -2931,11 +2947,15 @@ def failsafe_run(
                 log_info['error_message'] = str(e)
 
                 if on_error == 'abort':
-                    message += '\n\nAborting pipeline run.'
+                    message += (
+                        '\n\nAborting pipeline run. The full traceback '
+                        'is:\n\n'
+                    )
+                    message += '\n'.join(traceback.format_exception(e))
                     logger.critical(**gen_log_kwargs(
                         message=message, **kwargs_copy
                     ))
-                    raise(e)
+                    sys.exit(1)
                 elif on_error == 'debug':
                     message += '\n\nStarting post-mortem debugger.'
                     logger.critical(**gen_log_kwargs(
@@ -3855,154 +3875,3 @@ if (get_task() is not None and
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
-
-# Pickle = Trouble.
-# Moved the Pth and Tf class to config.py because
-# otherwise Pickle cannot serialize the classes.
-# Pickle is used by mne.parallel.
-
-from mne.epochs import BaseEpochs
-
-class Tf:
-    """Util class containing useful info about the time frequency windows."""
-
-    def __init__(self, *, freqs, times):
-        """Calculate the required time and frequency size."""
-        freqs = np.array(freqs)
-        times = np.array(times)
-
-        # tmin , tmax, n_time_bins
-
-        freq_ranges = list(zip(freqs[:-1], freqs[1:]))
-        time_ranges = list(zip(times[:-1], times[1:]))
-
-        n_freq_windows = len(freq_ranges)
-        n_time_windows = len(time_ranges)
-
-        # For band passed periodic signal,
-        # according to the Nyquist theorem,
-        # we can reconstruct the signal if f_s > 2 * band_freq
-        min_band_freq = np.min(freqs[1:] - freqs[:-1])
-        min_band_time = np.min(times[1:] - times[:-1])
-        recommended_w_min_time = 1 / (2 * min_band_freq)
-
-        if recommended_w_min_time > min_band_time:
-            msg = ("We recommend increasing the duration of "
-                   "your time intervals "
-                   f"to at least {round(recommended_w_min_time, 2)}s.")
-            logger.warning(**gen_log_kwargs(msg))
-
-        centered_w_times = (times[1:] + times[:-1]) / 2
-        centered_w_freqs = (freqs[1:] + freqs[:-1]) / 2
-
-        self.freqs = freqs
-        self.freq_ranges = freq_ranges
-        self.times = times
-        self.time_ranges = time_ranges
-        self.centered_w_times = centered_w_times
-        self.centered_w_freqs = centered_w_freqs
-        self.n_time_windows = n_time_windows
-        self.n_freq_windows = n_freq_windows
-
-    def check_csp_times(self, epochs: BaseEpochs):
-        """Check if csp_times is contained in the epoch interval."""
-        # This test can only be performed after having read the Epochs file
-        # So it cannot be performed in the check section of the config file.
-        if min(self.times) < epochs.tmin or max(self.times) > epochs.tmax:
-            wrn = (
-                'csp_times should be contained in the epoch interval. But we '
-                f'do not have {epochs.tmin} < {self.times} < {epochs.tmax}')
-            logger.warning(wrn)
-
-
-# typing
-SessionT = Union[None, str]
-ContrastT = Tuple[str, str]
-
-
-class Pth:
-    """Util class containing useful Paths info."""
-
-    def __init__(self, cfg) -> None:
-        """Initialize directory. Initialize the base path."""
-        # We initialize to the average subject
-        # and to the default None session
-        self.bids_basename = BIDSPath(
-            subject="average",
-            task=cfg.task,
-            acquisition=cfg.acq,
-            run=None,
-            recording=cfg.rec,
-            space=cfg.space,
-            suffix='epo',
-            extension='.fif',
-            datatype=cfg.datatype,
-            root=cfg.deriv_root,
-            processing='clean',
-            check=False)
-
-    def file(self, subject: str, session: SessionT) -> BIDSPath:
-        """Return the path of the file."""
-        return self.bids_basename.copy().update(
-            subject=subject,
-            session=session)
-
-    def report(
-        self, subject: str, session: SessionT, contrast: ContrastT
-    ) -> BIDSPath:
-        """Path to array containing the report."""
-        return self.bids_basename.copy().update(
-            processing='tf+csp' + self.contrast_suffix(contrast),
-            subject=subject,
-            session=session,
-            suffix='report',
-            extension='.html')
-
-    def freq_scores(
-        self, subject: str, session: SessionT, contrast: ContrastT
-    ) -> BIDSPath:
-        """Path to array containing the histograms."""
-        return self.bids_basename.copy().update(
-            processing='csp+freq' + self.contrast_suffix(contrast),
-            subject=subject,
-            session=session,
-            suffix='scores',
-            extension='.npy')
-
-    def freq_scores_std(
-        self, subject: str, session: SessionT, contrast: ContrastT
-    ) -> BIDSPath:
-        """Path to array containing the std of the histograms."""
-        return self.bids_basename.copy().update(
-            processing='csp+freq' + self.contrast_suffix(contrast),
-            subject=subject,
-            session=session,
-            suffix='scores+std',
-            extension='.npy')
-
-    def tf_scores(
-        self, subject: str, session: SessionT, contrast: ContrastT
-    ) -> BIDSPath:
-        """Path to time-frequency scores."""
-        return self.bids_basename.copy().update(
-            processing='csp+tf' + self.contrast_suffix(contrast),
-            subject=subject,
-            session=session,
-            suffix='scores',
-            extension='.npy')
-
-    def contrast_suffix(self, contrast: ContrastT) -> str:
-        """Contrast suffix conform with Bids format."""
-        con0 = sanitize_cond_name(contrast[0])
-        con1 = sanitize_cond_name(contrast[1])
-        return f'+contr+{con0}+{con1}'
-
-    def prefix(
-        self, subject: str, session: SessionT, contrast: ContrastT
-    ) -> str:
-        """Usefull when logging messages."""
-        res = f'subject-{subject}-' + self.contrast_suffix(contrast)
-        if session:
-            return res + f'-session-{session}'
-        else:
-            return res

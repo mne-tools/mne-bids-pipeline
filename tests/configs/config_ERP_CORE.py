@@ -52,6 +52,7 @@ h_freq = None
 
 decode = True
 decoding_time_generalization = True
+decoding_csp = True
 
 find_breaks = True
 min_break_duration = 10

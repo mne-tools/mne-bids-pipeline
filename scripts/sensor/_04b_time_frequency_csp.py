@@ -188,50 +188,49 @@ def one_subject_decoding(
         random_state=cfg.random_state
     )
 
-    if isinstance(cfg.decoding_csp_freqs, dict):
-        freq_range_names = list(cfg.decoding_csp_freqs.keys())
-        freq_ranges = np.array(
-            list(cfg.decoding_csp_freqs.values())
-        )
-    else:
-        freq_ranges = np.array(cfg.decoding_csp_freqs)
-        freq_range_names = None
+    # Loop over frequencies (all time points lumped together)
+    freq_name_to_bins_map = dict()
+    for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
+        freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
+        freq_name_to_bins_map[freq_range_name] = freq_bins
 
-    if freq_ranges.ndim == 1:
-        freq_ranges = np.array(
-            list(zip(freq_ranges[:-1], freq_ranges[1:]))
-        )
-
-    if freq_range_names is None:
-        freq_range_names = [None] * len(freq_ranges)
-
-    assert freq_ranges.ndim == 2
-    assert len(freq_ranges) == len(freq_range_names)
-
-    time_ranges = np.array(cfg.decoding_csp_times)
-    if time_ranges.ndim == 1:
-        time_ranges = np.array(
-            list(zip(time_ranges[:-1], time_ranges[1:]))
-        )
-    assert time_ranges.ndim == 2
-
-    # Roll covariance, csp and lda over time
-    tf_scores = np.empty(
-        (len(time_ranges), len(freq_ranges))
+    freq_decoding_table = pd.DataFrame(
+        columns=['cond_1', 'cond_2', 'f_min', 'f_max', 'freq_range_name',
+                 'mean_crossval_score', 'metric']
     )
-    tf_scores.fill(np.nan)
-    freq_scores = []
 
-    for freq_range_idx, (freq_range, freq_range_name) in enumerate(
-        zip(freq_ranges, freq_range_names)
-    ):
-        fmin, fmax = freq_range
+    for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+        for freq_bin in freq_bins:
+            f_min, f_max = freq_bin
+            one_row = pd.DataFrame(
+                {
+                    'cond_1': condition1,
+                    'cond_2': condition2,
+                    'f_min': f_min,
+                    'f_max': f_max,
+                    'freq_range_name': freq_range_name,
+                    'mean_crossval_score': np.nan,
+                    'metric': cfg.decoding_metric
+                },
+                index=[0]
+            )
+            freq_decoding_table = pd.concat(
+                [freq_decoding_table, one_row],
+                ignore_index=True
+            )
+
+    for _, row in freq_decoding_table.iterrows():
+        fmin = row['f_min']
+        fmax = row['f_max']
+        cond1 = row['cond_1']
+        cond2 = row['cond_2']
+        freq_range_name = row['freq_range_name']
+
         msg = (
-            f'Contrast: {contrast[0]} – {contrast[1]}, '
-            f'Freqs (Hz): {fmin}–{fmax}'
+            f'Contrast: {cond1} – {cond2}, '
+            f'Freqs (Hz): {fmin}–{fmax} '
+            f'({freq_range_name})'
         )
-        if freq_range_name is not None:
-            msg += f' ({freq_range_name})'
         logger.info(
             **gen_log_kwargs(msg, subject=subject, session=session)
         )
@@ -239,9 +238,6 @@ def one_subject_decoding(
         epochs_filt, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
-
-        ######################################################################
-        # 1. Loop over frequencies, apply classifier and save scores
 
         X = epochs_filt.get_data()
 
@@ -259,91 +255,88 @@ def one_subject_decoding(
             n_jobs=1
         )
 
-        freq_scores.append(cv_scores.mean())
+        # The row is a view on the original dataframe, so we can modify it here
+        # and the dataframe will be updated.
+        row['mean_crossval_score'] = cv_scores.mean()
 
-        ######################################################################
-        # 2. Loop through frequencies and time
-        for time_range_idx, time_range in enumerate(time_ranges):
-            # Originally the window size varied accross frequencies...
-            # But this means also that there is some mutual information between
-            # 2 different pixels in the map.
-            # So the simple way to deal with this is just to fix
-            # the windows size for all frequencies.
+    # Loop over times x frequencies
+    #
+    # Note: We don't support varying time ranges for different frequency
+    # ranges to avoid leaking of information.
 
-            tmin, tmax = time_range
-            msg = (
-                f'Contrast: {contrast[0]} – {contrast[1]}, '
-                f'Freqs (Hz): {fmin}–{fmax}'
-            )
-            if freq_range_name is not None:
-                msg += f' ({freq_range_name})'
-            msg += f', Times (s): {round(tmin, 3)}–{round(tmax, 3)}'
-            logger.info(
-                **gen_log_kwargs(msg, subject=subject, session=session)
-            )
-
-            # Crop data into time window of interest
-            X = epochs_filt.copy().crop(tmin, tmax).get_data()
-            X_pca = pca.transform(X)
-            del X
-
-            cv_scores = cross_val_score(
-                estimator=clf,
-                X=X_pca, y=y,
-                scoring=cfg.decoding_metric,
-                cv=cv,
-                n_jobs=1,
-            )
-            tf_scores[time_range_idx, freq_range_idx] = cv_scores.mean()
-
-
-    # Prepare frequency data for saving
-    tabular_data_freq = pd.DataFrame(
-        columns=['cond_1', 'cond_2', 'freq_range', 'freq_range_name'
-                 'mean_crossval_score', 'metric']
-    )
-    for freq_range_idx, freq_range in enumerate(freq_ranges):
-        freq_range_name = freq_range_names[freq_range_idx]
-        one_row = pd.DataFrame(
-            {
-                'cond_1': condition1,
-                'cond_2': condition2,
-                'freq_range': f'{freq_range[0]}–{freq_range[1]}',
-                'freq_range_name': freq_range_name if freq_range_name is not None else '',
-                'mean_crossval_score': freq_scores[freq_range_idx],
-                'metric': cfg.decoding_metric
-            },
-            index=[0]
+    time_bins = np.array(cfg.decoding_csp_times)
+    if time_bins.ndim == 1:
+        time_bins = np.array(
+            list(zip(time_bins[:-1], time_bins[1:]))
         )
-        tabular_data_freq = pd.concat(
-            [tabular_data_freq, one_row],
-            ignore_index=True
+    assert time_bins.ndim == 2
+
+    tf_decoding_table = pd.DataFrame(
+        columns=[
+            'cond_1', 'cond_2', 't_min', 't_max', 'f_min', 'f_max',
+            'freq_range_name', 'mean_crossval_score', 'metric'
+        ]
+    )
+
+    for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+        for time_bin in time_bins:
+            t_min, t_max = time_bin
+
+            for freq_bin in freq_bins:
+                f_min, f_max = freq_bin
+                one_row = pd.DataFrame(
+                    {
+                        'cond_1': condition1,
+                        'cond_2': condition2,
+                        't_min': t_min,
+                        't_max': t_max,
+                        'f_min': f_min,
+                        'f_max': f_max,
+                        'freq_range_name': freq_range_name,
+                        'mean_crossval_score': np.nan,
+                        'metric': cfg.decoding_metric
+                    },
+                    index=[0]
+                )
+                tf_decoding_table = pd.concat(
+                    [tf_decoding_table, one_row],
+                    ignore_index=True
+                )
+
+    for _, row in tf_decoding_table.iterrows():
+        tmin = row['t_min']
+        tmax = row['t_max']
+        fmin = row['f_min']
+        fmax = row['f_max']
+        cond1 = row['cond_1']
+        cond2 = row['cond_2']
+        freq_range_name = row['freq_range_name']
+
+        msg = (
+            f'Contrast: {cond1} – {cond2}, '
+            f'Freqs (Hz): {fmin}–{fmax} '
+            f'({freq_range_name}), '
+            f'Times (s): {round(tmin, 3)}–{round(tmax, 3)}'
+        )
+        logger.info(
+            **gen_log_kwargs(msg, subject=subject, session=session)
         )
 
-    # Prepare time-frequency data for saving
-    tabular_data_tf = pd.DataFrame(
-        columns=['cond_1', 'cond_2', 'time_range', 'freq_range',
-                 'freq_range_name', 'mean_crossval_score', 'metric']
-    )
-    for time_range_idx, time_range in enumerate(time_ranges):
-        for freq_range_idx, freq_range in enumerate(freq_ranges):
-            freq_range_name = freq_range_names[freq_range_idx]
-            one_row = pd.DataFrame(
-                {
-                    'cond_1': condition1,
-                    'cond_2': condition2,
-                    'time_range': f'{time_range[0]}–{time_range[1]}',
-                    'freq_range': f'{freq_range[0]}–{freq_range[1]}',
-                    'freq_range_name': freq_range_name if freq_range_name is not None else '',
-                    'mean_crossval_score': tf_scores[time_range_idx, freq_range_idx],
-                    'metric': cfg.decoding_metric
-                },
-                index=[0]
-            )
-            tabular_data_tf = pd.concat(
-                [tabular_data_tf, one_row],
-                ignore_index=True
-            )
+        # Crop data into time window of interest
+        X = epochs_filt.copy().crop(tmin, tmax).get_data()
+        X_pca = pca.transform(X)
+        del X
+
+        cv_scores = cross_val_score(
+            estimator=clf,
+            X=X_pca, y=y,
+            scoring=cfg.decoding_metric,
+            cv=cv,
+            n_jobs=1,
+        )
+        # The row is a view on the original dataframe, so we can modify it here
+        # and the dataframe will be updated.
+        row['mean_crossval_score'] = cv_scores.mean()
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f'{condition1}+{condition2}'.replace(op.sep, '')
@@ -355,8 +348,10 @@ def one_subject_decoding(
                                                extension='.xlsx')
 
     with pd.ExcelWriter(fname_results) as w:
-        tabular_data_freq.to_excel(w, sheet_name='CSP Frequency', index=False)
-        tabular_data_tf.to_excel(
+        freq_decoding_table.to_excel(
+            w, sheet_name='CSP Frequency', index=False
+        )
+        tf_decoding_table.to_excel(
             w, sheet_name='CSP Time-Frequency', index=False
         )
 

@@ -30,6 +30,18 @@ conditions = ['Famous', 'Unfamiliar', 'Scrambled']
 contrasts = [('Famous', 'Scrambled'),
              ('Unfamiliar', 'Scrambled'),
              ('Famous', 'Unfamiliar')]
+
+time_frequency_freq_min = 8
+time_frequency_freq_max = 13
+time_frequency_subtract_evoked = True
+
 decode = True
 decoding_time_generalization = True
+decoding_csp = True
+decoding_csp_freqs = {
+    'alpha': (8, 10, 12.5),
+    'beta_1': (12.5, 16),
+    'beta_2': (16, 20),
+    'beta_3': (20, 30),
+}
 run_source_estimation = False

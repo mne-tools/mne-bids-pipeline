@@ -1435,8 +1435,8 @@ Note: Note
 """
 
 ###############################################################################
- # TIME-FREQUENCY CSP
- # ------------------
+# TIME-FREQUENCY CSP
+# ------------------
 
 decoding_csp: bool = False
 """
@@ -1470,23 +1470,19 @@ frequency data.
     ```
 """
 
-decoding_csp_freqs: Union[
-    ArrayLike,
-    Dict[str, ArrayLike]
-] = [
-    time_frequency_freq_min,
-    (time_frequency_freq_max - time_frequency_freq_min) / 2 + time_frequency_freq_min,  # noqa: E501
-    time_frequency_freq_max,
-]
+decoding_csp_freqs: Dict[str, ArrayLike] = {
+    'custom': [
+        time_frequency_freq_min,
+        (time_frequency_freq_max - time_frequency_freq_min) / 2 + time_frequency_freq_min,  # noqa: E501
+        time_frequency_freq_max
+    ]
+}
 """
 The edges of the frequency bins to use for CSP decoding.
-This can either be
 
-- a list-like object containing at least two scalar values,
-- a list-like object containing tuples of two scalars, or
-- a dictionary with they keys specifying the "name" to use for the frequency
-  range, and the value being any of the two above. The names will appear in the
-  report.
+This parameter must be a dictionary with they keys specifying the "name" to use
+for the frequency range, must be a list-like object containing at least two
+scalar values, specifying the edges of the respective frequency bin(s).
 
 Defaults to two frequency bins, one from
 [`time_frequency_freq_min`][config.time_frequency_freq_min] to the mindpoint
@@ -1497,42 +1493,38 @@ that midpoint to `time_frequency_freq_max`.
 ???+ example "Example"
     Create two frquency bins, one for 4–8 Hz, and another for 8–14 Hz:
     ```python
-    decoding_csp_freqs = [4, 8, 14]
+    decoding_csp_freqs = {
+        'custom_range': [4, 8, 14]
+    }
     ```
 
     Create 5 equidistant frequency bins from 4 to 14 Hz:
     ```python
-    decoding_csp_freqs = np.linspace(
-        start=4,
-        stop=14,
-        num=5+1  # We need one more to account for the endpoint!
-    )
+    decoding_csp_freqs = {
+        'custom_range': np.linspace(
+            start=4,
+            stop=14,
+            num=5+1  # We need one more to account for the endpoint!
+        )
+    }
     ```
 
     Create two frquency bins with a "gap" between them, one for 4–8 Hz,
     and another for 10–14 Hz:
     ```python
-    decoding_csp_freqs = [
-        (4, 8),
-        (10, 14)
+    decoding_csp_freqs = {
+        'lower_range': [4, 8],
+        'upper_range': [10, 14]
     ]
     ```
 
     Create partially overlapping frequency bins, one for 4–10 Hz, and another
     for 8–14 Hz:
     ```python
-    decoding_csp_freqs = [
-        (4, 10),
-        (8, 14)
-    ]
-    ```
-
-    Create two "named" frequency ranges:
-    ```python
     decoding_csp_freqs = {
-        'alpha': np.linspace(start=8, stop=12, num=4+1),
-        'beta': np.linspace(start=12.5, stop=30, num=10+1)
-    }
+        'lower_range': [4, 10],
+        'upper_range': [8, 14]
+    ]
     ```
 """
 
@@ -2327,12 +2319,12 @@ if list(decoding_csp_times) != sorted(decoding_csp_times):
 if list(decoding_csp_freqs) != sorted(decoding_csp_freqs):
     ValueError("decoding_csp_freqs should be sorted.")
 
-if min(decoding_csp_freqs) < 0:
-    ValueError("decoding_csp_freqs should contain only positive values.")
+# if min(decoding_csp_freqs) < 0:
+#     ValueError("decoding_csp_freqs should contain only positive values.")
 
 
-if len(decoding_csp_freqs) < 2:
-    raise ValueError('decoding_csp_freqs should contain at least 2 values.')
+# if len(decoding_csp_freqs) < 2:
+#     raise ValueError('decoding_csp_freqs should contain at least 2 values.')
 
 if not 0 < cluster_permutation_p_threshold < 1:
     raise ValueError(

@@ -3,3 +3,6 @@
 ::: config.time_frequency_freq_max
 ::: config.time_frequency_cycles
 ::: config.time_frequency_subtract_evoked
+::: config.decoding_csp
+::: config.decoding_csp_times
+::: config.decoding_csp_freqs

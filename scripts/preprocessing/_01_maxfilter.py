@@ -31,7 +31,6 @@ from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data, import_rest_data)
 from config import parallel_func
 
-
 logger = logging.getLogger('mne-bids-pipeline')
 
 

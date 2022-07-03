@@ -31,30 +31,7 @@ from config import (gen_log_kwargs, on_error, failsafe_run,
                     import_experimental_data, import_er_data, import_rest_data)
 from config import parallel_func
 
-
 logger = logging.getLogger('mne-bids-pipeline')
-
-
-def _get_reference_run_path(
-    *,
-    subject: str,
-    session: Optional[str] = None,
-    run: str
-) -> BIDSPath:
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        run=run,
-        task=get_task(),
-        acquisition=acq,
-        recording=rec,
-        space=space,
-        suffix='meg',
-        extension='.fif',
-        datatype=get_datatype(),
-        root=get_bids_root(),
-    )
-    return bids_path
 
 
 def get_input_fnames_maxwell_filter(**kwargs):

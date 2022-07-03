@@ -2856,12 +2856,15 @@ class StepMemory():
 
             hashes = []
             for v in in_files.values():
+                if isinstance(v, BIDSPath):
+                    v = v.fpath
                 hashes.append((str(v), v.lstat().st_mtime))
                 # hashes.append((str(v), hash_file_path(v)))
 
             cfg = copy.deepcopy(kwargs['cfg'])
             cfg.hashes = hashes
             kwargs['cfg'] = cfg
+            kwargs['in_files'] = in_files
 
             # XXX we should also hash the sidecar files
 
@@ -3476,10 +3479,7 @@ def _fix_stim_artifact_func(
 def import_experimental_data(
     *,
     cfg: SimpleNamespace,
-    bids_path_in: BIDSPath = None,
-    subject: str,
-    session: Optional[str] = None,
-    run: Optional[str] = None
+    bids_path_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
@@ -3489,32 +3489,12 @@ def import_experimental_data(
         The local configuration.
     bids_path_in
         XXX
-    subject
-        The subject to import.
-    session
-        The session to import.
-    run
-        The run to import.
 
     Returns
     -------
     raw
         The imported data.
     """
-    if bids_path_in is None:
-        # XXX cleanup
-        bids_path_in = BIDSPath(subject=subject,
-                                session=session,
-                                run=run,
-                                task=cfg.task,
-                                acquisition=cfg.acq,
-                                processing=cfg.proc,
-                                recording=cfg.rec,
-                                space=cfg.space,
-                                suffix=cfg.datatype,
-                                datatype=cfg.datatype,
-                                root=cfg.bids_root)
-
     subject = bids_path_in.subject
     session = bids_path_in.session
     run = bids_path_in.run
@@ -3540,8 +3520,8 @@ def import_experimental_data(
 def import_er_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None
+    bids_path_er_in: BIDSPath,
+    bids_path_ref_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -3549,33 +3529,19 @@ def import_er_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject for whom to import the empty-room data.
-    session
-        The session for which to import the empty-room data.
+    bids_path_er_in
+        XXX
+    bids_path_ref_in
+        XXX
 
     Returns
     -------
     raw_er
         The imported data.
     """
-    bids_path_reference_run = BIDSPath(
-        subject=subject,
-        session=session,
-        run=cfg.mf_reference_run,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        processing=cfg.proc,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix=cfg.datatype,
-        datatype=cfg.datatype,
-        root=cfg.bids_root
-    )
-    bids_path_er_in = bids_path_reference_run.find_empty_room()
-
     raw_er = _load_data(cfg, bids_path_er_in)
-    raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
+    raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
+    session = raw_er.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 

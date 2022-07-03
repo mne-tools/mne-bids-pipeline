@@ -35,28 +35,6 @@ from config import parallel_func
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def _get_reference_run_path(
-    *,
-    subject: str,
-    session: Optional[str] = None,
-    run: str
-) -> BIDSPath:
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        run=run,
-        task=get_task(),
-        acquisition=acq,
-        recording=rec,
-        space=space,
-        suffix='meg',
-        extension='.fif',
-        datatype=get_datatype(),
-        root=get_bids_root(),
-    )
-    return bids_path
-
-
 def get_input_fnames_maxwell_filter(**kwargs):
     """Get paths of files required by maxwell_filter function."""
     cfg = kwargs['cfg']
@@ -77,7 +55,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
                             check=False)
 
     in_files = {
-        f'raw_run-{bp.run}': bp.fpath for bp in bids_path_in.match()
+        f'raw_run-{bp.run}': bp for bp in bids_path_in.match()
     }
 
     ref_bids_path = bids_path_in.copy().update(
@@ -85,6 +63,11 @@ def get_input_fnames_maxwell_filter(**kwargs):
         extension='.fif',
         check=True
     )
+
+    if config.noise_cov == 'rest':
+        in_files["raw_rest"] = bids_path_in.copy().update(task="rest")
+    else:
+        in_files["raw_er"] = ref_bids_path.find_empty_room()
 
     in_files["raw_ref_run"] = ref_bids_path
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
@@ -100,22 +83,17 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
 
-    # del subject, session, run
-    assert in_files is not None
-
-    bids_path_out = BIDSPath(subject=subject,
-                             session=session,
-                             run=run,
-                             task=cfg.task,
-                             acquisition=cfg.acq,
-                             processing='sss',
-                             recording=cfg.rec,
-                             space=cfg.space,
-                             suffix='raw',
-                             extension='.fif',
-                             datatype=cfg.datatype,
-                             root=cfg.deriv_root,
-                             check=False)
+    bids_path_in = in_files[f"raw_run-{run}"]
+    bids_path_out = bids_path_in.copy().update(
+        processing="sss",
+        suffix="raw",
+        extension='.fif',
+        check=False
+    )
+    # Now take everything from the bids_path_in and overwrite the parameters
+    subject = bids_path_in.subject
+    session = bids_path_in.session
+    run = bids_path_in.run
 
     out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
@@ -130,7 +108,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     del raw
 
     raw = import_experimental_data(
-        in_files[f"raw_run-{run}"],
+        bids_path_in=bids_path_in,
         cfg=cfg
     )
 
@@ -203,14 +181,13 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         if config.noise_cov == 'rest':
             raw_noise = import_rest_data(
                 cfg=cfg,
-                subject=subject,
-                session=session
+                bids_path_in=in_files['raw_rest']
             )
         else:
             raw_noise = import_er_data(
                 cfg=cfg,
-                subject=subject,
-                session=session
+                bids_path_er_in=in_files['raw_er'],
+                bids_path_ref_in=in_files['raw_ref_run'],
             )
 
         # Maxwell-filter noise data.

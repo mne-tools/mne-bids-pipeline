@@ -3542,6 +3542,7 @@ def import_er_data(
         XXX
     bids_path_ref_in
         XXX
+        Only necessary if use_maxwell_filter is True.
 
     Returns
     -------
@@ -3549,7 +3550,6 @@ def import_er_data(
         The imported data.
     """
     raw_er = _load_data(cfg, bids_path_er_in)
-    raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
     session = raw_er.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
@@ -3558,6 +3558,7 @@ def import_er_data(
     raw_er.pick_types(meg=True, exclude=[])
 
     if cfg.use_maxwell_filter:
+        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
             raw=raw_ref

@@ -125,7 +125,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
     'ds000117': {
         'dataset': 'ds000117',
         'config': 'config_ds000117.py',
-        'steps': ('preprocessing', 'sensor',), #'report'),
+        'steps': ('preprocessing', 'sensor', 'report'),
         'task': None,
         'env': {}
     },

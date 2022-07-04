@@ -255,7 +255,6 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            # XXX revert
             # - mne_data/derivatives/mne-bids-pipeline/ds000117/*/*/*/*.html
             - mne_data/derivatives/mne-bids-pipeline/ds000117/**/*.xlsx
 

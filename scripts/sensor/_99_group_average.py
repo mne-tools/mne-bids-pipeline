@@ -413,7 +413,6 @@ def average_csp_decoding(
             all_decoding_data_freq.append(decoding_data_freq)
             all_decoding_data_time_freq.append(decoding_data_time_freq)
 
-
         # Now calculate descriptes and bootstrap CIs.
         grand_average_freq = _average_csp_time_freq(
             cfg=cfg,
@@ -441,18 +440,15 @@ def average_csp_decoding(
             ])
         )
 
-        subjects = list(
-            pd.concat(all_decoding_data_time_freq)['subject'].unique()
-        )
+        subjects = cfg.subjects
         time_bins = np.array(cfg.decoding_csp_times)
         if time_bins.ndim == 1:
             time_bins = np.array(
                 list(zip(time_bins[:-1], time_bins[1:]))
             )
         time_bins = pd.DataFrame(time_bins, columns=['t_min', 't_max'])
-        freq_range_names = list(
-            pd.concat(all_decoding_data_time_freq)['freq_range_name'].unique()
-        )
+        freq_range_names = list(cfg.decoding_csp_freqs.keys())
+
         freq_name_to_bins_map = dict()
         for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
             freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))

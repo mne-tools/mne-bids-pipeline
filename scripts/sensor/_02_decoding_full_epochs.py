@@ -178,22 +178,14 @@ def main():
         return
 
     with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_epochs)
+        parallel, run_func = parallel_func(run_epochs_decoding)
         logs = parallel(
             run_func(
-                cfg=get_config(subject, session), subject=subject,
-                session=session
-            )
-            for subject, session in
-            itertools.product(config.get_subjects(), config.get_sessions())
-        )
-
-    parallel, run_func = parallel_func(run_epochs_decoding)
-    with config.get_parallel_backend():
-        logs = parallel(
-            run_func(
-                cfg=get_config(subject, session), subject=subject,
-                session=session, condition1=contrast[0], condition2=contrast[1]
+                cfg=get_config(subject, session),
+                subject=subject,
+                session=session,
+                condition1=contrast[0],
+                condition2=contrast[1]
             )
             for subject, session, contrast in itertools.product(
                 config.get_subjects(),

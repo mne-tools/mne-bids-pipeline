@@ -37,7 +37,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run, parallel_func
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -104,67 +104,66 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
-    with config.get_parallel_backend():
-        clf = make_pipeline(
-            StandardScaler(),
-            LogReg(
-                solver='liblinear',  # much faster than the default
-                random_state=cfg.random_state,
-                n_jobs=1,
-            )
-        )
-        cv = StratifiedKFold(
-            shuffle=True,
+    clf = make_pipeline(
+        StandardScaler(),
+        LogReg(
+            solver='liblinear',  # much faster than the default
             random_state=cfg.random_state,
-            n_splits=cfg.decoding_n_splits,
+            n_jobs=1,  # higher values don't make sense for liblinear
+        )
+    )
+    cv = StratifiedKFold(
+        shuffle=True,
+        random_state=cfg.random_state,
+        n_splits=cfg.decoding_n_splits,
+    )
+
+    if cfg.decoding_time_generalization:
+        estimator = GeneralizingEstimator(
+            clf,
+            scoring=cfg.decoding_metric,
+        )
+    else:
+        estimator = SlidingEstimator(
+            clf,
+            scoring=cfg.decoding_metric,
         )
 
-        if cfg.decoding_time_generalization:
-            estimator = GeneralizingEstimator(
-                clf,
-                scoring=cfg.decoding_metric,
-                n_jobs=cfg.n_jobs,
-            )
-            cv_scoring_n_jobs = 1
-        else:
-            estimator = SlidingEstimator(
-                clf,
-                scoring=cfg.decoding_metric,
-                n_jobs=1,
-            )
-            cv_scoring_n_jobs = cfg.n_jobs
+    scores = cross_val_multiscore(
+        estimator, X=X, y=y, cv=cv,
+    )
 
-        scores = cross_val_multiscore(
-            estimator, X=X, y=y, cv=cv, n_jobs=cv_scoring_n_jobs
-        )
+    # let's save the scores now
+    a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
+    processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+    processing = processing.replace('_', '-').replace('-', '')
 
-        # let's save the scores now
-        a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
-        processing = processing.replace('_', '-').replace('-', '')
+    fname_mat = (
+        fname_epochs
+        .copy()
+        .update(suffix='decoding',
+                processing=processing,
+                extension='.mat')
+    )
+    savemat(fname_mat, {'scores': scores, 'times': epochs.times})
 
-        fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                               processing=processing,
-                                               extension='.mat')
-        savemat(fname_mat, {'scores': scores, 'times': epochs.times})
+    if cfg.decoding_time_generalization:
+        # Only store the mean scores for the diagonal in the TSV file –
+        # we still have all time generalization results in the MAT file
+        # we just saved.
+        mean_crossval_score = np.diag(scores.mean(axis=0))
+    else:
+        mean_crossval_score = scores.mean(axis=0)
 
-        if cfg.decoding_time_generalization:
-            # Only store the mean scores for the diagonal in the TSV file –
-            # we still have all time generalization results in the MAT file
-            # we just saved.
-            mean_crossval_score = np.diag(scores.mean(axis=0))
-        else:
-            mean_crossval_score = scores.mean(axis=0)
-
-        fname_tsv = fname_mat.copy().update(extension='.tsv')
-        tabular_data = pd.DataFrame(
-            dict(cond_1=[cond_names[0]] * len(epochs.times),
-                 cond_2=[cond_names[1]] * len(epochs.times),
-                 time=epochs.times,
-                 mean_crossval_score=mean_crossval_score,
-                 metric=[cfg.decoding_metric] * len(epochs.times))
-        )
-        tabular_data.to_csv(fname_tsv, sep='\t', index=False)
+    fname_tsv = fname_mat.copy().update(extension='.tsv')
+    tabular_data = pd.DataFrame(
+        dict(cond_1=[cond_names[0]] * len(epochs.times),
+             cond_2=[cond_names[1]] * len(epochs.times),
+             time=epochs.times,
+             mean_crossval_score=mean_crossval_score,
+             metric=[cfg.decoding_metric] * len(epochs.times))
+    )
+    tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
 def get_config(
@@ -205,20 +204,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-    # so we don't dispatch manually to multiple jobs.
-    logs = []
-    for subject, session, (cond_1, cond_2) in itertools.product(
-        config.get_subjects(),
-        config.get_sessions(),
-        config.get_decoding_contrasts()
-    ):
-        log = run_time_decoding(
-            cfg=get_config(), subject=subject,
-            condition1=cond_1, condition2=cond_2,
-            session=session
+    with config.get_parallel_backend():
+        parallel, run_func = parallel_func(run_time_decoding)
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject, session),
+                subject=subject,
+                session=session,
+                condition1=contrast[0],
+                condition2=contrast[1]
+            )
+            for subject, session, contrast in itertools.product(
+                config.get_subjects(),
+                config.get_sessions(),
+                config.get_decoding_contrasts()
+            )
         )
-        logs.append(log)
 
     config.save_logs(logs)
 

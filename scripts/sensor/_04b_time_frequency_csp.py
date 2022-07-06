@@ -15,11 +15,10 @@ from sklearn.decomposition import PCA
 import mne
 from mne import BaseEpochs
 from mne.decoding import UnsupervisedSpatialFilter, CSP
-from mne.parallel import parallel_func
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run, parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -408,24 +407,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    subjects = config.get_subjects()
-    sessions = config.get_sessions()
-
-    for contrast in config.get_decoding_contrasts():
-        parallel, run_func, _ = parallel_func(
-            one_subject_decoding,
-            n_jobs=config.get_n_jobs()
-        )
+    with config.get_parallel_backend():
+        parallel, run_func = parallel_func(one_subject_decoding)
         logs = parallel(
             run_func(
-                cfg=cfg,
+                cfg=get_config(subject, session),
                 subject=subject,
                 session=session,
                 contrast=contrast,
             )
-            for subject, session in
-            itertools.product(subjects, sessions)
+            for subject, session, contrast in itertools.product(
+                config.get_subjects(),
+                config.get_sessions(),
+                config.get_decoding_contrasts(),
+            )
         )
+
         config.save_logs(logs)
 
     msg = 'Completed Step 4b: CSP'

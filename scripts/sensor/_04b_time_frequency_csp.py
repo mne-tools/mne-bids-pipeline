@@ -399,7 +399,7 @@ def main():
     cfg = get_config()
 
     if not config.contrasts or not config.decoding_csp:
-        if config.contrasts:
+        if not config.contrasts:
             msg = 'No contrasts specified. '
         else:
             msg = 'No CSP analysis requested. '

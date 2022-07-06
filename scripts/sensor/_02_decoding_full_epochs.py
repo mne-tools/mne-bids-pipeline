@@ -31,6 +31,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run, LogReg
+from config import parallel_func
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -176,21 +177,30 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-    # so we don't dispatch manually to multiple jobs.
-    logs = []
-    for subject, session, (cond_1, cond_2) in itertools.product(
-        config.get_subjects(),
-        config.get_sessions(),
-        config.get_decoding_contrasts()
-    ):
-        log = run_epochs_decoding(
-            cfg=get_config(), subject=subject,
-            condition1=cond_1, condition2=cond_2,
-            session=session
+    with config.get_parallel_backend():
+        parallel, run_func = parallel_func(run_epochs)
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject, session), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(config.get_subjects(), config.get_sessions())
         )
-        logs.append(log)
 
+    with config.get_parallel_backend():
+        parallel, run_func = parallel_func(run_epochs_decoding)
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject, session), subject=subject,
+                session=session
+            )
+            for subject, session, (cond_1, cond_2) in itertools.product(
+                config.get_subjects(),
+                config.get_sessions(),
+                config.get_decoding_contrasts()
+            )
+        )
     config.save_logs(logs)
 
 

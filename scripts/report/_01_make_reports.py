@@ -1550,14 +1550,18 @@ def add_csp_grand_average(
         fname_csp_cluster_results = bids_path.copy().update(
             processing=processing,
         )
-        csp_cluster_results = loadmat(fname_csp_cluster_results)
+        csp_cluster_results = loadmat(
+            fname_csp_cluster_results,
+            simplify_cells=True
+        )
 
         for freq_range_name in cfg.decoding_csp_freqs.keys():
-            t_vals = csp_cluster_results[freq_range_name][0][0][0]
-            clusters = csp_cluster_results[freq_range_name][0][0][1]
-            cluster_p_vals = csp_cluster_results[freq_range_name][0][0][2]
-            time_bin_edges = csp_cluster_results[freq_range_name][0][0][4][0]
-            freq_bin_edges = csp_cluster_results[freq_range_name][0][0][5][0]
+            results = csp_cluster_results[freq_range_name]
+            t_vals = results['t_vals']
+            clusters = results['clusters']
+            cluster_p_vals = results['cluster_p_vals']
+            time_bin_edges = results['time_bin_edges']
+            freq_bin_edges = results['freq_bin_edges']
 
             vmax = np.abs(t_vals).max()
             vmin = -vmax

@@ -195,8 +195,8 @@ def one_subject_decoding(
         freq_name_to_bins_map[freq_range_name] = freq_bins
 
     freq_decoding_table = pd.DataFrame(
-        columns=['cond_1', 'cond_2', 'f_min', 'f_max', 'freq_range_name',
-                 'mean_crossval_score', 'metric']
+        columns=['subject', 'cond_1', 'cond_2', 'f_min', 'f_max',
+                 'freq_range_name', 'mean_crossval_score', 'metric']
     )
 
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
@@ -204,6 +204,7 @@ def one_subject_decoding(
             f_min, f_max = freq_bin
             one_row = pd.DataFrame(
                 {
+                    'subject': subject,
                     'cond_1': condition1,
                     'cond_2': condition2,
                     'f_min': f_min,
@@ -273,8 +274,8 @@ def one_subject_decoding(
 
     tf_decoding_table = pd.DataFrame(
         columns=[
-            'cond_1', 'cond_2', 't_min', 't_max', 'f_min', 'f_max',
-            'freq_range_name', 'mean_crossval_score', 'metric'
+            'subject', 'cond_1', 'cond_2', 't_min', 't_max', 'f_min',
+            'f_max', 'freq_range_name', 'mean_crossval_score', 'metric'
         ]
     )
 
@@ -286,6 +287,7 @@ def one_subject_decoding(
                 f_min, f_max = freq_bin
                 one_row = pd.DataFrame(
                     {
+                        'subject': subject,
                         'cond_1': condition1,
                         'cond_2': condition2,
                         't_min': t_min,
@@ -322,6 +324,9 @@ def one_subject_decoding(
             **gen_log_kwargs(msg, subject=subject, session=session)
         )
 
+        epochs_filt, y = prepare_epochs_and_y(
+            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
+        )
         # Crop data into time window of interest
         X = epochs_filt.copy().crop(tmin, tmax).get_data()
         X_pca = pca.transform(X)

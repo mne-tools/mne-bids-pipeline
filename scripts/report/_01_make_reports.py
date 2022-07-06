@@ -1292,6 +1292,11 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             session=session, cfg=cfg, report=report
         )
 
+    if cfg.decode and cfg.decoding_csp:
+        add_csp_grand_average(
+            session=session, cfg=cfg, report=report
+        )
+
     #######################################################################
     #
     # Visualize forward solution, inverse operator, and inverse solutions.
@@ -1513,6 +1518,79 @@ def add_decoding_grand_average(
             plt.close(fig)
 
 
+def add_csp_grand_average(
+    *,
+    session: str,
+    cfg: SimpleNamespace,
+    report: mne.Report,
+):
+    """Add CSP decoding results to the grand average report."""
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    bids_path = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='decoding',
+        extension='.mat',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_cluster_results = bids_path.copy().update(
+            processing=processing,
+        )
+        csp_cluster_results = loadmat(fname_csp_cluster_results)
+
+        for freq_range_name in cfg.decoding_csp_freqs.keys():
+            t_vals = csp_cluster_results[freq_range_name][0][0][0]
+            clusters = csp_cluster_results[freq_range_name][0][0][1]
+            cluster_p_vals = csp_cluster_results[freq_range_name][0][0][2]
+            time_bin_edges = csp_cluster_results[freq_range_name][0][0][4][0]
+            freq_bin_edges = csp_cluster_results[freq_range_name][0][0][5][0]
+
+            vmax = np.abs(t_vals).max()
+            vmin = -vmax
+            fig, ax = plt.subplots()
+            img = ax.imshow(
+                t_vals,
+                interpolation='none',
+                origin='lower',
+                vmin=vmin,
+                vmax=vmax,
+                cmap='RdBu_r',
+                extent=[
+                    time_bin_edges[0],
+                    time_bin_edges[-1],
+                    freq_bin_edges[0],
+                    freq_bin_edges[-1]
+                ],
+                aspect='auto',
+            )
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Frequency (Hz)')
+
+            cbar = plt.colorbar(
+                ax=ax, shrink=0.75, orientation='vertical', mappable=img,
+            )
+            cbar.set_label(f'T-value')
+
+            report.add_figure(
+                fig=fig,
+                title=f'CSP: {freq_range_name}',
+            )
+
+
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
@@ -1557,6 +1635,9 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_csp=config.decoding_csp,
+        decoding_csp_freqs=config.decoding_csp_freqs,
+        decoding_csp_times=config.decoding_csp_times,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,
@@ -1577,19 +1658,19 @@ def main():
     """Make reports."""
     with config.get_parallel_backend():
         parallel, run_func = parallel_func(run_report)
-        logs = parallel(
-            run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session
-            )
-            for subject, session in
-            itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
-            )
-        )
+        # logs = parallel(
+        #     run_func(
+        #         cfg=get_config(subject=subject), subject=subject,
+        #         session=session
+        #     )
+        #     for subject, session in
+        #     itertools.product(
+        #         config.get_subjects(),
+        #         config.get_sessions()
+        #     )
+        # )
 
-        config.save_logs(logs)
+        # config.save_logs(logs)
 
         sessions = config.get_sessions()
         if not sessions:

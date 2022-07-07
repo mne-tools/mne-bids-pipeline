@@ -2804,7 +2804,18 @@ def failsafe_run(
                         '\n\nAborting pipeline run. The full traceback '
                         'is:\n\n'
                     )
-                    message += '\n'.join(traceback.format_exception(e))
+                    if sys.version_info >= (3, 10):
+                        message += '\n'.join(
+                            traceback.format_exception(e)
+                        )
+                    else:
+                         message += '\n'.join(
+                             traceback.format_exception(
+                                 etype=type(e),
+                                 value=e,
+                                 tb=e.__traceback__
+                            )
+                         )
                     logger.critical(**gen_log_kwargs(
                         message=message, **kwargs_copy
                     ))

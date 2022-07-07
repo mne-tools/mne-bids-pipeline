@@ -265,6 +265,7 @@ jobs:
     #
     # https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
+    no_output_timeout: 15m
     steps:
       - attach_workspace:
           at: ~/

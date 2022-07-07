@@ -123,9 +123,15 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
     processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
 
-    fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                            processing=processing,
-                                            extension='.mat')
+    fname_mat = (
+        fname_epochs
+        .copy()
+        .update(
+            suffix='decoding',
+            processing=processing,
+            extension='.mat'
+        )
+    )
     savemat(fname_mat, {'scores': scores})
 
     fname_tsv = fname_mat.copy().update(extension='.tsv')

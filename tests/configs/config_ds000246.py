@@ -27,4 +27,4 @@ on_error = 'abort'
 # dask_open_dashboard = True
 # N_JOBS = 2
 
-N_JOBS = 2
+N_JOBS = 4

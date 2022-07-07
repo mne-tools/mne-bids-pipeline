@@ -204,7 +204,17 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with config.get_parallel_backend():
+    # Extremely ugly (?) hack to get things to parallelize more nicely without
+    # a resource over-subcription when processing fewer than n_jobs
+    # datasets (participants x sessions x contrasts).
+    # Only tested with loky so far!
+    inner_max_num_threads = config.get_n_jobs()
+
+    with config.get_parallel_backend(
+        inner_max_num_threads=inner_max_num_threads
+    ):
+        # import joblib
+        # print(joblib.parallel.get_active_backend())
         parallel, run_func = parallel_func(run_time_decoding)
         logs = parallel(
             run_func(

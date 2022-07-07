@@ -118,27 +118,27 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
             n_jobs=1
         )
 
-        # Save the scores
-        a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
-        processing = processing.replace('_', '-').replace('-', '')
+    # Save the scores
+    a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
+    processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+    processing = processing.replace('_', '-').replace('-', '')
 
-        fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                               processing=processing,
-                                               extension='.mat')
-        savemat(fname_mat, {'scores': scores})
+    fname_mat = fname_epochs.copy().update(suffix='decoding',
+                                            processing=processing,
+                                            extension='.mat')
+    savemat(fname_mat, {'scores': scores})
 
-        fname_tsv = fname_mat.copy().update(extension='.tsv')
-        tabular_data = pd.Series(
-            {
-                'cond_1': cond_names[0],
-                'cond_2': cond_names[1],
-                'mean_crossval_score': scores.mean(axis=0),
-                'metric': cfg.decoding_metric
-            }
-        )
-        tabular_data = pd.DataFrame(tabular_data).T
-        tabular_data.to_csv(fname_tsv, sep='\t', index=False)
+    fname_tsv = fname_mat.copy().update(extension='.tsv')
+    tabular_data = pd.Series(
+        {
+            'cond_1': cond_names[0],
+            'cond_2': cond_names[1],
+            'mean_crossval_score': scores.mean(axis=0),
+            'metric': cfg.decoding_metric
+        }
+    )
+    tabular_data = pd.DataFrame(tabular_data).T
+    tabular_data.to_csv(fname_tsv, sep='\t', index=False)
 
 
 def get_config(
@@ -177,7 +177,15 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with config.get_parallel_backend():
+    # Extremely ugly (?) hack to get things to parallelize more nicely without
+    # a resource over-subcription when processing fewer than n_jobs
+    # datasets (participants x sessions x contrasts).
+    # Only tested with loky so far!
+    inner_max_num_threads = config.get_n_jobs()
+
+    with config.get_parallel_backend(
+        inner_max_num_threads=inner_max_num_threads
+    ):
         parallel, run_func = parallel_func(run_epochs_decoding)
         logs = parallel(
             run_func(

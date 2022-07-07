@@ -259,7 +259,7 @@ jobs:
 
   test_ds000246:
     <<: *imageconfig
-    no_output_timeout: 15m
+    no_output_timeout: 15m  # XXX should be revisited at some point
     steps:
       - attach_workspace:
           at: ~/

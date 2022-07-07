@@ -182,10 +182,8 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # Extremely ugly (?) hack to get things to parallelize more nicely without
-    # a resource over-subcription when processing fewer than n_jobs
-    # datasets (participants x sessions x contrasts).
-    # Only tested with loky so far!
+    # The liblinear solver can parallelize automatically, but we need to
+    # allow it to do so.
     inner_max_num_threads = config.get_n_jobs()
 
     with config.get_parallel_backend(

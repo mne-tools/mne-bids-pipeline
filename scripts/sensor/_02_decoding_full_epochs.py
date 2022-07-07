@@ -182,13 +182,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # The liblinear solver can parallelize automatically, but we need to
-    # allow it to do so.
-    inner_max_num_threads = config.get_n_jobs()
-
-    with config.get_parallel_backend(
-        inner_max_num_threads=inner_max_num_threads
-    ):
+    with config.get_parallel_backend():
         parallel, run_func = parallel_func(run_epochs_decoding)
         logs = parallel(
             run_func(

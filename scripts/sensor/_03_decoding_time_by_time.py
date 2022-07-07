@@ -109,7 +109,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         LogReg(
             solver='liblinear',  # much faster than the default
             random_state=cfg.random_state,
-            n_jobs=1,  # higher values don't make sense for liblinear
+            n_jobs=1,  # liblinear parallelizes automatically
         )
     )
     cv = StratifiedKFold(
@@ -122,17 +122,21 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         estimator = GeneralizingEstimator(
             clf,
             scoring=cfg.decoding_metric,
-            n_jobs=1
+            n_jobs=1,
         )
     else:
         estimator = SlidingEstimator(
             clf,
             scoring=cfg.decoding_metric,
-            n_jobs=1
+            n_jobs=1,
         )
 
     scores = cross_val_multiscore(
-        estimator, X=X, y=y, cv=cv, n_jobs=None
+        estimator,
+        X=X,
+        y=y,
+        cv=cv,
+        n_jobs=1,
     )
 
     # let's save the scores now

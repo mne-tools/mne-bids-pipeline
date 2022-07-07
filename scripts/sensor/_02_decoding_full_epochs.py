@@ -98,7 +98,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
             LogReg(
                 solver='liblinear',  # much faster than the default
                 random_state=cfg.random_state,
-                n_jobs=1,
+                n_jobs=1,  # liblinear parallelizes automatically
             )
         )
 

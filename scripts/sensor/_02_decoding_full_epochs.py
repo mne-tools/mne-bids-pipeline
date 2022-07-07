@@ -91,32 +91,31 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
-    with config.get_parallel_backend():
-        classification_pipeline = make_pipeline(
-            Scaler(scalings='mean'),
-            Vectorizer(),  # So we can pass the data to scikit-learn
-            LogReg(
-                solver='liblinear',  # much faster than the default
-                random_state=cfg.random_state,
-                n_jobs=1,  # liblinear parallelizes automatically
-            )
-        )
-
-        # Now, actually run the classification, and evaluate it via a
-        # cross-validation procedure.
-        cv = StratifiedKFold(
-            shuffle=True,
+    classification_pipeline = make_pipeline(
+        Scaler(scalings='mean'),
+        Vectorizer(),  # So we can pass the data to scikit-learn
+        LogReg(
+            solver='liblinear',  # much faster than the default
             random_state=cfg.random_state,
-            n_splits=cfg.decoding_n_splits,
+            n_jobs=1,  # liblinear parallelizes automatically
         )
-        scores = cross_val_score(
-            estimator=classification_pipeline,
-            X=X,
-            y=y,
-            cv=cv,
-            scoring='roc_auc',
-            n_jobs=1
-        )
+    )
+
+    # Now, actually run the classification, and evaluate it via a
+    # cross-validation procedure.
+    cv = StratifiedKFold(
+        shuffle=True,
+        random_state=cfg.random_state,
+        n_splits=cfg.decoding_n_splits,
+    )
+    scores = cross_val_score(
+        estimator=classification_pipeline,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring='roc_auc',
+        n_jobs=1,
+    )
 
     # Save the scores
     a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')

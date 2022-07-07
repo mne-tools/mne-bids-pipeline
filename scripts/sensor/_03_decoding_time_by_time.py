@@ -122,15 +122,17 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         estimator = GeneralizingEstimator(
             clf,
             scoring=cfg.decoding_metric,
+            n_jobs=1
         )
     else:
         estimator = SlidingEstimator(
             clf,
             scoring=cfg.decoding_metric,
+            n_jobs=1
         )
 
     scores = cross_val_multiscore(
-        estimator, X=X, y=y, cv=cv,
+        estimator, X=X, y=y, cv=cv, n_jobs=None
     )
 
     # let's save the scores now
@@ -213,8 +215,6 @@ def main():
     with config.get_parallel_backend(
         inner_max_num_threads=inner_max_num_threads
     ):
-        # import joblib
-        # print(joblib.parallel.get_active_backend())
         parallel, run_func = parallel_func(run_time_decoding)
         logs = parallel(
             run_func(

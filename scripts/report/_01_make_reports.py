@@ -291,7 +291,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     n_significant_clusters_plotted = 0
     for cluster in clusters:
         cluster_times = cluster['times'][0][0].squeeze()
-        cluster_p = np.asscalar(cluster['p_value'][0][0])
+        cluster_p = cluster['p_value'][0][0].item()
         if cluster_p >= cfg.cluster_permutation_p_threshold:
             continue
 
@@ -1475,9 +1475,10 @@ def add_decoding_grand_average(
             fig = plot_time_by_time_decoding_t_values(
                 decoding_data=decoding_data
             )
-            t_threshold = np.asscalar(
-                np.round(decoding_data['cluster_t_threshold'], 3)
-            )
+            t_threshold = np.round(
+                decoding_data['cluster_t_threshold'],
+                3
+            ).item()
             caption = (
                 f'Observed t-values. Time points with '
                 f't-values > {t_threshold} were used to form clusters.'
@@ -1501,7 +1502,7 @@ def add_decoding_grand_average(
                 f'Time generalization (generalization across time, GAT): '
                 f'each classifier is trained on each time point, and tested '
                 f'on all other time points. The results were averaged across '
-                f'N={np.asscalar(decoding_data["N"])} subjects.'
+                f'N={decoding_data["N"].item()} subjects.'
             )
             report.add_figure(
                 fig=fig,

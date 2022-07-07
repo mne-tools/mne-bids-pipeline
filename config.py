@@ -2596,7 +2596,7 @@ def get_parallel_backend_name() -> Literal['dask', 'loky']:
         raise ValueError(f'Unknown parallel backend: {parallel_backend}')
 
 
-def get_parallel_backend(inner_max_num_threads=1):
+def get_parallel_backend():
     import joblib
 
     backend = get_parallel_backend_name()
@@ -2605,7 +2605,7 @@ def get_parallel_backend(inner_max_num_threads=1):
     }
 
     if backend == "loky":
-        kwargs['inner_max_num_threads'] = inner_max_num_threads
+        kwargs['inner_max_num_threads'] = 1
     else:
         setup_dask_client()
 

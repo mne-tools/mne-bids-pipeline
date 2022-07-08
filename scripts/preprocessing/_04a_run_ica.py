@@ -192,6 +192,7 @@ def detect_bad_components(
     which: Literal['eog', 'ecg'],
     epochs: mne.BaseEpochs,
     ica: mne.preprocessing.ICA,
+    ch_names: Optional[List[str]] = None,
     subject: str,
     session: str
 ) -> Tuple[List[int], np.ndarray]:
@@ -203,12 +204,14 @@ def detect_bad_components(
     if which == 'eog':
         inds, scores = ica.find_bads_eog(
             epochs,
-            threshold=cfg.ica_eog_threshold
+            threshold=cfg.ica_eog_threshold,
+            ch_name=ch_names,
         )
     else:
         inds, scores = ica.find_bads_ecg(
             epochs, method='ctps',
-            threshold=cfg.ica_ctps_ecg_threshold
+            threshold=cfg.ica_ctps_ecg_threshold,
+            ch_name=ch_names,
         )
 
     if not inds:
@@ -396,8 +399,11 @@ def run_ica(*, cfg, subject, session=None):
     # ECG and EOG component detection
     if epochs_ecg:
         ecg_ics, ecg_scores = detect_bad_components(
-            cfg=cfg, which='ecg', epochs=epochs_ecg,
+            cfg=cfg,
+            which='ecg',
+            epochs=epochs_ecg,
             ica=ica,
+            ch_names=None,  # we currently don't allow for custom channels
             subject=subject,
             session=session
         )
@@ -406,8 +412,11 @@ def run_ica(*, cfg, subject, session=None):
 
     if epochs_eog:
         eog_ics, eog_scores = detect_bad_components(
-            cfg=cfg, which='eog', epochs=epochs_eog,
+            cfg=cfg,
+            which='eog',
+            epochs=epochs_eog,
             ica=ica,
+            ch_names=cfg.eog_channels,
             subject=subject,
             session=session
         )

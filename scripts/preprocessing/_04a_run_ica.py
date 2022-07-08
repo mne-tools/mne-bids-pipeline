@@ -192,7 +192,7 @@ def detect_bad_components(
     which: Literal['eog', 'ecg'],
     epochs: mne.BaseEpochs,
     ica: mne.preprocessing.ICA,
-    ch_names: Optional[List[str]] = None,
+    ch_names: Optional[List[str]],
     subject: str,
     session: str
 ) -> Tuple[List[int], np.ndarray]:

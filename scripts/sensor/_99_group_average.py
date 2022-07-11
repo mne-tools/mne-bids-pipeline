@@ -374,6 +374,9 @@ def average_csp_decoding(
     cfg: SimpleNamespace,
     session: str
 ):
+    msg = 'Summarizing CSP results.'
+    logger.info(**gen_log_kwargs(message=msg))
+
     for contrast in cfg.contrasts:
         cond_1, cond_2 = contrast
 
@@ -468,7 +471,7 @@ def average_csp_decoding(
 
         for (subject, freq_range_name, t_min, t_max), df in g:
             scores = df['mean_crossval_score']
-            sub_idx = subjects.index(subject)
+            sub_idx = subjects.index(f'{subject}')
             time_bin_idx = time_bins.loc[
                 (np.isclose(time_bins['t_min'], t_min)) &
                 (np.isclose(time_bins['t_max'], t_max)), :
@@ -501,6 +504,9 @@ def average_csp_decoding(
 
         fname_out = fname_xlsx.copy().update(subject='average',
                                              extension='.mat')
+
+        msg = f'Saving CSP results to disk: {contrast[0]} – {contrast[1]}.'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
         savemat(file_name=fname_out, mdict=cluster_permutation_results)
 
 
@@ -607,18 +613,19 @@ def run_group_average_sensor(*, cfg, subject='average'):
     if not sessions:
         sessions = [None]
 
-    for session in sessions:
-        evokeds = average_evokeds(cfg, session)
-        if config.interactive:
-            for evoked in evokeds:
-                evoked.plot()
+    with config.get_parallel_backend():
+        for session in sessions:
+            evokeds = average_evokeds(cfg, session)
+            if config.interactive:
+                for evoked in evokeds:
+                    evoked.plot()
 
-        if config.decode:
-            average_full_epochs_decoding(cfg, session)
-            average_time_by_time_decoding(cfg, session)
+            if config.decode:
+                average_full_epochs_decoding(cfg, session)
+                average_time_by_time_decoding(cfg, session)
 
-            if config.decoding_csp:
-                average_csp_decoding(cfg, session)
+                if config.decoding_csp:
+                    average_csp_decoding(cfg, session)
 
 
 def main():

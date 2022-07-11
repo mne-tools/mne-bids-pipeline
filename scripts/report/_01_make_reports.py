@@ -125,40 +125,40 @@ def plot_auto_scores(cfg, subject, session):
     return all_figs, all_captions
 
 
-# def plot_full_epochs_decoding_scores(
-#     contrast: str,
-#     cross_val_scores: np.ndarray,
-#     metric: str
-# ):
-#     """Plot cross-validation results from full-epochs decoding.
-#     """
-#     import matplotlib.pyplot as plt  # nested import to help joblib
-#     import seaborn as sns
+def plot_full_epochs_decoding_scores(
+    contrast: str,
+    cross_val_scores: np.ndarray,
+    metric: str
+):
+    """Plot cross-validation results from full-epochs decoding.
+    """
+    import matplotlib.pyplot as plt  # nested import to help joblib
+    import seaborn as sns
 
-#     cross_val_scores = cross_val_scores.squeeze()  # Make it a 1D array
-#     data = pd.DataFrame({
-#         'contrast': [contrast] * len(cross_val_scores),
-#         'scores': cross_val_scores,
-#         'metric': [metric] * len(cross_val_scores)}
-#     )
-#     fig, ax = plt.subplots()
+    cross_val_scores = cross_val_scores.squeeze()  # Make it a 1D array
+    data = pd.DataFrame({
+        'contrast': [contrast] * len(cross_val_scores),
+        'scores': cross_val_scores,
+        'metric': [metric] * len(cross_val_scores)}
+    )
+    fig, ax = plt.subplots()
 
-#     sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
-#                   label='cross-val. scores')
-#     ax.set_xticklabels([])
+    sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
+                  label='cross-val. scores')
+    ax.set_xticklabels([])
 
-#     ax.plot(cross_val_scores.mean(), '+', color='red', ms=15,
-#             label='mean score', zorder=99)
-#     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
+    ax.plot(cross_val_scores.mean(), '+', color='red', ms=15,
+            label='mean score', zorder=99)
+    ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
 
-#     ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
-#     if metric == 'roc_auc':
-#         metric = 'ROC AUC'
-#     ax.set_ylabel(f'Score ({metric})')
-#     ax.legend(loc='center right')
-#     fig.tight_layout()
+    ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
+    if metric == 'roc_auc':
+        metric = 'ROC AUC'
+    ax.set_ylabel(f'Score ({metric})')
+    ax.legend(loc='center right')
+    fig.tight_layout()
 
-#     return fig
+    return fig
 
 
 def _plot_full_epochs_decoding_scores(
@@ -1425,97 +1425,97 @@ def add_decoding_grand_average(
     del fig, caption, title
 
     # Time-by-time decoding
-    # for contrast in cfg.decoding_contrasts:
-    #     cond_1, cond_2 = contrast
-    #     a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-    #     section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
-    #     tags = (
-    #         'epochs',
-    #         'contrast',
-    #         'decoding',
-    #         f'{config.sanitize_cond_name(cond_1)}–'
-    #         f'{config.sanitize_cond_name(cond_2)}'
-    #         .lower().replace(' ', '-')
-    #     )
-    #     processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
-    #     processing = processing.replace('_', '-').replace('-', '')
-    #     fname_decoding = bids_path.copy().update(
-    #         processing=processing,
-    #         suffix='decoding',
-    #         extension='.mat'
-    #     )
-    #     decoding_data = loadmat(fname_decoding)
-    #     del fname_decoding, processing, a_vs_b
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            f'{config.sanitize_cond_name(cond_1)}–'
+            f'{config.sanitize_cond_name(cond_2)}'
+            .lower().replace(' ', '-')
+        )
+        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_decoding = bids_path.copy().update(
+            processing=processing,
+            suffix='decoding',
+            extension='.mat'
+        )
+        decoding_data = loadmat(fname_decoding)
+        del fname_decoding, processing, a_vs_b
 
-    #     # Plot scores
-    #     fig = _plot_time_by_time_decoding_scores_gavg(
-    #         cfg=cfg, decoding_data=decoding_data
-    #     )
-    #     caption = (
-    #         f'Based on N={decoding_data["N"].squeeze()} '
-    #         f'subjects. Standard error and confidence interval '
-    #         f'of the mean were bootstrapped with {cfg.n_boot} '
-    #         f'resamples. CI must not be used for statistical inference here, '
-    #         f'as it is not corrected for multiple testing.'
-    #     )
-    #     if len(config.get_subjects()) > 1:
-    #         caption += (
-    #             f' Time periods with decoding performance significantly above '
-    #             f'chance, if any, were derived with a one-tailed '
-    #             f'cluster-based permutation test '
-    #             f'({decoding_data["cluster_n_permutations"].squeeze()} '
-    #             f'permutations).'
-    #         )
-    #         report.add_figure(
-    #             fig=fig,
-    #             title='Decoding performance over time',
-    #             caption=caption,
-    #             section=section,
-    #             tags=tags,
-    #         )
-    #         plt.close(fig)
+        # Plot scores
+        fig = _plot_time_by_time_decoding_scores_gavg(
+            cfg=cfg, decoding_data=decoding_data
+        )
+        caption = (
+            f'Based on N={decoding_data["N"].squeeze()} '
+            f'subjects. Standard error and confidence interval '
+            f'of the mean were bootstrapped with {cfg.n_boot} '
+            f'resamples. CI must not be used for statistical inference here, '
+            f'as it is not corrected for multiple testing.'
+        )
+        if len(config.get_subjects()) > 1:
+            caption += (
+                f' Time periods with decoding performance significantly above '
+                f'chance, if any, were derived with a one-tailed '
+                f'cluster-based permutation test '
+                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f'permutations).'
+            )
+            report.add_figure(
+                fig=fig,
+                title='Decoding performance over time',
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
 
-    #     # Plot t-values used to form clusters
-    #     if len(config.get_subjects()) > 1:
-    #         fig = plot_time_by_time_decoding_t_values(
-    #             decoding_data=decoding_data
-    #         )
-    #         t_threshold = np.asscalar(
-    #             np.round(decoding_data['cluster_t_threshold'], 3)
-    #         )
-    #         caption = (
-    #             f'Observed t-values. Time points with '
-    #             f't-values > {t_threshold} were used to form clusters.'
-    #         )
-    #         report.add_figure(
-    #             fig=fig,
-    #             title='t-values based on decoding scores over time',
-    #             caption=caption,
-    #             section=section,
-    #             tags=tags,
-    #         )
-    #         plt.close(fig)
+        # Plot t-values used to form clusters
+        if len(config.get_subjects()) > 1:
+            fig = plot_time_by_time_decoding_t_values(
+                decoding_data=decoding_data
+            )
+            t_threshold = np.asscalar(
+                np.round(decoding_data['cluster_t_threshold'], 3)
+            )
+            caption = (
+                f'Observed t-values. Time points with '
+                f't-values > {t_threshold} were used to form clusters.'
+            )
+            report.add_figure(
+                fig=fig,
+                title='t-values based on decoding scores over time',
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
 
-    #     if cfg.decoding_time_generalization:
-    #         fig = _plot_decoding_time_generalization(
-    #             decoding_data=decoding_data,
-    #             metric=cfg.decoding_metric,
-    #             kind='grand-average'
-    #         )
-    #         caption = (
-    #             f'Time generalization (generalization across time, GAT): '
-    #             f'each classifier is trained on each time point, and tested '
-    #             f'on all other time points. The results were averaged across '
-    #             f'N={np.asscalar(decoding_data["N"])} subjects.'
-    #         )
-    #         report.add_figure(
-    #             fig=fig,
-    #             title='Time generalization',
-    #             caption=caption,
-    #             section=section,
-    #             tags=tags,
-    #         )
-    #         plt.close(fig)
+        if cfg.decoding_time_generalization:
+            fig = _plot_decoding_time_generalization(
+                decoding_data=decoding_data,
+                metric=cfg.decoding_metric,
+                kind='grand-average'
+            )
+            caption = (
+                f'Time generalization (generalization across time, GAT): '
+                f'each classifier is trained on each time point, and tested '
+                f'on all other time points. The results were averaged across '
+                f'N={np.asscalar(decoding_data["N"])} subjects.'
+            )
+            report.add_figure(
+                fig=fig,
+                title='Time generalization',
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
 
 
 def add_csp_grand_average(
@@ -1710,19 +1710,19 @@ def main():
     """Make reports."""
     with config.get_parallel_backend():
         parallel, run_func = parallel_func(run_report)
-        # logs = parallel(
-        #     run_func(
-        #         cfg=get_config(subject=subject), subject=subject,
-        #         session=session
-        #     )
-        #     for subject, session in
-        #     itertools.product(
-        #         config.get_subjects(),
-        #         config.get_sessions()
-        #     )
-        # )
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
 
-        # config.save_logs(logs)
+        config.save_logs(logs)
 
         sessions = config.get_sessions()
         if not sessions:

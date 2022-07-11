@@ -1358,14 +1358,6 @@ Note: Note
     [`cluster_forming_t_threshold`][config.cluster_forming_t_threshold].
 """
 
-csp_plot_patterns: bool = True
-"""
-Whether to add the CSP patterns to the report. Note that depending on
-[`csp_times`][config.csp_times], [`csp_freqs`][config.csp_freqs], and
-[`csp_n_components`][config.csp_n_components], a lot of patterns may be
-generated.
-"""
-
 ###############################################################################
 # GROUP AVERAGE SENSORS
 # ---------------------

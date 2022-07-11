@@ -1425,97 +1425,97 @@ def add_decoding_grand_average(
     del fig, caption, title
 
     # Time-by-time decoding
-    for contrast in cfg.decoding_contrasts:
-        cond_1, cond_2 = contrast
-        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-        section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
-        tags = (
-            'epochs',
-            'contrast',
-            'decoding',
-            f'{config.sanitize_cond_name(cond_1)}–'
-            f'{config.sanitize_cond_name(cond_2)}'
-            .lower().replace(' ', '-')
-        )
-        processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
-        processing = processing.replace('_', '-').replace('-', '')
-        fname_decoding = bids_path.copy().update(
-            processing=processing,
-            suffix='decoding',
-            extension='.mat'
-        )
-        decoding_data = loadmat(fname_decoding)
-        del fname_decoding, processing, a_vs_b
+    # for contrast in cfg.decoding_contrasts:
+    #     cond_1, cond_2 = contrast
+    #     a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+    #     section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+    #     tags = (
+    #         'epochs',
+    #         'contrast',
+    #         'decoding',
+    #         f'{config.sanitize_cond_name(cond_1)}–'
+    #         f'{config.sanitize_cond_name(cond_2)}'
+    #         .lower().replace(' ', '-')
+    #     )
+    #     processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+    #     processing = processing.replace('_', '-').replace('-', '')
+    #     fname_decoding = bids_path.copy().update(
+    #         processing=processing,
+    #         suffix='decoding',
+    #         extension='.mat'
+    #     )
+    #     decoding_data = loadmat(fname_decoding)
+    #     del fname_decoding, processing, a_vs_b
 
-        # Plot scores
-        fig = _plot_time_by_time_decoding_scores_gavg(
-            cfg=cfg, decoding_data=decoding_data
-        )
-        caption = (
-            f'Based on N={decoding_data["N"].squeeze()} '
-            f'subjects. Standard error and confidence interval '
-            f'of the mean were bootstrapped with {cfg.n_boot} '
-            f'resamples. CI must not be used for statistical inference here, '
-            f'as it is not corrected for multiple testing.'
-        )
-        if len(config.get_subjects()) > 1:
-            caption += (
-                f' Time periods with decoding performance significantly above '
-                f'chance, if any, were derived with a one-tailed '
-                f'cluster-based permutation test '
-                f'({decoding_data["cluster_n_permutations"].squeeze()} '
-                f'permutations).'
-            )
-            report.add_figure(
-                fig=fig,
-                title='Decoding performance over time',
-                caption=caption,
-                section=section,
-                tags=tags,
-            )
-            plt.close(fig)
+    #     # Plot scores
+    #     fig = _plot_time_by_time_decoding_scores_gavg(
+    #         cfg=cfg, decoding_data=decoding_data
+    #     )
+    #     caption = (
+    #         f'Based on N={decoding_data["N"].squeeze()} '
+    #         f'subjects. Standard error and confidence interval '
+    #         f'of the mean were bootstrapped with {cfg.n_boot} '
+    #         f'resamples. CI must not be used for statistical inference here, '
+    #         f'as it is not corrected for multiple testing.'
+    #     )
+    #     if len(config.get_subjects()) > 1:
+    #         caption += (
+    #             f' Time periods with decoding performance significantly above '
+    #             f'chance, if any, were derived with a one-tailed '
+    #             f'cluster-based permutation test '
+    #             f'({decoding_data["cluster_n_permutations"].squeeze()} '
+    #             f'permutations).'
+    #         )
+    #         report.add_figure(
+    #             fig=fig,
+    #             title='Decoding performance over time',
+    #             caption=caption,
+    #             section=section,
+    #             tags=tags,
+    #         )
+    #         plt.close(fig)
 
-        # Plot t-values used to form clusters
-        if len(config.get_subjects()) > 1:
-            fig = plot_time_by_time_decoding_t_values(
-                decoding_data=decoding_data
-            )
-            t_threshold = np.asscalar(
-                np.round(decoding_data['cluster_t_threshold'], 3)
-            )
-            caption = (
-                f'Observed t-values. Time points with '
-                f't-values > {t_threshold} were used to form clusters.'
-            )
-            report.add_figure(
-                fig=fig,
-                title='t-values based on decoding scores over time',
-                caption=caption,
-                section=section,
-                tags=tags,
-            )
-            plt.close(fig)
+    #     # Plot t-values used to form clusters
+    #     if len(config.get_subjects()) > 1:
+    #         fig = plot_time_by_time_decoding_t_values(
+    #             decoding_data=decoding_data
+    #         )
+    #         t_threshold = np.asscalar(
+    #             np.round(decoding_data['cluster_t_threshold'], 3)
+    #         )
+    #         caption = (
+    #             f'Observed t-values. Time points with '
+    #             f't-values > {t_threshold} were used to form clusters.'
+    #         )
+    #         report.add_figure(
+    #             fig=fig,
+    #             title='t-values based on decoding scores over time',
+    #             caption=caption,
+    #             section=section,
+    #             tags=tags,
+    #         )
+    #         plt.close(fig)
 
-        if cfg.decoding_time_generalization:
-            fig = _plot_decoding_time_generalization(
-                decoding_data=decoding_data,
-                metric=cfg.decoding_metric,
-                kind='grand-average'
-            )
-            caption = (
-                f'Time generalization (generalization across time, GAT): '
-                f'each classifier is trained on each time point, and tested '
-                f'on all other time points. The results were averaged across '
-                f'N={np.asscalar(decoding_data["N"])} subjects.'
-            )
-            report.add_figure(
-                fig=fig,
-                title='Time generalization',
-                caption=caption,
-                section=section,
-                tags=tags,
-            )
-            plt.close(fig)
+    #     if cfg.decoding_time_generalization:
+    #         fig = _plot_decoding_time_generalization(
+    #             decoding_data=decoding_data,
+    #             metric=cfg.decoding_metric,
+    #             kind='grand-average'
+    #         )
+    #         caption = (
+    #             f'Time generalization (generalization across time, GAT): '
+    #             f'each classifier is trained on each time point, and tested '
+    #             f'on all other time points. The results were averaged across '
+    #             f'N={np.asscalar(decoding_data["N"])} subjects.'
+    #         )
+    #         report.add_figure(
+    #             fig=fig,
+    #             title='Time generalization',
+    #             caption=caption,
+    #             section=section,
+    #             tags=tags,
+    #         )
+    #         plt.close(fig)
 
 
 def add_csp_grand_average(
@@ -1563,6 +1563,11 @@ def add_csp_grand_average(
             time_bin_edges = results['time_bin_edges']
             freq_bin_edges = results['freq_bin_edges']
 
+            significant_cluster_idx = np.where(
+                cluster_p_vals < cfg.cluster_permutation_p_threshold
+            )[0]
+            significant_clusters = clusters[significant_cluster_idx]
+
             vmax = np.abs(t_vals).max()
             vmin = -vmax
             fig, ax = plt.subplots()
@@ -1591,9 +1596,52 @@ def add_csp_grand_average(
 
             report.add_figure(
                 fig=fig,
-                title=f'CSP: {freq_range_name}',
+                title=f'{freq_range_name}',
+                section=f'CSP: {cond_1} ./. {cond_2}',
             )
 
+            if len(significant_clusters):
+                # Create a masked array that only shows the T-values for
+                # time-frequency bins that belong to significant clusters.
+                if len(significant_clusters) == 1:
+                    mask = ~significant_clusters[0].astype(bool)
+                else:
+                    mask = ~np.logical_or(
+                        *significant_clusters
+                    )
+                t_vals_masked = np.ma.masked_where(mask, t_vals)
+                fig, ax = plt.subplots()
+                img = ax.imshow(
+                    t_vals_masked,
+                    interpolation='none',
+                    origin='lower',
+                    vmin=vmin,
+                    vmax=vmax,
+                    cmap='RdBu_r',
+                    extent=[
+                        time_bin_edges[0],
+                        time_bin_edges[-1],
+                        freq_bin_edges[0],
+                        freq_bin_edges[-1]
+                    ],
+                    aspect='auto',
+                )
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Frequency (Hz)')
+
+                cbar = plt.colorbar(
+                    ax=ax, shrink=0.75, orientation='vertical', mappable=img,
+                )
+                cbar.set_label(f'T-value')
+
+                report.add_figure(
+                    fig=fig,
+                    title=f'{freq_range_name} – significant clusters',
+                    section=f'CSP: {cond_1} ./. {cond_2}',
+                    caption=f'Found {len(significant_cluster_idx)} '
+                            f'significant cluster(s) '
+                            f'(p < {cfg.cluster_permutation_p_threshold}).',
+                )
 
 def get_config(
     subject: Optional[str] = None,

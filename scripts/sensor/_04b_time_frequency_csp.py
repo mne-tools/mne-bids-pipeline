@@ -50,7 +50,7 @@ def _prepare_labels(
                    f"{contrast[0]}'s set {event_codes_condition_0} and in "
                    f"{contrast[1]}'s set {event_codes_condition_1}."
                    f"{contrast} does not constitute a valid partition.")
-            logger.critical(msg)
+            raise RuntimeError(msg)
         elif y[i] in event_codes_condition_0:
             y[i] = 0
         elif y[i] in event_codes_condition_1:
@@ -60,7 +60,7 @@ def _prepare_labels(
             msg = (f"Event_id {y[i]} is not contained in "
                    f"{contrast[0]}'s set {event_codes_condition_0}  nor in "
                    f"{contrast[1]}'s set {event_codes_condition_1}.")
-            logger.critical(msg)
+            raise RuntimeError(msg)
     return y
 
 

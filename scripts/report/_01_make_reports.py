@@ -1550,34 +1550,55 @@ def add_csp_grand_average(
         fname_csp_cluster_results = bids_path.copy().update(
             processing=processing,
         )
-        csp_cluster_results = loadmat(
-            fname_csp_cluster_results,
-            simplify_cells=True
-        )
+        csp_cluster_results = loadmat(fname_csp_cluster_results)
 
         for freq_range_name in cfg.decoding_csp_freqs.keys():
-            results = csp_cluster_results[freq_range_name]
-            t_vals = results['t_vals']
+            results = csp_cluster_results[freq_range_name][0][0]
+            mean_crossval_scores = results['mean_crossval_scores']
+            # t_vals = results['t_vals']
             clusters = results['clusters']
-            cluster_p_vals = results['cluster_p_vals']
-            time_bin_edges = results['time_bin_edges']
-            freq_bin_edges = results['freq_bin_edges']
+            cluster_p_vals = results['cluster_p_vals'].squeeze()
+            time_bin_edges = results['time_bin_edges'].squeeze()
+            freq_bin_edges = results['freq_bin_edges'].squeeze()
+            cluster_t_threshold = results['cluster_t_threshold'].item()
 
             significant_cluster_idx = np.where(
                 cluster_p_vals < cfg.cluster_permutation_p_threshold
             )[0]
             significant_clusters = clusters[significant_cluster_idx]
 
-            vmax = np.abs(t_vals).max()
-            vmin = -vmax
-            fig, ax = plt.subplots()
-            img = ax.imshow(
-                t_vals,
+            # vmax = np.abs(t_vals).max()
+            # vmin = -vmax
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            # For diverging gray colormap, we need to combine two existing
+            # colormaps, as there is no diverging colormap with gray/black at
+            # both endpoints.
+            from matplotlib.cm import gray, gray_r
+            from matplotlib.colors import ListedColormap
+
+            black_to_white = gray(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            white_to_black = gray_r(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            black_to_white_to_black = np.vstack(
+                (black_to_white, white_to_black)
+            )
+            diverging_gray_cmap = ListedColormap(
+                black_to_white_to_black, name='DivergingGray'
+            )
+            cmap_gray = diverging_gray_cmap
+            fig, ax = plt.subplots(nrows=1, ncols=2)
+            common_kwargs = dict(
                 interpolation='none',
                 origin='lower',
                 vmin=vmin,
                 vmax=vmax,
-                cmap='RdBu_r',
                 extent=[
                     time_bin_edges[0],
                     time_bin_edges[-1],
@@ -1586,20 +1607,28 @@ def add_csp_grand_average(
                 ],
                 aspect='auto',
             )
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('Frequency (Hz)')
+            img = ax[0].imshow(
+                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
+                cmap='RdBu_r',
+                **common_kwargs,
+            )
+            ax[0].set_xlabel('Time (s)')
+            ax[0].set_ylabel('Frequency (Hz)')
+
+            # Plot the same data in grayscale …
+            img = ax[1].imshow(
+                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
+                cmap=cmap_gray,
+                **common_kwargs,
+            )
+            ax[1].set_xlabel('Time (s)')
 
             cbar = plt.colorbar(
-                ax=ax, shrink=0.75, orientation='vertical', mappable=img,
-            )
-            cbar.set_label(f'T-value')
-
-            report.add_figure(
-                fig=fig,
-                title=f'{freq_range_name}',
-                section=f'CSP: {cond_1} ./. {cond_2}',
+                ax=ax[1], shrink=0.75, orientation='vertical', mappable=img,
             )
 
+            # If we have significant clusters, plot them in color on top of
+            # the grayscale image.
             if len(significant_clusters):
                 # Create a masked array that only shows the T-values for
                 # time-frequency bins that belong to significant clusters.
@@ -1609,39 +1638,44 @@ def add_csp_grand_average(
                     mask = ~np.logical_or(
                         *significant_clusters
                     )
-                t_vals_masked = np.ma.masked_where(mask, t_vals)
-                fig, ax = plt.subplots()
-                img = ax.imshow(
-                    t_vals_masked,
-                    interpolation='none',
-                    origin='lower',
-                    vmin=vmin,
-                    vmax=vmax,
+                mean_crossval_scores_masked = np.ma.masked_where(
+                    mask, mean_crossval_scores
+                )
+                img = ax[1].imshow(
+                    mean_crossval_scores_masked.T,  # x: time; y: frequency
                     cmap='RdBu_r',
-                    extent=[
-                        time_bin_edges[0],
-                        time_bin_edges[-1],
-                        freq_bin_edges[0],
-                        freq_bin_edges[-1]
-                    ],
-                    aspect='auto',
+                    **common_kwargs,
                 )
-                ax.set_xlabel('Time (s)')
-                ax.set_ylabel('Frequency (Hz)')
-
                 cbar = plt.colorbar(
-                    ax=ax, shrink=0.75, orientation='vertical', mappable=img,
+                    ax=ax[1], cax=cbar.ax, shrink=0.75, orientation='vertical',
+                    mappable=img,
                 )
-                cbar.set_label(f'T-value')
 
-                report.add_figure(
-                    fig=fig,
-                    title=f'{freq_range_name} – significant clusters',
-                    section=f'CSP: {cond_1} ./. {cond_2}',
-                    caption=f'Found {len(significant_cluster_idx)} '
-                            f'significant cluster(s) '
-                            f'(p < {cfg.cluster_permutation_p_threshold}).',
-                )
+            if cfg.decoding_metric == 'roc_auc':
+                metric = 'ROC AUC'
+            cbar.set_label(f'Mean decoding score ({metric})')
+
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
+            )
+            report.add_figure(
+                fig=fig,
+                title=f'Frequency range: {freq_range_name}',
+                section=f'CSP: {cond_1} ./. {cond_2}',
+                caption=f'Found {len(significant_cluster_idx)} '
+                        f'significant cluster(s) '
+                        f'(p < {cfg.cluster_permutation_p_threshold}; '
+                        f'bins with absolute t-values > '
+                        f'{round(cluster_t_threshold, 3)} '
+                        f'were used to form clusters).',
+                tags=tags,
+            )
+
 
 def get_config(
     subject: Optional[str] = None,
@@ -1692,6 +1726,7 @@ def get_config(
         decoding_csp_times=config.decoding_csp_times,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
+        cluster_forming_t_threshold=config.cluster_forming_t_threshold,
         inverse_method=config.inverse_method,
         report_stc_n_time_points=config.report_stc_n_time_points,
         report_evoked_n_time_points=config.report_evoked_n_time_points,

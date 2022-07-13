@@ -10,7 +10,8 @@ import os
 import os.path as op
 from collections import defaultdict
 import logging
-from typing import Optional, TypedDict, List, Tuple, Literal
+import itertools
+from typing import Optional, TypedDict, List, Tuple
 from types import SimpleNamespace
 
 import numpy as np
@@ -21,7 +22,7 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, on_error, failsafe_run, parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -372,142 +373,154 @@ def average_full_epochs_decoding(
 
 def average_csp_decoding(
     cfg: SimpleNamespace,
-    session: str
+    session: str,
+    condition_1: str,
+    condition_2: str,
 ):
-    msg = 'Summarizing CSP results.'
+    msg = f'Summarizing CSP results: {condition_1} - {condition_2}.'
     logger.info(**gen_log_kwargs(message=msg))
 
-    for contrast in cfg.contrasts:
-        cond_1, cond_2 = contrast
+    # Extract mean CV scores from all subjects.
+    a_vs_b = f'{condition_1}+{condition_2}'.replace(op.sep, '')
+    processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+    processing = processing.replace('_', '-').replace('-', '')
 
+    all_decoding_data_freq = []
+    all_decoding_data_time_freq = []
 
-        # Extract mean CV scores from all subjects.
-        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
-        processing = processing.replace('_', '-').replace('-', '')
-
-        all_decoding_data_freq = []
-        all_decoding_data_time_freq = []
-
-        # First load the data.
-        for subject in cfg.subjects:
-            fname_xlsx = BIDSPath(
-                subject=subject,
-                session=session,
-                task=cfg.task,
-                acquisition=cfg.acq,
-                run=None,
-                recording=cfg.rec,
-                space=cfg.space,
-                processing=processing,
-                suffix='decoding',
-                extension='.xlsx',
-                datatype=cfg.datatype,
-                root=cfg.deriv_root,
-                check=False
-            )
-
-            decoding_data_freq = pd.read_excel(
-                fname_xlsx, sheet_name='CSP Frequency',
-            )
-            decoding_data_time_freq = pd.read_excel(
-                fname_xlsx, sheet_name='CSP Time-Frequency'
-            )
-            all_decoding_data_freq.append(decoding_data_freq)
-            all_decoding_data_time_freq.append(decoding_data_time_freq)
-
-        # Now calculate descriptes and bootstrap CIs.
-        grand_average_freq = _average_csp_time_freq(
-            cfg=cfg,
-            data=all_decoding_data_freq,
-        )
-        grand_average_time_freq = _average_csp_time_freq(
-            cfg=cfg,
-            data=all_decoding_data_time_freq,
+    # First load the data.
+    for subject in cfg.subjects:
+        fname_xlsx = BIDSPath(
+            subject=subject,
+            session=session,
+            task=cfg.task,
+            acquisition=cfg.acq,
+            run=None,
+            recording=cfg.rec,
+            space=cfg.space,
+            processing=processing,
+            suffix='decoding',
+            extension='.xlsx',
+            datatype=cfg.datatype,
+            root=cfg.deriv_root,
+            check=False
         )
 
-        fname_out = fname_xlsx.copy().update(subject='average')
-        with pd.ExcelWriter(fname_out) as w:
-            grand_average_freq.to_excel(
-                w, sheet_name='CSP Frequency', index=False
-            )
-            grand_average_time_freq.to_excel(
-                w, sheet_name='CSP Time-Frequency', index=False
-            )
+        decoding_data_freq = pd.read_excel(
+            fname_xlsx, sheet_name='CSP Frequency',
+        )
+        decoding_data_time_freq = pd.read_excel(
+            fname_xlsx, sheet_name='CSP Time-Frequency'
+        )
+        all_decoding_data_freq.append(decoding_data_freq)
+        all_decoding_data_time_freq.append(decoding_data_time_freq)
 
-        # Perform a cluster-based permutation test.
-        g = (
-            pd.concat(all_decoding_data_time_freq)
-            .groupby([
-                'subject', 'freq_range_name', 't_min', 't_max'
-            ])
+    # Now calculate descriptes and bootstrap CIs.
+    grand_average_freq = _average_csp_time_freq(
+        cfg=cfg,
+        data=all_decoding_data_freq,
+    )
+    grand_average_time_freq = _average_csp_time_freq(
+        cfg=cfg,
+        data=all_decoding_data_time_freq,
+    )
+
+    fname_out = fname_xlsx.copy().update(subject='average')
+    with pd.ExcelWriter(fname_out) as w:
+        grand_average_freq.to_excel(
+            w, sheet_name='CSP Frequency', index=False
+        )
+        grand_average_time_freq.to_excel(
+            w, sheet_name='CSP Time-Frequency', index=False
         )
 
-        subjects = cfg.subjects
-        time_bins = np.array(cfg.decoding_csp_times)
-        if time_bins.ndim == 1:
-            time_bins = np.array(
-                list(zip(time_bins[:-1], time_bins[1:]))
+    # Perform a cluster-based permutation test.
+    g = (
+        pd.concat(all_decoding_data_time_freq)
+        .groupby([
+            'subject', 'freq_range_name', 't_min', 't_max'
+        ])
+    )
+
+    subjects = cfg.subjects
+    time_bins = np.array(cfg.decoding_csp_times)
+    if time_bins.ndim == 1:
+        time_bins = np.array(
+            list(zip(time_bins[:-1], time_bins[1:]))
+        )
+    time_bins = pd.DataFrame(time_bins, columns=['t_min', 't_max'])
+    freq_range_names = list(cfg.decoding_csp_freqs.keys())
+
+    freq_name_to_bins_map = dict()
+    for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
+        freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
+        freq_name_to_bins_map[freq_range_name] = freq_bins
+
+    data_for_clustering = {}
+    for freq_range_name in freq_range_names:
+        a = np.empty(
+            shape=(
+                len(subjects),
+                len(time_bins),
+                len(freq_name_to_bins_map[freq_range_name])
             )
-        time_bins = pd.DataFrame(time_bins, columns=['t_min', 't_max'])
-        freq_range_names = list(cfg.decoding_csp_freqs.keys())
+        )
+        a.fill(np.nan)
+        data_for_clustering[freq_range_name] = a
 
-        freq_name_to_bins_map = dict()
-        for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
-            freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
-            freq_name_to_bins_map[freq_range_name] = freq_bins
+    for (subject, freq_range_name, t_min, t_max), df in g:
+        scores = df['mean_crossval_score']
+        sub_idx = subjects.index(f'{subject}')
+        time_bin_idx = time_bins.loc[
+            (np.isclose(time_bins['t_min'], t_min)) &
+            (np.isclose(time_bins['t_max'], t_max)), :
+        ].index
+        assert len(time_bin_idx) == 1
+        time_bin_idx = time_bin_idx[0]
+        data_for_clustering[freq_range_name][sub_idx][time_bin_idx] = scores
 
-        data_for_clustering = {}
-        for freq_range_name in freq_range_names:
-            a = np.empty(
-                shape=(
-                    len(subjects),
-                    len(time_bins),
-                    len(freq_name_to_bins_map[freq_range_name])
-                )
-            )
-            a.fill(np.nan)
-            data_for_clustering[freq_range_name] = a
+    if cfg.cluster_forming_t_threshold is None:
+        import scipy.stats
+        cluster_forming_t_threshold = scipy.stats.t.ppf(
+            1 - 0.05,  # one-sided test
+            len(cfg.subjects) - 1
+        )
+    else:
+        cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
 
-        for (subject, freq_range_name, t_min, t_max), df in g:
-            scores = df['mean_crossval_score']
-            sub_idx = subjects.index(f'{subject}')
-            time_bin_idx = time_bins.loc[
-                (np.isclose(time_bins['t_min'], t_min)) &
-                (np.isclose(time_bins['t_max'], t_max)), :
-            ].index
-            assert len(time_bin_idx) == 1
-            time_bin_idx = time_bin_idx[0]
-            data_for_clustering[freq_range_name][sub_idx][time_bin_idx] = scores
+    cluster_permutation_results = {}
+    for freq_range_name, X in data_for_clustering.items():
+        t_vals, all_clusters, cluster_p_vals, H0 = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
+            X=X-0.5,  # One-sample test against zero.
+            threshold=cluster_forming_t_threshold,
+            n_permutations=cfg.n_permutations,
+            adjacency=None,  # each time & freq bin connected to its neighbors
+            out_type='mask',
+            tail=1,  # one-sided: significantly above chance level
+            seed=cfg.random_state,
+        )
+        n_permutations = H0.size - 1
+        all_clusters = np.array(all_clusters)  # preserve "empty" 0th dimension
+        cluster_permutation_results[freq_range_name] = {
+            'mean_crossval_scores': X.mean(axis=0),
+            't_vals': t_vals,
+            'clusters': all_clusters,
+            'cluster_p_vals': cluster_p_vals,
+            'cluster_t_threshold': cluster_forming_t_threshold,
+            'n_permutations': n_permutations,
+            'time_bin_edges': cfg.decoding_csp_times,
+            'freq_bin_edges': cfg.decoding_csp_freqs[freq_range_name],
+        }
 
-        cluster_permutation_results = {}
-        for freq_range_name, X in data_for_clustering.items():
-            X = X - 0.5  # One-sample test against zero.
-            t_vals, all_clusters, cluster_p_vals, H0 = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
-                X=X,
-                threshold=cfg.cluster_forming_t_threshold,
-                n_permutations=cfg.n_permutations,
-                tail=0,
-                seed=cfg.random_state,
-                adjacency=None,
-                out_type='mask',
-            )
-            n_permutations = H0.size - 1
-            cluster_permutation_results[freq_range_name] = {
-                't_vals': t_vals,
-                'clusters': all_clusters,
-                'cluster_p_vals': cluster_p_vals,
-                'n_permutations': n_permutations,
-                'time_bin_edges': cfg.decoding_csp_times,
-                'freq_bin_edges': cfg.decoding_csp_freqs[freq_range_name],
-            }
-
-        fname_out = fname_xlsx.copy().update(subject='average',
-                                             extension='.mat')
-
-        msg = f'Saving CSP results to disk: {contrast[0]} – {contrast[1]}.'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject))
-        savemat(file_name=fname_out, mdict=cluster_permutation_results)
+    fname_out = (
+        fname_xlsx
+        .copy()
+        .update(
+            subject='average',
+            extension='.mat'
+        )
+    )
+    savemat(file_name=fname_out, mdict=cluster_permutation_results)
 
 
 def _average_csp_time_freq(
@@ -519,6 +532,7 @@ def _average_csp_time_freq(
     grand_average = data[0].copy()
     del grand_average['mean_crossval_score']
 
+    grand_average['subject'] = 'average'
     grand_average['mean'] = np.nan
     grand_average['mean_se'] = np.nan
     grand_average['mean_ci_lower'] = np.nan
@@ -621,11 +635,25 @@ def run_group_average_sensor(*, cfg, subject='average'):
                     evoked.plot()
 
             if config.decode:
-                average_full_epochs_decoding(cfg, session)
-                average_time_by_time_decoding(cfg, session)
+                # average_full_epochs_decoding(cfg, session)
+                # average_time_by_time_decoding(cfg, session)
+                pass
 
-                if config.decoding_csp:
-                    average_csp_decoding(cfg, session)
+        if config.decode and config.decoding_csp:
+            parallel, run_func = parallel_func(average_csp_decoding)
+            parallel(
+                run_func(
+                    cfg=get_config(),
+                    session=session,
+                    condition_1=contrast[0],
+                    condition_2=contrast[1]
+                )
+                for session, contrast in itertools.product(
+                    config.get_sessions(),
+                    config.get_decoding_contrasts(),
+                )
+            )
+        # config.save_logs(logs)  # XXX avoid race conflict with main()
 
 
 def main():

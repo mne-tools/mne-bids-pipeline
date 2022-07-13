@@ -56,7 +56,7 @@ def _prepare_labels(
         elif y[i] in event_codes_condition_1:
             y[i] = 1
         else:
-            # This should not happen because epochs should already by filtered
+            # This should not happen because epochs should already be filtered
             msg = (f"Event_id {y[i]} is not contained in "
                    f"{contrast[0]}'s set {event_codes_condition_0}  nor in "
                    f"{contrast[1]}'s set {event_codes_condition_1}.")
@@ -77,7 +77,7 @@ def prepare_epochs_and_y(
         epochs
         .copy()
         .pick_types(
-            meg=True, eeg=True, stim=False, eog=False, exclude='bads'
+            meg=True, eeg=True,
         )
     )
 
@@ -180,11 +180,14 @@ def one_subject_decoding(
         reg=0.1,         # XXX revisit
         rank='info',
     )
-    clf = make_pipeline(csp, LinearDiscriminantAnalysis())
+    clf = make_pipeline(
+        csp,
+        LinearDiscriminantAnalysis(),
+    )
     cv = StratifiedKFold(
         n_splits=cfg.decoding_n_splits,
         shuffle=True,
-        random_state=cfg.random_state
+        random_state=cfg.random_state,
     )
 
     # Loop over frequencies (all time points lumped together)
@@ -210,7 +213,7 @@ def one_subject_decoding(
                     'f_max': f_max,
                     'freq_range_name': freq_range_name,
                     'mean_crossval_score': np.nan,
-                    'metric': cfg.decoding_metric
+                    'metric': cfg.decoding_metric,
                 },
                 index=[0]
             )
@@ -244,15 +247,16 @@ def one_subject_decoding(
         # We apply PCA before running CSP:
         # - much faster CSP processing
         # - reduced risk of numerical instabilities.
-
         X_pca = pca.fit_transform(X)
         del X
 
         cv_scores = cross_val_score(
-            estimator=clf, X=X_pca, y=y,
+            estimator=clf,
+            X=X_pca,
+            y=y,
             scoring=cfg.decoding_metric,
             cv=cv,
-            n_jobs=1
+            n_jobs=1,
         )
 
         # The row is a view on the original dataframe, so we can modify it here
@@ -326,14 +330,16 @@ def one_subject_decoding(
         epochs_filt, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
-        # Crop data into time window of interest
-        X = epochs_filt.copy().crop(tmin, tmax).get_data()
+        # Crop data to the time window of interest
+        epochs_filt.crop(tmin, tmax)
+        X = epochs_filt.get_data()
         X_pca = pca.transform(X)
         del X
 
         cv_scores = cross_val_score(
             estimator=clf,
-            X=X_pca, y=y,
+            X=X_pca,
+            y=y,
             scoring=cfg.decoding_metric,
             cv=cv,
             n_jobs=1,
@@ -382,7 +388,6 @@ def get_config(
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
-        csp_plot_patterns=config.csp_plot_patterns,
         n_boot=config.n_boot,
         random_state=config.random_state,
         interactive=config.interactive
@@ -394,8 +399,6 @@ def main():
     """Run all subjects decoding in parallel."""
     msg = 'Running Step 4b: CSP'
     logger.info(**gen_log_kwargs(message=msg))
-
-    cfg = get_config()
 
     if not config.contrasts or not config.decoding_csp:
         if not config.contrasts:

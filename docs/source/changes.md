@@ -332,3 +332,6 @@ authors:
   would always be 40-Hz-lowpass-filtered even if not explicitly requested by
   the user. This is now fixed.
   ({{ gh(558) }} by {{ authors.apmellot }} and {{ authors.hoechenberger }})
+- EEG channels couldn't be used as "virtual" EOG channels during ICA artifact
+  detection. Reported by "fraenni" on the forum. Thank you! 🌻
+  ({{ gh(572) }} by {{ authors.hoechenberger }})

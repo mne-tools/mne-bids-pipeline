@@ -1615,18 +1615,20 @@ def add_csp_grand_average(
             )
             ax[0].set_xlabel('Time (s)')
             ax[0].set_ylabel('Frequency (Hz)')
+            cbar = plt.colorbar(
+                ax=ax[1], shrink=0.75, orientation='vertical', mappable=img,
+            )
+            if cfg.decoding_metric == 'roc_auc':
+                metric = 'ROC AUC'
+            cbar.set_label(f'Mean decoding score ({metric})')
 
             # Plot the same data in grayscale …
-            img = ax[1].imshow(
+            ax[1].imshow(
                 mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
                 cmap=cmap_gray,
                 **common_kwargs,
             )
             ax[1].set_xlabel('Time (s)')
-
-            cbar = plt.colorbar(
-                ax=ax[1], shrink=0.75, orientation='vertical', mappable=img,
-            )
 
             # If we have significant clusters, plot them in color on top of
             # the grayscale image.
@@ -1642,19 +1644,11 @@ def add_csp_grand_average(
                 mean_crossval_scores_masked = np.ma.masked_where(
                     mask, mean_crossval_scores
                 )
-                img = ax[1].imshow(
+                ax[1].imshow(
                     mean_crossval_scores_masked.T,  # x: time; y: frequency
                     cmap='RdBu_r',
                     **common_kwargs,
                 )
-                cbar = plt.colorbar(
-                    ax=ax[1], cax=cbar.ax, shrink=0.75, orientation='vertical',
-                    mappable=img,
-                )
-
-            if cfg.decoding_metric == 'roc_auc':
-                metric = 'ROC AUC'
-            cbar.set_label(f'Mean decoding score ({metric})')
 
             tags = (
                 'epochs',
@@ -1745,20 +1739,20 @@ def get_config(
 def main():
     """Make reports."""
     with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_report)
-        logs = parallel(
-            run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session
-            )
-            for subject, session in
-            itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
-            )
-        )
+        # parallel, run_func = parallel_func(run_report)
+        # logs = parallel(
+        #     run_func(
+        #         cfg=get_config(subject=subject), subject=subject,
+        #         session=session
+        #     )
+        #     for subject, session in
+        #     itertools.product(
+        #         config.get_subjects(),
+        #         config.get_sessions()
+        #     )
+        # )
 
-        config.save_logs(logs)
+        # config.save_logs(logs)
 
         sessions = config.get_sessions()
         if not sessions:

@@ -1739,20 +1739,20 @@ def get_config(
 def main():
     """Make reports."""
     with config.get_parallel_backend():
-        # parallel, run_func = parallel_func(run_report)
-        # logs = parallel(
-        #     run_func(
-        #         cfg=get_config(subject=subject), subject=subject,
-        #         session=session
-        #     )
-        #     for subject, session in
-        #     itertools.product(
-        #         config.get_subjects(),
-        #         config.get_sessions()
-        #     )
-        # )
+        parallel, run_func = parallel_func(run_report)
+        logs = parallel(
+            run_func(
+                cfg=get_config(subject=subject), subject=subject,
+                session=session
+            )
+            for subject, session in
+            itertools.product(
+                config.get_subjects(),
+                config.get_sessions()
+            )
+        )
 
-        # config.save_logs(logs)
+        config.save_logs(logs)
 
         sessions = config.get_sessions()
         if not sessions:

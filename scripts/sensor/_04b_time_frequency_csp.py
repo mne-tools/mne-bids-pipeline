@@ -1,3 +1,6 @@
+"""
+Decoding based on spatial patterns (CSP).
+"""
 
 import itertools
 from types import SimpleNamespace

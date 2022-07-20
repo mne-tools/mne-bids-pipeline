@@ -7,7 +7,6 @@ import os.path as op
 
 import numpy as np
 import pandas as pd
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
@@ -18,7 +17,9 @@ from mne.decoding import UnsupervisedSpatialFilter, CSP
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, parallel_func
+from config import (
+    gen_log_kwargs, on_error, failsafe_run, parallel_func, LogReg
+)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -182,7 +183,11 @@ def one_subject_decoding(
     )
     clf = make_pipeline(
         csp,
-        LinearDiscriminantAnalysis(),
+        LogReg(
+            solver='liblinear',  # much faster than the default
+            random_state=cfg.random_state,
+            n_jobs=1,
+        )
     )
     cv = StratifiedKFold(
         n_splits=cfg.decoding_n_splits,

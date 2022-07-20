@@ -223,7 +223,7 @@ def one_subject_decoding(
     )
     del freq_decoding_table_rows
 
-    for _, row in freq_decoding_table.iterrows():
+    for idx, row in freq_decoding_table.iterrows():
         fmin = row['f_min']
         fmax = row['f_max']
         cond1 = row['cond_1']
@@ -259,10 +259,7 @@ def one_subject_decoding(
             cv=cv,
             n_jobs=1,
         )
-
-        # The row is a view on the original dataframe, so we can modify it here
-        # and the dataframe will be updated.
-        row['mean_crossval_score'] = cv_scores.mean()
+        freq_decoding_table.loc[idx, 'mean_crossval_score'] = cv_scores.mean()
 
     # Loop over times x frequencies
     #
@@ -304,7 +301,7 @@ def one_subject_decoding(
     )
     del tf_decoding_table_rows
 
-    for _, row in tf_decoding_table.iterrows():
+    for idx, row in tf_decoding_table.iterrows():
         tmin = row['t_min']
         tmax = row['t_max']
         fmin = row['f_min']
@@ -340,9 +337,7 @@ def one_subject_decoding(
             cv=cv,
             n_jobs=1,
         )
-        # The row is a view on the original dataframe, so we can modify it here
-        # and the dataframe will be updated.
-        row['mean_crossval_score'] = cv_scores.mean()
+        tf_decoding_table.loc[idx, 'mean_crossval_score'] = cv_scores.mean()
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f'{condition1}+{condition2}'.replace(op.sep, '')

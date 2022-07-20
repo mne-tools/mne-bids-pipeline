@@ -1568,8 +1568,8 @@ def add_csp_grand_average(
             )[0]
             significant_clusters = clusters[significant_cluster_idx]
 
-            # vmax = np.abs(t_vals).max()
-            # vmin = -vmax
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
             vmax = max(
                 np.abs(mean_crossval_scores.min() - 0.5),
                 np.abs(mean_crossval_scores.max() - 0.5)

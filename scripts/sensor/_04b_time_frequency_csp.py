@@ -201,31 +201,27 @@ def one_subject_decoding(
         freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
         freq_name_to_bins_map[freq_range_name] = freq_bins
 
-    freq_decoding_table = pd.DataFrame(
-        columns=['subject', 'cond_1', 'cond_2', 'f_min', 'f_max',
-                 'freq_range_name', 'mean_crossval_score', 'metric']
-    )
-
+    freq_decoding_table_rows = []
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
         for freq_bin in freq_bins:
             f_min, f_max = freq_bin
-            one_row = pd.DataFrame(
-                {
-                    'subject': subject,
-                    'cond_1': condition1,
-                    'cond_2': condition2,
-                    'f_min': f_min,
-                    'f_max': f_max,
-                    'freq_range_name': freq_range_name,
-                    'mean_crossval_score': np.nan,
-                    'metric': cfg.decoding_metric,
-                },
-                index=[0]
-            )
-            freq_decoding_table = pd.concat(
-                [freq_decoding_table, one_row],
-                ignore_index=True
-            )
+            row = {
+                'subject': [subject],
+                'cond_1': [condition1],
+                'cond_2': [condition2],
+                'f_min': [f_min],
+                'f_max': [f_max],
+                'freq_range_name': [freq_range_name],
+                'mean_crossval_score': [np.nan],
+                'metric': [cfg.decoding_metric],
+            }
+            freq_decoding_table_rows.append(row)
+
+    freq_decoding_table = pd.concat(
+        [pd.DataFrame.from_dict(row) for row in freq_decoding_table_rows],
+        ignore_index=True
+    )
+    del freq_decoding_table_rows
 
     for _, row in freq_decoding_table.iterrows():
         fmin = row['f_min']
@@ -280,12 +276,7 @@ def one_subject_decoding(
         )
     assert time_bins.ndim == 2
 
-    tf_decoding_table = pd.DataFrame(
-        columns=[
-            'subject', 'cond_1', 'cond_2', 't_min', 't_max', 'f_min',
-            'f_max', 'freq_range_name', 'mean_crossval_score', 'metric'
-        ]
-    )
+    tf_decoding_table_rows = []
 
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
         for time_bin in time_bins:
@@ -293,25 +284,25 @@ def one_subject_decoding(
 
             for freq_bin in freq_bins:
                 f_min, f_max = freq_bin
-                one_row = pd.DataFrame(
-                    {
-                        'subject': subject,
-                        'cond_1': condition1,
-                        'cond_2': condition2,
-                        't_min': t_min,
-                        't_max': t_max,
-                        'f_min': f_min,
-                        'f_max': f_max,
-                        'freq_range_name': freq_range_name,
-                        'mean_crossval_score': np.nan,
-                        'metric': cfg.decoding_metric
-                    },
-                    index=[0]
-                )
-                tf_decoding_table = pd.concat(
-                    [tf_decoding_table, one_row],
-                    ignore_index=True
-                )
+                row = {
+                    'subject': subject,
+                    'cond_1': condition1,
+                    'cond_2': condition2,
+                    't_min': t_min,
+                    't_max': t_max,
+                    'f_min': f_min,
+                    'f_max': f_max,
+                    'freq_range_name': freq_range_name,
+                    'mean_crossval_score': np.nan,
+                    'metric': cfg.decoding_metric
+                }
+                tf_decoding_table_rows.append(row)
+
+    tf_decoding_table = pd.concat(
+        [pd.DataFrame.from_dict(row) for row in tf_decoding_table_rows],
+        ignore_index=True
+    )
+    del tf_decoding_table_rows
 
     for _, row in tf_decoding_table.iterrows():
         tmin = row['t_min']

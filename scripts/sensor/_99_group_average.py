@@ -437,13 +437,6 @@ def average_csp_decoding(
         )
 
     # Perform a cluster-based permutation test.
-    g = (
-        pd.concat(all_decoding_data_time_freq)
-        .groupby([
-            'subject', 'freq_range_name', 't_min', 't_max'
-        ])
-    )
-
     subjects = cfg.subjects
     time_bins = np.array(cfg.decoding_csp_times)
     if time_bins.ndim == 1:
@@ -469,6 +462,14 @@ def average_csp_decoding(
         )
         a.fill(np.nan)
         data_for_clustering[freq_range_name] = a
+
+
+    g = (
+        pd.concat(all_decoding_data_time_freq)
+        .groupby([
+            'subject', 'freq_range_name', 't_min', 't_max'
+        ])
+    )
 
     for (subject, freq_range_name, t_min, t_max), df in g:
         scores = df['mean_crossval_score']

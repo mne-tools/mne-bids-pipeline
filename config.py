@@ -1443,7 +1443,7 @@ decoding_csp_times: Optional[ArrayLike] = np.linspace(
 )
 """
 The edges of the time bins to use for CSP decoding.
-Must contain at least two elements. By default, 4 equally-spaced bins are
+Must contain at least two elements. By default, 5 equally-spaced bins are
 created across the non-negative time range of the epochs.
 
 All specified time points must be contained in the epochs interval.
@@ -1465,14 +1465,14 @@ frequency data.
 decoding_csp_freqs: Dict[str, ArrayLike] = {
     'custom': [
         time_frequency_freq_min,
-        (time_frequency_freq_max - time_frequency_freq_min) / 2 + time_frequency_freq_min,  # noqa: E501
+        (time_frequency_freq_max + time_frequency_freq_min) / 2,  # noqa: E501
         time_frequency_freq_max
     ]
 }
 """
 The edges of the frequency bins to use for CSP decoding.
 
-This parameter must be a dictionary with they keys specifying the "name" to use
+This parameter must be a dictionary with keys specifying the "name" to use
 for the frequency range, must be a list-like object containing at least two
 scalar values, specifying the edges of the respective frequency bin(s).
 
@@ -1483,7 +1483,7 @@ between this value and
 that midpoint to `time_frequency_freq_max`.
 
 ???+ example "Example"
-    Create two frquency bins, one for 4–8 Hz, and another for 8–14 Hz:
+    Create two frequency bins, one for 4–8 Hz, and another for 8–14 Hz:
     ```python
     decoding_csp_freqs = {
         'custom_range': [4, 8, 14]

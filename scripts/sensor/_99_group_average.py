@@ -408,9 +408,11 @@ def average_csp_decoding(
 
         decoding_data_freq = pd.read_excel(
             fname_xlsx, sheet_name='CSP Frequency',
+            dtype={'subject': str}  # don't drop trailing zeros
         )
         decoding_data_time_freq = pd.read_excel(
-            fname_xlsx, sheet_name='CSP Time-Frequency'
+            fname_xlsx, sheet_name='CSP Time-Frequency',
+            dtype={'subject': str}  # don't drop trailing zeros
         )
         all_decoding_data_freq.append(decoding_data_freq)
         all_decoding_data_time_freq.append(decoding_data_time_freq)
@@ -470,7 +472,7 @@ def average_csp_decoding(
 
     for (subject, freq_range_name, t_min, t_max), df in g:
         scores = df['mean_crossval_score']
-        sub_idx = subjects.index(f'{subject}')
+        sub_idx = subjects.index(subject)
         time_bin_idx = time_bins.loc[
             (np.isclose(time_bins['t_min'], t_min)) &
             (np.isclose(time_bins['t_max'], t_max)), :

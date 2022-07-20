@@ -242,7 +242,7 @@ def one_subject_decoding(
         epochs_filt, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
-
+        # Get the data for all time points
         X = epochs_filt.get_data()
 
         # We apply PCA before running CSP:
@@ -285,16 +285,16 @@ def one_subject_decoding(
             for freq_bin in freq_bins:
                 f_min, f_max = freq_bin
                 row = {
-                    'subject': subject,
-                    'cond_1': condition1,
-                    'cond_2': condition2,
-                    't_min': t_min,
-                    't_max': t_max,
-                    'f_min': f_min,
-                    'f_max': f_max,
-                    'freq_range_name': freq_range_name,
-                    'mean_crossval_score': np.nan,
-                    'metric': cfg.decoding_metric
+                    'subject': [subject],
+                    'cond_1': [condition1],
+                    'cond_2': [condition2],
+                    't_min': [t_min],
+                    't_max': [t_max],
+                    'f_min': [f_min],
+                    'f_max': [f_max],
+                    'freq_range_name': [freq_range_name],
+                    'mean_crossval_score': [np.nan],
+                    'metric': [cfg.decoding_metric]
                 }
                 tf_decoding_table_rows.append(row)
 

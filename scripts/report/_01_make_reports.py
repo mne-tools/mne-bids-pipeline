@@ -1537,12 +1537,73 @@ def add_csp_grand_average(
         recording=cfg.rec,
         space=cfg.space,
         suffix='decoding',
-        extension='.mat',
         datatype=cfg.datatype,
         root=cfg.deriv_root,
         check=False
     )
 
+    # First, plot deocding scores across frequency bins (entire epochs).
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_freq_results = bids_path.copy().update(
+            processing=processing,
+            extension='.xlsx',
+        )
+        csp_freq_results = pd.read_excel(
+            fname_csp_freq_results,
+            sheet_name='CSP Frequency'
+        )
+
+        for freq_range_name in cfg.decoding_csp_freqs.keys():
+            results = csp_freq_results.loc[
+                csp_freq_results['freq_range_name'] == freq_range_name, :
+            ]
+            freq_bin_starts = results['f_min']
+            freq_bin_widths = results['f_max'] - results['f_min']
+            decoding_scores = results['mean']
+            cis_lower = results['mean_ci_lower']
+            cis_upper = results['mean_ci_upper']
+            error_bars_lower = decoding_scores - cis_lower
+            error_bars_upper = cis_upper - decoding_scores
+            error_bars = np.stack([error_bars_lower, error_bars_upper])
+            assert len(error_bars) == 2  # lower, upper
+            del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+
+            if cfg.decoding_metric == 'roc_auc':
+                metric = 'ROC AUC'
+
+            fig, ax = plt.subplots()
+            ax.bar(
+                x=freq_bin_starts,
+                width=freq_bin_widths,
+                height=decoding_scores,
+                align='edge',
+                yerr=error_bars,
+                edgecolor='black',
+            )
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel(f'Mean decoding score ({metric})')
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
+            )
+            report.add_figure(
+                fig=fig,
+                title=f'Frequency range: {freq_range_name}',
+                section=f'CSP: {cond_1} ./. {cond_2}',
+                caption=f'Mean decoding scores. Error bars represent '
+                        f'bootstrapped 95% confidence intervals.',
+                tags=tags,
+            )
+
+    # Now, plot deocding scores across time-frequency bins.
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
@@ -1550,6 +1611,7 @@ def add_csp_grand_average(
         processing = processing.replace('_', '-').replace('-', '')
         fname_csp_cluster_results = bids_path.copy().update(
             processing=processing,
+            extension='.mat',
         )
         csp_cluster_results = loadmat(fname_csp_cluster_results)
 

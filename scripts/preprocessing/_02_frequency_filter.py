@@ -53,19 +53,24 @@ def get_input_fnames_frequency_filter(**kwargs):
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
     # the "run" entity.
-    bids_path_in = BIDSPath(subject=subject,
-                            run=run,
-                            session=session,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            processing=cfg.proc,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix='raw',
-                            extension='.fif',
-                            datatype=cfg.datatype,
-                            root=cfg.deriv_root,
-                            check=False)
+    path_kwargs = dict(
+        subject=subject,
+        run=run,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        check=False
+    )
+    if cfg.use_maxwell_filter:
+        path_kwargs['root'] = cfg.deriv_root
+        path_kwargs['suffix'] = '.fif'
+    else:
+        path_kwargs['root'] = cfg.bids_root
+    bids_path_in = BIDSPath(**path_kwargs)
 
     if cfg.use_maxwell_filter:
         bids_path_in.update(processing="sss")
@@ -75,8 +80,11 @@ def get_input_fnames_frequency_filter(**kwargs):
     in_files = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
 
-    noise_task = "rest" if config.noise_cov == "rest" else "noise"
+    # TODO: No need to process empty room (I guess?)
+    if cfg.noise_cov not in ('rest', 'noise'):
+        return in_files
 
+    noise_task = "rest" if config.noise_cov == "rest" else "noise"
     if cfg.use_maxwell_filter:
         raw_noise_fname_in = bids_path_in.copy().update(
             run=None, task=noise_task
@@ -89,6 +97,7 @@ def get_input_fnames_frequency_filter(**kwargs):
             in_files["raw_rest"] = bids_path_in.copy().update(run=None,
                                                               task=noise_task)
         else:
+            assert cfg.noise_cov == 'noise'
             ref_bids_path = bids_path_in.copy().update(
                 run=cfg.mf_reference_run,
                 extension='.fif',
@@ -180,7 +189,9 @@ def filter_data(
         raw = import_experimental_data(bids_path_in=bids_path,
                                        cfg=cfg)
 
-    out_files['raw_filt'] = bids_path.copy().update(processing='filt')
+    out_files['raw_filt'] = bids_path.copy().update(
+        root=cfg.deriv_root, processing='filt', extension='.fif',
+        suffix='raw')
     raw.load_data()
     filter(
         raw=raw, subject=subject, session=session, run=run,
@@ -227,7 +238,9 @@ def filter_data(
             )
 
         out_files['raw_noise_filt'] = \
-            bids_path_noise.copy(root=cfg.deriv_root).update(processing='filt')
+            bids_path_noise.copy(root=cfg.deriv_root).update(
+                root=cfg.deriv_root, processing='filt', extension='.fif',
+                suffix='raw')
 
         raw_noise.load_data()
         filter(

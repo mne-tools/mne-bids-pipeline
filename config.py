@@ -1845,10 +1845,13 @@ processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 """
 
-memory_location: str = '.'
+memory_location: PathLike = '.'
 """
-If not None, caching will be enabled and the cache files will be persisted
-in the this folder.
+If not None, caching will be enabled and the cache files will be stored in the
+given directory. For example, you could use
+``pathlib.Path(__file__).parent / 'joblib'`` to store the cache files in the
+``'joblib'`` directory relative to your config file. This directory will be
+created if it does not exist.
 """
 
 ###############################################################################
@@ -2776,7 +2779,7 @@ def failsafe_run(
 ):
     if memory_location is None or get_input_fnames is None:
         # No caching is needed
-        memory = Memory(location='.')  # no op
+        memory = Memory(location=None)  # no op
     else:
         memory = StepMemory(get_input_fnames=get_input_fnames)
 
@@ -2874,9 +2877,10 @@ class StepMemory():
             assert isinstance(in_files, dict), type(in_files)
 
             hashes = []
-            for v in in_files.values():
+            for k, v in in_files.items():
                 if isinstance(v, BIDSPath):
                     v = v.fpath
+                assert v.exists(), f'missing in_files["{k}"] = {v}'
                 hashes.append((str(v), v.lstat().st_mtime))
                 # hashes.append((str(v), hash_file_path(v)))
 
@@ -3568,11 +3572,15 @@ def import_er_data(
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
 
+    # TODO: This 'union' operation should affect the raw runs, too, otherwise
+    # rank mismatches will still occur (eventually for some configs).
+    # But at least using the union here should reduce them.
     if cfg.use_maxwell_filter:
         raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
-            raw=raw_ref
+            raw=raw_ref,
+            bads='union',
         )
     else:
         # Set same set of bads as in the reference run, but only for MEG

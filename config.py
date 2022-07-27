@@ -3561,7 +3561,7 @@ def import_er_data(
         The imported data.
     """
     raw_er = _load_data(cfg, bids_path_er_in)
-    session = raw_er.session
+    session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 

@@ -1845,13 +1845,11 @@ processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 """
 
-memory_location: PathLike = '.'
+memory_location: Optional[Union[PathLike, bool]] = True
 """
-If not None, caching will be enabled and the cache files will be stored in the
-given directory. For example, you could use
-``pathlib.Path(__file__).parent / 'joblib'`` to store the cache files in the
-``'joblib'`` directory relative to your config file. This directory will be
-created if it does not exist.
+If not None (or False), caching will be enabled and the cache files will be
+stored in the given directory. The default (True) will use a
+``'.joblib_cache'`` subdirectory in the BIDS derivative root of the dataset.
 """
 MemoryFileMethodT = Literal['mtime', 'hash']
 memory_file_method: MemoryFileMethodT = 'mtime'
@@ -2793,7 +2791,9 @@ def failsafe_run(
     script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
 ):
-    if memory_location is None or get_input_fnames is None:
+    if memory_location is None or \
+            memory_location is False or \
+            get_input_fnames is None:
         # No caching is needed
         memory = Memory(location=None)  # no op
     else:
@@ -2883,7 +2883,17 @@ def hash_file_path(path):
 
 class StepMemory():
     def __init__(self, get_input_fnames=None):
-        self.memory = Memory(location=memory_location, verbose=3)
+        # Use an ugly global here so that this message only gets printed once
+        # (because after this it will no longer be bool)
+        global memory_location
+        if memory_location is True:
+            memory_location = get_deriv_root() / '.joblib_cache'
+            logger.info(**gen_log_kwargs(
+                message=f'Using memory_location={memory_location}'))
+            logger.info(**gen_log_kwargs(
+                message=f'Using memory_file_method={memory_file_method}'))
+        memory_location = pathlib.Path(memory_location)
+        self.memory = Memory(memory_location, verbose=3)
         self.get_input_fnames = get_input_fnames
 
     def cache(self, func):
@@ -3607,8 +3617,8 @@ def import_er_data(
             bads_tsv_fname = bids_path_ref_in.copy().update(
                 suffix='bads', extension='.tsv', root=cfg.deriv_root,
                 check=False)
-            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t')
-            bads_tsv = bads_tsv[bads_tsv.columns[0]][1:].tolist()  # omit hdr
+            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t', header=0)
+            bads_tsv = bads_tsv[bads_tsv.columns[0]].tolist()
             raw_ref.info['bads'] = sorted(
                 set(raw_ref.info['bads']) | set(bads_tsv))
             raw_ref.info._check_consistency()

@@ -1853,6 +1853,15 @@ given directory. For example, you could use
 ``'joblib'`` directory relative to your config file. This directory will be
 created if it does not exist.
 """
+MemoryFileMethodT = Literal['mtime', 'hash']
+memory_file_method: MemoryFileMethodT = 'mtime'
+"""
+The method to use for cache invalidation (i.e., detecting changes). Using the
+"modified time" reported by the filesystem (``'mtime'``, default) is very fast
+but requires that the filesystem supports proper mtime reporting. Using file
+hashes (``'hash'``) is slower and requires reading all input files but should
+work on any filesystem.
+"""
 
 ###############################################################################
 #                                                                             #
@@ -2102,7 +2111,14 @@ if 'eeg' in ch_types:
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
-           f"but received: {on_error}.")
+           f"but received: {on_error}. Using 'abort'.")
+    on_error = 'abort'
+    logger.info(**gen_log_kwargs(message=msg))
+
+if memory_file_method not in ('mtime', 'hash'):
+    msg = (f"memory_file_method must be one of 'mtime' or 'hash', "
+           f"but received: {memory_file_method}. Using 'mtime'.")
+    memory_file_method = 'mtime'
     logger.info(**gen_log_kwargs(message=msg))
 
 if isinstance(noise_cov, str) and noise_cov not in (
@@ -2881,8 +2897,12 @@ class StepMemory():
                 if isinstance(v, BIDSPath):
                     v = v.fpath
                 assert v.exists(), f'missing in_files["{k}"] = {v}'
-                hashes.append((str(v), v.lstat().st_mtime))
-                # hashes.append((str(v), hash_file_path(v)))
+                if memory_file_method == 'mtime':
+                    this_hash = v.lstat().st_mtime
+                else:
+                    assert memory_file_method == 'hash'  # should be guaranteed
+                    this_hash = hash_file_path(v)
+                hashes.append((str(v), this_hash))
 
             cfg = copy.deepcopy(kwargs['cfg'])
             cfg.hashes = hashes
@@ -3575,8 +3595,23 @@ def import_er_data(
     # TODO: This 'union' operation should affect the raw runs, too, otherwise
     # rank mismatches will still occur (eventually for some configs).
     # But at least using the union here should reduce them.
+    # TODO: We should also uso automatic bad finding on the empty room data
     if cfg.use_maxwell_filter:
         raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
+        # We need to include any automatically found bad channels, if relevant.
+        # TODO this is a bit of a hack because we don't use "in_files" access
+        # here, but this is *in the same step where this file is generated*
+        # so we cannot / should not put it in `in_files`.
+        if cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg:
+            # match filename from _find_bad_channels
+            bads_tsv_fname = bids_path_ref_in.copy().update(
+                suffix='bads', extension='.tsv', root=cfg.deriv_root,
+                check=False)
+            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t')
+            bads_tsv = bads_tsv[bads_tsv.columns[0]][1:].tolist()  # omit hdr
+            raw_ref.info['bads'] = sorted(
+                set(raw_ref.info['bads']) | set(bads_tsv))
+            raw_ref.info._check_consistency()
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
             raw=raw_ref,

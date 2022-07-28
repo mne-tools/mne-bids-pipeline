@@ -2890,17 +2890,11 @@ def hash_file_path(path):
 
 class StepMemory():
     def __init__(self, get_input_fnames=None):
-        # Use an ugly global here so that this message only gets printed once
-        # (because after this it will no longer be bool)
-        global memory_location
         if memory_location is True:
-            memory_location = get_deriv_root() / '.joblib_cache'
-            logger.info(**gen_log_kwargs(
-                message=f'Using memory_location={memory_location}'))
-            logger.info(**gen_log_kwargs(
-                message=f'Using memory_file_method={memory_file_method}'))
-        memory_location = pathlib.Path(memory_location)
-        self.memory = Memory(memory_location, verbose=memory_verbose)
+            use_location = get_deriv_root() / '.joblib_cache'
+        else:
+            use_location = pathlib.Path(memory_location)
+        self.memory = Memory(use_location, verbose=memory_verbose)
         self.get_input_fnames = get_input_fnames
 
     def cache(self, func):

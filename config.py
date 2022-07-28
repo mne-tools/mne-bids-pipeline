@@ -15,6 +15,7 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+import warnings
 
 
 if sys.version_info >= (3, 8):
@@ -1860,6 +1861,11 @@ but requires that the filesystem supports proper mtime reporting. Using file
 hashes (``'hash'``) is slower and requires reading all input files but should
 work on any filesystem.
 """
+memory_verbose: int = 0
+"""
+The verbosity to use when using memory. The default (0) does not print, while
+1 will print the function calls that will be cached. See the documentation for
+the joblib.Memory class for more information."""
 
 ###############################################################################
 #                                                                             #
@@ -2863,6 +2869,7 @@ def failsafe_run(
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
+                    sys.exit(1)
                 else:
                     message += '\n\nContinuing pipeline run.'
                     logger.critical(**gen_log_kwargs(
@@ -2893,7 +2900,7 @@ class StepMemory():
             logger.info(**gen_log_kwargs(
                 message=f'Using memory_file_method={memory_file_method}'))
         memory_location = pathlib.Path(memory_location)
-        self.memory = Memory(memory_location, verbose=3)
+        self.memory = Memory(memory_location, verbose=memory_verbose)
         self.get_input_fnames = get_input_fnames
 
     def cache(self, func):
@@ -3744,16 +3751,29 @@ def save_logs(logs):
     df = df[columns]
 
     if fname.exists():
-        book = load_workbook(fname)
-        if sheet_name in book:
-            book.remove(book[sheet_name])
+        book = None
+        try:
+            book = load_workbook(fname)
+        except Exception:  # bad file
+            pass
+        else:
+            if sheet_name in book:
+                book.remove(book[sheet_name])
         writer = pd.ExcelWriter(fname, engine='openpyxl')
-        writer.book = book
+        if book is not None:
+            try:
+                writer.book = book
+            except Exception:
+                pass  # AttributeError: can't set attribute 'book' (?)
     else:
         writer = pd.ExcelWriter(fname, engine='openpyxl')
 
     df.to_excel(writer, sheet_name=sheet_name, index=False)
-    writer.save()
+    # TODO: "FutureWarning: save is not part of the public API, usage can give
+    # in unexpected results and will be removed in a future version"
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("ignore")
+        writer.save()
     writer.close()
 
 

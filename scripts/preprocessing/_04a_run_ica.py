@@ -533,8 +533,11 @@ def get_config(
 
 def main():
     """Run ICA."""
-    if not config.spatial_filter == 'ica':
+    if config.spatial_filter != 'ica':
         msg = 'Skipping …'
+        # TODO: This message has the wrong prefix because
+        # MNE_BIDS_STUDY_SCRIPT_PATH will be from whatever the *previous*
+        # step was, as it hasn't been set by failsafe_run yet
         logger.info(**gen_log_kwargs(message=msg))
         return
 

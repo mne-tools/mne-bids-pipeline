@@ -79,9 +79,6 @@ def get_config(
 @failsafe_run(on_error=on_error, script_path=__file__)
 def main():
     """Initialize the output directories."""
-    msg = 'Running: Initializing output directories.'
-    logger.info(**gen_log_kwargs(message=msg))
-
     with config.get_parallel_backend():
         init_dataset(cfg=get_config())
         parallel, run_func = parallel_func(init_subject_dirs)
@@ -92,9 +89,6 @@ def main():
                     config.get_sessions()
                 )
             )
-
-        msg = 'Completed: Initializing output directories.'
-        logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

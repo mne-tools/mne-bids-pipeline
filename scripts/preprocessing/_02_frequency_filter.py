@@ -67,7 +67,8 @@ def get_input_fnames_frequency_filter(**kwargs):
     )
     if cfg.use_maxwell_filter:
         path_kwargs['root'] = cfg.deriv_root
-        path_kwargs['suffix'] = '.fif'
+        path_kwargs['suffix'] = 'raw'
+        path_kwargs['extension'] = '.fif'
     else:
         path_kwargs['root'] = cfg.bids_root
     bids_path_in = BIDSPath(**path_kwargs)
@@ -81,7 +82,7 @@ def get_input_fnames_frequency_filter(**kwargs):
     in_files[f'raw_run-{run}'] = bids_path_in
 
     # TODO: No need to process empty room (I guess?)
-    if cfg.noise_cov not in ('rest', 'noise'):
+    if cfg.noise_cov not in ('rest', 'emptyroom'):
         return in_files
 
     noise_task = "rest" if config.noise_cov == "rest" else "noise"
@@ -238,7 +239,7 @@ def filter_data(
             )
 
         out_files['raw_noise_filt'] = \
-            bids_path_noise.copy(root=cfg.deriv_root).update(
+            bids_path_noise.copy().update(
                 root=cfg.deriv_root, processing='filt', extension='.fif',
                 suffix='raw')
 

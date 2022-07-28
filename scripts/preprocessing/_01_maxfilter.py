@@ -87,6 +87,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         processing="sss",
         suffix="raw",
         extension='.fif',
+        root=cfg.deriv_root,
         check=False
     )
     # Now take everything from the bids_path_in and overwrite the parameters
@@ -148,6 +149,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     # We do not run `raw_sss.pick()` here because it uses too much memory.
     picks = config.get_channels_to_analyze(raw.info)
     out_files['sss_raw'] = bids_path_out
+    logger.info(**gen_log_kwargs(
+        message=f"Writing {out_files['sss_raw']}",
+        subject=subject, session=session, run=run))
     raw_sss.save(out_files['sss_raw'], picks=picks, split_naming='bids',
                  overwrite=True)
     del raw, raw_sss
@@ -237,6 +241,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
 
         # Save only the channel types we wish to analyze
         # (same as for experimental data above).
+        logger.info(**gen_log_kwargs(
+            message=f"Writing {out_files['sss_noise']}",
+            subject=subject, session=session, run=run))
         raw_noise_sss.save(
             out_files['sss_noise'], picks=picks, overwrite=True,
             split_naming='bids'

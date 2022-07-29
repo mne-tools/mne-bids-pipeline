@@ -3585,10 +3585,9 @@ def import_er_data(
     cfg
         The local configuration.
     bids_path_er_in
-        XXX
+        The BIDS path to the empty room data.
     bids_path_ref_in
-        XXX
-        Only necessary if use_maxwell_filter is True.
+        The BIDS path to the reference data.
 
     Returns
     -------

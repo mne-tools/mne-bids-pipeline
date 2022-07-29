@@ -3542,7 +3542,7 @@ def import_experimental_data(
     cfg
         The local configuration.
     bids_path_in
-        XXX
+        The BIDS path to the data to import.
 
     Returns
     -------

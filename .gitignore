@@ -13,3 +13,4 @@ docs/source/examples/*
 __pycache__/
 .dask-worker-space/
 mprofile_*.dat
+.joblib_cache/

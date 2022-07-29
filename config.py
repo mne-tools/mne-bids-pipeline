@@ -5,6 +5,7 @@ alter for your specific analysis.
 
 import importlib
 import pathlib
+import hashlib
 import functools
 import os
 import pdb
@@ -14,6 +15,8 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+import warnings
+
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -25,6 +28,7 @@ import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
+from joblib import Memory
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
@@ -1842,6 +1846,27 @@ processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 """
 
+memory_location: Optional[Union[PathLike, bool]] = True
+"""
+If not None (or False), caching will be enabled and the cache files will be
+stored in the given directory. The default (True) will use a
+``'joblib'`` subdirectory in the BIDS derivative root of the dataset.
+"""
+MemoryFileMethodT = Literal['mtime', 'hash']
+memory_file_method: MemoryFileMethodT = 'mtime'
+"""
+The method to use for cache invalidation (i.e., detecting changes). Using the
+"modified time" reported by the filesystem (``'mtime'``, default) is very fast
+but requires that the filesystem supports proper mtime reporting. Using file
+hashes (``'hash'``) is slower and requires reading all input files but should
+work on any filesystem.
+"""
+memory_verbose: int = 0
+"""
+The verbosity to use when using memory. The default (0) does not print, while
+1 will print the function calls that will be cached. See the documentation for
+the joblib.Memory class for more information."""
+
 ###############################################################################
 #                                                                             #
 #                      CUSTOM CONFIGURATION ENDS HERE                         #
@@ -2090,7 +2115,14 @@ if 'eeg' in ch_types:
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
-           f"but received: {on_error}.")
+           f"but received: {on_error}. Using 'abort'.")
+    on_error = 'abort'
+    logger.info(**gen_log_kwargs(message=msg))
+
+if memory_file_method not in ('mtime', 'hash'):
+    msg = (f"memory_file_method must be one of 'mtime' or 'hash', "
+           f"but received: {memory_file_method}. Using 'mtime'.")
+    memory_file_method = 'mtime'
     logger.info(**gen_log_kwargs(message=msg))
 
 if isinstance(noise_cov, str) and noise_cov not in (
@@ -2763,7 +2795,16 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 def failsafe_run(
     on_error: OnErrorT,
     script_path: PathLike,
+    get_input_fnames: Optional[Callable] = None,
 ):
+    if memory_location is None or \
+            memory_location is False or \
+            get_input_fnames is None:
+        # No caching is needed
+        memory = Memory(location=None)  # no op
+    else:
+        memory = StepMemory(get_input_fnames=get_input_fnames)
+
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
@@ -2782,8 +2823,8 @@ def failsafe_run(
 
             try:
                 assert len(args) == 0  # make sure params are only kwargs
-                out = func(*args, **kwargs)
-                assert out is None  # make sure the function returns None
+                out = memory.cache(func)(*args, **kwargs)
+                assert out is None  # nothing should be returned
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
@@ -2828,6 +2869,7 @@ def failsafe_run(
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
+                    sys.exit(1)
                 else:
                     message += '\n\nContinuing pipeline run.'
                     logger.critical(**gen_log_kwargs(
@@ -2837,6 +2879,72 @@ def failsafe_run(
             return log_info
         return wrapper
     return failsafe_run_decorator
+
+
+def hash_file_path(path):
+    with open(path, 'rb') as f:
+        md5_hash = hashlib.md5(f.read())
+        md5_hashed = md5_hash.hexdigest()
+    return md5_hashed
+
+
+class StepMemory():
+    def __init__(self, get_input_fnames=None):
+        if memory_location is True:
+            use_location = get_deriv_root() / 'joblib'
+        else:
+            use_location = pathlib.Path(memory_location)
+        self.memory = Memory(use_location, verbose=memory_verbose)
+        self.get_input_fnames = get_input_fnames
+
+    def cache(self, func):
+        def wrapper(*args, **kwargs):
+            in_files = self.get_input_fnames(**kwargs)
+            # This is an implementation detail so we don't need a proper error
+            assert isinstance(in_files, dict), type(in_files)
+
+            hashes = []
+            for k, v in in_files.items():
+                if isinstance(v, BIDSPath):
+                    v = v.fpath
+                assert v.exists(), f'missing in_files["{k}"] = {v}'
+                if memory_file_method == 'mtime':
+                    this_hash = v.lstat().st_mtime
+                else:
+                    assert memory_file_method == 'hash'  # should be guaranteed
+                    this_hash = hash_file_path(v)
+                hashes.append((str(v), this_hash))
+
+            cfg = copy.deepcopy(kwargs['cfg'])
+            cfg.hashes = hashes
+            kwargs['cfg'] = cfg
+            kwargs['in_files'] = in_files
+
+            # XXX we should also hash the sidecar files
+
+            out_files = self.memory.cache(func)(*args, **kwargs)
+            # backward compat, but ideally this would eventually just be dict
+            assert isinstance(out_files, (dict, list))
+            if isinstance(out_files, dict):
+                out_files_missing_msg = '\n'.join(
+                    f'- {key}={fname}' for key, fname in out_files.items()
+                    if not pathlib.Path(fname).exists()
+                )
+            else:
+                out_files_missing_msg = '\n'.join(
+                    f'- {fname}' for fname in out_files
+                    if not pathlib.Path(fname).exists()
+                )
+            if out_files_missing_msg:
+                raise ValueError('Missing at least one output file: \n'
+                                 + out_files_missing_msg + '\n' +
+                                 'This should not happen unless some files '
+                                 'have been manually moved or deleted. You '
+                                 'need to flush your cache to fix this.')
+        return wrapper
+
+    def clear(self):
+        self.memory.clear()
 
 
 def plot_auto_scores(auto_scores):
@@ -3425,9 +3533,7 @@ def _fix_stim_artifact_func(
 def import_experimental_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None,
-    run: Optional[str] = None
+    bids_path_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
@@ -3435,29 +3541,17 @@ def import_experimental_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject to import.
-    session
-        The session to import.
-    run
-        The run to import.
+    bids_path_in
+        The BIDS path to the data to import.
 
     Returns
     -------
     raw
         The imported data.
     """
-    bids_path_in = BIDSPath(subject=subject,
-                            session=session,
-                            run=run,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            processing=cfg.proc,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix=cfg.datatype,
-                            datatype=cfg.datatype,
-                            root=cfg.bids_root)
+    subject = bids_path_in.subject
+    session = bids_path_in.session
+    run = bids_path_in.run
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
     _set_eeg_montage(
@@ -3481,8 +3575,8 @@ def import_experimental_data(
 def import_er_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None
+    bids_path_er_in: BIDSPath,
+    bids_path_ref_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -3490,43 +3584,48 @@ def import_er_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject for whom to import the empty-room data.
-    session
-        The session for which to import the empty-room data.
+    bids_path_er_in
+        The BIDS path to the empty room data.
+    bids_path_ref_in
+        The BIDS path to the reference data.
 
     Returns
     -------
     raw_er
         The imported data.
     """
-    bids_path_reference_run = BIDSPath(
-        subject=subject,
-        session=session,
-        run=cfg.mf_reference_run,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        processing=cfg.proc,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix=cfg.datatype,
-        datatype=cfg.datatype,
-        root=cfg.bids_root
-    )
-    bids_path_er_in = bids_path_reference_run.find_empty_room()
-
     raw_er = _load_data(cfg, bids_path_er_in)
-    raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
+    session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
 
+    # TODO: This 'union' operation should affect the raw runs, too, otherwise
+    # rank mismatches will still occur (eventually for some configs).
+    # But at least using the union here should reduce them.
+    # TODO: We should also uso automatic bad finding on the empty room data
     if cfg.use_maxwell_filter:
+        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
+        # We need to include any automatically found bad channels, if relevant.
+        # TODO this is a bit of a hack because we don't use "in_files" access
+        # here, but this is *in the same step where this file is generated*
+        # so we cannot / should not put it in `in_files`.
+        if cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg:
+            # match filename from _find_bad_channels
+            bads_tsv_fname = bids_path_ref_in.copy().update(
+                suffix='bads', extension='.tsv', root=cfg.deriv_root,
+                check=False)
+            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t', header=0)
+            bads_tsv = bads_tsv[bads_tsv.columns[0]].tolist()
+            raw_ref.info['bads'] = sorted(
+                set(raw_ref.info['bads']) | set(bads_tsv))
+            raw_ref.info._check_consistency()
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
-            raw=raw_ref
+            raw=raw_ref,
+            bads='union',
         )
     else:
         # Set same set of bads as in the reference run, but only for MEG
@@ -3571,34 +3670,6 @@ def import_rest_data(
 class ReferenceRunParams(TypedDict):
     montage: mne.channels.DigMontage
     dev_head_t: mne.Transform
-
-
-def get_reference_run_params(
-    *,
-    subject: str,
-    session: Optional[str] = None,
-    run: str
-) -> ReferenceRunParams:
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        run=run,
-        task=get_task(),
-        acquisition=acq,
-        recording=rec,
-        space=space,
-        suffix='meg',
-        extension='.fif',
-        datatype=get_datatype(),
-        root=get_bids_root(),
-    )
-
-    raw = read_raw_bids(bids_path=bids_path)
-    params = ReferenceRunParams(
-        montage=raw.get_montage(),
-        dev_head_t=raw.info['dev_head_t']
-    )
-    return params
 
 
 def _find_breaks_func(
@@ -3673,16 +3744,29 @@ def save_logs(logs):
     df = df[columns]
 
     if fname.exists():
-        book = load_workbook(fname)
-        if sheet_name in book:
-            book.remove(book[sheet_name])
+        book = None
+        try:
+            book = load_workbook(fname)
+        except Exception:  # bad file
+            pass
+        else:
+            if sheet_name in book:
+                book.remove(book[sheet_name])
         writer = pd.ExcelWriter(fname, engine='openpyxl')
-        writer.book = book
+        if book is not None:
+            try:
+                writer.book = book
+            except Exception:
+                pass  # AttributeError: can't set attribute 'book' (?)
     else:
         writer = pd.ExcelWriter(fname, engine='openpyxl')
 
     df.to_excel(writer, sheet_name=sheet_name, index=False)
-    writer.save()
+    # TODO: "FutureWarning: save is not part of the public API, usage can give
+    # in unexpected results and will be removed in a future version"
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("ignore")
+        writer.save()
     writer.close()
 
 

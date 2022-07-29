@@ -147,7 +147,7 @@ def get_config(
 
 def main():
     """Run SSP."""
-    if not config.spatial_filter == 'ssp':
+    if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
         logger.info(**gen_log_kwargs(message=msg))
         return

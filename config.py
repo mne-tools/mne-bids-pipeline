@@ -1850,7 +1850,7 @@ memory_location: Optional[Union[PathLike, bool]] = True
 """
 If not None (or False), caching will be enabled and the cache files will be
 stored in the given directory. The default (True) will use a
-``'.joblib_cache'`` subdirectory in the BIDS derivative root of the dataset.
+``'joblib'`` subdirectory in the BIDS derivative root of the dataset.
 """
 MemoryFileMethodT = Literal['mtime', 'hash']
 memory_file_method: MemoryFileMethodT = 'mtime'
@@ -2891,7 +2891,7 @@ def hash_file_path(path):
 class StepMemory():
     def __init__(self, get_input_fnames=None):
         if memory_location is True:
-            use_location = get_deriv_root() / '.joblib_cache'
+            use_location = get_deriv_root() / 'joblib'
         else:
             use_location = pathlib.Path(memory_location)
         self.memory = Memory(use_location, verbose=memory_verbose)

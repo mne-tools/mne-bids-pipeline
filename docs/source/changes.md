@@ -9,6 +9,7 @@ authors:
   dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
   apmellot: "[Apolline Mellot](https://github.com/apmellot)"
   mathiassm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
+  larsoner: "[Eric Larson](https://github.com/larsoner)"
 ---
 
 
@@ -167,6 +168,9 @@ authors:
   scheme via the new configuration option
   [`decoding_time_generalization`][config.decoding_time_generalization].
   ({{ gh(559) }} by {{ authors.hoechenberger }}
+- Caching of early pipeline steps (maxwell filtering, frequency filtering)
+  enabled by default using [`memory_location=True'`][config.memory_location]
+  ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }}
 
 ### Behavior changes
 

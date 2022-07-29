@@ -96,14 +96,14 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': [
-            'sub-01/ses-meg/meg/sub-01_ses-meg_coordsystem.json',
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos',
-            'derivatives/meg_derivatives/ct_sparse.fif',
-            'derivatives/meg_derivatives/sss_cal.dat',
             'sub-01/ses-meg/*.tsv',
             'sub-01/ses-meg/*.json',
+            'sub-emptyroom/ses-20090409',
+            'derivatives/meg_derivatives/ct_sparse.fif',
+            'derivatives/meg_derivatives/sss_cal.dat',
         ],
         'exclude': []
     },

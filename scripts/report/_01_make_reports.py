@@ -1584,6 +1584,9 @@ def add_csp_grand_average(
                 yerr=error_bars,
                 edgecolor='black',
             )
+            ax.set_ylim([0, 1.02])
+            ax.axhline(0.5, color='black', linestyle='--', label='chance')
+            ax.legend()
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel(f'Mean decoding score ({metric})')
             tags = (

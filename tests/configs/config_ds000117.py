@@ -40,8 +40,6 @@ decoding_time_generalization = True
 decoding_csp = True
 decoding_csp_freqs = {
     'alpha': (8, 10, 12.5),
-    'beta_1': (12.5, 16),
-    'beta_2': (16, 20),
-    'beta_3': (20, 30),
+    'test': (10, 15),
 }
 run_source_estimation = False

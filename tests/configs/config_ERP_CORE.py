@@ -36,6 +36,16 @@ sessions = [task]
 subjects = ['015', '016', '017', '018', '019']
 
 
+decode = True
+decoding_time_generalization = True
+decoding_csp = True
+decoding_csp_freqs = {
+    'alpha': (8, 10, 12.5),
+    'test': (10, 15),
+}
+run_source_estimation = False
+
+
 ch_types = ['eeg']
 interactive = False
 

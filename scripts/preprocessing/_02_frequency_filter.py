@@ -82,7 +82,7 @@ def get_input_fnames_frequency_filter(**kwargs):
     in_files[f'raw_run-{run}'] = bids_path_in
 
     # TODO: No need to process empty room (I guess?)
-    if cfg.noise_cov not in ('rest', 'emptyroom'):
+    if config.noise_cov not in ('rest', 'emptyroom'):
         return in_files
 
     noise_task = "rest" if config.noise_cov == "rest" else "noise"
@@ -94,11 +94,11 @@ def get_input_fnames_frequency_filter(**kwargs):
             raw_noise_fname_in.update(split='01')
         in_files["raw_noise"] = raw_noise_fname_in
     else:
-        if cfg.noise_cov == 'rest':
+        if config.noise_cov == 'rest':
             in_files["raw_rest"] = bids_path_in.copy().update(run=None,
                                                               task=noise_task)
         else:
-            assert cfg.noise_cov == 'noise'
+            assert config.noise_cov == 'noise'
             ref_bids_path = bids_path_in.copy().update(
                 run=cfg.mf_reference_run,
                 extension='.fif',
@@ -301,7 +301,6 @@ def get_config(
         drop_channels=config.drop_channels,
         find_breaks=config.find_breaks,
         min_break_duration=config.min_break_duration,
-        noise_cov=config.noise_cov,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
     )

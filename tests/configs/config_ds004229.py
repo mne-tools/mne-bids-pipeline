@@ -8,6 +8,7 @@ bids_root = '~/mne_data/ds004229'
 deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds004229'
 
 task = 'amnoise'
+crop_runs = (0., 300.)
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True

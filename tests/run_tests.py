@@ -43,6 +43,13 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'task': None,
         'env': {}
     },
+    'ds004229': {
+        'dataset': 'ds004229',
+        'config': 'config_ds004229.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
+        'env': {}
+    },
     'ds000246': {
         'dataset': 'ds000246',
         'config': 'config_ds000246.py',

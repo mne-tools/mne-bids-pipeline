@@ -191,6 +191,25 @@ jobs:
           paths:
             - ~/mne_data/ds003392
 
+  cache_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds004229
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds003392
+          command: |
+            python ~/project/tests/download_test_data.py -d ds004229
+      - save_cache:
+          key: data-cache-ds004229-{{ .Revision }}
+          paths:
+            - ~/mne_data/ds004229
+
   cache_eeg_matchingpennies:
     <<: *imageconfig
     steps:
@@ -523,6 +542,36 @@ jobs:
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
 
+  test_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-{{ .Revision }}
+      - run:
+          name: test ds004229
+          command: |
+            export DS=ds004229
+            python tests/run_tests.py --download=0 ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds004229
+          destination: reports/ds004229
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.tsv
+
   test_eeg_matchingpennies:
     <<: *imageconfig
     steps:
@@ -782,6 +831,9 @@ jobs:
             - data-cache-ds003392-{{ .Revision }}
       - restore_cache:
           keys:
+            - data-cache-ds004229-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-eeg_matchingpennies-{{ .Revision }}
       - restore_cache:
           keys:
@@ -895,6 +947,13 @@ workflows:
           requires:
             - cache_ds003392
 
+      - cache_ds004229:
+          requires:
+            - setup_env
+      - test_ds004229:
+          requires:
+            - cache_ds004229
+
       - cache_eeg_matchingpennies:
           requires:
             - setup_env
@@ -938,6 +997,7 @@ workflows:
             - test_ds001810
             - test_ds003104
             - test_ds003392
+            - test_ds004229
             - test_eeg_matchingpennies
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN

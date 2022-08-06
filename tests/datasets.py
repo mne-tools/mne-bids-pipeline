@@ -141,5 +141,18 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'sub-emptyroom/ses-19111211'
         ],
         'exclude': []
-    }
+    },
+    'ds004229': {
+        'git': '',
+        'openneuro': 'ds004229',
+        'osf': '',
+        'web': '',
+        'include': [
+            'sub-102',
+            'sub-emptyroom/ses-20000101',
+            'derivatives/meg_derivatives/ct_sparse.fif',
+            'derivatives/meg_derivatives/sss_cal.dat',
+        ],
+        'exclude': []
+    },
 }

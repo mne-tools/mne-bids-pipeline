@@ -148,29 +148,31 @@ authors:
   dicts specifying a name, a condition list and a weights list to use to
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.
-  ({{ gh(536) }} by {{ authors.mathiassm }}
+  ({{ gh(536) }} by {{ authors.mathiassm }})
 - The pipeline configuration and MNE system information are now automatically
   added to the report.
-  ({{ gh(544) }} by {{ authors.hoechenberger }}
+  ({{ gh(544) }} by {{ authors.hoechenberger }})
 - More robust empty-room data processing for use with Maxwell filter. We are
   now relying on `mne.preprocessing.maxwell_filter_prepare_emptyroom`.
-  ({{ gh(550) }} by {{ authors.hoechenberger }}
+  ({{ gh(550) }} by {{ authors.hoechenberger }})
 - Maxwell filtering now also parallelizes across runs (previously only across
   subjects and sessions).
-  ({{ gh(550) }} by {{ authors.hoechenberger }}
+  ({{ gh(550) }} by {{ authors.hoechenberger }})
 - It is now possible to estimate the noise covariance matrix based on a
   resting-state recording and use it for inverse modeling, just like one could
   previously do with empty-room recordings.
-  ({{ gh(554) }} by {{ authors.hoechenberger }}
+  ({{ gh(554) }} by {{ authors.hoechenberger }})
 - Added full-epochs decoding.
-  ({{ gh(558) }} by {{ authors.hoechenberger }}
+  ({{ gh(558) }} by {{ authors.hoechenberger }})
 - Generalization across time can now be enabled for the time-by-time decoding
   scheme via the new configuration option
   [`decoding_time_generalization`][config.decoding_time_generalization].
-  ({{ gh(559) }} by {{ authors.hoechenberger }}
+  ({{ gh(559) }} by {{ authors.hoechenberger }})
 - Caching of early pipeline steps (maxwell filtering, frequency filtering)
   enabled by default using [`memory_location=True'`][config.memory_location]
-  ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }}
+  ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }})
+- Basic testing of infant MEG data with movement was added to CI testing
+  ({{ gh(582) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

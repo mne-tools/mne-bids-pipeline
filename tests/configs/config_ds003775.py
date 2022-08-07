@@ -1,9 +1,8 @@
-import pathlib
 from mne_bids import get_entity_vals
 
 study_name = 'ds003775'
-bids_root = pathlib.Path('/storage/store2/data/ds003775')
-deriv_root = pathlib.Path('/storage/store2/derivatives/ds003775/mne-bids-pipeline')
+bids_root = '~/mne_data/ds003775'
+deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds003775'
 
 subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
 subjects = subjects[:1]  # take only the first subject

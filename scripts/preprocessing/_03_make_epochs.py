@@ -75,7 +75,7 @@ def run_epochs(*, cfg, subject, session=None):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
-        if cfg.task.lower() == 'rest':
+        if cfg.task.lower().startswith('rest'):
             event_id = None  # make_epochs takes care of it.
         else:
             event_id = event_name_to_code_map.copy()

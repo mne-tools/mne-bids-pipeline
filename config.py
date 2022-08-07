@@ -3127,7 +3127,7 @@ def make_epochs(
     - No rejection thresholds will be applied.
     - No baseline-correction will be performed.
     """
-    if task.lower() == 'rest':
+    if task.lower().startswith('rest'):
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -3786,7 +3786,7 @@ if 'MKDOCS' not in os.environ:
 
 # Another check that depends on some of the functions defined above
 if (get_task() is not None and
-        get_task().lower() != 'rest' and
+        not get_task().lower().startswith('rest') and
         conditions is None and
         'MKDOCS' not in os.environ):
     msg = ('Please indicate the name of your conditions in your '

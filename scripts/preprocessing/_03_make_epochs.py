@@ -52,7 +52,7 @@ def run_epochs(*, cfg, subject, session=None):
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task.lower().startswith('rest'):
         event_name_to_code_map = config.annotations_to_events(
             raw_paths=raw_fnames)
 

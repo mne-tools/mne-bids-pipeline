@@ -110,7 +110,7 @@ def get_config(
 
 def main():
     """Run evoked."""
-    if config.get_task().lower() == 'rest':
+    if config.get_task().lower().startswith('rest'):
         msg = '    … skipping: for resting-state task.'
         logger.info(**gen_log_kwargs(message=msg))
         return

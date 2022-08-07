@@ -561,7 +561,7 @@ def run_report_preprocessing(
             plt.close(fig)
 
     # Visualize events.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task.lower().startswith('rest'):
         msg = 'Adding events plot to report.'
         logger.info(
             **gen_log_kwargs(
@@ -1597,7 +1597,7 @@ def main():
             sessions = [None]
 
         if (config.get_task() is not None and
-                config.get_task().lower() == 'rest'):
+                config.get_task().lower().startswith('rest')):
             msg = '    … skipping "average" report for "rest" task.'
             logger.info(**gen_log_kwargs(message=msg))
             return

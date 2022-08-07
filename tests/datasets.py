@@ -107,6 +107,14 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         ],
         'exclude': []
     },
+    'ds003775': {
+        'git': '',
+        'openneuro': 'ds003775',
+        'osf': '',
+        'web': '',
+        'include': ['sub-01'],
+        'exclude': []
+    },
     'ds001810': {
         'git': '',
         'openneuro': 'ds001810',

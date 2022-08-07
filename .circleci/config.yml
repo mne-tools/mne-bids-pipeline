@@ -77,6 +77,25 @@ jobs:
           paths:
             - ~/mne_data/ds000117
 
+  cache_ds003775:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds003775
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds003775
+          command: |
+            python ~/project/tests/download_test_data.py -d ds003775
+      - save_cache:
+          key: data-cache-ds003775-{{ .Revision }}
+          paths:
+            - ~/mne_data/ds003775
+
   cache_ds000246:
     <<: *imageconfig
     steps:
@@ -275,6 +294,32 @@ jobs:
           root: ~/
           paths:
             - mne_data/derivatives/mne-bids-pipeline/ds000117/*/*/*/*.html
+
+  test_ds003775:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds003775-{{ .Revision }}
+      - run:
+          name: test ds003775
+          command: |
+            export DS=ds003775
+            python tests/run_tests.py --download=0 ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds003775
+          destination: reports/ds003775
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds003775/*/*/*/*.html
 
   test_ds000246:
     <<: *imageconfig
@@ -813,6 +858,9 @@ jobs:
             - data-cache-ds000117-{{ .Revision }}
       - restore_cache:
           keys:
+            - data-cache-ds003775-{{ .Revision }}
+      - restore_cache:
+          keys:
             - data-cache-ds000246-{{ .Revision }}
       - restore_cache:
           keys:
@@ -889,6 +937,13 @@ workflows:
       - test_ds000117:
           requires:
             - cache_ds000117
+
+      - cache_ds003775:
+          requires:
+            - setup_env
+      - test_ds003775:
+          requires:
+            - cache_ds003775
 
       - cache_ds000246:
           requires:
@@ -989,6 +1044,7 @@ workflows:
       - build_docs:
           requires:
             - test_ds000117
+            - test_ds003775
             - test_ds000246
             - test_ds000247
             - test_ds000248

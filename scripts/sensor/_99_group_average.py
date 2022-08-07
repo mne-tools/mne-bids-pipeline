@@ -405,7 +405,7 @@ def get_config(
 # pass 'average' subject for logging
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_group_average_sensor(*, cfg, subject='average'):
-    if config.get_task().lower() == 'rest':
+    if config.get_task().lower().startswith('rest'):
         msg = '    … skipping: for "rest" task.'
         logger.info(**gen_log_kwargs(message=msg))
         return

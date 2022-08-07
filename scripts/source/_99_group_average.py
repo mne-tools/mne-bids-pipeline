@@ -37,7 +37,7 @@ def morph_stc(cfg, subject, fs_subject, session=None):
     morphed_stcs = []
 
     if cfg.task.lower().startswith('rest'):
-        conditions = ['rest']
+        conditions = [cfg.task.lower()]
     else:
         if isinstance(cfg.conditions, dict):
             conditions = list(cfg.conditions.keys())

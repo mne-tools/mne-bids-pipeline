@@ -18,9 +18,6 @@ fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
 def run_recon(root_dir, subject, fs_bids_app) -> None:
-    logger.info(f"Running recon-all on subject {subject}. This will take "
-                f"a LONG time – it's a good idea to let it run over night.")
-
     subjects_dir = Path(config.get_fs_subjects_dir())
     subj_dir = subjects_dir / f"sub-{subject}"
 
@@ -28,6 +25,8 @@ def run_recon(root_dir, subject, fs_bids_app) -> None:
         logger.info(f"Subject {subject} is already present. Please delete the "
                     f"directory if you want to recompute.")
         return
+    logger.info(f"Running recon-all on subject {subject}. This will take "
+                f"a LONG time – it's a good idea to let it run over night.")
 
     env = os.environ
     if 'FREESURFER_HOME' not in env:

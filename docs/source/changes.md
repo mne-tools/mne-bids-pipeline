@@ -239,6 +239,9 @@ authors:
   [`report_evoked_n_time_points`][config.report_evoked_n_time_points] and
   [`report_stc_n_time_points`][config.report_stc_n_time_points], respectively.
   ({{ gh(542) }} by {{ authors.agramfort }})
+- Patch information is now incorporated when computing surface source spaces,
+  which should slightly improve the surface normals
+  ({{ gh(588) }} by {{ authors.larsoner }})
 
 ### Code health
 

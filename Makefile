@@ -4,7 +4,6 @@
 
 PYTHON ?= python
 PYTESTS ?= pytest
-CODESPELL_SKIPS ?= "docs/site/*,*.html"
 CODESPELL_DIRS ?= scripts/ docs/
 all: clean inplace test test-doc
 
@@ -55,11 +54,11 @@ flake-config:
 flake: flake-code flake-config
 	@echo "flake8 passed"
 
-codespell:  # running manually
-	@codespell --builtin clear,rare,informal,names,usage -w -i 3 -q 3 -S $(CODESPELL_SKIPS) --ignore-words=ignore_words.txt $(CODESPELL_DIRS)
+codespell:  # running manually; auto-fix spelling mistakes
+	@codespell --write-changes $(CODESPELL_DIRS)
 
-codespell-error:  # running on travis
-	@codespell --builtin clear,rare,informal,names,usage -i 0 -q 7 -S $(CODESPELL_SKIPS) --ignore-words=ignore_words.txt $(CODESPELL_DIRS)
+codespell-error:  # running on travis; override interactivity seting
+	@codespell -i 0 -q 7 $(CODESPELL_DIRS)
 
 pydocstyle:
 	@echo "Running pydocstyle"

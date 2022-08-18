@@ -14,18 +14,40 @@ echo "COMMIT_MESSAGE=$COMMIT_MESSAGE"
 echo "COMMIT_MESSAGE_ESCAPED=$COMMIT_MESSAGE_ESCAPED"
 echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 
+# Leave here for reference. This only runs all jobs upon [circle full] in the
+# commit message.
+#
 # On a PR, only run setup_env, build_docs, and the requested job(s). If no
 # jobs have been specifically requested, run ds000247.
+# if [[
+#     -v CIRCLE_PULL_REQUEST &&
+#     "$CIRCLE_REQUESTED_JOB" != "full" &&
+#     "$CIRCLE_JOB" != "setup_env" &&
+#     "$CIRCLE_JOB" != "build_docs"
+#    ]] && [[
+#        (-n $CIRCLE_REQUESTED_JOB &&  # Specific job requested -> run only that one
+#         "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB"*) ||
+#        (-z $CIRCLE_REQUESTED_JOB &&  # no specific job requested -> run only ds000247
+#         "$CIRCLE_JOB" != *"ds000247")
+#     ]]; then
+#         echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
+#         circleci-agent step halt
+# # Otherwise, run everything
+# elif [[ -v CIRCLE_PULL_REQUEST ]]; then
+#     echo "Running job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}"
+# else
+#     echo "Running job ${CIRCLE_JOB} for ${CIRCLE_BRANCH} branch"
+# fi
+
+# On a PR, only run setup_env, build_docs, and the requested job(s). If no
+# jobs have been specifically requested via [circle jobname], run all tests.
 if [[
     -v CIRCLE_PULL_REQUEST &&
-    "$CIRCLE_REQUESTED_JOB" != "full" &&
     "$CIRCLE_JOB" != "setup_env" &&
     "$CIRCLE_JOB" != "build_docs"
    ]] && [[
-       (-n $CIRCLE_REQUESTED_JOB &&  # Specific job requested -> run only that one
-        "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB"*) ||
-       (-z $CIRCLE_REQUESTED_JOB &&  # no specific job requested -> run only ds000247
-        "$CIRCLE_JOB" != *"ds000247")
+        -n $CIRCLE_REQUESTED_JOB &&  # Specific job requested -> run only that one
+        "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB"*
     ]]; then
         echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
         circleci-agent step halt

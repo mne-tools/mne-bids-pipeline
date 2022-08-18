@@ -15,7 +15,7 @@ echo "COMMIT_MESSAGE_ESCAPED=$COMMIT_MESSAGE_ESCAPED"
 echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 
 # Leave here for reference. This only runs all jobs upon [circle full] in the
-# commit message.
+# commit message, or jobs that were explicitly requersted.
 #
 # On a PR, only run setup_env, build_docs, and the requested job(s). If no
 # jobs have been specifically requested, run ds000247.

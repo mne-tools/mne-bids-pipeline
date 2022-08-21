@@ -1,4 +1,5 @@
 ::: config.rename_events
+::: config.on_rename_missing_events
 ::: config.event_repeated
 ::: config.conditions
 ::: config.epochs_tmin

@@ -1,10 +1,13 @@
-name: Run the test suite
+name: Checks
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
 
 on: [push, pull_request]
 
 jobs:
   check-style:
-    name: Check style
+    name: Style
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
@@ -12,7 +15,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
@@ -30,3 +33,18 @@ jobs:
       run: pip install codespell
     - name: Run codespell
       run: make codespell-error
+  check-doc:
+    name: Config doc
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v4
+    - run: pip install pytest
+    - run: pytest -ra -vv tests/

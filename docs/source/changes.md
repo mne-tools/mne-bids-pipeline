@@ -173,7 +173,7 @@ authors:
   ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }})
 - Basic testing of infant MEG data with movement was added to CI testing
   ({{ gh(582) }} by {{ authors.larsoner }})
-- The `loose` and `depth` configuration parameters were reenabled
+- The `loose` and `depth` configuration parameters were re-enabled
   ({{ gh(592) }}) by {{ authors.larsoner }}
 
 ### Behavior changes

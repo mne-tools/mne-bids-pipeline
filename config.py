@@ -587,7 +587,7 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
-mf_head_origin = 'auto'
+mf_head_origin: Union[Literal['auto'], ArrayLike] = 'auto'
 """
 ``mf_head_origin`` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.

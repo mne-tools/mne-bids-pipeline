@@ -20,3 +20,5 @@ of tips! 😇
 
 ::: config.l_freq
 ::: config.h_freq
+::: config.l_trans_bandwidth
+::: config.h_trans_bandwidth

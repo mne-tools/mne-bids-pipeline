@@ -1,4 +1,7 @@
 name: Run the test suite
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
 
 on: [push, pull_request]
 
@@ -30,3 +33,20 @@ jobs:
       run: pip install codespell
     - name: Run codespell
       run: make codespell-error
+  check-doc:
+    name: Check config doc
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v4
+    - shell: bash -el {0}
+      run: |
+        pip install pytest
+        pytest -ra -vv tests/

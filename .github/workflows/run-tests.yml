@@ -15,7 +15,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
@@ -46,7 +46,5 @@ jobs:
       with:
         fetch-depth: 0
     - uses: actions/setup-python@v4
-    - shell: bash -el {0}
-      run: |
-        pip install pytest
-        pytest -ra -vv tests/
+    - run: pip install pytest
+    - run: pytest -ra -vv tests/

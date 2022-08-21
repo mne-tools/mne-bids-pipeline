@@ -118,6 +118,8 @@ def get_config(
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,
+        loose=config.loose,
+        depth=config.depth,
         inverse_method=config.inverse_method,
         deriv_root=config.get_deriv_root(),
     )

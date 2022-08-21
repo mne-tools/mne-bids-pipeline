@@ -1,4 +1,4 @@
-name: Style and doc
+name: Checks
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
   cancel-in-progress: true
@@ -7,7 +7,7 @@ on: [push, pull_request]
 
 jobs:
   check-style:
-    name: Check style
+    name: Style
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
@@ -34,7 +34,7 @@ jobs:
     - name: Run codespell
       run: make codespell-error
   check-doc:
-    name: Check config doc
+    name: Config doc
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

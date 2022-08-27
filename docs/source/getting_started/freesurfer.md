@@ -1,7 +1,7 @@
 To perform inverse modeling, or also called source estimation or source
-localization, we need to ensure that a couple prerequisities are met.
+localization, we need to ensure that a couple prerequisites are met.
 Essentially, starting from a collection of 2-dimensional MRI images of coronal,
-axial, and saggital slices of a participant's head, we need to construct a
+axial, and sagittal slices of a participant's head, we need to construct a
 3-dimensional representation of the brain, skull, and scalp. Furthermore,
 it's highly advantegous to attach labels to different brain areas according
 to common anatomical atlases, so that we could, for example, restrict

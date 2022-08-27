@@ -345,7 +345,8 @@ def run_ica(*, cfg, subject, session=None):
             metadata_keep_last=cfg.epochs_metadata_keep_last,
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
-            decim=cfg.decim
+            decim=cfg.decim,
+            task_is_rest=cfg.task_is_rest,
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -497,6 +498,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=config.conditions,
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         datatype=config.get_datatype(),
         runs=config.get_runs(subject=subject),
         acq=config.acq,

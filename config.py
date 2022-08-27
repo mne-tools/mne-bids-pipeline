@@ -428,6 +428,17 @@ itself, nor to the source analysis stage.
     ```
 """
 
+reader_extra_params: dict = {}
+"""
+Parameters to be passed to read_raw_bids calls when importing raw data.
+
+???+ example "Example"
+    Enforce units for EDF files:
+    ```python
+    reader_extra_params = {"units": "uV}
+    ```
+"""
+
 ###############################################################################
 # BREAK DETECTION
 # ---------------
@@ -860,8 +871,8 @@ Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
 This is a **required** parameter in the configuration file, unless you are
-processing resting-state data. If left as `None` and [`task`][config.task]
-is not `'rest'`, we will raise an error.
+processing resting-state data. If left as `None` and
+[`task_is_rest`][config.task_is_rest] is not True, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -897,6 +908,12 @@ The end of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
     ```
+"""
+
+task_is_rest: bool = False
+"""
+Set to true is the task is or should be processed as resting
+state data.
 """
 
 rest_epochs_duration: Optional[float] = None
@@ -3116,7 +3133,8 @@ def make_epochs(
     metadata_keep_last: Optional[Iterable[str]],
     metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
-    decim: int
+    decim: int,
+    task_is_rest: bool
 ) -> mne.Epochs:
     """Generate Epochs from raw data.
 
@@ -3127,7 +3145,7 @@ def make_epochs(
     - No rejection thresholds will be applied.
     - No baseline-correction will be performed.
     """
-    if task.lower().startswith('rest'):
+    if task_is_rest:
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -3414,7 +3432,8 @@ def _load_data(cfg, bids_path):
     # - sets raw.annotations using the BIDS events.tsv
 
     subject = bids_path.subject
-    raw = read_raw_bids(bids_path=bids_path)
+    raw = read_raw_bids(bids_path=bids_path,
+                        extra_params=cfg.reader_extra_params)
 
     # Save only the channel types we wish to analyze (including the
     # channels marked as "bad").
@@ -3607,7 +3626,8 @@ def import_er_data(
     # But at least using the union here should reduce them.
     # TODO: We should also uso automatic bad finding on the empty room data
     if cfg.use_maxwell_filter:
-        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in)
+        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
+                                         extra_params=cfg.extra_params)
         # We need to include any automatically found bad channels, if relevant.
         # TODO this is a bit of a hack because we don't use "in_files" access
         # here, but this is *in the same step where this file is generated*
@@ -3785,9 +3805,7 @@ if 'MKDOCS' not in os.environ:
 
 
 # Another check that depends on some of the functions defined above
-if (get_task() is not None and
-        not get_task().lower().startswith('rest') and
-        conditions is None and
+if (not task_is_rest and conditions is None and
         'MKDOCS' not in os.environ):
     msg = ('Please indicate the name of your conditions in your '
            'configuration. Currently the `conditions` parameter is empty. '

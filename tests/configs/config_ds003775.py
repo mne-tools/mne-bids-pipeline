@@ -7,6 +7,8 @@ deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds003775'
 subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
 subjects = subjects[:1]  # take only the first subject
 
+reader_extra_params = {"units": "uV"}
+
 sessions = ["t1"]
 
 run_source_estimation = False
@@ -17,10 +19,11 @@ baseline = None
 reject = None
 spatial_filter = None
 
-h_freq = 110
+h_freq = 40
 l_freq = None
 
 task = "resteyesc"
+task_is_rest = True
 epochs_tmin = 0.
 epochs_tmax = 10.
 rest_epochs_overlap = 0.

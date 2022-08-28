@@ -33,6 +33,9 @@
 ::: config.dask_worker_memory_limit
 ::: config.random_state
 ::: config.shortest_event
+::: config.memory_location
+::: config.memory_file_method
+::: config.memory_verbose
 ::: config.log_level
 ::: config.mne_log_level
 ::: config.on_error

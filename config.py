@@ -598,7 +598,7 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
-mf_head_origin = 'auto'
+mf_head_origin: Union[Literal['auto'], ArrayLike] = 'auto'
 """
 ``mf_head_origin`` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
@@ -1621,26 +1621,26 @@ mindist: float = 5
 Exclude points closer than this distance (mm) to the bounding surface.
 """
 
-# loose: Union[float, Literal['auto']] = 0.2
-# # ``loose`` : float in [0, 1] | 'auto'
-# """
-# Value that weights the source variances of the dipole components
-# that are parallel (tangential) to the cortical surface. If ``0``, then the
-# inverse solution is computed with **fixed orientation.**
-# If ``1``, it corresponds to **free orientation.**
-# The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
-# spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
-# unless ``fixed is True`` in which case the value 0. is used.
-# """
+loose: Union[float, Literal['auto']] = 0.2
+# ``loose`` : float in [0, 1] | 'auto'
+"""
+Value that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface. If ``0``, then the
+inverse solution is computed with **fixed orientation.**
+If ``1``, it corresponds to **free orientation.**
+The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
+spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
+unless ``fixed is True`` in which case the value 0. is used.
+"""
 
-# depth: Optional[Union[float, dict]] = 0.8
-# """
-# If float (default 0.8), it acts as the depth weighting exponent (``exp``)
-# to use (must be between 0 and 1). None is equivalent to 0, meaning no
-# depth weighting is performed. Can also be a `dict` containing additional
-# keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-# (see docstring for details and defaults).
-# """
+depth: Optional[Union[float, dict]] = 0.8
+"""
+If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+to use (must be between 0 and 1). None is equivalent to 0, meaning no
+depth weighting is performed. Can also be a `dict` containing additional
+keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+(see docstring for details and defaults).
+"""
 
 inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
 """

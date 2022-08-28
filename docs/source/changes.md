@@ -173,6 +173,8 @@ authors:
   ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }})
 - Basic testing of infant MEG data with movement was added to CI testing
   ({{ gh(582) }} by {{ authors.larsoner }})
+- The `loose` and `depth` configuration parameters were re-enabled
+  ({{ gh(592) }}) by {{ authors.larsoner }}
 
 ### Behavior changes
 
@@ -245,6 +247,9 @@ authors:
 - Add [`task_is_rest`][config.task_is_rest] parameter to be explicit that
   the data must be analyzed as resting state.
   ({{ gh(585) }} by {{ authors.agramfort }})
+- Patch information is now incorporated when computing surface source spaces,
+  which should slightly improve the surface normals
+  ({{ gh(588) }} by {{ authors.larsoner }})
 
 ### Code health
 

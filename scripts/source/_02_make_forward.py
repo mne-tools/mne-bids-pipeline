@@ -54,7 +54,7 @@ def _prepare_forward_template(cfg, fname_info):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False)
+                                 add_dist='patch')
     return src, trans, bem_sol
 
 

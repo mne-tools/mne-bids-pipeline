@@ -61,8 +61,9 @@ def run_inverse(*, cfg, subject, session=None):
         cov = mne.read_cov(fname_cov)
 
     forward = mne.read_forward_solution(fname_fwd)
-    inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
-                                             depth=0.8, rank='info')
+    inverse_operator = make_inverse_operator(
+        info, forward, cov, loose=cfg.loose, depth=cfg.depth,
+        rank='info')
     write_inverse_operator(fname_inv, inverse_operator, overwrite=True)
 
     # Apply inverse
@@ -117,6 +118,8 @@ def get_config(
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,
+        loose=config.loose,
+        depth=config.depth,
         inverse_method=config.inverse_method,
         deriv_root=config.get_deriv_root(),
     )

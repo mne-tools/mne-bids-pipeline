@@ -1,3 +1,7 @@
+"""
+SRM Resting-state EEG
+"""
+
 from mne_bids import get_entity_vals
 
 study_name = 'ds003775'

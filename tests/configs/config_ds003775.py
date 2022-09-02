@@ -38,10 +38,6 @@ parallel_backend = 'loky'
 dask_open_dashboard = True
 
 on_error = 'continue'
-# on_error = 'abort'
-# on_error = 'debug'
-
-# log_level = 'debug'
 log_level = 'info'
 
 N_JOBS = 1

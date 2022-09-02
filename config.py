@@ -435,7 +435,7 @@ Parameters to be passed to read_raw_bids calls when importing raw data.
 ???+ example "Example"
     Enforce units for EDF files:
     ```python
-    reader_extra_params = {"units": "uV}
+    reader_extra_params = {"units": "uV"}
     ```
 """
 
@@ -872,7 +872,7 @@ Passing a dictionary allows to assign a name to map a complex condition name
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
-[`task_is_rest`][config.task_is_rest] is not True, we will raise an error.
+[`task_is_rest`][config.task_is_rest] is not `True`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -912,8 +912,7 @@ The end of an epoch, relative to the respective event, in seconds.
 
 task_is_rest: bool = False
 """
-Set to true is the task is or should be processed as resting
-state data.
+Whether the task should be treated as resting-state data.
 """
 
 rest_epochs_duration: Optional[float] = None
@@ -3805,8 +3804,11 @@ if 'MKDOCS' not in os.environ:
 
 
 # Another check that depends on some of the functions defined above
-if (not task_is_rest and conditions is None and
-        'MKDOCS' not in os.environ):
+if (
+    not task_is_rest and
+    conditions is None and
+    'MKDOCS' not in os.environ
+):
     msg = ('Please indicate the name of your conditions in your '
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')

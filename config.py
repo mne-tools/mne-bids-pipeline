@@ -430,7 +430,7 @@ itself, nor to the source analysis stage.
 
 reader_extra_params: dict = {}
 """
-Parameters to be passed to read_raw_bids calls when importing raw data.
+Parameters to be passed to `read_raw_bids()` calls when importing raw data.
 
 ???+ example "Example"
     Enforce units for EDF files:

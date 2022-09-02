@@ -103,7 +103,8 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
-    raw = read_raw_bids(bids_path=in_files["raw_ref_run"])
+    raw = read_raw_bids(bids_path=in_files["raw_ref_run"],
+                        extra_params=cfg.reader_extra_params)
     dev_head_t = raw.info['dev_head_t']
     del raw
 
@@ -258,6 +259,7 @@ def get_config(
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        reader_extra_params=config.reader_extra_params,
         mf_cal_fname=config.get_mf_cal_fname(subject, session),
         mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
         mf_st_duration=config.mf_st_duration,

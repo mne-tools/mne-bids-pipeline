@@ -377,6 +377,7 @@ def get_config(
     cfg = SimpleNamespace(
         subjects=config.get_subjects(),
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
@@ -405,7 +406,7 @@ def get_config(
 # pass 'average' subject for logging
 @failsafe_run(on_error=on_error, script_path=__file__)
 def run_group_average_sensor(*, cfg, subject='average'):
-    if config.get_task().lower() == 'rest':
+    if cfg.task_is_rest:
         msg = '    … skipping: for "rest" task.'
         logger.info(**gen_log_kwargs(message=msg))
         return

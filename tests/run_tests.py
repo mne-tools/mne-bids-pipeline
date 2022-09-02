@@ -136,6 +136,13 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
         'task': None,
         'env': {}
     },
+    'ds003775': {
+        'dataset': 'ds003775',
+        'config': 'config_ds003775.py',
+        'steps': ('preprocessing', 'sensor', 'report'),
+        'task': None,
+        'env': {}
+    },
     'ERP_CORE_N400': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',

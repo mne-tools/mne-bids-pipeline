@@ -52,7 +52,7 @@ def run_epochs(*, cfg, subject, session=None):
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task_is_rest:
         event_name_to_code_map = config.annotations_to_events(
             raw_paths=raw_fnames)
 
@@ -75,7 +75,7 @@ def run_epochs(*, cfg, subject, session=None):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
-        if cfg.task.lower() == 'rest':
+        if cfg.task_is_rest:
             event_id = None  # make_epochs takes care of it.
         else:
             event_id = event_name_to_code_map.copy()
@@ -101,7 +101,8 @@ def run_epochs(*, cfg, subject, session=None):
             metadata_keep_last=cfg.epochs_metadata_keep_last,
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
-            decim=cfg.decim
+            decim=cfg.decim,
+            task_is_rest=cfg.task_is_rest
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -215,6 +216,7 @@ def get_config(
         bids_root=config.get_bids_root(),
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
+        task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,

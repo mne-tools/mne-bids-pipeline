@@ -561,7 +561,7 @@ def run_report_preprocessing(
             plt.close(fig)
 
     # Visualize events.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task_is_rest:
         msg = 'Adding events plot to report.'
         logger.info(
             **gen_log_kwargs(
@@ -1539,6 +1539,7 @@ def get_config(
 
     cfg = SimpleNamespace(
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -1596,8 +1597,7 @@ def main():
         if not sessions:
             sessions = [None]
 
-        if (config.get_task() is not None and
-                config.get_task().lower() == 'rest'):
+        if config.task_is_rest:
             msg = '    … skipping "average" report for "rest" task.'
             logger.info(**gen_log_kwargs(message=msg))
             return

@@ -11,6 +11,7 @@ deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000247'
 subjects = ['0002']
 sessions = ['01']
 task = 'rest'
+task_is_rest = True
 
 crop_runs = (0, 100)  # to speed up computations
 

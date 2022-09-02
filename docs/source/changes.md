@@ -241,6 +241,12 @@ authors:
   [`report_evoked_n_time_points`][config.report_evoked_n_time_points] and
   [`report_stc_n_time_points`][config.report_stc_n_time_points], respectively.
   ({{ gh(542) }} by {{ authors.agramfort }})
+- Add [`reader_extra_params`][config.reader_extra_params] parameter to pass
+  parameters to read_raw_bids.
+  ({{ gh(585) }} by {{ authors.agramfort }})
+- Add [`task_is_rest`][config.task_is_rest] parameter to be explicit that
+  the data must be analyzed as resting state.
+  ({{ gh(585) }} by {{ authors.agramfort }})
 - Patch information is now incorporated when computing surface source spaces,
   which should slightly improve the surface normals
   ({{ gh(588) }} by {{ authors.larsoner }})

@@ -36,8 +36,8 @@ def morph_stc(cfg, subject, fs_subject, session=None):
 
     morphed_stcs = []
 
-    if cfg.task == 'rest':
-        conditions = ['rest']
+    if cfg.task_is_rest:
+        conditions = [cfg.task.lower()]
     else:
         if isinstance(cfg.conditions, dict):
             conditions = list(cfg.conditions.keys())
@@ -104,6 +104,7 @@ def run_average(cfg, session, mean_morphed_stcs):
 def get_config() -> SimpleNamespace:
     cfg = SimpleNamespace(
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,

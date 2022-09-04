@@ -1066,7 +1066,7 @@ on individual EOG epochs.
 ssp_meg: str = 'separate'
 """
 Whether to compute SSP vectors for MEG channels separately (`'separate'`)
-or jointly (`'combined'`).
+or jointly (`'combined'`) for magnetometers and gradiomenters.
 """
 
 ssp_reject_ecg: Optional[

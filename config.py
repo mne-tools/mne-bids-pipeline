@@ -569,8 +569,8 @@ warning:
 
 mf_st_duration: Optional[float] = None
 """
-There are two kinds of maxfiltering: SSS (signal space separation) and tSSS
-(temporal signal space separation)
+There are two kinds of Maxwell filtering: SSS (signal space separation) and
+tSSS (temporal signal space separation)
 (see [Taulu et al., 2004](http://cds.cern.ch/record/709081/files/0401166.pdf)).
 
 If not None, apply spatiotemporal SSS (tSSS) with specified buffer
@@ -1063,13 +1063,15 @@ Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
 """
 
-ssp_meg: str = 'separate'
+ssp_meg: Literal['separate', 'combined', 'auto'] = 'auto'
 """
 Whether to compute SSP vectors for MEG channels separately (`'separate'`)
 or jointly (`'combined'`) for magnetometers and gradiomenters. When using
-MaxFilter, magnetometer and gradiometer signals are synthesized from multipole
-moments jointly and are no longer independent, so it can be useful to estimate
-projectors from all MEG sensors simultaneously.
+Maxwell filtering, magnetometer and gradiometer signals are synthesized from
+multipole moments jointly and are no longer independent, so it can be useful to
+estimate projectors from all MEG sensors simultaneously. The default is
+`'auto'`, which will use `'combined'` when Maxwell filtering is used and
+`'separate'` otherwise.
 """
 
 ssp_reject_ecg: Optional[
@@ -2077,7 +2079,7 @@ if parallel_backend not in ('dask', 'loky'):
 
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
-    raise ValueError('Cannot use maxwell filter without MEG channels.')
+    raise ValueError('Cannot use Maxwell filter without MEG channels.')
 
 if (spatial_filter == 'ica' and
         ica_algorithm not in ('picard', 'fastica', 'extended_infomax')):

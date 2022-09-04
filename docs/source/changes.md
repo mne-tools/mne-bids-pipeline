@@ -175,8 +175,6 @@ authors:
   ({{ gh(582) }} by {{ authors.larsoner }})
 - The `loose` and `depth` configuration parameters were re-enabled
   ({{ gh(592) }}) by {{ authors.larsoner }}
-- Add [`ssp_meg`][config.ssp_meg] option for MEG SSP computation
-  ({{ gh(595) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 
@@ -252,6 +250,10 @@ authors:
 - Patch information is now incorporated when computing surface source spaces,
   which should slightly improve the surface normals
   ({{ gh(588) }} by {{ authors.larsoner }})
+- Add [`ssp_meg`][config.ssp_meg] option for MEG SSP computation. This
+  defaults to `'auto'`, which will use `ssp_meg='combined'` for SSP computation
+  when Maxwell filtering is used.
+  ({{ gh(595) }} by {{ authors.larsoner }})
 
 ### Code health
 

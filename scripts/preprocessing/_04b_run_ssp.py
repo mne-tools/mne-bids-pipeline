@@ -68,6 +68,7 @@ def run_ssp(*, cfg, subject, session=None):
             ecg_projs, _ = compute_proj_ecg(raw,
                                             average=cfg.ecg_proj_from_average,
                                             reject=reject_ecg_,
+                                            meg=cfg.ssp_meg,
                                             **cfg.n_proj_ecg)
         else:
             reject_ecg_ = config.get_ssp_reject(
@@ -76,6 +77,7 @@ def run_ssp(*, cfg, subject, session=None):
             ecg_projs, _ = compute_proj_ecg(raw,
                                             average=cfg.ecg_proj_from_average,
                                             reject=reject_ecg_,
+                                            meg=cfg.ssp_meg,
                                             **cfg.n_proj_ecg)
 
     if not ecg_projs:
@@ -141,6 +143,7 @@ def get_config(
         eog_proj_from_average=config.eog_proj_from_average,
         n_proj_eog=config.n_proj_eog,
         n_proj_ecg=config.n_proj_ecg,
+        ssp_meg=config.ssp_meg,
     )
     return cfg
 

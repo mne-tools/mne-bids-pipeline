@@ -1063,6 +1063,12 @@ Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
 """
 
+ssp_meg: str = 'separate'
+"""
+Whether to compute SSP vectors for MEG channels separately (`'separate'`)
+or jointly (`'combined'`).
+"""
+
 ssp_reject_ecg: Optional[
     Union[
         Dict[str, float],

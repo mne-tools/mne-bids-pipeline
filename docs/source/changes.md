@@ -175,6 +175,8 @@ authors:
   ({{ gh(582) }} by {{ authors.larsoner }})
 - The `loose` and `depth` configuration parameters were re-enabled
   ({{ gh(592) }}) by {{ authors.larsoner }}
+- Add [`ssp_meg`][config.ssp_meg] option for MEG SSP computation
+  ({{ gh(595) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

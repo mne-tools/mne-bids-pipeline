@@ -1066,7 +1066,10 @@ on individual EOG epochs.
 ssp_meg: str = 'separate'
 """
 Whether to compute SSP vectors for MEG channels separately (`'separate'`)
-or jointly (`'combined'`) for magnetometers and gradiomenters.
+or jointly (`'combined'`) for magnetometers and gradiomenters. When using
+MaxFilter, magnetometer and gradiometer signals are synthesized from multipole
+moments jointly and are no longer independent, so it can be useful to estimate
+projectors from all MEG sensors simultaneously.
 """
 
 ssp_reject_ecg: Optional[

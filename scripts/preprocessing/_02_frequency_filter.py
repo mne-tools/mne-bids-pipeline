@@ -81,32 +81,29 @@ def get_input_fnames_frequency_filter(**kwargs):
     in_files = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
 
-    # TODO: No need to process empty room (I guess?)
-    if config.noise_cov not in ('rest', 'emptyroom'):
-        return in_files
-
-    noise_task = "rest" if config.noise_cov == "rest" else "noise"
-    if cfg.use_maxwell_filter:
-        raw_noise_fname_in = bids_path_in.copy().update(
-            run=None, task=noise_task
-        )
-        if raw_noise_fname_in.copy().update(split='01').fpath.exists():
-            raw_noise_fname_in.update(split='01')
-        in_files["raw_noise"] = raw_noise_fname_in
-    else:
-        if config.noise_cov == 'rest':
-            in_files["raw_rest"] = bids_path_in.copy().update(run=None,
-                                                              task=noise_task)
-        else:
-            assert config.noise_cov == 'noise'
-            ref_bids_path = bids_path_in.copy().update(
-                run=cfg.mf_reference_run,
-                extension='.fif',
-                suffix='meg',
-                root=cfg.bids_root,
-                check=True
+    if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
+        noise_task = "rest" if config.noise_cov == "rest" else "noise"
+        if cfg.use_maxwell_filter:
+            raw_noise_fname_in = bids_path_in.copy().update(
+                run=None, task=noise_task
             )
-            in_files["raw_er"] = ref_bids_path.find_empty_room()
+            if raw_noise_fname_in.copy().update(split='01').fpath.exists():
+                raw_noise_fname_in.update(split='01')
+            in_files["raw_noise"] = raw_noise_fname_in
+        else:
+            if config.noise_cov == 'rest':
+                in_files["raw_rest"] = bids_path_in.copy().update(
+                    run=None, task=noise_task)
+            else:
+                assert config.noise_cov == 'noise'
+                ref_bids_path = bids_path_in.copy().update(
+                    run=cfg.mf_reference_run,
+                    extension='.fif',
+                    suffix='meg',
+                    root=cfg.bids_root,
+                    check=True
+                )
+                in_files["raw_er"] = ref_bids_path.find_empty_room()
 
     return in_files
 

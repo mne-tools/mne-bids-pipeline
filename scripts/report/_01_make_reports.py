@@ -26,7 +26,7 @@ from mne_bids.stats import count_events
 import config
 from config import (
     gen_log_kwargs, on_error, failsafe_run, parallel_func,
-    get_noise_cov_bids_path
+    get_noise_cov_bids_path, _update_for_splits,
 )
 
 
@@ -52,10 +52,7 @@ def get_events(cfg, subject, session):
 
     for run in cfg.runs:
         this_raw_fname = raw_fname.copy().update(run=run)
-
-        if this_raw_fname.copy().update(split='01').fpath.exists():
-            this_raw_fname.update(split='01')
-
+        this_raw_fname = _update_for_splits(this_raw_fname, None, single=True)
         raw_filt = mne.io.read_raw_fif(this_raw_fname)
         raws_filt.append(raw_filt)
         del this_raw_fname
@@ -81,10 +78,7 @@ def get_er_path(cfg, subject, session):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
-
-    if raw_fname.copy().update(split='01').fpath.exists():
-        raw_fname.update(split='01')
-
+    raw_fname = _update_for_splits(raw_fname, None, single=True)
     return raw_fname
 
 
@@ -482,9 +476,7 @@ def run_report_preprocessing(
             run=run, processing='filt',
             suffix='raw', check=False
         )
-        if fname.copy().update(split='01').fpath.exists():
-            fname.update(split='01')
-
+        fname = _update_for_splits(fname, None, single=True)
         fnames_raw_filt.append(fname)
 
     fname_epo_not_clean = bids_path.copy().update(suffix='epo')

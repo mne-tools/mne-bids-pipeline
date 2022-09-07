@@ -37,7 +37,6 @@ baseline = None
 parallel_backend = 'loky'
 dask_open_dashboard = True
 
-on_error = 'continue'
 log_level = 'info'
 
 N_JOBS = 1

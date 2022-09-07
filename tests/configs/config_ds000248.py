@@ -24,10 +24,8 @@ find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
 process_er = True
-_raw_split_size = '100MB'
-_epochs_split_size = '50MB'
-# on_error = 'debug'
-# n_jobs = 1
+_raw_split_size = '60MB'  # hits both task-noise and task-audiovisual
+_epochs_split_size = '30MB'
 
 
 def noise_cov(bp):

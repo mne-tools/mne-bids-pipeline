@@ -3834,9 +3834,23 @@ if (
     raise ValueError(msg)
 
 
-def _update_for_splits(out_files, key):
-    out_bids_path = out_files[key]
-    if pathlib.Path(out_bids_path).is_file():
-        return  # no modifications needed
-    # TODO: Actually fix the entries
-    return
+def _update_for_splits(files_dict, key, *, single=False):
+    if not isinstance(files_dict, dict):  # fake it
+        assert key is None
+        files_dict, key = dict(x=files_dict), 'x'
+    bids_path = files_dict[key]
+    if bids_path.fpath.is_file():
+        return bids_path  # no modifications needed
+    bids_path = bids_path.copy().update(split='01')
+    assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
+    files_dict[key] = bids_path
+    # if we only need the first file (i.e., when reading), quit now
+    if single:
+        return bids_path
+    for split in range(2, 100):
+        split_key = f'{split:02d}'
+        bids_path_next = bids_path.copy().update(split=split_key)
+        if not bids_path_next.fpath.is_file():
+            break
+        files_dict[f'{key}_split-{split_key}'] = bids_path_next
+    return bids_path

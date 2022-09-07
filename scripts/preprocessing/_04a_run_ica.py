@@ -33,7 +33,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
-                    annotations_to_events)
+                    annotations_to_events, _update_for_splits)
 from config import parallel_func
 
 
@@ -259,9 +259,7 @@ def run_ica(*, cfg, subject, session=None):
     raw_fnames = []
     for run in cfg.runs:
         raw_fname.update(run=run)
-        if raw_fname.copy().update(split='01').fpath.exists():
-            raw_fname.update(split='01')
-
+        raw_fname = _update_for_splits(raw_fname, None, single=True)
         raw_fnames.append(raw_fname.copy())
 
     # Generate a unique event name -> event code mapping that can be used

@@ -20,7 +20,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import parallel_func, _update_for_splits
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -44,10 +44,7 @@ def run_epochs(*, cfg, subject, session=None):
     for run in cfg.runs:
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
-
-        if raw_fname_in.copy().update(split='01').fpath.exists():
-            raw_fname_in.update(split='01')
-
+        raw_fname_in = _update_for_splits(raw_fname_in, None, single=True)
         raw_fnames.append(raw_fname_in)
 
     # Generate a unique event name -> event code mapping that can be used

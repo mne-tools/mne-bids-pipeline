@@ -154,7 +154,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     logger.info(**gen_log_kwargs(
         message=msg, subject=subject, session=session, run=run))
     raw_sss.save(out_files['sss_raw'], picks=picks, split_naming='bids',
-                 overwrite=True, split_size=cfg._raw_split_size, verbose=True)
+                 overwrite=True, split_size=cfg._raw_split_size)
     # we need to be careful about split files
     _update_for_splits(out_files, 'sss_raw')
     del raw, raw_sss

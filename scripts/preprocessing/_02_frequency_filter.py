@@ -76,11 +76,10 @@ def get_input_fnames_frequency_filter(**kwargs):
 
     if cfg.use_maxwell_filter:
         bids_path_in.update(processing="sss")
-        if bids_path_in.copy().update(split='01').fpath.exists():
-            bids_path_in = bids_path_in.update(split='01')
 
     in_files = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
+    _update_for_splits(in_files, f'raw_run-{run}', single=True)
 
     if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
         noise_task = "rest" if config.noise_cov == "rest" else "noise"
@@ -88,9 +87,8 @@ def get_input_fnames_frequency_filter(**kwargs):
             raw_noise_fname_in = bids_path_in.copy().update(
                 run=None, task=noise_task
             )
-            if raw_noise_fname_in.copy().update(split='01').fpath.exists():
-                raw_noise_fname_in.update(split='01')
             in_files["raw_noise"] = raw_noise_fname_in
+            _update_for_splits(in_files, "raw_noise", single=True)
         else:
             if config.noise_cov == 'rest':
                 in_files["raw_rest"] = bids_path_in.copy().update(
@@ -190,7 +188,7 @@ def filter_data(
 
     out_files['raw_filt'] = bids_path.copy().update(
         root=cfg.deriv_root, processing='filt', extension='.fif',
-        suffix='raw')
+        suffix='raw', split=None)
     raw.load_data()
     filter(
         raw=raw, subject=subject, session=session, run=run,
@@ -241,7 +239,7 @@ def filter_data(
         out_files['raw_noise_filt'] = \
             bids_path_noise.copy().update(
                 root=cfg.deriv_root, processing='filt', extension='.fif',
-                suffix='raw')
+                suffix='raw', split=None)
 
         raw_noise.load_data()
         filter(

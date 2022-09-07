@@ -18,7 +18,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import parallel_func, _update_for_splits
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -49,9 +49,7 @@ def run_ssp(*, cfg, subject, session=None):
     msg = f'Input: {raw_fname_in.basename}, Output: {proj_fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-
-    if raw_fname_in.copy().update(split='01').fpath.exists():
-        raw_fname_in.update(split='01')
+    raw_fname_in = _update_for_splits(raw_fname_in, None, single=True)
 
     raw = mne.io.read_raw_fif(raw_fname_in)
     msg = 'Computing SSPs for ECG'

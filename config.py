@@ -3839,7 +3839,7 @@ def _update_for_splits(files_dict, key, *, single=False):
         assert key is None
         files_dict, key = dict(x=files_dict), 'x'
     bids_path = files_dict[key]
-    if bids_path.fpath.is_file():
+    if bids_path.fpath.exists():
         return bids_path  # no modifications needed
     bids_path = bids_path.copy().update(split='01')
     assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
@@ -3850,7 +3850,7 @@ def _update_for_splits(files_dict, key, *, single=False):
     for split in range(2, 100):
         split_key = f'{split:02d}'
         bids_path_next = bids_path.copy().update(split=split_key)
-        if not bids_path_next.fpath.is_file():
+        if not bids_path_next.fpath.exists():
             break
         files_dict[f'{key}_split-{split_key}'] = bids_path_next
     return bids_path

@@ -35,7 +35,8 @@ from mne_bids import BIDSPath
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data, import_rest_data)
+                    import_experimental_data, import_er_data, import_rest_data,
+                    _update_for_splits)
 from config import parallel_func
 
 
@@ -201,7 +202,9 @@ def filter_data(
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=cfg.resample_sfreq, data_type='experimental')
 
-    raw.save(out_files['raw_filt'], overwrite=True, split_naming='bids')
+    raw.save(out_files['raw_filt'], overwrite=True, split_naming='bids',
+             split_size=cfg._raw_split_size)
+    _update_for_splits(out_files, 'raw_filt')
     if cfg.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
@@ -252,8 +255,10 @@ def filter_data(
                  sfreq=cfg.resample_sfreq, data_type=data_type)
 
         raw_noise.save(
-            out_files['raw_noise_filt'], overwrite=True, split_naming='bids'
+            out_files['raw_noise_filt'], overwrite=True, split_naming='bids',
+            split_size=cfg._raw_split_size,
         )
+        _update_for_splits(out_files, 'raw_noise_filt')
         if cfg.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)
@@ -301,6 +306,7 @@ def get_config(
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        _raw_split_size=config._raw_split_size,
     )
     return cfg
 

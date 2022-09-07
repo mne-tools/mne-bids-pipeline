@@ -2021,6 +2021,14 @@ def gen_log_kwargs(
 
 
 ###############################################################################
+# Private config vars (not to be set by user)
+# -------------------------------------------
+
+_raw_split_size = '2GB'
+_epochs_split_size = '2GB'
+
+
+###############################################################################
 # Retrieve custom configuration options
 # -------------------------------------
 #
@@ -3824,3 +3832,11 @@ if (
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
+
+
+def _update_for_splits(out_files, key):
+    out_bids_path = out_files[key]
+    if pathlib.Path(out_bids_path).is_file():
+        return  # no modifications needed
+    # TODO: Actually fix the entries
+    return

@@ -2021,6 +2021,14 @@ def gen_log_kwargs(
 
 
 ###############################################################################
+# Private config vars (not to be set by user)
+# -------------------------------------------
+
+_raw_split_size = '2GB'
+_epochs_split_size = '2GB'
+
+
+###############################################################################
 # Retrieve custom configuration options
 # -------------------------------------
 #
@@ -3824,3 +3832,25 @@ if (
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
+
+
+def _update_for_splits(files_dict, key, *, single=False):
+    if not isinstance(files_dict, dict):  # fake it
+        assert key is None
+        files_dict, key = dict(x=files_dict), 'x'
+    bids_path = files_dict[key]
+    if bids_path.fpath.exists():
+        return bids_path  # no modifications needed
+    bids_path = bids_path.copy().update(split='01')
+    assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
+    files_dict[key] = bids_path
+    # if we only need the first file (i.e., when reading), quit now
+    if single:
+        return bids_path
+    for split in range(2, 100):
+        split_key = f'{split:02d}'
+        bids_path_next = bids_path.copy().update(split=split_key)
+        if not bids_path_next.fpath.exists():
+            break
+        files_dict[f'{key}_split-{split_key}'] = bids_path_next
+    return bids_path

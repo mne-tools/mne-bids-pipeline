@@ -352,3 +352,5 @@ authors:
 - EEG channels couldn't be used as "virtual" EOG channels during ICA artifact
   detection. Reported by "fraenni" on the forum. Thank you! 🌻
   ({{ gh(572) }} by {{ authors.hoechenberger }})
+- Fix bug with handling of split files during preprocessing
+  ({{ gh(597) }} by {{ authors.larsoner }})

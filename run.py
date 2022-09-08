@@ -15,6 +15,10 @@ import fire
 import coloredlogs
 
 
+# Ensure that the "scripts" that we import from is the correct one
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+
+
 logger = logging.getLogger(__name__)
 
 log_level_styles = {

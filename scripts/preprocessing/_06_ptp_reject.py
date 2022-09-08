@@ -89,7 +89,9 @@ def drop_ptp(*, cfg, subject, session=None):
     msg = 'Saving cleaned, baseline-corrected epochs …'
 
     epochs.apply_baseline(cfg.baseline)
-    epochs.save(fname_out, overwrite=True, split_naming='bids')
+    epochs.save(
+        fname_out, overwrite=True, split_naming='bids',
+        split_size=cfg._epochs_split_size)
 
 
 def get_config(
@@ -108,7 +110,8 @@ def get_config(
         spatial_filter=config.spatial_filter,
         ica_reject=config.get_ica_reject(),
         deriv_root=config.get_deriv_root(),
-        decim=config.decim
+        decim=config.decim,
+        _epochs_split_size=config._epochs_split_size,
     )
     return cfg
 

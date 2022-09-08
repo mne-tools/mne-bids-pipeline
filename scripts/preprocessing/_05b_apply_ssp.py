@@ -62,7 +62,10 @@ def apply_ssp(*, cfg, subject, session=None):
     msg = 'Saving epochs with projectors.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_cleaned.save(fname_out, overwrite=True, split_naming='bids')
+    epochs_cleaned.save(
+        fname_out, overwrite=True, split_naming='bids',
+        split_size=cfg._epochs_split_size)
+    # _update_for_splits(out_files, 'epochs_cleaned')
 
 
 def get_config(
@@ -76,6 +79,7 @@ def get_config(
         rec=config.rec,
         space=config.space,
         deriv_root=config.get_deriv_root(),
+        _epochs_split_size=config._epochs_split_size,
     )
     return cfg
 

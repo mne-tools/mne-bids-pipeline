@@ -28,7 +28,8 @@ from mne_bids import BIDSPath, read_raw_bids
 
 import config
 from config import (gen_log_kwargs, on_error, failsafe_run,
-                    import_experimental_data, import_er_data, import_rest_data)
+                    import_experimental_data, import_er_data, import_rest_data,
+                    _update_for_splits)
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -81,7 +82,6 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
-
     bids_path_in = in_files[f"raw_run-{run}"]
     bids_path_out = bids_path_in.copy().update(
         processing="sss",
@@ -154,13 +154,16 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     logger.info(**gen_log_kwargs(
         message=msg, subject=subject, session=session, run=run))
     raw_sss.save(out_files['sss_raw'], picks=picks, split_naming='bids',
-                 overwrite=True)
+                 overwrite=True, split_size=cfg._raw_split_size)
+    # we need to be careful about split files
+    _update_for_splits(out_files, 'sss_raw')
     del raw, raw_sss
 
     if cfg.interactive:
         # Load the data we have just written, because it contains only
         # the relevant channels.
-        raw_sss = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
+        raw_sss = mne.io.read_raw_fif(
+            out_files['sss_raw'], allow_maxshield=True)
         raw_sss.plot(n_channels=50, butterfly=True, block=True)
         del raw_sss
 
@@ -211,7 +214,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         # copy the bad channel selection from the reference run over to
         # the resting-state recording.
 
-        raw_sss = mne.io.read_raw_fif(bids_path_out)
+        raw_sss = mne.io.read_raw_fif(out_files['sss_raw'])
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
         rank_noise = mne.compute_rank(raw_noise_sss, rank='info')['meg']
 
@@ -248,8 +251,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
             message=msg, subject=subject, session=session, run=run))
         raw_noise_sss.save(
             out_files['sss_noise'], picks=picks, overwrite=True,
-            split_naming='bids'
+            split_naming='bids', split_size=cfg._raw_split_size,
         )
+        _update_for_splits(out_files, 'sss_noise')
         del raw_noise_sss
     return {key: pth.fpath for key, pth in out_files.items()}
 
@@ -290,6 +294,7 @@ def get_config(
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        _raw_split_size=config._raw_split_size,
     )
     return cfg
 

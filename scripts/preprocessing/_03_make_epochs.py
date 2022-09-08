@@ -20,7 +20,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import parallel_func, _update_for_splits
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -44,10 +44,7 @@ def run_epochs(*, cfg, subject, session=None):
     for run in cfg.runs:
         raw_fname_in = bids_path.copy().update(run=run, processing='filt',
                                                suffix='raw', check=False)
-
-        if raw_fname_in.copy().update(split='01').fpath.exists():
-            raw_fname_in.update(split='01')
-
+        raw_fname_in = _update_for_splits(raw_fname_in, None, single=True)
         raw_fnames.append(raw_fname_in)
 
     # Generate a unique event name -> event code mapping that can be used
@@ -191,7 +188,10 @@ def run_epochs(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs_fname = bids_path.copy().update(suffix='epo', check=False)
-    epochs.save(epochs_fname, overwrite=True, split_naming='bids')
+    epochs.save(
+        epochs_fname, overwrite=True, split_naming='bids',
+        split_size=cfg._epochs_split_size)
+    # _update_for_splits(out_files, 'epochs')
 
     if cfg.interactive:
         epochs.plot()
@@ -228,7 +228,8 @@ def get_config(
         event_repeated=config.event_repeated,
         decim=config.decim,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference()
+        eeg_reference=config.get_eeg_reference(),
+        _epochs_split_size=config._epochs_split_size,
     )
     return cfg
 

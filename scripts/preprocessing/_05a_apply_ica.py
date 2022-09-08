@@ -93,7 +93,10 @@ def apply_ica(*, cfg, subject, session):
     msg = 'Saving reconstructed epochs after ICA.'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_cleaned.save(fname_epo_out, overwrite=True, split_naming='bids')
+    epochs_cleaned.save(
+        fname_epo_out, overwrite=True, split_naming='bids',
+        split_size=cfg._epochs_split_size)
+    # _update_for_splits(out_files, 'epochs_cleaned')
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on
@@ -127,7 +130,8 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
-        ica_reject=config.get_ica_reject()
+        ica_reject=config.get_ica_reject(),
+        _epochs_split_size=config._epochs_split_size,
     )
     return cfg
 

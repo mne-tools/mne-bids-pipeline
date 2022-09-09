@@ -129,7 +129,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': [
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv'
+            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.fdt',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',

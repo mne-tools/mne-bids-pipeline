@@ -27,15 +27,13 @@ def fetch(dataset=None):
 DATA_DIR = Path('~/mne_data').expanduser()
 
 
-# Until PEP655 lands in 3.11 and we can use NotRequired, using this forces our
-# code to be non-DRY:
-#
-# class TestOptionsT(TypedDict):
-#     dataset: str
-#     config: str
-#     steps: Collection[str]
-#     task: Optional[str]
-#     env: Dict[str, str]
+# Once PEP655 lands in 3.11 we can use NotRequired instead of total=False
+class TestOptionsT(TypedDict, total=False):
+    dataset: str
+    config: str
+    steps: Collection[str]
+    task: Optional[str]
+    env: Dict[str, str]
 
 
 # If not supplied below, the defaults are:
@@ -47,7 +45,7 @@ DATA_DIR = Path('~/mne_data').expanduser()
 #     'task': None,
 # }
 #
-TEST_SUITE: Dict[str, Dict] = {
+TEST_SUITE: Dict[str, TestOptionsT] = {
     'ds003392': {},
     'ds004229': {},
     'ds004107': {},

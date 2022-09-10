@@ -97,6 +97,8 @@ for test_dataset_name, test_dataset_options in test_options.items():
     else:
         dataset_name = test_dataset_name
 
+    dataset_options_key = test_dataset_options.get(
+        'dataset', test_dataset_name.split('_')[0])
     del test_dataset_options, test_dataset_name
 
     if dataset_name in datasets_without_html:
@@ -105,7 +107,7 @@ for test_dataset_name, test_dataset_options in test_options.items():
 
     logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
-    options = dataset_options[dataset_name]
+    options = dataset_options[dataset_options_key]
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')

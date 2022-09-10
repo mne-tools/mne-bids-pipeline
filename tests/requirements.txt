@@ -12,3 +12,4 @@ openneuro-py
 httpx >= 0.20
 tqdm
 Pygments <= 2.11.2
+pyyaml

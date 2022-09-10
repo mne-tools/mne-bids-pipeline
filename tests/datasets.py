@@ -123,22 +123,22 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'include': ['sub-01'],
         'exclude': []
     },
-    'ds001971': {
-        'git': '',
-        'openneuro': 'ds001971',
-        'osf': '',
-        'web': '',
-        'include': [
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv',
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set',
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.fdt',
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv'  # noqa: E501
-        ],
-        'exclude': []
-    },
+    #'ds001971': {
+    #    'git': '',
+    #    'openneuro': 'ds001971',
+    #    'osf': '',
+    #    'web': '',
+    #    'include': [
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv',
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set',
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.fdt',
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_electrodes.tsv',  # noqa: E501
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json',  # noqa: E501
+    #        'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv'  # noqa: E501
+    #    ],
+    #    'exclude': []
+    #},
     'ds003392': {
         'git': '',
         'openneuro': 'ds003392',

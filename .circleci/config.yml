@@ -96,25 +96,24 @@ jobs:
           paths:
             - ~/mne_data/ds003775
 
-  # Pending https://github.com/mne-tools/mne-bids/issues/1065
-  #cache_ds001971:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    # - restore_cache:
-  #    #     keys:
-  #    #       - data-cache-ds001971
-  #    - run:
-  #        <<: *bashenv
-  #    - run:
-  #        name: Get ds001971
-  #        command: |
-  #          python ~/project/tests/download_test_data.py -d ds001971
-  #    - save_cache:
-  #        key: data-cache-ds001971-{{ .Revision }}
-  #        paths:
-  #          - ~/mne_data/ds001971
+  cache_ds001971:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds001971
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds001971
+          command: |
+            python ~/project/tests/download_test_data.py -d ds001971
+      - save_cache:
+          key: data-cache-ds001971-{{ .Revision }}
+          paths:
+            - ~/mne_data/ds001971
 
   cache_ds004107:
     <<: *imageconfig
@@ -360,31 +359,31 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/ds003775/*/*/*/*.html
 
-  #test_ds001971:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    - run:
-  #        <<: *bashenv
-  #    - restore_cache:
-  #        keys:
-  #          - data-cache-ds001971-{{ .Revision }}
-  #    - run:
-  #        name: test ds001971
-  #        command: |
-  #          export DS=ds001971
-  #          python tests/run_tests.py --download=0 ${DS}
-  #          mkdir -p ~/reports/${DS}
-  #          cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-  #          cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-  #    - store_artifacts:
-  #        path: /home/circleci/reports/ds001971
-  #        destination: reports/ds001971
-  #    - persist_to_workspace:
-  #        root: ~/
-  #        paths:
-  #          - mne_data/derivatives/mne-bids-pipeline/ds001971/*/*/*/*.html
+  test_ds001971:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds001971-{{ .Revision }}
+      - run:
+          name: test ds001971
+          command: |
+            export DS=ds001971
+            python tests/run_tests.py --download=0 ${DS}
+            mkdir -p ~/reports/${DS}
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds001971
+          destination: reports/ds001971
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds001971/*/*/*/*.html
 
   test_ds004107:
     <<: *imageconfig
@@ -951,9 +950,9 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds003775-{{ .Revision }}
-      #- restore_cache:
-      #    keys:
-      #      - data-cache-ds001971-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds001971-{{ .Revision }}
       - restore_cache:
           keys:
             - data-cache-ds004107-{{ .Revision }}
@@ -1043,12 +1042,12 @@ workflows:
           requires:
             - cache_ds003775
 
-      #- cache_ds001971:
-      #    requires:
-      #      - setup_env
-      #- test_ds001971:
-      #    requires:
-      #      - cache_ds001971
+      - cache_ds001971:
+          requires:
+            - setup_env
+      - test_ds001971:
+          requires:
+            - cache_ds001971
 
       - cache_ds004107:
           requires:
@@ -1157,7 +1156,7 @@ workflows:
           requires:
             - test_ds000117
             - test_ds003775
-            #- test_ds001971
+            - test_ds001971
             - test_ds004107
             - test_ds000246
             - test_ds000247

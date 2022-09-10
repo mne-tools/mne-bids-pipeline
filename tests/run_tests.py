@@ -48,7 +48,7 @@ class TestOptionsT(TypedDict, total=False):
 TEST_SUITE: Dict[str, TestOptionsT] = {
     'ds003392': {},
     'ds004229': {},
-    #'ds001971': {},
+    'ds001971': {},
     'ds004107': {},
     'ds000117': {},
     'ds003775': {},
@@ -156,12 +156,20 @@ def run_tests(test_suite, download):
 
         # XXX Workaround for buggy date in ds000247. Remove this and the
         # XXX file referenced here once fixed!!!
+        fix_path = Path(__file__).parent
         if dataset == 'ds000247':
             shutil.copy(
-                src=Path(__file__).parent / 'ds000247_scans.tsv',
+                src=fix_path / 'ds000247_scans.tsv',
                 dst=Path('~/mne_data/ds000247/sub-0002/ses-01/'
                          'sub-0002_ses-01_scans.tsv').expanduser()
             )
+        # XXX Workaround for buggy participant_id in ds001971
+        elif dataset == 'ds001971':
+            shutil.copy(
+                src=fix_path / 'ds001971_participants.tsv',
+                dst=Path('~/mne_data/ds001971/participants.tsv').expanduser()
+            )
+
 
         # Test the `--n_jobs` parameter
         if dataset == 'ds000117':

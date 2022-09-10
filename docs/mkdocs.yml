@@ -78,7 +78,7 @@ nav:
         - examples/ds000117.md
         - examples/ds003775.md
         - examples/ds004107.md
-        #- examples/ds001971.md
+        - examples/ds001971.md
         - examples/ERP_CORE.md
     - What's new: changes.md
 

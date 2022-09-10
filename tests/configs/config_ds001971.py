@@ -20,9 +20,7 @@ task = 'AudioCueWalkingStudy'
 interactive = False
 ch_types = ['eeg']
 reject = {'eeg': 150e-6}
-conditions = ['left', 'right']
-contrasts = [('left', 'right')]
-decode = True
+conditions = ['AdvanceTempo', 'DelayTempo']
 
 subjects = ['001']
 runs = ['01']

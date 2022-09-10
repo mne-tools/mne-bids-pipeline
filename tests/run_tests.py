@@ -27,7 +27,8 @@ def fetch(dataset=None):
 DATA_DIR = Path('~/mne_data').expanduser()
 
 
-class TestOptionsT(TypedDict):
+# Once PEP655 lands in 3.11 we can use NotRequired instead of total=False
+class TestOptionsT(TypedDict, total=False):
     dataset: str
     config: str
     steps: Collection[str]
@@ -35,162 +36,89 @@ class TestOptionsT(TypedDict):
     env: Dict[str, str]
 
 
+# If not supplied below, the defaults are:
+# key: {
+#     'dataset': key.split('_')[0],
+#     'config': f'config_{key}.py',
+#     'steps': ('preprocessing', 'sensor', 'report'),
+#     'env': {},
+#     'task': None,
+# }
+#
 TEST_SUITE: Dict[str, TestOptionsT] = {
-    'ds003392': {
-        'dataset': 'ds003392',
-        'config': 'config_ds003392.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'ds004229': {
-        'dataset': 'ds004229',
-        'config': 'config_ds004229.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
+    'ds003392': {},
+    'ds004229': {},
+    'ds001971': {},
+    'ds004107': {},
+    'ds000117': {},
+    'ds003775': {},
+    'eeg_matchingpennies': {
+        'dataset': 'eeg_matchingpennies',
     },
     'ds000246': {
-        'dataset': 'ds000246',
-        'config': 'config_ds000246.py',
         'steps': ('preprocessing',
                   'preprocessing/make_epochs',  # Test the group/step syntax
                   'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds000247': {
-        'dataset': 'ds000247',
-        'config': 'config_ds000247.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'rest',
-        'env': {}
     },
     'ds000248': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
-        'task': None,
-        'env': {}
     },
-    'ds000248_ica': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_ica.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
+    'ds000248_ica': {},
     'ds000248_T1_BEM': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_FLASH_BEM': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_FLASH_BEM.py',
         'steps': ('source/make_bem_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_coreg_surfaces': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_coreg_surfaces.py',
         'steps': ('freesurfer/coreg_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_no_mri': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_no_mri.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds001810': {
-        'dataset': 'ds001810',
-        'config': 'config_ds001810.py',
         'steps': ('preprocessing', 'preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'eeg_matchingpennies': {
-        'dataset': 'eeg_matchingpennies',
-        'config': 'config_eeg_matchingpennies.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds003104': {
-        'dataset': 'ds003104',
-        'config': 'config_ds003104.py',
         'steps': ('preprocessing', 'sensor',  'source', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'ds000117': {
-        'dataset': 'ds000117',
-        'config': 'config_ds000117.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'ds003775': {
-        'dataset': 'ds003775',
-        'config': 'config_ds003775.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ERP_CORE_N400': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N400',
-        'env': {}
     },
     'ERP_CORE_ERN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'ERN',
-        'env': {}
     },
     'ERP_CORE_LRP': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'LRP',
-        'env': {}
     },
     'ERP_CORE_MMN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'MMN',
-        'env': {}
     },
     'ERP_CORE_N2pc': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N2pc',
-        'env': {}
     },
     'ERP_CORE_N170': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N170',
-        'env': {}
     },
     'ERP_CORE_P3': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'P3',
-        'env': {}
     }
 }
 
@@ -215,24 +143,33 @@ def run_tests(test_suite, download):
     for dataset, test_options in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset
-        if test_options['env']:
+        if 'env' in test_options:
             os.environ.update(test_options['env'])
 
-        config_path = (study_template_dir / 'tests' / 'configs' /
-                       test_options['config'])
+        config = test_options.get('config', f'config_{dataset}.py')
+        config_path = study_template_dir / 'tests' / 'configs' / config
 
         # Fetch the data.
+        dataset_name = test_options.get('dataset', dataset.split('_')[0])
         if download:
-            fetch(test_options['dataset'])
+            fetch(dataset_name)
 
         # XXX Workaround for buggy date in ds000247. Remove this and the
         # XXX file referenced here once fixed!!!
+        fix_path = Path(__file__).parent
         if dataset == 'ds000247':
             shutil.copy(
-                src=Path(__file__).parent / 'ds000247_scans.tsv',
+                src=fix_path / 'ds000247_scans.tsv',
                 dst=Path('~/mne_data/ds000247/sub-0002/ses-01/'
                          'sub-0002_ses-01_scans.tsv').expanduser()
             )
+        # XXX Workaround for buggy participant_id in ds001971
+        elif dataset == 'ds001971':
+            shutil.copy(
+                src=fix_path / 'ds001971_participants.tsv',
+                dst=Path('~/mne_data/ds001971/participants.tsv').expanduser()
+            )
+
 
         # Test the `--n_jobs` parameter
         if dataset == 'ds000117':
@@ -241,8 +178,9 @@ def run_tests(test_suite, download):
             n_jobs = None
 
         # Run the tests.
-        steps = test_options['steps']
-        task = test_options['task']
+        steps = test_options.get(
+            'steps', ('preprocessing', 'sensor', 'report'))
+        task = test_options.get('task', None)
 
         run_script = study_template_dir / 'run.py'
         # We need to adjust sys.argv so we can pass "command line arguments"

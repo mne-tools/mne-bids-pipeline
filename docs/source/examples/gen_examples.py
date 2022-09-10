@@ -71,6 +71,7 @@ for test_name, test_dataset_options in test_options.items():
         dataset_name = test_dataset_options['dataset']
     else:
         dataset_name = test_name
+    del test_dataset_options
 
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')
     example_target_dir.mkdir(exist_ok=True)
@@ -96,7 +97,7 @@ for test_dataset_name, test_dataset_options in test_options.items():
     else:
         dataset_name = test_dataset_name
 
-    del test_dataset_name
+    del test_dataset_options, test_dataset_name
 
     if dataset_name in datasets_without_html:
         logger.warning(f'Dataset {dataset_name} has no HTML report.')
@@ -104,7 +105,7 @@ for test_dataset_name, test_dataset_options in test_options.items():
 
     logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
-    options = dataset_options[test_dataset_options['dataset']]
+    options = dataset_options[dataset_name]
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = Path(f'docs/source/examples/{dataset_name}')

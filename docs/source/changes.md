@@ -175,6 +175,8 @@ authors:
   ({{ gh(582) }} by {{ authors.larsoner }})
 - The `loose` and `depth` configuration parameters were re-enabled
   ({{ gh(592) }}) by {{ authors.larsoner }}
+- Add the example [MIND DATA dataset (ds004107)](https://openneuro.org/datasets/ds004107)
+  ({{ gh(600) }}) by {{ authors.larsoner }}
 
 ### Behavior changes
 

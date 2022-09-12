@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import functools
-import inspect
 import os
 import sys
 import pathlib

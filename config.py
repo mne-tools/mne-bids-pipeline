@@ -1353,6 +1353,14 @@ Because each classifier is trained and tested on **all** time points, this
 procedure may take a significant amount of time.
 """
 
+decoding_time_generalization_decim: int = 1
+"""
+Says how much to decimate data before time generalization decoding.
+This is done in addition to the decimation done at the epochs level via the
+[`decim`][config.decim] parameter. This can be used to greatly speed up time
+generalization at the cost of lower time resolution in the resulting matrix.
+"""
+
 n_boot: int = 5000
 """
 The number of bootstrap resamples when estimating the standard error and

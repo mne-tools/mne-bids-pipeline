@@ -17,6 +17,7 @@ conditions = ['standard', 'deviant', 'button']
 contrasts = [('deviant', 'standard')]
 decode = True
 decoding_time_generalization = True
+decoding_time_generalization_decim = 4
 on_error = 'abort'
 
 parallel_backend = 'dask'

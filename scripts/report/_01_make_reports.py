@@ -135,7 +135,7 @@ def plot_auto_scores(cfg, subject, session):
 #         'scores': cross_val_scores,
 #         'metric': [metric] * len(cross_val_scores)}
 #     )
-#     fig, ax = plt.subplots()
+#     fig, ax = plt.subplots(constrained_layout=True)
 
 #     sns.swarmplot(x='contrast', y='scores', data=data, color='0.25',
 #                   label='cross-val. scores')
@@ -150,7 +150,6 @@ def plot_auto_scores(cfg, subject, session):
 #         metric = 'ROC AUC'
 #     ax.set_ylabel(f'Score ({metric})')
 #     ax.legend(loc='center right')
-#     fig.tight_layout()
 
 #     return fig
 
@@ -212,10 +211,12 @@ def _plot_full_epochs_decoding_scores(
 
 
 def _plot_time_by_time_decoding_scores(
+    *,
     times: np.ndarray,
     cross_val_scores: np.ndarray,
     metric: str,
-    time_generalization: bool
+    time_generalization: bool,
+    decim: int,
 ):
     """Plot cross-validation results from time-by-time decoding.
     """
@@ -232,7 +233,7 @@ def _plot_time_by_time_decoding_scores(
         max_scores = np.diag(max_scores)
         min_scores = np.diag(min_scores)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
     if times.min() < 0 < times.max():
         ax.axvline(0, ls='-', lw=0.5, color='black')
@@ -241,18 +242,27 @@ def _plot_time_by_time_decoding_scores(
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
     ax.set_ylim((-0.025, 1.025))
     ax.legend(loc='lower right')
-    fig.tight_layout()
 
     return fig
 
 
-def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
+def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
+    extra = ''
+    if decim > 1:
+        extra = f'\n(decim={decim})'
+    if xlabel is not None:
+        ax.set_xlabel(f'{xlabel}{extra}')
+    if ylabel is not None:
+        ax.set_ylabel(f'{ylabel}{extra}')
+
+
+def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -264,6 +274,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     se_upper = mean_scores + decoding_data['mean_se'].squeeze()
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
+    decim = decoding_data['decim'].item()
 
     if cfg.decoding_time_generalization:
         # Only use the diagonal values (classifiers trained and tested on the
@@ -277,7 +288,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     metric = cfg.decoding_metric
     clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.set_ylim((-0.025, 1.025))
 
     # Start with plotting the significant time periods according to the
@@ -321,12 +332,11 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
     ax.legend(loc='lower right')
-    fig.tight_layout()
 
     return fig
 
@@ -340,8 +350,9 @@ def plot_time_by_time_decoding_t_values(decoding_data):
     all_times = decoding_data['cluster_all_times'].squeeze()
     all_t_values = decoding_data['cluster_all_t_values'].squeeze()
     t_threshold = decoding_data['cluster_t_threshold']
+    decim = decoding_data['decim']
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.plot(all_times, all_t_values, ls='-', color='black',
             label='observed $t$-values')
     ax.axhline(t_threshold, ls='--', color='red', label='threshold')
@@ -350,7 +361,7 @@ def plot_time_by_time_decoding_t_values(decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     ax.set_ylabel('$t$-value')
     ax.legend(loc='lower right')
 
@@ -365,7 +376,6 @@ def plot_time_by_time_decoding_t_values(decoding_data):
         # start y axis at zero
         ax.set_ylim(ymin=all_t_values.min(), ymax=0)
 
-    fig.tight_layout()
     return fig
 
 
@@ -380,6 +390,7 @@ def _plot_decoding_time_generalization(
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
+    decim = decoding_data['decim'].item()
     if kind == 'single-subject':
         # take the mean across CV scores
         mean_scores = decoding_data['scores'].mean(axis=0)
@@ -406,8 +417,12 @@ def _plot_decoding_time_generalization(
     ax.plot(times[[0, -1]], times[[0, -1]], ls='--', lw=0.5, color='black')
 
     # Axis labels
-    ax.set_xlabel('Testing time (s)')
-    ax.set_ylabel('Training time (s)')
+    _label_time_by_time(
+        ax,
+        xlabel='Testing time (s)',
+        ylabel='Training time (s)',
+        decim=decim,
+    )
 
     # Color bar
     cbar = plt.colorbar(im, ax=ax)
@@ -415,7 +430,6 @@ def _plot_decoding_time_generalization(
         metric = 'ROC AUC'
     cbar.set_label(f'Score ({metric})')
 
-    fig.tight_layout()
     return fig
 
 
@@ -508,7 +522,7 @@ def run_report_preprocessing(
             title=title,
             butterfly=5,
             psd=plot_raw_psd,
-            tags=('raw', 'filtered', f'run-{fname.run}')
+            tags=('raw', 'filtered', f'run-{fname.run}'),
             # caption=fname.basename  # TODO upstream
         )
         del plot_raw_psd
@@ -769,7 +783,7 @@ def run_report_sensor(
             titles=title,
             noise_cov=noise_cov,
             n_time_points=cfg.report_evoked_n_time_points,
-            tags=tags
+            tags=tags,
         )
 
     ###########################################################################
@@ -865,10 +879,11 @@ def run_report_sensor(
             del fname_decoding, processing, a_vs_b
 
             fig = _plot_time_by_time_decoding_scores(
-                times=epochs.times,
+                times=decoding_data['times'].ravel(),
                 cross_val_scores=decoding_data['scores'],
                 metric=cfg.decoding_metric,
-                time_generalization=cfg.decoding_time_generalization
+                time_generalization=cfg.decoding_time_generalization,
+                decim=decoding_data['decim'].item(),
             )
             caption = (
                 f'Time-by-time decoding: '
@@ -1436,7 +1451,8 @@ def add_decoding_grand_average(
 
         # Plot scores
         fig = _plot_time_by_time_decoding_scores_gavg(
-            cfg=cfg, decoding_data=decoding_data
+            cfg=cfg,
+            decoding_data=decoding_data,
         )
         caption = (
             f'Based on N={decoding_data["N"].squeeze()} '
@@ -1529,6 +1545,7 @@ def get_config(
     else:
         fs_subject = config.get_fs_subject(subject=subject)
 
+    dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         task=config.get_task(),
         task_is_rest=config.task_is_rest,
@@ -1551,6 +1568,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_time_generalization_decim=dtg_decim,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,

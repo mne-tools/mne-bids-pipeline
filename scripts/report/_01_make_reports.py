@@ -245,7 +245,7 @@ def _plot_time_by_time_decoding_scores(
     extra = ''
     if decim > 1:
         extra = f'\n(decim={decim})'
-    ax.set_xlabel('Time (s){extra}')
+    ax.set_xlabel(f'Time (s){extra}')
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')

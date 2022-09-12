@@ -195,8 +195,7 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
-        decoding_time_generalization_decim=\
-            config.decoding_time_generalization_decim,
+        decoding_time_generalization_decim=config.decoding_time_generalization_decim,  # noqa: E501
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,

@@ -102,6 +102,10 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
 
+    decim = cfg.decoding_time_generalization_decim
+    if cfg.decoding_time_generalization and decim > 1:
+        epochs.decimate(decim, verbose='error')
+
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
     with config.get_parallel_backend():
@@ -146,7 +150,14 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         fname_mat = fname_epochs.copy().update(suffix='decoding',
                                                processing=processing,
                                                extension='.mat')
-        savemat(fname_mat, {'scores': scores, 'times': epochs.times})
+        savemat(
+            fname_mat,
+            {
+                'scores': scores,
+                'times': epochs.times,
+                'decim': decim,
+            }
+        )
 
         if cfg.decoding_time_generalization:
             # Only store the mean scores for the diagonal in the TSV file –
@@ -184,6 +195,7 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_time_generalization_decim=config.decoding_time_generalization_decim,  # noqa: E501
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,

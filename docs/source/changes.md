@@ -168,6 +168,9 @@ authors:
   scheme via the new configuration option
   [`decoding_time_generalization`][config.decoding_time_generalization].
   ({{ gh(559) }} by {{ authors.hoechenberger }})
+- Generalization across time additional decimation can be configured using
+  [`decoding_time_generalization_decim`][config.decoding_time_generalization_decim].
+  ({{ gh(603) }} by {{ authors.larsoner }})
 - Caching of early pipeline steps (maxwell filtering, frequency filtering)
   enabled by default using [`memory_location=True'`][config.memory_location]
   ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }})

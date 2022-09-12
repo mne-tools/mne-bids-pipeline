@@ -19,12 +19,8 @@ decode = True
 decoding_time_generalization = True
 on_error = 'abort'
 
-# XXX temporarily disable Dask
-#
-# parallel_backend = 'dask'
-# dask_worker_memory_limit = '3G'
-# dask_temp_dir = "./.dask-worker-space"
-# dask_open_dashboard = True
-# N_JOBS = 2
-
+parallel_backend = 'dask'
+dask_worker_memory_limit = '2G'
+dask_temp_dir = "./.dask-worker-space"
+dask_open_dashboard = True
 N_JOBS = 2

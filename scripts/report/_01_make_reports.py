@@ -266,7 +266,6 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
-    raise RuntimeError
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()

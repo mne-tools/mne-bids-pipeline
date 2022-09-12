@@ -868,7 +868,7 @@ def run_report_sensor(
                 times=decoding_data['times'],
                 cross_val_scores=decoding_data['scores'],
                 metric=cfg.decoding_metric,
-                time_generalization=cfg.decoding_time_generalization
+                time_generalization=cfg.decoding_time_generalization,
                 decim=decoding_data['decoding_time_generalization_decim'],
             )
             caption = (

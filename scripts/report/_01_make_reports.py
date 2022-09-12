@@ -242,10 +242,7 @@ def _plot_time_by_time_decoding_scores(
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
 
-    extra = ''
-    if decim > 1:
-        extra = f'\n(decim={decim})'
-    ax.set_xlabel(f'Time (s){extra}')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
@@ -255,7 +252,17 @@ def _plot_time_by_time_decoding_scores(
     return fig
 
 
-def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
+def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
+    extra = ''
+    if decim > 1:
+        extra = f'\n(decim={decim})'
+    if xlabel is not None:
+        ax.set_xlabel(f'{xlabel}{extra}')
+    if ylabel is not None:
+        ax.set_ylabel(f'{ylabel}{extra}')
+
+
+def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -267,6 +274,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     se_upper = mean_scores + decoding_data['mean_se'].squeeze()
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
+    decim = decoding_data['decim'].item()
 
     if cfg.decoding_time_generalization:
         # Only use the diagonal values (classifiers trained and tested on the
@@ -324,7 +332,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
@@ -342,6 +350,7 @@ def plot_time_by_time_decoding_t_values(decoding_data):
     all_times = decoding_data['cluster_all_times'].squeeze()
     all_t_values = decoding_data['cluster_all_t_values'].squeeze()
     t_threshold = decoding_data['cluster_t_threshold']
+    decim = decoding_data['decim']
 
     fig, ax = plt.subplots(constrained_layout=True)
     ax.plot(all_times, all_t_values, ls='-', color='black',
@@ -352,7 +361,7 @@ def plot_time_by_time_decoding_t_values(decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     ax.set_ylabel('$t$-value')
     ax.legend(loc='lower right')
 
@@ -381,6 +390,7 @@ def _plot_decoding_time_generalization(
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
+    decim = decoding_data['decim'].item()
     if kind == 'single-subject':
         # take the mean across CV scores
         mean_scores = decoding_data['scores'].mean(axis=0)
@@ -407,8 +417,12 @@ def _plot_decoding_time_generalization(
     ax.plot(times[[0, -1]], times[[0, -1]], ls='--', lw=0.5, color='black')
 
     # Axis labels
-    ax.set_xlabel('Testing time (s)')
-    ax.set_ylabel('Training time (s)')
+    _label_time_by_time(
+        ax,
+        xlabel='Testing time (s)',
+        ylabel='Training time (s)',
+        decim=decim,
+    )
 
     # Color bar
     cbar = plt.colorbar(im, ax=ax)
@@ -508,7 +522,7 @@ def run_report_preprocessing(
             title=title,
             butterfly=5,
             psd=plot_raw_psd,
-            tags=('raw', 'filtered', f'run-{fname.run}')
+            tags=('raw', 'filtered', f'run-{fname.run}'),
             # caption=fname.basename  # TODO upstream
         )
         del plot_raw_psd
@@ -769,7 +783,7 @@ def run_report_sensor(
             titles=title,
             noise_cov=noise_cov,
             n_time_points=cfg.report_evoked_n_time_points,
-            tags=tags
+            tags=tags,
         )
 
     ###########################################################################
@@ -865,11 +879,11 @@ def run_report_sensor(
             del fname_decoding, processing, a_vs_b
 
             fig = _plot_time_by_time_decoding_scores(
-                times=decoding_data['times'],
+                times=decoding_data['times'].ravel(),
                 cross_val_scores=decoding_data['scores'],
                 metric=cfg.decoding_metric,
                 time_generalization=cfg.decoding_time_generalization,
-                decim=decoding_data['decoding_time_generalization_decim'],
+                decim=decoding_data['decim'].item(),
             )
             caption = (
                 f'Time-by-time decoding: '
@@ -1439,7 +1453,6 @@ def add_decoding_grand_average(
         fig = _plot_time_by_time_decoding_scores_gavg(
             cfg=cfg,
             decoding_data=decoding_data,
-            time_generalization_decim=cfg.decoding_time_generalization_decim,
         )
         caption = (
             f'Based on N={decoding_data["N"].squeeze()} '
@@ -1532,6 +1545,7 @@ def get_config(
     else:
         fs_subject = config.get_fs_subject(subject=subject)
 
+    dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         task=config.get_task(),
         task_is_rest=config.task_is_rest,
@@ -1554,6 +1568,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_time_generalization_decim=dtg_decim,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
         inverse_method=config.inverse_method,

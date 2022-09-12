@@ -148,6 +148,9 @@ def average_time_by_time_decoding(
                          root=cfg.deriv_root,
                          check=False)
     epochs = mne.read_epochs(fname_epo)
+    dtg_decim = cfg.decoding_time_generalization_decim
+    if cfg.decoding_time_generalization and dtg_decim > 1:
+        epochs.decimate(dtg_decim, verbose='error')
     times = epochs.times
     subjects = cfg.subjects
     del epochs, fname_epo
@@ -164,6 +167,7 @@ def average_time_by_time_decoding(
             'cond_2': cond_2,
             'times': times,
             'N': len(subjects),
+            'decim': dtg_decim,
             'mean': np.empty(time_points_shape),
             'mean_min': np.empty(time_points_shape),
             'mean_max': np.empty(time_points_shape),
@@ -374,6 +378,7 @@ def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> SimpleNamespace:
+    dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         subjects=config.get_subjects(),
         task=config.get_task(),
@@ -390,6 +395,7 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_time_generalization_decim=dtg_decim,
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,

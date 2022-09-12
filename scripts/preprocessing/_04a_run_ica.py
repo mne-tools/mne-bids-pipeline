@@ -32,7 +32,7 @@ from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
 import config
-from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
+from config import (make_epochs, gen_log_kwargs, failsafe_run,
                     annotations_to_events, _update_for_splits)
 from config import parallel_func
 
@@ -232,7 +232,7 @@ def detect_bad_components(
     return inds, scores
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_ica(*, cfg, subject, session=None):
     """Run ICA."""
     bids_basename = BIDSPath(subject=subject,

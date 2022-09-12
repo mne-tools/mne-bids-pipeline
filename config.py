@@ -2601,6 +2601,14 @@ def get_n_jobs() -> int:
     return n_jobs
 
 
+def get_on_error() -> int:
+    if interactive:
+        this_on_error = 'debug'
+    else:
+        this_on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR', on_error)
+    return this_on_error
+
+
 dask_client = None
 
 
@@ -2836,10 +2844,10 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 
 
 def failsafe_run(
-    on_error: OnErrorT,
     script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
 ):
+    on_error = get_on_error()
     if memory_location is None or \
             memory_location is False or \
             get_input_fnames is None:

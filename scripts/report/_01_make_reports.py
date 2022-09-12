@@ -25,7 +25,7 @@ from mne_bids.stats import count_events
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, parallel_func,
+    gen_log_kwargs, failsafe_run, parallel_func,
     get_noise_cov_bids_path, _update_for_splits,
 )
 
@@ -266,6 +266,7 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
+    raise RuntimeError
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
@@ -1113,7 +1114,7 @@ def run_report_source(
     return report
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_report(
     *,
     cfg: SimpleNamespace,
@@ -1208,7 +1209,7 @@ def add_system_info(report: mne.Report):
     report.add_sys_info(title='System information')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib

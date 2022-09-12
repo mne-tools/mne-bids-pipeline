@@ -30,13 +30,13 @@ from mne.decoding import Scaler, Vectorizer
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, LogReg
+from config import gen_log_kwargs, failsafe_run, LogReg
 
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,

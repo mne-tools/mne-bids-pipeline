@@ -27,7 +27,7 @@ import mne
 from mne_bids import BIDSPath, read_raw_bids
 
 import config
-from config import (gen_log_kwargs, on_error, failsafe_run,
+from config import (gen_log_kwargs, failsafe_run,
                     import_experimental_data, import_er_data, import_rest_data,
                     _update_for_splits)
 from config import parallel_func
@@ -75,7 +75,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
     return in_files
 
 
-@failsafe_run(on_error=on_error, script_path=__file__,
+@failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_maxwell_filter)
 def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:

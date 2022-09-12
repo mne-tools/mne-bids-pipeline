@@ -15,7 +15,7 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -76,7 +76,7 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def main():
     """Initialize the output directories."""
     with config.get_parallel_backend():

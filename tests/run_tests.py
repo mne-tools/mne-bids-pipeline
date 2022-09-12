@@ -123,7 +123,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
 }
 
 
-def run_tests(test_suite, download):
+def run_tests(test_suite, *, download, debug):
     """Run a suite of tests.
 
     Parameters
@@ -134,6 +134,8 @@ def run_tests(test_suite, download):
         elements function handles to be called.
     download : bool
         Whether to (re-)download the test dataset.
+    debug : bool
+        If True, force debug mode.
 
     Notes
     -----
@@ -175,7 +177,7 @@ def run_tests(test_suite, download):
         if dataset == 'ds000117':
             n_jobs = '1'
         else:
-            n_jobs = None
+            n_jobs = '1' if debug else None
 
         # Run the tests.
         steps = test_options.get(
@@ -186,20 +188,24 @@ def run_tests(test_suite, download):
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.
         argv_orig = sys.argv.copy()
+        run_path = str(run_script)
         sys.argv = [
-            sys.argv[0],
+            run_path,
             f'--steps={",".join(steps)}',
             f'--config={config_path}',
             f'--task={task}' if task else '',
             f'--n_jobs={n_jobs}' if n_jobs else '',
+            '--debug=1' if debug else '',
             f'--interactive=0'
         ]
         # Eliminate "empty" items
         sys.argv = [arg for arg in sys.argv if arg != '']
         # We have to use run_path because run_module doesn't allow
         # relative imports.
-        runpy.run_path(str(run_script), run_name='__main__')
-        sys.argv = argv_orig
+        try:
+            runpy.run_path(run_path, run_name='__main__')
+        finally:
+            sys.argv = argv_orig
 
 
 if __name__ == '__main__':
@@ -207,12 +213,22 @@ if __name__ == '__main__':
     parser.add_argument('dataset', help='dataset to test. A key in the '
                                         'TEST_SUITE dictionary, or ALL, '
                                         'to test all datasets.')
-    parser.add_argument('--download', choices=['0', '1'],
-                        help='Whether to (re-)download the dataset.')
+    parser.add_argument('--download', choices=['0', '1'], default='0',
+                        help='Whether to (re-)download the dataset.',
+                        nargs='?')
+    parser.add_argument('--debug', '-d', choices=['0', '1'], default='0',
+                        nargs='?', help='Run in debug mode')
+
     args = parser.parse_args()
     dataset = args.dataset
     download = args.download
-    download = True if download is None else bool(int(download))
+    if download is None:  # --download
+        download = '0'
+    download = bool(int(download))
+    debug = args.debug
+    if debug is None:  # --debug
+        debug = '1'
+    debug = bool(int(debug))
     # Triage the dataset and raise informative error if it does not exist
     if dataset == 'ALL':
         test_suite = TEST_SUITE
@@ -230,6 +246,11 @@ if __name__ == '__main__':
         )
 
     # Run the tests
-    print(f'Running the following tests: {", ".join(test_suite.keys())}')
+    extra = ''
+    if download:
+        extra += ' after downloading data'
+    if debug:
+        extra += ' in debug mode'
+    print(f'Running the following tests{extra}: {", ".join(test_suite.keys())}')
 
-    run_tests(test_suite, download=download)
+    run_tests(test_suite, download=download, debug=debug)

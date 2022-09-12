@@ -19,13 +19,13 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
+from config import make_epochs, gen_log_kwargs, failsafe_run
 from config import parallel_func, _update_for_splits
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_epochs(*, cfg, subject, session=None):
     """Extract epochs for one subject."""
     bids_path = BIDSPath(subject=subject,

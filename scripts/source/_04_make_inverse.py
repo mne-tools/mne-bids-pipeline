@@ -18,14 +18,14 @@ from mne_bids import BIDSPath
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name, parallel_func,
+    gen_log_kwargs, failsafe_run, sanitize_cond_name, parallel_func,
     get_noise_cov_bids_path
 )
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_inverse(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,

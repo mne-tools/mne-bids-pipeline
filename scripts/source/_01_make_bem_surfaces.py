@@ -18,7 +18,7 @@ from types import SimpleNamespace
 import mne
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -119,7 +119,7 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def make_bem_and_scalp_surface(*, cfg, subject):
     make_bem(cfg=cfg, subject=subject)
     make_scalp_surface(cfg=cfg, subject=subject)

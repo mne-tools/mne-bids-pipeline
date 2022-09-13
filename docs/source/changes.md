@@ -359,3 +359,6 @@ authors:
   ({{ gh(572) }} by {{ authors.hoechenberger }})
 - Fix bug with handling of split files during preprocessing
   ({{ gh(597) }} by {{ authors.larsoner }})
+- Fix bug where wrong command-line arguments to ``run.py`` were just ignored
+  instead of raising an error
+  ({{ gh(605) }}) by {{ authors.larsoner }}

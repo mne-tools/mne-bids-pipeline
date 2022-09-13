@@ -46,7 +46,8 @@ def _get_script_modules(
     task: Optional[str] = None,
     run: Optional[str] = None,
     interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None
+    n_jobs: Optional[str] = None,
+    on_error: Optional[str] = None,
 ) -> Dict[str, Tuple[ModuleType]]:
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
@@ -71,6 +72,9 @@ def _get_script_modules(
 
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+
+    if on_error:
+        env['MNE_BIDS_STUDY_ON_ERROR'] = on_error
 
     from scripts import init
     from scripts import preprocessing
@@ -123,7 +127,9 @@ def process(
     task: Optional[str] = None,
     run: Optional[str] = None,
     interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None
+    n_jobs: Optional[str] = None,
+    debug: Optional[str] = None,
+    **kwargs: Optional[dict],
 ):
     """Run the BIDS pipeline.
 
@@ -153,7 +159,13 @@ def process(
         Whether or not to enable "interactive" mode.
     n_jobs
         The number of parallel processes to execute.
+    debug
+        Whether or not to force on_error='debug'.
+    **kwargs
+        Should not be used. Only used to detect invalid arguments.
     """
+    if kwargs:
+        raise ValueError(f"Unknown argument(s) to run.py: {list(kwargs)}")
     if steps is None:
         steps = ('all',)
     elif isinstance(steps, str) and ',' in steps:
@@ -183,6 +195,7 @@ def process(
         interactive = '1' if interactive in ['1', 'True', True] else '0'
     if n_jobs is not None:
         n_jobs = str(n_jobs)
+    on_error = 'debug' if debug is not None else debug
 
     processing_stages = []
     processing_steps = []
@@ -206,6 +219,7 @@ def process(
         run=run,
         interactive=interactive,
         n_jobs=n_jobs,
+        on_error=on_error,
     )
 
     script_modules: List[ModuleType] = []

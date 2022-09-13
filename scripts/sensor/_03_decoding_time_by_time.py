@@ -37,7 +37,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -52,7 +52,7 @@ class LogReg(LogisticRegression):
             return super().fit(*args, **kwargs)
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,

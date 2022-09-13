@@ -16,7 +16,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, parallel_func,
+    gen_log_kwargs, failsafe_run, parallel_func,
     get_noise_cov_bids_path
 )
 
@@ -143,7 +143,7 @@ def retrieve_custom_cov(
     cov.save(cov_fname, overwrite=True)
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_covariance(*, cfg, subject, session=None, custom_func=None):
     if callable(config.noise_cov):
         retrieve_custom_cov(

@@ -3475,8 +3475,7 @@ def _load_data(cfg, bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    if bids_path.subject != 'emptyroom':
-        _crop_data(cfg, raw=raw, subject=subject)
+    _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):

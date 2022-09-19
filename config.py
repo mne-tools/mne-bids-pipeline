@@ -2137,24 +2137,12 @@ if not ch_types:
     msg = 'Please specify ch_types in your configuration.'
     raise ValueError(msg)
 
-if ch_types == ['eeg']:
-    pass
-elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
-    msg = ('EEG data can only be analyzed separately from other channel '
-           'types. Please adjust `ch_types` in your configuration.')
-    raise ValueError(msg)
-elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+_VALID_TYPES = ('meg', 'mag', 'grad', 'eeg')
+if any(ch_type not in _VALID_TYPES for ch_type in ch_types):
     msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
-           'configuration.')
+           f'configuration, got {ch_types} but supported types are '
+           f'{_VALID_TYPES}')
     raise ValueError(msg)
-
-if 'eeg' in ch_types:
-    if spatial_filter == 'ssp':
-        msg = ("You requested SSP for EEG data via spatial_filter='ssp'. "
-               "However, this is not presently supported. Please use ICA "
-               "instead by setting spatial_filter='ica'.")
-        raise ValueError(msg)
-
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "

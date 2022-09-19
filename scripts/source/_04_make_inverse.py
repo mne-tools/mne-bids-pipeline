@@ -48,6 +48,8 @@ def run_inverse(*, cfg, subject, session=None):
         session=session
     )
 
+    # TODO: Eventually we should maybe loop over ch_types, e.g., to create
+    # MEG, EEG, and MEG+EEG inverses and STCs
     fname_inv = bids_path.copy().update(suffix='inv')
 
     info = mne.io.read_info(fname_info)

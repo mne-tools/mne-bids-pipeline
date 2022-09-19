@@ -179,7 +179,11 @@ authors:
 - The `loose` and `depth` configuration parameters were re-enabled
   ({{ gh(592) }}) by {{ authors.larsoner }}
 - Add the example [MIND DATA dataset (ds004107)](https://openneuro.org/datasets/ds004107)
-  ({{ gh(600) }}) by {{ authors.larsoner }}
+  (({{ gh(600) }}) by {{ authors.larsoner }})
+- Simultaneous MEG+EEG can now be processed jointly
+  ({{ gh(606) }} by {{ authors.larsoner }})
+- Spatial filtering using SSP is now supported for EEG data
+  ({{ gh(606) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 
@@ -361,4 +365,7 @@ authors:
   ({{ gh(597) }} by {{ authors.larsoner }})
 - Fix bug where wrong command-line arguments to ``run.py`` were just ignored
   instead of raising an error
-  ({{ gh(605) }}) by {{ authors.larsoner }}
+  ({{ gh(605) }}) by {{ authors.larsoner }})
+- During the Maxwell filtering step, all channels are now kept rather than
+  being restricted to just MEG channels
+  ({{ gh(606) }} by {{ authors.larsoner }})

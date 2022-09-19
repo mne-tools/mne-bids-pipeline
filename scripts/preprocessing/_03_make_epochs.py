@@ -142,11 +142,11 @@ def run_epochs(*, cfg, subject, session=None):
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
             msg = (
-                f'The rank of the resting state data ({rank_rest}) is smaller '
-                f'than the smallest rank of the "{cfg.task}" epochs '
-                f'({smallest_rank}). Replacing part of the  "info" object of '
-                f'the concatenated "{cfg.task}" epochs with information from '
-                f'the resting-state run.'
+                f'The MEG rank of the resting state data ({rank_rest}) is '
+                f'smaller than the smallest MEG rank of the "{cfg.task}" '
+                f'epochs ({smallest_rank}). Replacing part of the  "info" '
+                f'object of the concatenated "{cfg.task}" epochs with '
+                f'information from the resting-state run.'
             )
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,
                                             session=session, run='rest'))
@@ -167,7 +167,7 @@ def run_epochs(*, cfg, subject, session=None):
             epochs.info['proc_history'] = smallest_rank_info['proc_history']
             rank_epochs_new = mne.compute_rank(epochs, rank='info')['meg']
             msg = (
-                f'The rank of the "{cfg.task}" epochs is now: '
+                f'The MEG rank of the "{cfg.task}" epochs is now: '
                 f'{rank_epochs_new}'
             )
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,

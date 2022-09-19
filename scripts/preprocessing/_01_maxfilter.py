@@ -144,16 +144,11 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
     )
 
     raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
-
-    # Save only the channel types we wish to analyze (including the
-    # channels marked as "bad").
-    # We do not run `raw_sss.pick()` here because it uses too much memory.
-    picks = config.get_channels_to_analyze(raw.info)
     out_files['sss_raw'] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
     logger.info(**gen_log_kwargs(
         message=msg, subject=subject, session=session, run=run))
-    raw_sss.save(out_files['sss_raw'], picks=picks, split_naming='bids',
+    raw_sss.save(out_files['sss_raw'], split_naming='bids',
                  overwrite=True, split_size=cfg._raw_split_size)
     # we need to be careful about split files
     _update_for_splits(out_files, 'sss_raw')
@@ -250,7 +245,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run))
         raw_noise_sss.save(
-            out_files['sss_noise'], picks=picks, overwrite=True,
+            out_files['sss_noise'], overwrite=True,
             split_naming='bids', split_size=cfg._raw_split_size,
         )
         _update_for_splits(out_files, 'sss_noise')

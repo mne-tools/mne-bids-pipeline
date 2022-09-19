@@ -1,5 +1,5 @@
 """
-MNE Sample Data
+MNE Sample Data: M/EEG combined processing
 """
 import mne
 
@@ -18,7 +18,7 @@ contrasts = [('Visual', 'Auditory'),
 
 time_frequency_conditions = ['Auditory', 'Visual']
 
-ch_types = ['meg']
+ch_types = ['meg', 'eeg']
 mf_reference_run = '01'
 find_flat_channels_meg = True
 find_noisy_channels_meg = True

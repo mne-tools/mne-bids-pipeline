@@ -2015,7 +2015,7 @@ def gen_log_kwargs(
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
     extra = {
-        'step': f'📊 {step_name}'
+        'step': f'⏳️ {step_name}'
     }
     if subject:
         extra['subject'] = subject

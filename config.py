@@ -3001,6 +3001,8 @@ def plot_auto_scores(auto_scores):
     for ch_type in ch_types_:
         # Only select the data for mag or grad channels.
         ch_subset = auto_scores['ch_types'] == ch_type
+        if not ch_subset.any():
+            continue  # e.g., MEG+EEG data with finding bads with MF enabled
         ch_names = auto_scores['ch_names'][ch_subset]
         scores = auto_scores['scores_noisy'][ch_subset]
         limits = auto_scores['limits_noisy'][ch_subset]

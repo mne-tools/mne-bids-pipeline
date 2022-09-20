@@ -37,10 +37,12 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 def get_input_fnames_maxwell_filter(**kwargs):
     """Get paths of files required by maxwell_filter function."""
-    cfg = kwargs['cfg']
-    subject = kwargs['subject']
-    session = kwargs['session']
-    run = kwargs['run']
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    run = kwargs.pop('run')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
 
     bids_path_in = BIDSPath(subject=subject,
                             session=session,
@@ -77,7 +79,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_maxwell_filter)
-def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
+def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'

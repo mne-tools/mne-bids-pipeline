@@ -171,9 +171,9 @@ authors:
 - Generalization across time additional decimation can be configured using
   [`decoding_time_generalization_decim`][config.decoding_time_generalization_decim].
   ({{ gh(603) }} by {{ authors.larsoner }})
-- Caching of early pipeline steps (maxwell filtering, frequency filtering)
-  enabled by default using [`memory_location=True'`][config.memory_location]
-  ({{ gh(563) }} by {{ authors.agramfort }} and {{ authors.larsoner }})
+- Caching of pipeline enabled (up to/including the decoding steps) by default
+  using [`memory_location=True'`][config.memory_location]
+  ({{ gh(563) }}, {{ gh (600)  }} by {{ authors.agramfort }} and {{ authors.larsoner }})
 - Basic testing of infant MEG data with movement was added to CI testing
   ({{ gh(582) }} by {{ authors.larsoner }})
 - The `loose` and `depth` configuration parameters were re-enabled
@@ -361,4 +361,6 @@ authors:
   ({{ gh(597) }} by {{ authors.larsoner }})
 - Fix bug where wrong command-line arguments to ``run.py`` were just ignored
   instead of raising an error
-  ({{ gh(605) }}) by {{ authors.larsoner }}
+  ({{ gh(605) }}) by {{ authors.larsoner }})
+- Fix bug where only the first run was used to compute SSP
+  ({{ gh(607) }} by {{ authors.larsoner }})

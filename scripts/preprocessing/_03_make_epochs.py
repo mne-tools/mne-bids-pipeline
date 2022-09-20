@@ -25,9 +25,18 @@ from config import parallel_func, _update_for_splits
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(script_path=__file__)
-def run_epochs(*, cfg, subject, session=None):
-    """Extract epochs for one subject."""
+def get_input_fnames_epochs(**kwargs):
+    """Get paths of files required by filter_data function."""
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
+
+    # Construct the basenames of the files we wish to load, and of the empty-
+    # room recording we wish to save.
+    # The basenames of the empty-room recording output file does not contain
+    # the "run" entity.
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -36,16 +45,32 @@ def run_epochs(*, cfg, subject, session=None):
                          space=cfg.space,
                          extension='.fif',
                          datatype=cfg.datatype,
-                         root=cfg.deriv_root)
+                         root=cfg.deriv_root,
+                         processing='filt').update(suffix='raw', check=False)
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
-    raw_fnames = []
+    in_files = dict()
     for run in cfg.runs:
-        raw_fname_in = bids_path.copy().update(run=run, processing='filt',
-                                               suffix='raw', check=False)
-        raw_fname_in = _update_for_splits(raw_fname_in, None, single=True)
-        raw_fnames.append(raw_fname_in)
+        key = f'raw_run-{run}'
+        in_files[key] = bids_path.copy().update(run=run)
+        _update_for_splits(in_files, key, single=True)
+    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+        in_files['raw_rest'] = bids_path.copy().update(
+            task='rest',
+            check=False
+        )
+        _update_for_splits(in_files, 'raw_rest', single=True)
+    return in_files
+
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_epochs)
+def run_epochs(*, cfg, subject, session, in_files):
+    """Extract epochs for one subject."""
+    raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
+    bids_path_in = raw_fnames[0].copy().update(
+        processing=None, run=None, split=None)
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
@@ -65,8 +90,7 @@ def run_epochs(*, cfg, subject, session=None):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = (f'Loading filtered raw data from {raw_fname.basename} '
-               f'and creating epochs')
+        msg = (f'Loading filtered raw data from {raw_fname.basename}')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
@@ -130,15 +154,7 @@ def run_epochs(*, cfg, subject, session=None):
     del epochs_all_runs
 
     if cfg.use_maxwell_filter and config.noise_cov == 'rest':
-        bp_raw_rest = (bids_path.copy()
-                       .update(
-                           run=None,
-                           task='rest',
-                           processing='filt',
-                           suffix='raw',
-                           check=False
-                        ))
-        raw_rest_filt = mne.io.read_raw(bp_raw_rest)
+        raw_rest_filt = mne.io.read_raw(in_files['raw_rest'])
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
             msg = (
@@ -181,21 +197,28 @@ def run_epochs(*, cfg, subject, session=None):
     n_epochs_before_metadata_query = len(epochs.drop_log)
 
     msg = (f'Created {n_epochs_before_metadata_query} epochs with time '
-           f'interval: {epochs.tmin} – {epochs.tmax} sec.\n'
-           f'Selected {len(epochs)} epochs via metadata query: '
-           f'{cfg.epochs_metadata_query}\n'
-           f'Writing {len(epochs)} epochs to disk.')
+           f'interval: {epochs.tmin} – {epochs.tmax} sec.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_fname = bids_path.copy().update(suffix='epo', check=False)
+    msg = (f'Selected {len(epochs)} epochs via metadata query: '
+           f'{cfg.epochs_metadata_query}')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Writing {len(epochs)} epochs to disk.')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    out_files = dict()
+    out_files['epochs'] = bids_path_in.copy().update(
+        suffix='epo', processing=None, check=False)
     epochs.save(
-        epochs_fname, overwrite=True, split_naming='bids',
+        out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)
-    # _update_for_splits(out_files, 'epochs')
+    _update_for_splits(out_files, 'epochs')
 
     if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
+    return out_files
 
 
 def get_config(

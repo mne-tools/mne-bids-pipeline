@@ -49,9 +49,13 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
         session=session
     )
 
-    msg = (f"Computing regularized covariance based on epochs' baseline "
-           f"periods. Input: {epo_fname.basename}, "
-           f"Output: {cov_fname.basename}")
+    msg = "Computing regularized covariance based on epochs' baseline periods."
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Input: {epo_fname.basename}"
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Output: {cov_fname.basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -93,9 +97,13 @@ def compute_cov_from_raw(cfg, subject, session):
         session=session
     )
 
-    msg = (f'Computing regularized covariance based on {data_type} recording. '
-           f'Input: {bids_path_raw_noise.basename}, '
-           f'Output: {cov_fname.basename}')
+    msg = f'Computing regularized covariance based on {data_type} recording.'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Input: {bids_path_raw_noise.basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Output: {cov_fname.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -133,8 +141,11 @@ def retrieve_custom_cov(
         session=session
     )
 
-    msg = (f'Retrieving noise covariance matrix from custom user-supplied '
-           f'function, Output: {cov_fname.basename}')
+    msg = ('Retrieving noise covariance matrix from custom user-supplied '
+           'function')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = 'Output: {cov_fname.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

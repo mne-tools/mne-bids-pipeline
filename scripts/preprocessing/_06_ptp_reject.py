@@ -27,8 +27,12 @@ from config import parallel_func
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(script_path=__file__)
-def drop_ptp(*, cfg, subject, session=None):
+def get_input_fnames_drop_ptp(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -41,17 +45,26 @@ def drop_ptp(*, cfg, subject, session=None):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
+    in_files = dict()
+    in_files['epochs'] = bids_path.copy().update(
+        processing=cfg.spatial_filter)
+    return in_files
 
-    infile_processing = cfg.spatial_filter
-    fname_in = bids_path.copy().update(processing=infile_processing)
-    fname_out = bids_path.copy().update(processing='clean')
 
-    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_drop_ptp)
+def drop_ptp(*, cfg, subject, session, in_files):
+    out_files = dict()
+    out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')
+    msg = f'Input: {in_files["epochs"].basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Output: {out_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
     # Get rejection parameters and drop bad epochs
-    epochs = mne.read_epochs(fname_in, preload=True)
+    epochs = mne.read_epochs(in_files['epochs'], preload=True)
     reject = config.get_reject(epochs=epochs)
 
     if cfg.ica_reject is not None:
@@ -90,8 +103,9 @@ def drop_ptp(*, cfg, subject, session=None):
 
     epochs.apply_baseline(cfg.baseline)
     epochs.save(
-        fname_out, overwrite=True, split_naming='bids',
+        out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)
+    return out_files
 
 
 def get_config(

@@ -48,9 +48,10 @@ def _get_script_modules(
     interactive: Optional[str] = None,
     n_jobs: Optional[str] = None,
     on_error: Optional[str] = None,
+    cache: Optional[str] = None,
 ) -> Dict[str, Tuple[ModuleType]]:
     env = os.environ
-    env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+    env['MNE_BIDS_STUDY_CONFIG'] = config
 
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
@@ -75,6 +76,9 @@ def _get_script_modules(
 
     if on_error:
         env['MNE_BIDS_STUDY_ON_ERROR'] = on_error
+
+    if cache:
+        env['MNE_BIDS_STUDY_USE_CACHE'] = cache
 
     from scripts import init
     from scripts import preprocessing
@@ -129,6 +133,7 @@ def process(
     interactive: Optional[str] = None,
     n_jobs: Optional[str] = None,
     debug: Optional[str] = None,
+    cache: Optional[str] = None,
     **kwargs: Optional[dict],
 ):
     """Run the BIDS pipeline.
@@ -161,6 +166,8 @@ def process(
         The number of parallel processes to execute.
     debug
         Whether or not to force on_error='debug'.
+    cache
+        Whether or not to use caching.
     **kwargs
         Should not be used. Only used to detect invalid arguments.
     """
@@ -196,6 +203,7 @@ def process(
     if n_jobs is not None:
         n_jobs = str(n_jobs)
     on_error = 'debug' if debug is not None else debug
+    cache = '1' if cache != 0 else '0'
 
     processing_stages = []
     processing_steps = []
@@ -210,6 +218,7 @@ def process(
             processing_stages.append(steps_)
             processing_steps.append(None)
 
+    config = str(pathlib.Path(config).expanduser())
     SCRIPT_MODULES = _get_script_modules(
         config=config,
         root_dir=root_dir,
@@ -220,6 +229,7 @@ def process(
         interactive=interactive,
         n_jobs=n_jobs,
         on_error=on_error,
+        cache=cache,
     )
 
     script_modules: List[ModuleType] = []
@@ -251,7 +261,10 @@ def process(
         script_modules = [*SCRIPT_MODULES['init'], *script_modules]
 
     logger.info(
-        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+        "👋 Welcome aboard the MNE BIDS Pipeline!"
+    )
+    logger.info(
+        f"🧾 Using configuration: {config}"
     )
 
     for script_module in script_modules:

@@ -1684,7 +1684,7 @@ which is typically the pre-stimulus period.
 
 If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
-selected based on recording date and time.
+selected based on recording date and time. This cannot be used with EEG data.
 
 If ``''rest'``, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
@@ -1925,7 +1925,10 @@ os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 logger = logging.getLogger('mne-bids-pipeline')
 
 log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
-log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
+log_date_fmt = '%H:%M:%S'
+# TODO:
+# This does not persist across threads, probably due to relead of coloredlogs?
+# coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
 log_level_styles = {
     'warning': {
         'color': 202,
@@ -2012,7 +2015,7 @@ def gen_log_kwargs(
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
     extra = {
-        'step': step_name
+        'step': f'⏳️ {step_name}'
     }
     if subject:
         extra['subject'] = subject
@@ -2051,10 +2054,7 @@ _epochs_split_size = '2GB'
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
 
-    if cfg_path.exists():
-        msg = f'Using custom configuration: {cfg_path}'
-        logger.info(**gen_log_kwargs(message=msg))
-    else:
+    if not cfg_path.exists():
         msg = ('The custom configuration file specified in the '
                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
                'found: {cfg_path}'.format(cfg_path=cfg_path))
@@ -2081,6 +2081,9 @@ if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
 
 if not interactive:
     matplotlib.use('Agg')  # do not open any window  # noqa
+
+if os.getenv('MNE_BIDS_STUDY_USE_CACHE', '') == '0':
+    memory_location = False
 
 
 ###############################################################################
@@ -2848,13 +2851,7 @@ def failsafe_run(
     get_input_fnames: Optional[Callable] = None,
 ):
     on_error = get_on_error()
-    if memory_location is None or \
-            memory_location is False or \
-            get_input_fnames is None:
-        # No caching is needed
-        memory = Memory(location=None)  # no op
-    else:
-        memory = StepMemory(get_input_fnames=get_input_fnames)
+    memory = ConditionalStepMemory(get_input_fnames=get_input_fnames)
 
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -2939,18 +2936,29 @@ def hash_file_path(path):
     return md5_hashed
 
 
-class StepMemory():
+class ConditionalStepMemory():
     def __init__(self, get_input_fnames=None):
         if memory_location is True:
             use_location = get_deriv_root() / 'joblib'
+        elif not memory_location:
+            use_location = None
         else:
             use_location = pathlib.Path(memory_location)
-        self.memory = Memory(use_location, verbose=memory_verbose)
+        # Actually make the Memory object only if necessary
+        if use_location is not None and get_input_fnames is not None:
+            self.memory = Memory(use_location, verbose=memory_verbose)
+        else:
+            self.memory = None
         self.get_input_fnames = get_input_fnames
 
     def cache(self, func):
         def wrapper(*args, **kwargs):
-            in_files = self.get_input_fnames(**kwargs)
+            in_files = None
+            if self.get_input_fnames is not None:
+                in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
+            if self.memory is None:
+                func(*args, **kwargs)
+                return
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
 
@@ -2966,26 +2974,18 @@ class StepMemory():
                     this_hash = hash_file_path(v)
                 hashes.append((str(v), this_hash))
 
-            cfg = copy.deepcopy(kwargs['cfg'])
-            cfg.hashes = hashes
-            kwargs['cfg'] = cfg
-            kwargs['in_files'] = in_files
+            kwargs['cfg'] = copy.deepcopy(kwargs['cfg'])
+            kwargs['cfg'].hashes = hashes
 
             # XXX we should also hash the sidecar files
 
             out_files = self.memory.cache(func)(*args, **kwargs)
             # backward compat, but ideally this would eventually just be dict
-            assert isinstance(out_files, (dict, list))
-            if isinstance(out_files, dict):
-                out_files_missing_msg = '\n'.join(
-                    f'- {key}={fname}' for key, fname in out_files.items()
-                    if not pathlib.Path(fname).exists()
-                )
-            else:
-                out_files_missing_msg = '\n'.join(
-                    f'- {fname}' for fname in out_files
-                    if not pathlib.Path(fname).exists()
-                )
+            assert isinstance(out_files, dict), type(out_files)
+            out_files_missing_msg = '\n'.join(
+                f'- {key}={fname}' for key, fname in out_files.items()
+                if not pathlib.Path(fname).exists()
+            )
             if out_files_missing_msg:
                 raise ValueError('Missing at least one output file: \n'
                                  + out_files_missing_msg + '\n' +

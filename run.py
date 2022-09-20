@@ -268,7 +268,7 @@ def process(
     )
 
     for script_module in script_modules:
-        logger.info(f'🚀 Now running script:  {script_module.__name__} 👇')
+        logger.info(f'🚀 Now running script: {script_module.__name__} 👇')
         script_module.main()
         logger.info(f'🎉 Done running script: {script_module.__name__} 👆')
 

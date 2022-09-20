@@ -69,7 +69,8 @@ def get_input_fnames_epochs(**kwargs):
 def run_epochs(*, cfg, subject, session=None, in_files):
     """Extract epochs for one subject."""
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
-    bids_path_in = raw_fnames[0].copy().update(processing=None, run=None)
+    bids_path_in = raw_fnames[0].copy().update(
+        processing=None, run=None, split=None)
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.

@@ -116,6 +116,7 @@ def plot_auto_scores(cfg, subject, session):
         captions = [f'Run {run}'] * len(figs)
         all_captions.extend(captions)
 
+    assert all_figs
     return all_figs, all_captions
 
 

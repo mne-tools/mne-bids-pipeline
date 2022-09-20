@@ -2992,10 +2992,11 @@ def plot_auto_scores(auto_scores):
     import seaborn as sns
     import pandas as pd
 
-    if ch_types == ['meg']:
-        ch_types_ = ['grad', 'mag']
-    else:
-        ch_types_ = ch_types
+    ch_types_ = list(ch_types)
+    if 'meg' in ch_types_:  # split it
+        idx = ch_types_.index('meg')
+        ch_types_[idx] = 'grad'
+        ch_types_.insert(idx + 1, 'mag')
 
     figs = []
     for ch_type in ch_types_:
@@ -3043,6 +3044,7 @@ def plot_auto_scores(auto_scores):
         # The figure title should not overlap with the subplots.
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         figs.append(fig)
+    assert figs
 
     return figs
 

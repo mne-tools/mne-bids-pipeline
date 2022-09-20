@@ -87,8 +87,10 @@ def apply_ica(*, cfg, subject, session, in_files):
                    .to_list())
 
     # Load epochs to reject ICA components.
-    msg = (f'Input: {in_files["epochs"].basename}, '
-           f'Output: {out_files["epochs"].basename}')
+    msg = (f'Input: {in_files["epochs"].basename}')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Output: {out_files["epochs"].basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

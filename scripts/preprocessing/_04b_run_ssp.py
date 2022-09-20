@@ -62,8 +62,10 @@ def run_ssp(*, cfg, subject, session, in_files):
         run=None, suffix='proj', split=None, processing=None, check=False)
 
     msg = (f'Input{_pl(raw_fnames)} ({len(raw_fnames)}): '
-           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}, '
-           f'Output: {out_files["proj"].basename}')
+           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}, ')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Output: {out_files["proj"].basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

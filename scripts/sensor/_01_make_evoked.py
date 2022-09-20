@@ -41,7 +41,10 @@ def run_evoked(*, cfg, subject, session=None):
                                        check=False)
     fname_out = bids_path.copy().update(suffix='ave', check=False)
 
-    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
+    msg = f'Input: {fname_in.basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Output: {fname_out.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 

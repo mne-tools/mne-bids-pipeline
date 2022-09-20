@@ -54,8 +54,10 @@ def apply_ssp(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(
         processing='ssp', check=False)
-    msg = (f"Input: {in_files['epochs'].basename}, "
-           f"Output: {out_files['epochs'].basename}")
+    msg = f"Input: {in_files['epochs'].basename}"
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Output: {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs = mne.read_epochs(in_files['epochs'], preload=True)

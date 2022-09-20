@@ -2051,10 +2051,7 @@ _epochs_split_size = '2GB'
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
 
-    if cfg_path.exists():
-        msg = f'Using custom configuration: {cfg_path}'
-        logger.info(**gen_log_kwargs(message=msg))
-    else:
+    if not cfg_path.exists():
         msg = ('The custom configuration file specified in the '
                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
                'found: {cfg_path}'.format(cfg_path=cfg_path))
@@ -2975,17 +2972,11 @@ class StepMemory():
 
             out_files = self.memory.cache(func)(*args, **kwargs)
             # backward compat, but ideally this would eventually just be dict
-            assert isinstance(out_files, (dict, list))
-            if isinstance(out_files, dict):
-                out_files_missing_msg = '\n'.join(
-                    f'- {key}={fname}' for key, fname in out_files.items()
-                    if not pathlib.Path(fname).exists()
-                )
-            else:
-                out_files_missing_msg = '\n'.join(
-                    f'- {fname}' for fname in out_files
-                    if not pathlib.Path(fname).exists()
-                )
+            assert isinstance(out_files, dict), type(out_files)
+            out_files_missing_msg = '\n'.join(
+                f'- {key}={fname}' for key, fname in out_files.items()
+                if not pathlib.Path(fname).exists()
+            )
             if out_files_missing_msg:
                 raise ValueError('Missing at least one output file: \n'
                                  + out_files_missing_msg + '\n' +

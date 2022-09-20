@@ -24,6 +24,9 @@ logger = logging.getLogger('mne-bids-pipeline')
 def init_dataset(cfg) -> None:
     """Prepare the pipeline directory in /derivatives.
     """
+    fname_json = cfg.deriv_root / 'dataset_description.json'
+    if fname_json.is_file():
+        return  # already exists
     msg = "Initializing output directories."
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -42,8 +45,7 @@ def init_dataset(cfg) -> None:
         'URL': 'n/a',
     }
 
-    fname = cfg.deriv_root / 'dataset_description.json'
-    _write_json(fname, ds_json, overwrite=True)
+    _write_json(fname_json, ds_json, overwrite=True)
 
 
 def init_subject_dirs(

@@ -50,7 +50,7 @@ def _get_script_modules(
     on_error: Optional[str] = None,
 ) -> Dict[str, Tuple[ModuleType]]:
     env = os.environ
-    env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+    env['MNE_BIDS_STUDY_CONFIG'] = config
 
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
@@ -210,6 +210,7 @@ def process(
             processing_stages.append(steps_)
             processing_steps.append(None)
 
+    config = str(pathlib.Path(config).expanduser())
     SCRIPT_MODULES = _get_script_modules(
         config=config,
         root_dir=root_dir,
@@ -251,7 +252,10 @@ def process(
         script_modules = [*SCRIPT_MODULES['init'], *script_modules]
 
     logger.info(
-        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+        "👋 Welcome aboard the MNE BIDS Pipeline!"
+    )
+    logger.info(
+        f"👋 Using configuration: {config}\n"
     )
 
     for script_module in script_modules:

@@ -37,10 +37,12 @@ logger = logging.getLogger('mne-bids-pipeline')
 
 def get_input_fnames_maxwell_filter(**kwargs):
     """Get paths of files required by maxwell_filter function."""
-    cfg = kwargs['cfg']
-    subject = kwargs['subject']
-    session = kwargs['session']
-    run = kwargs['run']
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    run = kwargs.pop('run')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
 
     bids_path_in = BIDSPath(subject=subject,
                             session=session,

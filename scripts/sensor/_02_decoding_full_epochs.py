@@ -158,6 +158,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
             out_files[f'tsv_{processing}'], sep='\t', index=False)
     return out_files
 
+
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None

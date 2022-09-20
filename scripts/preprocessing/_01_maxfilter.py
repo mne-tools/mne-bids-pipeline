@@ -109,7 +109,8 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
-    raw = read_raw_bids(bids_path=in_files.pop("raw_ref_run"),
+    ref_fname = in_files.pop("raw_ref_run")
+    raw = read_raw_bids(bids_path=ref_fname,
                         extra_params=cfg.reader_extra_params)
     dev_head_t = raw.info['dev_head_t']
     del raw
@@ -200,7 +201,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=in_files.pop('raw_er'),
-                bids_path_ref_in=in_files.pop('raw_ref_run'),
+                bids_path_ref_in=ref_fname,
             )
 
         # Maxwell-filter noise data.

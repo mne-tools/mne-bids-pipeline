@@ -117,6 +117,9 @@ def run_ssp(*, cfg, subject, session, in_files):
 
     eog_projs = []
     eog_epochs = create_eog_epochs(raw)
+    # TODO: This config.get_ssp_reject violates that we should only use
+    # cfg.values in this function, so caching might not work properly here.
+    # This should be refactored at some point.
     if len(eog_epochs) >= cfg.min_eog_epochs:
         if cfg.ssp_reject_eog == 'autoreject_global':
             reject_eog_ = config.get_ssp_reject(
@@ -165,6 +168,8 @@ def get_config(
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
         eog_proj_from_average=config.eog_proj_from_average,
+        min_ecg_epochs=config.min_ecg_epochs,
+        min_eog_epochs=config.min_eog_epochs,
         n_proj_eog=config.n_proj_eog,
         n_proj_ecg=config.n_proj_ecg,
         ssp_meg=config.ssp_meg,

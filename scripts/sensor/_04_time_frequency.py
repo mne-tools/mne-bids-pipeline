@@ -53,14 +53,15 @@ def get_input_fnames_time_frequency(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__)
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_time_frequency)
 def run_time_frequency(*, cfg, subject, session, in_files):
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     bids_path = in_files['epochs'].copy().update(processing=None)
 
-    epochs = mne.read_epochs(in_names.pop('epochs'))
+    epochs = mne.read_epochs(in_files.pop('epochs'))
     if cfg.analyze_channels:
         # We special-case the average reference here.
         # See time-by-time decoding script for more info.

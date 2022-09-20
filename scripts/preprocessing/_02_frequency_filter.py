@@ -223,7 +223,7 @@ def filter_data(
                    f'{bids_path_noise.basename}')
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
-            raw_noise = mne.io.read_raw_fif(in_files.pop('raw_noise'))
+            raw_noise = mne.io.read_raw_fif(bids_path_noise)
         elif data_type == 'empty-room':
             bids_path_noise = in_files.pop('raw_er')
             raw_noise = import_er_data(

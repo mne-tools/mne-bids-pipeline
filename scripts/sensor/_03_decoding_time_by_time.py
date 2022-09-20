@@ -52,12 +52,15 @@ class LogReg(LogisticRegression):
             return super().fit(*args, **kwargs)
 
 
-@failsafe_run(script_path=__file__)
-def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
-    msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
-
+def get_input_fnames_time_decoding(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    # TODO: Somehow remove these?
+    del kwargs['condition1']
+    del kwargs['condition2']
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -70,8 +73,22 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
                             datatype=cfg.datatype,
                             root=cfg.deriv_root,
                             check=False)
+    in_files = dict(
+        epochs=fname_epochs,
+    )
+    return in_files
 
-    epochs = mne.read_epochs(fname_epochs)
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_time_decoding)
+def run_time_decoding(*, cfg, subject, condition1, condition2, session,
+                      in_files):
+    msg = f'Contrasting conditions: {condition1} – {condition2}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    out_files = dict()
+
+    epochs = mne.read_epochs(in_files['epochs'])
     if cfg.analyze_channels:
         # We special-case the average reference here to work around a situation
         # where e.g. `analyze_channels` might contain only a single channel:
@@ -146,12 +163,11 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
-
-        fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                               processing=processing,
-                                               extension='.mat')
+        mat_key = f'mat_{processing}'
+        out_files[mat_key] = in_files['epochs'].copy().update(
+            suffix='decoding', processing=processing, extension='.mat')
         savemat(
-            fname_mat,
+            out_files[mat_key],
             {
                 'scores': scores,
                 'times': epochs.times,
@@ -167,7 +183,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
         else:
             mean_crossval_score = scores.mean(axis=0)
 
-        fname_tsv = fname_mat.copy().update(extension='.tsv')
+        out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
+            extension='.tsv')
         tabular_data = pd.DataFrame(
             dict(cond_1=[cond_names[0]] * len(epochs.times),
                  cond_2=[cond_names[1]] * len(epochs.times),
@@ -175,7 +192,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session=None):
                  mean_crossval_score=mean_crossval_score,
                  metric=[cfg.decoding_metric] * len(epochs.times))
         )
-        tabular_data.to_csv(fname_tsv, sep='\t', index=False)
+        tabular_data.to_csv(
+            out_files[f'tsv_{processing}'], sep='\t', index=False)
+    return out_files
 
 
 def get_config(

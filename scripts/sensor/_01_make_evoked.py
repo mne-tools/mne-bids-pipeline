@@ -22,30 +22,46 @@ from config import parallel_func
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(script_path=__file__)
-def run_evoked(*, cfg, subject, session=None):
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root)
+def get_input_fnames_evoked(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
+    fname_epochs = BIDSPath(subject=subject,
+                            session=session,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            run=None,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix='epo',
+                            extension='.fif',
+                            datatype=cfg.datatype,
+                            root=cfg.deriv_root,
+                            processing='clean',  # always use clean epochs
+                            check=False)
+    in_files = dict(
+        epochs=fname_epochs,
+    )
+    return in_files
 
-    processing = 'clean'  # always use the clean epochs
 
-    fname_in = bids_path.copy().update(processing=processing, suffix='epo',
-                                       check=False)
-    fname_out = bids_path.copy().update(suffix='ave', check=False)
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_evoked)
+def run_evoked(*, cfg, subject, session, in_files):
+    out_files = dict()
+    out_files['evoked'] = in_files['epochs'].copy().update(
+        suffix='ave', processing=None, check=False)
 
-    msg = f'Input: {fname_in.basename}, Output: {fname_out.basename}'
+    msg = f'Input: {in_files["epochs"].basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Output: {out_files["evoked"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    epochs = mne.read_epochs(fname_in, preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     msg = 'Creating evoked data based on experimental conditions …'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -75,7 +91,7 @@ def run_evoked(*, cfg, subject, session=None):
             all_evoked[contrast["name"]] = evoked_diff
 
     evokeds = list(all_evoked.values())
-    mne.write_evokeds(fname_out, evokeds, overwrite=True)
+    mne.write_evokeds(out_files['evoked'], evokeds, overwrite=True)
 
     if cfg.interactive:
         for evoked in evokeds:
@@ -88,6 +104,8 @@ def run_evoked(*, cfg, subject, session=None):
         # for condition, evoked in zip(config.conditions, evokeds):
         #     evoked.plot_joint(title=condition, ts_args=ts_args,
         #                       topomap_args=topomap_args)
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(

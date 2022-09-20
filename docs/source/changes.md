@@ -180,6 +180,8 @@ authors:
   ({{ gh(592) }}) by {{ authors.larsoner }}
 - Add the example [MIND DATA dataset (ds004107)](https://openneuro.org/datasets/ds004107)
   ({{ gh(600) }}) by {{ authors.larsoner }}
+- Add caching for epoching, SSP, ICA
+  ({{ gh(607) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 
@@ -361,4 +363,6 @@ authors:
   ({{ gh(597) }} by {{ authors.larsoner }})
 - Fix bug where wrong command-line arguments to ``run.py`` were just ignored
   instead of raising an error
-  ({{ gh(605) }}) by {{ authors.larsoner }}
+  ({{ gh(605) }}) by {{ authors.larsoner }})
+- Fix bug where only the first run was used to compute SSP
+  ({{ gh(607) }} by {{ authors.larsoner }})

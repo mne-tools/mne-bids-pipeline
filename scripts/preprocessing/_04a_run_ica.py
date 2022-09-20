@@ -261,7 +261,8 @@ def get_input_fnames_run_ica(**kwargs):
 def run_ica(*, cfg, subject, session, in_files):
     """Run ICA."""
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None)
+    bids_basename = raw_fnames[0].copy().update(
+        processing=None, split=None, run=None)
     out_files = dict()
     out_files['ica'] = bids_basename.copy().update(
         suffix='ica', extension='.fif')
@@ -285,8 +286,7 @@ def run_ica(*, cfg, subject, session, in_files):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = (f'Loading filtered raw data from {raw_fname.basename} and '
-               f'creating epochs')
+        msg = f'Loading filtered raw data from {raw_fname.basename}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 

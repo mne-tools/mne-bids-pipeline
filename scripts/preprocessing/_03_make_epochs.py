@@ -90,8 +90,7 @@ def run_epochs(*, cfg, subject, session, in_files):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = (f'Loading filtered raw data from {raw_fname.basename} '
-               f'and creating epochs')
+        msg = (f'Loading filtered raw data from {raw_fname.basename}')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)

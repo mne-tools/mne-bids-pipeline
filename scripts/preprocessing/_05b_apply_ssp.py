@@ -38,6 +38,7 @@ def get_input_fnames_apply_ssp(**kwargs):
                              space=cfg.space,
                              datatype=cfg.datatype,
                              root=cfg.deriv_root,
+                             extension='.fif',
                              check=False)
     in_files = dict()
     in_files['epochs'] = bids_basename.copy().update(suffix='epo', check=False)
@@ -47,7 +48,7 @@ def get_input_fnames_apply_ssp(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_apply_ssp)
-def apply_ssp(*, cfg, subject, session=None, in_files):
+def apply_ssp(*, cfg, subject, session, in_files):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
     out_files = dict()

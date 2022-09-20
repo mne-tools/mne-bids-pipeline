@@ -15,6 +15,7 @@ import mne
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne_bids import BIDSPath
+from mne.utils import _pl
 
 import config
 from config import gen_log_kwargs, failsafe_run
@@ -38,6 +39,7 @@ def get_input_fnames_run_ssp(**kwargs):
                              space=cfg.space,
                              datatype=cfg.datatype,
                              root=cfg.deriv_root,
+                             extension='.fif',
                              check=False)
     in_files = dict()
     for run in cfg.runs:
@@ -50,7 +52,7 @@ def get_input_fnames_run_ssp(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_run_ssp)
-def run_ssp(*, cfg, subject, session=None, in_files):
+def run_ssp(*, cfg, subject, session, in_files):
     # compute SSP on first run of raw
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
 
@@ -59,7 +61,8 @@ def run_ssp(*, cfg, subject, session=None, in_files):
     out_files['proj'] = raw_fnames[0].copy().update(
         run=None, suffix='proj', split=None, processing=None, check=False)
 
-    msg = (f'Input: {raw_fnames[0].basename}, '
+    msg = (f'Input{_pl(raw_fnames)} ({len(raw_fnames)}): '
+           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}, '
            f'Output: {out_files["proj"].basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))

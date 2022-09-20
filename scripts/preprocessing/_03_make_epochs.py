@@ -66,7 +66,7 @@ def get_input_fnames_epochs(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_epochs)
-def run_epochs(*, cfg, subject, session=None, in_files):
+def run_epochs(*, cfg, subject, session, in_files):
     """Extract epochs for one subject."""
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
     bids_path_in = raw_fnames[0].copy().update(
@@ -198,24 +198,28 @@ def run_epochs(*, cfg, subject, session=None, in_files):
     n_epochs_before_metadata_query = len(epochs.drop_log)
 
     msg = (f'Created {n_epochs_before_metadata_query} epochs with time '
-           f'interval: {epochs.tmin} – {epochs.tmax} sec.\n'
-           f'Selected {len(epochs)} epochs via metadata query: '
-           f'{cfg.epochs_metadata_query}\n'
-           f'Writing {len(epochs)} epochs to disk.')
+           f'interval: {epochs.tmin} – {epochs.tmax} sec.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    out_fnames = dict()
-    out_fnames['epochs'] = bids_path_in.copy().update(
+    msg = (f'Selected {len(epochs)} epochs via metadata query: '
+           f'{cfg.epochs_metadata_query}')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Writing {len(epochs)} epochs to disk.')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    out_files = dict()
+    out_files['epochs'] = bids_path_in.copy().update(
         suffix='epo', processing=None, check=False)
     epochs.save(
-        out_fnames['epochs'], overwrite=True, split_naming='bids',
+        out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)
-    # _update_for_splits(out_files, 'epochs')
+    _update_for_splits(out_files, 'epochs')
 
     if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
-    return out_fnames
+    return out_files
 
 
 def get_config(

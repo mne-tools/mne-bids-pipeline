@@ -258,7 +258,7 @@ def get_input_fnames_run_ica(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_run_ica)
-def run_ica(*, cfg, subject, session=None, in_files):
+def run_ica(*, cfg, subject, session, in_files):
     """Run ICA."""
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None)
@@ -441,6 +441,7 @@ def run_ica(*, cfg, subject, session=None, in_files):
                                  session=session))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(out_files['ica'], overwrite=True)
+    _update_for_splits(out_files, 'ica')
 
     # Create TSV.
     tsv_data = pd.DataFrame(

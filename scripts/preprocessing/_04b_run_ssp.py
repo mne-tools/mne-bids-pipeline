@@ -137,7 +137,7 @@ def run_ssp(*, cfg, subject, session=None, in_files):
                                      session=session))
 
     mne.write_proj(out_files['proj'], eog_projs + ecg_projs, overwrite=True)
-    # TOOD: Write the epochs as well for nice joint plots
+    # TODO: Write the epochs as well for nice joint plots
 
     return out_files
 

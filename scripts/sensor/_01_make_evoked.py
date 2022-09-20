@@ -52,7 +52,7 @@ def get_input_fnames_evoked(**kwargs):
 def run_evoked(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['evoked'] = in_files['epochs'].copy().update(
-        suffix='ave', check=False)
+        suffix='ave', processing=None, check=False)
 
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,

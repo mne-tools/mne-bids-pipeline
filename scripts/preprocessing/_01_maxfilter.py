@@ -79,7 +79,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_maxwell_filter)
-def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files=None):
+def run_maxwell_filter(*, cfg, subject, session=None, run=None, in_files):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'

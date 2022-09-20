@@ -123,7 +123,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
 }
 
 
-def run_tests(test_suite, *, download, debug):
+def run_tests(test_suite, *, download, debug, cache):
     """Run a suite of tests.
 
     Parameters
@@ -136,6 +136,8 @@ def run_tests(test_suite, *, download, debug):
         Whether to (re-)download the test dataset.
     debug : bool
         If True, force debug mode.
+    cache : bool
+        If True (default), use cache. If False, recompute everything.
 
     Notes
     -----
@@ -196,6 +198,7 @@ def run_tests(test_suite, *, download, debug):
             f'--task={task}' if task else '',
             f'--n_jobs={n_jobs}' if n_jobs else '',
             '--debug=1' if debug else '',
+            '--cache=0' if not cache else '',
             f'--interactive=0'
         ]
         # Eliminate "empty" items
@@ -218,6 +221,8 @@ if __name__ == '__main__':
                         nargs='?')
     parser.add_argument('--debug', '-d', choices=['0', '1'], default='0',
                         nargs='?', help='Run in debug mode')
+    parser.add_argument('--no-cache', dest='cache', action='store_false',
+                        help='Do not use cache')
 
     args = parser.parse_args()
     dataset = args.dataset
@@ -229,6 +234,7 @@ if __name__ == '__main__':
     if debug is None:  # --debug
         debug = '1'
     debug = bool(int(debug))
+    cache = args.cache
     # Triage the dataset and raise informative error if it does not exist
     if dataset == 'ALL':
         test_suite = TEST_SUITE
@@ -253,4 +259,4 @@ if __name__ == '__main__':
         extra += ' in debug mode'
     print(f'Running the following tests{extra}: {", ".join(test_suite.keys())}')
 
-    run_tests(test_suite, download=download, debug=debug)
+    run_tests(test_suite, download=download, debug=debug, cache=cache)

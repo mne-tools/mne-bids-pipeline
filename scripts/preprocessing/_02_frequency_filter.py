@@ -171,7 +171,7 @@ def filter_data(
     subject: str,
     session: Optional[str] = None,
     run: Optional[str] = None,
-    in_files: Optional[dict] = None
+    in_files: dict,
 ) -> None:
     """Filter data from a single subject."""
 

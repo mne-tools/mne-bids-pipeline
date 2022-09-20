@@ -2079,6 +2079,9 @@ if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
 if not interactive:
     matplotlib.use('Agg')  # do not open any window  # noqa
 
+if os.getenv('MNE_BIDS_STUDY_USE_CACHE', '') == '0':
+    memory_location = False
+
 
 ###############################################################################
 # CHECKS
@@ -2845,13 +2848,7 @@ def failsafe_run(
     get_input_fnames: Optional[Callable] = None,
 ):
     on_error = get_on_error()
-    if memory_location is None or \
-            memory_location is False or \
-            get_input_fnames is None:
-        # No caching is needed
-        memory = Memory(location=None)  # no op
-    else:
-        memory = StepMemory(get_input_fnames=get_input_fnames)
+    memory = ConditionalStepMemory(get_input_fnames=get_input_fnames)
 
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -2936,18 +2933,29 @@ def hash_file_path(path):
     return md5_hashed
 
 
-class StepMemory():
+class ConditionalStepMemory():
     def __init__(self, get_input_fnames=None):
         if memory_location is True:
             use_location = get_deriv_root() / 'joblib'
+        elif not memory_location:
+            use_location = None
         else:
             use_location = pathlib.Path(memory_location)
-        self.memory = Memory(use_location, verbose=memory_verbose)
+        # Actually make the Memory object only if necessary
+        if use_location is not None and get_input_fnames is not None:
+            self.memory = Memory(use_location, verbose=memory_verbose)
+        else:
+            self.memory = None
         self.get_input_fnames = get_input_fnames
 
     def cache(self, func):
         def wrapper(*args, **kwargs):
-            in_files = self.get_input_fnames(**kwargs)
+            in_files = None
+            if self.get_input_fnames is not None:
+                in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
+            if self.memory is None:
+                func(*args, **kwargs)
+                return
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
 
@@ -2963,10 +2971,8 @@ class StepMemory():
                     this_hash = hash_file_path(v)
                 hashes.append((str(v), this_hash))
 
-            cfg = copy.deepcopy(kwargs['cfg'])
-            cfg.hashes = hashes
-            kwargs['cfg'] = cfg
-            kwargs['in_files'] = in_files
+            kwargs['cfg'] = copy.deepcopy(kwargs['cfg'])
+            kwargs['cfg'].hashes = hashes
 
             # XXX we should also hash the sidecar files
 

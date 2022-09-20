@@ -25,7 +25,6 @@ from config import parallel_func, _update_for_splits
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-
 def get_input_fnames_epochs(**kwargs):
     """Get paths of files required by filter_data function."""
     cfg = kwargs.pop('cfg')
@@ -55,16 +54,22 @@ def get_input_fnames_epochs(**kwargs):
     for run in cfg.runs:
         key = f'raw_run-{run}'
         in_files[key] = bids_path.copy().update(run=run)
-        _update_for_splits(in_files, key, single=True)  # TODO: NEED SINGLE?
+        _update_for_splits(in_files, key, single=True)
+    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+        in_files['raw_rest'] = bids_path.copy().update(
+            task='rest',
+            check=False
+        )
+        _update_for_splits(in_files, 'raw_rest', single=True)
     return in_files
 
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_epochs)
-def run_epochs(*, cfg, subject, session=None, in_files=None):
+def run_epochs(*, cfg, subject, session=None, in_files):
     """Extract epochs for one subject."""
     raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
-    bids_path_in = raw_fnames[0].copy().update(processing=None)
+    bids_path_in = raw_fnames[0].copy().update(processing=None, run=None)
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
@@ -149,13 +154,7 @@ def run_epochs(*, cfg, subject, session=None, in_files=None):
     del epochs_all_runs
 
     if cfg.use_maxwell_filter and config.noise_cov == 'rest':
-        bp_raw_rest = (bids_path_in.copy()
-                       .update(
-                           run=None,
-                           task='rest',
-                           check=False
-                        ))
-        raw_rest_filt = mne.io.read_raw(bp_raw_rest)
+        raw_rest_filt = mne.io.read_raw(in_files['raw_rest'])
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
             msg = (

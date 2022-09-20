@@ -1925,7 +1925,10 @@ os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 logger = logging.getLogger('mne-bids-pipeline')
 
 log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
-log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
+log_date_fmt = '%H:%M:%S'
+# TODO:
+# This does not persist across threads, probably due to relead of coloredlogs?
+# coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
 log_level_styles = {
     'warning': {
         'color': 202,

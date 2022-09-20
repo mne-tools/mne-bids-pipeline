@@ -61,6 +61,7 @@ def get_input_fnames_time_decoding(**kwargs):
     del kwargs['condition2']
     assert len(kwargs) == 0, kwargs.keys()
     del kwargs
+    # TODO: Shouldn't this at least use the PTP-rejected epochs if available?
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -73,9 +74,8 @@ def get_input_fnames_time_decoding(**kwargs):
                             datatype=cfg.datatype,
                             root=cfg.deriv_root,
                             check=False)
-    in_files = dict(
-        epochs=fname_epochs,
-    )
+    in_files = dict()
+    in_files['epochs'] = fname_epochs
     return in_files
 
 
@@ -87,8 +87,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     out_files = dict()
+    bids_path = in_files['epochs'].copy()
 
-    epochs = mne.read_epochs(in_files['epochs'])
+    epochs = mne.read_epochs(in_files.pop('epochs'))
     if cfg.analyze_channels:
         # We special-case the average reference here to work around a situation
         # where e.g. `analyze_channels` might contain only a single channel:
@@ -164,7 +165,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
         mat_key = f'mat_{processing}'
-        out_files[mat_key] = in_files['epochs'].copy().update(
+        out_files[mat_key] = bids_path.copy().update(
             suffix='decoding', processing=processing, extension='.mat')
         savemat(
             out_files[mat_key],
@@ -194,6 +195,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
         )
         tabular_data.to_csv(
             out_files[f'tsv_{processing}'], sep='\t', index=False)
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

@@ -20,7 +20,7 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, failsafe_run
+from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func
 
 
@@ -64,7 +64,7 @@ def drop_ptp(*, cfg, subject, session, in_files):
                                  session=session))
 
     # Get rejection parameters and drop bad epochs
-    epochs = mne.read_epochs(in_files['epochs'], preload=True)
+    epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
     reject = config.get_reject(epochs=epochs)
 
     if cfg.ica_reject is not None:
@@ -105,6 +105,8 @@ def drop_ptp(*, cfg, subject, session, in_files):
     epochs.save(
         out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)
+    _update_for_splits(out_files, 'epochs')
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

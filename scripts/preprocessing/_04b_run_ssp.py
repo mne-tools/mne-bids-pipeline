@@ -18,8 +18,8 @@ from mne_bids import BIDSPath
 from mne.utils import _pl
 
 import config
-from config import gen_log_kwargs, failsafe_run
-from config import parallel_func, _update_for_splits
+from config import gen_log_kwargs, failsafe_run, _update_for_splits
+from config import parallel_func, _script_path
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -54,7 +54,7 @@ def get_input_fnames_run_ssp(**kwargs):
               get_input_fnames=get_input_fnames_run_ssp)
 def run_ssp(*, cfg, subject, session, in_files):
     # compute SSP on first run of raw
-    raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
 
     # when saving proj, use run=None
     out_files = dict()
@@ -80,7 +80,7 @@ def run_ssp(*, cfg, subject, session, in_files):
     ecg_epochs = create_ecg_epochs(raw)
     if cfg.ssp_meg == 'auto':
         cfg.ssp_meg = 'combined' if cfg.use_maxwell_filter else 'separate'
-    if len(ecg_epochs) >= config.min_ecg_epochs:
+    if len(ecg_epochs) >= cfg.min_ecg_epochs:
         if cfg.ssp_reject_ecg == 'autoreject_global':
             reject_ecg_ = config.get_ssp_reject(
                 ssp_type='ecg',
@@ -117,7 +117,7 @@ def run_ssp(*, cfg, subject, session, in_files):
 
     eog_projs = []
     eog_epochs = create_eog_epochs(raw)
-    if len(eog_epochs) >= config.min_eog_epochs:
+    if len(eog_epochs) >= cfg.min_eog_epochs:
         if cfg.ssp_reject_eog == 'autoreject_global':
             reject_eog_ = config.get_ssp_reject(
                 ssp_type='eog',
@@ -144,6 +144,7 @@ def run_ssp(*, cfg, subject, session, in_files):
     mne.write_proj(out_files['proj'], eog_projs + ecg_projs, overwrite=True)
     # TODO: Write the epochs as well for nice joint plots
 
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 
@@ -176,7 +177,8 @@ def main():
     """Run SSP."""
     if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
-        logger.info(**gen_log_kwargs(message=msg))
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg))
         return
 
     with config.get_parallel_backend():

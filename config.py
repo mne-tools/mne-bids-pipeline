@@ -3,6 +3,7 @@ but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
 
+import contextlib
 import importlib
 import pathlib
 import hashlib
@@ -2976,11 +2977,11 @@ class ConditionalStepMemory():
 
             kwargs['cfg'] = copy.deepcopy(kwargs['cfg'])
             kwargs['cfg'].hashes = hashes
+            del in_files  # will be modified by func call
 
             # XXX we should also hash the sidecar files
 
             out_files = self.memory.cache(func)(*args, **kwargs)
-            # backward compat, but ideally this would eventually just be dict
             assert isinstance(out_files, dict), type(out_files)
             out_files_missing_msg = '\n'.join(
                 f'- {key}={fname}' for key, fname in out_files.items()
@@ -3869,3 +3870,22 @@ def _update_for_splits(files_dict, key, *, single=False):
             break
         files_dict[f'{key}_split-{split_key}'] = bids_path_next
     return bids_path
+
+
+@contextlib.contextmanager
+def _script_path(script_path):
+    # Usually failsafe_run dec sets MNE_BIDS_STUDY_SCRIPT_PATH so that log
+    # kwargs can be set properly. However, if the script gets skipped
+    # outside/before the failsafe_run, whatever the last SCRIPT_PATH was
+    # set will be used, so logs will be incorrect. This context manager
+    # sets it temporarily
+    key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
+    orig_val = os.getenv(key, None)
+    os.environ[key] = str(script_path)
+    try:
+        yield
+    finally:
+        if orig_val is None:
+            del os.environ[key]
+        else:
+            os.environ[key] = orig_val

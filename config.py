@@ -3503,7 +3503,7 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
         msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
-        raw.drop_channels(cfg.drop_channels)
+        raw.drop_channels(cfg.drop_channels, on_missing='warn')
 
 
 def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:

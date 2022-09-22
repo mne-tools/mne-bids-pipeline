@@ -53,7 +53,11 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     funcs.append(f'SSP | {_bool_to_icon(config["spatial_filter"] == "ssp")}')
     funcs.append(f'ICA | {_bool_to_icon(config["spatial_filter"] == "ica")}')
     funcs.append(f'Evoked contrasts | {_bool_to_icon(config["contrasts"])}')
-    funcs.append(f'Time-by-time decoding | {_bool_to_icon(config["decode"])}')
+    funcs.append(f'Full-epoch decoding | '
+                 f'{_bool_to_icon(config["decode"] and config["contrasts"])}')
+    time_by_time = (config["decoding_time_generalization"] and
+                    config["contrasts"])
+    funcs.append(f'Time-by-time decoding | {_bool_to_icon(time_by_time)}')
     funcs.append(f'Time-frequency analysis | '
                  f'{_bool_to_icon(config["time_frequency_conditions"])}')
     funcs.append(f'BEM surface creation | '

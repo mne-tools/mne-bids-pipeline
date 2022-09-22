@@ -370,5 +370,9 @@ authors:
 - During the Maxwell filtering step, all channels are now kept rather than
   being restricted to just MEG channels
   ({{ gh(606) }} by {{ authors.larsoner }})
+- The default for `analyze_channels` is now `'ch_types'` which restricts to the
+  data channels of interest rather than `'all'`, which included all channels,
+  and hence could include things like stimulus channels
+  ({{ gh(606) by {{ authors.larsoner }})
 - Fix bug where only the first run was used to compute SSP
   ({{ gh(607) }} by {{ authors.larsoner }})

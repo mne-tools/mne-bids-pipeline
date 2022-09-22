@@ -27,7 +27,7 @@ from mne_bids.stats import count_events
 import config
 from config import (
     gen_log_kwargs, failsafe_run, parallel_func,
-    get_noise_cov_bids_path, _update_for_splits,
+    get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
 
@@ -766,8 +766,7 @@ def run_report_sensor(
         noise_cov = None
 
     for condition, evoked in zip(conditions, evokeds):
-        if cfg.analyze_channels:
-            evoked.pick(cfg.analyze_channels)
+        _restrict_analyze_channels(evoked, cfg)
 
         if condition in cfg.conditions:
             title = f'Condition: {condition}'
@@ -1246,9 +1245,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         raw_psd=True
     )
     evokeds = mne.read_evokeds(evoked_fname)
-    if cfg.analyze_channels:
-        for evoked in evokeds:
-            evoked.pick(cfg.analyze_channels)
+    for evoked in evokeds:
+        _restrict_analyze_channels(evoked, cfg)
 
     method = cfg.inverse_method
     inverse_str = method

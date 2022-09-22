@@ -411,15 +411,18 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[Literal['all'], Iterable['str']] = 'all'
+analyze_channels: Union[
+    Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
 sensor-space analysis to only a few specific sensors. If `'all'`, do not
 exclude any channels (except for those selected for removal via the
-`drop_channels` setting). The constraint will be applied to all sensor-level
-analyses after the preprocessing stage, but not to the preprocessing stage
-itself, nor to the source analysis stage.
+`drop_channels` setting; use with caution as this can include things like STIM
+channels during the decoding step). If 'ch_types' (default), restrict to the
+channels listed in the `ch_types` parameter. The constraint will be applied to
+all sensor-level analyses after the preprocessing stage, but not to the
+preprocessing stage itself, nor to the source analysis stage.
 
 ???+ example "Example"
     Only use channel `Pz` for ERP, evoked contrasts, time-by-time
@@ -2019,7 +2022,7 @@ def gen_log_kwargs(
     # Choose some to be our standards
     emoji = dict(
         cache='✅',
-        skip='⏭️',
+        skip='⏩',
     ).get(emoji, emoji)
     extra = {
         'step': f'{emoji} {step_name}'
@@ -3898,3 +3901,23 @@ def _script_path(script_path):
             del os.environ[key]
         else:
             os.environ[key] = orig_val
+
+
+def _restrict_analyze_channels(inst, cfg):
+    if cfg.analyze_channels:
+        analyze_channels = cfg.analyze_channels
+        if cfg.analyze_channels == 'ch_types':
+            analyze_channels = ch_types
+            inst.apply_proj()
+        # We special-case the average reference here to work around a situation
+        # where e.g. `analyze_channels` might contain only a single channel:
+        # `concatenate_epochs` below will then fail when trying to create /
+        # apply the projection. We can avoid this by removing an existing
+        # average reference projection here, and applying the average reference
+        # directly – without going through a projector.
+        elif 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
+            inst.set_eeg_reference('average')
+        else:
+            inst.apply_proj()
+        inst.pick(analyze_channels)
+    return inst

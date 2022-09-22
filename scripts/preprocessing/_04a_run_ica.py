@@ -32,7 +32,7 @@ from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
 import config
-from config import (make_epochs, gen_log_kwargs, failsafe_run,
+from config import (make_epochs, gen_log_kwargs, failsafe_run, _script_path,
                     annotations_to_events, _update_for_splits)
 from config import parallel_func
 
@@ -260,7 +260,7 @@ def get_input_fnames_run_ica(**kwargs):
               get_input_fnames=get_input_fnames_run_ica)
 def run_ica(*, cfg, subject, session, in_files):
     """Run ICA."""
-    raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(
         processing=None, split=None, run=None)
     out_files = dict()
@@ -503,6 +503,7 @@ def run_ica(*, cfg, subject, session, in_files):
     report.save(
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
 
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 
@@ -552,10 +553,8 @@ def main():
     """Run ICA."""
     if config.spatial_filter != 'ica':
         msg = 'Skipping …'
-        # TODO: This message has the wrong prefix because
-        # MNE_BIDS_STUDY_SCRIPT_PATH will be from whatever the *previous*
-        # step was, as it hasn't been set by failsafe_run yet
-        logger.info(**gen_log_kwargs(message=msg))
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg))
         return
 
     with config.get_parallel_backend():

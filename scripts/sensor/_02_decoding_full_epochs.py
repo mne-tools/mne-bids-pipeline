@@ -57,9 +57,8 @@ def get_input_fnames_epochs_decoding(**kwargs):
                             datatype=cfg.datatype,
                             root=cfg.deriv_root,
                             check=False)
-    in_files = dict(
-        epochs=fname_epochs,
-    )
+    in_files = dict()
+    in_files['epochs'] = fname_epochs
     return in_files
 
 
@@ -71,8 +70,9 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     out_files = dict()
+    bids_path = in_files['epochs'].copy()
 
-    epochs = mne.read_epochs(in_files['epochs'])
+    epochs = mne.read_epochs(in_files.pop('epochs'))
     if cfg.analyze_channels:
         # We special-case the average reference here to work around a situation
         # where e.g. `analyze_channels` might contain only a single channel:
@@ -139,7 +139,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
         processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
         mat_key = f'mat_{processing}'
-        out_files[mat_key] = in_files['epochs'].copy().update(
+        out_files[mat_key] = bids_path.copy().update(
             suffix='decoding', processing=processing, extension='.mat')
         out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
             extension='.tsv')
@@ -156,6 +156,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
         tabular_data = pd.DataFrame(tabular_data).T
         tabular_data.to_csv(
             out_files[f'tsv_{processing}'], sep='\t', index=False)
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

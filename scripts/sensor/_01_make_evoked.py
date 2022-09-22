@@ -41,9 +41,8 @@ def get_input_fnames_evoked(**kwargs):
                             root=cfg.deriv_root,
                             processing='clean',  # always use clean epochs
                             check=False)
-    in_files = dict(
-        epochs=fname_epochs,
-    )
+    in_files = dict()
+    in_files['epochs'] = fname_epochs
     return in_files
 
 

@@ -68,7 +68,7 @@ def get_input_fnames_epochs(**kwargs):
               get_input_fnames=get_input_fnames_epochs)
 def run_epochs(*, cfg, subject, session, in_files):
     """Extract epochs for one subject."""
-    raw_fnames = [in_files[f'raw_run-{run}'] for run in cfg.runs]
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
     bids_path_in = raw_fnames[0].copy().update(
         processing=None, run=None, split=None)
 
@@ -154,7 +154,7 @@ def run_epochs(*, cfg, subject, session, in_files):
     del epochs_all_runs
 
     if cfg.use_maxwell_filter and config.noise_cov == 'rest':
-        raw_rest_filt = mne.io.read_raw(in_files['raw_rest'])
+        raw_rest_filt = mne.io.read_raw(in_files.pop('raw_rest'))
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
             msg = (
@@ -218,6 +218,7 @@ def run_epochs(*, cfg, subject, session, in_files):
     if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

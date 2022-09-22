@@ -176,7 +176,7 @@ def filter_data(
     """Filter data from a single subject."""
 
     out_files = dict()
-    bids_path = in_files[f"raw_run-{run}"]
+    bids_path = in_files.pop(f"raw_run-{run}")
 
     # Create paths for reading and writing the filtered data.
     if cfg.use_maxwell_filter:
@@ -218,21 +218,21 @@ def filter_data(
                      else 'empty-room')
 
         if cfg.use_maxwell_filter:
-            bids_path_noise = in_files["raw_noise"]
+            bids_path_noise = in_files.pop("raw_noise")
             msg = (f'Reading {data_type} recording: '
                    f'{bids_path_noise.basename}')
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
-            raw_noise = mne.io.read_raw_fif(in_files['raw_noise'])
+            raw_noise = mne.io.read_raw_fif(bids_path_noise)
         elif data_type == 'empty-room':
-            bids_path_noise = in_files['raw_er']
+            bids_path_noise = in_files.pop('raw_er')
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
                 bids_path_ref_in=None,
             )
         else:
-            bids_path_noise = in_files['raw_rest']
+            bids_path_noise = in_files.pop('raw_rest')
             raw_noise = import_rest_data(
                 cfg=cfg,
                 bids_path_in=bids_path_noise
@@ -265,6 +265,7 @@ def filter_data(
             fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
             raw_noise.plot_psd(fmax=fmax)
 
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

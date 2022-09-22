@@ -53,8 +53,8 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     funcs['SSP'] = config["spatial_filter"] == "ssp"
     funcs['ICA'] = config["spatial_filter"] == "ica"
     funcs['Evoked contrasts'] = config["contrasts"]
-    funcs['Full-epoch decoding'] = config["decode"] and config["contrasts"]
-    funcs['Time-by-time decoding'] = \
+    funcs['Time-by-time decoding'] = config["decode"] and config["contrasts"]
+    funcs['Time-generalization decoding'] = \
         config["decoding_time_generalization"] and config["contrasts"]
     funcs['Time-frequency analysis'] = config["time_frequency_conditions"]
     funcs['BEM surface creation'] = config["recreate_bem"]

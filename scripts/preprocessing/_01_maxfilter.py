@@ -307,7 +307,7 @@ def main():
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
         with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg))
+            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

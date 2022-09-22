@@ -102,6 +102,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
         else:
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
+    else:
+        epochs.pick(cfg.ch_types)
 
     # We define the epochs and the labels
     if isinstance(cfg.conditions, dict):

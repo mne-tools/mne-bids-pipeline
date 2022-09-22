@@ -2001,7 +2001,8 @@ def gen_log_kwargs(
     message: str,
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None
+    run: Optional[Union[str, int]] = None,
+    emoji: str = '⏳️',
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -2015,8 +2016,13 @@ def gen_log_kwargs(
     script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
+    # Choose some to be our standards
+    emoji = dict(
+        cache='✅',
+        skip='⏭️',
+    ).get(emoji, emoji)
     extra = {
-        'step': f'⏳️ {step_name}'
+        'step': f'{emoji} {step_name}'
     }
     if subject:
         extra['subject'] = subject
@@ -2969,6 +2975,17 @@ class ConditionalStepMemory():
 
             # XXX we should also hash the sidecar files
 
+            # Someday we could modify the joblib API to combine this with the
+            # call (https://github.com/joblib/joblib/issues/1342), but our hash
+            # should be plenty fast so let's not bother for now.
+            if self.memory.cache(func).check_call_in_cache(*args, **kwargs):
+                subject = kwargs.get('subject', None)
+                session = kwargs.get('session', None)
+                run = kwargs.get('run', None)
+                msg = 'Computation unnecessary (cached) …'
+                logger.info(**gen_log_kwargs(
+                    message=msg, subject=subject, session=session, run=run,
+                    emoji='cache'))
             out_files = self.memory.cache(func)(*args, **kwargs)
             assert isinstance(out_files, dict), type(out_files)
             out_files_missing_msg = '\n'.join(

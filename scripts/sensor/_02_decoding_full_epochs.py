@@ -85,6 +85,8 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
         else:
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
+    else:
+        epochs.pick(cfg.ch_types)  # exclude things like STIM
 
     # We define the epochs and the labels
     if isinstance(cfg.conditions, dict):

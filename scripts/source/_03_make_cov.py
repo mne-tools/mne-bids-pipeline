@@ -195,16 +195,16 @@ def main():
     cfg = get_config()
 
     if not cfg.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     # Note that we're using config.noise_cov here and not adding it to
     # cfg, as in case it's a function, it won't work when running parallel jobs
 
     if config.noise_cov == "ad-hoc":
-        msg = '    … skipping: using ad-hoc diagonal covariance.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, using ad-hoc diagonal covariance …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

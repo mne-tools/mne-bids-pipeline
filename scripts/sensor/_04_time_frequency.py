@@ -70,6 +70,8 @@ def run_time_frequency(*, cfg, subject, session, in_files):
         else:
             epochs.apply_proj()
         epochs.pick(cfg.analyze_channels)
+    else:
+        epochs.pick(cfg.ch_types)
 
     if cfg.time_frequency_subtract_evoked:
         epochs.subtract_evoked()

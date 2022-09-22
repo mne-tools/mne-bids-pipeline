@@ -7,6 +7,7 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import contextlib
 import os
 import os.path as op
 from pathlib import Path
@@ -1586,9 +1587,20 @@ def get_config(
     return cfg
 
 
+@contextlib.contextmanager
+def _agg_backend():
+    import matplotlib
+    backend = matplotlib.get_backend()
+    matplotlib.use('Agg', force=True)
+    try:
+        yield
+    finally:
+        matplotlib.use(backend, force=True)
+
+
 def main():
     """Make reports."""
-    with config.get_parallel_backend():
+    with config.get_parallel_backend(), _agg_backend():
         parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(

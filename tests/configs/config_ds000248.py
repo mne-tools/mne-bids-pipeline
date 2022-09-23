@@ -1,5 +1,5 @@
 """
-MNE Sample Data
+MNE Sample Data: M/EEG combined processing
 """
 import mne
 
@@ -18,12 +18,14 @@ contrasts = [('Visual', 'Auditory'),
 
 time_frequency_conditions = ['Auditory', 'Visual']
 
-ch_types = ['meg']
+ch_types = ['meg', 'eeg']
 mf_reference_run = '01'
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
-process_er = False
+process_er = True
+_raw_split_size = '60MB'  # hits both task-noise and task-audiovisual
+_epochs_split_size = '30MB'
 
 
 def noise_cov(bp):
@@ -37,8 +39,10 @@ def noise_cov(bp):
 spatial_filter = 'ssp'
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=1)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
+ssp_meg = 'combined'
 ecg_proj_from_average = True
 eog_proj_from_average = False
+decim = 4
 
 bem_mri_images = 'FLASH'
 recreate_bem = True

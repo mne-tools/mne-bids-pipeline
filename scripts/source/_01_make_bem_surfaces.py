@@ -18,7 +18,7 @@ from types import SimpleNamespace
 import mne
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -76,15 +76,15 @@ def make_scalp_surface(*, cfg, subject):
     fs_subject = cfg.fs_subject
     bem_dir = Path(cfg.fs_subjects_dir) / fs_subject / 'bem'
 
-    generate_surface = cfg.recreate_scalp_surface
+    regenerate_surface = cfg.recreate_scalp_surface
 
     # Even if the user didn't ask for re-creation of the surface, we check if
     # the required file exist; if it doesn't, we create it
     surface_fname = bem_dir / f'sub-{subject}-head-dense.fif'
-    if not generate_surface and not surface_fname.exists():
-        generate_surface = True
+    if not regenerate_surface and not surface_fname.exists():
+        regenerate_surface = True
 
-    if not generate_surface:
+    if not regenerate_surface:
         # Seems everything is in place, so we can safely skip surface creation
         msg = 'Not generating high-resolution scalp surface.'
         logger.info(**gen_log_kwargs(message=msg, subject=subject))
@@ -119,7 +119,7 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def make_bem_and_scalp_surface(*, cfg, subject):
     make_bem(cfg=cfg, subject=subject)
     make_scalp_surface(cfg=cfg, subject=subject)
@@ -128,13 +128,13 @@ def make_bem_and_scalp_surface(*, cfg, subject):
 def main():
     """Run BEM surface extraction."""
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     if config.use_template_mri is not None:
-        msg = '    … skipping BEM computating when using MRI template.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, BEM surface extraction not needed for MRI template …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

@@ -96,15 +96,23 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': [
-            'sub-01/ses-meg/meg/sub-01_ses-meg_coordsystem.json',
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*',  # noqa: E501
             'sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos',
-            'derivatives/meg_derivatives/ct_sparse.fif',
-            'derivatives/meg_derivatives/sss_cal.dat',
             'sub-01/ses-meg/*.tsv',
             'sub-01/ses-meg/*.json',
+            'sub-emptyroom/ses-20090409',
+            'derivatives/meg_derivatives/ct_sparse.fif',
+            'derivatives/meg_derivatives/sss_cal.dat',
         ],
+        'exclude': []
+    },
+    'ds003775': {
+        'git': '',
+        'openneuro': 'ds003775',
+        'osf': '',
+        'web': '',
+        'include': ['sub-01'],
         'exclude': []
     },
     'ds001810': {
@@ -121,7 +129,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         'osf': '',
         'web': '',
         'include': [
-            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv'
+            'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.fdt',
             'sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.json',
@@ -141,5 +149,29 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             'sub-emptyroom/ses-19111211'
         ],
         'exclude': []
-    }
+    },
+    'ds004107': {
+        'git': '',
+        'openneuro': 'ds004107',
+        'osf': '',
+        'web': '',
+        'include': [
+            'sub-mind002/ses-01/meg/*coordsystem*',
+            'sub-mind002/ses-01/meg/*auditory*',
+        ],
+        'exclude': []
+    },
+    'ds004229': {
+        'git': '',
+        'openneuro': 'ds004229',
+        'osf': '',
+        'web': '',
+        'include': [
+            'sub-102',
+            'sub-emptyroom/ses-20000101',
+            'derivatives/meg_derivatives/ct_sparse.fif',
+            'derivatives/meg_derivatives/sss_cal.dat',
+        ],
+        'exclude': []
+    },
 }

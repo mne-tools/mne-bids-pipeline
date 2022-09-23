@@ -8,8 +8,8 @@ data
 docs/site/
 docs/source/examples/*
 !docs/source/examples/gen_examples.py
-!docs/source/examples/examples.md
 .pytest_cache/
 __pycache__/
 .dask-worker-space/
 mprofile_*.dat
+.joblib_cache/

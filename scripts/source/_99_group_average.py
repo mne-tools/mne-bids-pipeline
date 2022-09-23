@@ -16,7 +16,7 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name
+from config import gen_log_kwargs, failsafe_run, sanitize_cond_name
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -36,8 +36,8 @@ def morph_stc(cfg, subject, fs_subject, session=None):
 
     morphed_stcs = []
 
-    if cfg.task == 'rest':
-        conditions = ['rest']
+    if cfg.task_is_rest:
+        conditions = [cfg.task.lower()]
     else:
         if isinstance(cfg.conditions, dict):
             conditions = list(cfg.conditions.keys())
@@ -104,6 +104,7 @@ def run_average(cfg, session, mean_morphed_stcs):
 def get_config() -> SimpleNamespace:
     cfg = SimpleNamespace(
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         datatype=config.get_datatype(),
         acq=config.acq,
         rec=config.rec,
@@ -118,7 +119,7 @@ def get_config() -> SimpleNamespace:
 
 
 # pass 'average' subject for logging
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
 
@@ -156,8 +157,8 @@ def run_group_average_source(*, cfg, subject='average'):
 
 def main():
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     log = run_group_average_source(cfg=get_config())

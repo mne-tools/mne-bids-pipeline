@@ -17,7 +17,7 @@ from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -54,7 +54,7 @@ def _prepare_forward_template(cfg, fname_info):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False)
+                                 add_dist='patch')
     return src, trans, bem_sol
 
 
@@ -125,7 +125,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False)
+                                 add_dist='patch')
 
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.
@@ -137,7 +137,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     return src, trans, bem_sol
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_forward(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -200,8 +200,8 @@ def get_config(
 def main():
     """Run forward."""
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

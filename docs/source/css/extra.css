@@ -13,7 +13,7 @@ p {
 .md-typeset table td,
 .md-typeset table th {
   font-size: 0.7rem;
-  line-height: 0.5;
+  padding: .5em 1.25em !important;
 }
 
 /* Larger font in code, example, info, warning blocks */

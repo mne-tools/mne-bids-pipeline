@@ -15,7 +15,7 @@ from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
+from config import gen_log_kwargs, failsafe_run
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -24,6 +24,9 @@ logger = logging.getLogger('mne-bids-pipeline')
 def init_dataset(cfg) -> None:
     """Prepare the pipeline directory in /derivatives.
     """
+    fname_json = cfg.deriv_root / 'dataset_description.json'
+    if fname_json.is_file():
+        return  # already exists
     msg = "Initializing output directories."
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -42,8 +45,7 @@ def init_dataset(cfg) -> None:
         'URL': 'n/a',
     }
 
-    fname = cfg.deriv_root / 'dataset_description.json'
-    _write_json(fname, ds_json, overwrite=True)
+    _write_json(fname_json, ds_json, overwrite=True)
 
 
 def init_subject_dirs(
@@ -76,12 +78,9 @@ def get_config(
     return cfg
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def main():
     """Initialize the output directories."""
-    msg = 'Running: Initializing output directories.'
-    logger.info(**gen_log_kwargs(message=msg))
-
     with config.get_parallel_backend():
         init_dataset(cfg=get_config())
         parallel, run_func = parallel_func(init_subject_dirs)
@@ -92,9 +91,6 @@ def main():
                     config.get_sessions()
                 )
             )
-
-        msg = 'Completed: Initializing output directories.'
-        logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ authors:
   dengemann: "[Denis A. Engemann](https://github.com/dengemann)"
   apmellot: "[Apolline Mellot](https://github.com/apmellot)"
   mathiassm: "[Mathias Sablé-Meyer](https://github.com/mathias-sm)"
+  larsoner: "[Eric Larson](https://github.com/larsoner)"
 ---
 
 
@@ -147,26 +148,43 @@ authors:
   dicts specifying a name, a condition list and a weights list to use to
   `combine_evoked`. Decoding steps ignores contrasts with more than two
   elements.
-  ({{ gh(536) }} by {{ authors.mathiassm }}
+  ({{ gh(536) }} by {{ authors.mathiassm }})
 - The pipeline configuration and MNE system information are now automatically
   added to the report.
-  ({{ gh(544) }} by {{ authors.hoechenberger }}
+  ({{ gh(544) }} by {{ authors.hoechenberger }})
 - More robust empty-room data processing for use with Maxwell filter. We are
   now relying on `mne.preprocessing.maxwell_filter_prepare_emptyroom`.
-  ({{ gh(550) }} by {{ authors.hoechenberger }}
+  ({{ gh(550) }} by {{ authors.hoechenberger }})
 - Maxwell filtering now also parallelizes across runs (previously only across
   subjects and sessions).
-  ({{ gh(550) }} by {{ authors.hoechenberger }}
+  ({{ gh(550) }} by {{ authors.hoechenberger }})
 - It is now possible to estimate the noise covariance matrix based on a
   resting-state recording and use it for inverse modeling, just like one could
   previously do with empty-room recordings.
-  ({{ gh(554) }} by {{ authors.hoechenberger }}
+  ({{ gh(554) }} by {{ authors.hoechenberger }})
 - Added full-epochs decoding.
-  ({{ gh(558) }} by {{ authors.hoechenberger }}
+  ({{ gh(558) }} by {{ authors.hoechenberger }})
 - Generalization across time can now be enabled for the time-by-time decoding
   scheme via the new configuration option
   [`decoding_time_generalization`][config.decoding_time_generalization].
-  ({{ gh(559) }} by {{ authors.hoechenberger }}
+  ({{ gh(559) }} by {{ authors.hoechenberger }})
+- Generalization across time additional decimation can be configured using
+  [`decoding_time_generalization_decim`][config.decoding_time_generalization_decim].
+  ({{ gh(603) }} by {{ authors.larsoner }})
+- Caching of pipeline enabled (up to/including decoding and time-frequency)
+  by default using [`memory_location=True'`][config.memory_location]
+  ({{ gh(563) }}, {{ gh (600)  }}, and {{ gh(608) }}
+  by {{ authors.agramfort }} and {{ authors.larsoner }})
+- Basic testing of infant MEG data with movement was added to CI testing
+  ({{ gh(582) }} by {{ authors.larsoner }})
+- The `loose` and `depth` configuration parameters were re-enabled
+  ({{ gh(592) }}) by {{ authors.larsoner }}
+- Add the example [MIND DATA dataset (ds004107)](https://openneuro.org/datasets/ds004107)
+  (({{ gh(600) }}) by {{ authors.larsoner }})
+- Simultaneous MEG+EEG can now be processed jointly
+  ({{ gh(606) }} by {{ authors.larsoner }})
+- Spatial filtering using SSP is now supported for EEG data
+  ({{ gh(606) }} by {{ authors.larsoner }})
 - Time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
   (CSP).
   ({{ gh(479) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
@@ -237,6 +255,19 @@ authors:
   [`report_evoked_n_time_points`][config.report_evoked_n_time_points] and
   [`report_stc_n_time_points`][config.report_stc_n_time_points], respectively.
   ({{ gh(542) }} by {{ authors.agramfort }})
+- Add [`reader_extra_params`][config.reader_extra_params] parameter to pass
+  parameters to read_raw_bids.
+  ({{ gh(585) }} by {{ authors.agramfort }})
+- Add [`task_is_rest`][config.task_is_rest] parameter to be explicit that
+  the data must be analyzed as resting state.
+  ({{ gh(585) }} by {{ authors.agramfort }})
+- Patch information is now incorporated when computing surface source spaces,
+  which should slightly improve the surface normals
+  ({{ gh(588) }} by {{ authors.larsoner }})
+- Add [`ssp_meg`][config.ssp_meg] option for MEG SSP computation. This
+  defaults to `'auto'`, which will use `ssp_meg='combined'` for SSP computation
+  when Maxwell filtering is used.
+  ({{ gh(595) }} by {{ authors.larsoner }})
 
 ### Code health
 
@@ -335,3 +366,17 @@ authors:
 - EEG channels couldn't be used as "virtual" EOG channels during ICA artifact
   detection. Reported by "fraenni" on the forum. Thank you! 🌻
   ({{ gh(572) }} by {{ authors.hoechenberger }})
+- Fix bug with handling of split files during preprocessing
+  ({{ gh(597) }} by {{ authors.larsoner }})
+- Fix bug where wrong command-line arguments to ``run.py`` were just ignored
+  instead of raising an error
+  ({{ gh(605) }}) by {{ authors.larsoner }})
+- During the Maxwell filtering step, all channels are now kept rather than
+  being restricted to just MEG channels
+  ({{ gh(606) }} by {{ authors.larsoner }})
+- The default for `analyze_channels` is now `'ch_types'` which restricts to the
+  data channels of interest rather than `'all'`, which included all channels,
+  and hence could include things like stimulus channels
+  ({{ gh(606) }} by {{ authors.larsoner }})
+- Fix bug where only the first run was used to compute SSP
+  ({{ gh(607) }} by {{ authors.larsoner }})

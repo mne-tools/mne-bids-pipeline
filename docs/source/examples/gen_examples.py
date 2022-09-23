@@ -1,24 +1,35 @@
 import os
 import shutil
+import sys
 from pathlib import Path
 import runpy
 import logging
 from typing import Union, Iterable
 
+this_dir = Path(__file__).parent
+root = this_dir.parent.parent.parent
+if str(root) not in sys.path:
+    sys.path.insert(0, str(root))
 
 logger = logging.getLogger()
 
 
-dataset_opts_path = Path('tests/datasets.py')
-run_tests_path = Path('tests/run_tests.py')
+dataset_opts_path = root / 'tests' / 'datasets.py'
+run_tests_path = root / 'tests' / 'run_tests.py'
 
 dataset_options = runpy.run_path(dataset_opts_path)['DATASET_OPTIONS']
 test_options = runpy.run_path(run_tests_path)['TEST_SUITE']
 
 
-def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
-    """Generate a list of the demonstrated functionality based on the config.
-    """
+def _bool_to_icon(x: Union[bool, Iterable]) -> str:
+    if x:
+        return '✅'
+    else:
+        return '❌'
+
+
+def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
+    """Generate dict of demonstrated functionality based on config."""
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
 
@@ -30,37 +41,24 @@ def gen_demonstrated_funcs_str(example_config_path: Path) -> str:
     example_config = runpy.run_path(example_config_path)
     env['BIDS_ROOT'] = example_config['bids_root']
 
-    config_module_path = Path('config.py')
+    config_module_path = root / 'config.py'
     config = runpy.run_path(config_module_path)
 
-    def _bool_to_icon(x: Union[bool, Iterable]) -> str:
-        if x:
-            return '✅'
-        else:
-            return '❌'
-
-    funcs = ['## Demonstrated features\n',
-             'Feature | This example',
-             '--------|:-----------:']
-
     ch_types = [c.upper() for c in config['ch_types']]
-    funcs.append(f'MEG processing | {_bool_to_icon("MEG" in ch_types)}')
-    funcs.append(f'EEG processing | {_bool_to_icon("EEG" in ch_types)}')
-    funcs.append(f'Maxwell filter | '
-                 f'{_bool_to_icon(config["use_maxwell_filter"])}')
-    funcs.append(f'Frequency filter | '
-                 f'{_bool_to_icon(config["l_freq"] or config["h_freq"])}')
-    funcs.append(f'SSP | {_bool_to_icon(config["spatial_filter"] == "ssp")}')
-    funcs.append(f'ICA | {_bool_to_icon(config["spatial_filter"] == "ica")}')
-    funcs.append(f'Evoked contrasts | {_bool_to_icon(config["contrasts"])}')
-    funcs.append(f'Time-by-time decoding | {_bool_to_icon(config["decode"])}')
-    funcs.append(f'Time-frequency analysis | '
-                 f'{_bool_to_icon(config["time_frequency_conditions"])}')
-    funcs.append(f'BEM surface creation | '
-                 f'{_bool_to_icon(config["recreate_bem"])}')
-    funcs.append(f'Template MRI | {_bool_to_icon(config["use_template_mri"])}')
-
-    funcs = '\n'.join(funcs) + '\n\n'
+    funcs = dict()
+    funcs['MEG processing'] = "MEG" in ch_types
+    funcs['EEG processing'] = "EEG" in ch_types
+    funcs['Maxwell filter'] = config["use_maxwell_filter"]
+    funcs['Frequency filter'] = config["l_freq"] or config["h_freq"]
+    funcs['SSP'] = config["spatial_filter"] == "ssp"
+    funcs['ICA'] = config["spatial_filter"] == "ica"
+    funcs['Evoked contrasts'] = config["contrasts"]
+    funcs['Time-by-time decoding'] = config["decode"] and config["contrasts"]
+    funcs['Time-generalization decoding'] = \
+        config["decoding_time_generalization"] and config["contrasts"]
+    funcs['Time-frequency analysis'] = config["time_frequency_conditions"]
+    funcs['BEM surface creation'] = config["recreate_bem"]
+    funcs['Template MRI'] = config["use_template_mri"]
     return funcs
 
 
@@ -71,8 +69,9 @@ for test_name, test_dataset_options in test_options.items():
         dataset_name = test_dataset_options['dataset']
     else:
         dataset_name = test_name
+    del test_dataset_options
 
-    example_target_dir = Path(f'docs/source/examples/{dataset_name}')
+    example_target_dir = this_dir / dataset_name
     example_target_dir.mkdir(exist_ok=True)
 
     example_source_dir = Path(
@@ -90,13 +89,16 @@ for test_name, test_dataset_options in test_options.items():
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
+all_demonstrated = dict()
 for test_dataset_name, test_dataset_options in test_options.items():
     if 'ERP_CORE' in test_dataset_name:
         dataset_name = test_dataset_options['dataset']
     else:
         dataset_name = test_dataset_name
 
-    del test_dataset_name
+    dataset_options_key = test_dataset_options.get(
+        'dataset', test_dataset_name.split('_')[0])
+    del test_dataset_options, test_dataset_name
 
     if dataset_name in datasets_without_html:
         logger.warning(f'Dataset {dataset_name} has no HTML report.')
@@ -104,10 +106,10 @@ for test_dataset_name, test_dataset_options in test_options.items():
 
     logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
-    options = dataset_options[test_dataset_options['dataset']]
+    options = dataset_options[dataset_options_key]
 
     report_str = '\n## Generated output\n\n'
-    example_target_dir = Path(f'docs/source/examples/{dataset_name}')
+    example_target_dir = this_dir / dataset_name
 
     fnames_reports = sorted(
         [f for f in example_target_dir.glob('*.html')
@@ -186,7 +188,7 @@ for test_dataset_name, test_dataset_options in test_options.items():
     else:
         download_str = ''
 
-    config_path = Path(f'tests/configs/config_{dataset_name}.py')
+    config_path = root / 'tests' / 'configs' / f'config_{dataset_name}.py'
     config = config_path.read_text(encoding='utf-8-sig').strip()
     descr_end_idx = config[2:].find('"""')
     config_descr = '# ' + config[:descr_end_idx+1].replace('"""', '').strip()
@@ -196,10 +198,17 @@ for test_dataset_name, test_dataset_options in test_options.items():
                   f'```python\n'
                   f'{config_options}\n'
                   f'```\n')
-    demonstrated_funcs_str = gen_demonstrated_funcs_str(config_path)
+    demonstrated_funcs = _gen_demonstrated_funcs(config_path)
+    all_demonstrated[dataset_name] = demonstrated_funcs
     del config, config_options
+    funcs = ['## Demonstrated features\n',
+             'Feature | This example',
+             '--------|:-----------:']
+    for key, val in demonstrated_funcs.items():
+        funcs.append(f'{key} | {_bool_to_icon(val)}')
+    demonstrated_funcs_str = '\n'.join(funcs) + '\n\n'
 
-    out_path = Path(f'docs/source/examples/{dataset_name}.md')
+    out_path = this_dir / f'{dataset_name}.md'
     with out_path.open('w', encoding='utf-8') as f:
         f.write(config_descr)
         f.write(demonstrated_funcs_str)
@@ -207,3 +216,31 @@ for test_dataset_name, test_dataset_options in test_options.items():
         f.write(download_str)
         f.write(config_str)
         f.write(report_str)
+
+# Finally, write our examples.html file
+
+_example_header = """\
+# Examples
+
+Here you will find a number of examples using publicly available
+datasets, mostly taken from [OpenNeuro](https://openneuro.org).
+
+For a first example, see the results obtained with the
+[MNE sample dataset](ds000248.md).
+"""
+
+out_path = this_dir / 'examples.md'
+with out_path.open('w', encoding='utf-8') as f:
+    f.write(_example_header)
+
+# Eventually we could add a table with code like the following (but the flow
+# is not great / it's too big currently):
+#
+#     header_written = False
+#     for dataset_name, funcs in all_demonstrated.items():
+#         if not header_written:
+#             f.write('Dataset | ' + ' | '.join(funcs.keys()) + '\n')
+#             f.write('--------|' + '|'.join([':---:'] * len(funcs)) + '\n')
+#             header_written = True
+#         f.write(f'[{dataset_name}]({dataset_name}.md) | ' +
+#                 ' | '.join(_bool_to_icon(v) for v in funcs.values()) + '\n')

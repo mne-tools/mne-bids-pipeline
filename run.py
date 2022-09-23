@@ -15,6 +15,10 @@ import fire
 import coloredlogs
 
 
+# Ensure that the "scripts" that we import from is the correct one
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+
+
 logger = logging.getLogger(__name__)
 
 log_level_styles = {
@@ -42,10 +46,12 @@ def _get_script_modules(
     task: Optional[str] = None,
     run: Optional[str] = None,
     interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None
+    n_jobs: Optional[str] = None,
+    on_error: Optional[str] = None,
+    cache: Optional[str] = None,
 ) -> Dict[str, Tuple[ModuleType]]:
     env = os.environ
-    env['MNE_BIDS_STUDY_CONFIG'] = str(pathlib.Path(config).expanduser())
+    env['MNE_BIDS_STUDY_CONFIG'] = config
 
     if root_dir:
         env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
@@ -67,6 +73,12 @@ def _get_script_modules(
 
     if n_jobs:
         env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+
+    if on_error:
+        env['MNE_BIDS_STUDY_ON_ERROR'] = on_error
+
+    if cache:
+        env['MNE_BIDS_STUDY_USE_CACHE'] = cache
 
     from scripts import init
     from scripts import preprocessing
@@ -119,7 +131,10 @@ def process(
     task: Optional[str] = None,
     run: Optional[str] = None,
     interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None
+    n_jobs: Optional[str] = None,
+    debug: Optional[str] = None,
+    cache: Optional[str] = None,
+    **kwargs: Optional[dict],
 ):
     """Run the BIDS pipeline.
 
@@ -149,7 +164,15 @@ def process(
         Whether or not to enable "interactive" mode.
     n_jobs
         The number of parallel processes to execute.
+    debug
+        Whether or not to force on_error='debug'.
+    cache
+        Whether or not to use caching.
+    **kwargs
+        Should not be used. Only used to detect invalid arguments.
     """
+    if kwargs:
+        raise ValueError(f"Unknown argument(s) to run.py: {list(kwargs)}")
     if steps is None:
         steps = ('all',)
     elif isinstance(steps, str) and ',' in steps:
@@ -179,6 +202,8 @@ def process(
         interactive = '1' if interactive in ['1', 'True', True] else '0'
     if n_jobs is not None:
         n_jobs = str(n_jobs)
+    on_error = 'debug' if debug is not None else debug
+    cache = '1' if cache != 0 else '0'
 
     processing_stages = []
     processing_steps = []
@@ -193,6 +218,7 @@ def process(
             processing_stages.append(steps_)
             processing_steps.append(None)
 
+    config = str(pathlib.Path(config).expanduser())
     SCRIPT_MODULES = _get_script_modules(
         config=config,
         root_dir=root_dir,
@@ -202,6 +228,8 @@ def process(
         run=run,
         interactive=interactive,
         n_jobs=n_jobs,
+        on_error=on_error,
+        cache=cache,
     )
 
     script_modules: List[ModuleType] = []
@@ -233,7 +261,10 @@ def process(
         script_modules = [*SCRIPT_MODULES['init'], *script_modules]
 
     logger.info(
-        "👋 Welcome aboard the MNE BIDS Pipeline!\n"
+        "👋 Welcome aboard the MNE BIDS Pipeline!"
+    )
+    logger.info(
+        f"🧾 Using configuration: {config}"
     )
 
     for script_module in script_modules:

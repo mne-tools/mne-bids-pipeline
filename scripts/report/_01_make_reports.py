@@ -7,6 +7,7 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import contextlib
 import os
 import os.path as op
 from pathlib import Path
@@ -25,8 +26,8 @@ from mne_bids.stats import count_events
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, parallel_func,
-    get_noise_cov_bids_path
+    gen_log_kwargs, failsafe_run, parallel_func,
+    get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
 
@@ -52,10 +53,7 @@ def get_events(cfg, subject, session):
 
     for run in cfg.runs:
         this_raw_fname = raw_fname.copy().update(run=run)
-
-        if this_raw_fname.copy().update(split='01').fpath.exists():
-            this_raw_fname.update(split='01')
-
+        this_raw_fname = _update_for_splits(this_raw_fname, None, single=True)
         raw_filt = mne.io.read_raw_fif(this_raw_fname)
         raws_filt.append(raw_filt)
         del this_raw_fname
@@ -81,10 +79,7 @@ def get_er_path(cfg, subject, session):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
-
-    if raw_fname.copy().update(split='01').fpath.exists():
-        raw_fname.update(split='01')
-
+    raw_fname = _update_for_splits(raw_fname, None, single=True)
     return raw_fname
 
 
@@ -122,6 +117,7 @@ def plot_auto_scores(cfg, subject, session):
         captions = [f'Run {run}'] * len(figs)
         all_captions.extend(captions)
 
+    assert all_figs
     return all_figs, all_captions
 
 
@@ -218,10 +214,12 @@ def _plot_full_epochs_decoding_scores(
 
 
 def _plot_time_by_time_decoding_scores(
+    *,
     times: np.ndarray,
     cross_val_scores: np.ndarray,
     metric: str,
-    time_generalization: bool
+    time_generalization: bool,
+    decim: int,
 ):
     """Plot cross-validation results from time-by-time decoding.
     """
@@ -238,7 +236,7 @@ def _plot_time_by_time_decoding_scores(
         max_scores = np.diag(max_scores)
         min_scores = np.diag(min_scores)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
     if times.min() < 0 < times.max():
         ax.axvline(0, ls='-', lw=0.5, color='black')
@@ -247,18 +245,27 @@ def _plot_time_by_time_decoding_scores(
     ax.plot(times, mean_scores, ls='-', lw=2, color='black',
             label='mean')
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
     ax.set_ylim((-0.025, 1.025))
     ax.legend(loc='lower right')
-    fig.tight_layout()
 
     return fig
 
 
-def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
+def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
+    extra = ''
+    if decim > 1:
+        extra = f'\n(decim={decim})'
+    if xlabel is not None:
+        ax.set_xlabel(f'{xlabel}{extra}')
+    if ylabel is not None:
+        ax.set_ylabel(f'{ylabel}{extra}')
+
+
+def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     """Plot the grand-averaged decoding scores.
     """
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -270,6 +277,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     se_upper = mean_scores + decoding_data['mean_se'].squeeze()
     ci_lower = decoding_data['mean_ci_lower'].squeeze()
     ci_upper = decoding_data['mean_ci_upper'].squeeze()
+    decim = decoding_data['decim'].item()
 
     if cfg.decoding_time_generalization:
         # Only use the diagonal values (classifiers trained and tested on the
@@ -283,7 +291,7 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
     metric = cfg.decoding_metric
     clusters = np.atleast_1d(decoding_data['clusters'].squeeze())
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.set_ylim((-0.025, 1.025))
 
     # Start with plotting the significant time periods according to the
@@ -327,12 +335,11 @@ def _plot_time_by_time_decoding_scores_gavg(cfg, decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     if metric == 'roc_auc':
         metric = 'ROC AUC'
     ax.set_ylabel(f'Score ({metric})')
     ax.legend(loc='lower right')
-    fig.tight_layout()
 
     return fig
 
@@ -346,8 +353,9 @@ def plot_time_by_time_decoding_t_values(decoding_data):
     all_times = decoding_data['cluster_all_times'].squeeze()
     all_t_values = decoding_data['cluster_all_t_values'].squeeze()
     t_threshold = decoding_data['cluster_t_threshold']
+    decim = decoding_data['decim']
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     ax.plot(all_times, all_t_values, ls='-', color='black',
             label='observed $t$-values')
     ax.axhline(t_threshold, ls='--', color='red', label='threshold')
@@ -356,7 +364,7 @@ def plot_time_by_time_decoding_t_values(decoding_data):
             fontsize='x-large', horizontalalignment='left',
             verticalalignment='bottom', transform=ax.transAxes)
 
-    ax.set_xlabel('Time (s)')
+    _label_time_by_time(ax, xlabel='Time (s)', decim=decim)
     ax.set_ylabel('$t$-value')
     ax.legend(loc='lower right')
 
@@ -371,7 +379,6 @@ def plot_time_by_time_decoding_t_values(decoding_data):
         # start y axis at zero
         ax.set_ylim(ymin=all_t_values.min(), ymax=0)
 
-    fig.tight_layout()
     return fig
 
 
@@ -386,6 +393,7 @@ def _plot_decoding_time_generalization(
 
     # We squeeze() to make Matplotlib happy.
     times = decoding_data['times'].squeeze()
+    decim = decoding_data['decim'].item()
     if kind == 'single-subject':
         # take the mean across CV scores
         mean_scores = decoding_data['scores'].mean(axis=0)
@@ -412,8 +420,12 @@ def _plot_decoding_time_generalization(
     ax.plot(times[[0, -1]], times[[0, -1]], ls='--', lw=0.5, color='black')
 
     # Axis labels
-    ax.set_xlabel('Testing time (s)')
-    ax.set_ylabel('Training time (s)')
+    _label_time_by_time(
+        ax,
+        xlabel='Testing time (s)',
+        ylabel='Training time (s)',
+        decim=decim,
+    )
 
     # Color bar
     cbar = plt.colorbar(im, ax=ax)
@@ -421,7 +433,6 @@ def _plot_decoding_time_generalization(
         metric = 'ROC AUC'
     cbar.set_label(f'Score ({metric})')
 
-    fig.tight_layout()
     return fig
 
 
@@ -482,9 +493,7 @@ def run_report_preprocessing(
             run=run, processing='filt',
             suffix='raw', check=False
         )
-        if fname.copy().update(split='01').fpath.exists():
-            fname.update(split='01')
-
+        fname = _update_for_splits(fname, None, single=True)
         fnames_raw_filt.append(fname)
 
     fname_epo_not_clean = bids_path.copy().update(suffix='epo')
@@ -516,7 +525,7 @@ def run_report_preprocessing(
             title=title,
             butterfly=5,
             psd=plot_raw_psd,
-            tags=('raw', 'filtered', f'run-{fname.run}')
+            tags=('raw', 'filtered', f'run-{fname.run}'),
             # caption=fname.basename  # TODO upstream
         )
         del plot_raw_psd
@@ -561,7 +570,7 @@ def run_report_preprocessing(
             plt.close(fig)
 
     # Visualize events.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task_is_rest:
         msg = 'Adding events plot to report.'
         logger.info(
             **gen_log_kwargs(
@@ -758,8 +767,7 @@ def run_report_sensor(
         noise_cov = None
 
     for condition, evoked in zip(conditions, evokeds):
-        if cfg.analyze_channels:
-            evoked.pick(cfg.analyze_channels)
+        _restrict_analyze_channels(evoked, cfg)
 
         if condition in cfg.conditions:
             title = f'Condition: {condition}'
@@ -777,7 +785,7 @@ def run_report_sensor(
             titles=title,
             noise_cov=noise_cov,
             n_time_points=cfg.report_evoked_n_time_points,
-            tags=tags
+            tags=tags,
         )
 
     ###########################################################################
@@ -873,10 +881,11 @@ def run_report_sensor(
             del fname_decoding, processing, a_vs_b
 
             fig = _plot_time_by_time_decoding_scores(
-                times=epochs.times,
+                times=decoding_data['times'].ravel(),
                 cross_val_scores=decoding_data['scores'],
                 metric=cfg.decoding_metric,
-                time_generalization=cfg.decoding_time_generalization
+                time_generalization=cfg.decoding_time_generalization,
+                decim=decoding_data['decim'].item(),
             )
             caption = (
                 f'Time-by-time decoding: '
@@ -1106,7 +1115,7 @@ def run_report_source(
     return report
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_report(
     *,
     cfg: SimpleNamespace,
@@ -1201,7 +1210,7 @@ def add_system_info(report: mne.Report):
     report.add_sys_info(title='System information')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -1237,9 +1246,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         raw_psd=True
     )
     evokeds = mne.read_evokeds(evoked_fname)
-    if cfg.analyze_channels:
-        for evoked in evokeds:
-            evoked.pick(cfg.analyze_channels)
+    for evoked in evokeds:
+        _restrict_analyze_channels(evoked, cfg)
 
     method = cfg.inverse_method
     inverse_str = method
@@ -1449,7 +1457,8 @@ def add_decoding_grand_average(
 
         # Plot scores
         fig = _plot_time_by_time_decoding_scores_gavg(
-            cfg=cfg, decoding_data=decoding_data
+            cfg=cfg,
+            decoding_data=decoding_data,
         )
         caption = (
             f'Based on N={decoding_data["N"].squeeze()} '
@@ -1760,8 +1769,10 @@ def get_config(
     else:
         fs_subject = config.get_fs_subject(subject=subject)
 
+    dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),
         datatype=config.get_datatype(),
         acq=config.acq,
@@ -1781,6 +1792,7 @@ def get_config(
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
+        decoding_time_generalization_decim=dtg_decim,
         decoding_csp=config.decoding_csp,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
@@ -1801,9 +1813,20 @@ def get_config(
     return cfg
 
 
+@contextlib.contextmanager
+def _agg_backend():
+    import matplotlib
+    backend = matplotlib.get_backend()
+    matplotlib.use('Agg', force=True)
+    try:
+        yield
+    finally:
+        matplotlib.use(backend, force=True)
+
+
 def main():
     """Make reports."""
-    with config.get_parallel_backend():
+    with config.get_parallel_backend(), _agg_backend():
         parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(
@@ -1823,8 +1846,7 @@ def main():
         if not sessions:
             sessions = [None]
 
-        if (config.get_task() is not None and
-                config.get_task().lower() == 'rest'):
+        if config.task_is_rest:
             msg = '    … skipping "average" report for "rest" task.'
             logger.info(**gen_log_kwargs(message=msg))
             return

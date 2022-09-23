@@ -24,39 +24,84 @@ from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne_bids import BIDSPath
+from mne_bids import BIDSPath, read_raw_bids
 
 import config
-from config import (gen_log_kwargs, on_error, failsafe_run,
+from config import (gen_log_kwargs, failsafe_run, _script_path,
                     import_experimental_data, import_er_data, import_rest_data,
-                    get_reference_run_params)
+                    _update_for_splits)
 from config import parallel_func
-
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_maxwell_filter(*, cfg, subject, session=None, run=None):
+def get_input_fnames_maxwell_filter(**kwargs):
+    """Get paths of files required by maxwell_filter function."""
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    run = kwargs.pop('run')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
+
+    bids_path_in = BIDSPath(subject=subject,
+                            session=session,
+                            run=run,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            suffix='meg',
+                            datatype=cfg.datatype,
+                            root=cfg.bids_root,
+                            check=False)
+
+    in_files = {
+        f'raw_run-{bp.run}': bp for bp in bids_path_in.match()
+    }
+
+    ref_bids_path = bids_path_in.copy().update(
+        run=cfg.mf_reference_run,
+        extension='.fif',
+        check=True
+    )
+
+    if (
+        (cfg.process_er or config.noise_cov == 'rest') and
+        run == cfg.mf_reference_run
+    ):
+        if config.noise_cov == 'rest':
+            in_files["raw_rest"] = bids_path_in.copy().update(task="rest")
+        else:
+            in_files["raw_er"] = ref_bids_path.find_empty_room()
+
+    in_files["raw_ref_run"] = ref_bids_path
+    in_files["mf_cal_fname"] = cfg.mf_cal_fname
+    in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+    return in_files
+
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_maxwell_filter)
+def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
                          f' Got proc={config.proc}.')
+    bids_path_in = in_files.pop(f"raw_run-{run}")
+    bids_path_out = bids_path_in.copy().update(
+        processing="sss",
+        suffix="raw",
+        extension='.fif',
+        root=cfg.deriv_root,
+        check=False
+    )
+    # Now take everything from the bids_path_in and overwrite the parameters
+    subject = bids_path_in.subject
+    session = bids_path_in.session
+    run = bids_path_in.run
 
-    bids_path_out = BIDSPath(subject=subject,
-                             session=session,
-                             run=run,
-                             task=cfg.task,
-                             acquisition=cfg.acq,
-                             processing='sss',
-                             recording=cfg.rec,
-                             space=cfg.space,
-                             suffix='raw',
-                             extension='.fif',
-                             datatype=cfg.datatype,
-                             root=cfg.deriv_root,
-                             check=False)
-
+    out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
@@ -64,17 +109,15 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
-    reference_run_params = get_reference_run_params(
-        subject=subject, session=session, run=cfg.mf_reference_run
-    )
-    dev_head_t = reference_run_params['dev_head_t']
-    del reference_run_params
+    ref_fname = in_files.pop("raw_ref_run")
+    raw = read_raw_bids(bids_path=ref_fname,
+                        extra_params=cfg.reader_extra_params)
+    dev_head_t = raw.info['dev_head_t']
+    del raw
 
     raw = import_experimental_data(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        run=run
+        bids_path_in=bids_path_in,
+        cfg=cfg
     )
 
     # Maxwell-filter experimental data.
@@ -98,8 +141,9 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     # Keyword arguments shared between Maxwell filtering of the
     # experimental and the empty-room data.
     common_mf_kws = dict(
-        calibration=cfg.mf_cal_fname,
-        cross_talk=cfg.mf_ctc_fname,
+        # TODO: Add head_pos, st_correlation, eSSS
+        calibration=in_files.pop("mf_cal_fname"),
+        cross_talk=in_files.pop("mf_ctc_fname"),
         st_duration=cfg.mf_st_duration,
         origin=cfg.mf_head_origin,
         coord_frame='head',
@@ -107,19 +151,21 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
     )
 
     raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
-
-    # Save only the channel types we wish to analyze (including the
-    # channels marked as "bad").
-    # We do not run `raw_sss.pick()` here because it uses too much memory.
-    picks = config.get_channels_to_analyze(raw.info)
-    raw_sss.save(bids_path_out, picks=picks, split_naming='bids',
-                 overwrite=True)
+    out_files['sss_raw'] = bids_path_out
+    msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
+    logger.info(**gen_log_kwargs(
+        message=msg, subject=subject, session=session, run=run))
+    raw_sss.save(out_files['sss_raw'], split_naming='bids',
+                 overwrite=True, split_size=cfg._raw_split_size)
+    # we need to be careful about split files
+    _update_for_splits(out_files, 'sss_raw')
     del raw, raw_sss
 
     if cfg.interactive:
         # Load the data we have just written, because it contains only
         # the relevant channels.
-        raw_sss = mne.io.read_raw_fif(bids_path_out, allow_maxshield=True)
+        raw_sss = mne.io.read_raw_fif(
+            out_files['sss_raw'], allow_maxshield=True)
         raw_sss.plot(n_channels=50, butterfly=True, block=True)
         del raw_sss
 
@@ -144,14 +190,13 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         if config.noise_cov == 'rest':
             raw_noise = import_rest_data(
                 cfg=cfg,
-                subject=subject,
-                session=session
+                bids_path_in=in_files.pop('raw_rest')
             )
         else:
             raw_noise = import_er_data(
                 cfg=cfg,
-                subject=subject,
-                session=session
+                bids_path_er_in=in_files.pop('raw_er'),
+                bids_path_ref_in=ref_fname,
             )
 
         # Maxwell-filter noise data.
@@ -171,7 +216,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
         # copy the bad channel selection from the reference run over to
         # the resting-state recording.
 
-        raw_sss = mne.io.read_raw_fif(bids_path_out)
+        raw_sss = mne.io.read_raw_fif(out_files['sss_raw'])
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
         rank_noise = mne.compute_rank(raw_noise_sss, rank='info')['meg']
 
@@ -194,7 +239,7 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
                    f'were processed  differently.')
             raise RuntimeError(msg)
 
-        raw_noise_fname_out = bids_path_out.copy().update(
+        out_files['sss_noise'] = bids_path_out.copy().update(
             task='rest' if config.noise_cov == 'rest' else 'noise',
             run=None,
             processing='sss'
@@ -202,11 +247,18 @@ def run_maxwell_filter(*, cfg, subject, session=None, run=None):
 
         # Save only the channel types we wish to analyze
         # (same as for experimental data above).
+        msg = ("Writing "
+               f"{out_files['sss_noise'].fpath.relative_to(cfg.deriv_root)}")
+        logger.info(**gen_log_kwargs(
+            message=msg, subject=subject, session=session, run=run))
         raw_noise_sss.save(
-            raw_noise_fname_out, picks=picks, overwrite=True,
-            split_naming='bids'
+            out_files['sss_noise'], overwrite=True,
+            split_naming='bids', split_size=cfg._raw_split_size,
         )
+        _update_for_splits(out_files, 'sss_noise')
         del raw_noise_sss
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(
@@ -214,6 +266,7 @@ def get_config(
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        reader_extra_params=config.reader_extra_params,
         mf_cal_fname=config.get_mf_cal_fname(subject, session),
         mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
         mf_st_duration=config.mf_st_duration,
@@ -244,6 +297,7 @@ def get_config(
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        _raw_split_size=config._raw_split_size,
     )
     return cfg
 
@@ -252,7 +306,8 @@ def main():
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
-        logger.info(**gen_log_kwargs(message=msg))
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

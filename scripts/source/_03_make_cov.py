@@ -16,7 +16,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, parallel_func,
+    gen_log_kwargs, failsafe_run, parallel_func,
     get_noise_cov_bids_path
 )
 
@@ -49,9 +49,13 @@ def compute_cov_from_epochs(cfg, subject, session, tmin, tmax):
         session=session
     )
 
-    msg = (f"Computing regularized covariance based on epochs' baseline "
-           f"periods. Input: {epo_fname.basename}, "
-           f"Output: {cov_fname.basename}")
+    msg = "Computing regularized covariance based on epochs' baseline periods."
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Input: {epo_fname.basename}"
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Output: {cov_fname.basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -93,9 +97,13 @@ def compute_cov_from_raw(cfg, subject, session):
         session=session
     )
 
-    msg = (f'Computing regularized covariance based on {data_type} recording. '
-           f'Input: {bids_path_raw_noise.basename}, '
-           f'Output: {cov_fname.basename}')
+    msg = f'Computing regularized covariance based on {data_type} recording.'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Input: {bids_path_raw_noise.basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f'Output: {cov_fname.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -133,8 +141,11 @@ def retrieve_custom_cov(
         session=session
     )
 
-    msg = (f'Retrieving noise covariance matrix from custom user-supplied '
-           f'function, Output: {cov_fname.basename}')
+    msg = ('Retrieving noise covariance matrix from custom user-supplied '
+           'function')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = 'Output: {cov_fname.basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
@@ -143,7 +154,7 @@ def retrieve_custom_cov(
     cov.save(cov_fname, overwrite=True)
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_covariance(*, cfg, subject, session=None, custom_func=None):
     if callable(config.noise_cov):
         retrieve_custom_cov(
@@ -184,16 +195,16 @@ def main():
     cfg = get_config()
 
     if not cfg.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     # Note that we're using config.noise_cov here and not adding it to
     # cfg, as in case it's a function, it won't work when running parallel jobs
 
     if config.noise_cov == "ad-hoc":
-        msg = '    … skipping: using ad-hoc diagonal covariance.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, using ad-hoc diagonal covariance …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

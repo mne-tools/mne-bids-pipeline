@@ -62,6 +62,7 @@ h_freq = None
 
 decode = True
 decoding_time_generalization = True
+decoding_time_generalization_decim = 4
 
 find_breaks = True
 min_break_duration = 10
@@ -80,18 +81,14 @@ run_source_estimation = False
 on_error = 'abort'
 on_rename_missing_events = 'warn'
 
-# XXX temporarily disable Dask
-#
-# parallel_backend = 'dask'
-# dask_worker_memory_limit = '2G'
-# N_JOBS = 2
+parallel_backend = 'dask'
+dask_worker_memory_limit = '2G'
+N_JOBS = 2
 
 N_JOBS = 2
 
 if task == 'N400':
-    # XXX temporarily disable Dask
-    #
-    # dask_open_dashboard = True
+    dask_open_dashboard = True
 
     rename_events = {
         'response/201': 'response/correct',

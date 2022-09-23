@@ -32,8 +32,8 @@ from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
 import config
-from config import (make_epochs, gen_log_kwargs, on_error, failsafe_run,
-                    annotations_to_events)
+from config import (make_epochs, gen_log_kwargs, failsafe_run, _script_path,
+                    annotations_to_events, _update_for_splits)
 from config import parallel_func
 
 
@@ -232,9 +232,12 @@ def detect_bad_components(
     return inds, scores
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_ica(*, cfg, subject, session=None):
-    """Run ICA."""
+def get_input_fnames_run_ica(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=cfg.task,
@@ -244,25 +247,33 @@ def run_ica(*, cfg, subject, session=None):
                              datatype=cfg.datatype,
                              root=cfg.deriv_root,
                              check=False)
+    in_files = dict()
+    for run in cfg.runs:
+        key = f'raw_run-{run}'
+        in_files[key] = bids_basename.copy().update(
+            run=run, processing='filt', suffix='raw')
+        _update_for_splits(in_files, key, single=True)
+    return in_files
 
-    raw_fname = bids_basename.copy().update(processing='filt', suffix='raw')
-    ica_fname = bids_basename.copy().update(suffix='ica', extension='.fif')
-    ica_components_fname = bids_basename.copy().update(processing='ica',
-                                                       suffix='components',
-                                                       extension='.tsv')
-    report_fname = bids_basename.copy().update(processing='ica+components',
-                                               suffix='report',
-                                               extension='.html')
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_run_ica)
+def run_ica(*, cfg, subject, session, in_files):
+    """Run ICA."""
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
+    bids_basename = raw_fnames[0].copy().update(
+        processing=None, split=None, run=None)
+    out_files = dict()
+    out_files['ica'] = bids_basename.copy().update(
+        suffix='ica', extension='.fif')
+    out_files['components'] = bids_basename.copy().update(
+        processing='ica', suffix='components', extension='.tsv')
+    out_files['report'] = bids_basename.copy().update(
+        processing='ica+components', suffix='report', extension='.html')
+    del bids_basename
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
-    raw_fnames = []
-    for run in cfg.runs:
-        raw_fname.update(run=run)
-        if raw_fname.copy().update(split='01').fpath.exists():
-            raw_fname.update(split='01')
-
-        raw_fnames.append(raw_fname.copy())
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
@@ -275,8 +286,7 @@ def run_ica(*, cfg, subject, session=None):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = (f'Loading filtered raw data from {raw_fname.basename} and '
-               f'creating epochs')
+        msg = f'Loading filtered raw data from {raw_fname.basename}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
 
@@ -345,7 +355,8 @@ def run_ica(*, cfg, subject, session=None):
             metadata_keep_last=cfg.epochs_metadata_keep_last,
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
-            decim=cfg.decim
+            decim=cfg.decim,
+            task_is_rest=cfg.task_is_rest,
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -429,7 +440,8 @@ def run_ica(*, cfg, subject, session=None):
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
-    ica.save(ica_fname, overwrite=True)
+    ica.save(out_files['ica'], overwrite=True)
+    _update_for_splits(out_files, 'ica')
 
     # Create TSV.
     tsv_data = pd.DataFrame(
@@ -451,7 +463,7 @@ def run_ica(*, cfg, subject, session=None):
         tsv_data.loc[row_idx,
                      'status_description'] = 'Auto-detected EOG artifact'
 
-    tsv_data.to_csv(ica_components_fname, sep='\t', index=False)
+    tsv_data.to_csv(out_files['components'], sep='\t', index=False)
 
     # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
     # for manual inspection.
@@ -482,12 +494,17 @@ def run_ica(*, cfg, subject, session=None):
     )
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
-           f"report {report_fname.basename}, and mark all components you wish "
-           f"to reject as 'bad' in {ica_components_fname.basename}")
+           f"report {out_files['report'].basename}, and mark all components "
+           f"you wish to reject as 'bad' in "
+           f"{out_files['components'].basename}")
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    report.save(report_fname, overwrite=True, open_browser=cfg.interactive)
+    report.save(
+        out_files['report'], overwrite=True, open_browser=cfg.interactive)
+
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(
@@ -497,6 +514,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=config.conditions,
         task=config.get_task(),
+        task_is_rest=config.task_is_rest,
         datatype=config.get_datatype(),
         runs=config.get_runs(subject=subject),
         acq=config.acq,
@@ -533,9 +551,10 @@ def get_config(
 
 def main():
     """Run ICA."""
-    if not config.spatial_filter == 'ica':
+    if config.spatial_filter != 'ica':
         msg = 'Skipping …'
-        logger.info(**gen_log_kwargs(message=msg))
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

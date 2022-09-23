@@ -15,52 +15,72 @@ import mne
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne_bids import BIDSPath
+from mne.utils import _pl
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import gen_log_kwargs, failsafe_run, _update_for_splits
+from config import parallel_func, _script_path
 
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_ssp(*, cfg, subject, session=None):
-    # compute SSP on first run of raw
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=cfg.runs[0],
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root)
+def get_input_fnames_run_ssp(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
+    bids_basename = BIDSPath(subject=subject,
+                             session=session,
+                             task=cfg.task,
+                             acquisition=cfg.acq,
+                             recording=cfg.rec,
+                             space=cfg.space,
+                             datatype=cfg.datatype,
+                             root=cfg.deriv_root,
+                             extension='.fif',
+                             check=False)
+    in_files = dict()
+    for run in cfg.runs:
+        key = f'raw_run-{run}'
+        in_files[key] = bids_basename.copy().update(
+            run=run, processing='filt', suffix='raw')
+        _update_for_splits(in_files, key, single=True)
+    return in_files
 
-    # Prepare a name to save the data
-    raw_fname_in = bids_path.copy().update(processing='filt', suffix='raw',
-                                           check=False)
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_run_ssp)
+def run_ssp(*, cfg, subject, session, in_files):
+    # compute SSP on first run of raw
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
 
     # when saving proj, use run=None
-    proj_fname_out = bids_path.copy().update(run=None, suffix='proj',
-                                             check=False)
+    out_files = dict()
+    out_files['proj'] = raw_fnames[0].copy().update(
+        run=None, suffix='proj', split=None, processing=None, check=False)
 
-    msg = f'Input: {raw_fname_in.basename}, Output: {proj_fname_out.basename}'
+    msg = (f'Input{_pl(raw_fnames)} ({len(raw_fnames)}): '
+           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}, ')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Output: {out_files["proj"].basename}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    if raw_fname_in.copy().update(split='01').fpath.exists():
-        raw_fname_in.update(split='01')
-
-    raw = mne.io.read_raw_fif(raw_fname_in)
+    raw = mne.concatenate_raws([
+        mne.io.read_raw_fif(raw_fname_in) for raw_fname_in in raw_fnames])
+    del raw_fnames
     msg = 'Computing SSPs for ECG'
     logger.debug(**gen_log_kwargs(message=msg, subject=subject,
                                   session=session))
 
     ecg_projs = []
     ecg_epochs = create_ecg_epochs(raw)
-    if len(ecg_epochs) >= config.min_ecg_epochs:
+    if cfg.ssp_meg == 'auto':
+        cfg.ssp_meg = 'combined' if cfg.use_maxwell_filter else 'separate'
+    if len(ecg_epochs) >= cfg.min_ecg_epochs:
         if cfg.ssp_reject_ecg == 'autoreject_global':
             reject_ecg_ = config.get_ssp_reject(
                 ssp_type='ecg',
@@ -68,6 +88,7 @@ def run_ssp(*, cfg, subject, session=None):
             ecg_projs, _ = compute_proj_ecg(raw,
                                             average=cfg.ecg_proj_from_average,
                                             reject=reject_ecg_,
+                                            meg=cfg.ssp_meg,
                                             **cfg.n_proj_ecg)
         else:
             reject_ecg_ = config.get_ssp_reject(
@@ -76,6 +97,7 @@ def run_ssp(*, cfg, subject, session=None):
             ecg_projs, _ = compute_proj_ecg(raw,
                                             average=cfg.ecg_proj_from_average,
                                             reject=reject_ecg_,
+                                            meg=cfg.ssp_meg,
                                             **cfg.n_proj_ecg)
 
     if not ecg_projs:
@@ -95,7 +117,10 @@ def run_ssp(*, cfg, subject, session=None):
 
     eog_projs = []
     eog_epochs = create_eog_epochs(raw)
-    if len(eog_epochs) >= config.min_eog_epochs:
+    # TODO: This config.get_ssp_reject violates that we should only use
+    # cfg.values in this function, so caching might not work properly here.
+    # This should be refactored at some point.
+    if len(eog_epochs) >= cfg.min_eog_epochs:
         if cfg.ssp_reject_eog == 'autoreject_global':
             reject_eog_ = config.get_ssp_reject(
                 ssp_type='eog',
@@ -119,7 +144,11 @@ def run_ssp(*, cfg, subject, session=None):
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
 
-    mne.write_proj(proj_fname_out, eog_projs + ecg_projs, overwrite=True)
+    mne.write_proj(out_files['proj'], eog_projs + ecg_projs, overwrite=True)
+    # TODO: Write the epochs as well for nice joint plots
+
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(
@@ -139,17 +168,22 @@ def get_config(
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
         eog_proj_from_average=config.eog_proj_from_average,
+        min_ecg_epochs=config.min_ecg_epochs,
+        min_eog_epochs=config.min_eog_epochs,
         n_proj_eog=config.n_proj_eog,
         n_proj_ecg=config.n_proj_ecg,
+        ssp_meg=config.ssp_meg,
+        use_maxwell_filter=config.use_maxwell_filter,
     )
     return cfg
 
 
 def main():
     """Run SSP."""
-    if not config.spatial_filter == 'ssp':
+    if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
-        logger.info(**gen_log_kwargs(message=msg))
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

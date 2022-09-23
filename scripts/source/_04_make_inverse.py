@@ -18,14 +18,14 @@ from mne_bids import BIDSPath
 
 import config
 from config import (
-    gen_log_kwargs, on_error, failsafe_run, sanitize_cond_name, parallel_func,
+    gen_log_kwargs, failsafe_run, sanitize_cond_name, parallel_func,
     get_noise_cov_bids_path
 )
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
+@failsafe_run(script_path=__file__)
 def run_inverse(*, cfg, subject, session=None):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -48,6 +48,8 @@ def run_inverse(*, cfg, subject, session=None):
         session=session
     )
 
+    # TODO: Eventually we should maybe loop over ch_types, e.g., to create
+    # MEG, EEG, and MEG+EEG inverses and STCs
     fname_inv = bids_path.copy().update(suffix='inv')
 
     info = mne.io.read_info(fname_info)
@@ -61,8 +63,9 @@ def run_inverse(*, cfg, subject, session=None):
         cov = mne.read_cov(fname_cov)
 
     forward = mne.read_forward_solution(fname_fwd)
-    inverse_operator = make_inverse_operator(info, forward, cov, loose=0.2,
-                                             depth=0.8, rank='info')
+    inverse_operator = make_inverse_operator(
+        info, forward, cov, loose=cfg.loose, depth=cfg.depth,
+        rank='info')
     write_inverse_operator(fname_inv, inverse_operator, overwrite=True)
 
     # Apply inverse
@@ -117,6 +120,8 @@ def get_config(
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,
+        loose=config.loose,
+        depth=config.depth,
         inverse_method=config.inverse_method,
         deriv_root=config.get_deriv_root(),
     )
@@ -126,8 +131,8 @@ def get_config(
 def main():
     """Run inv."""
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

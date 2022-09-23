@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import mne.bem
 
 import config
-from config import parallel_func
+from config import parallel_func, failsafe_run
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
@@ -42,6 +42,7 @@ def get_config() -> SimpleNamespace:
     return cfg
 
 
+@failsafe_run(script_path=__file__)
 def main():
     # Ensure we're also processing fsaverage if present
     subjects = config.get_subjects()

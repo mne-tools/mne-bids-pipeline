@@ -27,7 +27,8 @@ def fetch(dataset=None):
 DATA_DIR = Path('~/mne_data').expanduser()
 
 
-class TestOptionsT(TypedDict):
+# Once PEP655 lands in 3.11 we can use NotRequired instead of total=False
+class TestOptionsT(TypedDict, total=False):
     dataset: str
     config: str
     steps: Collection[str]
@@ -35,153 +36,94 @@ class TestOptionsT(TypedDict):
     env: Dict[str, str]
 
 
+# If not supplied below, the defaults are:
+# key: {
+#     'dataset': key.split('_')[0],
+#     'config': f'config_{key}.py',
+#     'steps': ('preprocessing', 'sensor', 'report'),
+#     'env': {},
+#     'task': None,
+# }
+#
 TEST_SUITE: Dict[str, TestOptionsT] = {
-    'ds003392': {
-        'dataset': 'ds003392',
-        'config': 'config_ds003392.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
+    'ds003392': {},
+    'ds004229': {},
+    'ds001971': {},
+    'ds004107': {},
+    'ds000117': {},
+    'ds003775': {},
+    'eeg_matchingpennies': {
+        'dataset': 'eeg_matchingpennies',
     },
     'ds000246': {
-        'dataset': 'ds000246',
-        'config': 'config_ds000246.py',
         'steps': ('preprocessing',
                   'preprocessing/make_epochs',  # Test the group/step syntax
                   'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds000247': {
-        'dataset': 'ds000247',
-        'config': 'config_ds000247.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'rest',
-        'env': {}
     },
     'ds000248': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
-        'task': None,
-        'env': {}
     },
-    'ds000248_ica': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_ica.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
+    'ds000248_ica': {},
     'ds000248_T1_BEM': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_T1_BEM.py',
         'steps': ('source/make_bem_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_FLASH_BEM': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_FLASH_BEM.py',
         'steps': ('source/make_bem_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_coreg_surfaces': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_coreg_surfaces.py',
         'steps': ('freesurfer/coreg_surfaces',),
-        'task': None,
-        'env': {}
     },
     'ds000248_no_mri': {
-        'dataset': 'ds000248',
-        'config': 'config_ds000248_no_mri.py',
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds001810': {
-        'dataset': 'ds001810',
-        'config': 'config_ds001810.py',
         'steps': ('preprocessing', 'preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'eeg_matchingpennies': {
-        'dataset': 'eeg_matchingpennies',
-        'config': 'config_eeg_matchingpennies.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ds003104': {
-        'dataset': 'ds003104',
-        'config': 'config_ds003104.py',
         'steps': ('preprocessing', 'sensor',  'source', 'report'),
-        'task': None,
-        'env': {}
-    },
-    'ds000117': {
-        'dataset': 'ds000117',
-        'config': 'config_ds000117.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
-        'task': None,
-        'env': {}
     },
     'ERP_CORE_N400': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N400',
-        'env': {}
     },
     'ERP_CORE_ERN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'ERN',
-        'env': {}
     },
     'ERP_CORE_LRP': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'LRP',
-        'env': {}
     },
     'ERP_CORE_MMN': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'MMN',
-        'env': {}
     },
     'ERP_CORE_N2pc': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N2pc',
-        'env': {}
     },
     'ERP_CORE_N170': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'N170',
-        'env': {}
     },
     'ERP_CORE_P3': {
         'dataset': 'ERP_CORE',
         'config': 'config_ERP_CORE.py',
-        'steps': ('preprocessing', 'sensor', 'report'),
         'task': 'P3',
-        'env': {}
     }
 }
 
 
-def run_tests(test_suite, download):
+def run_tests(test_suite, *, download, debug, cache):
     """Run a suite of tests.
 
     Parameters
@@ -192,6 +134,10 @@ def run_tests(test_suite, download):
         elements function handles to be called.
     download : bool
         Whether to (re-)download the test dataset.
+    debug : bool
+        If True, force debug mode.
+    cache : bool
+        If True (default), use cache. If False, recompute everything.
 
     Notes
     -----
@@ -201,53 +147,68 @@ def run_tests(test_suite, download):
     for dataset, test_options in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset
-        if test_options['env']:
+        if 'env' in test_options:
             os.environ.update(test_options['env'])
 
-        config_path = (study_template_dir / 'tests' / 'configs' /
-                       test_options['config'])
+        config = test_options.get('config', f'config_{dataset}.py')
+        config_path = study_template_dir / 'tests' / 'configs' / config
 
         # Fetch the data.
+        dataset_name = test_options.get('dataset', dataset.split('_')[0])
         if download:
-            fetch(test_options['dataset'])
+            fetch(dataset_name)
 
         # XXX Workaround for buggy date in ds000247. Remove this and the
         # XXX file referenced here once fixed!!!
+        fix_path = Path(__file__).parent
         if dataset == 'ds000247':
             shutil.copy(
-                src=Path(__file__).parent / 'ds000247_scans.tsv',
+                src=fix_path / 'ds000247_scans.tsv',
                 dst=Path('~/mne_data/ds000247/sub-0002/ses-01/'
                          'sub-0002_ses-01_scans.tsv').expanduser()
             )
+        # XXX Workaround for buggy participant_id in ds001971
+        elif dataset == 'ds001971':
+            shutil.copy(
+                src=fix_path / 'ds001971_participants.tsv',
+                dst=Path('~/mne_data/ds001971/participants.tsv').expanduser()
+            )
+
 
         # Test the `--n_jobs` parameter
         if dataset == 'ds000117':
             n_jobs = '1'
         else:
-            n_jobs = None
+            n_jobs = '1' if debug else None
 
         # Run the tests.
-        steps = test_options['steps']
-        task = test_options['task']
+        steps = test_options.get(
+            'steps', ('preprocessing', 'sensor', 'report'))
+        task = test_options.get('task', None)
 
         run_script = study_template_dir / 'run.py'
         # We need to adjust sys.argv so we can pass "command line arguments"
         # to run.py when executed via runpy.
         argv_orig = sys.argv.copy()
+        run_path = str(run_script)
         sys.argv = [
-            sys.argv[0],
+            run_path,
             f'--steps={",".join(steps)}',
             f'--config={config_path}',
             f'--task={task}' if task else '',
             f'--n_jobs={n_jobs}' if n_jobs else '',
+            '--debug=1' if debug else '',
+            '--cache=0' if not cache else '',
             f'--interactive=0'
         ]
         # Eliminate "empty" items
         sys.argv = [arg for arg in sys.argv if arg != '']
         # We have to use run_path because run_module doesn't allow
         # relative imports.
-        runpy.run_path(str(run_script), run_name='__main__')
-        sys.argv = argv_orig
+        try:
+            runpy.run_path(run_path, run_name='__main__')
+        finally:
+            sys.argv = argv_orig
 
 
 if __name__ == '__main__':
@@ -255,12 +216,25 @@ if __name__ == '__main__':
     parser.add_argument('dataset', help='dataset to test. A key in the '
                                         'TEST_SUITE dictionary, or ALL, '
                                         'to test all datasets.')
-    parser.add_argument('--download', choices=['0', '1'],
-                        help='Whether to (re-)download the dataset.')
+    parser.add_argument('--download', choices=['0', '1'], default='0',
+                        help='Whether to (re-)download the dataset.',
+                        nargs='?')
+    parser.add_argument('--debug', '-d', choices=['0', '1'], default='0',
+                        nargs='?', help='Run in debug mode')
+    parser.add_argument('--no-cache', dest='cache', action='store_false',
+                        help='Do not use cache')
+
     args = parser.parse_args()
     dataset = args.dataset
     download = args.download
-    download = True if download is None else bool(int(download))
+    if download is None:  # --download
+        download = '0'
+    download = bool(int(download))
+    debug = args.debug
+    if debug is None:  # --debug
+        debug = '1'
+    debug = bool(int(debug))
+    cache = args.cache
     # Triage the dataset and raise informative error if it does not exist
     if dataset == 'ALL':
         test_suite = TEST_SUITE
@@ -278,6 +252,11 @@ if __name__ == '__main__':
         )
 
     # Run the tests
-    print(f'Running the following tests: {", ".join(test_suite.keys())}')
+    extra = ''
+    if download:
+        extra += ' after downloading data'
+    if debug:
+        extra += ' in debug mode'
+    print(f'Running the following tests{extra}: {", ".join(test_suite.keys())}')
 
-    run_tests(test_suite, download=download)
+    run_tests(test_suite, download=download, debug=debug, cache=cache)

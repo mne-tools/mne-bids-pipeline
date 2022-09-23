@@ -5,6 +5,7 @@
 ::: config.interactive
 ::: config.sessions
 ::: config.task
+::: config.task_is_rest
 ::: config.runs
 ::: config.exclude_runs
 ::: config.crop_runs
@@ -22,6 +23,7 @@
 ::: config.eeg_reference
 ::: config.eeg_template_montage
 ::: config.drop_channels
+::: config.reader_extra_params
 ::: config.analyze_channels
 ::: config.plot_psd_for_runs
 ::: config.N_JOBS
@@ -31,6 +33,9 @@
 ::: config.dask_worker_memory_limit
 ::: config.random_state
 ::: config.shortest_event
+::: config.memory_location
+::: config.memory_file_method
+::: config.memory_verbose
 ::: config.log_level
 ::: config.mne_log_level
 ::: config.on_error

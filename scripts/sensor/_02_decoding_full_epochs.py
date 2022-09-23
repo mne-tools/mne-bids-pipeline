@@ -30,18 +30,22 @@ from mne.decoding import Scaler, Vectorizer
 from mne_bids import BIDSPath
 
 import config
-from config import gen_log_kwargs, on_error, failsafe_run, LogReg
+from config import (
+    gen_log_kwargs, failsafe_run, LogReg, _restrict_analyze_channels)
 
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
-    msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
-
+def get_input_fnames_epochs_decoding(**kwargs):
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    # TODO: Somehow remove these?
+    del kwargs['condition1']
+    del kwargs['condition2']
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -54,20 +58,23 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
                             datatype=cfg.datatype,
                             root=cfg.deriv_root,
                             check=False)
+    in_files = dict()
+    in_files['epochs'] = fname_epochs
+    return in_files
 
-    epochs = mne.read_epochs(fname_epochs)
-    if cfg.analyze_channels:
-        # We special-case the average reference here to work around a situation
-        # where e.g. `analyze_channels` might contain only a single channel:
-        # `concatenate_epochs` below will then fail when trying to create /
-        # apply the projection. We can avoid this by removing an existing
-        # average reference projection here, and applying the average reference
-        # directly – without going through a projector.
-        if 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
-            epochs.set_eeg_reference('average')
-        else:
-            epochs.apply_proj()
-        epochs.pick(cfg.analyze_channels)
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_epochs_decoding)
+def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
+                        in_files):
+    msg = f'Contrasting conditions: {condition1} – {condition2}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    out_files = dict()
+    bids_path = in_files['epochs'].copy()
+
+    epochs = mne.read_epochs(in_files.pop('epochs'))
+    _restrict_analyze_channels(epochs, cfg)
 
     # We define the epochs and the labels
     if isinstance(cfg.conditions, dict):
@@ -121,13 +128,13 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
         a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
         processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
+        mat_key = f'mat_{processing}'
+        out_files[mat_key] = bids_path.copy().update(
+            suffix='decoding', processing=processing, extension='.mat')
+        out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
+            extension='.tsv')
+        savemat(out_files[f'mat_{processing}'], {'scores': scores})
 
-        fname_mat = fname_epochs.copy().update(suffix='decoding',
-                                               processing=processing,
-                                               extension='.mat')
-        savemat(fname_mat, {'scores': scores})
-
-        fname_tsv = fname_mat.copy().update(extension='.tsv')
         tabular_data = pd.Series(
             {
                 'cond_1': cond_names[0],
@@ -137,7 +144,10 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session=None):
             }
         )
         tabular_data = pd.DataFrame(tabular_data).T
-        tabular_data.to_csv(fname_tsv, sep='\t', index=False)
+        tabular_data.to_csv(
+            out_files[f'tsv_{processing}'], sep='\t', index=False)
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(

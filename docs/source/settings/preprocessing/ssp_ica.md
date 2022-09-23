@@ -3,6 +3,7 @@
 ::: config.min_eog_epochs
 ::: config.n_proj_eog
 ::: config.n_proj_ecg
+::: config.ssp_meg
 ::: config.ecg_proj_from_average
 ::: config.eog_proj_from_average
 ::: config.ssp_reject_eog

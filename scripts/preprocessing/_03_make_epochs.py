@@ -19,15 +19,24 @@ import mne
 from mne_bids import BIDSPath
 
 import config
-from config import make_epochs, gen_log_kwargs, on_error, failsafe_run
-from config import parallel_func
+from config import make_epochs, gen_log_kwargs, failsafe_run
+from config import parallel_func, _update_for_splits
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(on_error=on_error, script_path=__file__)
-def run_epochs(*, cfg, subject, session=None):
-    """Extract epochs for one subject."""
+def get_input_fnames_epochs(**kwargs):
+    """Get paths of files required by filter_data function."""
+    cfg = kwargs.pop('cfg')
+    subject = kwargs.pop('subject')
+    session = kwargs.pop('session')
+    assert len(kwargs) == 0, kwargs.keys()
+    del kwargs
+
+    # Construct the basenames of the files we wish to load, and of the empty-
+    # room recording we wish to save.
+    # The basenames of the empty-room recording output file does not contain
+    # the "run" entity.
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -36,23 +45,36 @@ def run_epochs(*, cfg, subject, session=None):
                          space=cfg.space,
                          extension='.fif',
                          datatype=cfg.datatype,
-                         root=cfg.deriv_root)
+                         root=cfg.deriv_root,
+                         processing='filt').update(suffix='raw', check=False)
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
-    raw_fnames = []
+    in_files = dict()
     for run in cfg.runs:
-        raw_fname_in = bids_path.copy().update(run=run, processing='filt',
-                                               suffix='raw', check=False)
+        key = f'raw_run-{run}'
+        in_files[key] = bids_path.copy().update(run=run)
+        _update_for_splits(in_files, key, single=True)
+    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+        in_files['raw_rest'] = bids_path.copy().update(
+            task='rest',
+            check=False
+        )
+        _update_for_splits(in_files, 'raw_rest', single=True)
+    return in_files
 
-        if raw_fname_in.copy().update(split='01').fpath.exists():
-            raw_fname_in.update(split='01')
 
-        raw_fnames.append(raw_fname_in)
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_epochs)
+def run_epochs(*, cfg, subject, session, in_files):
+    """Extract epochs for one subject."""
+    raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
+    bids_path_in = raw_fnames[0].copy().update(
+        processing=None, run=None, split=None)
 
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
-    if cfg.task.lower() != 'rest':
+    if not cfg.task_is_rest:
         event_name_to_code_map = config.annotations_to_events(
             raw_paths=raw_fnames)
 
@@ -68,14 +90,13 @@ def run_epochs(*, cfg, subject, session=None):
     for idx, (run, raw_fname) in enumerate(
         zip(cfg.runs, raw_fnames)
     ):
-        msg = (f'Loading filtered raw data from {raw_fname.basename} '
-               f'and creating epochs')
+        msg = (f'Loading filtered raw data from {raw_fname.basename}')
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session, run=run))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
-        if cfg.task.lower() == 'rest':
+        if cfg.task_is_rest:
             event_id = None  # make_epochs takes care of it.
         else:
             event_id = event_name_to_code_map.copy()
@@ -101,7 +122,8 @@ def run_epochs(*, cfg, subject, session=None):
             metadata_keep_last=cfg.epochs_metadata_keep_last,
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
-            decim=cfg.decim
+            decim=cfg.decim,
+            task_is_rest=cfg.task_is_rest
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -132,23 +154,15 @@ def run_epochs(*, cfg, subject, session=None):
     del epochs_all_runs
 
     if cfg.use_maxwell_filter and config.noise_cov == 'rest':
-        bp_raw_rest = (bids_path.copy()
-                       .update(
-                           run=None,
-                           task='rest',
-                           processing='filt',
-                           suffix='raw',
-                           check=False
-                        ))
-        raw_rest_filt = mne.io.read_raw(bp_raw_rest)
+        raw_rest_filt = mne.io.read_raw(in_files.pop('raw_rest'))
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
             msg = (
-                f'The rank of the resting state data ({rank_rest}) is smaller '
-                f'than the smallest rank of the "{cfg.task}" epochs '
-                f'({smallest_rank}). Replacing part of the  "info" object of '
-                f'the concatenated "{cfg.task}" epochs with information from '
-                f'the resting-state run.'
+                f'The MEG rank of the resting state data ({rank_rest}) is '
+                f'smaller than the smallest MEG rank of the "{cfg.task}" '
+                f'epochs ({smallest_rank}). Replacing part of the  "info" '
+                f'object of the concatenated "{cfg.task}" epochs with '
+                f'information from the resting-state run.'
             )
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,
                                             session=session, run='rest'))
@@ -169,7 +183,7 @@ def run_epochs(*, cfg, subject, session=None):
             epochs.info['proc_history'] = smallest_rank_info['proc_history']
             rank_epochs_new = mne.compute_rank(epochs, rank='info')['meg']
             msg = (
-                f'The rank of the "{cfg.task}" epochs is now: '
+                f'The MEG rank of the "{cfg.task}" epochs is now: '
                 f'{rank_epochs_new}'
             )
             logger.warning(**gen_log_kwargs(message=msg, subject=subject,
@@ -183,18 +197,29 @@ def run_epochs(*, cfg, subject, session=None):
     n_epochs_before_metadata_query = len(epochs.drop_log)
 
     msg = (f'Created {n_epochs_before_metadata_query} epochs with time '
-           f'interval: {epochs.tmin} – {epochs.tmax} sec.\n'
-           f'Selected {len(epochs)} epochs via metadata query: '
-           f'{cfg.epochs_metadata_query}\n'
-           f'Writing {len(epochs)} epochs to disk.')
+           f'interval: {epochs.tmin} – {epochs.tmax} sec.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    epochs_fname = bids_path.copy().update(suffix='epo', check=False)
-    epochs.save(epochs_fname, overwrite=True, split_naming='bids')
+    msg = (f'Selected {len(epochs)} epochs via metadata query: '
+           f'{cfg.epochs_metadata_query}')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = (f'Writing {len(epochs)} epochs to disk.')
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    out_files = dict()
+    out_files['epochs'] = bids_path_in.copy().update(
+        suffix='epo', processing=None, check=False)
+    epochs.save(
+        out_files['epochs'], overwrite=True, split_naming='bids',
+        split_size=cfg._epochs_split_size)
+    _update_for_splits(out_files, 'epochs')
 
     if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
+    assert len(in_files) == 0, in_files.keys()
+    return out_files
 
 
 def get_config(
@@ -215,6 +240,7 @@ def get_config(
         bids_root=config.get_bids_root(),
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
+        task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
@@ -226,7 +252,8 @@ def get_config(
         event_repeated=config.event_repeated,
         decim=config.decim,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference()
+        eeg_reference=config.get_eeg_reference(),
+        _epochs_split_size=config._epochs_split_size,
     )
     return cfg
 

@@ -3,8 +3,10 @@ but instead create a new configuration changing only the settings you need to
 alter for your specific analysis.
 """
 
+import contextlib
 import importlib
 import pathlib
+import hashlib
 import functools
 import os
 import pdb
@@ -14,6 +16,8 @@ import copy
 import logging
 import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+import warnings
+
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -25,6 +29,7 @@ import coloredlogs
 import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
+from joblib import Memory
 from openpyxl import load_workbook
 import json_tricks
 import matplotlib
@@ -406,21 +411,35 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[Literal['all'], Iterable['str']] = 'all'
+analyze_channels: Union[
+    Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
 sensor-space analysis to only a few specific sensors. If `'all'`, do not
 exclude any channels (except for those selected for removal via the
-`drop_channels` setting). The constraint will be applied to all sensor-level
-analyses after the preprocessing stage, but not to the preprocessing stage
-itself, nor to the source analysis stage.
+`drop_channels` setting; use with caution as this can include things like STIM
+channels during the decoding step). If 'ch_types' (default), restrict to the
+channels listed in the `ch_types` parameter. The constraint will be applied to
+all sensor-level analyses after the preprocessing stage, but not to the
+preprocessing stage itself, nor to the source analysis stage.
 
 ???+ example "Example"
     Only use channel `Pz` for ERP, evoked contrasts, time-by-time
     decoding, and time-frequency analysis:
     ```python
     analyze_channels = ['Pz']
+    ```
+"""
+
+reader_extra_params: dict = {}
+"""
+Parameters to be passed to `read_raw_bids()` calls when importing raw data.
+
+???+ example "Example"
+    Enforce units for EDF files:
+    ```python
+    reader_extra_params = {"units": "uV"}
     ```
 """
 
@@ -554,8 +573,8 @@ warning:
 
 mf_st_duration: Optional[float] = None
 """
-There are two kinds of maxfiltering: SSS (signal space separation) and tSSS
-(temporal signal space separation)
+There are two kinds of Maxwell filtering: SSS (signal space separation) and
+tSSS (temporal signal space separation)
 (see [Taulu et al., 2004](http://cds.cern.ch/record/709081/files/0401166.pdf)).
 
 If not None, apply spatiotemporal SSS (tSSS) with specified buffer
@@ -583,7 +602,7 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
-mf_head_origin = 'auto'
+mf_head_origin: Union[Literal['auto'], ArrayLike] = 'auto'
 """
 ``mf_head_origin`` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
@@ -856,8 +875,8 @@ Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
 
 This is a **required** parameter in the configuration file, unless you are
-processing resting-state data. If left as `None` and [`task`][config.task]
-is not `'rest'`, we will raise an error.
+processing resting-state data. If left as `None` and
+[`task_is_rest`][config.task_is_rest] is not `True`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -893,6 +912,11 @@ The end of an epoch, relative to the respective event, in seconds.
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
     ```
+"""
+
+task_is_rest: bool = False
+"""
+Whether the task should be treated as resting-state data.
 """
 
 rest_epochs_duration: Optional[float] = None
@@ -1041,6 +1065,17 @@ eog_proj_from_average: bool = True
 """
 Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
+"""
+
+ssp_meg: Literal['separate', 'combined', 'auto'] = 'auto'
+"""
+Whether to compute SSP vectors for MEG channels separately (`'separate'`)
+or jointly (`'combined'`) for magnetometers and gradiomenters. When using
+Maxwell filtering, magnetometer and gradiometer signals are synthesized from
+multipole moments jointly and are no longer independent, so it can be useful to
+estimate projectors from all MEG sensors simultaneously. The default is
+`'auto'`, which will use `'combined'` when Maxwell filtering is used and
+`'separate'` otherwise.
 """
 
 ssp_reject_ecg: Optional[
@@ -1320,6 +1355,14 @@ on **all** time points.
 
 Because each classifier is trained and tested on **all** time points, this
 procedure may take a significant amount of time.
+"""
+
+decoding_time_generalization_decim: int = 1
+"""
+Says how much to decimate data before time generalization decoding.
+This is done in addition to the decimation done at the epochs level via the
+[`decim`][config.decim] parameter. This can be used to greatly speed up time
+generalization at the cost of lower time resolution in the resulting matrix.
 """
 
 n_boot: int = 5000
@@ -1698,26 +1741,26 @@ mindist: float = 5
 Exclude points closer than this distance (mm) to the bounding surface.
 """
 
-# loose: Union[float, Literal['auto']] = 0.2
-# # ``loose`` : float in [0, 1] | 'auto'
-# """
-# Value that weights the source variances of the dipole components
-# that are parallel (tangential) to the cortical surface. If ``0``, then the
-# inverse solution is computed with **fixed orientation.**
-# If ``1``, it corresponds to **free orientation.**
-# The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
-# spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
-# unless ``fixed is True`` in which case the value 0. is used.
-# """
+loose: Union[float, Literal['auto']] = 0.2
+# ``loose`` : float in [0, 1] | 'auto'
+"""
+Value that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface. If ``0``, then the
+inverse solution is computed with **fixed orientation.**
+If ``1``, it corresponds to **free orientation.**
+The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
+spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
+unless ``fixed is True`` in which case the value 0. is used.
+"""
 
-# depth: Optional[Union[float, dict]] = 0.8
-# """
-# If float (default 0.8), it acts as the depth weighting exponent (``exp``)
-# to use (must be between 0 and 1). None is equivalent to 0, meaning no
-# depth weighting is performed. Can also be a `dict` containing additional
-# keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-# (see docstring for details and defaults).
-# """
+depth: Optional[Union[float, dict]] = 0.8
+"""
+If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+to use (must be between 0 and 1). None is equivalent to 0, meaning no
+depth weighting is performed. Can also be a `dict` containing additional
+keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+(see docstring for details and defaults).
+"""
 
 inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
 """
@@ -1743,7 +1786,7 @@ which is typically the pre-stimulus period.
 
 If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
-selected based on recording date and time.
+selected based on recording date and time. This cannot be used with EEG data.
 
 If ``''rest'``, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
@@ -1940,6 +1983,27 @@ processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 """
 
+memory_location: Optional[Union[PathLike, bool]] = True
+"""
+If not None (or False), caching will be enabled and the cache files will be
+stored in the given directory. The default (True) will use a
+``'joblib'`` subdirectory in the BIDS derivative root of the dataset.
+"""
+MemoryFileMethodT = Literal['mtime', 'hash']
+memory_file_method: MemoryFileMethodT = 'mtime'
+"""
+The method to use for cache invalidation (i.e., detecting changes). Using the
+"modified time" reported by the filesystem (``'mtime'``, default) is very fast
+but requires that the filesystem supports proper mtime reporting. Using file
+hashes (``'hash'``) is slower and requires reading all input files but should
+work on any filesystem.
+"""
+memory_verbose: int = 0
+"""
+The verbosity to use when using memory. The default (0) does not print, while
+1 will print the function calls that will be cached. See the documentation for
+the joblib.Memory class for more information."""
+
 ###############################################################################
 #                                                                             #
 #                      CUSTOM CONFIGURATION ENDS HERE                         #
@@ -1963,7 +2027,10 @@ os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 logger = logging.getLogger('mne-bids-pipeline')
 
 log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
-log_date_fmt = coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
+log_date_fmt = '%H:%M:%S'
+# TODO:
+# This does not persist across threads, probably due to relead of coloredlogs?
+# coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
 log_level_styles = {
     'warning': {
         'color': 202,
@@ -2035,7 +2102,8 @@ def gen_log_kwargs(
     message: str,
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None
+    run: Optional[Union[str, int]] = None,
+    emoji: str = '⏳️',
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -2049,8 +2117,13 @@ def gen_log_kwargs(
     script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
+    # Choose some to be our standards
+    emoji = dict(
+        cache='✅',
+        skip='⏩',
+    ).get(emoji, emoji)
     extra = {
-        'step': step_name
+        'step': f'{emoji} {step_name}'
     }
     if subject:
         extra['subject'] = subject
@@ -2064,6 +2137,14 @@ def gen_log_kwargs(
         'extra': extra
     }
     return kwargs
+
+
+###############################################################################
+# Private config vars (not to be set by user)
+# -------------------------------------------
+
+_raw_split_size = '2GB'
+_epochs_split_size = '2GB'
 
 
 ###############################################################################
@@ -2081,10 +2162,7 @@ def gen_log_kwargs(
 if "MNE_BIDS_STUDY_CONFIG" in os.environ:
     cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
 
-    if cfg_path.exists():
-        msg = f'Using custom configuration: {cfg_path}'
-        logger.info(**gen_log_kwargs(message=msg))
-    else:
+    if not cfg_path.exists():
         msg = ('The custom configuration file specified in the '
                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
                'found: {cfg_path}'.format(cfg_path=cfg_path))
@@ -2112,6 +2190,9 @@ if 'MNE_BIDS_STUDY_INTERACTIVE' in os.environ:
 if not interactive:
     matplotlib.use('Agg')  # do not open any window  # noqa
 
+if os.getenv('MNE_BIDS_STUDY_USE_CACHE', '') == '0':
+    memory_location = False
+
 
 ###############################################################################
 # CHECKS
@@ -2125,7 +2206,7 @@ if parallel_backend not in ('dask', 'loky'):
 
 if (use_maxwell_filter and
         len(set(ch_types).intersection(('meg', 'grad', 'mag'))) == 0):
-    raise ValueError('Cannot use maxwell filter without MEG channels.')
+    raise ValueError('Cannot use Maxwell filter without MEG channels.')
 
 if (spatial_filter == 'ica' and
         ica_algorithm not in ('picard', 'fastica', 'extended_infomax')):
@@ -2167,28 +2248,23 @@ if not ch_types:
     msg = 'Please specify ch_types in your configuration.'
     raise ValueError(msg)
 
-if ch_types == ['eeg']:
-    pass
-elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
-    msg = ('EEG data can only be analyzed separately from other channel '
-           'types. Please adjust `ch_types` in your configuration.')
-    raise ValueError(msg)
-elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+_VALID_TYPES = ('meg', 'mag', 'grad', 'eeg')
+if any(ch_type not in _VALID_TYPES for ch_type in ch_types):
     msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
-           'configuration.')
+           f'configuration, got {ch_types} but supported types are '
+           f'{_VALID_TYPES}')
     raise ValueError(msg)
-
-if 'eeg' in ch_types:
-    if spatial_filter == 'ssp':
-        msg = ("You requested SSP for EEG data via spatial_filter='ssp'. "
-               "However, this is not presently supported. Please use ICA "
-               "instead by setting spatial_filter='ica'.")
-        raise ValueError(msg)
-
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
-           f"but received: {on_error}.")
+           f"but received: {on_error}. Using 'abort'.")
+    on_error = 'abort'
+    logger.info(**gen_log_kwargs(message=msg))
+
+if memory_file_method not in ('mtime', 'hash'):
+    msg = (f"memory_file_method must be one of 'mtime' or 'hash', "
+           f"but received: {memory_file_method}. Using 'mtime'.")
+    memory_file_method = 'mtime'
     logger.info(**gen_log_kwargs(message=msg))
 
 if isinstance(noise_cov, str) and noise_cov not in (
@@ -2657,6 +2733,14 @@ def get_n_jobs() -> int:
     return n_jobs
 
 
+def get_on_error() -> int:
+    if interactive:
+        this_on_error = 'debug'
+    else:
+        this_on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR', on_error)
+    return this_on_error
+
+
 dask_client = None
 
 
@@ -2892,9 +2976,12 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 
 
 def failsafe_run(
-    on_error: OnErrorT,
     script_path: PathLike,
+    get_input_fnames: Optional[Callable] = None,
 ):
+    on_error = get_on_error()
+    memory = ConditionalStepMemory(get_input_fnames=get_input_fnames)
+
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
@@ -2913,8 +3000,8 @@ def failsafe_run(
 
             try:
                 assert len(args) == 0  # make sure params are only kwargs
-                out = func(*args, **kwargs)
-                assert out is None  # make sure the function returns None
+                out = memory.cache(func)(*args, **kwargs)
+                assert out is None  # nothing should be returned
                 log_info['success'] = True
                 log_info['error_message'] = ''
             except Exception as e:
@@ -2959,6 +3046,7 @@ def failsafe_run(
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
                     pdb.post_mortem(tb)
+                    sys.exit(1)
                 else:
                     message += '\n\nContinuing pipeline run.'
                     logger.critical(**gen_log_kwargs(
@@ -2970,21 +3058,104 @@ def failsafe_run(
     return failsafe_run_decorator
 
 
+def hash_file_path(path):
+    with open(path, 'rb') as f:
+        md5_hash = hashlib.md5(f.read())
+        md5_hashed = md5_hash.hexdigest()
+    return md5_hashed
+
+
+class ConditionalStepMemory():
+    def __init__(self, get_input_fnames=None):
+        if memory_location is True:
+            use_location = get_deriv_root() / 'joblib'
+        elif not memory_location:
+            use_location = None
+        else:
+            use_location = pathlib.Path(memory_location)
+        # Actually make the Memory object only if necessary
+        if use_location is not None and get_input_fnames is not None:
+            self.memory = Memory(use_location, verbose=memory_verbose)
+        else:
+            self.memory = None
+        self.get_input_fnames = get_input_fnames
+
+    def cache(self, func):
+        def wrapper(*args, **kwargs):
+            in_files = None
+            if self.get_input_fnames is not None:
+                in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
+            if self.memory is None:
+                func(*args, **kwargs)
+                return
+            # This is an implementation detail so we don't need a proper error
+            assert isinstance(in_files, dict), type(in_files)
+
+            hashes = []
+            for k, v in in_files.items():
+                if isinstance(v, BIDSPath):
+                    v = v.fpath
+                assert v.exists(), f'missing in_files["{k}"] = {v}'
+                if memory_file_method == 'mtime':
+                    this_hash = v.lstat().st_mtime
+                else:
+                    assert memory_file_method == 'hash'  # should be guaranteed
+                    this_hash = hash_file_path(v)
+                hashes.append((str(v), this_hash))
+
+            kwargs['cfg'] = copy.deepcopy(kwargs['cfg'])
+            kwargs['cfg'].hashes = hashes
+            del in_files  # will be modified by func call
+
+            # XXX we should also hash the sidecar files
+
+            # Someday we could modify the joblib API to combine this with the
+            # call (https://github.com/joblib/joblib/issues/1342), but our hash
+            # should be plenty fast so let's not bother for now.
+            if self.memory.cache(func).check_call_in_cache(*args, **kwargs):
+                subject = kwargs.get('subject', None)
+                session = kwargs.get('session', None)
+                run = kwargs.get('run', None)
+                msg = 'Computation unnecessary (cached) …'
+                logger.info(**gen_log_kwargs(
+                    message=msg, subject=subject, session=session, run=run,
+                    emoji='cache'))
+            out_files = self.memory.cache(func)(*args, **kwargs)
+            assert isinstance(out_files, dict), type(out_files)
+            out_files_missing_msg = '\n'.join(
+                f'- {key}={fname}' for key, fname in out_files.items()
+                if not pathlib.Path(fname).exists()
+            )
+            if out_files_missing_msg:
+                raise ValueError('Missing at least one output file: \n'
+                                 + out_files_missing_msg + '\n' +
+                                 'This should not happen unless some files '
+                                 'have been manually moved or deleted. You '
+                                 'need to flush your cache to fix this.')
+        return wrapper
+
+    def clear(self):
+        self.memory.clear()
+
+
 def plot_auto_scores(auto_scores):
     # Plot scores of automated bad channel detection.
     import matplotlib.pyplot as plt
     import seaborn as sns
     import pandas as pd
 
-    if ch_types == ['meg']:
-        ch_types_ = ['grad', 'mag']
-    else:
-        ch_types_ = ch_types
+    ch_types_ = list(ch_types)
+    if 'meg' in ch_types_:  # split it
+        idx = ch_types_.index('meg')
+        ch_types_[idx] = 'grad'
+        ch_types_.insert(idx + 1, 'mag')
 
     figs = []
     for ch_type in ch_types_:
         # Only select the data for mag or grad channels.
         ch_subset = auto_scores['ch_types'] == ch_type
+        if not ch_subset.any():
+            continue  # e.g., MEG+EEG data with finding bads with MF enabled
         ch_names = auto_scores['ch_names'][ch_subset]
         scores = auto_scores['scores_noisy'][ch_subset]
         limits = auto_scores['limits_noisy'][ch_subset]
@@ -3025,6 +3196,7 @@ def plot_auto_scores(auto_scores):
         # The figure title should not overlap with the subplots.
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         figs.append(fig)
+    assert figs
 
     return figs
 
@@ -3140,7 +3312,8 @@ def make_epochs(
     metadata_keep_last: Optional[Iterable[str]],
     metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
-    decim: int
+    decim: int,
+    task_is_rest: bool
 ) -> mne.Epochs:
     """Generate Epochs from raw data.
 
@@ -3151,7 +3324,7 @@ def make_epochs(
     - No rejection thresholds will be applied.
     - No baseline-correction will be performed.
     """
-    if task.lower() == 'rest':
+    if task_is_rest:
         stop = raw.times[-1] - rest_epochs_duration
         assert epochs_tmin == 0., "epochs_tmin must be 0 for rest"
         assert rest_epochs_overlap is not None, \
@@ -3438,7 +3611,8 @@ def _load_data(cfg, bids_path):
     # - sets raw.annotations using the BIDS events.tsv
 
     subject = bids_path.subject
-    raw = read_raw_bids(bids_path=bids_path)
+    raw = read_raw_bids(bids_path=bids_path,
+                        extra_params=cfg.reader_extra_params)
 
     # Save only the channel types we wish to analyze (including the
     # channels marked as "bad").
@@ -3446,8 +3620,7 @@ def _load_data(cfg, bids_path):
         picks = get_channels_to_analyze(raw.info)
         raw.pick(picks)
 
-    if bids_path.subject != 'emptyroom':
-        _crop_data(cfg, raw=raw, subject=subject)
+    _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
     if hasattr(raw, 'fix_mag_coil_types'):
@@ -3474,7 +3647,7 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
         msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
-        raw.drop_channels(cfg.drop_channels)
+        raw.drop_channels(cfg.drop_channels, on_missing='warn')
 
 
 def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
@@ -3557,9 +3730,7 @@ def _fix_stim_artifact_func(
 def import_experimental_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None,
-    run: Optional[str] = None
+    bids_path_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
@@ -3567,29 +3738,17 @@ def import_experimental_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject to import.
-    session
-        The session to import.
-    run
-        The run to import.
+    bids_path_in
+        The BIDS path to the data to import.
 
     Returns
     -------
     raw
         The imported data.
     """
-    bids_path_in = BIDSPath(subject=subject,
-                            session=session,
-                            run=run,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            processing=cfg.proc,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix=cfg.datatype,
-                            datatype=cfg.datatype,
-                            root=cfg.bids_root)
+    subject = bids_path_in.subject
+    session = bids_path_in.session
+    run = bids_path_in.run
 
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
     _set_eeg_montage(
@@ -3613,8 +3772,8 @@ def import_experimental_data(
 def import_er_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None
+    bids_path_er_in: BIDSPath,
+    bids_path_ref_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -3622,43 +3781,49 @@ def import_er_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject for whom to import the empty-room data.
-    session
-        The session for which to import the empty-room data.
+    bids_path_er_in
+        The BIDS path to the empty room data.
+    bids_path_ref_in
+        The BIDS path to the reference data.
 
     Returns
     -------
     raw_er
         The imported data.
     """
-    bids_path_reference_run = BIDSPath(
-        subject=subject,
-        session=session,
-        run=cfg.mf_reference_run,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        processing=cfg.proc,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix=cfg.datatype,
-        datatype=cfg.datatype,
-        root=cfg.bids_root
-    )
-    bids_path_er_in = bids_path_reference_run.find_empty_room()
-
     raw_er = _load_data(cfg, bids_path_er_in)
-    raw_ref = mne_bids.read_raw_bids(bids_path_reference_run)
+    session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
 
     # Only keep MEG channels.
     raw_er.pick_types(meg=True, exclude=[])
 
+    # TODO: This 'union' operation should affect the raw runs, too, otherwise
+    # rank mismatches will still occur (eventually for some configs).
+    # But at least using the union here should reduce them.
+    # TODO: We should also uso automatic bad finding on the empty room data
     if cfg.use_maxwell_filter:
+        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
+                                         extra_params=cfg.reader_extra_params)
+        # We need to include any automatically found bad channels, if relevant.
+        # TODO this is a bit of a hack because we don't use "in_files" access
+        # here, but this is *in the same step where this file is generated*
+        # so we cannot / should not put it in `in_files`.
+        if cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg:
+            # match filename from _find_bad_channels
+            bads_tsv_fname = bids_path_ref_in.copy().update(
+                suffix='bads', extension='.tsv', root=cfg.deriv_root,
+                check=False)
+            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t', header=0)
+            bads_tsv = bads_tsv[bads_tsv.columns[0]].tolist()
+            raw_ref.info['bads'] = sorted(
+                set(raw_ref.info['bads']) | set(bads_tsv))
+            raw_ref.info._check_consistency()
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
-            raw=raw_ref
+            raw=raw_ref,
+            bads='union',
         )
     else:
         # Set same set of bads as in the reference run, but only for MEG
@@ -3703,34 +3868,6 @@ def import_rest_data(
 class ReferenceRunParams(TypedDict):
     montage: mne.channels.DigMontage
     dev_head_t: mne.Transform
-
-
-def get_reference_run_params(
-    *,
-    subject: str,
-    session: Optional[str] = None,
-    run: str
-) -> ReferenceRunParams:
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        run=run,
-        task=get_task(),
-        acquisition=acq,
-        recording=rec,
-        space=space,
-        suffix='meg',
-        extension='.fif',
-        datatype=get_datatype(),
-        root=get_bids_root(),
-    )
-
-    raw = read_raw_bids(bids_path=bids_path)
-    params = ReferenceRunParams(
-        montage=raw.get_montage(),
-        dev_head_t=raw.info['dev_head_t']
-    )
-    return params
 
 
 def _find_breaks_func(
@@ -3805,16 +3942,29 @@ def save_logs(logs):
     df = df[columns]
 
     if fname.exists():
-        book = load_workbook(fname)
-        if sheet_name in book:
-            book.remove(book[sheet_name])
+        book = None
+        try:
+            book = load_workbook(fname)
+        except Exception:  # bad file
+            pass
+        else:
+            if sheet_name in book:
+                book.remove(book[sheet_name])
         writer = pd.ExcelWriter(fname, engine='openpyxl')
-        writer.book = book
+        if book is not None:
+            try:
+                writer.book = book
+            except Exception:
+                pass  # AttributeError: can't set attribute 'book' (?)
     else:
         writer = pd.ExcelWriter(fname, engine='openpyxl')
 
     df.to_excel(writer, sheet_name=sheet_name, index=False)
-    writer.save()
+    # TODO: "FutureWarning: save is not part of the public API, usage can give
+    # in unexpected results and will be removed in a future version"
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("ignore")
+        writer.save()
     writer.close()
 
 
@@ -3833,11 +3983,73 @@ if 'MKDOCS' not in os.environ:
 
 
 # Another check that depends on some of the functions defined above
-if (get_task() is not None and
-        get_task().lower() != 'rest' and
-        conditions is None and
-        'MKDOCS' not in os.environ):
+if (
+    not task_is_rest and
+    conditions is None and
+    'MKDOCS' not in os.environ
+):
     msg = ('Please indicate the name of your conditions in your '
            'configuration. Currently the `conditions` parameter is empty. '
            'This is only allowed for resting-state analysis.')
     raise ValueError(msg)
+
+
+def _update_for_splits(files_dict, key, *, single=False):
+    if not isinstance(files_dict, dict):  # fake it
+        assert key is None
+        files_dict, key = dict(x=files_dict), 'x'
+    bids_path = files_dict[key]
+    if bids_path.fpath.exists():
+        return bids_path  # no modifications needed
+    bids_path = bids_path.copy().update(split='01')
+    assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
+    files_dict[key] = bids_path
+    # if we only need the first file (i.e., when reading), quit now
+    if single:
+        return bids_path
+    for split in range(2, 100):
+        split_key = f'{split:02d}'
+        bids_path_next = bids_path.copy().update(split=split_key)
+        if not bids_path_next.fpath.exists():
+            break
+        files_dict[f'{key}_split-{split_key}'] = bids_path_next
+    return bids_path
+
+
+@contextlib.contextmanager
+def _script_path(script_path):
+    # Usually failsafe_run dec sets MNE_BIDS_STUDY_SCRIPT_PATH so that log
+    # kwargs can be set properly. However, if the script gets skipped
+    # outside/before the failsafe_run, whatever the last SCRIPT_PATH was
+    # set will be used, so logs will be incorrect. This context manager
+    # sets it temporarily
+    key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
+    orig_val = os.getenv(key, None)
+    os.environ[key] = str(script_path)
+    try:
+        yield
+    finally:
+        if orig_val is None:
+            del os.environ[key]
+        else:
+            os.environ[key] = orig_val
+
+
+def _restrict_analyze_channels(inst, cfg):
+    if cfg.analyze_channels:
+        analyze_channels = cfg.analyze_channels
+        if cfg.analyze_channels == 'ch_types':
+            analyze_channels = ch_types
+            inst.apply_proj()
+        # We special-case the average reference here to work around a situation
+        # where e.g. `analyze_channels` might contain only a single channel:
+        # `concatenate_epochs` below will then fail when trying to create /
+        # apply the projection. We can avoid this by removing an existing
+        # average reference projection here, and applying the average reference
+        # directly – without going through a projector.
+        elif 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
+            inst.set_eeg_reference('average')
+        else:
+            inst.apply_proj()
+        inst.pick(analyze_channels)
+    return inst

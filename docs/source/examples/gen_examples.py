@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import os
 import shutil
 import sys
@@ -227,20 +229,19 @@ datasets, mostly taken from [OpenNeuro](https://openneuro.org).
 
 For a first example, see the results obtained with the
 [MNE sample dataset](ds000248.md).
+
+## Demonstrated features
+
 """
 
 out_path = this_dir / 'examples.md'
 with out_path.open('w', encoding='utf-8') as f:
     f.write(_example_header)
-
-# Eventually we could add a table with code like the following (but the flow
-# is not great / it's too big currently):
-#
-#     header_written = False
-#     for dataset_name, funcs in all_demonstrated.items():
-#         if not header_written:
-#             f.write('Dataset | ' + ' | '.join(funcs.keys()) + '\n')
-#             f.write('--------|' + '|'.join([':---:'] * len(funcs)) + '\n')
-#             header_written = True
-#         f.write(f'[{dataset_name}]({dataset_name}.md) | ' +
-#                 ' | '.join(_bool_to_icon(v) for v in funcs.values()) + '\n')
+    header_written = False
+    for dataset_name, funcs in all_demonstrated.items():
+        if not header_written:
+            f.write('Dataset | ' + ' | '.join(funcs.keys()) + '\n')
+            f.write('--------|' + '|'.join([':---:'] * len(funcs)) + '\n')
+            header_written = True
+        f.write(f'[{dataset_name}]({dataset_name}.md) | ' +
+                ' | '.join(_bool_to_icon(v) for v in funcs.values()) + '\n')

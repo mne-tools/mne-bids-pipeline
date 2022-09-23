@@ -1476,7 +1476,9 @@ Note: Note
 decoding_csp: bool = False
 """
 Whether to run decoding via Common Spatial Patterns (CSP) analysis on the
-time-frequency representation of the data.
+data. CSP takes as input data covariances that are estimated on different
+time and frequency ranges. This allows to obtain decoding scores defined over
+time and frequency.
 """
 
 decoding_csp_times: Optional[ArrayLike] = np.linspace(

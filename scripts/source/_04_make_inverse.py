@@ -48,6 +48,8 @@ def run_inverse(*, cfg, subject, session=None):
         session=session
     )
 
+    # TODO: Eventually we should maybe loop over ch_types, e.g., to create
+    # MEG, EEG, and MEG+EEG inverses and STCs
     fname_inv = bids_path.copy().update(suffix='inv')
 
     info = mne.io.read_info(fname_info)
@@ -129,8 +131,8 @@ def get_config(
 def main():
     """Run inv."""
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

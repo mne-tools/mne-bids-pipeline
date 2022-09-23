@@ -125,7 +125,7 @@ def _prepare_forward(cfg, bids_path, fname_trans):
     src = mne.setup_source_space(subject=cfg.fs_subject,
                                  subjects_dir=cfg.fs_subjects_dir,
                                  spacing=cfg.spacing,
-                                 add_dist=False)
+                                 add_dist='patch')
 
     # Calculate the BEM solution.
     # Here we only use a 3-layers BEM only if EEG is available.
@@ -200,8 +200,8 @@ def get_config(
 def main():
     """Run forward."""
     if not config.run_source_estimation:
-        msg = '    … skipping: run_source_estimation is set to False.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, run_source_estimation is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():

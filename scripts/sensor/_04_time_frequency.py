@@ -20,7 +20,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import gen_log_kwargs, failsafe_run, sanitize_cond_name
-from config import parallel_func, _script_path
+from config import parallel_func, _script_path, _restrict_analyze_channels
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -62,14 +62,7 @@ def run_time_frequency(*, cfg, subject, session, in_files):
     bids_path = in_files['epochs'].copy().update(processing=None)
 
     epochs = mne.read_epochs(in_files.pop('epochs'))
-    if cfg.analyze_channels:
-        # We special-case the average reference here.
-        # See time-by-time decoding script for more info.
-        if 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
-            epochs.set_eeg_reference('average')
-        else:
-            epochs.apply_proj()
-        epochs.pick(cfg.analyze_channels)
+    _restrict_analyze_channels(epochs, cfg)
 
     if cfg.time_frequency_subtract_evoked:
         epochs.subtract_evoked()

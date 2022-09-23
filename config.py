@@ -411,15 +411,18 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[Literal['all'], Iterable['str']] = 'all'
+analyze_channels: Union[
+    Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
 sensor-space analysis to only a few specific sensors. If `'all'`, do not
 exclude any channels (except for those selected for removal via the
-`drop_channels` setting). The constraint will be applied to all sensor-level
-analyses after the preprocessing stage, but not to the preprocessing stage
-itself, nor to the source analysis stage.
+`drop_channels` setting; use with caution as this can include things like STIM
+channels during the decoding step). If 'ch_types' (default), restrict to the
+channels listed in the `ch_types` parameter. The constraint will be applied to
+all sensor-level analyses after the preprocessing stage, but not to the
+preprocessing stage itself, nor to the source analysis stage.
 
 ???+ example "Example"
     Only use channel `Pz` for ERP, evoked contrasts, time-by-time
@@ -2001,7 +2004,8 @@ def gen_log_kwargs(
     message: str,
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None
+    run: Optional[Union[str, int]] = None,
+    emoji: str = '⏳️',
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -2015,8 +2019,13 @@ def gen_log_kwargs(
     script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
     step_name = f'{script_path.parent.name}/{script_path.stem}'
 
+    # Choose some to be our standards
+    emoji = dict(
+        cache='✅',
+        skip='⏩',
+    ).get(emoji, emoji)
     extra = {
-        'step': f'⏳️ {step_name}'
+        'step': f'{emoji} {step_name}'
     }
     if subject:
         extra['subject'] = subject
@@ -2141,24 +2150,12 @@ if not ch_types:
     msg = 'Please specify ch_types in your configuration.'
     raise ValueError(msg)
 
-if ch_types == ['eeg']:
-    pass
-elif 'eeg' in ch_types and len(ch_types) > 1:  # EEG + some other channel types
-    msg = ('EEG data can only be analyzed separately from other channel '
-           'types. Please adjust `ch_types` in your configuration.')
-    raise ValueError(msg)
-elif any([ch_type not in ('meg', 'mag', 'grad') for ch_type in ch_types]):
+_VALID_TYPES = ('meg', 'mag', 'grad', 'eeg')
+if any(ch_type not in _VALID_TYPES for ch_type in ch_types):
     msg = ('Invalid channel type passed. Please adjust `ch_types` in your '
-           'configuration.')
+           f'configuration, got {ch_types} but supported types are '
+           f'{_VALID_TYPES}')
     raise ValueError(msg)
-
-if 'eeg' in ch_types:
-    if spatial_filter == 'ssp':
-        msg = ("You requested SSP for EEG data via spatial_filter='ssp'. "
-               "However, this is not presently supported. Please use ICA "
-               "instead by setting spatial_filter='ica'.")
-        raise ValueError(msg)
-
 
 if on_error not in ('continue', 'abort', 'debug'):
     msg = (f"on_error must be one of 'continue', 'debug' or 'abort', "
@@ -2981,6 +2978,17 @@ class ConditionalStepMemory():
 
             # XXX we should also hash the sidecar files
 
+            # Someday we could modify the joblib API to combine this with the
+            # call (https://github.com/joblib/joblib/issues/1342), but our hash
+            # should be plenty fast so let's not bother for now.
+            if self.memory.cache(func).check_call_in_cache(*args, **kwargs):
+                subject = kwargs.get('subject', None)
+                session = kwargs.get('session', None)
+                run = kwargs.get('run', None)
+                msg = 'Computation unnecessary (cached) …'
+                logger.info(**gen_log_kwargs(
+                    message=msg, subject=subject, session=session, run=run,
+                    emoji='cache'))
             out_files = self.memory.cache(func)(*args, **kwargs)
             assert isinstance(out_files, dict), type(out_files)
             out_files_missing_msg = '\n'.join(
@@ -3005,15 +3013,18 @@ def plot_auto_scores(auto_scores):
     import seaborn as sns
     import pandas as pd
 
-    if ch_types == ['meg']:
-        ch_types_ = ['grad', 'mag']
-    else:
-        ch_types_ = ch_types
+    ch_types_ = list(ch_types)
+    if 'meg' in ch_types_:  # split it
+        idx = ch_types_.index('meg')
+        ch_types_[idx] = 'grad'
+        ch_types_.insert(idx + 1, 'mag')
 
     figs = []
     for ch_type in ch_types_:
         # Only select the data for mag or grad channels.
         ch_subset = auto_scores['ch_types'] == ch_type
+        if not ch_subset.any():
+            continue  # e.g., MEG+EEG data with finding bads with MF enabled
         ch_names = auto_scores['ch_names'][ch_subset]
         scores = auto_scores['scores_noisy'][ch_subset]
         limits = auto_scores['limits_noisy'][ch_subset]
@@ -3054,6 +3065,7 @@ def plot_auto_scores(auto_scores):
         # The figure title should not overlap with the subplots.
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
         figs.append(fig)
+    assert figs
 
     return figs
 
@@ -3889,3 +3901,23 @@ def _script_path(script_path):
             del os.environ[key]
         else:
             os.environ[key] = orig_val
+
+
+def _restrict_analyze_channels(inst, cfg):
+    if cfg.analyze_channels:
+        analyze_channels = cfg.analyze_channels
+        if cfg.analyze_channels == 'ch_types':
+            analyze_channels = ch_types
+            inst.apply_proj()
+        # We special-case the average reference here to work around a situation
+        # where e.g. `analyze_channels` might contain only a single channel:
+        # `concatenate_epochs` below will then fail when trying to create /
+        # apply the projection. We can avoid this by removing an existing
+        # average reference projection here, and applying the average reference
+        # directly – without going through a projector.
+        elif 'eeg' in cfg.ch_types and cfg.eeg_reference == 'average':
+            inst.set_eeg_reference('average')
+        else:
+            inst.apply_proj()
+        inst.pick(analyze_channels)
+    return inst

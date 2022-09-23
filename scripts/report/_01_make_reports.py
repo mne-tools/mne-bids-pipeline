@@ -7,6 +7,7 @@ Builds an HTML report for each subject containing all the relevant analysis
 plots.
 """
 
+import contextlib
 import os
 import os.path as op
 from pathlib import Path
@@ -26,7 +27,7 @@ from mne_bids.stats import count_events
 import config
 from config import (
     gen_log_kwargs, failsafe_run, parallel_func,
-    get_noise_cov_bids_path, _update_for_splits,
+    get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
 
@@ -116,6 +117,7 @@ def plot_auto_scores(cfg, subject, session):
         captions = [f'Run {run}'] * len(figs)
         all_captions.extend(captions)
 
+    assert all_figs
     return all_figs, all_captions
 
 
@@ -764,8 +766,7 @@ def run_report_sensor(
         noise_cov = None
 
     for condition, evoked in zip(conditions, evokeds):
-        if cfg.analyze_channels:
-            evoked.pick(cfg.analyze_channels)
+        _restrict_analyze_channels(evoked, cfg)
 
         if condition in cfg.conditions:
             title = f'Condition: {condition}'
@@ -1244,9 +1245,8 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
         raw_psd=True
     )
     evokeds = mne.read_evokeds(evoked_fname)
-    if cfg.analyze_channels:
-        for evoked in evokeds:
-            evoked.pick(cfg.analyze_channels)
+    for evoked in evokeds:
+        _restrict_analyze_channels(evoked, cfg)
 
     method = cfg.inverse_method
     inverse_str = method
@@ -1585,9 +1585,20 @@ def get_config(
     return cfg
 
 
+@contextlib.contextmanager
+def _agg_backend():
+    import matplotlib
+    backend = matplotlib.get_backend()
+    matplotlib.use('Agg', force=True)
+    try:
+        yield
+    finally:
+        matplotlib.use(backend, force=True)
+
+
 def main():
     """Make reports."""
-    with config.get_parallel_backend():
+    with config.get_parallel_backend(), _agg_backend():
         parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(

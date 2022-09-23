@@ -38,6 +38,25 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+tests = [
+    "psutil",
+    "datalad",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-macros-plugin",
+    "mkdocstrings-python",
+    "jinja2 < 3.1.0",  # https://twitter.com/readthedocs/status/1507388916013314048
+    "black",  # function signature formatting
+    "livereload",
+    "openneuro-py",
+    "httpx >= 0.20",
+    "tqdm",
+    "Pygments <= 2.11.2",
+    "pyyaml",
+]
+
 [project.urls]
 homepage = "https://mne.tools/mne-bids-pipeline"
 repository = "https://github.com/mne-tools/mne-bids-pipeline"

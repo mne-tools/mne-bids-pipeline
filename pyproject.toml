@@ -32,13 +32,18 @@ dependencies = [
     "pyvista",
     "pyvistaqt",
     "openpyxl",
-    "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master",
-    "mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main",
-    "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
+    "autoreject",
+    "mne[hdf5]",
+    "mne-bids[full]",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
+dev = [
+    "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master",
+    "mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main",
+    "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
+]
 tests = [
     "psutil",
     "datalad",
@@ -56,6 +61,9 @@ tests = [
     "Pygments <= 2.11.2",
     "pyyaml",
 ]
+
+[project.scripts]
+mne-bids-pipeline = "mne_bids_pipeline.run:main"
 
 [project.urls]
 homepage = "https://mne.tools/mne-bids-pipeline"

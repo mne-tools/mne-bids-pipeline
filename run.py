@@ -273,5 +273,9 @@ def process(
         logger.info(f'🎉 Done running script: {script_module.__name__} 👆')
 
 
-if __name__ == '__main__':
+def main():
     fire.Fire(process)
+
+
+if __name__ == '__main__':
+    main()

@@ -16,7 +16,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-    "typing_extensions",
+    "typing_extensions < '3.8'",
     "importlib_metadata; python_version < '3.8'",
     "psutil",  # for joblib
     "joblib >= 0.14",

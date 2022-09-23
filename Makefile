@@ -19,13 +19,13 @@ clean-cache:
 clean: clean-build clean-pyc clean-so clean-cache
 
 install_user:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r requirements.txt
+	$(PYTHON) -m pip install --user --upgrade --progress-bar off .
 
 install_user_tests:
 	$(PYTHON) -m pip install --user --upgrade --progress-bar off -r tests/requirements.txt
 
 install:
-	$(PYTHON) -m pip install --upgrade --progress-bar off -r requirements.txt
+	$(PYTHON) -m pip install --upgrade --progress-bar off .
 
 install_tests:
 	$(PYTHON) -m pip install --upgrade --progress-bar off -r tests/requirements.txt

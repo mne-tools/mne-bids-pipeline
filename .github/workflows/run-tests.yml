@@ -30,7 +30,7 @@ jobs:
     - name: Lint config.py with flake8
       run: make flake-config
     - name: Install codespell
-      run: pip install codespell
+      run: pip install https://github.com/Freed-Wu/codespell/archive/refs/heads/iss2055.zip
     - name: Run codespell
       run: make codespell-error
   check-doc:

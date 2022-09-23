@@ -52,3 +52,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = []
+
+[tool.codespell]
+skip = "docs/site/*,*.html,scripts/freesurfer/contrib/*"
+ignore-words = "ignore_words.txt"
+builtin = "clear,rare,informal,names,usage"
+quiet-level = 3
+interactive = 3
+enable-colors = ""
+count = ""

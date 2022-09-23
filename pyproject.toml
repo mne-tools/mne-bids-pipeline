@@ -85,12 +85,16 @@ packages = [
   "mne_bids_pipeline",
   "mne_bids_pipeline.scripts",
   "mne_bids_pipeline.scripts.freesurfer",
+  "mne_bids_pipeline.scripts.freesurfer.contrib",
   "mne_bids_pipeline.scripts.init",
   "mne_bids_pipeline.scripts.preprocessing",
   "mne_bids_pipeline.scripts.report",
   "mne_bids_pipeline.scripts.sensor",
   "mne_bids_pipeline.scripts.source",
 ]
+
+[tool.setuptools.package-data]
+"mne_bids_pipeline.scripts.freesurfer.contrib" = ["version"]
 
 [tool.codespell]
 skip = "docs/site/*,*.html,scripts/freesurfer/contrib/*"

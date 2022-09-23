@@ -17,6 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "typing_extensions",
+    "importlib_metadata; python_version < '3.8'",
     "psutil",  # for joblib
     "joblib >= 0.14",
     "dask[distributed]",

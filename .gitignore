@@ -15,3 +15,5 @@ mprofile_*.dat
 .joblib_cache/
 dist/
 mne_bids_pipeline.egg-info/
+build/
+dist/

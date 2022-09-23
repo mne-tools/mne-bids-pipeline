@@ -1,5 +1,5 @@
 [project]
-name = "mne_bids_pipeline"
+name = "mne-bids-pipeline"
 description = "Automated processing and report generation for MNE-Python."
 readme = "README.md"
 requires-python = ">=3.7"
@@ -78,7 +78,18 @@ build-backend = "setuptools.build_meta"
 # can be left blank
 
 [tool.setuptools]
-py-modules = []
+package-dir = {mne_bids_pipeline = "."}
+py-modules = ["run", "config"]
+packages = [
+  "mne_bids_pipeline",
+  "mne_bids_pipeline.scripts",
+  "mne_bids_pipeline.scripts.freesurfer",
+  "mne_bids_pipeline.scripts.init",
+  "mne_bids_pipeline.scripts.preprocessing",
+  "mne_bids_pipeline.scripts.report",
+  "mne_bids_pipeline.scripts.sensor",
+  "mne_bids_pipeline.scripts.source",
+]
 
 [tool.codespell]
 skip = "docs/site/*,*.html,scripts/freesurfer/contrib/*"

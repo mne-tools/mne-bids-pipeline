@@ -185,6 +185,8 @@ authors:
   ({{ gh(606) }} by {{ authors.larsoner }})
 - Spatial filtering using SSP is now supported for EEG data
   ({{ gh(606) }} by {{ authors.larsoner }})
+- Add SSP joint plots to generated reports
+- ({{ gh(614) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

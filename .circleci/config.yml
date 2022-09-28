@@ -259,7 +259,7 @@ jobs:
       - run:
           <<: *bashenv
       - run:
-          name: Get ds003392
+          name: Get ds004229
           command: |
             python ~/project/tests/download_test_data.py -d ds004229
       - save_cache:
@@ -320,7 +320,7 @@ jobs:
       - run:
           name: test ds000117
           command: |
-            export DS=ds000117
+            DS=ds000117
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -346,7 +346,7 @@ jobs:
       - run:
           name: test ds003775
           command: |
-            export DS=ds003775
+            DS=ds003775
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -372,7 +372,7 @@ jobs:
       - run:
           name: test ds001971
           command: |
-            export DS=ds001971
+            DS=ds001971
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -398,7 +398,7 @@ jobs:
       - run:
           name: test ds004107
           command: |
-            export DS=ds004107
+            DS=ds004107
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -425,7 +425,7 @@ jobs:
           name: test ds000246
           no_output_timeout: 15m
           command: |
-            export DS=ds000246
+            DS=ds000246
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -453,7 +453,7 @@ jobs:
       - run:
           name: test ds000247
           command: |
-            export DS=ds000247
+            DS=ds000247
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -479,7 +479,7 @@ jobs:
       - run:
           name: test ds000248
           command: |
-            export DS=ds000248
+            DS=ds000248
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -509,7 +509,7 @@ jobs:
       - run:
           name: test ds000248_ica
           command: |
-            export DS=ds000248_ica
+            DS=ds000248_ica
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -583,7 +583,7 @@ jobs:
       - run:
           name: test ds000248_no_mri
           command: |
-            export DS=ds000248_no_mri
+            DS=ds000248_no_mri
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -609,7 +609,7 @@ jobs:
       - run:
           name: test ds001810
           command: |
-            export DS=ds001810
+            DS=ds001810
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
@@ -635,7 +635,7 @@ jobs:
       - run:
           name: test ds003104
           command: |
-            export DS=ds003104
+            DS=ds003104
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -661,7 +661,7 @@ jobs:
       - run:
           name: test ds003392
           command: |
-            export DS=ds003392
+            DS=ds003392
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -691,7 +691,7 @@ jobs:
       - run:
           name: test ds004229
           command: |
-            export DS=ds004229
+            DS=ds004229
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -721,7 +721,7 @@ jobs:
       - run:
           name: test eeg_matchingpennies
           command: |
-            export DS=eeg_matchingpennies
+            DS=eeg_matchingpennies
             python tests/run_tests.py --download=0 ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
@@ -755,10 +755,11 @@ jobs:
       - run:
           name: test ERP CORE N400
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_N400
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N400*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N400*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_N400
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -783,10 +784,11 @@ jobs:
       - run:
           name: test ERP CORE ERN
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_ERN
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*ERN*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*ERN*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_ERN
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -811,10 +813,11 @@ jobs:
       - run:
           name: test ERP CORE LRP
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_LRP
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*LRP*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*LRP*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_LRP
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -839,10 +842,11 @@ jobs:
       - run:
           name: test ERP CORE MMN
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_MMN
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*MMN*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*MMN*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_MMN
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -867,10 +871,11 @@ jobs:
       - run:
           name: test ERP CORE N2pc
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_N2pc
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N2pc*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N2pc*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_N2pc
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -895,10 +900,11 @@ jobs:
       - run:
           name: test ERP CORE N170
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_N170
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*N170*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*N170*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_N170
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -923,10 +929,11 @@ jobs:
       - run:
           name: test ERP CORE P3
           command: |
-            mkdir -p ~/reports/ERP_CORE
-            python tests/run_tests.py --download=0 ERP_CORE_P3
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*/**/*P3*.html ~/reports/ERP_CORE/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE/*P3*.xlsx ~/reports/ERP_CORE/
+            DS=ERP_CORE
+            python tests/run_tests.py --download=0 ${DS}_P3
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -942,47 +949,6 @@ jobs:
           at: ~/
       - run:
           <<: *bashenv
-      # necessary because gen_examples.py runs config script, which otherwise complains:
-      # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
-      - restore_cache:
-          keys:
-            - data-cache-ds000117-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds003775-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds001971-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds004107-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds000246-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds000247-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds000248-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds001810-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds003104-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds003392-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ds004229-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-eeg_matchingpennies-{{ .Revision }}
-      - restore_cache:
-          keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
           command: |

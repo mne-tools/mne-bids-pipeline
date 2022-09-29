@@ -164,8 +164,9 @@ def retrieve_custom_cov(
 def _get_cov_type(cfg):
     if cfg.noise_cov == 'custom':
         return 'custom'
-    elif (cfg.noise_cov == 'rest' or (cfg.noise_cov == 'emptyroom' and
-                                      'eeg' not in cfg.ch_types)):
+    elif cfg.noise_cov == 'rest':
+        return 'raw'
+    elif cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types:
         return 'raw'
     else:
         return 'epochs'

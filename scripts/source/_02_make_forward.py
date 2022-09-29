@@ -199,7 +199,6 @@ def get_config(
 
 def main():
     """Run forward."""
-    return
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))

@@ -8,7 +8,6 @@ Covariance matrices are computed and saved.
 
 import itertools
 import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
@@ -88,14 +87,14 @@ def compute_cov_from_epochs(
     msg = "Computing regularized covariance based on epochs' baseline periods."
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    msg = f"Input: {epo_fname.basename}"
+    msg = f"Input:  {epo_fname.basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
+    epochs = mne.read_epochs(epo_fname, preload=True)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
                                  rank='info')
     return cov
@@ -167,8 +166,7 @@ def _get_cov_type(cfg):
         return 'custom'
     elif (
         (cfg.noise_cov == 'emptyroom' and 'eeg' not in cfg.ch_types) or
-         cfg.noise_cov == 'rest'
-    ):
+         cfg.noise_cov == 'rest'):
         return 'raw'
     else:
         return 'epochs'
@@ -177,6 +175,7 @@ def _get_cov_type(cfg):
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_cov)
 def run_covariance(*, cfg, subject, session, in_files):
+    assert len(in_files) == 1, in_files
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(
         noise_cov=config.noise_cov,

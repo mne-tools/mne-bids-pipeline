@@ -33,7 +33,7 @@ def get_input_fnames_cov(**kwargs):
     cov_type = _get_cov_type(cfg)
     in_files = dict()
     if cov_type == 'custom':
-        in_files['__unknown_inputs__'] = True
+        in_files['__unknown_inputs__'] = 'custom noise_cov callable'
         return in_files
     if cov_type == 'raw':
         bids_path_raw_noise = BIDSPath(
@@ -77,13 +77,13 @@ def get_input_fnames_cov(**kwargs):
                                 root=cfg.deriv_root,
                                 check=False)
         in_files['epochs'] = fname_epochs
+    assert len(in_files) == 1, in_files
     return in_files
 
 
-def compute_cov_from_epochs(cfg, tmin, tmax, in_files, out_files):
+def compute_cov_from_epochs(
+        *, cfg, subject, session, tmin, tmax, in_files, out_files):
     epo_fname = in_files.pop('epochs')
-    subject = epo_fname.subject
-    session = epo_fname.session
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -98,7 +98,7 @@ def compute_cov_from_epochs(cfg, tmin, tmax, in_files, out_files):
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
     cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
                                  rank='info')
-    cov.save(out_files['cov'], overwrite=True)
+    return cov
 
 
 def compute_cov_from_raw(*, cfg, subject, session, in_files, out_files):
@@ -116,7 +116,7 @@ def compute_cov_from_raw(*, cfg, subject, session, in_files, out_files):
 
     raw_noise = mne.io.read_raw_fif(fname_raw, preload=True)
     cov = mne.compute_raw_covariance(raw_noise, method='shrunk', rank='info')
-    cov.save(out_files['cov'], overwrite=True)
+    return cov
 
 
 def retrieve_custom_cov(
@@ -130,7 +130,7 @@ def retrieve_custom_cov(
     # entries)
     assert cfg.noise_cov == 'custom'
     assert callable(config.noise_cov)
-    assert in_files is None  # signals that this cannot be cached...
+    assert in_files == {}, in_files  # unknown
 
     # ... so we construct the input file we need here
     evoked_bids_path = BIDSPath(
@@ -153,13 +153,13 @@ def retrieve_custom_cov(
            'function')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    msg = 'Output: {cov_fname.basename}'
+    msg = f'Output: {out_files["cov"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
     cov = config.noise_cov(evoked_bids_path)
     assert isinstance(cov, mne.Covariance)
-    cov.save(out_files['cov'], overwrite=True)
+    return cov
 
 
 def _get_cov_type(cfg):
@@ -185,22 +185,21 @@ def run_covariance(*, cfg, subject, session, in_files):
         session=session
     )
     cov_type = _get_cov_type(cfg)
-    kwargs = dict(cfg=cfg, in_files=in_files, out_files=out_files)
+    kwargs = dict(
+        cfg=cfg, subject=subject, session=session,
+        in_files=in_files, out_files=out_files)
     if cov_type == 'custom':
-        retrieve_custom_cov(**kwargs)
+        cov = retrieve_custom_cov(**kwargs)
     elif cov_type == 'raw':
-        compute_cov_from_raw(**kwargs)
+        cov = compute_cov_from_raw(**kwargs)
     else:
         tmin, tmax = config.noise_cov
-        compute_cov_from_epochs(tmin=tmin, tmax=tmax, **kwargs)
-    assert out_files['cov'].is_file(), out_files['cov']
+        cov = compute_cov_from_epochs(tmin=tmin, tmax=tmax, **kwargs)
+    cov.save(out_files['cov'], overwrite=True)
     return out_files
 
 
-def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
-) -> SimpleNamespace:
+def get_config() -> SimpleNamespace:
     # Callables are not nicely pickleable, so let's pass a string instead
     noise_cov = 'custom' if callable(config.noise_cov) else config.noise_cov
     cfg = SimpleNamespace(

@@ -2954,21 +2954,16 @@ class ConditionalStepMemory():
             in_files = None
             if self.get_input_fnames is not None:
                 in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
-            assert isinstance(in_files, (dict, type(None))), type(in_files)
-
-            run_without_memory = False
             if self.memory is None:
-                run_without_memory = True
-
-            # Deal with cases (e.g., custom cov) where input files are unknown
-            if (in_files or {}).pop('__unknown_inputs__', False):
-                run_without_memory = True
-            if run_without_memory:
                 func(*args, **kwargs)
                 return
 
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
+
+            # Deal with cases (e.g., custom cov) where input files are unknown
+            unknown_inputs = in_files.pop('__unknown_inputs__', False)
+
             # Deal with cases (e.g., BEM) where a user can force recreation
             force_run = in_files.pop('__force_run__', False)
 
@@ -2999,7 +2994,11 @@ class ConditionalStepMemory():
                 subject = kwargs.get('subject', None)
                 session = kwargs.get('session', None)
                 run = kwargs.get('run', None)
-                if force_run:
+                if unknown_inputs:
+                    msg = ('Computation forced because input files cannot '
+                           f'be determined ({unknown_inputs}) …')
+                    emoji = '🤷'
+                elif force_run:
                     msg = 'Computation forced despite existing cached result …'
                     emoji = '🔂'
                 else:
@@ -3011,7 +3010,7 @@ class ConditionalStepMemory():
             else:
                 force_run = False  # wasn't actually forced
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
-            if force_run:
+            if force_run or unknown_inputs:
                 out_files, _ = memorized_func.call(*args, **kwargs)
             else:
                 out_files = memorized_func(*args, **kwargs)

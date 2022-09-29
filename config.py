@@ -2868,7 +2868,7 @@ def failsafe_run(
             ])
 
             try:
-                assert len(args) == 0  # make sure params are only kwargs
+                assert len(args) == 0, args  # make sure params are only kwargs
                 out = memory.cache(func)(*args, **kwargs)
                 assert out is None  # nothing should be returned
                 log_info['success'] = True
@@ -2954,16 +2954,29 @@ class ConditionalStepMemory():
             in_files = None
             if self.get_input_fnames is not None:
                 in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
+            assert isinstance(in_files, (dict, type(None))), type(in_files)
+
+            run_without_memory = False
             if self.memory is None:
+                run_without_memory = True
+
+            # Deal with cases (e.g., custom cov) where input files are unknown
+            if (in_files or {}).pop('__unknown_inputs__', False):
+                run_without_memory = True
+            if run_without_memory:
                 func(*args, **kwargs)
                 return
+
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
+            # Deal with cases (e.g., BEM) where a user can force recreation
+            force_run = in_files.pop('__force_run__', False)
 
             hashes = []
             for k, v in in_files.items():
                 if isinstance(v, BIDSPath):
                     v = v.fpath
+                assert isinstance(v, pathlib.Path), f'{type(v)}: {v}'
                 assert v.exists(), f'missing in_files["{k}"] = {v}'
                 if memory_file_method == 'mtime':
                     this_hash = v.lstat().st_mtime
@@ -2981,15 +2994,27 @@ class ConditionalStepMemory():
             # Someday we could modify the joblib API to combine this with the
             # call (https://github.com/joblib/joblib/issues/1342), but our hash
             # should be plenty fast so let's not bother for now.
-            if self.memory.cache(func).check_call_in_cache(*args, **kwargs):
+            memorized_func = self.memory.cache(func)
+            if memorized_func.check_call_in_cache(*args, **kwargs):
                 subject = kwargs.get('subject', None)
                 session = kwargs.get('session', None)
                 run = kwargs.get('run', None)
-                msg = 'Computation unnecessary (cached) …'
+                if force_run:
+                    msg = 'Computation forced despite existing cached result …'
+                    emoji = '🔂'
+                else:
+                    msg = 'Computation unnecessary (cached) …'
+                    emoji = 'cache'
                 logger.info(**gen_log_kwargs(
                     message=msg, subject=subject, session=session, run=run,
-                    emoji='cache'))
-            out_files = self.memory.cache(func)(*args, **kwargs)
+                    emoji=emoji))
+            else:
+                force_run = False  # wasn't actually forced
+            # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
+            if force_run:
+                out_files, _ = memorized_func.call(*args, **kwargs)
+            else:
+                out_files = memorized_func(*args, **kwargs)
             assert isinstance(out_files, dict), type(out_files)
             out_files_missing_msg = '\n'.join(
                 f'- {key}={fname}' for key, fname in out_files.items()
@@ -3921,3 +3946,14 @@ def _restrict_analyze_channels(inst, cfg):
             inst.apply_proj()
         inst.pick(analyze_channels)
     return inst
+
+
+def _get_scalp_in_files(cfg):
+    subject_path = pathlib.Path(cfg.subjects_dir) / cfg.fs_subject
+    seghead = subject_path / 'surf' / 'lh.seghead'
+    in_files = dict()
+    if seghead.is_file():
+        in_files['seghead'] = seghead
+    else:
+        in_files['t1'] = subject_path / 'mri' / 'T1.mgz'
+    return in_files

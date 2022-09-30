@@ -6,7 +6,6 @@ Compute BEM solution
 Compute the BEM solution.
 """
 
-import glob
 import logging
 from pathlib import Path
 from typing import Optional

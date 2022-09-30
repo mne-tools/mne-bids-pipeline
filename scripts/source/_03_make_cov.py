@@ -76,7 +76,6 @@ def get_input_fnames_cov(**kwargs):
                                 root=cfg.deriv_root,
                                 check=False)
         in_files['epochs'] = fname_epochs
-    assert len(in_files) == 1, in_files
     return in_files
 
 

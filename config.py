@@ -2283,6 +2283,10 @@ if (spatial_filter == 'ica' and
 # Helper functions
 # ----------------
 
+# Private attribute to make it so we can skip some file checks when doc
+# building
+_strict_resolve = os.getenv('_MNE_BIDS_PIPELINE_STRICT_RESOLVE', '') != 'false'
+
 
 @functools.lru_cache(maxsize=None)
 def _get_entity_vals_cached(*args, **kwargs):
@@ -2296,7 +2300,7 @@ def get_bids_root() -> pathlib.Path:
     if root is not None:
         return (pathlib.Path(root)
                 .expanduser()
-                .resolve(strict=True))
+                .resolve(strict=_strict_resolve))
 
     # If we don't have a bids_root until now, raise an exception as we cannot
     # proceed.
@@ -2329,23 +2333,26 @@ def get_datatype() -> Literal['meg', 'eeg']:
 _all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
 _ignore_datatypes = set(_all_datatypes) - set([get_datatype()])
 
-_valid_tasks = _get_entity_vals_cached(
-    root=get_bids_root(),
-    entity_key='task',
-    ignore_datatypes=tuple(_ignore_datatypes)
-)
+if _strict_resolve:
+    _valid_tasks = _get_entity_vals_cached(
+        root=get_bids_root(),
+        entity_key='task',
+        ignore_datatypes=tuple(_ignore_datatypes)
+    )
 
-_valid_subjects = _get_entity_vals_cached(
-    root=get_bids_root(),
-    entity_key='subject',
-    ignore_datatypes=tuple(_ignore_datatypes)
-)
+    _valid_subjects = _get_entity_vals_cached(
+        root=get_bids_root(),
+        entity_key='subject',
+        ignore_datatypes=tuple(_ignore_datatypes)
+    )
 
-_all_sessions = _get_entity_vals_cached(
-    root=get_bids_root(),
-    entity_key='session',
-    ignore_datatypes=tuple(_ignore_datatypes)
-)
+    _all_sessions = _get_entity_vals_cached(
+        root=get_bids_root(),
+        entity_key='session',
+        ignore_datatypes=tuple(_ignore_datatypes)
+    )
+else:
+    _valid_tasks = _valid_subjects = _all_sessions = ()
 
 
 def get_deriv_root() -> pathlib.Path:
@@ -2516,7 +2523,7 @@ def get_task() -> Optional[str]:
     env = os.environ
     if env.get('MNE_BIDS_STUDY_TASK'):
         task = env['MNE_BIDS_STUDY_TASK']
-        if task not in _valid_tasks and 'MKDOCS' not in os.environ:
+        if _strict_resolve and task not in _valid_tasks:
             raise ValueError(f'Invalid task. It can be: '
                              f'{", ".join(_valid_tasks)} but got: {task}')
 
@@ -3894,7 +3901,7 @@ def save_logs(logs):
 
 # XXX This check should actually go into the CHECKS section, but it depends
 # XXX on get_runs(), which is defined after that section.
-if 'MKDOCS' not in os.environ:
+if _strict_resolve:
     inter_runs = get_intersect_run()
     mf_ref_error = (
         (mf_reference_run is not None) and
@@ -3910,7 +3917,7 @@ if 'MKDOCS' not in os.environ:
 if (
     not task_is_rest and
     conditions is None and
-    'MKDOCS' not in os.environ
+    _strict_resolve
 ):
     msg = ('Please indicate the name of your conditions in your '
            'configuration. Currently the `conditions` parameter is empty. '

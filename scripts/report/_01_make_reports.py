@@ -498,6 +498,9 @@ def run_report_preprocessing(
     fname_epo_not_clean = bids_path.copy().update(suffix='epo')
     fname_epo_clean = bids_path.copy().update(processing='clean', suffix='epo')
     fname_ica = bids_path.copy().update(suffix='ica')
+    fname_ssp = bids_path.copy().update(suffix='proj')
+    fname_eog_epochs = bids_path.copy().update(suffix='eog-epo')
+    fname_ecg_epochs = bids_path.copy().update(suffix='ecg-epo')
 
     for fname in fnames_raw_filt:
         msg = 'Adding filtered raw data to report.'
@@ -638,6 +641,48 @@ def run_report_preprocessing(
                 # f'before and after ICA '
                 # f'({len(ica.exclude)} ICs removed)'
             )
+
+    ###########################################################################
+    #
+    # Visualize effect of SSP artifact rejection.
+    #
+
+    if cfg.spatial_filter == 'ssp':
+        fnames = dict(ecg=fname_ecg_epochs, eog=fname_eog_epochs)
+        for kind, fname in fnames.items():
+            if not fname.fpath.is_file():
+                continue
+            msg = f'Adding {kind.upper()} SSP to report.'
+            logger.info(
+                **gen_log_kwargs(
+                    message=msg, subject=subject, session=session
+                )
+            )
+            # Eventually we should add this to report somehow
+            epochs = mne.read_epochs(fname)
+            projs = mne.read_proj(fname_ssp)
+            projs = [p for p in projs if kind.upper() in p['desc']]
+            assert len(projs), len(projs)  # should exist if the epochs do
+            picks_trace = None
+            if kind == 'ecg':
+                if 'ecg' in epochs:
+                    picks_trace = 'ecg'
+            else:
+                assert kind == 'eog'
+                if cfg.eog_channels:
+                    picks_trace = cfg.eog_channels
+                elif 'eog' in epochs:
+                    picks_trace = 'eog'
+            fig = mne.viz.plot_projs_joint(
+                projs, epochs.average(picks='all'), picks_trace=picks_trace)
+            caption = (
+                f'Computed using {len(epochs)} epochs '
+                f'(from {len(epochs.drop_log)} original events)'
+            )
+            report.add_figure(
+                fig, title=f'SSP: {kind.upper()}', caption=caption,
+                tags=('ssp', kind))
+            plt.close(fig)
 
     ###########################################################################
     #
@@ -1581,6 +1626,7 @@ def get_config(
         use_template_mri=config.use_template_mri,
         interactive=config.interactive,
         plot_psd_for_runs=config.plot_psd_for_runs,
+        eog_channels=config.eog_channels,
     )
     return cfg
 

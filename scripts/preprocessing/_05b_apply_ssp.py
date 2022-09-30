@@ -54,24 +54,18 @@ def apply_ssp(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(
         processing='ssp', check=False)
-    msg = f"Input: {in_files['epochs'].basename}"
+    msg = f"Input epochs: {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    msg = f"Output: {out_files['epochs'].basename}"
+    msg = f'Input SSP:    {in_files["proj"].basename}'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject,
+                                 session=session))
+    msg = f"Output:       {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
-
-    msg = f'Reading SSP projections from : {in_files["proj"]}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
-
     projs = mne.read_proj(in_files.pop('proj'))
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
-
-    msg = 'Saving epochs with projectors.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
     epochs_cleaned.save(
         out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)

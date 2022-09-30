@@ -949,6 +949,47 @@ jobs:
           at: ~/
       - run:
           <<: *bashenv
+      # necessary because gen_examples.py runs config script, which otherwise complains:
+      # ValueError: You set mf_reference_run=01, but your dataset only contains the following runs: [None]
+      - restore_cache:
+          keys:
+            - data-cache-ds000117-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds003775-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds001971-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds004107-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds000246-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds000247-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds001810-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds003104-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-eeg_matchingpennies-{{ .Revision }}
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-{{ .Revision }}
       - run:
           name: Build documentation
           command: |

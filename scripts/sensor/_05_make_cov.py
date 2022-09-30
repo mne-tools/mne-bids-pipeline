@@ -16,7 +16,7 @@ from mne_bids import BIDSPath
 import config
 from config import (
     gen_log_kwargs, failsafe_run, parallel_func,
-    get_noise_cov_bids_path
+    get_noise_cov_bids_path, _sanitize_callable,
 )
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -197,8 +197,6 @@ def run_covariance(*, cfg, subject, session, in_files):
 
 
 def get_config() -> SimpleNamespace:
-    # Callables are not nicely pickleable, so let's pass a string instead
-    noise_cov = 'custom' if callable(config.noise_cov) else config.noise_cov
     cfg = SimpleNamespace(
         task=config.get_task(),
         datatype=config.get_datatype(),
@@ -210,7 +208,7 @@ def get_config() -> SimpleNamespace:
         ch_types=config.ch_types,
         deriv_root=config.get_deriv_root(),
         run_source_estimation=config.run_source_estimation,
-        noise_cov=noise_cov,
+        noise_cov=_sanitize_callable(config.noise_cov),
     )
     return cfg
 

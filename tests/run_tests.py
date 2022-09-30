@@ -69,10 +69,10 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
     },
     'ds000248_ica': {},
     'ds000248_T1_BEM': {
-        'steps': ('source/make_bem_surfaces',),
+        'steps': ('source/make_bem',),
     },
     'ds000248_FLASH_BEM': {
-        'steps': ('source/make_bem_surfaces',),
+        'steps': ('source/make_bem',),
     },
     'ds000248_coreg_surfaces': {
         'steps': ('freesurfer/coreg_surfaces',),

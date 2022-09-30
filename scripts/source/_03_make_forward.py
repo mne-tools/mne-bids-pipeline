@@ -1,7 +1,7 @@
 """
-====================
-10. Forward solution
-====================
+================
+Forward solution
+================
 
 Calculate forward solution for MEG channels.
 """
@@ -12,29 +12,19 @@ from typing import Optional
 from types import SimpleNamespace
 
 import mne
-from mne.datasets import fetch_fsaverage
 from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
-from config import gen_log_kwargs, failsafe_run
+from config import gen_log_kwargs, failsafe_run, _get_bem_conductivity
 from config import parallel_func
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-def _prepare_forward_template(cfg, fname_info):
+def _prepare_trans_template(cfg, info):
     assert isinstance(cfg.use_template_mri, str)
     assert cfg.use_template_mri == cfg.fs_subject
-
-    # Take care of bem sol
-    bem_sol = cfg.fs_subjects_dir / cfg.fs_subject / \
-        'bem' / f'{cfg.fs_subject}-5120-5120-5120-bem-sol.fif'
-    if cfg.fs_subject == "fsaverage" and not bem_sol.exists():
-        fetch_fsaverage(cfg.fs_subjects_dir)
-        bem_sol = str(bem_sol)
-    else:
-        bem_sol = _make_bem_sol(cfg)
 
     if cfg.fs_subject != "fsaverage" and not cfg.adjust_coreg:
         raise ValueError("Adjusting the coregistration is mandatory "
@@ -45,42 +35,15 @@ def _prepare_forward_template(cfg, fname_info):
             'bem' / f'{cfg.fs_subject}-trans.fif'
     else:
         fiducials = "estimated"  # get fiducials from fsaverage
-        info = mne.io.read_info(fname_info)
         coreg = Coregistration(info, cfg.fs_subject, cfg.fs_subjects_dir,
                                fiducials=fiducials)
         coreg.fit_fiducials(verbose=True)
         trans = coreg.trans
 
-    src = mne.setup_source_space(subject=cfg.fs_subject,
-                                 subjects_dir=cfg.fs_subjects_dir,
-                                 spacing=cfg.spacing,
-                                 add_dist='patch')
-    return src, trans, bem_sol
+    return trans
 
 
-def _make_bem_sol(cfg):
-    if 'eeg' in cfg.ch_types:
-        conductivity = (0.3, 0.006, 0.3)
-    else:
-        conductivity = (0.3,)
-
-    try:
-        bem_model = mne.make_bem_model(subject=cfg.fs_subject,
-                                       subjects_dir=cfg.fs_subjects_dir,
-                                       ico=4, conductivity=conductivity)
-    except FileNotFoundError:
-        message = ("Could not make BEM model due to a missing file. \n"
-                   "Can be solved by setting recreate_bem=True in the config "
-                   "to force recreation of the BEM model, or by deleting the\n"
-                   f" {cfg.bids_root}/derivatives/freesurfer/"
-                   f"subjects/{cfg.fs_subject}/bem/ folder")
-        raise FileNotFoundError(message)
-
-    bem_sol = mne.make_bem_solution(bem_model)
-    return bem_sol
-
-
-def _prepare_forward(cfg, bids_path, fname_trans):
+def _prepare_trans(cfg, bids_path):
     # Generate a head ↔ MRI transformation matrix from the
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
@@ -118,27 +81,33 @@ def _prepare_forward(cfg, bids_path, fname_trans):
         fs_subjects_dir=cfg.fs_subjects_dir,
         kind=landmarks_kind)
 
-    # Create the source space.
-    msg = 'Creating source space'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
-    src = mne.setup_source_space(subject=cfg.fs_subject,
-                                 subjects_dir=cfg.fs_subjects_dir,
-                                 spacing=cfg.spacing,
-                                 add_dist='patch')
-
-    # Calculate the BEM solution.
-    # Here we only use a 3-layers BEM only if EEG is available.
-    msg = 'Calculating BEM solution'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
-
-    bem_sol = _make_bem_sol(cfg)
-    return src, trans, bem_sol
+    return trans
 
 
-@failsafe_run(script_path=__file__)
-def run_forward(*, cfg, subject, session=None):
+def get_input_fnames_forward(*, cfg, subject, session):
+    bids_path = BIDSPath(subject=subject,
+                         session=session,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         run=None,
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         extension='.fif',
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
+                         check=False)
+    in_files = dict()
+    in_files['info'] = bids_path.copy().update(**cfg.source_info_path_update)
+    bem_path = cfg.fs_subjects_dir / cfg.fs_subject / 'bem'
+    _, tag = _get_bem_conductivity(cfg)
+    in_files['bem'] = bem_path / f'{cfg.fs_subject}-{tag}-bem-sol.fif'
+    in_files['src'] = bem_path / f'{cfg.fs_subject}-{cfg.spacing}-src.fif'
+    return in_files
+
+
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_forward)
+def run_forward(*, cfg, subject, session, in_files):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -151,25 +120,32 @@ def run_forward(*, cfg, subject, session=None):
                          root=cfg.deriv_root,
                          check=False)
 
-    fname_info = bids_path.copy().update(**cfg.source_info_path_update)
-    fname_trans = bids_path.copy().update(suffix='trans')
-    fname_fwd = bids_path.copy().update(suffix='fwd')
+    # Info
+    info = mne.io.read_info(in_files.pop('info'))
 
+    # BEM
+    bem = in_files.pop('bem')
+
+    # source space
+    src = in_files.pop('src')
+
+    # trans
     if cfg.use_template_mri is not None:
-        src, trans, bem_sol = _prepare_forward_template(cfg, fname_info)
+        trans = _prepare_trans_template(cfg, info)
     else:
-        src, trans, bem_sol = _prepare_forward(cfg, bids_path, fname_trans)
+        trans = _prepare_trans(cfg, bids_path)
 
-    # Finally, calculate and save the forward solution.
     msg = 'Calculating forward solution'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
-    info = mne.io.read_info(fname_info)
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
-                                    bem=bem_sol, mindist=cfg.mindist)
-
-    mne.write_trans(fname_trans, fwd['mri_head_t'], overwrite=True)
-    mne.write_forward_solution(fname_fwd, fwd, overwrite=True)
+                                    bem=bem, mindist=cfg.mindist)
+    out_files = dict()
+    out_files['trans'] = bids_path.copy().update(suffix='trans')
+    out_files['forward'] = bids_path.copy().update(suffix='fwd')
+    mne.write_trans(out_files['trans'], fwd['mri_head_t'], overwrite=True)
+    mne.write_forward_solution(out_files['forward'], fwd, overwrite=True)
+    return out_files
 
 
 def get_config(

@@ -6,15 +6,11 @@ Source space
 Set up source space for forward and inverse computation.
 """
 
-import itertools
 import logging
 from typing import Optional
 from types import SimpleNamespace
 
 import mne
-from mne.datasets import fetch_fsaverage
-from mne.coreg import Coregistration
-from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
 from config import gen_log_kwargs, failsafe_run

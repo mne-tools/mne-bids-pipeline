@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import mne.bem
 
 import config
-from config import parallel_func, failsafe_run, _get_scalp_in_files
+from config import (parallel_func, failsafe_run, _get_scalp_in_files,
+                    gen_log_kwargs)
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
@@ -44,11 +45,8 @@ def make_coreg_surfaces(
     in_files: dict,
 ) -> dict:
     """Create head surfaces for use with MNE-Python coregistration tools."""
-    subject_str = f'sub-{subject}' if subject != 'fsaverage' else 'fsaverage'
-    logger.info(
-        f'Creating scalp surfaces for coregistration, '
-        f'subject: {subject_str} (FreeSurfer subject: {cfg.fs_subject})'
-    )
+    msg = 'Creating scalp surfaces for coregistration'
+    logger.info(**gen_log_kwargs(message=msg, subject=subject))
     in_files.pop('t1' if 't1' in in_files else 'seghead')
     mne.bem.make_scalp_surfaces(
         subject=cfg.fs_subject,

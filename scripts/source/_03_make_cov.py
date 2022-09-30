@@ -174,7 +174,6 @@ def _get_cov_type(cfg):
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_cov)
 def run_covariance(*, cfg, subject, session, in_files):
-    assert len(in_files) == 1, in_files
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(
         noise_cov=config.noise_cov,

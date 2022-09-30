@@ -2007,6 +2007,7 @@ def gen_log_kwargs(
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
     emoji: str = '⏳️',
+    script_path: Optional[PathLike] = None,
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -2960,6 +2961,7 @@ class ConditionalStepMemory():
         self.force_run = force_run
 
     def cache(self, func):
+
         def wrapper(*args, **kwargs):
             in_files = out_files = None
             if self.get_output_fnames is not None:

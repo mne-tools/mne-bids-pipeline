@@ -4012,12 +4012,12 @@ def _get_bem_conductivity(cfg):
     if cfg.fs_subject in ('fsaverage', cfg.use_template_mri):
         conductivity = None  # should never be used
         tag = '5120-5120-5120'
-    elif 'meg' == ''.join(cfg.ch_types):  # MEG only
-        conductivity = (0.3,)
-        tag = '5120'
-    else:
+    elif 'eeg' in cfg.ch_types:
         conductivity = (0.3, 0.006, 0.3)
         tag = '5120-5120-5120'
+    else:
+        conductivity = (0.3,)
+        tag = '5120'
     return conductivity, tag
 
 

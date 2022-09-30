@@ -123,7 +123,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM
-            mne.datasets.fetch_fsaverage(config.fs_subjects_dir)
+            mne.datasets.fetch_fsaverage(config.get_fs_subjects_dir())
         return
 
     with config.get_parallel_backend():

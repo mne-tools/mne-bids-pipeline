@@ -1988,7 +1988,7 @@ class LogFilter(logging.Filter):
         if not hasattr(record, 'run'):
             record.run = ''
         if not hasattr(record, 'box'):
-            record.box = '┣━'
+            record.box = '│ '
 
         return True
 

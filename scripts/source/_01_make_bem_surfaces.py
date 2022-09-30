@@ -39,10 +39,7 @@ def _get_bem_params(cfg):
     return mri_images, mri_dir, flash_dir
 
 
-def get_input_fnames_make_bem(**kwargs):
-    cfg = kwargs.pop('cfg')
-    kwargs.pop('subject')
-    assert len(kwargs) == 0, kwargs.keys()
+def get_input_fnames_make_bem(*, cfg, subject):
     in_files = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
     in_files['t1'] = mri_dir / 'T1.mgz'
@@ -51,13 +48,21 @@ def get_input_fnames_make_bem(**kwargs):
         # We could check for existence here, but make_flash_bem does it later
         for fname in flash_fnames:
             in_files[fname.stem] = fname
-    if cfg.recreate_bem:
-        in_files['__force_run__'] = True
     return in_files
 
 
+def get_output_fnames_make_bem(*, cfg, subject):
+    out_files = dict()
+    bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / 'bem'
+    for surf in ('inner_skull', 'outer_skull', 'outer_skin'):
+        out_files[surf] = bem_dir / f'{surf}.surf'
+    return out_files
+
+
 @failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_make_bem)
+              get_input_fnames=get_input_fnames_make_bem,
+              get_output_fnames=get_output_fnames_make_bem,
+              force_run=config.recreate_bem)
 def make_bem(*, cfg, subject, in_files):
     mri_images, _, _ = _get_bem_params(cfg)
     in_files.clear()  # assume we use everything we add
@@ -68,10 +73,7 @@ def make_bem(*, cfg, subject, in_files):
         msg = ('Creating BEM surfaces from T1-weighted MRI images using '
                'watershed algorithm')
         bem_func = mne.bem.make_watershed_bem
-    out_files = dict()
-    bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / 'bem'
-    for surf in ('inner_skull', 'outer_skull', 'outer_skin'):
-        out_files[surf] = bem_dir / f'{surf}.surf'
+    out_files = get_output_fnames_make_bem(cfg=cfg, subject=subject)
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
     show = True if cfg.interactive else False
     bem_func(
@@ -87,14 +89,11 @@ def make_bem(*, cfg, subject, in_files):
 
 def get_config(
     subject: Optional[str] = None,
-    session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         fs_subject=config.get_fs_subject(subject=subject),
         fs_subjects_dir=config.get_fs_subjects_dir(),
-        recreate_bem=config.recreate_bem,
         bem_mri_images=config.bem_mri_images,
-        recreate_scalp_surface=config.recreate_scalp_surface,
         interactive=config.interactive,
         freesurfer_verbose=config.freesurfer_verbose
     )

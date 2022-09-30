@@ -24,9 +24,20 @@ def get_input_fnames_coreg_surfaces(**kwargs):
     return in_files
 
 
-# TODO: Maybe deduplicate with _01_make_bem_surfaces.py?
+def get_output_fnames_coreg_surfaces(*, cfg, subject):
+    out_files = dict()
+    subject_path = Path(cfg.subjects_dir) / cfg.fs_subject
+    out_files['seghead'] = subject_path / 'surf' / 'lh.seghead'
+    for key in ('dense', 'medium', 'sparse'):
+        out_files[f'head-{key}'] = \
+            subject_path / 'bem' / f'{cfg.fs_subject}-head-{key}.fif'
+    return out_files
+
+
 @failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_coreg_surfaces)
+              get_input_fnames=get_input_fnames_coreg_surfaces,
+              get_output_fnames=get_output_fnames_coreg_surfaces,
+              force_run=config.recreate_scalp_surface)
 def make_coreg_surfaces(
     cfg: SimpleNamespace,
     subject: str,
@@ -34,7 +45,6 @@ def make_coreg_surfaces(
 ) -> dict:
     """Create head surfaces for use with MNE-Python coregistration tools."""
     subject_str = f'sub-{subject}' if subject != 'fsaverage' else 'fsaverage'
-    subject_path = Path(cfg.subjects_dir) / cfg.fs_subject
     logger.info(
         f'Creating scalp surfaces for coregistration, '
         f'subject: {subject_str} (FreeSurfer subject: {cfg.fs_subject})'
@@ -46,11 +56,7 @@ def make_coreg_surfaces(
         force=True,
         overwrite=True
     )
-    out_files = dict()
-    out_files['seghead'] = subject_path / 'surf' / 'lh.seghead'
-    for key in ('dense', 'medium', 'sparse'):
-        out_files[f'head-{key}'] = \
-            subject_path / 'bem' / f'{cfg.fs_subject}-head-{key}.fif'
+    out_files = get_output_fnames_coreg_surfaces(cfg=cfg, subject=subject)
     return out_files
 
 

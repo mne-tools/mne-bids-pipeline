@@ -172,5 +172,7 @@ def test_datasets_in_doc():
         )
     assert tests == caches, 'CircleCI tests != CircleCI caches'
     assert tests == examples, 'CircleCI tests != docs/mkdocs.yml Examples'
+    dataset_names.remove('ds004229')  # broken on openneuro
+    test_names.remove('ds004229')
     assert tests == dataset_names, 'CircleCI tests != tests/datasets.py'
     assert tests == test_names, 'CircleCI tests != tests/run_tests.py'

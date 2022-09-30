@@ -1,4 +1,5 @@
 """Download test data and run a test suite."""
+import difflib
 import sys
 import shutil
 import os
@@ -244,12 +245,17 @@ if __name__ == '__main__':
     if 'n/a' in test_suite.values():
         if os.environ.get('DATASET') is None:
             parser.print_help()
-        print('\n\n')
-        raise KeyError(
-            f'"{args.dataset}" is not a valid dataset key in the TEST_SUITE '
-            f'dictionary in the run_tests.py module. Use one of: '
-            f'{", ".join(TEST_SUITE.keys())}.'
+        print('\n')
+        extra = ''
+        matches = difflib.get_close_matches(args.dataset, TEST_SUITE.keys())
+        if matches:
+            extra = f'\n\nDid you mean one of {matches}?'
+        print(
+            f'\n\n{repr(args.dataset)}" is not a valid dataset key in the '
+            f'TEST_SUITE dictionary in the run_tests.py module.{extra}\n\n'
+            f'Valid options: {", ".join(sorted(TEST_SUITE.keys()))}.\n'
         )
+        raise KeyError(f'{repr(args.dataset)} is not a valid dataset key.')
 
     # Run the tests
     extra = ''
@@ -257,6 +263,7 @@ if __name__ == '__main__':
         extra += ' after downloading data'
     if debug:
         extra += ' in debug mode'
-    print(f'Running the following tests{extra}: {", ".join(test_suite.keys())}')
+    print(f'📝 Running the following tests{extra}: '
+          f'{", ".join(test_suite.keys())}')
 
     run_tests(test_suite, download=download, debug=debug, cache=cache)

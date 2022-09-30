@@ -46,7 +46,6 @@ decim = 4
 
 bem_mri_images = 'FLASH'
 recreate_bem = True
-recreate_scalp_surface = True
 
 N_JOBS = 2
 

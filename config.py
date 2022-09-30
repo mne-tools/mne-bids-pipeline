@@ -1537,9 +1537,10 @@ already. ``True`` forces their recreation, overwriting existing BEM surfaces.
 
 recreate_scalp_surface: bool = False
 """
-Whether to re-create the high-resolution scalp surface used for visualization
-of the coregistration in the report. If ``False``, the scalp surface is only
-created if it does not exist already. If ``True``, forces a re-computation.
+Whether to re-create the scalp surfaces used for visualization of the
+coregistration in the report and the lower-density coregistration surfaces.
+If ``False``, the scalp surface is only created if it does not exist already.
+If ``True``, forces a re-computation.
 """
 
 freesurfer_verbose: bool = False
@@ -2006,6 +2007,7 @@ def gen_log_kwargs(
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
     emoji: str = '⏳️',
+    script_path: Optional[PathLike] = None,
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -2854,9 +2856,15 @@ def get_decoding_contrasts() -> Iterable[Tuple[str, str]]:
 def failsafe_run(
     script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
+    get_output_fnames: Optional[Callable] = None,
+    force_run: bool = False,
 ):
     on_error = get_on_error()
-    memory = ConditionalStepMemory(get_input_fnames=get_input_fnames)
+    memory = ConditionalStepMemory(
+        get_input_fnames=get_input_fnames,
+        get_output_fnames=get_output_fnames,
+        force_run=force_run,
+    )
 
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -2875,7 +2883,7 @@ def failsafe_run(
             ])
 
             try:
-                assert len(args) == 0  # make sure params are only kwargs
+                assert len(args) == 0, args  # make sure params are only kwargs
                 out = memory.cache(func)(*args, **kwargs)
                 assert out is None  # nothing should be returned
                 log_info['success'] = True
@@ -2942,7 +2950,8 @@ def hash_file_path(path):
 
 
 class ConditionalStepMemory():
-    def __init__(self, get_input_fnames=None):
+    def __init__(self, get_input_fnames=None, get_output_fnames=None,
+                 force_run=False):
         if memory_location is True:
             use_location = get_deriv_root() / 'joblib'
         elif not memory_location:
@@ -2955,22 +2964,34 @@ class ConditionalStepMemory():
         else:
             self.memory = None
         self.get_input_fnames = get_input_fnames
+        self.get_output_fnames = get_output_fnames
+        self.force_run = force_run
 
     def cache(self, func):
+
         def wrapper(*args, **kwargs):
-            in_files = None
+            in_files = out_files = None
+            if self.get_output_fnames is not None:
+                out_files = self.get_output_fnames(**kwargs)
             if self.get_input_fnames is not None:
                 in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
             if self.memory is None:
                 func(*args, **kwargs)
                 return
+
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
+
+            # Deal with cases (e.g., custom cov) where input files are unknown
+            unknown_inputs = in_files.pop('__unknown_inputs__', False)
+            # If this is ever true, we'll need to improve the logic below
+            assert not (unknown_inputs and self.force_run)
 
             hashes = []
             for k, v in in_files.items():
                 if isinstance(v, BIDSPath):
                     v = v.fpath
+                assert isinstance(v, pathlib.Path), f'{type(v)}: {v}'
                 assert v.exists(), f'missing in_files["{k}"] = {v}'
                 if memory_file_method == 'mtime':
                     this_hash = v.lstat().st_mtime
@@ -2988,15 +3009,50 @@ class ConditionalStepMemory():
             # Someday we could modify the joblib API to combine this with the
             # call (https://github.com/joblib/joblib/issues/1342), but our hash
             # should be plenty fast so let's not bother for now.
-            if self.memory.cache(func).check_call_in_cache(*args, **kwargs):
-                subject = kwargs.get('subject', None)
-                session = kwargs.get('session', None)
-                run = kwargs.get('run', None)
-                msg = 'Computation unnecessary (cached) …'
+            memorized_func = self.memory.cache(func)
+            msg = emoji = None
+            short_circuit = False
+            subject = kwargs.get('subject', None)
+            session = kwargs.get('session', None)
+            run = kwargs.get('run', None)
+            if memorized_func.check_call_in_cache(*args, **kwargs):
+                if unknown_inputs:
+                    msg = ('Computation forced because input files cannot '
+                           f'be determined ({unknown_inputs}) …')
+                    emoji = '🤷'
+                elif self.force_run:
+                    msg = 'Computation forced despite existing cached result …'
+                    emoji = '🔂'
+                else:
+                    msg = 'Computation unnecessary (cached) …'
+                    emoji = 'cache'
+            # When out_files is not None, we should check if the output files
+            # exist and stop if they do (e.g., in bem surface or coreg surface
+            # creation)
+            elif out_files is not None:
+                have_all = all(path.exists() for path in out_files.values())
+                if not have_all:
+                    msg = 'Output files missing, will recompute …'
+                    emoji = '🧩'
+                elif self.force_run:
+                    msg = 'Computation forced despite existing output files …'
+                    emoji = '🔂'
+                else:
+                    msg = 'Computation unnecessary (output files exist) …'
+                    emoji = '🔍'
+                    short_circuit = True
+            if msg is not None:
                 logger.info(**gen_log_kwargs(
                     message=msg, subject=subject, session=session, run=run,
-                    emoji='cache'))
-            out_files = self.memory.cache(func)(*args, **kwargs)
+                    emoji=emoji))
+            if short_circuit:
+                return
+
+            # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
+            if self.force_run or unknown_inputs:
+                out_files, _ = memorized_func.call(*args, **kwargs)
+            else:
+                out_files = memorized_func(*args, **kwargs)
             assert isinstance(out_files, dict), type(out_files)
             out_files_missing_msg = '\n'.join(
                 f'- {key}={fname}' for key, fname in out_files.items()
@@ -3928,3 +3984,14 @@ def _restrict_analyze_channels(inst, cfg):
             inst.apply_proj()
         inst.pick(analyze_channels)
     return inst
+
+
+def _get_scalp_in_files(cfg):
+    subject_path = pathlib.Path(cfg.subjects_dir) / cfg.fs_subject
+    seghead = subject_path / 'surf' / 'lh.seghead'
+    in_files = dict()
+    if seghead.is_file():
+        in_files['seghead'] = seghead
+    else:
+        in_files['t1'] = subject_path / 'mri' / 'T1.mgz'
+    return in_files

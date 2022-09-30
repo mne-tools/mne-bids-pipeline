@@ -13,7 +13,7 @@ from types import SimpleNamespace
 
 import mne
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
-from mne.preprocessing import compute_proj_ecg, compute_proj_eog
+from mne import compute_proj_evoked, compute_proj_epochs
 from mne_bids import BIDSPath
 from mne.utils import _pl
 
@@ -62,7 +62,7 @@ def run_ssp(*, cfg, subject, session, in_files):
         run=None, suffix='proj', split=None, processing=None, check=False)
 
     msg = (f'Input{_pl(raw_fnames)} ({len(raw_fnames)}): '
-           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}, ')
+           f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     msg = (f'Output: {out_files["proj"].basename}')
@@ -72,81 +72,67 @@ def run_ssp(*, cfg, subject, session, in_files):
     raw = mne.concatenate_raws([
         mne.io.read_raw_fif(raw_fname_in) for raw_fname_in in raw_fnames])
     del raw_fnames
-    msg = 'Computing SSPs for ECG'
-    logger.debug(**gen_log_kwargs(message=msg, subject=subject,
-                                  session=session))
 
-    ecg_projs = []
-    ecg_epochs = create_ecg_epochs(raw)
+    projs = dict()
+    proj_kinds = ('ecg', 'eog')
+    rate_names = dict(ecg='heart', eog='blink')
+    epochs_fun = dict(ecg=create_ecg_epochs, eog=create_eog_epochs)
+    minimums = dict(ecg=cfg.min_ecg_epochs, eog=cfg.min_eog_epochs)
+    rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
+    avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
+    n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
+    ch_name = dict(ecg=None, eog=None)
+    if cfg.eog_channels:
+        ch_name['eog'] = cfg.eog_channels
+        assert all([ch_name in raw.ch_names for ch_name in ch_name['eog']])
     if cfg.ssp_meg == 'auto':
         cfg.ssp_meg = 'combined' if cfg.use_maxwell_filter else 'separate'
-    if len(ecg_epochs) >= cfg.min_ecg_epochs:
-        if cfg.ssp_reject_ecg == 'autoreject_global':
-            reject_ecg_ = config.get_ssp_reject(
-                ssp_type='ecg',
-                epochs=ecg_epochs)
-            ecg_projs, _ = compute_proj_ecg(raw,
-                                            average=cfg.ecg_proj_from_average,
-                                            reject=reject_ecg_,
-                                            meg=cfg.ssp_meg,
-                                            **cfg.n_proj_ecg)
-        else:
-            reject_ecg_ = config.get_ssp_reject(
-                    ssp_type='ecg',
-                    epochs=None)
-            ecg_projs, _ = compute_proj_ecg(raw,
-                                            average=cfg.ecg_proj_from_average,
-                                            reject=reject_ecg_,
-                                            meg=cfg.ssp_meg,
-                                            **cfg.n_proj_ecg)
-
-    if not ecg_projs:
-        msg = ('Not enough ECG events could be found. No ECG projectors are '
-               'computed.')
+    for kind in proj_kinds:
+        projs[kind] = []
+        if not any(n_projs[kind]):
+            continue
+        proj_epochs = epochs_fun[kind](raw, ch_name=ch_name[kind])
+        n_orig = len(proj_epochs)
+        rate = n_orig / raw.times[-1] * 60
+        msg = f'Detected {rate_names[kind]} rate: {rate:5.1f} bpm'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
-
-    msg = 'Computing SSPs for EOG'
-    logger.debug(**gen_log_kwargs(message=msg, subject=subject,
-                                  session=session))
-    if cfg.eog_channels:
-        ch_names = cfg.eog_channels
-        assert all([ch_name in raw.ch_names for ch_name in ch_names])
-    else:
-        ch_names = None
-
-    eog_projs = []
-    eog_epochs = create_eog_epochs(raw)
-    # TODO: This config.get_ssp_reject violates that we should only use
-    # cfg.values in this function, so caching might not work properly here.
-    # This should be refactored at some point.
-    if len(eog_epochs) >= cfg.min_eog_epochs:
-        if cfg.ssp_reject_eog == 'autoreject_global':
-            reject_eog_ = config.get_ssp_reject(
-                ssp_type='eog',
-                epochs=eog_epochs)
-            eog_projs, _ = compute_proj_eog(raw,
-                                            average=cfg.eog_proj_from_average,
-                                            reject=reject_eog_,
-                                            **cfg.n_proj_eog)
+        # Enough to start
+        # TODO: This config.get_ssp_reject violates that we should only use
+        # cfg.values in this function, so caching might not work properly here.
+        # This should be refactored at some point.
+        if len(proj_epochs) >= minimums[kind]:
+            if rejects[kind] == 'autoreject_global':
+                reject_epochs = proj_epochs
+            else:
+                reject_epochs = None
+            reject_ = config.get_ssp_reject(
+                ssp_type=kind, epochs=reject_epochs)
+            proj_epochs.drop_bad(reject=reject_)
+        # Still enough after rejection
+        if len(proj_epochs) >= minimums[kind]:
+            proj_epochs.apply_baseline((None, None))
+            use = proj_epochs.average() if avg[kind] else proj_epochs
+            fun = compute_proj_evoked if avg[kind] else compute_proj_epochs
+            desc_prefix = (
+                f'{kind.upper()}-'
+                f'{proj_epochs.times[0]:0.3f}-'
+                f'{proj_epochs.times[-1]:0.3f})'
+            )
+            projs[kind] = fun(
+                use, meg=cfg.ssp_meg, **n_projs[kind], desc_prefix=desc_prefix)
+            out_files[f'{kind}_epochs'] = out_files['proj'].copy().update(
+                suffix=f'{kind}-epo', split=None, check=False)
+            proj_epochs.save(out_files[f'{kind}_epochs'], overwrite=True)
         else:
-            reject_eog_ = config.get_ssp_reject(
-                    ssp_type='eog',
-                    epochs=None)
-            eog_projs, _ = compute_proj_eog(raw,
-                                            average=cfg.eog_proj_from_average,
-                                            reject=reject_eog_,
-                                            **cfg.n_proj_eog)
+            msg = (f'No {kind.upper()} projectors computed: got '
+                   f'{len(proj_epochs)} good epochs < {minimums[kind]} '
+                   f'(from {n_orig} original events).')
+            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
+                                            session=session))
+        del proj_epochs
 
-    if not eog_projs:
-        msg = ('Not enough EOG events could be found. No EOG projectors are '
-               'computed.')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
-
-    mne.write_proj(out_files['proj'], eog_projs + ecg_projs, overwrite=True)
-    # TODO: Write the epochs as well for nice joint plots
-
+    mne.write_proj(out_files['proj'], sum(projs.values(), []), overwrite=True)
     assert len(in_files) == 0, in_files.keys()
     return out_files
 

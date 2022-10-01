@@ -1,13 +1,14 @@
 """
-====================
-12. Inverse solution
-====================
+================
+Inverse solution
+================
 
 Compute and apply an inverse solution for each evoked data set.
 """
 
 import itertools
 import logging
+import pathlib
 from typing import Optional
 from types import SimpleNamespace
 
@@ -19,14 +20,13 @@ from mne_bids import BIDSPath
 import config
 from config import (
     gen_log_kwargs, failsafe_run, sanitize_cond_name, parallel_func,
-    get_noise_cov_bids_path
+    get_noise_cov_bids_path, _sanitize_callable,
 )
 
 logger = logging.getLogger('mne-bids-pipeline')
 
 
-@failsafe_run(script_path=__file__)
-def run_inverse(*, cfg, subject, session=None):
+def get_input_fnames_inverse(*, cfg, subject, session):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -38,35 +38,44 @@ def run_inverse(*, cfg, subject, session=None):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
+    in_files = dict()
+    in_files['info'] = bids_path.copy().update(**cfg.source_info_path_update)
+    in_files['forward'] = bids_path.copy().update(suffix='fwd')
+    if cfg.noise_cov != 'ad-hoc':
+        in_files['cov'] = get_noise_cov_bids_path(
+            noise_cov=config.noise_cov,
+            cfg=cfg,
+            subject=subject,
+            session=session
+        )
+    if 'evoked' in cfg.inverse_targets:
+        in_files['evoked'] = bids_path.copy().update(suffix='ave')
+    return in_files
 
-    fname_info = bids_path.copy().update(**cfg.source_info_path_update)
-    fname_fwd = bids_path.copy().update(suffix='fwd')
-    fname_cov = get_noise_cov_bids_path(
-        noise_cov=config.noise_cov,
-        cfg=cfg,
-        subject=subject,
-        session=session
-    )
 
+@failsafe_run(script_path=__file__,
+              get_input_fnames=get_input_fnames_inverse)
+def run_inverse(*, cfg, subject, session, in_files):
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs
-    fname_inv = bids_path.copy().update(suffix='inv')
+    fname_fwd = in_files.pop('forward')
+    out_files = dict()
+    out_files['inverse'] = fname_fwd.copy().update(suffix='inv')
 
-    info = mne.io.read_info(fname_info)
+    info = mne.io.read_info(in_files.pop('info'))
 
-    # Note that we're using config.noise_cov here and not adding it to
-    # cfg, as in case it's a function, it won't work when running parallel jobs
-
-    if config.noise_cov == "ad-hoc":
+    if cfg.noise_cov == "ad-hoc":
         cov = mne.make_ad_hoc_cov(info)
     else:
-        cov = mne.read_cov(fname_cov)
+        cov = mne.read_cov(in_files.pop('cov'))
 
     forward = mne.read_forward_solution(fname_fwd)
+    del fname_fwd
     inverse_operator = make_inverse_operator(
         info, forward, cov, loose=cfg.loose, depth=cfg.depth,
         rank='info')
-    write_inverse_operator(fname_inv, inverse_operator, overwrite=True)
+    write_inverse_operator(
+        out_files['inverse'], inverse_operator, overwrite=True)
 
     # Apply inverse
     snr = 3.0
@@ -77,8 +86,8 @@ def run_inverse(*, cfg, subject, session=None):
     else:
         conditions = cfg.conditions
 
-    if 'evoked' in cfg.inverse_targets:
-        fname_ave = bids_path.copy().update(suffix='ave')
+    if 'evoked' in in_files:
+        fname_ave = in_files.pop('evoked')
         evokeds = mne.read_evokeds(fname_ave)
 
         for condition, evoked in zip(conditions, evokeds):
@@ -88,9 +97,9 @@ def run_inverse(*, cfg, subject, session=None):
             cond_str = sanitize_cond_name(condition)
             inverse_str = method
             hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-            fname_stc = bids_path.copy().update(
-                suffix=f'{cond_str}+{inverse_str}+{hemi_str}',
-                extension=None)
+            key = f'{cond_str}+{inverse_str}+{hemi_str}'
+            out_files[key] = fname_ave.copy().update(
+                suffix=key, extension=None)
 
             if "eeg" in cfg.ch_types:
                 evoked.set_eeg_reference('average', projection=True)
@@ -102,7 +111,9 @@ def run_inverse(*, cfg, subject, session=None):
                 method=method,
                 pick_ori=pick_ori
             )
-            stc.save(fname_stc, overwrite=True)
+            stc.save(out_files[key], overwrite=True)
+            out_files[key] = pathlib.Path(str(out_files[key]) + '-lh.stc')
+    return out_files
 
 
 def get_config(
@@ -124,6 +135,7 @@ def get_config(
         depth=config.depth,
         inverse_method=config.inverse_method,
         deriv_root=config.get_deriv_root(),
+        noise_cov=_sanitize_callable(config.noise_cov),
     )
     return cfg
 

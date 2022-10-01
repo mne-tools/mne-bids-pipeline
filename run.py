@@ -40,9 +40,14 @@ log_field_styles = {
         'color': 'cyan',
         'bold': True,
         'bright': True,
-    }
+    },
+    'box': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
 }
-log_fmt = '[%(asctime)s] %(step)s%(message)s'
+log_fmt = '[%(asctime)s] %(box)s%(step)s%(message)s'
 
 
 class LogFilter(logging.Filter):
@@ -55,6 +60,8 @@ class LogFilter(logging.Filter):
             record.session = ''
         if not hasattr(record, 'run'):
             record.run = ''
+        if not hasattr(record, 'box'):
+            record.box = '╶╴'
 
         return True
 
@@ -302,9 +309,11 @@ def process(
     for script_module in script_modules:
         this_name = script_module.__name__.split('.', maxsplit=1)[-1]
         this_name = this_name.replace('.', '/')
-        logger.info('Now running  👇', extra=dict(step=f'🚀 {this_name} '))
+        extra = dict(box='┌╴', step=f'🚀 {this_name} ')
+        logger.info('Now running  👇', extra=extra)
         script_module.main()
-        logger.info('Done running 👆', extra=dict(step=f'🎉 {this_name} '))
+        extra = dict(box='└╴', step=f'🎉 {this_name} ')
+        logger.info('Done running 👆', extra=extra)
 
 
 def main():

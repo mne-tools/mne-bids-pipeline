@@ -2,14 +2,14 @@
 SRM Resting-state EEG
 """
 
-from mne_bids import get_entity_vals
-
 study_name = 'ds003775'
 bids_root = '~/mne_data/ds003775'
 deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds003775'
 
-subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
-subjects = subjects[:1]  # take only the first subject
+# To get all subjects for example:
+# from mne_bids import get_entity_vals
+# subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
+subjects = ['010']
 
 reader_extra_params = {"units": "uV"}
 

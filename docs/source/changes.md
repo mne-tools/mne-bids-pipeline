@@ -171,9 +171,9 @@ authors:
 - Generalization across time additional decimation can be configured using
   [`decoding_time_generalization_decim`][config.decoding_time_generalization_decim].
   ({{ gh(603) }} by {{ authors.larsoner }})
-- Caching of pipeline enabled (up to/including decoding and time-frequency)
+- Caching of pipeline enabled for many pipeline steps
   by default using [`memory_location=True'`][config.memory_location]
-  ({{ gh(563) }}, {{ gh (600)  }}, and {{ gh(608) }}
+  ({{ gh(563) }}, {{ gh (600) }}, {{ gh(608) }}, {{ gh(615) }}
   by {{ authors.agramfort }} and {{ authors.larsoner }})
 - Basic testing of infant MEG data with movement was added to CI testing
   ({{ gh(582) }} by {{ authors.larsoner }})
@@ -185,6 +185,8 @@ authors:
   ({{ gh(606) }} by {{ authors.larsoner }})
 - Spatial filtering using SSP is now supported for EEG data
   ({{ gh(606) }} by {{ authors.larsoner }})
+- Add SSP joint plots to generated reports
+- ({{ gh(614) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

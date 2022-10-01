@@ -24,14 +24,46 @@ logger = logging.getLogger(__name__)
 log_level_styles = {
     'info': {
         'bright': True,
-        'bold': True
+        'bold': True,
     }
 }
-log_fmt = '[%(asctime)s] %(message)s'
+log_field_styles = {
+    'asctime': {
+        'color': 'green'
+    },
+    'step': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
+    'msg': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    }
+}
+log_fmt = '[%(asctime)s] %(step)s%(message)s'
+
+
+class LogFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'step'):
+            record.step = ''
+        if not hasattr(record, 'subject'):
+            record.subject = ''
+        if not hasattr(record, 'session'):
+            record.session = ''
+        if not hasattr(record, 'run'):
+            record.run = ''
+
+        return True
+
+
+logger.addFilter(LogFilter())
+
 coloredlogs.install(
-    fmt=log_fmt,
-    level_styles=log_level_styles,
-    logger=logger
+    fmt=log_fmt, level='info', logger=logger,
+    level_styles=log_level_styles, field_styles=log_field_styles,
 )
 
 PathLike = Union[str, pathlib.Path]
@@ -268,9 +300,11 @@ def process(
     )
 
     for script_module in script_modules:
-        logger.info(f'🚀 Now running script: {script_module.__name__} 👇')
+        this_name = script_module.__name__.split('.', maxsplit=1)[-1]
+        this_name = this_name.replace('.', '/')
+        logger.info('Now running  👇', extra=dict(step=f'🚀 {this_name} '))
         script_module.main()
-        logger.info(f'🎉 Done running script: {script_module.__name__} 👆')
+        logger.info('Done running 👆', extra=dict(step=f'🎉 {this_name} '))
 
 
 def main():

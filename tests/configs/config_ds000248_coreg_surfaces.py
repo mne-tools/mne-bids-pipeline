@@ -10,3 +10,5 @@ subjects_dir = f'{bids_root}/derivatives/freesurfer/subjects'
 subjects = ['01']
 conditions = ['Auditory']
 ch_types = ['meg']
+
+recreate_scalp_surface = True

@@ -16,4 +16,3 @@ mprofile_*.dat
 dist/
 mne_bids_pipeline.egg-info/
 build/
-dist/

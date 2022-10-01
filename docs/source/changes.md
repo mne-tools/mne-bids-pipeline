@@ -173,7 +173,7 @@ authors:
   ({{ gh(603) }} by {{ authors.larsoner }})
 - Caching of pipeline enabled for many pipeline steps
   by default using [`memory_location=True'`][config.memory_location]
-  ({{ gh(563) }}, {{ gh (600) }}, {{ gh(608) }}, {{ gh(615) }}
+  ({{ gh(563) }}, {{ gh (600) }}, {{ gh(608) }}, {{ gh(615) }}, {{ gh(618) }}
   by {{ authors.agramfort }} and {{ authors.larsoner }})
 - Basic testing of infant MEG data with movement was added to CI testing
   ({{ gh(582) }} by {{ authors.larsoner }})

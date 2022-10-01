@@ -1929,7 +1929,9 @@ os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
 
 logger = logging.getLogger('mne-bids-pipeline')
 
-log_fmt = '[%(asctime)s] %(step)s%(subject)s%(session)s%(run)s%(message)s'
+log_fmt = (
+    '[%(asctime)s] %(box)s%(step)s%(subject)s%(session)s%(run)s%(message)s'
+)
 log_date_fmt = '%H:%M:%S'
 # TODO:
 # This does not persist across threads, probably due to relead of coloredlogs?
@@ -1966,7 +1968,12 @@ log_field_styles = {
     },
     'run': {
         'bold': True
-    }
+    },
+    'box': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
 }
 
 
@@ -1980,6 +1987,8 @@ class LogFilter(logging.Filter):
             record.session = ''
         if not hasattr(record, 'run'):
             record.run = ''
+        if not hasattr(record, 'box'):
+            record.box = '│ '
 
         return True
 
@@ -1999,6 +2008,7 @@ mne.set_log_level(verbose=mne_log_level.upper())
 class LogKwargsT(TypedDict):
     msg: str
     extra: Dict[str, str]
+    box: str
 
 
 def gen_log_kwargs(
@@ -2027,7 +2037,8 @@ def gen_log_kwargs(
         skip='⏩',
     ).get(emoji, emoji)
     extra = {
-        'step': f'{emoji} {step_name}'
+        'step': f'{emoji} {step_name}',
+        'box': '│ ',
     }
     if subject:
         extra['subject'] = subject
@@ -2038,7 +2049,7 @@ def gen_log_kwargs(
 
     kwargs: LogKwargsT = {
         'msg': message,
-        'extra': extra
+        'extra': extra,
     }
     return kwargs
 
@@ -3995,3 +4006,24 @@ def _get_scalp_in_files(cfg):
     else:
         in_files['t1'] = subject_path / 'mri' / 'T1.mgz'
     return in_files
+
+
+def _get_bem_conductivity(cfg):
+    if cfg.fs_subject in ('fsaverage', cfg.use_template_mri):
+        conductivity = None  # should never be used
+        tag = '5120-5120-5120'
+    elif 'eeg' in cfg.ch_types:
+        conductivity = (0.3, 0.006, 0.3)
+        tag = '5120-5120-5120'
+    else:
+        conductivity = (0.3,)
+        tag = '5120'
+    return conductivity, tag
+
+
+def _sanitize_callable(val):
+    # Callables are not nicely pickleable, so let's pass a string instead
+    if callable(val):
+        return 'custom'
+    else:
+        return val

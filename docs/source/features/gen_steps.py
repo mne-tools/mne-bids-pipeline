@@ -2,6 +2,7 @@
 """Generate steps.md."""
 
 import importlib
+import os
 from pathlib import Path
 import sys
 
@@ -18,6 +19,7 @@ if str(config_dir) not in sys.path:
     sys.path.insert(0, str(config_dir))
 from run import _get_script_modules
 # We need to provide some valid config
+os.environ['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
 script_modules = _get_script_modules(
     config=str(config_dir / 'tests' / 'configs' / 'config_ds000248.py'))
 

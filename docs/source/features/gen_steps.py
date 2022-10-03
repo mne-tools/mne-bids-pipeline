@@ -20,8 +20,8 @@ if str(config_dir) not in sys.path:
 from run import _get_script_modules
 # We need to provide some valid config
 os.environ['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
-script_modules = _get_script_modules(
-    config=str(config_dir / 'tests' / 'configs' / 'config_ds000248.py'))
+config_path = str(config_dir / 'tests' / 'configs' / 'config_ds000248.py')
+script_modules = _get_script_modules(config=config_path)
 
 # Construct the lines of steps.md
 lines = [pre]

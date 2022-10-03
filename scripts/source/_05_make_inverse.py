@@ -1,7 +1,4 @@
-"""
-================
-Inverse solution
-================
+"""Inverse solution.
 
 Compute and apply an inverse solution for each evoked data set.
 """

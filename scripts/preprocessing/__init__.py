@@ -1,3 +1,5 @@
+"""Preprocessing."""
+
 from . import _01_maxfilter
 from . import _02_frequency_filter
 from . import _03_make_epochs

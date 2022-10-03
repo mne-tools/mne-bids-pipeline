@@ -1,9 +1,6 @@
-"""
-===========
-04. Run SSP
-===========
+"""Run Signal Subspace Projections (SSP) for artifact correction.
 
-Compute Signal Subspace Projections (SSP).
+These are often also referred to as PCA vectors.
 """
 
 import itertools

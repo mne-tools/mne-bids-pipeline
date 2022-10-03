@@ -1,7 +1,4 @@
-"""
-===============================
-11. Noise covariance estimation
-===============================
+"""Noise covariance estimation.
 
 Covariance matrices are computed and saved.
 """

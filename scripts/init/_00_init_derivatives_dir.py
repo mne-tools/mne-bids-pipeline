@@ -1,9 +1,6 @@
-"""
-========================
-00. Init derivatives_dir
-========================
+"""Initialize derivatives_dir.
 
-We initialize the derivatives directory.
+Initialize the derivatives directory.
 """
 
 import logging

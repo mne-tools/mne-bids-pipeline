@@ -1,7 +1,4 @@
-"""
-============
-Source space
-============
+"""Setup source space.
 
 Set up source space for forward and inverse computation.
 """

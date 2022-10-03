@@ -1,7 +1,4 @@
-"""
-================
-Forward solution
-================
+"""Forward solution.
 
 Calculate forward solution for MEG channels.
 """

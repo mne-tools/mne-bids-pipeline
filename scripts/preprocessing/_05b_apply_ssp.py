@@ -1,7 +1,4 @@
-"""
-===============
-05b. Apply SSP
-===============
+"""Apply SSP projections and obtain the cleaned epochs.
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP
 projections components are removed from the data.

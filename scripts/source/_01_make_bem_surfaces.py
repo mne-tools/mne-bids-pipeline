@@ -1,7 +1,4 @@
-"""
-===================
-Create BEM surfaces
-===================
+"""Create BEM surfaces.
 
 Generate the BEM surfaces from a T1 or FLASH MRI scan.
 """

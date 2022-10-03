@@ -1,7 +1,5 @@
-"""
-===========
-04. Run ICA
-===========
+"""Run Independent Component Analysis (ICA) for artifact correction.
+
 This fits ICA on epoched data filtered with 1 Hz highpass,
 for this purpose only using fastICA. Separate ICAs are fitted and stored for
 MEG and EEG data.

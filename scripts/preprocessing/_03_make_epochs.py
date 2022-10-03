@@ -1,7 +1,4 @@
-"""
-====================
-03. Construct epochs
-====================
+"""Extract epochs.
 
 The epochs are constructed by using the events created in script 03. MNE
 supports hierarchical events that allows selection to different groups more

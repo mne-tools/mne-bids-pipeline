@@ -1,7 +1,4 @@
-"""
-=================================================
-Time-by-time decoding using a "sliding" estimator
-=================================================
+"""Decode time-by-time using a "sliding" estimator.
 
 A sliding estimator fits a separate logistic regression model for every time
 point. The end result is an averaging effect across sensors.

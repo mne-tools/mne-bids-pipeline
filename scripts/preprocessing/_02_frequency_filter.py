@@ -1,7 +1,4 @@
-"""
-==========================
-02. Apply frequency filter
-==========================
+"""Apply low- and high-pass filters.
 
 The data are bandpass filtered to the frequencies defined in config.py
 (config.h_freq - config.l_freq Hz) using linear-phase fir filter with
@@ -15,7 +12,6 @@ directory.
 To save space, the raw data can be resampled.
 
 If config.interactive = True plots raw data and power spectral density.
-
 """  # noqa: E501
 
 import sys

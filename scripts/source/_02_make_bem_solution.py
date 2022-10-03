@@ -1,7 +1,4 @@
-"""
-====================
-Compute BEM solution
-====================
+"""Compute BEM solution.
 
 Compute the BEM solution.
 """

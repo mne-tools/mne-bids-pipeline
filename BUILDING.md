@@ -4,5 +4,6 @@
 * Create `sdist` distribution:
 
   ```shell
-  python -m build --sdist
+  pip install -q build
+  python -m build  # will build sdist and wheel
   ```

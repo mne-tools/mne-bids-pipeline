@@ -316,5 +316,9 @@ def process(
         logger.info('Done running 👆', extra=extra)
 
 
-if __name__ == '__main__':
+def main():
     fire.Fire(process)
+
+
+if __name__ == '__main__':
+    main()

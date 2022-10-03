@@ -5,17 +5,16 @@ import shutil
 import os
 from pathlib import Path
 import argparse
-import runpy
 from typing import Collection, Dict, Optional
 if sys.version_info >= (3, 8):
     from typing import TypedDict
 else:
     from typing_extensions import TypedDict
 
+from mne.utils import run_subprocess
 
-# Add the pipelines dir to the PATH
-study_template_dir = Path(__file__).absolute().parents[1]
-sys.path.append(str(study_template_dir))
+
+BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
 
 
 def fetch(dataset=None):
@@ -152,7 +151,7 @@ def run_tests(test_suite, *, download, debug, cache):
             os.environ.update(test_options['env'])
 
         config = test_options.get('config', f'config_{dataset}.py')
-        config_path = study_template_dir / 'tests' / 'configs' / config
+        config_path = BIDS_PIPELINE_DIR / 'tests' / 'configs' / config
 
         # Fetch the data.
         dataset_name = test_options.get('dataset', dataset.split('_')[0])
@@ -175,7 +174,6 @@ def run_tests(test_suite, *, download, debug, cache):
                 dst=Path('~/mne_data/ds001971/participants.tsv').expanduser()
             )
 
-
         # Test the `--n_jobs` parameter
         if dataset == 'ds000117':
             n_jobs = '1'
@@ -186,30 +184,18 @@ def run_tests(test_suite, *, download, debug, cache):
         steps = test_options.get(
             'steps', ('preprocessing', 'sensor', 'report'))
         task = test_options.get('task', None)
-
-        run_script = study_template_dir / 'run.py'
-        # We need to adjust sys.argv so we can pass "command line arguments"
-        # to run.py when executed via runpy.
-        argv_orig = sys.argv.copy()
-        run_path = str(run_script)
-        sys.argv = [
-            run_path,
-            f'--steps={",".join(steps)}',
+        command = [
+            'mne_bids_pipeline',
             f'--config={config_path}',
+            f'--steps={",".join(steps)}',
             f'--task={task}' if task else '',
             f'--n_jobs={n_jobs}' if n_jobs else '',
             '--debug=1' if debug else '',
             '--cache=0' if not cache else '',
             f'--interactive=0'
         ]
-        # Eliminate "empty" items
-        sys.argv = [arg for arg in sys.argv if arg != '']
-        # We have to use run_path because run_module doesn't allow
-        # relative imports.
-        try:
-            runpy.run_path(run_path, run_name='__main__')
-        finally:
-            sys.argv = argv_orig
+        command = [x for x in command if x != ''] # Eliminate "empty" items
+        run_subprocess(command=command)
 
 
 if __name__ == '__main__':
@@ -267,3 +253,4 @@ if __name__ == '__main__':
           f'{", ".join(test_suite.keys())}')
 
     run_tests(test_suite, download=download, debug=debug, cache=cache)
+

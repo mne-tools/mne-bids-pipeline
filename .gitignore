@@ -13,3 +13,6 @@ __pycache__/
 .dask-worker-space/
 mprofile_*.dat
 .joblib_cache/
+dist/
+mne_bids_pipeline.egg-info/
+build/

@@ -1,0 +1,106 @@
+[project]
+name = "mne-bids-pipeline"
+description = "Automated processing and report generation for MNE-Python."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE.txt"}
+keywords = ["science", "neuroscience", "psychology"]
+authors = [
+  {name = "Eric Larson"},
+  {name = "Alexandre Gramfort"},
+  {name = "Mainak Jas"},
+  {name = "Richard Höchenberger", email = "richard.hoechenberger@gmail.com"},
+]
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python"
+]
+dependencies = [
+    "typing_extensions; python_version < '3.8'",
+    "importlib_metadata; python_version < '3.8'",
+    "psutil",  # for joblib
+    "joblib >= 0.14",
+    "dask[distributed]",
+    "jupyter-server-proxy",  # to have dask and jupyter working together
+    "scikit-learn",
+    "pandas",
+    "seaborn",
+    "json_tricks",
+    "coloredlogs",
+    "python-picard",
+    "fire",
+    "pyqt5",
+    "pyvista",
+    "pyvistaqt",
+    "openpyxl",
+    "autoreject",
+    "mne[hdf5]",
+    "mne-bids[full]",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master",
+    "mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main",
+    "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
+]
+tests = [
+    "psutil",
+    "datalad",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-macros-plugin",
+    "mkdocstrings-python",
+    "jinja2 < 3.1.0",  # https://twitter.com/readthedocs/status/1507388916013314048
+    "black",  # function signature formatting
+    "livereload",
+    "openneuro-py",
+    "httpx >= 0.20",
+    "tqdm",
+    "Pygments <= 2.11.2",
+    "pyyaml",
+]
+
+[project.scripts]
+mne_bids_pipeline = "mne_bids_pipeline.run:main"
+
+[project.urls]
+homepage = "https://mne.tools/mne-bids-pipeline"
+repository = "https://github.com/mne-tools/mne-bids-pipeline"
+changelog = "http://mne.tools/mne-bids-pipeline/changes.html"
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+# can be left blank
+
+[tool.setuptools]
+package-dir = {mne_bids_pipeline = "."}
+py-modules = ["run", "config"]
+packages = [
+  "mne_bids_pipeline",
+  "mne_bids_pipeline.scripts",
+  "mne_bids_pipeline.scripts.freesurfer",
+  "mne_bids_pipeline.scripts.freesurfer.contrib",
+  "mne_bids_pipeline.scripts.init",
+  "mne_bids_pipeline.scripts.preprocessing",
+  "mne_bids_pipeline.scripts.report",
+  "mne_bids_pipeline.scripts.sensor",
+  "mne_bids_pipeline.scripts.source",
+]
+
+[tool.setuptools.package-data]
+"mne_bids_pipeline.scripts.freesurfer.contrib" = ["version"]
+
+[tool.codespell]
+skip = "docs/site/*,*.html,scripts/freesurfer/contrib/*"
+ignore-words = "ignore_words.txt"
+builtin = "clear,rare,informal,names,usage"
+quiet-level = 3
+interactive = 3
+enable-colors = ""
+count = ""

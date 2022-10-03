@@ -30,7 +30,7 @@ jobs:
     - name: Lint config.py with flake8
       run: make flake-config
     - name: Install codespell
-      run: pip install codespell
+      run: pip install "codespell @ https://github.com/Freed-Wu/codespell/archive/refs/heads/iss2055.zip" tomli  # fork that supports pyproject.toml
     - name: Run codespell
       run: make codespell-error
   check-doc:
@@ -46,5 +46,5 @@ jobs:
       with:
         fetch-depth: 0
     - uses: actions/setup-python@v4
-    - run: pip install pytest
+    - run: pip install pytest mne
     - run: pytest -ra -vv tests/

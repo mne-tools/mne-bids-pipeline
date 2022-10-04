@@ -72,40 +72,40 @@ Run the pipeline
     To run the full pipeline, execute the following command in your
     terminal:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py
+    mne_bids_pipeline --config=/path/to/your/custom_config.py
     ```
 
 ??? example "Run only parts of the pipeline"
     Run only the preprocessing steps:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=preprocessing
     ```
 
     Run only the sensor-level processing steps:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=sensor
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=sensor
     ```
 
     Run only the source-level (inverse solution) processing steps:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=source
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=source
     ```
 
     Only generate the report:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=report
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=report
     ```
 
     (Re-)run ICA:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing/ica
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=preprocessing/ica
     ```
 
     You can also run multiple steps with one command by separating different
     steps by a comma. For example, to run preprocessing and sensor-level
     processing steps using a single command, do:
     ```shell
-    python run.py --config=/path/to/your/custom_config.py --steps=preprocessing,sensor
+    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=preprocessing,sensor
     ```
 
 You can directly visit our [examples page](../examples/examples.md) to see some configuration files

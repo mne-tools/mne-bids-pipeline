@@ -1,7 +1,4 @@
-"""
-====================================================
-Decoding pairs of conditions based on entire epochs.
-====================================================
+"""Decode pairs of conditions based on entire epochs.
 
 Entire epochs are fed into a logistic regression model. Decoding performance
 then tells how well the classifier could predict which epoch belongs to

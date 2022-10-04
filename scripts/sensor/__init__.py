@@ -1,3 +1,5 @@
+"""Sensor-space analysis."""
+
 from . import _01_make_evoked
 from . import _02_decoding_full_epochs
 from . import _03_decoding_time_by_time

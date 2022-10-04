@@ -1,7 +1,4 @@
-"""
-=================================
-13. Group average on source level
-=================================
+"""Group average at the source level.
 
 Source estimates are morphed to the ``fsaverage`` brain.
 """

@@ -1,7 +1,4 @@
-"""
-========================================================
-06. Remove epochs based on peak-to-peak (PTP) amplitudes
-========================================================
+"""Remove epochs based on peak-to-peak (PTP) amplitudes.
 
 Epochs containing peak-to-peak above the thresholds defined
 in the 'reject' parameter are removed from the data.

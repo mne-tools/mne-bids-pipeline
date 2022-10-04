@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+"""Run FreeSurfer's recon-all.
 
+This will run FreeSurfer's ``recon-all --all`` if necessary.
+"""
 import os
 import shutil
 import sys

@@ -1,3 +1,5 @@
+"""Source-space analysis."""
+
 from . import _01_make_bem_surfaces
 from . import _02_make_bem_solution
 from . import _03_setup_source_space

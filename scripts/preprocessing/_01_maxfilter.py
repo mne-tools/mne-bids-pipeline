@@ -1,7 +1,4 @@
-"""
-===========================
-01. MaxWell-filter MEG data
-===========================
+"""Maxwell-filter MEG data.
 
 If you chose to run Maxwell filter (config.use_maxwell_filter = True),
 the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
@@ -15,7 +12,7 @@ config.mf_reference_run.
 It is critical to mark bad channels before Maxwell filtering.
 
 The function loads machine-specific calibration files.
-"""  # noqa: E501
+"""
 
 import itertools
 import logging

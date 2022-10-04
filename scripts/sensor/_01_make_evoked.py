@@ -1,10 +1,4 @@
-"""
-===============
-06. Evoked data
-===============
-
-The evoked data sets are created by averaging different conditions.
-"""
+"""Extract evoked data for each condition."""
 
 import itertools
 import logging

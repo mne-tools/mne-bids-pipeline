@@ -1,7 +1,4 @@
-"""
-================================
-08. Time-frequency decomposition
-================================
+"""Time-frequency decomposition.
 
 The epoched data is transformed to time-frequency domain using morlet wavelets.
 The average power and inter-trial coherence are computed and saved to disk.

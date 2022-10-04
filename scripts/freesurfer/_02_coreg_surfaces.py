@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+"""Generate coregistration surfaces.
 
+Use FreeSurfer's ``mkheadsurf`` and related utilities to make head surfaces
+suitable for coregistration.
+"""
 from pathlib import Path
 import logging
 from typing import Union

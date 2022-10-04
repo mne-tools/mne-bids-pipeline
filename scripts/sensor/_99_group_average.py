@@ -1,7 +1,4 @@
-"""
-=====================================
-07. Group average at the sensor level
-=====================================
+"""Group average at the sensor level.
 
 The M/EEG-channel data are averaged for group averages.
 """

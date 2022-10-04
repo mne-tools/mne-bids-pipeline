@@ -2341,7 +2341,12 @@ def get_datatype() -> Literal['meg', 'eeg']:
                            "the MNE-BIDS-pipeline developers. Thank you.")
 
 
-_all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+try:
+    _all_datatypes = mne_bids.get_datatypes(root=get_bids_root())
+except FileNotFoundError:
+    if _strict_resolve:
+        raise
+    _all_datatypes = ['meg', 'eeg']
 _ignore_datatypes = set(_all_datatypes) - set([get_datatype()])
 
 if _strict_resolve:

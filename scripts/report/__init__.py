@@ -1,3 +1,5 @@
+"""Analysis report generation."""
+
 from . import _01_make_reports
 
 SCRIPTS = (

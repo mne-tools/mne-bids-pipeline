@@ -1,7 +1,4 @@
-"""
-================
-99. Make reports
-================
+"""Make reports.
 
 Builds an HTML report for each subject containing all the relevant analysis
 plots.

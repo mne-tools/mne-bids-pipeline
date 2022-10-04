@@ -135,11 +135,11 @@ def _get_script_modules(
 
     SCRIPT_MODULES = {
         'init': INIT_SCRIPTS,
+        'freesurfer': FREESURFER_SCRIPTS,
         'preprocessing': PREPROCESSING_SCRIPTS,
         'sensor': SENSOR_SCRIPTS,
         'source': SOURCE_SCRIPTS,
         'report': REPORT_SCRIPTS,
-        'freesurfer': FREESURFER_SCRIPTS
     }
 
     # Do not include the FreeSurfer scripts in "all" – we don't intend to run

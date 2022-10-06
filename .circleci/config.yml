@@ -25,11 +25,18 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - source-cache-1
-      - run: git config --global --add remote.origin.fetch '^refs/heads/gh-pages'
+            - source-cache-main
+      - run: | # avoid checking out entire repo
+          if
+          if [ ! -e '/home/circleci/project/.git' ] ; then
+            echo 'Cloning git repository'
+            mkdir -p '/home/circleci/project'
+            cd '/home/circleci/project'
+            git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL" -b main .  # this line is the big change!
+          fi
       - checkout
       - save_cache:
-          key: source-cache-1
+          key: source-cache-main
           paths:
             - ".git"
       - run:
@@ -971,10 +978,10 @@ jobs:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
       - restore_cache:
           keys:
-            - source-cache
+            - source-cache-full
       - checkout
       - save_cache:
-          key: source-cache
+          key: source-cache-full
           paths:
             - ".git"
       - attach_workspace:

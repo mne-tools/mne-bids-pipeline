@@ -51,8 +51,7 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
-            - .local/bin
-            - .local/lib
+            - python_env
 
   cache_ds000117:
     <<: *imageconfig

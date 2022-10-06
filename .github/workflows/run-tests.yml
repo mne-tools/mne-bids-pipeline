@@ -41,8 +41,6 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
     - uses: actions/setup-python@v4
     - run: pip install pytest mne
     - run: pytest -ra -vv mne_bids_pipeline

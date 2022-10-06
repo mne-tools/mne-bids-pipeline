@@ -84,7 +84,7 @@ def test_datasets_in_doc():
         get = f'Get {name}'
         n_found = circle_yaml_src.count(get)
         assert n_found == 1, get
-        dl = f'download_test_data.py -d {name}'
+        dl = f'$DOWNLOAD_DATA -d {name}'
         n_found = circle_yaml_src.count(dl)
         assert n_found == 1, dl
         # jobs: save_cache:

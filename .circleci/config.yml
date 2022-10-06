@@ -38,10 +38,8 @@ jobs:
       - run:
           name: Get Python running
           command: |
-            python -m pip install --upgrade --progress-bar off pip setuptools
-            python -m pip cache purge
-            python -m pip config set global.cache-dir false
-            python -m pip install -ve .[tests,dev]
+            pip install --upgrade --progress-bar off pip setuptools
+            pip install -ve .[tests,dev]
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -69,7 +67,7 @@ jobs:
       - run:
           name: Get ds000117
           command: |
-            python ~/project/tests/download_test_data.py -d ds000117
+            $DOWNLOAD_DATA -d ds000117
       - save_cache:
           key: data-cache-ds000117-{{ .Revision }}
           paths:
@@ -88,7 +86,7 @@ jobs:
       - run:
           name: Get ds003775
           command: |
-            python ~/project/tests/download_test_data.py -d ds003775
+            $DOWNLOAD_DATA -d ds003775
       - save_cache:
           key: data-cache-ds003775-{{ .Revision }}
           paths:
@@ -107,7 +105,7 @@ jobs:
       - run:
           name: Get ds001971
           command: |
-            python ~/project/tests/download_test_data.py -d ds001971
+            $DOWNLOAD_DATA -d ds001971
       - save_cache:
           key: data-cache-ds001971-{{ .Revision }}
           paths:
@@ -126,7 +124,7 @@ jobs:
       - run:
           name: Get ds004107
           command: |
-            python ~/project/tests/download_test_data.py -d ds004107
+            $DOWNLOAD_DATA -d ds004107
       - save_cache:
           key: data-cache-ds004107-{{ .Revision }}
           paths:
@@ -145,7 +143,7 @@ jobs:
       - run:
           name: Get ds000246
           command: |
-            python ~/project/tests/download_test_data.py -d ds000246
+            $DOWNLOAD_DATA -d ds000246
       - save_cache:
           key: data-cache-ds000246-{{ .Revision }}
           paths:
@@ -164,7 +162,7 @@ jobs:
       - run:
           name: Get ds000247
           command: |
-            python ~/project/tests/download_test_data.py -d ds000247
+            $DOWNLOAD_DATA -d ds000247
       - save_cache:
           key: data-cache-ds000247-{{ .Revision }}
           paths:
@@ -183,7 +181,7 @@ jobs:
       - run:
           name: Get ds000248
           command: |
-            python ~/project/tests/download_test_data.py -d ds000248
+            $DOWNLOAD_DATA -d ds000248
       - save_cache:
           key: data-cache-ds000248-{{ .Revision }}
           paths:
@@ -202,7 +200,7 @@ jobs:
       - run:
           name: Get ds001810
           command: |
-            python ~/project/tests/download_test_data.py -d ds001810
+            $DOWNLOAD_DATA -d ds001810
       - save_cache:
           key: data-cache-ds001810-{{ .Revision }}
           paths:
@@ -221,7 +219,7 @@ jobs:
       - run:
           name: Get ds003104
           command: |
-            python ~/project/tests/download_test_data.py -d ds003104
+            $DOWNLOAD_DATA -d ds003104
       - save_cache:
           key: data-cache-ds003104-{{ .Revision }}
           paths:
@@ -240,7 +238,7 @@ jobs:
       - run:
           name: Get ds003392
           command: |
-            python ~/project/tests/download_test_data.py -d ds003392
+            $DOWNLOAD_DATA -d ds003392
       - save_cache:
           key: data-cache-ds003392-{{ .Revision }}
           paths:
@@ -259,7 +257,7 @@ jobs:
       - run:
           name: Get ds004229
           command: |
-            python ~/project/tests/download_test_data.py -d ds004229
+            $DOWNLOAD_DATA -d ds004229
       - save_cache:
           key: data-cache-ds004229-{{ .Revision }}
           paths:
@@ -280,7 +278,7 @@ jobs:
       - run:
           name: Get eeg_matchingpennies
           command: |
-            python ~/project/tests/download_test_data.py -d eeg_matchingpennies
+            $DOWNLOAD_DATA -d eeg_matchingpennies
       - save_cache:
           key: data-cache-eeg_matchingpennies-{{ .Revision }}
           paths:
@@ -299,7 +297,7 @@ jobs:
       - run:
           name: Get ERP_CORE
           command: |
-            python ~/project/tests/download_test_data.py -d ERP_CORE
+            $DOWNLOAD_DATA -d ERP_CORE
       - save_cache:
           key: data-cache-ERP_CORE-{{ .Revision }}
           paths:

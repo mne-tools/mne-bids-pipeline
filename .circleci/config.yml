@@ -6,7 +6,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.9-browsers
+    - image: cimg/base:current-22.04
 
 _git: &git
   name: Configure git

@@ -25,10 +25,8 @@ jobs:
       run: conda list
     - name: Install flake8
       run: conda install -y flake8
-    - name: Lint scripts with flake8
-      run: make flake-code
-    - name: Lint config.py with flake8
-      run: make flake-config
+    - name: Lint with flake8
+      run: make flake
     - name: Install codespell
       run: pip install https://github.com/codespell_lib/codespell/zipball/master tomli
     - name: Run codespell

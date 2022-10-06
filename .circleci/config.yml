@@ -27,6 +27,7 @@ jobs:
           keys:
             - source-cache-main
       - run: | # avoid checking out entire repo
+          git config --global url."https://github.com".insteadOf "ssh://git@github.com" || true
           if [ ! -e '/home/circleci/project/.git' ] ; then
             echo 'Cloning git repository'
             mkdir -p '/home/circleci/project'

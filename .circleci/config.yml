@@ -23,9 +23,6 @@ jobs:
   setup_env:
     <<: *imageconfig
     steps:
-      - restore_cache:
-          keys:
-            - source-cache-main
       - run: | # avoid checking out entire repo
           CIRCLE_REPOSITORY_URL_HTTPS=$(echo "$CIRCLE_REPOSITORY_URL" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
           echo "Using: $CIRCLE_REPOSITORY_URL_HTTPS"
@@ -38,10 +35,6 @@ jobs:
             git remote set-url origin "$CIRCLE_REPOSITORY_URL"
           fi
       - checkout
-      - save_cache:
-          key: source-cache-main
-          paths:
-            - ".git"
       - run:
           <<: *bashenv
       - run:

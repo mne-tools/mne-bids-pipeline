@@ -9,8 +9,6 @@ jobs:
   check-style:
     name: Style
     runs-on: "ubuntu-latest"
-    strategy:
-      fail-fast: false
     defaults:
       run:
         shell: bash -l {0}
@@ -24,14 +22,11 @@ jobs:
   check-doc:
     name: Doc consistency
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     defaults:
       run:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
-    # no need to install mne_bids_pipeline and its deps here
     - run: pip install pytest mne
     - run: pytest -ra -vv mne_bids_pipeline

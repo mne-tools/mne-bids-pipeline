@@ -41,7 +41,7 @@ jobs:
             python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
-            python -m pip install -ve .[tests]
+            python -m pip install -ve .[tests,dev]
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

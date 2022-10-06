@@ -14,7 +14,7 @@ from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
 from config import gen_log_kwargs, failsafe_run, _get_bem_conductivity
-from config import parallel_func
+from config import parallel_func, _meg_in_ch_types
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -123,7 +123,7 @@ def run_forward(*, cfg, subject, session, in_files):
         info,
         mne.pick_types(
             info,
-            meg="meg" in cfg.ch_types,
+            meg=_meg_in_ch_types(cfg.ch_types),
             eeg="eeg" in cfg.ch_types,
             exclude=[]
         )

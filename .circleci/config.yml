@@ -40,6 +40,12 @@ jobs:
           command: |
             pip install --upgrade --progress-bar off pip setuptools
             pip install -ve .[tests,dev]
+            pip install PyQt6
+      - run:
+          name: Check Qt
+          command: |
+            wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
+            bash check_qt_import.sh PyQt6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

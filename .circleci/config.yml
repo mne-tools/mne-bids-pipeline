@@ -218,8 +218,8 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-        keys:
-          - data-cache-ds003104-1
+          keys:
+            - data-cache-ds003104-1
       - run:
           <<: *bashenv
       - run:

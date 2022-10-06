@@ -27,12 +27,14 @@ jobs:
           keys:
             - source-cache-main
       - run: | # avoid checking out entire repo
-          git config --global url."https://github.com".insteadOf "ssh://git@github.com" || true
+          CIRCLE_REPOSITORY_URL_HTTPS=$(echo "git@github.com:mne-tools/mne-bids-pipeline.git" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
+          git config --global url."https://github.com".insteadOf "git@github.com:"
           if [ ! -e '/home/circleci/project/.git' ] ; then
             echo 'Cloning git repository'
             mkdir -p '/home/circleci/project'
             cd '/home/circleci/project'
-            git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL" -b main .  # this line is the big change!
+            git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL_HTTPS" -b main .  # this line is the big change!
+            git remote set-url origin "$CIRCLE_REPOSITORY_URL"
           fi
       - checkout
       - save_cache:

@@ -74,7 +74,7 @@ wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_mi
 source get_minimal_commands.sh
 mkdir -p ~/mne_data
 echo "set -e" >> $BASH_ENV;
-echo 'export OPENBLAS_NUM_THREADS=3' >> $BASH_ENV;
+echo 'export OPENBLAS_NUM_THREADS=2' >> $BASH_ENV;
 echo 'shopt -s globstar' >> $BASH_ENV;  # Enable recursive globbing via **
 echo 'export MNE_DATA=$HOME/mne_data' >> $BASH_ENV;
 echo "export PATH=~/.local/bin/:$PATH" >> $BASH_ENV

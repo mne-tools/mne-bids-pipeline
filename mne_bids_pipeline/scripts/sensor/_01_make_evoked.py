@@ -84,6 +84,8 @@ def run_evoked(*, cfg, subject, session, in_files):
             all_evoked[contrast["name"]] = evoked_diff
 
     evokeds = list(all_evoked.values())
+    for evoked in evokeds:
+        evoked.nave = int(round(evoked.nave))  # avoid a warning
     mne.write_evokeds(out_files['evoked'], evokeds, overwrite=True)
 
     if cfg.interactive:

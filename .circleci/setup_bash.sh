@@ -62,16 +62,12 @@ fi
 sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
 wget -q -O- http://neuro.debian.net/lists/focal.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
 sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-sudo apt -qq update
-sudo apt install -qq \
-    tcsh git-annex-standalone libosmesa6 libglx-mesa0 libopengl0 libglx0 \
-    libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 \
-    libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 \
-    libxcb-xfixes0 libxcb-xinerama0 libxft2 \
-    python3.10-venv python3-venv
-python3.10 -m venv ~/python_env
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
+wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
+bash setup_xvfb.sh
+sudo apt install -qq tcsh git-annex-standalone python3.10-venv python3-venv
+python3.10 -m venv ~/python_env
 mkdir -p ~/mne_data
 echo "set -e" >> $BASH_ENV;
 echo 'export OPENBLAS_NUM_THREADS=3' >> $BASH_ENV;

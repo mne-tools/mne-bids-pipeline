@@ -92,3 +92,9 @@ quiet-level = 3
 interactive = 3
 enable-colors = ""
 count = ""
+
+[tool.pytest.ini_options]
+addopts = "-ra -vv --tb=short"
+testpaths = [
+    "mne_bids_pipeline",
+]

@@ -29,4 +29,4 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
     - run: pip install pytest mne
-    - run: pytest -ra -vv mne_bids_pipeline
+    - run: pytest

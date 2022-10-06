@@ -25,10 +25,11 @@ jobs:
     steps:
       - restore_cache:
           keys:
-            - source-cache
+            - source-cache-1
+      - run: git config --global --add remote.origin.fetch '^refs/heads/gh-pages'
       - checkout
       - save_cache:
-          key: source-cache
+          key: source-cache-1
           paths:
             - ".git"
       - run:
@@ -74,7 +75,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000117
       - save_cache:
-          key: data-cache-ds000117-{{ .Revision }}
+          key: data-cache-ds000117-1
           paths:
             - ~/mne_data/ds000117
 
@@ -83,9 +84,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003775
+      - restore_cache:
+          keys:
+            - data-cache-ds003775-1
       - run:
           <<: *bashenv
       - run:
@@ -93,7 +94,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds003775
       - save_cache:
-          key: data-cache-ds003775-{{ .Revision }}
+          key: data-cache-ds003775-1
           paths:
             - ~/mne_data/ds003775
 
@@ -102,9 +103,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds001971
+      - restore_cache:
+          keys:
+            - data-cache-ds001971-1
       - run:
           <<: *bashenv
       - run:
@@ -112,7 +113,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds001971
       - save_cache:
-          key: data-cache-ds001971-{{ .Revision }}
+          key: data-cache-ds001971-1
           paths:
             - ~/mne_data/ds001971
 
@@ -121,9 +122,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds004107
+      - restore_cache:
+          keys:
+            - data-cache-ds004107
       - run:
           <<: *bashenv
       - run:
@@ -131,7 +132,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds004107
       - save_cache:
-          key: data-cache-ds004107-{{ .Revision }}
+          key: data-cache-ds004107-1
           paths:
             - ~/mne_data/ds004107
 
@@ -140,9 +141,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000246
+      - restore_cache:
+          keys:
+            - data-cache-ds000246-1
       - run:
           <<: *bashenv
       - run:
@@ -150,7 +151,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000246
       - save_cache:
-          key: data-cache-ds000246-{{ .Revision }}
+          key: data-cache-ds000246-1
           paths:
             - ~/mne_data/ds000246
 
@@ -159,9 +160,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000247
+      - restore_cache:
+          keys:
+            - data-cache-ds000247
       - run:
           <<: *bashenv
       - run:
@@ -169,7 +170,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000247
       - save_cache:
-          key: data-cache-ds000247-{{ .Revision }}
+          key: data-cache-ds000247-1
           paths:
             - ~/mne_data/ds000247
 
@@ -178,9 +179,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000248
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-1
       - run:
           <<: *bashenv
       - run:
@@ -188,7 +189,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000248
       - save_cache:
-          key: data-cache-ds000248-{{ .Revision }}
+          key: data-cache-ds000248-1
           paths:
             - ~/mne_data/ds000248
 
@@ -197,9 +198,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds001810
+      - restore_cache:
+          keys:
+            - data-cache-ds001810-1
       - run:
           <<: *bashenv
       - run:
@@ -207,7 +208,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds001810
       - save_cache:
-          key: data-cache-ds001810-{{ .Revision }}
+          key: data-cache-ds001810-1
           paths:
             - ~/mne_data/ds001810
 
@@ -216,9 +217,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003104
+      - restore_cache:
+        keys:
+          - data-cache-ds003104-1
       - run:
           <<: *bashenv
       - run:
@@ -226,7 +227,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds003104
       - save_cache:
-          key: data-cache-ds003104-{{ .Revision }}
+          key: data-cache-ds003104-1
           paths:
             - ~/mne_data/ds003104
 
@@ -235,9 +236,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003392
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-1
       - run:
           <<: *bashenv
       - run:
@@ -245,7 +246,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds003392
       - save_cache:
-          key: data-cache-ds003392-{{ .Revision }}
+          key: data-cache-ds003392-1
           paths:
             - ~/mne_data/ds003392
 
@@ -254,9 +255,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds004229
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-1
       - run:
           <<: *bashenv
       - run:
@@ -264,7 +265,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds004229
       - save_cache:
-          key: data-cache-ds004229-{{ .Revision }}
+          key: data-cache-ds004229-1
           paths:
             - ~/mne_data/ds004229
 
@@ -273,9 +274,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-eeg_matchingpennies
+      - restore_cache:
+          keys:
+            - data-cache-eeg_matchingpennies-1
       - run:
           <<: *bashenv
       - run:
@@ -285,7 +286,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d eeg_matchingpennies
       - save_cache:
-          key: data-cache-eeg_matchingpennies-{{ .Revision }}
+          key: data-cache-eeg_matchingpennies-1
           paths:
             - ~/mne_data/eeg_matchingpennies
 
@@ -294,9 +295,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ERP_CORE
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE
       - run:
           <<: *bashenv
       - run:
@@ -304,7 +305,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ERP_CORE
       - save_cache:
-          key: data-cache-ERP_CORE-{{ .Revision }}
+          key: data-cache-ERP_CORE-1
           paths:
             - ~/mne_data/ERP_CORE
 
@@ -317,7 +318,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000117-{{ .Revision }}
+            - data-cache-ds000117-1
       - run:
           name: test ds000117
           command: |
@@ -343,7 +344,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003775-{{ .Revision }}
+            - data-cache-ds003775-1
       - run:
           name: test ds003775
           command: |
@@ -369,7 +370,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds001971-{{ .Revision }}
+            - data-cache-ds001971-1
       - run:
           name: test ds001971
           command: |
@@ -395,7 +396,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds004107-{{ .Revision }}
+            - data-cache-ds004107-1
       - run:
           name: test ds004107
           command: |
@@ -421,7 +422,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000246-{{ .Revision }}
+            - data-cache-ds000246-1
       - run:
           name: test ds000246
           no_output_timeout: 15m
@@ -450,7 +451,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000247-{{ .Revision }}
+            - data-cache-ds000247-1
       - run:
           name: test ds000247
           command: |
@@ -476,7 +477,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test ds000248
           command: |
@@ -506,7 +507,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test ds000248_ica
           command: |
@@ -534,7 +535,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test BEM from FLASH
           command: |
@@ -549,7 +550,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test BEM from T1 (watershed)
           command: |
@@ -565,7 +566,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test head surface creation for MNE coregistration
           command: |
@@ -580,7 +581,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-1
       - run:
           name: test ds000248_no_mri
           command: |
@@ -606,7 +607,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds001810-{{ .Revision }}
+            - data-cache-ds001810-1
       - run:
           name: test ds001810
           command: |
@@ -632,7 +633,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003104-{{ .Revision }}
+            - data-cache-ds003104-1
       - run:
           name: test ds003104
           command: |
@@ -658,7 +659,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003392-{{ .Revision }}
+            - data-cache-ds003392-1
       - run:
           name: test ds003392
           command: |
@@ -688,7 +689,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds004229-{{ .Revision }}
+            - data-cache-ds004229-1
       - run:
           name: test ds004229
           command: |
@@ -718,7 +719,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-eeg_matchingpennies-{{ .Revision }}
+            - data-cache-eeg_matchingpennies-1
       - run:
           name: test eeg_matchingpennies
           command: |
@@ -744,7 +745,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -778,7 +779,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -807,7 +808,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -836,7 +837,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -865,7 +866,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -894,7 +895,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -923,7 +924,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista

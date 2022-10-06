@@ -186,7 +186,7 @@ def process(
         Can either be one of the processing groups 'preprocessing', sensor',
         'source', 'report',  or 'all',  or the name of a processing group plus
         the desired script sans the step number and
-        filename extension, separated by a '/'. For exmaple, to run ICA, you
+        filename extension, separated by a '/'. For example, to run ICA, you
         would pass 'sensor/run_ica`. If unspecified, will run all processing
         steps. Can also be a tuple of steps.
     root_dir

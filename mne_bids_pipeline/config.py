@@ -416,7 +416,7 @@ analyze_channels: Union[
     Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
-steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
+steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain
 sensor-space analysis to only a few specific sensors. If `'all'`, do not
 exclude any channels (except for those selected for removal via the
 `drop_channels` setting; use with caution as this can include things like STIM
@@ -460,7 +460,7 @@ It is therefore advisable to mark such break periods for exclusion at early
 processing stages.
 
 If `True`, try to mark breaks by finding segments of the data where no
-exprimental events have occurred. This will then add annotations with the
+experimental events have occurred. This will then add annotations with the
 description `BAD_break` to the continuous data, causing these segments to be
 ignored in all following processing steps.
 
@@ -746,7 +746,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 ???+ example "Example"
     ```python
     decim = 1  # no decimation
-    decim = 4  # decimate by 4 ie devide sampling frequency by 4
+    decim = 4  # decimate by 4, i.e., divide sampling frequency by 4
     ```
 """
 
@@ -1199,7 +1199,7 @@ ica_n_components: Optional[Union[float, int]] = 0.8
 """
 MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
-data); and in the second step, the principal componenets are passed
+data); and in the second step, the principal components are passed
 to the actual ICA. You can select how many of the total principal
 components to pass to ICA – it can be all or just a subset. This determines
 how many independent components to fit, and can be controlled via this
@@ -1938,7 +1938,7 @@ log_fmt = (
 )
 log_date_fmt = '%H:%M:%S'
 # TODO:
-# This does not persist across threads, probably due to relead of coloredlogs?
+# This does not persist across threads, probably due to reload of coloredlogs?
 # coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
 log_level_styles = {
     'warning': {
@@ -2670,7 +2670,7 @@ def setup_dask_client():
             'distributed.worker.memory.terminate': 1.0,
             # TODO spilling to disk currently doesn't work reliably for us,
             # as Dask cannot spill "unmanaged" memory – and most of what we
-            # see currently is, in fact, "unmanaged". Needs thourough
+            # see currently is, in fact, "unmanaged". Needs thorough
             # investigation.
             'distributed.worker.memory.spill': False
         }
@@ -2915,7 +2915,7 @@ def failsafe_run(
                     if k in ('subject', 'session', 'task', 'run')
                 }
                 message = (
-                    f'A critical error occured. '
+                    f'A critical error occurred. '
                     f'The error message was: {str(e)}'
                 )
                 log_info['success'] = False
@@ -3836,7 +3836,7 @@ def _find_breaks_func(
                                      session=session, run=run))
         return
 
-    msg = (f'Finding breaks with a mininum duration of '
+    msg = (f'Finding breaks with a minimum duration of '
            f'{cfg.min_break_duration} seconds.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session, run=run))

@@ -76,7 +76,7 @@ def test_datasets_in_doc():
     assert len(tests) == len(set(tests))
     tests = set(tests)
     # Rather than going circle_yaml['workflows']['commit']['jobs'] and
-    # make sure everything is consitent there (too much work), let's at least
+    # make sure everything is consistent there (too much work), let's at least
     # check that we get the correct number using `.count`.
     counts = dict(ERP_CORE=7, ds000248=6)
     counts_noartifact = dict(ds000248=3)  # 3 are actually tests, not for docs

@@ -28,7 +28,7 @@ jobs:
     - name: Lint with flake8
       run: make flake
     - name: Install codespell
-      run: pip install https://github.com/codespell_lib/codespell/zipball/master tomli
+      run: pip install https://github.com/codespell-project/codespell/zipball/master tomli
     - name: Run codespell
       run: make codespell-error
   check-doc:

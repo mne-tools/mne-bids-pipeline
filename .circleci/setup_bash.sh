@@ -70,6 +70,9 @@ sudo apt install -qq \
     libxcb-xfixes0 libxcb-xinerama0 libxft2 \
     python3.10-venv python3-venv
 python3.10 -m venv ~/python_env
+wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
+source get_minimal_commands.sh
+mkdir -p ~/mne_data
 echo "set -e" >> $BASH_ENV;
 echo 'export OPENBLAS_NUM_THREADS=3' >> $BASH_ENV;
 echo 'shopt -s globstar' >> $BASH_ENV;  # Enable recursive globbing via **

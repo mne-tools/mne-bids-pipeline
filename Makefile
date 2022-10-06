@@ -4,7 +4,7 @@
 
 PYTHON ?= python
 PYTESTS ?= pytest
-CODESPELL_DIRS ?= scripts/ docs/
+CODESPELL_DIRS ?= mne_bids_pipeline/ docs/
 all: clean inplace test test-doc
 
 clean-pyc:
@@ -42,7 +42,3 @@ codespell:  # running manually; auto-fix spelling mistakes
 
 codespell-error:  # running on travis; override interactivity seting
 	@codespell -i 0 -q 7 $(CODESPELL_DIRS)
-
-pydocstyle:
-	@echo "Running pydocstyle"
-	@pydocstyle mne

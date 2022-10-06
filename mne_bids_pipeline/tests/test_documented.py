@@ -3,16 +3,12 @@ import ast
 from pathlib import Path
 import os
 import re
-import sys
 import yaml
 
-test_dir_path = Path(__file__).parent
-root_path = test_dir_path.parent
+from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
+from mne_bids_pipeline.run_tests import TEST_SUITE
 
-sys.path.insert(0, str(test_dir_path))
-
-from datasets import DATASET_OPTIONS
-from run_tests import TEST_SUITE
+root_path = Path(__file__).parent.parent.parent
 
 
 def test_options_documented():
@@ -22,14 +18,15 @@ def test_options_documented():
         contents = fid.read()
     contents = ast.parse(contents)
     in_config = [
-        item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
+        item.target.id for item in contents.body
+        if isinstance(item, ast.AnnAssign)
     ]
     assert len(set(in_config)) == len(in_config)
     in_config = set(in_config)
     settings_path = root_path.parent / "docs" / "source" / "settings"
     assert settings_path.is_dir()
     in_doc = set()
-    key = "::: config."
+    key = "::: mne_bids_pipeline.config."
     allowed_duplicates = set(
         [
             "source_info_path_update",
@@ -45,7 +42,7 @@ def test_options_documented():
                     if not line.startswith(key):
                         continue
                     # The line starts with our magic key
-                    val = line[len(key) :].strip()
+                    val = line[len(key):].strip()
                     if val not in allowed_duplicates:
                         assert val not in in_doc, "Duplicate documentation"
                     in_doc.add(val)

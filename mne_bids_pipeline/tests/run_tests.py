@@ -192,9 +192,9 @@ def run_tests(test_suite, *, download, debug, cache):
             f'--n_jobs={n_jobs}' if n_jobs else '',
             '--debug=1' if debug else '',
             '--cache=0' if not cache else '',
-            f'--interactive=0'
+            '--interactive=0'
         ]
-        command = [x for x in command if x != ''] # Eliminate "empty" items
+        command = [x for x in command if x != '']  # Eliminate "empty" items
         run_subprocess(command=command)
 
 
@@ -253,4 +253,3 @@ if __name__ == '__main__':
           f'{", ".join(test_suite.keys())}')
 
     run_tests(test_suite, download=download, debug=debug, cache=cache)
-

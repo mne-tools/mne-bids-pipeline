@@ -13,5 +13,5 @@ on this procedure. The list of bad channels detected through this procedure
 will be merged with the list of bad channels already present in the dataset,
 if any.
 
-::: config.find_flat_channels_meg
-::: config.find_noisy_channels_meg
+::: mne_bids_pipeline.config.find_flat_channels_meg
+::: mne_bids_pipeline.config.find_noisy_channels_meg

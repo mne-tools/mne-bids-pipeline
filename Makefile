@@ -33,13 +33,8 @@ check:
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
-flake-code:
-	flake8 ./run*.py ./scripts --exclude ./scripts/freesurfer/contrib
-
-flake-config:
-	flake8 ./config.py --ignore=E501,W503,W504
-
-flake: flake-code flake-config
+flake:
+	flake8 . --exclude "**/freesurfer/contrib,docs/,dist/"
 	@echo "flake8 passed"
 
 codespell:  # running manually; auto-fix spelling mistakes

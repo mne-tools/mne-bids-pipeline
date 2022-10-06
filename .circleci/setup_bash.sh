@@ -69,7 +69,7 @@ bash setup_xvfb.sh
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 # Similar CircleCI setup to upstream
-sudo apt install -qq tcsh git-annex-standalone python3.10-venv python3-venv
+sudo apt install -qq tcsh git-annex-standalone python3.10-venv python3-venv libxft2
 python3.10 -m venv ~/python_env
 mkdir -p ~/mne_data
 echo "set -e" >> $BASH_ENV;
@@ -81,22 +81,6 @@ echo 'export DISPLAY=:99' >> $BASH_ENV;
 echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV;
 echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
 echo "source ~/python_env/bin/activate" >> $BASH_ENV
+echo 'export MNE_3D_OPTION_MULTI_SAMPLES=1' >> $BASH_ENV;
 mkdir -p ~/.local/bin
 ln -s ~/python_env/bin/python ~/.local/bin/python
-
-# Disable fancy 3D rendering options
-echo 'export MNE_3D_OPTION_ANTIALIAS=false' >> $BASH_ENV;
-echo 'export MNE_3D_OPTION_DEPTH_PEELING=false' >> $BASH_ENV;
-echo 'export MNE_3D_OPTION_SMOOTH_SHADING=false' >> $BASH_ENV;
-
-wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
-source get_minimal_commands.sh
-mkdir -p ~/mne_data
-
-# start xvfb if testing
-if [[ "$CIRCLE_JOB" == "test_"* ]] || [[ "$CIRCLE_JOB" == "setup_env" ]] || [[ "$CIRCLE_JOB" == "build_docs" ]]; then
-    echo "Starting Xvfb for ${CIRCLE_JOB}"
-    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
-fi
-
-echo "export RUN_TESTS=\"python mne_bids_pipeline/tests/run_tests.py\"" >> $BASH_ENV

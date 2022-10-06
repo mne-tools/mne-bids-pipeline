@@ -78,7 +78,8 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 # can be left blank
 
-[tool.setuptools]
+[tool.setuptools.packages.find]
+exclude = ["false"]  # on CircleCI this folder appears during pip install -ve. for an unknown reason
 
 [tool.setuptools.package-data]
 "mne_bids_pipeline.scripts.freesurfer.contrib" = ["version"]

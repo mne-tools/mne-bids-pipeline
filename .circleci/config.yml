@@ -17,7 +17,6 @@ _git: &git
 _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
-    set -e
     ./.circleci/setup_bash.sh
 
 jobs:

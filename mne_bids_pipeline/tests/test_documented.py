@@ -94,7 +94,7 @@ def test_datasets_in_doc():
         # jobs: restore_cache:
         rc = f'- data-cache-{name}-'
         n_found = circle_yaml_src.count(rc)
-        count = counts.get(name, 1)
+        count = counts.get(name, 1) + 1  # one restore
         assert n_found == count, f'{rc} ({n_found} != {count})'
         # jobs: save_cache: paths:
         pth = f'- ~/mne_data/{name}'
@@ -106,6 +106,7 @@ def test_datasets_in_doc():
         assert n_found == 1, cj
         tj = f'  test_{name}'
         n_found = circle_yaml_src.count(tj)
+        count = counts.get(name, 1)
         assert n_found == count, f'{tj} ({n_found} != {count})'
         # jobs: test_*: steps: store_artifacts
         sa = f'path: /home/circleci/reports/{name}'

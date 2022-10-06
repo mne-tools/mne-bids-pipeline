@@ -27,7 +27,6 @@ jobs:
           keys:
             - source-cache-main
       - run: | # avoid checking out entire repo
-          if
           if [ ! -e '/home/circleci/project/.git' ] ; then
             echo 'Cloning git repository'
             mkdir -p '/home/circleci/project'
@@ -72,9 +71,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000117
+      - restore_cache:
+          keys:
+            - data-cache-ds000117-1
       - run:
           <<: *bashenv
       - run:
@@ -131,7 +130,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004107
+            - data-cache-ds004107-1
       - run:
           <<: *bashenv
       - run:
@@ -169,7 +168,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000247
+            - data-cache-ds000247-1
       - run:
           <<: *bashenv
       - run:
@@ -304,7 +303,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE
+            - data-cache-ERP_CORE-1
       - run:
           <<: *bashenv
       - run:

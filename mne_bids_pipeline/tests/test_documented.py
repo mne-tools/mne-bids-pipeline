@@ -6,9 +6,9 @@ import re
 import yaml
 
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
-from mne_bids_pipeline.run_tests import TEST_SUITE
+from mne_bids_pipeline.tests.run_tests import TEST_SUITE
 
-root_path = Path(__file__).parent.parent.parent
+root_path = Path(__file__).parent.parent
 
 
 def test_options_documented():

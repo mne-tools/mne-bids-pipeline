@@ -1,6 +1,6 @@
 """Forward solution.
 
-Calculate forward solution for MEG channels.
+Calculate forward solution for M/EEG channels.
 """
 
 import itertools
@@ -119,6 +119,15 @@ def run_forward(*, cfg, subject, session, in_files):
 
     # Info
     info = mne.io.read_info(in_files.pop('info'))
+    info = mne.pick_info(
+        info,
+        mne.pick_types(
+            info,
+            meg="meg" in cfg.ch_types,
+            eeg="eeg" in cfg.ch_types,
+            exclude=[]
+        )
+    )
 
     # BEM
     bem = in_files.pop('bem')

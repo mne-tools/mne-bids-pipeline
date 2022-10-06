@@ -42,8 +42,7 @@ jobs:
             python -m pip install --upgrade --progress-bar off pip setuptools
             python -m pip cache purge
             python -m pip config set global.cache-dir false
-            make install_user_dev
-            make install_user_tests
+            python -m pip install -ve .[tests]
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -248,24 +247,24 @@ jobs:
           paths:
             - ~/mne_data/ds003392
 
-  #cache_ds004229:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    # - restore_cache:
-  #    #     keys:
-  #    #       - data-cache-ds004229
-  #    - run:
-  #        <<: *bashenv
-  #    - run:
-  #        name: Get ds004229
-  #        command: |
-  #          python ~/project/tests/download_test_data.py -d ds004229
-  #    - save_cache:
-  #        key: data-cache-ds004229-{{ .Revision }}
-  #        paths:
-  #          - ~/mne_data/ds004229
+  cache_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys:
+      #       - data-cache-ds004229
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds004229
+          command: |
+            python ~/project/tests/download_test_data.py -d ds004229
+      - save_cache:
+          key: data-cache-ds004229-{{ .Revision }}
+          paths:
+            - ~/mne_data/ds004229
 
   cache_eeg_matchingpennies:
     <<: *imageconfig
@@ -321,7 +320,7 @@ jobs:
           name: test ds000117
           command: |
             DS=ds000117
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -347,7 +346,7 @@ jobs:
           name: test ds003775
           command: |
             DS=ds003775
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -373,7 +372,7 @@ jobs:
           name: test ds001971
           command: |
             DS=ds001971
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -399,7 +398,7 @@ jobs:
           name: test ds004107
           command: |
             DS=ds004107
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -426,7 +425,7 @@ jobs:
           no_output_timeout: 15m
           command: |
             DS=ds000246
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
@@ -454,7 +453,7 @@ jobs:
           name: test ds000247
           command: |
             DS=ds000247
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -480,7 +479,7 @@ jobs:
           name: test ds000248
           command: |
             DS=ds000248
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
@@ -510,7 +509,7 @@ jobs:
           name: test ds000248_ica
           command: |
             DS=ds000248_ica
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
@@ -537,7 +536,7 @@ jobs:
       - run:
           name: test BEM from FLASH
           command: |
-            python tests/run_tests.py --download=0 ds000248_FLASH_BEM
+            $RUN_TESTS ds000248_FLASH_BEM
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -552,7 +551,7 @@ jobs:
       - run:
           name: test BEM from T1 (watershed)
           command: |
-            python tests/run_tests.py --download=0 ds000248_T1_BEM
+            $RUN_TESTS ds000248_T1_BEM
           no_output_timeout: 20m
 
   test_ds000248_coreg_surfaces:
@@ -568,7 +567,7 @@ jobs:
       - run:
           name: test head surface creation for MNE coregistration
           command: |
-            python tests/run_tests.py --download=0 ds000248_coreg_surfaces
+            $RUN_TESTS ds000248_coreg_surfaces
 
   test_ds000248_no_mri:
     <<: *imageconfig
@@ -584,7 +583,7 @@ jobs:
           name: test ds000248_no_mri
           command: |
             DS=ds000248_no_mri
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -610,7 +609,7 @@ jobs:
           name: test ds001810
           command: |
             DS=ds001810
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -636,7 +635,7 @@ jobs:
           name: test ds003104
           command: |
             DS=ds003104
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -662,7 +661,7 @@ jobs:
           name: test ds003392
           command: |
             DS=ds003392
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
@@ -678,35 +677,35 @@ jobs:
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
 
-  #test_ds004229:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    - run:
-  #        <<: *bashenv
-  #    - restore_cache:
-  #        keys:
-  #          - data-cache-ds004229-{{ .Revision }}
-  #    - run:
-  #        name: test ds004229
-  #        command: |
-  #          DS=ds004229
-  #          python tests/run_tests.py --download=0 ${DS}
-  #          mkdir -p ~/reports/${DS}
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-  #    - store_artifacts:
-  #        path: /home/circleci/reports/ds004229
-  #        destination: reports/ds004229
-  #    - persist_to_workspace:
-  #        root: ~/
-  #        paths:
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.html
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.json
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.tsv
+  test_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-{{ .Revision }}
+      - run:
+          name: test ds004229
+          command: |
+            DS=ds004229
+            $RUN_TESTS ${DS}
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds004229
+          destination: reports/ds004229
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.tsv
 
   test_eeg_matchingpennies:
     <<: *imageconfig
@@ -722,7 +721,7 @@ jobs:
           name: test eeg_matchingpennies
           command: |
             DS=eeg_matchingpennies
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -756,7 +755,7 @@ jobs:
           name: test ERP CORE N400
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N400
+            $RUN_TESTS ${DS}_N400
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
@@ -785,7 +784,7 @@ jobs:
           name: test ERP CORE ERN
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_ERN
+            $RUN_TESTS ${DS}_ERN
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
@@ -814,7 +813,7 @@ jobs:
           name: test ERP CORE LRP
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_LRP
+            $RUN_TESTS ${DS}_LRP
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
@@ -843,7 +842,7 @@ jobs:
           name: test ERP CORE MMN
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_MMN
+            $RUN_TESTS ${DS}_MMN
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
@@ -872,7 +871,7 @@ jobs:
           name: test ERP CORE N2pc
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N2pc
+            $RUN_TESTS ${DS}_N2pc
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
@@ -901,7 +900,7 @@ jobs:
           name: test ERP CORE N170
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N170
+            $RUN_TESTS ${DS}_N170
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
@@ -930,7 +929,7 @@ jobs:
           name: test ERP CORE P3
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_P3
+            $RUN_TESTS ${DS}_P3
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
@@ -1079,12 +1078,12 @@ workflows:
           requires:
             - cache_ds003392
 
-      #- cache_ds004229:
-      #    requires:
-      #      - setup_env
-      #- test_ds004229:
-      #    requires:
-      #      - cache_ds004229
+      - cache_ds004229:
+          requires:
+            - setup_env
+      - test_ds004229:
+          requires:
+            - cache_ds004229
 
       - cache_eeg_matchingpennies:
           requires:
@@ -1132,7 +1131,7 @@ workflows:
             - test_ds001810
             - test_ds003104
             - test_ds003392
-            # - test_ds004229
+            - test_ds004229
             - test_eeg_matchingpennies
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN

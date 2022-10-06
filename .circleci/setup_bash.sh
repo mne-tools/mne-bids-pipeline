@@ -89,3 +89,5 @@ if [[ "$CIRCLE_JOB" == "test_"* ]] || [[ "$CIRCLE_JOB" == "setup_env" ]] || [[ "
     echo "Starting Xvfb for ${CIRCLE_JOB}"
     /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
 fi
+
+echo "export RUN_TESTS=\"python mne_bids_pipeline/tests/run_tests.py\"" >> $BASH_ENV

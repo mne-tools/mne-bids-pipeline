@@ -26,7 +26,8 @@ def test_options_documented():
     ]
     assert len(set(in_config)) == len(in_config)
     in_config = set(in_config)
-    settings_path = root_path / "docs" / "source" / "settings"
+    settings_path = root_path.parent / "docs" / "source" / "settings"
+    assert settings_path.is_dir()
     in_doc = set()
     key = "::: config."
     allowed_duplicates = set(
@@ -64,7 +65,7 @@ def test_datasets_in_doc():
     # So let's make sure they stay in sync.
 
     # 1. Read cache, test, etc. entries from CircleCI
-    with open(root_path / '.circleci' / 'config.yml', 'r') as fid:
+    with open(root_path.parent / '.circleci' / 'config.yml', 'r') as fid:
         circle_yaml_src = fid.read()
     circle_yaml = yaml.safe_load(circle_yaml_src)
     caches = [
@@ -121,7 +122,7 @@ def test_datasets_in_doc():
         # jobs: test_*: steps: run test
         cp = re.compile(f"""\
             DS={name}.*
-            python tests/run_tests.py --download=0 \\${{DS}}.*
+            \\$RUN_TESTS \\${{DS}}.*
             mkdir -p ~/reports/\\${{DS}}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/\\${{DS}}/[^\\.]+.html""")  # noqa: E501
         n_found = len(cp.findall(circle_yaml_src))
@@ -135,7 +136,7 @@ def test_datasets_in_doc():
     SafeLoaderIgnoreUnknown.add_constructor(
         None, SafeLoaderIgnoreUnknown.ignore_unknown)
 
-    with open(root_path / 'docs' / 'mkdocs.yml', 'r') as fid:
+    with open(root_path.parent / 'docs' / 'mkdocs.yml', 'r') as fid:
         examples = yaml.load(fid.read(), Loader=SafeLoaderIgnoreUnknown)
     examples = [n for n in examples['nav'] if list(n)[0] == 'Examples'][0]
     examples = [ex for ex in examples['Examples'] if isinstance(ex, str)]
@@ -172,7 +173,5 @@ def test_datasets_in_doc():
         )
     assert tests == caches, 'CircleCI tests != CircleCI caches'
     assert tests == examples, 'CircleCI tests != docs/mkdocs.yml Examples'
-    dataset_names.remove('ds004229')  # broken on openneuro
-    test_names.remove('ds004229')
     assert tests == dataset_names, 'CircleCI tests != tests/datasets.py'
     assert tests == test_names, 'CircleCI tests != tests/run_tests.py'

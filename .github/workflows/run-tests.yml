@@ -30,7 +30,7 @@ jobs:
     - name: Lint config.py with flake8
       run: make flake-config
     - name: Install codespell
-      run: pip install "codespell @ https://github.com/Freed-Wu/codespell/archive/refs/heads/iss2055.zip" tomli  # fork that supports pyproject.toml
+      run: pip install https://github.com/codespell_lib/codespell/zipball/master tomli
     - name: Run codespell
       run: make codespell-error
   check-doc:
@@ -47,4 +47,4 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-python@v4
     - run: pip install pytest mne
-    - run: pytest -ra -vv tests/
+    - run: pytest -ra -vv mne_bids_pipeline

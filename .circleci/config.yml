@@ -26,7 +26,6 @@ jobs:
       - run: | # avoid checking out entire repo
           CIRCLE_REPOSITORY_URL_HTTPS=$(echo "$CIRCLE_REPOSITORY_URL" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
           echo "Using: $CIRCLE_REPOSITORY_URL_HTTPS"
-          git config --global url."https://github.com".insteadOf "git@github.com:"
           if [ ! -e '/home/circleci/project/.git' ] ; then
             echo 'Cloning git repository'
             mkdir -p '/home/circleci/project'
@@ -974,10 +973,10 @@ jobs:
             - "da:49:10:cd:fd:7d:2f:62:7c:78:be:4a:e1:c4:72:6c"
       - restore_cache:
           keys:
-            - source-cache-full
+            - source-cache
       - checkout
       - save_cache:
-          key: source-cache-full
+          key: source-cache
           paths:
             - ".git"
       - attach_workspace:

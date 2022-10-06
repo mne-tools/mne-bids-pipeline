@@ -83,4 +83,6 @@ echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
 echo "source ~/python_env/bin/activate" >> $BASH_ENV
 echo 'export MNE_3D_OPTION_MULTI_SAMPLES=1' >> $BASH_ENV;
 mkdir -p ~/.local/bin
-ln -s ~/python_env/bin/python ~/.local/bin/python
+if [[ ! -f ~/.local/bin/python ]]; then
+    ln -s ~/python_env/bin/python ~/.local/bin/python
+fi

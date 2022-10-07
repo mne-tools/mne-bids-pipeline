@@ -4,7 +4,7 @@
 
 PYTHON ?= python
 PYTESTS ?= pytest
-CODESPELL_DIRS ?= scripts/ docs/
+CODESPELL_DIRS ?= mne_bids_pipeline/ docs/
 all: clean inplace test test-doc
 
 clean-pyc:
@@ -17,24 +17,6 @@ clean-cache:
 	find . -name "__pycache__" | xargs rm -rf
 
 clean: clean-build clean-pyc clean-so clean-cache
-
-install_user:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off .
-
-install_user_dev:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off .[dev]
-
-install_user_tests:
-	$(PYTHON) -m pip install --user --upgrade --progress-bar off .[tests]
-
-install:
-	$(PYTHON) -m pip install --upgrade --progress-bar off .
-
-install_dev:
-	$(PYTHON) -m pip install --upgrade --progress-bar off .[dev]
-
-install_tests:
-	$(PYTHON) -m pip install --upgrade --progress-bar off .[tests]
 
 doc:
 	./docs/build-docs.sh
@@ -51,13 +33,8 @@ check:
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
-flake-code:
-	flake8 ./run*.py ./scripts --exclude ./scripts/freesurfer/contrib
-
-flake-config:
-	flake8 ./config.py --ignore=E501,W503,W504
-
-flake: flake-code flake-config
+flake:
+	flake8 . --exclude "**/freesurfer/contrib,docs/,dist/"
 	@echo "flake8 passed"
 
 codespell:  # running manually; auto-fix spelling mistakes
@@ -65,7 +42,3 @@ codespell:  # running manually; auto-fix spelling mistakes
 
 codespell-error:  # running on travis; override interactivity seting
 	@codespell -i 0 -q 7 $(CODESPELL_DIRS)
-
-pydocstyle:
-	@echo "Running pydocstyle"
-	@pydocstyle mne

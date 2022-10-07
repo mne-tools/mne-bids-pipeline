@@ -254,7 +254,7 @@ def _plot_time_by_time_decoding_scores(
 def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
     extra = ''
     if decim > 1:
-        extra = f'\n(decim={decim})'
+        extra = f' (decim={decim})'
     if xlabel is not None:
         ax.set_xlabel(f'{xlabel}{extra}')
     if ylabel is not None:
@@ -294,7 +294,7 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     # cluster-based permutation test
     n_significant_clusters_plotted = 0
     for cluster in clusters:
-        cluster_times = cluster['times'][0][0].squeeze()
+        cluster_times = np.atleast_1d(cluster['times'][0][0].squeeze())
         cluster_p = cluster['p_value'][0][0].item()
         if cluster_p >= cfg.cluster_permutation_p_threshold:
             continue
@@ -396,7 +396,7 @@ def _plot_decoding_time_generalization(
     else:
         mean_scores = decoding_data['mean']
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     im = ax.imshow(
         mean_scores,
         extent=times[[0, -1, 0, -1]],
@@ -1509,7 +1509,7 @@ def add_decoding_grand_average(
                 f'chance, if any, were derived with a one-tailed '
                 f'cluster-based permutation test '
                 f'({decoding_data["cluster_n_permutations"].squeeze()} '
-                f'permutations).'
+                f'permutations) and are highlighted in yellow.'
             )
             report.add_figure(
                 fig=fig,

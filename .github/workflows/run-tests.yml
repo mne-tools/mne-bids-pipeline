@@ -9,42 +9,24 @@ jobs:
   check-style:
     name: Style
     runs-on: "ubuntu-latest"
-    strategy:
-      fail-fast: false
     defaults:
       run:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v3
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-update-conda: true
-    - name: Conda info
-      run: conda info
-    - name: Conda list
-      run: conda list
-    - name: Install flake8
-      run: conda install -y flake8
-    - name: Lint scripts with flake8
-      run: make flake-code
-    - name: Lint config.py with flake8
-      run: make flake-config
-    - name: Install codespell
-      run: pip install "codespell @ https://github.com/Freed-Wu/codespell/archive/refs/heads/iss2055.zip" tomli  # fork that supports pyproject.toml
-    - name: Run codespell
-      run: make codespell-error
+    - uses: actions/setup-python@v4
+    - name: Install flake8 and codespell
+      run: pip install flake8 https://github.com/codespell-project/codespell/zipball/master tomli
+    - run: make flake
+    - run: make codespell-error
   check-doc:
-    name: Config doc
+    name: Doc consistency
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     defaults:
       run:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
     - uses: actions/setup-python@v4
     - run: pip install pytest mne
-    - run: pytest -ra -vv tests/
+    - run: pytest

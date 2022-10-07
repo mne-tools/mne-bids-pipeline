@@ -4,6 +4,7 @@ import os
 import sys
 import pathlib
 import logging
+import time
 from typing import Union, Optional, Tuple, List, Dict
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -13,6 +14,7 @@ from types import ModuleType
 
 import fire
 import coloredlogs
+import numpy as np
 
 
 # Ensure that the "scripts" that we import from is the correct one
@@ -186,7 +188,7 @@ def process(
         Can either be one of the processing groups 'preprocessing', sensor',
         'source', 'report',  or 'all',  or the name of a processing group plus
         the desired script sans the step number and
-        filename extension, separated by a '/'. For exmaple, to run ICA, you
+        filename extension, separated by a '/'. For example, to run ICA, you
         would pass 'sensor/run_ica`. If unspecified, will run all processing
         steps. Can also be a tuple of steps.
     root_dir
@@ -310,10 +312,22 @@ def process(
         this_name = script_module.__name__.split('.', maxsplit=1)[-1]
         this_name = this_name.replace('.', '/')
         extra = dict(box='┌╴', step=f'🚀 {this_name} ')
+        start = time.time()
         logger.info('Now running  👇', extra=extra)
         script_module.main()
         extra = dict(box='└╴', step=f'🎉 {this_name} ')
-        logger.info('Done running 👆', extra=extra)
+        elapsed = time.time() - start
+        hours, remainder = divmod(elapsed, 3600)
+        hours = int(hours)
+        minutes, seconds = divmod(remainder, 60)
+        minutes = int(minutes)
+        seconds = int(np.ceil(seconds))  # always take full seconds
+        elapsed = f'{seconds}s'
+        if minutes:
+            elapsed = f'{minutes}m {elapsed}'
+        if hours:
+            elapsed = f'{hours}h {elapsed}'
+        logger.info(f'Done running 👆 ⟮{elapsed}⟯', extra=extra)
 
 
 def main():

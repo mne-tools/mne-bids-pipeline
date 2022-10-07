@@ -3,16 +3,12 @@ import ast
 from pathlib import Path
 import os
 import re
-import sys
 import yaml
 
-test_dir_path = Path(__file__).parent
-root_path = test_dir_path.parent
+from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
+from mne_bids_pipeline.tests.run_tests import TEST_SUITE
 
-sys.path.insert(0, str(test_dir_path))
-
-from datasets import DATASET_OPTIONS
-from run_tests import TEST_SUITE
+root_path = Path(__file__).parent.parent
 
 
 def test_options_documented():
@@ -22,13 +18,15 @@ def test_options_documented():
         contents = fid.read()
     contents = ast.parse(contents)
     in_config = [
-        item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
+        item.target.id for item in contents.body
+        if isinstance(item, ast.AnnAssign)
     ]
     assert len(set(in_config)) == len(in_config)
     in_config = set(in_config)
-    settings_path = root_path / "docs" / "source" / "settings"
+    settings_path = root_path.parent / "docs" / "source" / "settings"
+    assert settings_path.is_dir()
     in_doc = set()
-    key = "::: config."
+    key = "::: mne_bids_pipeline.config."
     allowed_duplicates = set(
         [
             "source_info_path_update",
@@ -44,7 +42,7 @@ def test_options_documented():
                     if not line.startswith(key):
                         continue
                     # The line starts with our magic key
-                    val = line[len(key) :].strip()
+                    val = line[len(key):].strip()
                     if val not in allowed_duplicates:
                         assert val not in in_doc, "Duplicate documentation"
                     in_doc.add(val)
@@ -64,7 +62,7 @@ def test_datasets_in_doc():
     # So let's make sure they stay in sync.
 
     # 1. Read cache, test, etc. entries from CircleCI
-    with open(root_path / '.circleci' / 'config.yml', 'r') as fid:
+    with open(root_path.parent / '.circleci' / 'config.yml', 'r') as fid:
         circle_yaml_src = fid.read()
     circle_yaml = yaml.safe_load(circle_yaml_src)
     caches = [
@@ -78,7 +76,7 @@ def test_datasets_in_doc():
     assert len(tests) == len(set(tests))
     tests = set(tests)
     # Rather than going circle_yaml['workflows']['commit']['jobs'] and
-    # make sure everything is consitent there (too much work), let's at least
+    # make sure everything is consistent there (too much work), let's at least
     # check that we get the correct number using `.count`.
     counts = dict(ERP_CORE=7, ds000248=6)
     counts_noartifact = dict(ds000248=3)  # 3 are actually tests, not for docs
@@ -86,7 +84,7 @@ def test_datasets_in_doc():
         get = f'Get {name}'
         n_found = circle_yaml_src.count(get)
         assert n_found == 1, get
-        dl = f'download_test_data.py -d {name}'
+        dl = f'$DOWNLOAD_DATA -d {name}'
         n_found = circle_yaml_src.count(dl)
         assert n_found == 1, dl
         # jobs: save_cache:
@@ -96,7 +94,7 @@ def test_datasets_in_doc():
         # jobs: restore_cache:
         rc = f'- data-cache-{name}-'
         n_found = circle_yaml_src.count(rc)
-        count = counts.get(name, 1)
+        count = counts.get(name, 1) + 1  # one restore
         assert n_found == count, f'{rc} ({n_found} != {count})'
         # jobs: save_cache: paths:
         pth = f'- ~/mne_data/{name}'
@@ -108,6 +106,7 @@ def test_datasets_in_doc():
         assert n_found == 1, cj
         tj = f'  test_{name}'
         n_found = circle_yaml_src.count(tj)
+        count = counts.get(name, 1)
         assert n_found == count, f'{tj} ({n_found} != {count})'
         # jobs: test_*: steps: store_artifacts
         sa = f'path: /home/circleci/reports/{name}'
@@ -121,7 +120,7 @@ def test_datasets_in_doc():
         # jobs: test_*: steps: run test
         cp = re.compile(f"""\
             DS={name}.*
-            python tests/run_tests.py --download=0 \\${{DS}}.*
+            \\$RUN_TESTS \\${{DS}}.*
             mkdir -p ~/reports/\\${{DS}}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/\\${{DS}}/[^\\.]+.html""")  # noqa: E501
         n_found = len(cp.findall(circle_yaml_src))
@@ -135,7 +134,7 @@ def test_datasets_in_doc():
     SafeLoaderIgnoreUnknown.add_constructor(
         None, SafeLoaderIgnoreUnknown.ignore_unknown)
 
-    with open(root_path / 'docs' / 'mkdocs.yml', 'r') as fid:
+    with open(root_path.parent / 'docs' / 'mkdocs.yml', 'r') as fid:
         examples = yaml.load(fid.read(), Loader=SafeLoaderIgnoreUnknown)
     examples = [n for n in examples['nav'] if list(n)[0] == 'Examples'][0]
     examples = [ex for ex in examples['Examples'] if isinstance(ex, str)]
@@ -172,7 +171,5 @@ def test_datasets_in_doc():
         )
     assert tests == caches, 'CircleCI tests != CircleCI caches'
     assert tests == examples, 'CircleCI tests != docs/mkdocs.yml Examples'
-    dataset_names.remove('ds004229')  # broken on openneuro
-    test_names.remove('ds004229')
     assert tests == dataset_names, 'CircleCI tests != tests/datasets.py'
     assert tests == test_names, 'CircleCI tests != tests/run_tests.py'

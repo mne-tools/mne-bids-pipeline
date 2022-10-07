@@ -3157,8 +3157,7 @@ def get_channels_to_analyze(info) -> List[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
-    if get_datatype() == 'meg' and ('mag' in ch_types or 'grad' in ch_types
-                                    or 'meg' in ch_types):
+    if get_datatype() == 'meg' and _meg_in_ch_types(ch_types):
         pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
 
         if 'mag' in ch_types:
@@ -4037,3 +4036,7 @@ def _sanitize_callable(val):
         return 'custom'
     else:
         return val
+
+
+def _meg_in_ch_types(ch_types):
+    return ('mag' in ch_types or 'grad' in ch_types or 'meg' in ch_types)

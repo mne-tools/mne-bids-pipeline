@@ -1,6 +1,6 @@
 """Forward solution.
 
-Calculate forward solution for MEG channels.
+Calculate forward solution for M/EEG channels.
 """
 
 import itertools
@@ -14,7 +14,7 @@ from mne_bids import BIDSPath, get_head_mri_trans
 
 import config
 from config import gen_log_kwargs, failsafe_run, _get_bem_conductivity
-from config import parallel_func
+from config import parallel_func, _meg_in_ch_types
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -119,6 +119,15 @@ def run_forward(*, cfg, subject, session, in_files):
 
     # Info
     info = mne.io.read_info(in_files.pop('info'))
+    info = mne.pick_info(
+        info,
+        mne.pick_types(
+            info,
+            meg=_meg_in_ch_types(cfg.ch_types),
+            eeg="eeg" in cfg.ch_types,
+            exclude=[]
+        )
+    )
 
     # BEM
     bem = in_files.pop('bem')

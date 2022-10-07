@@ -12,6 +12,7 @@ import itertools
 import logging
 from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
+import warnings
 
 from scipy.io import loadmat
 import numpy as np
@@ -1637,7 +1638,6 @@ def _agg_backend():
         yield
     finally:
         matplotlib.use(backend, force=True)
-
 
 
 @contextlib.contextmanager

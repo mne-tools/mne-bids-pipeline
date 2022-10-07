@@ -294,7 +294,7 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     # cluster-based permutation test
     n_significant_clusters_plotted = 0
     for cluster in clusters:
-        cluster_times = cluster['times'][0][0].squeeze()
+        cluster_times = np.atleast_1d(cluster['times'][0][0].squeeze())
         cluster_p = cluster['p_value'][0][0].item()
         if cluster_p >= cfg.cluster_permutation_p_threshold:
             continue
@@ -1509,7 +1509,7 @@ def add_decoding_grand_average(
                 f'chance, if any, were derived with a one-tailed '
                 f'cluster-based permutation test '
                 f'({decoding_data["cluster_n_permutations"].squeeze()} '
-                f'permutations).'
+                f'permutations) and are highlighted in yellow.'
             )
             report.add_figure(
                 fig=fig,

@@ -185,7 +185,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           <<: *bashenv
       - run:
@@ -193,7 +193,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000248
       - save_cache:
-          key: data-cache-ds000248-2
+          key: data-cache-ds000248-3
           paths:
             - ~/mne_data/ds000248
 
@@ -481,7 +481,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test ds000248
           command: |
@@ -511,7 +511,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test ds000248_ica
           command: |
@@ -539,7 +539,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test BEM from FLASH
           command: |
@@ -554,7 +554,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test BEM from T1 (watershed)
           command: |
@@ -570,7 +570,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test head surface creation for MNE coregistration
           command: |
@@ -585,7 +585,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-2
+            - data-cache-ds000248-3
       - run:
           name: test ds000248_no_mri
           command: |

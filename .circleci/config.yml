@@ -23,16 +23,18 @@ jobs:
   setup_env:
     <<: *imageconfig
     steps:
-      - run: | # avoid checking out entire repo
-          CIRCLE_REPOSITORY_URL_HTTPS=$(echo "$CIRCLE_REPOSITORY_URL" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
-          echo "Using: $CIRCLE_REPOSITORY_URL_HTTPS"
-          if [ ! -e '/home/circleci/project/.git' ] ; then
-            echo 'Cloning git repository'
-            mkdir -p '/home/circleci/project'
-            cd '/home/circleci/project'
-            git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL_HTTPS" -b main .  # this line is the big change!
-            git remote set-url origin "$CIRCLE_REPOSITORY_URL"
-          fi
+      - run:
+          name: Avoid checking out entire repo
+          command:
+            CIRCLE_REPOSITORY_URL_HTTPS=$(echo "$CIRCLE_REPOSITORY_URL" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
+            echo "Using: $CIRCLE_REPOSITORY_URL_HTTPS"
+            if [ ! -e '/home/circleci/project/.git' ] ; then
+              echo 'Cloning git repository'
+              mkdir -p '/home/circleci/project'
+              cd '/home/circleci/project'
+              git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL_HTTPS" -b main .  # this line is the big change!
+              git remote set-url origin "$CIRCLE_REPOSITORY_URL"
+            fi
       - checkout
       - run:
           <<: *bashenv

@@ -12,7 +12,6 @@ import itertools
 import logging
 from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
-import warnings
 
 from scipy.io import loadmat
 import numpy as np
@@ -24,7 +23,7 @@ from mne_bids.stats import count_events
 
 import config
 from config import (
-    gen_log_kwargs, failsafe_run, parallel_func,
+    gen_log_kwargs, failsafe_run, parallel_func, _ignore_iteritems_warning,
     get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
@@ -184,8 +183,9 @@ def _plot_full_epochs_decoding_scores(
                 data=data, y=score_label, kind='box',
                 col='Contrast', col_wrap=3, aspect=0.33
             )
-        # … and now add swarmplots on top to visualize every single data point.
-        g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+            # … and now add swarmplots on top to visualize every single data
+            # point.
+            g.map_dataframe(sns.swarmplot, y=score_label, color='black')
     else:
         # First create a grid of swarmplots to visualize every single
         # cross-validation score.
@@ -1640,17 +1640,6 @@ def _agg_backend():
         yield
     finally:
         matplotlib.use(backend, force=True)
-
-
-@contextlib.contextmanager
-def _ignore_iteritems_warning():
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action='ignore',
-            message='.*iteritems is deprecated and will be removed.*',
-            category=FutureWarning
-        )
-        yield
 
 
 def main():

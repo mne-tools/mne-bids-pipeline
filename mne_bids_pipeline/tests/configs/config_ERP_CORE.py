@@ -39,7 +39,7 @@ subjects = ['015', '016', '017', '018', '019']
 ch_types = ['eeg']
 interactive = False
 
-resample_sfreq = 256
+resample_sfreq = 128
 
 eeg_template_montage = mne.channels.make_standard_montage('standard_1005')
 eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
@@ -48,11 +48,11 @@ drop_channels = ['HEOG_left', 'HEOG_right', 'VEOG_lower']
 eog_channels = ['HEOG', 'VEOG']
 
 l_freq = 0.1
-h_freq = None
+h_freq = 40
 
 decode = True
 decoding_time_generalization = True
-decoding_time_generalization_decim = 4
+decoding_time_generalization_decim = 2
 
 find_breaks = True
 min_break_duration = 10
@@ -73,8 +73,6 @@ on_rename_missing_events = 'warn'
 
 parallel_backend = 'dask'
 dask_worker_memory_limit = '2G'
-N_JOBS = 2
-
 N_JOBS = 2
 
 if task == 'N400':

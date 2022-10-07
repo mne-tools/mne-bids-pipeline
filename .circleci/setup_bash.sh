@@ -62,30 +62,28 @@ fi
 sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
 wget -q -O- http://neuro.debian.net/lists/focal.us-tn.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
 sudo apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-sudo apt-get -qq update
-sudo apt install -qq tcsh git-annex-standalone libosmesa6 libglx-mesa0 libopengl0 libglx0 libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xinerama0
-echo "set -e" >> $BASH_ENV;
-echo 'export OPENBLAS_NUM_THREADS=4' >> $BASH_ENV;
-echo 'shopt -s globstar' >> $BASH_ENV;  # Enable recursive globbing via **
-echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV;
-echo 'export PATH=~/.pyenv/libexec:$PATH' >> $BASH_ENV;
-PATH=~/.local/bin:~/.pyenv/libexec:$PATH
-echo 'export MNE_DATA=/home/circleci/mne_data' >> $BASH_ENV;
-echo 'export DISPLAY=:99' >> $BASH_ENV;
-echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV;
-echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
+echo "export RUN_TESTS=\"python $HOME/project/mne_bids_pipeline/tests/run_tests.py\"" >> $BASH_ENV
+echo "export DOWNLOAD_DATA=\"python $HOME/project/mne_bids_pipeline/tests/download_test_data.py\"" >> $BASH_ENV
 
-# Disable fancy 3D rendering options
-echo 'export MNE_3D_OPTION_ANTIALIAS=false' >> $BASH_ENV;
-echo 'export MNE_3D_OPTION_DEPTH_PEELING=false' >> $BASH_ENV;
-echo 'export MNE_3D_OPTION_SMOOTH_SHADING=false' >> $BASH_ENV;
-
+# Similar CircleCI setup to mne-python (Xvfb, venv, minimal commands, env vars)
+wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
+bash setup_xvfb.sh
+sudo apt install -qq tcsh git-annex-standalone python3.10-venv python3-venv libxft2
+python3.10 -m venv ~/python_env
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 mkdir -p ~/mne_data
-
-# start xvfb if testing
-if [[ "$CIRCLE_JOB" == "test_"* ]] || [[ "$CIRCLE_JOB" == "setup_env" ]] || [[ "$CIRCLE_JOB" == "build_docs" ]]; then
-    echo "Starting Xvfb for ${CIRCLE_JOB}"
-    /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1280x1024x24 -ac +extension GLX +render -noreset -nolisten tcp -nolisten unix
+echo "set -e" >> $BASH_ENV;
+echo 'export OPENBLAS_NUM_THREADS=2' >> $BASH_ENV;
+echo 'shopt -s globstar' >> $BASH_ENV;  # Enable recursive globbing via **
+echo 'export MNE_DATA=$HOME/mne_data' >> $BASH_ENV;
+echo "export PATH=~/.local/bin/:$PATH" >> $BASH_ENV
+echo 'export DISPLAY=:99' >> $BASH_ENV;
+echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> $BASH_ENV;
+echo 'export MPLBACKEND=Agg' >> $BASH_ENV;
+echo "source ~/python_env/bin/activate" >> $BASH_ENV
+echo 'export MNE_3D_OPTION_MULTI_SAMPLES=1' >> $BASH_ENV;
+mkdir -p ~/.local/bin
+if [[ ! -f ~/.local/bin/python ]]; then
+    ln -s ~/python_env/bin/python ~/.local/bin/python
 fi

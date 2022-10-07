@@ -7,12 +7,10 @@ from pathlib import Path
 import runpy
 import logging
 from typing import Union, Iterable
+import mne_bids_pipeline
 
 this_dir = Path(__file__).parent
-root = this_dir.parent.parent.parent
-if str(root) not in sys.path:
-    sys.path.insert(0, str(root))
-
+root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
 

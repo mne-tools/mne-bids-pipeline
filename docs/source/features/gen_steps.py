@@ -4,7 +4,8 @@
 import importlib
 import os
 from pathlib import Path
-import sys
+import mne_bids_pipeline
+from mne_bids_pipeline.run import _get_script_modules
 
 pre = """\
 # Processing steps
@@ -13,14 +14,10 @@ The following table provides a concise summary of each step in the Study
 Template. All scripts exist in the `scripts`/ directory.
 """
 
-this_dir = Path(__file__).parent
-config_dir = this_dir.parent.parent.parent.resolve(strict=True)
-if str(config_dir) not in sys.path:
-    sys.path.insert(0, str(config_dir))
-from run import _get_script_modules
+root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 # We need to provide some valid config
 os.environ['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
-config_path = str(config_dir / 'tests' / 'configs' / 'config_ds000248.py')
+config_path = str(root / 'tests' / 'configs' / 'config_ds000248.py')
 script_modules = _get_script_modules(config=config_path)
 
 # Construct the lines of steps.md

@@ -1,5 +1,5 @@
 """
-MNE Sample Data: BEM fromm T1 images
+MNE Sample Data: BEM from T1 images
 """
 
 study_name = 'ds000248'

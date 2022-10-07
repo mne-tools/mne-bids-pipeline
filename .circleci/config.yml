@@ -6,7 +6,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.9-browsers
+    - image: cimg/base:current-22.04
 
 _git: &git
   name: Configure git
@@ -17,21 +17,25 @@ _git: &git
 _bashenv: &bashenv
   name: Set BASH_ENV
   command: |
-    set -e
     ./.circleci/setup_bash.sh
 
 jobs:
   setup_env:
     <<: *imageconfig
     steps:
-      - restore_cache:
-          keys:
-            - source-cache
+      - run:
+          name: Avoid checking out entire repo
+          command: |
+            CIRCLE_REPOSITORY_URL_HTTPS=$(echo "$CIRCLE_REPOSITORY_URL" | sed --expression="s/git@github.com:/https:\/\/github.com\//g")
+            echo "Using: $CIRCLE_REPOSITORY_URL_HTTPS"
+            if [ ! -e '/home/circleci/project/.git' ] ; then
+              echo 'Cloning git repository'
+              mkdir -p '/home/circleci/project'
+              cd '/home/circleci/project'
+              git clone --single-branch --branch main "$CIRCLE_REPOSITORY_URL_HTTPS" -b main .  # this line is the big change!
+              git remote set-url origin "$CIRCLE_REPOSITORY_URL"
+            fi
       - checkout
-      - save_cache:
-          key: source-cache
-          paths:
-            - ".git"
       - run:
           <<: *bashenv
       - run:
@@ -39,11 +43,14 @@ jobs:
       - run:
           name: Get Python running
           command: |
-            python -m pip install --upgrade --progress-bar off pip setuptools
-            python -m pip cache purge
-            python -m pip config set global.cache-dir false
-            make install_user_dev
-            make install_user_tests
+            pip install --upgrade --progress-bar off pip setuptools
+            pip install -ve .[tests,dev]
+            pip install PyQt6
+      - run:
+          name: Check Qt
+          command: |
+            wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
+            bash check_qt_import.sh PyQt6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -55,25 +62,24 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
-            - .local/bin
-            - .local/lib
+            - python_env
 
   cache_ds000117:
     <<: *imageconfig
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000117
+      - restore_cache:
+          keys:
+            - data-cache-ds000117-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds000117
           command: |
-            python ~/project/tests/download_test_data.py -d ds000117
+            $DOWNLOAD_DATA -d ds000117
       - save_cache:
-          key: data-cache-ds000117-{{ .Revision }}
+          key: data-cache-ds000117-1
           paths:
             - ~/mne_data/ds000117
 
@@ -82,17 +88,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003775
+      - restore_cache:
+          keys:
+            - data-cache-ds003775-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds003775
           command: |
-            python ~/project/tests/download_test_data.py -d ds003775
+            $DOWNLOAD_DATA -d ds003775
       - save_cache:
-          key: data-cache-ds003775-{{ .Revision }}
+          key: data-cache-ds003775-1
           paths:
             - ~/mne_data/ds003775
 
@@ -101,17 +107,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds001971
+      - restore_cache:
+          keys:
+            - data-cache-ds001971-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds001971
           command: |
-            python ~/project/tests/download_test_data.py -d ds001971
+            $DOWNLOAD_DATA -d ds001971
       - save_cache:
-          key: data-cache-ds001971-{{ .Revision }}
+          key: data-cache-ds001971-1
           paths:
             - ~/mne_data/ds001971
 
@@ -120,17 +126,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds004107
+      - restore_cache:
+          keys:
+            - data-cache-ds004107-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds004107
           command: |
-            python ~/project/tests/download_test_data.py -d ds004107
+            $DOWNLOAD_DATA -d ds004107
       - save_cache:
-          key: data-cache-ds004107-{{ .Revision }}
+          key: data-cache-ds004107-1
           paths:
             - ~/mne_data/ds004107
 
@@ -139,17 +145,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000246
+      - restore_cache:
+          keys:
+            - data-cache-ds000246-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds000246
           command: |
-            python ~/project/tests/download_test_data.py -d ds000246
+            $DOWNLOAD_DATA -d ds000246
       - save_cache:
-          key: data-cache-ds000246-{{ .Revision }}
+          key: data-cache-ds000246-1
           paths:
             - ~/mne_data/ds000246
 
@@ -158,17 +164,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000247
+      - restore_cache:
+          keys:
+            - data-cache-ds000247-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds000247
           command: |
-            python ~/project/tests/download_test_data.py -d ds000247
+            $DOWNLOAD_DATA -d ds000247
       - save_cache:
-          key: data-cache-ds000247-{{ .Revision }}
+          key: data-cache-ds000247-1
           paths:
             - ~/mne_data/ds000247
 
@@ -177,17 +183,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds000248
+      - restore_cache:
+          keys:
+            - data-cache-ds000248-3
       - run:
           <<: *bashenv
       - run:
           name: Get ds000248
           command: |
-            python ~/project/tests/download_test_data.py -d ds000248
+            $DOWNLOAD_DATA -d ds000248
       - save_cache:
-          key: data-cache-ds000248-{{ .Revision }}
+          key: data-cache-ds000248-3
           paths:
             - ~/mne_data/ds000248
 
@@ -196,17 +202,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds001810
+      - restore_cache:
+          keys:
+            - data-cache-ds001810-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds001810
           command: |
-            python ~/project/tests/download_test_data.py -d ds001810
+            $DOWNLOAD_DATA -d ds001810
       - save_cache:
-          key: data-cache-ds001810-{{ .Revision }}
+          key: data-cache-ds001810-1
           paths:
             - ~/mne_data/ds001810
 
@@ -215,17 +221,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003104
+      - restore_cache:
+          keys:
+            - data-cache-ds003104-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds003104
           command: |
-            python ~/project/tests/download_test_data.py -d ds003104
+            $DOWNLOAD_DATA -d ds003104
       - save_cache:
-          key: data-cache-ds003104-{{ .Revision }}
+          key: data-cache-ds003104-1
           paths:
             - ~/mne_data/ds003104
 
@@ -234,47 +240,47 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ds003392
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-1
       - run:
           <<: *bashenv
       - run:
           name: Get ds003392
           command: |
-            python ~/project/tests/download_test_data.py -d ds003392
+            $DOWNLOAD_DATA -d ds003392
       - save_cache:
-          key: data-cache-ds003392-{{ .Revision }}
+          key: data-cache-ds003392-1
           paths:
             - ~/mne_data/ds003392
 
-  #cache_ds004229:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    # - restore_cache:
-  #    #     keys:
-  #    #       - data-cache-ds004229
-  #    - run:
-  #        <<: *bashenv
-  #    - run:
-  #        name: Get ds004229
-  #        command: |
-  #          python ~/project/tests/download_test_data.py -d ds004229
-  #    - save_cache:
-  #        key: data-cache-ds004229-{{ .Revision }}
-  #        paths:
-  #          - ~/mne_data/ds004229
+  cache_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-1
+      - run:
+          <<: *bashenv
+      - run:
+          name: Get ds004229
+          command: |
+            $DOWNLOAD_DATA -d ds004229
+      - save_cache:
+          key: data-cache-ds004229-1
+          paths:
+            - ~/mne_data/ds004229
 
   cache_eeg_matchingpennies:
     <<: *imageconfig
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-eeg_matchingpennies
+      - restore_cache:
+          keys:
+            - data-cache-eeg_matchingpennies-1
       - run:
           <<: *bashenv
       - run:
@@ -282,9 +288,9 @@ jobs:
       - run:
           name: Get eeg_matchingpennies
           command: |
-            python ~/project/tests/download_test_data.py -d eeg_matchingpennies
+            $DOWNLOAD_DATA -d eeg_matchingpennies
       - save_cache:
-          key: data-cache-eeg_matchingpennies-{{ .Revision }}
+          key: data-cache-eeg_matchingpennies-1
           paths:
             - ~/mne_data/eeg_matchingpennies
 
@@ -293,17 +299,17 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys:
-      #       - data-cache-ERP_CORE
+      - restore_cache:
+          keys:
+            - data-cache-ERP_CORE-1
       - run:
           <<: *bashenv
       - run:
           name: Get ERP_CORE
           command: |
-            python ~/project/tests/download_test_data.py -d ERP_CORE
+            $DOWNLOAD_DATA -d ERP_CORE
       - save_cache:
-          key: data-cache-ERP_CORE-{{ .Revision }}
+          key: data-cache-ERP_CORE-1
           paths:
             - ~/mne_data/ERP_CORE
 
@@ -316,12 +322,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000117-{{ .Revision }}
+            - data-cache-ds000117-1
       - run:
           name: test ds000117
           command: |
             DS=ds000117
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -342,12 +348,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003775-{{ .Revision }}
+            - data-cache-ds003775-1
       - run:
           name: test ds003775
           command: |
             DS=ds003775
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -368,12 +374,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds001971-{{ .Revision }}
+            - data-cache-ds001971-1
       - run:
           name: test ds001971
           command: |
             DS=ds001971
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -394,12 +400,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds004107-{{ .Revision }}
+            - data-cache-ds004107-1
       - run:
           name: test ds004107
           command: |
             DS=ds004107
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -420,13 +426,13 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000246-{{ .Revision }}
+            - data-cache-ds000246-1
       - run:
           name: test ds000246
           no_output_timeout: 15m
           command: |
             DS=ds000246
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
@@ -449,12 +455,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000247-{{ .Revision }}
+            - data-cache-ds000247-1
       - run:
           name: test ds000247
           command: |
             DS=ds000247
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -475,12 +481,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test ds000248
           command: |
             DS=ds000248
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
@@ -505,12 +511,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test ds000248_ica
           command: |
             DS=ds000248_ica
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
@@ -533,11 +539,11 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test BEM from FLASH
           command: |
-            python tests/run_tests.py --download=0 ds000248_FLASH_BEM
+            $RUN_TESTS ds000248_FLASH_BEM
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -548,11 +554,11 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test BEM from T1 (watershed)
           command: |
-            python tests/run_tests.py --download=0 ds000248_T1_BEM
+            $RUN_TESTS ds000248_T1_BEM
           no_output_timeout: 20m
 
   test_ds000248_coreg_surfaces:
@@ -564,11 +570,11 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test head surface creation for MNE coregistration
           command: |
-            python tests/run_tests.py --download=0 ds000248_coreg_surfaces
+            $RUN_TESTS ds000248_coreg_surfaces
 
   test_ds000248_no_mri:
     <<: *imageconfig
@@ -579,12 +585,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds000248-{{ .Revision }}
+            - data-cache-ds000248-3
       - run:
           name: test ds000248_no_mri
           command: |
             DS=ds000248_no_mri
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -605,12 +611,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds001810-{{ .Revision }}
+            - data-cache-ds001810-1
       - run:
           name: test ds001810
           command: |
             DS=ds001810
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -631,12 +637,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003104-{{ .Revision }}
+            - data-cache-ds003104-1
       - run:
           name: test ds003104
           command: |
             DS=ds003104
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -657,12 +663,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ds003392-{{ .Revision }}
+            - data-cache-ds003392-1
       - run:
           name: test ds003392
           command: |
             DS=ds003392
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
@@ -678,35 +684,35 @@ jobs:
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
             - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
 
-  #test_ds004229:
-  #  <<: *imageconfig
-  #  steps:
-  #    - attach_workspace:
-  #        at: ~/
-  #    - run:
-  #        <<: *bashenv
-  #    - restore_cache:
-  #        keys:
-  #          - data-cache-ds004229-{{ .Revision }}
-  #    - run:
-  #        name: test ds004229
-  #        command: |
-  #          DS=ds004229
-  #          python tests/run_tests.py --download=0 ${DS}
-  #          mkdir -p ~/reports/${DS}
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-  #          cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-  #    - store_artifacts:
-  #        path: /home/circleci/reports/ds004229
-  #        destination: reports/ds004229
-  #    - persist_to_workspace:
-  #        root: ~/
-  #        paths:
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.html
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.json
-  #          - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.tsv
+  test_ds004229:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          <<: *bashenv
+      - restore_cache:
+          keys:
+            - data-cache-ds004229-1
+      - run:
+          name: test ds004229
+          command: |
+            DS=ds004229
+            $RUN_TESTS ${DS}
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+      - store_artifacts:
+          path: /home/circleci/reports/ds004229
+          destination: reports/ds004229
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds004229/*/*/*.tsv
 
   test_eeg_matchingpennies:
     <<: *imageconfig
@@ -717,12 +723,12 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-eeg_matchingpennies-{{ .Revision }}
+            - data-cache-eeg_matchingpennies-1
       - run:
           name: test eeg_matchingpennies
           command: |
             DS=eeg_matchingpennies
-            python tests/run_tests.py --download=0 ${DS}
+            $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
@@ -743,7 +749,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -756,7 +762,7 @@ jobs:
           name: test ERP CORE N400
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N400
+            $RUN_TESTS ${DS}_N400
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
@@ -777,7 +783,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -785,7 +791,7 @@ jobs:
           name: test ERP CORE ERN
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_ERN
+            $RUN_TESTS ${DS}_ERN
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
@@ -806,7 +812,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -814,7 +820,7 @@ jobs:
           name: test ERP CORE LRP
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_LRP
+            $RUN_TESTS ${DS}_LRP
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
@@ -835,7 +841,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -843,7 +849,7 @@ jobs:
           name: test ERP CORE MMN
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_MMN
+            $RUN_TESTS ${DS}_MMN
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
@@ -864,7 +870,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -872,7 +878,7 @@ jobs:
           name: test ERP CORE N2pc
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N2pc
+            $RUN_TESTS ${DS}_N2pc
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
@@ -893,7 +899,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -901,7 +907,7 @@ jobs:
           name: test ERP CORE N170
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_N170
+            $RUN_TESTS ${DS}_N170
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
@@ -922,7 +928,7 @@ jobs:
           <<: *bashenv
       - restore_cache:
           keys:
-            - data-cache-ERP_CORE-{{ .Revision }}
+            - data-cache-ERP_CORE-1
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
@@ -930,7 +936,7 @@ jobs:
           name: test ERP CORE P3
           command: |
             DS=ERP_CORE
-            python tests/run_tests.py --download=0 ${DS}_P3
+            $RUN_TESTS ${DS}_P3
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
@@ -1079,12 +1085,12 @@ workflows:
           requires:
             - cache_ds003392
 
-      #- cache_ds004229:
-      #    requires:
-      #      - setup_env
-      #- test_ds004229:
-      #    requires:
-      #      - cache_ds004229
+      - cache_ds004229:
+          requires:
+            - setup_env
+      - test_ds004229:
+          requires:
+            - cache_ds004229
 
       - cache_eeg_matchingpennies:
           requires:
@@ -1132,7 +1138,7 @@ workflows:
             - test_ds001810
             - test_ds003104
             - test_ds003392
-            # - test_ds004229
+            - test_ds004229
             - test_eeg_matchingpennies
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN

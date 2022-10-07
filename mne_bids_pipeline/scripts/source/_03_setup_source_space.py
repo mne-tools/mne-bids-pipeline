@@ -68,7 +68,9 @@ def main():
         return
 
     if config.use_template_mri is not None:
-        subjects = [config.use_template_mri]
+        subjects = [
+            config.use_template_mri
+        ]
     else:
         subjects = config.get_subjects()
 

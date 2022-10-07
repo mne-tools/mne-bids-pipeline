@@ -35,11 +35,10 @@ sessions = [task]
 
 subjects = ['015', '016', '017', '018', '019']
 
-
 ch_types = ['eeg']
 interactive = False
 
-resample_sfreq = 256
+resample_sfreq = 128
 
 eeg_template_montage = mne.channels.make_standard_montage('standard_1005')
 eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),
@@ -48,11 +47,11 @@ drop_channels = ['HEOG_left', 'HEOG_right', 'VEOG_lower']
 eog_channels = ['HEOG', 'VEOG']
 
 l_freq = 0.1
-h_freq = None
+h_freq = 40
 
 decode = True
 decoding_time_generalization = True
-decoding_time_generalization_decim = 4
+decoding_time_generalization_decim = 2
 
 find_breaks = True
 min_break_duration = 10
@@ -65,6 +64,7 @@ reject = 'autoreject_global'
 spatial_filter = 'ica'
 ica_max_iterations = 1000
 ica_eog_threshold = 2
+ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
 
@@ -73,8 +73,6 @@ on_rename_missing_events = 'warn'
 
 parallel_backend = 'dask'
 dask_worker_memory_limit = '2G'
-N_JOBS = 2
-
 N_JOBS = 2
 
 if task == 'N400':
@@ -112,7 +110,7 @@ if task == 'N400':
     }
     contrasts = [('unrelated', 'related')]
     cluster_forming_t_threshold = 1.5      # Only for testing!
-    cluster_permutation_p_threshold = 0.1  # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 elif task == 'ERN':
     rename_events = {
         'stimulus/11': 'compatible/left',
@@ -137,6 +135,8 @@ elif task == 'ERN':
     baseline = (-0.4, -0.2)
     conditions = ['response/correct', 'response/incorrect']
     contrasts = [('response/incorrect', 'response/correct')]
+    cluster_forming_t_threshold = 5        # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 elif task == 'LRP':
     rename_events = {
         'stimulus/11': 'compatible/left',
@@ -264,5 +264,7 @@ elif task == 'P3':
     baseline = (None, 0)
     conditions = ['stimulus/target', 'stimulus/non-target']
     contrasts = [('stimulus/target', 'stimulus/non-target')]
+    cluster_forming_t_threshold = 0.8      # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 else:
     raise RuntimeError(f'Task {task} not currently supported')

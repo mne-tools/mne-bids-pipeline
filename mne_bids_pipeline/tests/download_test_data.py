@@ -65,7 +65,6 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
                     f'Error {response.status_code} when trying '
                     f'to download {url}')
 
-
             header = response.headers['content-disposition']
             _, params = cgi.parse_header(header)
             # where to store the archive

@@ -81,7 +81,7 @@ the processing results. If ``None``, this will be
 
 Note: Note
     If specified and you wish to run the source analysis steps, you must
-    set [`subjects_dir`][config.subjects_dir] as well.
+    set [`subjects_dir`][mne_bids_pipeline.config.subjects_dir] as well.
 """
 
 subjects_dir: Optional[PathLike] = None
@@ -97,10 +97,11 @@ FreeSurfer.
   directory and also store the BEM surfaces there.
 
 If ``None``, this will default to
-[`bids_root`][config.bids_root]`/derivatives/freesurfer/subjects`.
+[`bids_root`][mne_bids_pipeline.config.bids_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
-    This setting is required if you specify [`deriv_root`][config.deriv_root]
+    This setting is required if you specify
+    [`deriv_root`][mne_bids_pipeline.config.deriv_root]
     and want to run the source analysis steps.
 """
 
@@ -415,7 +416,7 @@ analyze_channels: Union[
     Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
-steps. For certain paradigms, e.g. EEG ERP research, it is common to contrain
+steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain
 sensor-space analysis to only a few specific sensors. If `'all'`, do not
 exclude any channels (except for those selected for removal via the
 `drop_channels` setting; use with caution as this can include things like STIM
@@ -459,7 +460,7 @@ It is therefore advisable to mark such break periods for exclusion at early
 processing stages.
 
 If `True`, try to mark breaks by finding segments of the data where no
-exprimental events have occurred. This will then add annotations with the
+experimental events have occurred. This will then add annotations with the
 description `BAD_break` to the continuous data, causing these segments to be
 ignored in all following processing steps.
 
@@ -481,8 +482,8 @@ The minimal duration (in seconds) of a data segment without any experimental
 events for it to be considered a "break". Note that the minimal duration of the
 generated `BAD_break` annotation will typically be smaller than this, as by
 default, the annotation will not extend across the entire break.
-See [`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
-and [`t_break_annot_stop_before_next_event`][config.t_break_annot_stop_before_next_event]
+See [`t_break_annot_start_after_previous_event`][mne_bids_pipeline.config.t_break_annot_start_after_previous_event]
+and [`t_break_annot_stop_before_next_event`][mne_bids_pipeline.config.t_break_annot_stop_before_next_event]
 to control this behavior.
 
 ???+ example "Example"
@@ -495,7 +496,8 @@ to control this behavior.
 
 t_break_annot_start_after_previous_event: float = 5.
 """
-Once a break of at least [`min_break_duration`][config.min_break_duration]
+Once a break of at least
+[`min_break_duration`][mne_bids_pipeline.config.min_break_duration]
 seconds has been discovered, we generate a `BAD_break` annotation that does not
 necessarily span the entire break period. Instead, you will typically want to
 start it some time after the last event before the break period, as to not
@@ -522,7 +524,7 @@ period as bad.
 t_break_annot_stop_before_next_event: float = 5.
 """
 Similarly to how
-[`t_break_annot_start_after_previous_event`][config.t_break_annot_start_after_previous_event]
+[`t_break_annot_start_after_previous_event`][mne_bids_pipeline.config.t_break_annot_start_after_previous_event]
 controls the "gap" between beginning of the break period and `BAD_break`
 annotation onset,  this parameter controls how far the annotation should extend
 toward the first experimental event immediately following the break period
@@ -744,7 +746,7 @@ can be used for resampling raw data. ``1`` means no decimation.
 ???+ example "Example"
     ```python
     decim = 1  # no decimation
-    decim = 4  # decimate by 4 ie devide sampling frequency by 4
+    decim = 4  # decimate by 4, i.e., divide sampling frequency by 4
     ```
 """
 
@@ -860,7 +862,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```python
     epochs_metadata_query = ['response_missing.isna()']
     ```
-"""
+"""  # noqa: E501
 
 conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
@@ -876,7 +878,7 @@ Passing a dictionary allows to assign a name to map a complex condition name
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
-[`task_is_rest`][config.task_is_rest] is not `True`, we will raise an error.
+[`task_is_rest`][mne_bids_pipeline.config.task_is_rest] is not `True`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -1197,7 +1199,7 @@ ica_n_components: Optional[Union[float, int]] = 0.8
 """
 MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
-data); and in the second step, the principal componenets are passed
+data); and in the second step, the principal components are passed
 to the actual ICA. You can select how many of the total principal
 components to pass to ICA – it can be all or just a subset. This determines
 how many independent components to fit, and can be controlled via this
@@ -1257,14 +1259,14 @@ will generate a dictionary with (hopefully!) optimal thresholds for each
 channel type.
 
 The thresholds provided here must be at least as stringent as those in
-[`ica_reject`][config.ica_reject] if using ICA. In case of
+[`ica_reject`][mne_bids_pipeline.config.ica_reject] if using ICA. In case of
 `'autoreject_global'`, thresholds for any channel that do not meet this
 requirement will be automatically replaced with those used in `ica_reject`.
 
 Note: Note
       The rejection is performed **after** SSP or ICA, if any of those methods
       is used. To reject epochs **before** fitting ICA, see the
-      [`ica_reject`][config.ica_reject] setting.
+      [`ica_reject`][mne_bids_pipeline.config.ica_reject] setting.
 
 If `None` (default), do not apply automated rejection. If a dictionary,
 manually specify rejection thresholds (see examples).  If `'auto'`, use
@@ -1315,8 +1317,8 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-[`contrasts`][config.contrasts]. Classifiers will be trained on entire epochs
-("full-epochs decoding"), and separately on each time point
+[`contrasts`][mne_bids_pipeline.config.contrasts]. Classifiers will be trained
+on entire epochs ("full-epochs decoding"), and separately on each time point
 ("time-by-time decoding"), trying to learn how to distinguish the contrasting
 conditions.
 """
@@ -1355,14 +1357,15 @@ on **all** time points.
 
 Because each classifier is trained and tested on **all** time points, this
 procedure may take a significant amount of time.
-"""
+"""  # noqa: E501
 
 decoding_time_generalization_decim: int = 1
 """
 Says how much to decimate data before time generalization decoding.
 This is done in addition to the decimation done at the epochs level via the
-[`decim`][config.decim] parameter. This can be used to greatly speed up time
-generalization at the cost of lower time resolution in the resulting matrix.
+[`decim`][mne_bids_pipeline.config.decim] parameter. This can be used to
+greatly speed up time generalization at the cost of lower time resolution in
+the resulting matrix.
 """
 
 n_boot: int = 5000
@@ -1398,7 +1401,7 @@ used in the permutation test which takes place after forming the clusters.
 
 Note: Note
     To control how clusters are formed, see
-    [`cluster_forming_t_threshold`][config.cluster_forming_t_threshold].
+    [`cluster_forming_t_threshold`][mne_bids_pipeline.config.cluster_forming_t_threshold].
 """
 
 ###############################################################################
@@ -1827,7 +1830,8 @@ parallel_backend: Literal['loky', 'dask'] = 'loky'
 """
 Specifies which backend to use for parallel job execution. `loky` is the
 default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
-be installed. Ignored if [`N_JOBS`][config.N_JOBS] is set to `1`.
+be installed. Ignored if [`N_JOBS`][mne_bids_pipeline.config.N_JOBS] is set to
+`1`.
 """
 
 dask_open_dashboard: bool = False
@@ -1846,7 +1850,7 @@ ensure good performance. The directory needs to be writable and will be created
 if it does not exist.
 
 If `None`, will use `.dask-worker-space` inside of
-[`deriv_root`][config.deriv_root].
+[`deriv_root`][mne_bids_pipeline.config.deriv_root].
 """
 
 dask_worker_memory_limit: str = '10G'
@@ -1934,7 +1938,7 @@ log_fmt = (
 )
 log_date_fmt = '%H:%M:%S'
 # TODO:
-# This does not persist across threads, probably due to relead of coloredlogs?
+# This does not persist across threads, probably due to reload of coloredlogs?
 # coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
 log_level_styles = {
     'warning': {
@@ -2666,7 +2670,7 @@ def setup_dask_client():
             'distributed.worker.memory.terminate': 1.0,
             # TODO spilling to disk currently doesn't work reliably for us,
             # as Dask cannot spill "unmanaged" memory – and most of what we
-            # see currently is, in fact, "unmanaged". Needs thourough
+            # see currently is, in fact, "unmanaged". Needs thorough
             # investigation.
             'distributed.worker.memory.spill': False
         }
@@ -2911,7 +2915,7 @@ def failsafe_run(
                     if k in ('subject', 'session', 'task', 'run')
                 }
                 message = (
-                    f'A critical error occured. '
+                    f'A critical error occurred. '
                     f'The error message was: {str(e)}'
                 )
                 log_info['success'] = False
@@ -3774,7 +3778,8 @@ def import_er_data(
         )
     else:
         # Set same set of bads as in the reference run, but only for MEG
-        # channels (we might not have non-MEG channels in empty-room recordings).
+        # channels (we might not have non-MEG channels in empty-room
+        # recordings).
         raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
                                if ch.startswith('MEG')]
 
@@ -3831,7 +3836,7 @@ def _find_breaks_func(
                                      session=session, run=run))
         return
 
-    msg = (f'Finding breaks with a mininum duration of '
+    msg = (f'Finding breaks with a minimum duration of '
            f'{cfg.min_break_duration} seconds.')
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session, run=run))

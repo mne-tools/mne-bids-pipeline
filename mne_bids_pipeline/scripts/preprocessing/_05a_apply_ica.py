@@ -164,6 +164,7 @@ def _ignore_epochs_baseline_warning():
             message='.*The data you passed to ICA.* baseline-corrected.*',
             category=RuntimeWarning
         )
+        yield
 
 
 def main():

@@ -185,7 +185,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248-1
+            - data-cache-ds000248-2
       - run:
           <<: *bashenv
       - run:
@@ -193,7 +193,7 @@ jobs:
           command: |
             $DOWNLOAD_DATA -d ds000248
       - save_cache:
-          key: data-cache-ds000248-1
+          key: data-cache-ds000248-2
           paths:
             - ~/mne_data/ds000248
 

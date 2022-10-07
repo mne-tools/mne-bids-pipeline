@@ -3130,19 +3130,17 @@ def plot_auto_scores(auto_scores):
         fig, ax = plt.subplots(1, 2, figsize=(12, 8))
         fig.suptitle(f'Automated noisy channel detection: {ch_type}',
                      fontsize=16, fontweight='bold')
-        with _ignore_iteritems_warning():
-            sns.heatmap(data=data_to_plot, cmap='Reds',
-                        cbar_kws=dict(label='Score'), ax=ax[0])
+        sns.heatmap(data=data_to_plot, cmap='Reds',
+                    cbar_kws=dict(label='Score'), ax=ax[0])
         [ax[0].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
             for x in range(1, len(bins))]
         ax[0].set_title('All Scores', fontweight='bold')
 
         # Now, adjust the color range to highlight segments that exceeded the
         # limit.
-        with _ignore_iteritems_warning():
-            sns.heatmap(data=data_to_plot,
-                        vmin=np.nanmin(limits),  # input data may contain NaNs
-                        cmap='Reds', cbar_kws=dict(label='Score'), ax=ax[1])
+        sns.heatmap(data=data_to_plot,
+                    vmin=np.nanmin(limits),  # input data may contain NaNs
+                    cmap='Reds', cbar_kws=dict(label='Score'), ax=ax[1])
         [ax[1].axvline(x, ls='dashed', lw=0.25, dashes=(25, 15), color='gray')
             for x in range(1, len(bins))]
         ax[1].set_title('Scores > Limit', fontweight='bold')
@@ -4039,14 +4037,3 @@ def _sanitize_callable(val):
         return 'custom'
     else:
         return val
-
-
-@contextlib.contextmanager
-def _ignore_iteritems_warning():
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action='ignore',
-            message='.*iteritems is deprecated and will be removed.*',
-            category=FutureWarning
-        )
-        yield

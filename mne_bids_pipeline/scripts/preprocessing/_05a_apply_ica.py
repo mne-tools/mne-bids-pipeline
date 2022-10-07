@@ -11,10 +11,12 @@ order might differ).
 
 """
 
+import contextlib
 import itertools
 import logging
 from typing import Optional
 from types import SimpleNamespace
+import warnings
 
 import pandas as pd
 import mne
@@ -151,6 +153,19 @@ def get_config(
     return cfg
 
 
+@contextlib.contextmanager
+def _ignore_epochs_baseline_warning():
+    # Ignore: The data you passed to ICA.apply() was baseline-corrected.
+    # Please note that ICA can introduce DC shifts, therefore you may wish to
+    # consider baseline-correcting the cleaned data again.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action='ignore',
+            message='.*The data you passed to ICA.* baseline-corrected.*',
+            category=RuntimeWarning
+        )
+
+
 def main():
     """Apply ICA."""
     if not config.spatial_filter == 'ica':
@@ -159,7 +174,7 @@ def main():
             logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
+    with config.get_parallel_backend(), _ignore_epochs_baseline_warning():
         parallel, run_func = parallel_func(apply_ica)
         logs = parallel(
             run_func(cfg=get_config(), subject=subject, session=session)

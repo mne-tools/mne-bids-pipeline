@@ -33,8 +33,7 @@ deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE'
 task = os.environ.get('MNE_BIDS_STUDY_TASK')
 sessions = [task]
 
-subjects = ['015', '016', '017', '018', '019']
-
+subjects = ['015', '016', '017', '018']
 
 ch_types = ['eeg']
 interactive = False

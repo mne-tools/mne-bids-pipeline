@@ -33,7 +33,7 @@ deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE'
 task = os.environ.get('MNE_BIDS_STUDY_TASK')
 sessions = [task]
 
-subjects = ['015', '016', '017', '018']
+subjects = ['015', '016', '017', '018', '019']
 
 ch_types = ['eeg']
 interactive = False
@@ -64,6 +64,7 @@ reject = 'autoreject_global'
 spatial_filter = 'ica'
 ica_max_iterations = 1000
 ica_eog_threshold = 2
+ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
 

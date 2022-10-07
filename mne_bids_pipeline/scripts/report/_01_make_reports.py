@@ -254,7 +254,7 @@ def _plot_time_by_time_decoding_scores(
 def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
     extra = ''
     if decim > 1:
-        extra = f'\n(decim={decim})'
+        extra = f' (decim={decim})'
     if xlabel is not None:
         ax.set_xlabel(f'{xlabel}{extra}')
     if ylabel is not None:
@@ -396,7 +396,7 @@ def _plot_decoding_time_generalization(
     else:
         mean_scores = decoding_data['mean']
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(constrained_layout=True)
     im = ax.imshow(
         mean_scores,
         extent=times[[0, -1, 0, -1]],

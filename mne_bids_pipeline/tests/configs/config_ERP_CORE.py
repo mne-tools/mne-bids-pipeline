@@ -64,6 +64,7 @@ reject = 'autoreject_global'
 spatial_filter = 'ica'
 ica_max_iterations = 1000
 ica_eog_threshold = 2
+ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
 

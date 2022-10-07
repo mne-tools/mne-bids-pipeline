@@ -12,7 +12,6 @@ import itertools
 import logging
 from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
-import warnings
 
 from scipy.io import loadmat
 import numpy as np
@@ -1640,20 +1639,9 @@ def _agg_backend():
         matplotlib.use(backend, force=True)
 
 
-@contextlib.contextmanager
-def _ignore_iteritems():
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action='ignore',
-            message='.*iteritems is deprecated and will be removed.*',
-            category=FutureWarning
-        )
-        yield
-
-
 def main():
     """Make reports."""
-    with config.get_parallel_backend(), _agg_backend(), _ignore_iteritems():
+    with config.get_parallel_backend(), _agg_backend():
         parallel, run_func = parallel_func(run_report)
         logs = parallel(
             run_func(

@@ -109,7 +109,7 @@ if task == 'N400':
     }
     contrasts = [('unrelated', 'related')]
     cluster_forming_t_threshold = 1.5      # Only for testing!
-    cluster_permutation_p_threshold = 0.1  # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 elif task == 'ERN':
     rename_events = {
         'stimulus/11': 'compatible/left',
@@ -134,6 +134,8 @@ elif task == 'ERN':
     baseline = (-0.4, -0.2)
     conditions = ['response/correct', 'response/incorrect']
     contrasts = [('response/incorrect', 'response/correct')]
+    cluster_forming_t_threshold = 5        # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 elif task == 'LRP':
     rename_events = {
         'stimulus/11': 'compatible/left',
@@ -261,5 +263,7 @@ elif task == 'P3':
     baseline = (None, 0)
     conditions = ['stimulus/target', 'stimulus/non-target']
     contrasts = [('stimulus/target', 'stimulus/non-target')]
+    cluster_forming_t_threshold = 0.8      # Only for testing!
+    cluster_permutation_p_threshold = 0.2  # Only for testing!
 else:
     raise RuntimeError(f'Task {task} not currently supported')

@@ -4,6 +4,9 @@
 ::: mne_bids_pipeline.config.decoding_n_splits
 ::: mne_bids_pipeline.config.decoding_time_generalization
 ::: mne_bids_pipeline.config.decoding_time_generalization_decim
+::: mne_bids_pipeline.config.decoding_csp
+::: mne_bids_pipeline.config.decoding_csp_times
+::: mne_bids_pipeline.config.decoding_csp_freqs
 ::: mne_bids_pipeline.config.n_boot
 ::: mne_bids_pipeline.config.cluster_forming_t_threshold
 ::: mne_bids_pipeline.config.cluster_n_permutations

@@ -187,6 +187,10 @@ authors:
   ({{ gh(606) }} by {{ authors.larsoner }})
 - Add SSP joint plots to generated reports
 - ({{ gh(614) }} by {{ authors.larsoner }})
+- Add time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
+   (CSP).
+   ({{ gh(xxx) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
+    {{ authors.hoechenberger }})
 
 ### Behavior changes
 

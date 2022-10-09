@@ -202,5 +202,6 @@ def main():
 
         config.save_logs(logs)
 
+
 if __name__ == '__main__':
     main()

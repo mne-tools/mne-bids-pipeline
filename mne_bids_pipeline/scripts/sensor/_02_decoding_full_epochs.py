@@ -28,7 +28,9 @@ from mne_bids import BIDSPath
 
 import config
 from config import (
-    gen_log_kwargs, failsafe_run, LogReg, _restrict_analyze_channels)
+    gen_log_kwargs, failsafe_run, LogReg, _restrict_analyze_channels,
+    parallel_func
+)
 
 
 logger = logging.getLogger('mne-bids-pipeline')
@@ -94,55 +96,54 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
-    with config.get_parallel_backend():
-        classification_pipeline = make_pipeline(
-            Scaler(scalings='mean'),
-            Vectorizer(),  # So we can pass the data to scikit-learn
-            LogReg(
-                solver='liblinear',  # much faster than the default
-                random_state=cfg.random_state,
-                n_jobs=1,
-            )
-        )
-
-        # Now, actually run the classification, and evaluate it via a
-        # cross-validation procedure.
-        cv = StratifiedKFold(
-            shuffle=True,
+    classification_pipeline = make_pipeline(
+        Scaler(scalings='mean'),
+        Vectorizer(),  # So we can pass the data to scikit-learn
+        LogReg(
+            solver='liblinear',  # much faster than the default
             random_state=cfg.random_state,
-            n_splits=cfg.decoding_n_splits,
+            n_jobs=1,
         )
-        scores = cross_val_score(
-            estimator=classification_pipeline,
-            X=X,
-            y=y,
-            cv=cv,
-            scoring='roc_auc',
-            n_jobs=1
-        )
+    )
 
-        # Save the scores
-        a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
-        processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
-        processing = processing.replace('_', '-').replace('-', '')
-        mat_key = f'mat_{processing}'
-        out_files[mat_key] = bids_path.copy().update(
-            suffix='decoding', processing=processing, extension='.mat')
-        out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
-            extension='.tsv')
-        savemat(out_files[f'mat_{processing}'], {'scores': scores})
+    # Now, actually run the classification, and evaluate it via a
+    # cross-validation procedure.
+    cv = StratifiedKFold(
+        shuffle=True,
+        random_state=cfg.random_state,
+        n_splits=cfg.decoding_n_splits,
+    )
+    scores = cross_val_score(
+        estimator=classification_pipeline,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring='roc_auc',
+        n_jobs=1
+    )
 
-        tabular_data = pd.Series(
-            {
-                'cond_1': cond_names[0],
-                'cond_2': cond_names[1],
-                'mean_crossval_score': scores.mean(axis=0),
-                'metric': cfg.decoding_metric
-            }
-        )
-        tabular_data = pd.DataFrame(tabular_data).T
-        tabular_data.to_csv(
-            out_files[f'tsv_{processing}'], sep='\t', index=False)
+    # Save the scores
+    a_vs_b = f'{cond_names[0]}+{cond_names[1]}'.replace(op.sep, '')
+    processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+    processing = processing.replace('_', '-').replace('-', '')
+    mat_key = f'mat_{processing}'
+    out_files[mat_key] = bids_path.copy().update(
+        suffix='decoding', processing=processing, extension='.mat')
+    out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
+        extension='.tsv')
+    savemat(out_files[f'mat_{processing}'], {'scores': scores})
+
+    tabular_data = pd.Series(
+        {
+            'cond_1': cond_names[0],
+            'cond_2': cond_names[1],
+            'mean_crossval_score': scores.mean(axis=0),
+            'metric': cfg.decoding_metric
+        }
+    )
+    tabular_data = pd.DataFrame(tabular_data).T
+    tabular_data.to_csv(
+        out_files[f'tsv_{processing}'], sep='\t', index=False)
     assert len(in_files) == 0, in_files.keys()
     return out_files
 
@@ -183,22 +184,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
-    # so we don't dispatch manually to multiple jobs.
-    logs = []
-    for subject, session, (cond_1, cond_2) in itertools.product(
-        config.get_subjects(),
-        config.get_sessions(),
-        config.get_decoding_contrasts()
-    ):
-        log = run_epochs_decoding(
-            cfg=get_config(), subject=subject,
-            condition1=cond_1, condition2=cond_2,
-            session=session
+    with config.get_parallel_backend():
+        parallel, run_func = parallel_func(run_epochs_decoding)
+        logs = parallel(
+            run_func(
+                cfg=get_config(), subject=subject,
+                condition1=cond_1, condition2=cond_2,
+                session=session
+            )
+            for subject, session, (cond_1, cond_2) in itertools.product(
+                config.get_subjects(),
+                config.get_sessions(),
+                config.get_decoding_contrasts()
+            )
         )
-        logs.append(log)
 
-    config.save_logs(logs)
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

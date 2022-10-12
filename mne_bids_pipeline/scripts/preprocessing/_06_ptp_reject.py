@@ -20,6 +20,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func
 
+from ..._utils import _get_reject, _read_json
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -45,6 +46,9 @@ def get_input_fnames_drop_ptp(**kwargs):
     in_files = dict()
     in_files['epochs'] = bids_path.copy().update(
         processing=cfg.spatial_filter)
+    if cfg.spatial_filter == 'ica':
+        in_files['reject'] = bids_path.copy().update(
+            processing='ica', suffix='reject', extension='.json')
     return in_files
 
 
@@ -62,10 +66,20 @@ def drop_ptp(*, cfg, subject, session, in_files):
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
-    reject = config.get_reject(epochs=epochs)
+    reject = _get_reject(
+        subject=subject,
+        session=session,
+        epochs=epochs,
+        reject=cfg.reject,
+        ch_types=cfg.ch_types,
+        decim=1)
+    if cfg.spatial_filter == 'ica':
+        ica_reject = _read_json(in_files.pop('reject'))
+    else:
+        ica_reject = None
 
-    if cfg.ica_reject is not None:
-        for ch_type, threshold in cfg.ica_reject.items():
+    if ica_reject is not None:
+        for ch_type, threshold in ica_reject.items():
             if (ch_type in reject and
                     threshold < reject[ch_type]):
                 # This can only ever happen in case of
@@ -121,9 +135,11 @@ def get_config(
         reject_tmin=config.reject_tmin,
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,
-        ica_reject=config.get_ica_reject(),
+        ica_reject=config.ica_reject,
         deriv_root=config.get_deriv_root(),
         decim=config.decim,
+        reject=config.reject,
+        ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg

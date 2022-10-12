@@ -121,12 +121,12 @@ def _get_script_modules(
     if cache:
         env['MNE_BIDS_STUDY_USE_CACHE'] = cache
 
-    from scripts import init
-    from scripts import preprocessing
-    from scripts import sensor
-    from scripts import source
-    from scripts import report
-    from scripts import freesurfer
+    from .scripts import init
+    from .scripts import preprocessing
+    from .scripts import sensor
+    from .scripts import source
+    from .scripts import report
+    from .scripts import freesurfer
 
     INIT_SCRIPTS = init.SCRIPTS
     PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS

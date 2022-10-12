@@ -986,9 +986,9 @@ def run_report_sensor(
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)
         fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
-                                                               f"+{cond}-")
+                                                               f"+{cond}+")
         fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
-                                                               f"+{cond}-")
+                                                               f"+{cond}+")
         with mne.use_log_level('error'):  # filename convention
             power = mne.time_frequency.read_tfrs(
                 fname_tfr_pow_cond, condition=0)

@@ -752,11 +752,11 @@ def run_report_sensor(
         extension='.mat'
     )
     fname_tfr_pow = bids_path.copy().update(
-        suffix='power+condition+tfr',
+        suffix='power+condition-tfr',
         extension='.h5'
     )
     fname_tfr_itc = bids_path.copy().update(
-        suffix='itc+condition+tfr',
+        suffix='itc+condition-tfr',
         extension='.h5'
     )
     fname_noise_cov = get_noise_cov_bids_path(
@@ -985,10 +985,10 @@ def run_report_sensor(
 
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)
-        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
-                                                               f"+{cond}+")
-        fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
-                                                               f"+{cond}+")
+        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition-",
+                                                               f"+{cond}-")
+        fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition-",
+                                                               f"+{cond}-")
         power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond, condition=0)
         kwargs = dict(
             show=False, fig_facecolor='w', font_color='k', border='k'

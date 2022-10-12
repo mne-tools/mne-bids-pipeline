@@ -83,9 +83,9 @@ def run_time_frequency(*, cfg, subject, session, in_files):
         power_key = f'power-{condition_str}'
         itc_key = f'itc-{condition_str}'
         out_files[power_key] = bids_path.copy().update(
-            suffix=f'power+{condition_str}+tfr', extension='.h5')
+            suffix=f'power+{condition_str}-tfr', extension='.h5')
         out_files[itc_key] = bids_path.copy().update(
-            suffix=f'itc+{condition_str}+tfr', extension='.h5')
+            suffix=f'itc+{condition_str}-tfr', extension='.h5')
 
         power.save(out_files[power_key], overwrite=True)
         itc.save(out_files[itc_key], overwrite=True)

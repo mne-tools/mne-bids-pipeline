@@ -752,11 +752,11 @@ def run_report_sensor(
         extension='.mat'
     )
     fname_tfr_pow = bids_path.copy().update(
-        suffix='power+condition-tfr',
+        suffix='power+condition+tfr',
         extension='.h5'
     )
     fname_tfr_itc = bids_path.copy().update(
-        suffix='itc+condition-tfr',
+        suffix='itc+condition+tfr',
         extension='.h5'
     )
     fname_noise_cov = get_noise_cov_bids_path(
@@ -985,11 +985,13 @@ def run_report_sensor(
 
     for condition in conditions:
         cond = config.sanitize_cond_name(condition)
-        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition-",
+        fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
                                                                f"+{cond}-")
-        fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition-",
+        fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
                                                                f"+{cond}-")
-        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond, condition=0)
+        with mne.use_log_level('error'):  # filename convention
+            power = mne.time_frequency.read_tfrs(
+                fname_tfr_pow_cond, condition=0)
         kwargs = dict(
             show=False, fig_facecolor='w', font_color='k', border='k'
         )
@@ -1003,7 +1005,9 @@ def run_report_sensor(
         plt.close(fig_power)
         del power
 
-        itc = mne.time_frequency.read_tfrs(fname_tfr_itc_cond, condition=0)
+        with mne.use_log_level('error'):  # filename convention
+            itc = mne.time_frequency.read_tfrs(
+                fname_tfr_itc_cond, condition=0)
         fig_itc = itc.plot_topo(**kwargs)
         report.add_figure(
             fig=fig_itc,

@@ -18,6 +18,11 @@ import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 import warnings
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from types import SimpleNamespace
 import coloredlogs
 import numpy as np
@@ -32,9 +37,10 @@ from sklearn.linear_model import LogisticRegression
 import mne
 import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
-from mne_bids_pipeline._utils import (
-    PathLike, Literal, ArbitraryContrast, gen_log_kwargs,
-    _write_json)
+
+from mne_bids_pipeline._typing import PathLike, ArbitraryContrast
+from mne_bids_pipeline._logging import gen_log_kwargs
+from mne_bids_pipeline._io import _write_json
 
 
 ###############################################################################

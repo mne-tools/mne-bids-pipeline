@@ -34,7 +34,7 @@ from config import (make_epochs, gen_log_kwargs, failsafe_run, _script_path,
                     annotations_to_events, _update_for_splits)
 from config import parallel_func
 
-from ..._utils import _get_reject, _write_json
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -267,8 +267,6 @@ def run_ica(*, cfg, subject, session, in_files):
         suffix='ica', extension='.fif')
     out_files['components'] = bids_basename.copy().update(
         processing='ica', suffix='components', extension='.tsv')
-    out_files['reject'] = bids_basename.copy().update(
-        processing='ica', suffix='reject', extension='.json')
     out_files['report'] = bids_basename.copy().update(
         processing='ica+components', suffix='report', extension='.html')
     del bids_basename
@@ -388,10 +386,10 @@ def run_ica(*, cfg, subject, session, in_files):
     ica_reject = _get_reject(
         subject=subject,
         session=session,
-        epochs=epochs,
         reject=cfg.ica_reject,
         ch_types=cfg.ch_types,
-        decim=cfg.ica_decim)
+        param='ica_reject',
+    )
 
     msg = f'Using PTP rejection thresholds: {ica_reject}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
@@ -511,8 +509,6 @@ def run_ica(*, cfg, subject, session, in_files):
 
     report.save(
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
-
-    _write_json(out_files['reject'], ica_reject)
 
     assert len(in_files) == 0, in_files.keys()
     return out_files

@@ -27,7 +27,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func, _script_path
 
-from ..._utils import _read_json
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -54,8 +54,6 @@ def get_input_fnames_apply_ica(**kwargs):
         processing='ica', suffix='components', extension='.tsv')
     in_files['epochs'] = bids_basename.copy().update(
         suffix='epo', extension='.fif')
-    in_files['reject'] = bids_basename.copy().update(
-        processing='ica', suffix='reject', extension='.json')
     return in_files
 
 
@@ -95,7 +93,13 @@ def apply_ica(*, cfg, subject, session, in_files):
                                  session=session))
 
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
-    ica_reject = _read_json(in_files.pop('reject'))
+    ica_reject = _get_reject(
+        subject=subject,
+        session=session,
+        reject=cfg.ica_reject,
+        ch_types=cfg.ch_types,
+        param='ica_reject',
+    )
     epochs.drop_bad(ica_reject)
 
     # Now actually reject the components.
@@ -150,6 +154,7 @@ def get_config(
         interactive=config.interactive,
         baseline=config.baseline,
         ica_reject=config.ica_reject,
+        ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg

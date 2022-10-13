@@ -20,7 +20,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func
 
-from ..._utils import _get_reject, _read_json
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -46,9 +46,6 @@ def get_input_fnames_drop_ptp(**kwargs):
     in_files = dict()
     in_files['epochs'] = bids_path.copy().update(
         processing=cfg.spatial_filter)
-    if cfg.spatial_filter == 'ica':
-        in_files['reject'] = bids_path.copy().update(
-            processing='ica', suffix='reject', extension='.json')
     return in_files
 
 
@@ -69,12 +66,19 @@ def drop_ptp(*, cfg, subject, session, in_files):
     reject = _get_reject(
         subject=subject,
         session=session,
-        epochs=epochs,
         reject=cfg.reject,
         ch_types=cfg.ch_types,
-        decim=1)
+        param='reject',
+        epochs=epochs,
+    )
     if cfg.spatial_filter == 'ica':
-        ica_reject = _read_json(in_files.pop('reject'))
+        ica_reject = _get_reject(
+            subject=subject,
+            session=session,
+            reject=cfg.ica_reject,
+            ch_types=cfg.ch_types,
+            param='ica_reject',
+        )
     else:
         ica_reject = None
 

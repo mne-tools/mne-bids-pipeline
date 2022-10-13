@@ -18,7 +18,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func, _script_path
 
-from ..._utils import _get_reject
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -102,8 +102,8 @@ def run_ssp(*, cfg, subject, session, in_files):
                 session=session,
                 reject=rejects[kind],
                 ch_types=cfg.ch_types,
+                param=f'ssp_{kind}_reject',
                 epochs=proj_epochs,
-                decim=1,
             )
             proj_epochs.drop_bad(reject=reject_)
         # Still enough after rejection

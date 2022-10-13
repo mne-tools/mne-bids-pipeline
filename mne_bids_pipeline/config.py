@@ -1693,7 +1693,7 @@ If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time. This cannot be used with EEG data.
 
-If ``''rest'``, the noise covariance will be estimated from a resting-state
+If ``'rest'``, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
 filename).
 

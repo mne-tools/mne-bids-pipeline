@@ -3761,9 +3761,9 @@ def import_er_data(
     # rank mismatches will still occur (eventually for some configs).
     # But at least using the union here should reduce them.
     # TODO: We should also uso automatic bad finding on the empty room data
+    raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
+                                     extra_params=cfg.reader_extra_params)
     if cfg.use_maxwell_filter:
-        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
-                                         extra_params=cfg.reader_extra_params)
         # We need to include any automatically found bad channels, if relevant.
         # TODO this is a bit of a hack because we don't use "in_files" access
         # here, but this is *in the same step where this file is generated*

@@ -235,7 +235,7 @@ def filter_data(
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
-                bids_path_ref_in=None,
+                bids_path_ref_in=bids_path,  # will take bads from this run (0)
             )
         else:
             raw_noise = import_rest_data(
@@ -244,9 +244,9 @@ def filter_data(
             )
         out_key = f'raw_{task}_filt'
         out_files[out_key] = \
-            bids_path_noise.copy().update(
+            bids_path.copy().update(
                 root=cfg.deriv_root, processing='filt', extension='.fif',
-                suffix='raw', split=None)
+                suffix='raw', split=None, task=task, run=None)
 
         raw_noise.load_data()
         filter(

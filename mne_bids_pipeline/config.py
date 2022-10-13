@@ -3953,7 +3953,7 @@ if (
     raise ValueError(msg)
 
 
-def _update_for_splits(files_dict, key, *, single=False):
+def _update_for_splits(files_dict, key, *, single=False, allow_missing=False):
     if not isinstance(files_dict, dict):  # fake it
         assert key is None
         files_dict, key = dict(x=files_dict), 'x'
@@ -3961,7 +3961,11 @@ def _update_for_splits(files_dict, key, *, single=False):
     if bids_path.fpath.exists():
         return bids_path  # no modifications needed
     bids_path = bids_path.copy().update(split='01')
-    assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
+    missing = not bids_path.fpath.exists()
+    if not allow_missing:
+        assert not missing, f'Missing file: {bids_path.fpath}'
+    if missing:
+        return bids_path.update(split=None)
     files_dict[key] = bids_path
     # if we only need the first file (i.e., when reading), quit now
     if single:

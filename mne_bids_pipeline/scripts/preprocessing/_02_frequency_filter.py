@@ -266,6 +266,7 @@ def get_config(
     cfg = SimpleNamespace(
         reader_extra_params=config.reader_extra_params,
         process_er=config.process_er,
+        process_rest=config.process_rest,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,

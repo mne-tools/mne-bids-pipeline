@@ -267,10 +267,10 @@ authors:
   when Maxwell filtering is used.
   ({{ gh(595) }} by {{ authors.larsoner }})
 - Empty-room and resting-state data are processed by default if present,
-  regardless of [`config.noise_cov`][mne_bids_pipeline.config.noise_cov] value
-  based on [`config.process_er = True`][mne_bids_pipeline.config.process_er]
-  and [`config.process_rest = True`][mne_bids_pipeline.config.process_rest]
-  default values
+  regardless of [`config.noise_cov`][mne_bids_pipeline.config.noise_cov] value.
+  This can be controlled by changing the default values from 
+  [`config.process_er = True`][mne_bids_pipeline.config.process_er] and
+  [`config.process_rest = True`][mne_bids_pipeline.config.process_rest]
   ({{ gh(633) }} by {{ authors.larsoner }})
 
 ### Code health

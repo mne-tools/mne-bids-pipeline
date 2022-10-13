@@ -72,7 +72,7 @@ def get_input_fnames_frequency_filter(**kwargs):
         path_kwargs['root'] = cfg.bids_root
         path_kwargs['suffix'] = None
         path_kwargs['extension'] = None
-        path_kwmags['processing'] = cfg.proc
+        path_kwargs['processing'] = cfg.proc
     bids_path_in = BIDSPath(**path_kwargs)
 
     in_files = dict()

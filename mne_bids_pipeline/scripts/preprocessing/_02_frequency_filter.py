@@ -94,7 +94,7 @@ def get_input_fnames_frequency_filter(**kwargs):
                     try:
                         raw_fname = \
                             in_files[f'raw_run-{run}'].find_empty_room()
-                    except RuntimeError:  # non-MEG data
+                    except ValueError:  # non-MEG data
                         raw_fname = None
             if do[task] and raw_fname is not None and \
                     raw_fname.fpath.is_file():

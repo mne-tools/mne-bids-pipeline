@@ -102,7 +102,7 @@ def run_ssp(*, cfg, subject, session, in_files):
                 session=session,
                 reject=rejects[kind],
                 ch_types=cfg.ch_types,
-                param=f'ssp_{kind}_reject',
+                param=f'ssp_reject_{kind}',
                 epochs=proj_epochs,
             )
             proj_epochs.drop_bad(reject=reject_)

@@ -69,8 +69,11 @@ def get_input_fnames_maxwell_filter(**kwargs):
             if raw_rest.fpath.is_file():
                 in_files["raw_rest"] = raw_rest
         if cfg.process_er:
-            raw_noise = ref_bids_path.find_empty_room()
-            if raw_noise is not None:
+            try:
+                raw_noise = ref_bids_path.find_empty_room()
+            except RuntimeError:  # non-MEG data
+                raw_noise = None
+            if raw_noise is not None and raw_noise.fpath.is_file():
                 in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path

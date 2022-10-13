@@ -91,8 +91,13 @@ def get_input_fnames_frequency_filter(**kwargs):
                     raw_fname = bids_path_in.copy().update(
                         run=None, task=task)
                 else:
-                    raw_fname = in_files[f'raw_run-{run}'].find_empty_room()
-            if do[task] and raw_fname.fpath.is_file():
+                    try:
+                        raw_fname = \
+                            in_files[f'raw_run-{run}'].find_empty_room()
+                    except RuntimeError:  # non-MEG data
+                        raw_fname = None
+            if do[task] and raw_fname is not None and \
+                    raw_fname.fpath.is_file():
                 in_files[key] = raw_fname
                 _update_for_splits(in_files, key, single=True)
 

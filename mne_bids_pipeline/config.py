@@ -1738,6 +1738,7 @@ the generated evoked data.
         raw.crop(tmin=5, tmax=60)
         cov = mne.compute_raw_covariance(raw, rank='info')
         return cov
+    ```
 """
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')

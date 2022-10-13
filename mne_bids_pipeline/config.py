@@ -216,7 +216,7 @@ is automatically excluded from regular analysis.
     The ``emptyroom`` subject will be excluded automatically.
 """
 
-process_er: bool = False
+process_er: bool = True
 """
 Whether to apply the same pre-processing steps to the empty-room data as
 to the experimental data (up until including frequency filtering). This
@@ -224,6 +224,14 @@ is required if you wish to use the empty-room recording to estimate noise
 covariance (via ``noise_cov='emptyroom'``). The empty-room recording
 corresponding to the processed experimental data will be retrieved
 automatically.
+"""
+
+process_rest: bool = True
+"""
+Whether to apply the same pre-processing steps to the resting-state data as
+to the experimental data (up until including frequency filtering). This
+is required if you wish to use the resting-state recording to estimate noise
+covariance (via ``noise_cov='rest'``).
 """
 
 ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []

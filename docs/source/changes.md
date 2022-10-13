@@ -266,6 +266,12 @@ authors:
   defaults to `'auto'`, which will use `ssp_meg='combined'` for SSP computation
   when Maxwell filtering is used.
   ({{ gh(595) }} by {{ authors.larsoner }})
+- Empty-room and resting-state data are processed by default if present,
+  regardless of [`config.noise_cov`][mne_bids_pipeline.config.noise_cov] value
+  based on [`config.process_er = True`][mne_bids_pipeline.config.process_er]
+  and [`config.process_rest = True`][mne_bids_pipeline.config.process_rest]
+  default values
+  ({{ gh(633) }} by {{ authors.larsoner }})
 
 ### Code health
 

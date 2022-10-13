@@ -63,14 +63,15 @@ def get_input_fnames_maxwell_filter(**kwargs):
         check=True
     )
 
-    if (
-        (cfg.process_er or config.noise_cov == 'rest') and
-        run == cfg.mf_reference_run
-    ):
-        if config.noise_cov == 'rest':
-            in_files["raw_rest"] = bids_path_in.copy().update(task="rest")
-        else:
-            in_files["raw_er"] = ref_bids_path.find_empty_room()
+    if run == cfg.mf_reference_run:
+        if cfg.process_rest:
+            raw_rest = bids_path_in.copy().update(task="rest")
+            if raw_rest.fpath.is_file():
+                in_files["raw_rest"] = raw_rest
+        if cfg.process_er:
+            raw_noise = ref_bids_path.find_empty_room()
+            if raw_noise is not None:
+                in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
@@ -84,7 +85,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
                          f'if data have already processed with Maxwell-filter.'
-                         f' Got proc={config.proc}.')
+                         f' Got proc={cfg.proc}.')
     bids_path_in = in_files.pop(f"raw_run-{run}")
     bids_path_out = bids_path_in.copy().update(
         processing="sss",
@@ -167,34 +168,28 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         del raw_sss
 
     # Noise data processing.
-    # Only process empty-room data once – we ensure this by simply checking
-    # if the current run is the reference run, and only then initiate
-    # processing. No sophisticated logic behind this – it's just convenient to
-    # code it this way.
-    if (
-        (cfg.process_er or config.noise_cov == 'rest') and
-        run == cfg.mf_reference_run
-    ):
-        if config.noise_cov == 'rest':
-            recording_type = 'resting-state'
-        else:
-            recording_type = 'empty-room'
-
+    nice_names = dict(rest='resting-state', noise='empty-room')
+    for task in ('rest', 'noise'):
+        in_key = f'raw_{task}'
+        if in_key not in in_files:
+            continue
+        recording_type = nice_names[task]
         msg = f'Processing {recording_type} recording …'
         logger.info(**gen_log_kwargs(subject=subject,
                                      session=session, run=run, message=msg))
-
-        if config.noise_cov == 'rest':
+        bids_path_in = in_files.pop(in_key)
+        if task == 'rest':
             raw_noise = import_rest_data(
                 cfg=cfg,
-                bids_path_in=in_files.pop('raw_rest')
+                bids_path_in=bids_path_in,
             )
         else:
             raw_noise = import_er_data(
                 cfg=cfg,
-                bids_path_er_in=in_files.pop('raw_er'),
+                bids_path_er_in=bids_path_in,
                 bids_path_ref_in=ref_fname,
             )
+        del bids_path_in
 
         # Maxwell-filter noise data.
         msg = f'Applying Maxwell filter to {recording_type} recording'
@@ -217,7 +212,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         rank_exp = mne.compute_rank(raw_sss, rank='info')['meg']
         rank_noise = mne.compute_rank(raw_noise_sss, rank='info')['meg']
 
-        if config.noise_cov == 'rest':
+        if task == 'rest':
             if rank_exp > rank_noise:
                 msg = (
                     f'Resting-state rank ({rank_noise}) is lower than '
@@ -236,8 +231,9 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
                    f'were processed  differently.')
             raise RuntimeError(msg)
 
-        out_files['sss_noise'] = bids_path_out.copy().update(
-            task='rest' if config.noise_cov == 'rest' else 'noise',
+        out_key = f'sss_{task}'
+        out_files[out_key] = bids_path_out.copy().update(
+            task=task,
             run=None,
             processing='sss'
         )
@@ -245,14 +241,14 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         # Save only the channel types we wish to analyze
         # (same as for experimental data above).
         msg = ("Writing "
-               f"{out_files['sss_noise'].fpath.relative_to(cfg.deriv_root)}")
+               f"{out_files[out_key].fpath.relative_to(cfg.deriv_root)}")
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run))
         raw_noise_sss.save(
-            out_files['sss_noise'], overwrite=True,
+            out_files[out_key], overwrite=True,
             split_naming='bids', split_size=cfg._raw_split_size,
         )
-        _update_for_splits(out_files, 'sss_noise')
+        _update_for_splits(out_files, out_key)
         del raw_noise_sss
     assert len(in_files) == 0, in_files.keys()
     return out_files
@@ -269,6 +265,7 @@ def get_config(
         mf_st_duration=config.mf_st_duration,
         mf_head_origin=config.mf_head_origin,
         process_er=config.process_er,
+        process_rest=config.process_rest,
         runs=config.get_runs(subject=subject),  # XXX needs to accept session!
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,

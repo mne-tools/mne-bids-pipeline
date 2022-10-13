@@ -58,7 +58,6 @@ def get_input_fnames_frequency_filter(**kwargs):
         session=session,
         task=cfg.task,
         acquisition=cfg.acq,
-        processing=cfg.proc,
         recording=cfg.rec,
         space=cfg.space,
         datatype=cfg.datatype,
@@ -68,39 +67,34 @@ def get_input_fnames_frequency_filter(**kwargs):
         path_kwargs['root'] = cfg.deriv_root
         path_kwargs['suffix'] = 'raw'
         path_kwargs['extension'] = '.fif'
+        path_kwargs['processing'] = 'sss'
     else:
         path_kwargs['root'] = cfg.bids_root
+        path_kwargs['suffix'] = None
+        path_kwargs['extension'] = None
+        path_kwmags['processing'] = cfg.proc
     bids_path_in = BIDSPath(**path_kwargs)
-
-    if cfg.use_maxwell_filter:
-        bids_path_in.update(processing="sss")
 
     in_files = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
     _update_for_splits(in_files, f'raw_run-{run}', single=True)
 
-    if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
-        noise_task = "rest" if config.noise_cov == "rest" else "noise"
-        if cfg.use_maxwell_filter:
-            raw_noise_fname_in = bids_path_in.copy().update(
-                run=None, task=noise_task
-            )
-            in_files["raw_noise"] = raw_noise_fname_in
-            _update_for_splits(in_files, "raw_noise", single=True)
-        else:
-            if config.noise_cov == 'rest':
-                in_files["raw_rest"] = bids_path_in.copy().update(
-                    run=None, task=noise_task)
+    if run == cfg.runs[0]:
+        do = dict(rest=cfg.process_rest, noise=cfg.process_er)
+        for task in ('rest', 'noise'):
+            key = f'raw_{task}'
+            if cfg.use_maxwell_filter:
+                raw_fname = bids_path_in.copy().update(
+                    run=None, task=task)
             else:
-                assert config.noise_cov == 'noise'
-                ref_bids_path = bids_path_in.copy().update(
-                    run=cfg.mf_reference_run,
-                    extension='.fif',
-                    suffix='meg',
-                    root=cfg.bids_root,
-                    check=True
-                )
-                in_files["raw_er"] = ref_bids_path.find_empty_room()
+                if task == 'rest':
+                    raw_fname = bids_path_in.copy().update(
+                        run=None, task=task)
+                else:
+                    raw_fname = in_files[f'raw_run-{run}'].find_empty_room()
+            if do[task] and raw_fname.fpath.is_file():
+                in_files[key] = raw_fname
+                _update_for_splits(in_files, key, single=True)
 
     return in_files
 
@@ -209,32 +203,32 @@ def filter_data(
 
     del raw
 
-    if (cfg.process_er or config.noise_cov == 'rest') and run == cfg.runs[0]:
-        data_type = ('resting-state' if config.noise_cov == 'rest'
-                     else 'empty-room')
-
+    nice_names = dict(rest='restiing-state', noise='empty-room')
+    for task in ('rest', 'noise'):
+        in_key = f'raw_{task}'
+        if in_key not in in_files:
+            continue
+        data_type = nice_names[task]
+        bids_path_noise = in_files.pop(in_key)
         if cfg.use_maxwell_filter:
-            bids_path_noise = in_files.pop("raw_noise")
             msg = (f'Reading {data_type} recording: '
                    f'{bids_path_noise.basename}')
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                          session=session))
             raw_noise = mne.io.read_raw_fif(bids_path_noise)
         elif data_type == 'empty-room':
-            bids_path_noise = in_files.pop('raw_er')
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
                 bids_path_ref_in=None,
             )
         else:
-            bids_path_noise = in_files.pop('raw_rest')
             raw_noise = import_rest_data(
                 cfg=cfg,
                 bids_path_in=bids_path_noise
             )
-
-        out_files['raw_noise_filt'] = \
+        out_key = f'raw_{task}_filt'
+        out_files[out_key] = \
             bids_path_noise.copy().update(
                 root=cfg.deriv_root, processing='filt', extension='.fif',
                 suffix='raw', split=None)
@@ -251,10 +245,10 @@ def filter_data(
                  sfreq=cfg.resample_sfreq, data_type=data_type)
 
         raw_noise.save(
-            out_files['raw_noise_filt'], overwrite=True, split_naming='bids',
+            out_files[out_key], overwrite=True, split_naming='bids',
             split_size=cfg._raw_split_size,
         )
-        _update_for_splits(out_files, 'raw_noise_filt')
+        _update_for_splits(out_files, out_key)
         if cfg.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)

@@ -141,7 +141,6 @@ def get_config(
         spatial_filter=config.spatial_filter,
         ica_reject=config.ica_reject,
         deriv_root=config.get_deriv_root(),
-        decim=config.decim,
         reject=config.reject,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,

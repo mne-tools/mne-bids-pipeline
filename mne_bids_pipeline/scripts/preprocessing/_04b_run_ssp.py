@@ -158,6 +158,7 @@ def get_config(
         n_proj_ecg=config.n_proj_ecg,
         ssp_meg=config.ssp_meg,
         ch_types=config.ch_types,
+        decim=config.decim,
         use_maxwell_filter=config.use_maxwell_filter,
     )
     return cfg

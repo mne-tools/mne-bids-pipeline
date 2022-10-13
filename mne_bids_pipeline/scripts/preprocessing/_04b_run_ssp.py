@@ -89,7 +89,8 @@ def run_ssp(*, cfg, subject, session, in_files):
         projs[kind] = []
         if not any(n_projs[kind]):
             continue
-        proj_epochs = epochs_fun[kind](raw, ch_name=ch_name[kind])
+        proj_epochs = epochs_fun[kind](
+            raw, ch_name=ch_name[kind], decim=cfg.decim)
         n_orig = len(proj_epochs)
         rate = n_orig / raw.times[-1] * 60
         msg = f'Detected {rate_names[kind]} rate: {rate:5.1f} bpm'

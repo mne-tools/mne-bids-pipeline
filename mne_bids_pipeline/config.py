@@ -3796,8 +3796,7 @@ def import_er_data(
 def import_rest_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None
+    bids_path_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Import resting-state data for use as a noise source.
 
@@ -3805,10 +3804,8 @@ def import_rest_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject for whom to import the empty-room data.
-    session
-        The session for which to import the empty-room data.
+    bids_path_in : BIDSPath
+        The path.
 
     Returns
     -------
@@ -3819,7 +3816,7 @@ def import_rest_data(
     cfg.task = 'rest'
 
     raw_rest = import_experimental_data(
-        cfg=cfg, subject=subject, session=session
+        cfg=cfg, bids_path_in=bids_path_in,
     )
     return raw_rest
 

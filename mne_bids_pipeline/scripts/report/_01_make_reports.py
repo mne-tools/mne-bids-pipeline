@@ -1599,7 +1599,6 @@ def get_config(
         space=config.space,
         proc=config.proc,
         analyze_channels=config.analyze_channels,
-        process_er=config.process_er,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,

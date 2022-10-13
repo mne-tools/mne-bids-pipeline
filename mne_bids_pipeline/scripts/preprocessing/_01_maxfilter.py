@@ -64,14 +64,16 @@ def get_input_fnames_maxwell_filter(**kwargs):
     )
 
     if run == cfg.mf_reference_run:
-        if cfg.process_rest:
+        if cfg.process_rest and not cfg.task_is_rest:
             raw_rest = bids_path_in.copy().update(task="rest")
             if raw_rest.fpath.is_file():
                 in_files["raw_rest"] = raw_rest
         if cfg.process_er:
             try:
                 raw_noise = ref_bids_path.find_empty_room()
-            except ValueError:  # non-MEG data
+            except (ValueError,  # non-MEG data
+                    AssertionError,  # MNE-BIDS check assert exists()
+                    FileNotFoundError):  # MNE-BIDS PR-1080 exists()
                 raw_noise = None
             if raw_noise is not None and raw_noise.fpath.is_file():
                 in_files["raw_noise"] = raw_noise
@@ -269,6 +271,7 @@ def get_config(
         mf_head_origin=config.mf_head_origin,
         process_er=config.process_er,
         process_rest=config.process_rest,
+        task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),  # XXX needs to accept session!
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,

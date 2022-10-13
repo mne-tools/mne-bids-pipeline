@@ -80,8 +80,13 @@ def get_input_fnames_frequency_filter(**kwargs):
     _update_for_splits(in_files, f'raw_run-{run}', single=True)
 
     if run == cfg.runs[0]:
-        do = dict(rest=cfg.process_rest, noise=cfg.process_er)
+        do = dict(
+            rest=cfg.process_rest and not cfg.task_is_rest,
+            noise=cfg.process_er,
+        )
         for task in ('rest', 'noise'):
+            if not do[task]:
+                continue
             key = f'raw_{task}'
             if cfg.use_maxwell_filter:
                 raw_fname = bids_path_in.copy().update(
@@ -94,12 +99,17 @@ def get_input_fnames_frequency_filter(**kwargs):
                     try:
                         raw_fname = \
                             in_files[f'raw_run-{run}'].find_empty_room()
-                    except ValueError:  # non-MEG data
+                    except (ValueError,  # non-MEG data
+                            AssertionError,  # MNE-BIDS check assert exists()
+                            FileNotFoundError):  # MNE-BIDS PR-1080 exists()
                         raw_fname = None
-            if do[task] and raw_fname is not None and \
-                    raw_fname.fpath.is_file():
-                in_files[key] = raw_fname
-                _update_for_splits(in_files, key, single=True)
+            if raw_fname is None:
+                continue
+            in_files[key] = raw_fname
+            _update_for_splits(
+                in_files, key, single=True, allow_missing=True)
+            if not in_files[key].fpath.is_file():
+                in_files.pop(key)
 
     return in_files
 
@@ -230,7 +240,7 @@ def filter_data(
         else:
             raw_noise = import_rest_data(
                 cfg=cfg,
-                bids_path_in=bids_path_noise
+                bids_path_in=bids_path_noise,
             )
         out_key = f'raw_{task}_filt'
         out_files[out_key] = \
@@ -272,6 +282,7 @@ def get_config(
         reader_extra_params=config.reader_extra_params,
         process_er=config.process_er,
         process_rest=config.process_rest,
+        task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,

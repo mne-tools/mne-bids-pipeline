@@ -203,7 +203,7 @@ def filter_data(
 
     del raw
 
-    nice_names = dict(rest='restiing-state', noise='empty-room')
+    nice_names = dict(rest='resting-state', noise='empty-room')
     for task in ('rest', 'noise'):
         in_key = f'raw_{task}'
         if in_key not in in_files:

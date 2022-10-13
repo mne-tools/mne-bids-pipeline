@@ -108,7 +108,7 @@ def get_input_fnames_frequency_filter(**kwargs):
             in_files[key] = raw_fname
             _update_for_splits(
                 in_files, key, single=True, allow_missing=True)
-            if not in_files[key].fpath.is_file():
+            if not in_files[key].fpath.exists():
                 in_files.pop(key)
 
     return in_files

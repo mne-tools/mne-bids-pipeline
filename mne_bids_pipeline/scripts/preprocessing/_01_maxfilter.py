@@ -66,7 +66,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
     if run == cfg.mf_reference_run:
         if cfg.process_rest and not cfg.task_is_rest:
             raw_rest = bids_path_in.copy().update(task="rest")
-            if raw_rest.fpath.is_file():
+            if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
         if cfg.process_er:
             try:
@@ -75,7 +75,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
                     AssertionError,  # MNE-BIDS check assert exists()
                     FileNotFoundError):  # MNE-BIDS PR-1080 exists()
                 raw_noise = None
-            if raw_noise is not None and raw_noise.fpath.is_file():
+            if raw_noise is not None and raw_noise.fpath.exists():
                 in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path

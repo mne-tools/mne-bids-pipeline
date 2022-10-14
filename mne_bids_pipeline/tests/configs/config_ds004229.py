@@ -32,5 +32,4 @@ conditions = ["auditory"]
 decode = False
 
 # Noise estimation
-process_er = True
 noise_cov = 'emptyroom'

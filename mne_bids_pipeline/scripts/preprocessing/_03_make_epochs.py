@@ -17,7 +17,7 @@ from mne_bids import BIDSPath
 
 import config
 from config import make_epochs, gen_log_kwargs, failsafe_run
-from config import parallel_func, _update_for_splits
+from config import parallel_func, _update_for_splits, _sanitize_callable
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -52,7 +52,7 @@ def get_input_fnames_epochs(**kwargs):
         key = f'raw_run-{run}'
         in_files[key] = bids_path.copy().update(run=run)
         _update_for_splits(in_files, key, single=True)
-    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+    if cfg.use_maxwell_filter and cfg.noise_cov == 'rest':
         in_files['raw_rest'] = bids_path.copy().update(
             task='rest',
             check=False
@@ -150,7 +150,7 @@ def run_epochs(*, cfg, subject, session, in_files):
     epochs = epochs_all_runs
     del epochs_all_runs
 
-    if cfg.use_maxwell_filter and config.noise_cov == 'rest':
+    if cfg.use_maxwell_filter and cfg.noise_cov == 'rest':
         raw_rest_filt = mne.io.read_raw(in_files.pop('raw_rest'))
         rank_rest = mne.compute_rank(raw_rest_filt, rank='info')['meg']
         if rank_rest < smallest_rank:
@@ -224,7 +224,6 @@ def get_config(
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        process_er=config.process_er,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
@@ -249,6 +248,7 @@ def get_config(
         event_repeated=config.event_repeated,
         decim=config.decim,
         ch_types=config.ch_types,
+        noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=config.get_eeg_reference(),
         _epochs_split_size=config._epochs_split_size,
     )

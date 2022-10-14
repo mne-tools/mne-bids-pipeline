@@ -215,7 +215,7 @@ is automatically excluded from regular analysis.
     The ``emptyroom`` subject will be excluded automatically.
 """
 
-process_er: bool = False
+process_empty_room: bool = True
 """
 Whether to apply the same pre-processing steps to the empty-room data as
 to the experimental data (up until including frequency filtering). This
@@ -223,6 +223,14 @@ is required if you wish to use the empty-room recording to estimate noise
 covariance (via ``noise_cov='emptyroom'``). The empty-room recording
 corresponding to the processed experimental data will be retrieved
 automatically.
+"""
+
+process_rest: bool = True
+"""
+Whether to apply the same pre-processing steps to the resting-state data as
+to the experimental data (up until including frequency filtering). This
+is required if you wish to use the resting-state recording to estimate noise
+covariance (via ``noise_cov='rest'``).
 """
 
 ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
@@ -2151,10 +2159,11 @@ if noise_cov == 'emptyroom' and 'eeg' in ch_types:
            'noise_cov to (tmin, tmax)')
     raise ValueError(msg)
 
-if noise_cov == 'emptyroom' and not process_er:
+if noise_cov == 'emptyroom' and not process_empty_room:
     msg = ('You requested noise covariance estimation from empty-room '
            'recordings by setting noise_cov = "emptyroom", but you did not '
-           'enable empty-room data processing. Please set process_er = True')
+           'enable empty-room data processing. '
+           'Please set process_empty_room = True')
     raise ValueError(msg)
 
 if bem_mri_images not in ('FLASH', 'T1', 'auto'):
@@ -3631,9 +3640,9 @@ def import_er_data(
     # rank mismatches will still occur (eventually for some configs).
     # But at least using the union here should reduce them.
     # TODO: We should also uso automatic bad finding on the empty room data
+    raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
+                                     extra_params=cfg.reader_extra_params)
     if cfg.use_maxwell_filter:
-        raw_ref = mne_bids.read_raw_bids(bids_path_ref_in,
-                                         extra_params=cfg.reader_extra_params)
         # We need to include any automatically found bad channels, if relevant.
         # TODO this is a bit of a hack because we don't use "in_files" access
         # here, but this is *in the same step where this file is generated*
@@ -3666,8 +3675,7 @@ def import_er_data(
 def import_rest_data(
     *,
     cfg: SimpleNamespace,
-    subject: str,
-    session: Optional[str] = None
+    bids_path_in: BIDSPath,
 ) -> mne.io.BaseRaw:
     """Import resting-state data for use as a noise source.
 
@@ -3675,10 +3683,8 @@ def import_rest_data(
     ----------
     cfg
         The local configuration.
-    subject
-        The subject for whom to import the empty-room data.
-    session
-        The session for which to import the empty-room data.
+    bids_path_in : BIDSPath
+        The path.
 
     Returns
     -------
@@ -3689,7 +3695,7 @@ def import_rest_data(
     cfg.task = 'rest'
 
     raw_rest = import_experimental_data(
-        cfg=cfg, subject=subject, session=session
+        cfg=cfg, bids_path_in=bids_path_in,
     )
     return raw_rest
 
@@ -3818,7 +3824,7 @@ if (
     raise ValueError(msg)
 
 
-def _update_for_splits(files_dict, key, *, single=False):
+def _update_for_splits(files_dict, key, *, single=False, allow_missing=False):
     if not isinstance(files_dict, dict):  # fake it
         assert key is None
         files_dict, key = dict(x=files_dict), 'x'
@@ -3826,7 +3832,11 @@ def _update_for_splits(files_dict, key, *, single=False):
     if bids_path.fpath.exists():
         return bids_path  # no modifications needed
     bids_path = bids_path.copy().update(split='01')
-    assert bids_path.fpath.exists(), f'Missing file: {bids_path.fpath}'
+    missing = not bids_path.fpath.exists()
+    if not allow_missing:
+        assert not missing, f'Missing file: {bids_path.fpath}'
+    if missing:
+        return bids_path.update(split=None)
     files_dict[key] = bids_path
     # if we only need the first file (i.e., when reading), quit now
     if single:

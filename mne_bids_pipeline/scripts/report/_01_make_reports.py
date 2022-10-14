@@ -77,7 +77,8 @@ def get_er_path(cfg, subject, session):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
-    raw_fname = _update_for_splits(raw_fname, None, single=True)
+    raw_fname = _update_for_splits(
+        raw_fname, None, single=True, allow_missing=True)
     return raw_fname
 
 
@@ -530,7 +531,8 @@ def run_report_preprocessing(
         )
         del plot_raw_psd
 
-    if cfg.process_er:
+    er_path = get_er_path(cfg=cfg, subject=subject, session=session)
+    if er_path.fpath.exists():
         msg = 'Adding filtered empty-room raw data to report.'
         logger.info(
             **gen_log_kwargs(
@@ -538,7 +540,6 @@ def run_report_preprocessing(
             )
         )
 
-        er_path = get_er_path(cfg=cfg, subject=subject, session=session)
         report.add_raw(
             raw=er_path,
             title='Empty-Room',
@@ -1612,7 +1613,6 @@ def get_config(
         space=config.space,
         proc=config.proc,
         analyze_channels=config.analyze_channels,
-        process_er=config.process_er,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,

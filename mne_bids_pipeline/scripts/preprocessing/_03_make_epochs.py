@@ -224,7 +224,6 @@ def get_config(
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        process_er=config.process_er,
         runs=config.get_runs(subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,

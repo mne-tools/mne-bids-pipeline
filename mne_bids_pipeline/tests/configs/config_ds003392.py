@@ -39,5 +39,4 @@ decoding_time_generalization_decim = 4
 contrasts = [('incoherent', 'coherent')]
 
 # Noise estimation
-process_er = True
 noise_cov = 'emptyroom'

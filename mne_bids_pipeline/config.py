@@ -215,7 +215,7 @@ is automatically excluded from regular analysis.
     The ``emptyroom`` subject will be excluded automatically.
 """
 
-process_er: bool = True
+process_empty_room: bool = True
 """
 Whether to apply the same pre-processing steps to the empty-room data as
 to the experimental data (up until including frequency filtering). This
@@ -2159,10 +2159,11 @@ if noise_cov == 'emptyroom' and 'eeg' in ch_types:
            'noise_cov to (tmin, tmax)')
     raise ValueError(msg)
 
-if noise_cov == 'emptyroom' and not process_er:
+if noise_cov == 'emptyroom' and not process_empty_room:
     msg = ('You requested noise covariance estimation from empty-room '
            'recordings by setting noise_cov = "emptyroom", but you did not '
-           'enable empty-room data processing. Please set process_er = True')
+           'enable empty-room data processing. '
+           'Please set process_empty_room = True')
     raise ValueError(msg)
 
 if bem_mri_images not in ('FLASH', 'T1', 'auto'):

@@ -269,7 +269,7 @@ authors:
 - Empty-room and resting-state data are processed by default if present,
   regardless of [`config.noise_cov`][mne_bids_pipeline.config.noise_cov] value.
   This can be controlled by changing the default values from 
-  [`config.process_er = True`][mne_bids_pipeline.config.process_er] and
+  [`config.process_empty_room = True`][mne_bids_pipeline.config.process_empty_room] and
   [`config.process_rest = True`][mne_bids_pipeline.config.process_rest]
   ({{ gh(633) }} by {{ authors.larsoner }})
 
@@ -289,6 +289,10 @@ authors:
 - For storing configuration values, we switched from using `BunchConst` to
   Python's built-in `SimpleNamespace`.
   ({{ gh(472) }} by {{ authors.agramfort }})
+- The `config.process_er` variable was renamed 
+  [`config.process_empty_room`][mne_bids_pipeline.config.process_empty_room]
+  for readability, and the default was changed to `True` for consistency
+  ({{ gh(633) }} by {{ authors.larsoner }})
 
 ### Bug fixes
 

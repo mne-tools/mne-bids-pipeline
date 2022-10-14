@@ -82,7 +82,7 @@ def get_input_fnames_frequency_filter(**kwargs):
     if run == cfg.runs[0]:
         do = dict(
             rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_er,
+            noise=cfg.process_empty_room,
         )
         for task in ('rest', 'noise'):
             if not do[task]:
@@ -280,7 +280,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         reader_extra_params=config.reader_extra_params,
-        process_er=config.process_er,
+        process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),

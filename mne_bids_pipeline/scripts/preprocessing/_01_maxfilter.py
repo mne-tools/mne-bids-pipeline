@@ -68,7 +68,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
             raw_rest = bids_path_in.copy().update(task="rest")
             if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
-        if cfg.process_er:
+        if cfg.process_empty_room:
             try:
                 raw_noise = ref_bids_path.find_empty_room()
             except (ValueError,  # non-MEG data
@@ -269,7 +269,7 @@ def get_config(
         mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
         mf_st_duration=config.mf_st_duration,
         mf_head_origin=config.mf_head_origin,
-        process_er=config.process_er,
+        process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
         runs=config.get_runs(subject=subject),  # XXX needs to accept session!

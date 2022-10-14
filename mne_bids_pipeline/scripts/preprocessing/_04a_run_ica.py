@@ -34,6 +34,7 @@ from config import (make_epochs, gen_log_kwargs, failsafe_run, _script_path,
                     annotations_to_events, _update_for_splits)
 from config import parallel_func
 
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -382,15 +383,23 @@ def run_ica(*, cfg, subject, session, in_files):
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     # Reject epochs based on peak-to-peak rejection thresholds
-    msg = f'Using PTP rejection thresholds: {cfg.ica_reject}'
+    ica_reject = _get_reject(
+        subject=subject,
+        session=session,
+        reject=cfg.ica_reject,
+        ch_types=cfg.ch_types,
+        param='ica_reject',
+    )
+
+    msg = f'Using PTP rejection thresholds: {ica_reject}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
 
-    epochs.drop_bad(reject=cfg.ica_reject)
+    epochs.drop_bad(reject=ica_reject)
     if epochs_eog is not None:
-        epochs_eog.drop_bad(reject=cfg.ica_reject)
+        epochs_eog.drop_bad(reject=ica_reject)
     if epochs_ecg is not None:
-        epochs_ecg.drop_bad(reject=cfg.ica_reject)
+        epochs_ecg.drop_bad(reject=ica_reject)
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
@@ -525,7 +534,7 @@ def get_config(
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
-        ica_reject=config.get_ica_reject(),
+        ica_reject=config.ica_reject,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
         random_state=config.random_state,

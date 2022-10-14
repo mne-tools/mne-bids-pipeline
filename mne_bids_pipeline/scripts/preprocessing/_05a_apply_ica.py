@@ -27,6 +27,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func, _script_path
 
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -92,7 +93,14 @@ def apply_ica(*, cfg, subject, session, in_files):
                                  session=session))
 
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
-    epochs.drop_bad(cfg.ica_reject)
+    ica_reject = _get_reject(
+        subject=subject,
+        session=session,
+        reject=cfg.ica_reject,
+        ch_types=cfg.ch_types,
+        param='ica_reject',
+    )
+    epochs.drop_bad(ica_reject)
 
     # Now actually reject the components.
     msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
@@ -145,7 +153,8 @@ def get_config(
         deriv_root=config.get_deriv_root(),
         interactive=config.interactive,
         baseline=config.baseline,
-        ica_reject=config.get_ica_reject(),
+        ica_reject=config.ica_reject,
+        ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg

@@ -18,11 +18,10 @@ import time
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
 import warnings
 
-
 if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
+    from typing import Literal
 else:
-    from typing_extensions import Literal, TypedDict
+    from typing_extensions import Literal
 
 from types import SimpleNamespace
 import coloredlogs
@@ -39,14 +38,14 @@ import mne
 import mne_bids
 from mne_bids import BIDSPath, read_raw_bids
 
-PathLike = Union[str, pathlib.Path]
+from mne_bids_pipeline._typing import PathLike, ArbitraryContrast
+from mne_bids_pipeline._logging import gen_log_kwargs
+from mne_bids_pipeline._io import _write_json
 
 
-class ArbitraryContrast(TypedDict):
-    name: str
-    conditions: List[str]
-    weights: List[float]
-
+###############################################################################
+# Config parameters
+# -----------------
 
 study_name: str = ''
 """
@@ -1702,7 +1701,7 @@ If ``'emptyroom'``, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time. This cannot be used with EEG data.
 
-If ``''rest'``, the noise covariance will be estimated from a resting-state
+If ``'rest'``, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
 filename).
 
@@ -1747,6 +1746,7 @@ the generated evoked data.
         raw.crop(tmin=5, tmax=60)
         cov = mne.compute_raw_covariance(raw, rank='info')
         return cov
+    ```
 """
 
 source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
@@ -2015,55 +2015,6 @@ coloredlogs.install(
 
 
 mne.set_log_level(verbose=mne_log_level.upper())
-
-
-class LogKwargsT(TypedDict):
-    msg: str
-    extra: Dict[str, str]
-    box: str
-
-
-def gen_log_kwargs(
-    message: str,
-    subject: Optional[Union[str, int]] = None,
-    session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None,
-    emoji: str = '⏳️',
-    script_path: Optional[PathLike] = None,
-) -> LogKwargsT:
-    if subject is not None:
-        subject = f' sub-{subject}'
-    if session is not None:
-        session = f' ses-{session}'
-    if run is not None:
-        run = f' run-{run}'
-
-    message = f' {message}'
-
-    script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
-    step_name = f'{script_path.parent.name}/{script_path.stem}'
-
-    # Choose some to be our standards
-    emoji = dict(
-        cache='✅',
-        skip='⏩',
-    ).get(emoji, emoji)
-    extra = {
-        'step': f'{emoji} {step_name}',
-        'box': '│ ',
-    }
-    if subject:
-        extra['subject'] = subject
-    if session:
-        extra['session'] = session
-    if run:
-        extra['run'] = run
-
-    kwargs: LogKwargsT = {
-        'msg': message,
-        'extra': extra,
-    }
-    return kwargs
 
 
 ###############################################################################
@@ -2751,79 +2702,6 @@ def parallel_func(func):
         my_func = delayed(func)
 
     return parallel, my_func
-
-
-def _get_reject(
-    *,
-    subject: Optional[str] = None,
-    session: Optional[str] = None,
-    reject: Optional[Union[Dict[str, float], Literal['autoreject_global']]],
-    ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']],
-    epochs: Optional[mne.BaseEpochs] = None
-) -> Dict[str, float]:
-    if reject is None:
-        return dict()
-
-    if reject == 'autoreject_global':
-        # Automated threshold calculation requested
-        import autoreject
-
-        ch_types_autoreject = list(ch_types)
-        if 'meg' in ch_types_autoreject:
-            ch_types_autoreject.remove('meg')
-            if 'mag' in epochs:
-                ch_types_autoreject.append('mag')
-            if 'grad' in epochs:
-                ch_types_autoreject.append('grad')
-
-        msg = 'Generating rejection thresholds using autoreject …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
-        reject = autoreject.get_rejection_threshold(
-            epochs=epochs, ch_types=ch_types_autoreject, decim=decim,
-            verbose=False
-        )
-        return reject
-
-    # Only keep thresholds for channel types of interest
-    reject = reject.copy()
-    if ch_types == ['eeg']:
-        ch_types_to_remove = ('mag', 'grad')
-    else:
-        ch_types_to_remove = ('eeg',)
-
-    for ch_type in ch_types_to_remove:
-        try:
-            del reject[ch_type]
-        except KeyError:
-            pass
-
-    return reject
-
-
-def get_reject(
-    *,
-    epochs: Optional[mne.BaseEpochs] = None
-) -> Dict[str, float]:
-    return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
-
-
-def get_ssp_reject(
-    *,
-    ssp_type: Literal['ecg', 'eog'],
-    epochs: mne.BaseEpochs
-) -> Dict[str, float]:
-    if ssp_type == 'ecg':
-        reject = ssp_reject_ecg
-    elif ssp_type == 'eog':
-        reject = ssp_reject_eog
-    else:
-        raise ValueError("Only 'eog' and 'ecg' are supported.")
-    return _get_reject(reject=reject, ch_types=ch_types, epochs=epochs)
-
-
-def get_ica_reject() -> Dict[str, float]:
-    return _get_reject(reject=ica_reject, ch_types=ch_types)
 
 
 def get_fs_subjects_dir():
@@ -3525,9 +3403,8 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     if find_noisy_channels_meg:
         auto_scores_fname = bids_path.copy().update(
             suffix='scores', extension='.json', check=False)
-        with open(auto_scores_fname, 'w') as f:
-            json_tricks.dump(auto_scores, fp=f, allow_nan=True,
-                             sort_keys=False)
+        # TODO: This should be in our list of output files!
+        _write_json(auto_scores_fname, auto_scores)
 
         if interactive:
             import matplotlib.pyplot as plt
@@ -3535,6 +3412,7 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
             plt.show()
 
     # Write the bad channels to disk.
+    # TODO: This should also be in our list of output files
     bads_tsv_fname = bids_path.copy().update(suffix='bads',
                                              extension='.tsv',
                                              check=False)
@@ -3819,11 +3697,6 @@ def import_rest_data(
         cfg=cfg, bids_path_in=bids_path_in,
     )
     return raw_rest
-
-
-class ReferenceRunParams(TypedDict):
-    montage: mne.channels.DigMontage
-    dev_head_t: mne.Transform
 
 
 def _find_breaks_func(

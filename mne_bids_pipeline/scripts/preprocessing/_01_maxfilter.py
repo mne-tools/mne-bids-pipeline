@@ -16,6 +16,7 @@ The function loads machine-specific calibration files.
 
 import itertools
 import logging
+from pathlib import Path
 from typing import Optional
 from types import SimpleNamespace
 
@@ -28,6 +29,8 @@ from config import (gen_log_kwargs, failsafe_run, _script_path,
                     import_experimental_data, import_er_data, import_rest_data,
                     _update_for_splits)
 from config import parallel_func
+
+from ..._io import _empty_room_match_path, _read_json
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -69,13 +72,11 @@ def get_input_fnames_maxwell_filter(**kwargs):
             if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
         if cfg.process_empty_room:
-            try:
-                raw_noise = ref_bids_path.find_empty_room()
-            except (ValueError,  # non-MEG data
-                    AssertionError,  # MNE-BIDS check assert exists()
-                    FileNotFoundError):  # MNE-BIDS PR-1080 exists()
-                raw_noise = None
-            if raw_noise is not None and raw_noise.fpath.exists():
+            raw_noise = _read_json(
+                _empty_room_match_path(bids_path_in, cfg))['fname']
+            if raw_noise is not None:
+                raw_noise = Path(raw_noise)
+                assert raw_noise.exists()  # guaranteed by match step
                 in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path

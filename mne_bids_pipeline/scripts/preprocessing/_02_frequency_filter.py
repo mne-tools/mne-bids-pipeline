@@ -35,8 +35,8 @@ from config import (gen_log_kwargs, failsafe_run,
                     _update_for_splits)
 from config import parallel_func
 
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._io import _read_json, _empty_room_match_path
+from ..._logging import logger
 
 
 def get_input_fnames_frequency_filter(**kwargs):
@@ -96,13 +96,8 @@ def get_input_fnames_frequency_filter(**kwargs):
                     raw_fname = bids_path_in.copy().update(
                         run=None, task=task)
                 else:
-                    try:
-                        raw_fname = \
-                            in_files[f'raw_run-{run}'].find_empty_room()
-                    except (ValueError,  # non-MEG data
-                            AssertionError,  # MNE-BIDS check assert exists()
-                            FileNotFoundError):  # MNE-BIDS PR-1080 exists()
-                        raw_fname = None
+                    raw_fname = _read_json(
+                        _empty_room_match_path(bids_path_in, cfg))['fname']
             if raw_fname is None:
                 continue
             in_files[key] = raw_fname

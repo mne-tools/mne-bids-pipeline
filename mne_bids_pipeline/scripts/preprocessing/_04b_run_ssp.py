@@ -18,6 +18,7 @@ import config
 from config import gen_log_kwargs, failsafe_run, _update_for_splits
 from config import parallel_func, _script_path
 
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -88,23 +89,23 @@ def run_ssp(*, cfg, subject, session, in_files):
         projs[kind] = []
         if not any(n_projs[kind]):
             continue
-        proj_epochs = epochs_fun[kind](raw, ch_name=ch_name[kind])
+        proj_epochs = epochs_fun[kind](
+            raw, ch_name=ch_name[kind], decim=cfg.decim)
         n_orig = len(proj_epochs)
         rate = n_orig / raw.times[-1] * 60
         msg = f'Detected {rate_names[kind]} rate: {rate:5.1f} bpm'
         logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                      session=session))
         # Enough to start
-        # TODO: This config.get_ssp_reject violates that we should only use
-        # cfg.values in this function, so caching might not work properly here.
-        # This should be refactored at some point.
         if len(proj_epochs) >= minimums[kind]:
-            if rejects[kind] == 'autoreject_global':
-                reject_epochs = proj_epochs
-            else:
-                reject_epochs = None
-            reject_ = config.get_ssp_reject(
-                ssp_type=kind, epochs=reject_epochs)
+            reject_ = _get_reject(
+                subject=subject,
+                session=session,
+                reject=rejects[kind],
+                ch_types=cfg.ch_types,
+                param=f'ssp_reject_{kind}',
+                epochs=proj_epochs,
+            )
             proj_epochs.drop_bad(reject=reject_)
         # Still enough after rejection
         if len(proj_epochs) >= minimums[kind]:
@@ -156,6 +157,8 @@ def get_config(
         n_proj_eog=config.n_proj_eog,
         n_proj_ecg=config.n_proj_ecg,
         ssp_meg=config.ssp_meg,
+        ch_types=config.ch_types,
+        decim=config.decim,
         use_maxwell_filter=config.use_maxwell_filter,
     )
     return cfg

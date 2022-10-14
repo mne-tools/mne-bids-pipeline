@@ -27,6 +27,7 @@ from config import (
     get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -624,8 +625,17 @@ def run_report_preprocessing(
             )
         )
         epochs = mne.read_epochs(fname_epo_not_clean)
-        epochs.drop_bad(cfg.ica_reject)
         ica = mne.preprocessing.read_ica(fname_ica)
+        ica_reject = _get_reject(
+            subject=subject,
+            session=session,
+            reject=cfg.ica_reject,
+            ch_types=cfg.ch_types,
+            param='ica_reject',
+        )
+        # TODO: Ref is set during ICA epochs fitting, we should ensure we do
+        # it here, too
+        epochs.drop_bad(ica_reject)
 
         if ica.exclude:
             report.add_ica(
@@ -1609,7 +1619,8 @@ def get_config(
         conditions=config.conditions,
         all_contrasts=config.get_all_contrasts(),
         decoding_contrasts=config.get_decoding_contrasts(),
-        ica_reject=config.get_ica_reject(),
+        ica_reject=config.ica_reject,
+        ch_types=config.ch_types,
         time_frequency_conditions=config.time_frequency_conditions,
         decode=config.decode,
         decoding_metric=config.decoding_metric,

@@ -69,6 +69,8 @@ def find_empty_room(*, subject, session, run, in_files, cfg):
         in_files.clear()  # MNE-BIDS find_empty_room should have looked at all
     elif fname == '':
         fname = None  # not downloaded, or EEG data
+    elif not fname.fpath.exists():
+        fname = None  # path found by sidecar but does not exist
     out_files = dict()
     out_files['empty_room_match'] = _empty_room_match_path(raw_path, cfg)
     _write_json(out_files['empty_room_match'], dict(fname=fname))
@@ -94,6 +96,10 @@ def main():
     """Run find_empty_room."""
     if not config.process_empty_room:
         msg = 'Skipping, process_empty_room is set to False …'
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        return
+    if config.get_datatype() != 'meg':
+        msg = 'Skipping, empty-room data only relevant for MEG …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
     # This will be I/O bound if the sidecar is not complete, so let's not run

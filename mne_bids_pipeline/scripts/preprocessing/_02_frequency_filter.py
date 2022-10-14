@@ -81,7 +81,7 @@ def get_input_fnames_frequency_filter(**kwargs):
     if run == cfg.runs[0]:
         do = dict(
             rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_empty_room,
+            noise=cfg.process_empty_room and cfg.datatype == 'meg',
         )
         for task in ('rest', 'noise'):
             if not do[task]:

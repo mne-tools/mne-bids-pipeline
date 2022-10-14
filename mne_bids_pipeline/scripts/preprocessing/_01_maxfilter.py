@@ -68,7 +68,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
             raw_rest = bids_path_in.copy().update(task="rest")
             if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
-        if cfg.process_empty_room:
+        if cfg.process_empty_room and cfg.datatype == 'meg':
             raw_noise = _read_json(
                 _empty_room_match_path(bids_path_in, cfg))['fname']
             if raw_noise is not None:

@@ -32,7 +32,7 @@ def get_input_fnames_find_empty_room(*, subject, session, run, cfg):
     try:
         fname = in_files[f'raw_run-{run}'].find_empty_room(
             use_sidecar_only=True)
-    except (FileNotFoundError, AssertionError):  # not downloaded as part of ds
+    except (FileNotFoundError, AssertionError, ValueError):
         return in_files
     if fname is not None:
         # TODO: We should include the sidecar here...
@@ -51,7 +51,7 @@ def find_empty_room(*, subject, session, run, in_files, cfg):
     raw_path = in_files.pop(f'raw_run-{run}')
     try:
         fname = raw_path.find_empty_room(use_sidecar_only=True)
-    except (FileNotFoundError, AssertionError):
+    except (FileNotFoundError, AssertionError, ValueError):
         fname = ''
     if fname is None:
         # sidecar is very fast and checking all can be slow (seconds), so only
@@ -68,7 +68,7 @@ def find_empty_room(*, subject, session, run, in_files, cfg):
             fname = None
         in_files.clear()  # MNE-BIDS find_empty_room should have looked at all
     elif fname == '':
-        fname = None  # not downloaded
+        fname = None  # not downloaded, or EEG data
     out_files = dict()
     out_files['empty_room_match'] = _empty_room_match_path(raw_path, cfg)
     _write_json(out_files['empty_room_match'], dict(fname=fname))

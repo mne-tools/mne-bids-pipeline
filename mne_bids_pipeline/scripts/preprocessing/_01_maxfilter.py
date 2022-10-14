@@ -15,7 +15,6 @@ The function loads machine-specific calibration files.
 """
 
 import itertools
-import logging
 from pathlib import Path
 from typing import Optional
 from types import SimpleNamespace
@@ -30,9 +29,8 @@ from config import (gen_log_kwargs, failsafe_run, _script_path,
                     _update_for_splits)
 from config import parallel_func
 
+from ..._logging import logger
 from ..._io import _empty_room_match_path, _read_json
-
-logger = logging.getLogger('mne-bids-pipeline')
 
 
 def get_input_fnames_maxwell_filter(**kwargs):

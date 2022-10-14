@@ -26,7 +26,7 @@ else:
 from types import SimpleNamespace
 
 import mne
-from mne_bids import BIDSPath
+from mne_bids import BIDSPath, get_bids_path_from_fname
 
 import config
 from config import (gen_log_kwargs, failsafe_run,
@@ -97,6 +97,8 @@ def get_input_fnames_frequency_filter(**kwargs):
                 else:
                     raw_fname = _read_json(
                         _empty_room_match_path(bids_path_in, cfg))['fname']
+                    if raw_fname is not None:
+                        raw_fname = get_bids_path_from_fname(raw_fname)
             if raw_fname is None:
                 continue
             in_files[key] = raw_fname

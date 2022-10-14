@@ -15,13 +15,12 @@ The function loads machine-specific calibration files.
 """
 
 import itertools
-from pathlib import Path
 from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne_bids import BIDSPath, read_raw_bids
+from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 
 import config
 from config import (gen_log_kwargs, failsafe_run, _script_path,
@@ -73,8 +72,7 @@ def get_input_fnames_maxwell_filter(**kwargs):
             raw_noise = _read_json(
                 _empty_room_match_path(bids_path_in, cfg))['fname']
             if raw_noise is not None:
-                raw_noise = Path(raw_noise)
-                assert raw_noise.exists()  # guaranteed by match step
+                raw_noise = get_bids_path_from_fname(raw_noise)
                 in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path

@@ -13,7 +13,8 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_fs_subjects_dir, get_subjects, sanitize_cond_name, get_fs_subject,
-    get_task, get_datatype, get_deriv_root, get_sessions)
+    get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root,
+    get_sessions)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs
@@ -117,6 +118,14 @@ def get_config(
         subjects_dir=get_fs_subjects_dir(config),
         parallel_backend=config.parallel_backend,
         interactive=config.interactive,
+        N_JOBS=config.N_JOBS,
+        bids_root=get_bids_root(config),
+        data_type=config.data_type,
+        ch_types=config.ch_types,
+        subjects=config.subjects,
+        exclude_subjects=config.exclude_subjects,
+        sessions=get_sessions(config),
+        use_template_mri=config.use_template_mri,
     )
     return cfg
 

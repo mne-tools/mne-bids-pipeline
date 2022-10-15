@@ -32,7 +32,6 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     """Generate dict of demonstrated functionality based on config."""
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
-    env['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
 
     # Set one of the various tasks for ERP CORE, as we currently raise if none
     # was provided

@@ -4,19 +4,18 @@ Covariance matrices are computed and saved.
 """
 
 import itertools
-import logging
 from types import SimpleNamespace
 
 import mne
 from mne_bids import BIDSPath
 
-import config
-from config import (
-    gen_log_kwargs, failsafe_run, parallel_func,
-    get_noise_cov_bids_path, _sanitize_callable,
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
+    get_noise_cov_bids_path
 )
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._logging import gen_log_kwargs, logger
+from ..._run import failsafe_run, save_logs, _sanitize_callable
+from ..._parallel import get_parallel_backend, parallel_func
 
 
 def get_input_fnames_cov(**kwargs):
@@ -123,6 +122,7 @@ def retrieve_custom_cov(
 ):
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
+    import config
     assert cfg.noise_cov == 'custom'
     assert callable(config.noise_cov)
     assert in_files == {}, in_files  # unknown
@@ -173,7 +173,6 @@ def _get_cov_type(cfg):
 def run_covariance(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(
-        noise_cov=config.noise_cov,
         cfg=cfg,
         subject=subject,
         session=session
@@ -187,23 +186,26 @@ def run_covariance(*, cfg, subject, session, in_files):
     elif cov_type == 'raw':
         cov = compute_cov_from_raw(**kwargs)
     else:
-        tmin, tmax = config.noise_cov
+        tmin, tmax = cfg.noise_cov
         cov = compute_cov_from_epochs(tmin=tmin, tmax=tmax, **kwargs)
     cov.save(out_files['cov'], overwrite=True)
     return out_files
 
 
-def get_config() -> SimpleNamespace:
+def get_config(
+    *,
+    config,
+) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         proc=config.proc,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
     )
@@ -212,7 +214,8 @@ def get_config() -> SimpleNamespace:
 
 def main():
     """Run cov."""
-    cfg = get_config()
+    import config
+    cfg = get_config(config=config)
 
     if not cfg.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -227,17 +230,17 @@ def main():
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_covariance)
+    with get_parallel_backend(config=config):
+        parallel, run_func = parallel_func(run_covariance, config=config)
         logs = parallel(
             run_func(cfg=cfg, subject=subject, session=session)
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config),
             )
         )
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

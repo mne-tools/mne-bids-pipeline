@@ -12,8 +12,6 @@ can learn about the entire time course of the signal.
 # Let us first import the libraries
 
 import os.path as op
-import logging
-from typing import Optional
 import itertools
 from types import SimpleNamespace
 
@@ -33,11 +31,13 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
-import config
-from config import gen_log_kwargs, failsafe_run, _restrict_analyze_channels
-
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
+    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
+)
+from ..._logging import gen_log_kwargs, logger
+from ..._run import failsafe_run, save_logs
+from ..._parallel import get_parallel_backend, get_n_jobs
 
 
 class LogReg(LogisticRegression):
@@ -112,7 +112,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
-    with config.get_parallel_backend():
+    with get_parallel_backend(cfg):
         clf = make_pipeline(
             StandardScaler(),
             LogReg(
@@ -186,18 +186,18 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         conditions=config.conditions,
-        contrasts=config.get_decoding_contrasts(),
+        contrasts=get_decoding_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
@@ -206,14 +206,18 @@ def get_config(
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference(),
-        n_jobs=config.get_n_jobs(),
+        eeg_reference=get_eeg_reference(config),
+        n_jobs=get_n_jobs(config),
+        parallel_backend=config.parallel_backend,
+        interactive=config.interactive,
+        N_JOBS=config.N_JOBS,
     )
     return cfg
 
 
 def main():
     """Run time-by-time decoding."""
+    import config
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -228,18 +232,19 @@ def main():
     # so we don't dispatch manually to multiple jobs.
     logs = []
     for subject, session, (cond_1, cond_2) in itertools.product(
-        config.get_subjects(),
-        config.get_sessions(),
-        config.get_decoding_contrasts()
+        get_subjects(config),
+        get_sessions(config),
+        get_decoding_contrasts(config)
     ):
         log = run_time_decoding(
-            cfg=get_config(), subject=subject,
-            condition1=cond_1, condition2=cond_2,
-            session=session
+            cfg=get_config(config=config),
+            subject=subject,
+            condition1=cond_1,
+            condition2=cond_2,
+            session=session,
         )
         logs.append(log)
-
-    config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

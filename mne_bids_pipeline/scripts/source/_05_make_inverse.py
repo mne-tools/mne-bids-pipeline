@@ -4,9 +4,7 @@ Compute and apply an inverse solution for each evoked data set.
 """
 
 import itertools
-import logging
 import pathlib
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
@@ -14,13 +12,12 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
 from mne_bids import BIDSPath
 
-import config
-from config import (
-    gen_log_kwargs, failsafe_run, sanitize_cond_name, parallel_func,
-    get_noise_cov_bids_path, _sanitize_callable,
-)
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_noise_cov_bids_path, get_subjects, sanitize_cond_name,
+    get_task, get_datatype, get_deriv_root, get_sessions)
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
 def get_input_fnames_inverse(*, cfg, subject, session):
@@ -40,7 +37,6 @@ def get_input_fnames_inverse(*, cfg, subject, session):
     in_files['forward'] = bids_path.copy().update(suffix='fwd')
     if cfg.noise_cov != 'ad-hoc':
         in_files['cov'] = get_noise_cov_bids_path(
-            noise_cov=config.noise_cov,
             cfg=cfg,
             subject=subject,
             session=session
@@ -114,12 +110,12 @@ def run_inverse(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         proc=config.proc,
@@ -131,7 +127,7 @@ def get_config(
         loose=config.loose,
         depth=config.depth,
         inverse_method=config.inverse_method,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         noise_cov=_sanitize_callable(config.noise_cov),
     )
     return cfg
@@ -139,23 +135,27 @@ def get_config(
 
 def main():
     """Run inv."""
+    import config
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_inverse)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_inverse, config=config)
         logs = parallel(
-            run_func(cfg=get_config(), subject=subject, session=session)
+            run_func(
+                cfg=get_config(config=config),
+                subject=subject,
+                session=session,
+            )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

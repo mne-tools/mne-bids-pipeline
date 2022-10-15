@@ -3,19 +3,17 @@
 Initialize the derivatives directory.
 """
 
-import logging
 import itertools
-from typing import Optional
 from types import SimpleNamespace
 
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
-import config
-from config import gen_log_kwargs, failsafe_run
-from config import parallel_func
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_datatype, get_deriv_root, get_subjects, get_sessions)
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run
 
 
 def init_dataset(cfg) -> None:
@@ -49,7 +47,7 @@ def init_subject_dirs(
     *,
     cfg,
     subject: str,
-    session: Optional[str] = None
+    session: str,
 ) -> None:
     """Create processing data output directories for individual participants.
     """
@@ -62,12 +60,12 @@ def init_subject_dirs(
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        datatype=config.get_datatype(),
-        deriv_root=config.get_deriv_root(),
+        datatype=get_datatype(config),
+        deriv_root=get_deriv_root(config),
         PIPELINE_NAME=config.PIPELINE_NAME,
         VERSION=config.VERSION,
         CODE_URL=config.CODE_URL
@@ -78,16 +76,22 @@ def get_config(
 @failsafe_run(script_path=__file__)
 def main():
     """Initialize the output directories."""
-    with config.get_parallel_backend():
-        init_dataset(cfg=get_config())
-        parallel, run_func = parallel_func(init_subject_dirs)
-        parallel(run_func(cfg=get_config(), subject=subject, session=session)
-                 for subject, session in
-                 itertools.product(
-                    config.get_subjects(),
-                    config.get_sessions()
-                )
+    import config
+    with get_parallel_backend(config):
+        init_dataset(cfg=get_config(config=config))
+        parallel, run_func = parallel_func(init_subject_dirs, config=config)
+        parallel(
+            run_func(
+                cfg=get_config(config=config),
+                subject=subject,
+                session=session,
             )
+            for subject, session in
+            itertools.product(
+                get_subjects(config),
+                get_sessions(config)
+            )
+        )
 
 
 if __name__ == '__main__':

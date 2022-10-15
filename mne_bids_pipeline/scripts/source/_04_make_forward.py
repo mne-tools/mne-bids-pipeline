@@ -4,19 +4,19 @@ Calculate forward solution for M/EEG channels.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
 from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
 
-import config
-from config import gen_log_kwargs, failsafe_run, _get_bem_conductivity
-from config import parallel_func, _meg_in_ch_types
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_fs_subject, get_subjects, _get_bem_conductivity, get_fs_subjects_dir,
+    get_task, get_runs, get_datatype, get_deriv_root, get_bids_root,
+    _meg_in_ch_types, get_sessions)
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import failsafe_run, save_logs
 
 
 def _prepare_trans_template(cfg, info):
@@ -46,6 +46,8 @@ def _prepare_trans(cfg, bids_path):
     # "trans" file in the derivatives folder.
     subject, session = bids_path.subject, bids_path.session
 
+    # TODO: This breaks our encapsulation
+    import config
     if config.mri_t1_path_generator is None:
         t1_bids_path = None
     else:
@@ -155,13 +157,14 @@ def run_forward(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        runs=config.get_runs(subject=subject),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        runs=get_runs(config=config, subject=subject),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -171,36 +174,37 @@ def get_config(
         adjust_coreg=config.adjust_coreg,
         source_info_path_update=config.source_info_path_update,
         ch_types=config.ch_types,
-        fs_subject=config.get_fs_subject(subject=subject),
-        fs_subjects_dir=config.get_fs_subjects_dir(),
-        deriv_root=config.get_deriv_root(),
-        bids_root=config.get_bids_root()
+        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subjects_dir=get_fs_subjects_dir(config),
+        deriv_root=get_deriv_root(config),
+        bids_root=get_bids_root(config),
     )
     return cfg
 
 
 def main():
     """Run forward."""
+    import config
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_forward)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_forward, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session
+                cfg=get_config(subject=subject),
+                subject=subject,
+                session=session,
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config),
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

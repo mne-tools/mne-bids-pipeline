@@ -9,8 +9,7 @@ import os
 import os.path as op
 from pathlib import Path
 import itertools
-import logging
-from typing import Tuple, Union, Optional, List, Literal
+from typing import Optional, List, Literal
 from types import SimpleNamespace
 
 from scipy.io import loadmat
@@ -21,17 +20,17 @@ import mne
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
-import config
-from config import (
-    gen_log_kwargs, failsafe_run, parallel_func,
-    get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
-)
-
+from ..._config_utils import (
+    get_noise_cov_bids_path, get_subjects, sanitize_cond_name,
+    get_task, get_datatype, get_deriv_root, get_sessions,
+    _restrict_analyze_channels, get_fs_subjects_dir, get_fs_subject,
+    get_runs, get_bids_root, get_decoding_contrasts, get_all_contrasts)
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import (
+    failsafe_run, save_logs, _update_for_splits, _sanitize_callable)
 from ..._reject import _get_reject
-
-logger = logging.getLogger('mne-bids-pipeline')
-
-Condition_T = Union[str, Tuple[str]]
+from ..._viz import plot_auto_scores
 
 
 def get_events(cfg, subject, session):
@@ -82,7 +81,7 @@ def get_er_path(cfg, subject, session):
     return raw_fname
 
 
-def plot_auto_scores(cfg, subject, session):
+def plot_auto_scores_(cfg, subject, session):
     """Plot automated bad channel detection scores.
     """
     import json_tricks
@@ -109,7 +108,7 @@ def plot_auto_scores(cfg, subject, session):
             fname_scores.fpath.read_text(encoding='utf-8-sig')
         )
 
-        figs = config.plot_auto_scores(auto_scores)
+        figs = plot_auto_scores(auto_scores, config=cfg)
         all_figs.extend(figs)
 
         # Could be more than 1 fig, e.g. "grad" and "mag"
@@ -454,7 +453,7 @@ def run_report_preprocessing(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: Optional[str],
     report: Optional[mne.Report]
 ) -> mne.Report:
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -557,8 +556,11 @@ def run_report_preprocessing(
             )
         )
 
-        figs, captions = plot_auto_scores(cfg=cfg, subject=subject,
-                                          session=session)
+        figs, captions = plot_auto_scores_(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+        )
 
         tags = ('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
         report.add_figure(
@@ -722,7 +724,7 @@ def run_report_sensor(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: Optional[str],
     report: mne.Report
 ) -> mne.Report:
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -771,7 +773,6 @@ def run_report_sensor(
         extension='.h5'
     )
     fname_noise_cov = get_noise_cov_bids_path(
-        noise_cov=config.noise_cov,
         cfg=cfg,
         subject=subject,
         session=session
@@ -888,8 +889,8 @@ def run_report_sensor(
                 'epochs',
                 'contrast',
                 'decoding',
-                *[f'{config.sanitize_cond_name(cond_1)}–'
-                  f'{config.sanitize_cond_name(cond_2)}'
+                *[f'{sanitize_cond_name(cond_1)}–'
+                  f'{sanitize_cond_name(cond_2)}'
                   .lower().replace(' ', '-')
                   for cond_1, cond_2 in cfg.decoding_contrasts]
             )
@@ -995,7 +996,7 @@ def run_report_sensor(
         )
 
     for condition in conditions:
-        cond = config.sanitize_cond_name(condition)
+        cond = sanitize_cond_name(condition)
         fname_tfr_pow_cond = str(fname_tfr_pow.copy()).replace("+condition+",
                                                                f"+{cond}+")
         fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
@@ -1036,7 +1037,7 @@ def run_report_source(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: Optional[str],
     report: mne.Report
 ) -> mne.Report:
     import matplotlib.pyplot as plt  # nested import to help joblib
@@ -1081,7 +1082,6 @@ def run_report_source(
         return report
 
     fname_noise_cov = get_noise_cov_bids_path(
-        noise_cov=config.noise_cov,
         cfg=cfg,
         subject=subject,
         session=session
@@ -1139,13 +1139,13 @@ def run_report_source(
                                      subject=subject, session=session))
 
         if condition in cfg.conditions:
-            title = f'Source: {config.sanitize_cond_name(condition)}'
+            title = f'Source: {sanitize_cond_name(condition)}'
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue
 
         method = cfg.inverse_method
-        cond_str = config.sanitize_cond_name(condition)
+        cond_str = sanitize_cond_name(condition)
         inverse_str = method
         hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
 
@@ -1176,7 +1176,7 @@ def run_report(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: Optional[str],
 ):
     report = _gen_empty_report(
         cfg=cfg,
@@ -1332,7 +1332,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             title = f'Average: {condition}'
             tags = (
                 'evoked',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
+                sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
@@ -1364,18 +1364,18 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     for condition, evoked in zip(conditions, evokeds):
         if condition in cfg.conditions:
             title = f'Average: {condition}'
-            cond_str = config.sanitize_cond_name(condition)
+            cond_str = sanitize_cond_name(condition)
             tags = (
                 'source-estimate',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
+                sanitize_cond_name(condition).lower().replace(' ', '')
             )
         else:  # It's a contrast of two conditions.
             title = f'Average contrast: {condition}'
-            cond_str = config.sanitize_cond_name(condition)
+            cond_str = sanitize_cond_name(condition)
             tags = (
                 'source-estimate',
                 'contrast',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
+                sanitize_cond_name(condition).lower().replace(' ', '')
             )
 
         fname_stc_avg = evoked_fname.copy().update(
@@ -1473,8 +1473,8 @@ def add_decoding_grand_average(
             'epochs',
             'contrast',
             'decoding',
-            *[f'{config.sanitize_cond_name(cond_1)}–'
-              f'{config.sanitize_cond_name(cond_2)}'
+            *[f'{sanitize_cond_name(cond_1)}–'
+              f'{sanitize_cond_name(cond_2)}'
               .lower().replace(' ', '-')
               for cond_1, cond_2 in cfg.decoding_contrasts]
         )
@@ -1492,8 +1492,8 @@ def add_decoding_grand_average(
             'epochs',
             'contrast',
             'decoding',
-            f'{config.sanitize_cond_name(cond_1)}–'
-            f'{config.sanitize_cond_name(cond_2)}'
+            f'{sanitize_cond_name(cond_1)}–'
+            f'{sanitize_cond_name(cond_2)}'
             .lower().replace(' ', '-')
         )
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
@@ -1518,7 +1518,7 @@ def add_decoding_grand_average(
             f'resamples. CI must not be used for statistical inference here, '
             f'as it is not corrected for multiple testing.'
         )
-        if len(config.get_subjects()) > 1:
+        if len(get_subjects(cfg)) > 1:
             caption += (
                 f' Time periods with decoding performance significantly above '
                 f'chance, if any, were derived with a one-tailed '
@@ -1536,7 +1536,7 @@ def add_decoding_grand_average(
             plt.close(fig)
 
         # Plot t-values used to form clusters
-        if len(config.get_subjects()) > 1:
+        if len(get_subjects(cfg)) > 1:
             fig = plot_time_by_time_decoding_t_values(
                 decoding_data=decoding_data
             )
@@ -1580,8 +1580,9 @@ def add_decoding_grand_average(
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     # Deal with configurations where `deriv_root` was specified, but not
     # `fs_subjects_dir`. We normally raise an exception in this case in
@@ -1595,19 +1596,19 @@ def get_config(
     # `get_fs_subject()` calls `get_fs_subjects_dir()`, so take care of this
     # too.
     try:
-        fs_subjects_dir = config.get_fs_subjects_dir()
+        fs_subjects_dir = get_fs_subjects_dir(config)
     except ValueError:
         fs_subjects_dir = None
         fs_subject = None
     else:
-        fs_subject = config.get_fs_subject(subject=subject)
+        fs_subject = get_fs_subject(config=config, subject=subject)
 
     dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
-        task=config.get_task(),
+        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        runs=config.get_runs(subject=subject),
-        datatype=config.get_datatype(),
+        runs=get_runs(config=config, subject=subject),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -1617,8 +1618,8 @@ def get_config(
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,
         conditions=config.conditions,
-        all_contrasts=config.get_all_contrasts(),
-        decoding_contrasts=config.get_decoding_contrasts(),
+        all_contrasts=get_all_contrasts(config),
+        decoding_contrasts=get_decoding_contrasts(config),
         ica_reject=config.ica_reject,
         ch_types=config.ch_types,
         time_frequency_conditions=config.time_frequency_conditions,
@@ -1633,12 +1634,13 @@ def get_config(
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         fs_subject=fs_subject,
         fs_subjects_dir=fs_subjects_dir,
-        deriv_root=config.get_deriv_root(),
-        bids_root=config.get_bids_root(),
+        deriv_root=get_deriv_root(config),
+        bids_root=get_bids_root(config),
         use_template_mri=config.use_template_mri,
         interactive=config.interactive,
         plot_psd_for_runs=config.plot_psd_for_runs,
         eog_channels=config.eog_channels,
+        noise_cov=_sanitize_callable(config.noise_cov),
     )
     return cfg
 
@@ -1656,25 +1658,28 @@ def _agg_backend():
 
 def main():
     """Make reports."""
-    with config.get_parallel_backend(), _agg_backend():
-        parallel, run_func = parallel_func(run_report)
+    import config
+    with get_parallel_backend(config), _agg_backend():
+        parallel, run_func = parallel_func(run_report, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                subject=subject,
                 session=session
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
         )
 
-        config.save_logs(logs)
+        save_logs(config=config, logs=logs)
 
-        sessions = config.get_sessions()
-        if not sessions:
-            sessions = [None]
+        sessions = get_sessions(config)
 
         if config.task_is_rest:
             msg = '    … skipping "average" report for "rest" task.'
@@ -1683,9 +1688,12 @@ def main():
 
         for session in sessions:
             run_report_average(
-                cfg=get_config(subject='average'),
+                cfg=get_config(
+                    config=config,
+                    subject='average',
+                ),
                 subject='average',
-                session=session
+                session=session,
             )
 
 

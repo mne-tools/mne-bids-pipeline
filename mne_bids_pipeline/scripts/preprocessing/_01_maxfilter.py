@@ -15,21 +15,21 @@ The function loads machine-specific calibration files.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
 import mne
 from mne_bids import BIDSPath, read_raw_bids
 
-import config
-from config import (gen_log_kwargs, failsafe_run, _script_path,
-                    import_experimental_data, import_er_data, import_rest_data,
-                    _update_for_splits)
-from config import parallel_func
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_mf_cal_fname, get_mf_ctc_fname, get_subjects, get_sessions,
+    get_runs, get_task, get_datatype, get_bids_root, get_deriv_root,
+    get_mf_reference_run)
+from ..._import_data import (
+    import_experimental_data, import_er_data, import_rest_data)
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run, _script_path, save_logs, _update_for_splits
 
 
 def get_input_fnames_maxwell_filter(**kwargs):
@@ -260,28 +260,39 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
+    session: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         reader_extra_params=config.reader_extra_params,
-        mf_cal_fname=config.get_mf_cal_fname(subject, session),
-        mf_ctc_fname=config.get_mf_ctc_fname(subject, session),
+        mf_cal_fname=get_mf_cal_fname(
+            config=config,
+            subject=subject,
+            session=session,
+        ),
+        mf_ctc_fname=get_mf_ctc_fname(
+            config=config,
+            subject=subject,
+            session=session,
+        ),
         mf_st_duration=config.mf_st_duration,
         mf_head_origin=config.mf_head_origin,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
-        runs=config.get_runs(subject=subject),  # XXX needs to accept session!
+        # XXX needs to accept session!
+        runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=config.get_bids_root(),
-        deriv_root=config.get_deriv_root(),
+        bids_root=get_bids_root(config),
+        deriv_root=get_deriv_root(config),
         crop_runs=config.crop_runs,
         interactive=config.interactive,
         rename_events=config.rename_events,
@@ -291,12 +302,14 @@ def get_config(
         stim_artifact_tmax=config.stim_artifact_tmax,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
-        mf_reference_run=config.get_mf_reference_run(),
+        mf_reference_run=get_mf_reference_run(config),
         drop_channels=config.drop_channels,
         find_breaks=config.find_breaks,
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        ch_types=config.ch_types,
+        data_type=config.data_type,
         _raw_split_size=config._raw_split_size,
     )
     return cfg
@@ -304,30 +317,34 @@ def get_config(
 
 def main():
     """Run maxwell_filter."""
+    import config
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
         with _script_path(__file__):
             logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_maxwell_filter)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_maxwell_filter, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject, session),
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                    session=session),
                 subject=subject,
                 session=session,
                 run=run
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
-            for run in config.get_runs(subject=subject)
+            for run in get_runs(config=config, subject=subject)
         )
 
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

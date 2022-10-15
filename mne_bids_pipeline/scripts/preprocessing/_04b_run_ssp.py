@@ -4,8 +4,6 @@ These are often also referred to as PCA vectors.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
@@ -14,13 +12,14 @@ from mne import compute_proj_evoked, compute_proj_epochs
 from mne_bids import BIDSPath
 from mne.utils import _pl
 
-import config
-from config import gen_log_kwargs, failsafe_run, _update_for_splits
-from config import parallel_func, _script_path
-
+from ..._config_utils import (
+    get_sessions, get_runs, get_subjects, get_task, get_datatype,
+    get_deriv_root,
+)
+from ..._logging import gen_log_kwargs, logger
+from ..._run import failsafe_run, _update_for_splits, _script_path, save_logs
+from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
-
-logger = logging.getLogger('mne-bids-pipeline')
 
 
 def get_input_fnames_run_ssp(**kwargs):
@@ -136,18 +135,19 @@ def run_ssp(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs=config.get_runs(subject=subject),
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        runs=get_runs(config=config, subject=subject),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         eog_channels=config.eog_channels,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
@@ -166,27 +166,31 @@ def get_config(
 
 def main():
     """Run SSP."""
+    import config
     if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
         with _script_path(__file__):
             logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_ssp)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_ssp, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                subject=subject,
+                session=session,
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

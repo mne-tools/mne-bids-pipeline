@@ -8,18 +8,20 @@ To save space, the epoch data can be decimated.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
 from mne_bids import BIDSPath
 
-import config
-from config import make_epochs, gen_log_kwargs, failsafe_run
-from config import parallel_func, _update_for_splits, _sanitize_callable
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_bids_root, get_deriv_root, get_task, get_runs, get_subjects,
+    get_eeg_reference, get_sessions, get_datatype,
+)
+from ..._import_data import make_epochs, annotations_to_events
+from ..._logging import gen_log_kwargs, logger
+from ..._run import (
+    failsafe_run, save_logs, _update_for_splits, _sanitize_callable)
+from ..._parallel import parallel_func, get_parallel_backend
 
 
 def get_input_fnames_epochs(**kwargs):
@@ -72,8 +74,7 @@ def run_epochs(*, cfg, subject, session, in_files):
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
     if not cfg.task_is_rest:
-        event_name_to_code_map = config.annotations_to_events(
-            raw_paths=raw_fnames)
+        event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
 
     # Store the rank & corresponding info of the run with the smallest rank.
     # We'll later manually inject this info into concatenated epochs.
@@ -120,7 +121,9 @@ def run_epochs(*, cfg, subject, session, in_files):
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
             decim=cfg.decim,
-            task_is_rest=cfg.task_is_rest
+            task_is_rest=cfg.task_is_rest,
+            rest_epochs_duration=cfg.rest_epochs_duration,
+            rest_epochs_overlap=cfg.rest_epochs_overlap,
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -220,21 +223,21 @@ def run_epochs(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs=config.get_runs(subject=subject),
+        runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
-        task=config.get_task(),
-        datatype=config.get_datatype(),
-        session=session,
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=config.get_bids_root(),
-        deriv_root=config.get_deriv_root(),
+        bids_root=get_bids_root(config),
+        deriv_root=get_deriv_root(config),
         interactive=config.interactive,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
@@ -249,7 +252,9 @@ def get_config(
         decim=config.decim,
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
-        eeg_reference=config.get_eeg_reference(),
+        eeg_reference=get_eeg_reference(config),
+        rest_epochs_duration=config.rest_epochs_duration,
+        rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg
@@ -257,18 +262,24 @@ def get_config(
 
 def main():
     """Run epochs."""
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_epochs)
+    import config
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_epochs, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject, session), subject=subject,
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                subject=subject,
                 session=session
             )
             for subject, session in
-            itertools.product(config.get_subjects(), config.get_sessions())
+            itertools.product(
+                get_subjects(config),
+                get_sessions(config))
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

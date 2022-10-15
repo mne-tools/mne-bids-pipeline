@@ -194,7 +194,9 @@ def main():
         parallel, run_func = parallel_func(run_forward, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject),
+                cfg=get_config(
+                    config=config,
+                    subject=subject),
                 subject=subject,
                 session=session,
             )

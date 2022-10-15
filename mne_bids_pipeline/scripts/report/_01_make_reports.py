@@ -108,7 +108,7 @@ def plot_auto_scores_(cfg, subject, session):
             fname_scores.fpath.read_text(encoding='utf-8-sig')
         )
 
-        figs = plot_auto_scores(auto_scores, config=cfg)
+        figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
         all_figs.extend(figs)
 
         # Could be more than 1 fig, e.g. "grad" and "mag"
@@ -1641,6 +1641,7 @@ def get_config(
         plot_psd_for_runs=config.plot_psd_for_runs,
         eog_channels=config.eog_channels,
         noise_cov=_sanitize_callable(config.noise_cov),
+        data_type=config.data_type,
     )
     return cfg
 

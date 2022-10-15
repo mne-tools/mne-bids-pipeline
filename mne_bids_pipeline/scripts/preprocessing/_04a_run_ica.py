@@ -523,7 +523,7 @@ def get_config(
         task=get_task(config),
         task_is_rest=config.task_is_rest,
         datatype=get_datatype(config),
-        runs=get_runs(config, subject=subject),
+        runs=get_runs(config=config, subject=subject),
         acq=config.acq,
         rec=config.rec,
         space=config.space,

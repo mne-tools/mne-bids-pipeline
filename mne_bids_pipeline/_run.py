@@ -147,6 +147,7 @@ class ConditionalStepMemory:
 
         def wrapper(*args, **kwargs):
             in_files = out_files = None
+            force_run = kwargs.pop('force_run', False)
             if self.get_output_fnames is not None:
                 out_files = self.get_output_fnames(**kwargs)
             if self.get_input_fnames is not None:
@@ -161,7 +162,6 @@ class ConditionalStepMemory:
             # Deal with cases (e.g., custom cov) where input files are unknown
             unknown_inputs = in_files.pop('__unknown_inputs__', False)
             # If this is ever true, we'll need to improve the logic below
-            force_run = kwargs.pop('force_run', False)
             assert not (unknown_inputs and force_run)
 
             hashes = []

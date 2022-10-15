@@ -84,7 +84,7 @@ def setup_dask_client(config):
 
 
 def get_parallel_backend_name(config) -> Literal['dask', 'loky']:
-    if config.parallel_backend == 'loky' or get_n_jobs() == 1:
+    if config.parallel_backend == 'loky' or get_n_jobs(config) == 1:
         return 'loky'
     elif config.parallel_backend == 'dask':
         # Disable interactive plotting backend

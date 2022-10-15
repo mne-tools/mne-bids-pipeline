@@ -13,8 +13,7 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_fs_subjects_dir, get_subjects, sanitize_cond_name, get_fs_subject,
-    get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root,
-    get_sessions)
+    get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs

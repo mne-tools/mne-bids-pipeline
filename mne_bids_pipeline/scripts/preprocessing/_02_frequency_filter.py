@@ -313,6 +313,8 @@ def get_config(
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
         data_type=config.data_type,
         ch_types=config.ch_types,
+        eog_channels=config.eog_channels,
+        on_rename_missing_events=config.on_rename_missing_events,
         _raw_split_size=config._raw_split_size,
     )
     return cfg

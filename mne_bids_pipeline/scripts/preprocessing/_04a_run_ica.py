@@ -551,7 +551,9 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=config.eog_channels
+        eog_channels=config.eog_channels,
+        rest_epochs_duration=config.rest_epochs_duration,
+        rest_epochs_overlap=config.rest_epochs_overlap,
     )
     return cfg
 

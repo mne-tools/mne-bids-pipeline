@@ -1642,6 +1642,8 @@ def get_config(
         eog_channels=config.eog_channels,
         noise_cov=_sanitize_callable(config.noise_cov),
         data_type=config.data_type,
+        subjects=config.subjects,
+        exclude_subjects=config.exclude_subjects,
     )
     return cfg
 

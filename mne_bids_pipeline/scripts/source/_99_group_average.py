@@ -114,6 +114,9 @@ def get_config(
         inverse_method=config.inverse_method,
         fs_subjects_dir=get_fs_subjects_dir(config),
         deriv_root=get_deriv_root(config),
+        subjects_dir=get_fs_subjects_dir(config),
+        parallel_backend=config.parallel_backend,
+        interactive=config.interactive,
     )
     return cfg
 
@@ -162,7 +165,7 @@ def main():
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    log = run_group_average_source(cfg=get_config(config))
+    log = run_group_average_source(cfg=get_config(config=config))
     save_logs(config=config, logs=[log])
 
 

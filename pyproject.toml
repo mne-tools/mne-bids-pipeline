@@ -56,7 +56,7 @@ tests = [
     "jinja2",
     "black",  # function signature formatting
     "livereload",
-    "openneuro-py @ git+https://github.com/larsoner/openneuro-py@iterate#egg=openneuro-py",
+    "openneuro-py",
     "httpx >= 0.20",
     "tqdm",
     "Pygments",

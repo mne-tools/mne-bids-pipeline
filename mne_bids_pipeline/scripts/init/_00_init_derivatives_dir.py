@@ -4,6 +4,7 @@ Initialize the derivatives directory.
 """
 
 import itertools
+from typing import Optional
 from types import SimpleNamespace
 
 from mne_bids.config import BIDS_VERSION
@@ -47,7 +48,7 @@ def init_subject_dirs(
     *,
     cfg,
     subject: str,
-    session: str,
+    session: Optional[str],
 ) -> None:
     """Create processing data output directories for individual participants.
     """

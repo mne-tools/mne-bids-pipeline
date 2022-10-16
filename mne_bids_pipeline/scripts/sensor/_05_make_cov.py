@@ -4,6 +4,7 @@ Covariance matrices are computed and saved.
 """
 
 import itertools
+from typing import Optional
 from types import SimpleNamespace
 
 import mne
@@ -116,7 +117,7 @@ def compute_cov_from_raw(*, cfg, subject, session, in_files, out_files):
 def retrieve_custom_cov(
     cfg: SimpleNamespace,
     subject: str,
-    session: str,
+    session: Optional[str],
     in_files: None,
     out_files: dict,
 ):

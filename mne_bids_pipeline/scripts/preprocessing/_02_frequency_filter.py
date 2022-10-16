@@ -111,7 +111,7 @@ def get_input_fnames_frequency_filter(**kwargs):
 def filter(
     raw: mne.io.BaseRaw,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: str,
     l_freq: Optional[float],
     h_freq: Optional[float],
@@ -148,7 +148,7 @@ def filter(
 def resample(
     raw: mne.io.BaseRaw,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: str,
     sfreq: float,
     data_type: Literal['experimental', 'empty-room', 'resting-state']
@@ -168,7 +168,7 @@ def filter_data(
     *,
     cfg,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: str,
     in_files: dict,
 ) -> None:

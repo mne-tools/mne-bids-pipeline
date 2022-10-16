@@ -1221,7 +1221,7 @@ def run_report(
 
 def add_event_counts(*,
                      cfg,
-                     session: str,
+                     session: Optional[str],
                      report: mne.Report) -> None:
     try:
         df_events = count_events(BIDSPath(root=cfg.bids_root,
@@ -1411,7 +1411,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
 
 def add_decoding_grand_average(
     *,
-    session: str,
+    session: Optional[str],
     cfg: SimpleNamespace,
     report: mne.Report,
 ):

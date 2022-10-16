@@ -40,7 +40,7 @@ def filter_for_ica(
     cfg,
     raw: mne.io.BaseRaw,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None
 ) -> None:
     """Apply a high-pass filter if needed."""
@@ -61,7 +61,7 @@ def fit_ica(
     cfg,
     epochs: mne.BaseEpochs,
     subject: str,
-    session: str,
+    session: Optional[str],
 ) -> mne.preprocessing.ICA:
     algorithm = cfg.ica_algorithm
     fit_params = None
@@ -93,7 +93,7 @@ def make_ecg_epochs(
     cfg,
     raw_path: BIDSPath,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None,
     n_runs: int
 ) -> Optional[mne.BaseEpochs]:
@@ -142,7 +142,7 @@ def make_eog_epochs(
     raw: mne.io.BaseRaw,
     eog_channels: Optional[Iterable[str]],
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None
 ) -> Optional[mne.Epochs]:
     """Create EOG epochs. No rejection thresholds will be applied.

@@ -8,18 +8,19 @@ import os.path as op
 from types import SimpleNamespace
 from typing import Dict, Optional, Tuple
 
-import config
 import mne
 import numpy as np
 import pandas as pd
-from config import (LogReg, _restrict_analyze_channels, failsafe_run,
-                    gen_log_kwargs, parallel_func)
 from mne import BaseEpochs
 from mne.decoding import CSP, UnsupervisedSpatialFilter
 from mne_bids import BIDSPath
 from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
+
+import config
+from config import (LogReg, _restrict_analyze_channels, failsafe_run,
+                    gen_log_kwargs, parallel_func, _script_path)
 
 logger = logging.getLogger('mne-bids-pipeline')
 

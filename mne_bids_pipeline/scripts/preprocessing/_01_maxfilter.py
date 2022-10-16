@@ -15,18 +15,21 @@ The function loads machine-specific calibration files.
 """
 
 import itertools
+from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne_bids import BIDSPath, read_raw_bids
+from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 
 from ..._config_utils import (
     get_mf_cal_fname, get_mf_ctc_fname, get_subjects, get_sessions,
     get_runs, get_task, get_datatype, get_bids_root, get_deriv_root,
-    get_mf_reference_run)
+    get_mf_reference_run
+)
 from ..._import_data import (
-    import_experimental_data, import_er_data, import_rest_data)
+    import_experimental_data, import_er_data, import_rest_data
+)
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run, _script_path, save_logs, _update_for_splits
@@ -68,14 +71,11 @@ def get_input_fnames_maxwell_filter(**kwargs):
             raw_rest = bids_path_in.copy().update(task="rest")
             if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
-        if cfg.process_empty_room:
-            try:
-                raw_noise = ref_bids_path.find_empty_room()
-            except (ValueError,  # non-MEG data
-                    AssertionError,  # MNE-BIDS check assert exists()
-                    FileNotFoundError):  # MNE-BIDS PR-1080 exists()
-                raw_noise = None
-            if raw_noise is not None and raw_noise.fpath.exists():
+        if cfg.process_empty_room and cfg.datatype == 'meg':
+            raw_noise = _read_json(
+                _empty_room_match_path(bids_path_in, cfg))['fname']
+            if raw_noise is not None:
+                raw_noise = get_bids_path_from_fname(raw_noise)
                 in_files["raw_noise"] = raw_noise
 
     in_files["raw_ref_run"] = ref_bids_path

@@ -21,7 +21,7 @@ from typing import Optional, Union
 from types import SimpleNamespace
 
 import mne
-from mne_bids import BIDSPath
+from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from ..._config_utils import (
     get_sessions, get_runs, get_subjects, get_task, get_bids_root,
@@ -78,7 +78,7 @@ def get_input_fnames_frequency_filter(**kwargs):
     if run == cfg.runs[0]:
         do = dict(
             rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_empty_room,
+            noise=cfg.process_empty_room and cfg.datatype == 'meg',
         )
         for task in ('rest', 'noise'):
             if not do[task]:
@@ -92,13 +92,10 @@ def get_input_fnames_frequency_filter(**kwargs):
                     raw_fname = bids_path_in.copy().update(
                         run=None, task=task)
                 else:
-                    try:
-                        raw_fname = \
-                            in_files[f'raw_run-{run}'].find_empty_room()
-                    except (ValueError,  # non-MEG data
-                            AssertionError,  # MNE-BIDS check assert exists()
-                            FileNotFoundError):  # MNE-BIDS PR-1080 exists()
-                        raw_fname = None
+                    raw_fname = _read_json(
+                        _empty_room_match_path(bids_path_in, cfg))['fname']
+                    if raw_fname is not None:
+                        raw_fname = get_bids_path_from_fname(raw_fname)
             if raw_fname is None:
                 continue
             in_files[key] = raw_fname

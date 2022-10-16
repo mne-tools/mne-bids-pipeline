@@ -4,7 +4,7 @@ import copy
 import functools
 import os
 import pathlib
-from typing import List, Optional, Union, Iterable, Tuple
+from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar
 from types import SimpleNamespace
 
 import numpy as np
@@ -16,7 +16,7 @@ from ._logging import logger, gen_log_kwargs
 from ._typing import Literal, ArbitraryContrast, _keys_arbitrary_contrast
 
 
-def get_deriv_root(config) -> pathlib.Path:
+def get_deriv_root(config: SimpleNamespace) -> pathlib.Path:
     if config.deriv_root is None:
         return get_bids_root(config) / 'derivatives' / config.PIPELINE_NAME
     else:
@@ -25,7 +25,7 @@ def get_deriv_root(config) -> pathlib.Path:
                 .resolve())
 
 
-def get_fs_subjects_dir(config) -> pathlib.Path:
+def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
     if not config.subjects_dir and config.deriv_root is not None:
         # We do this check here (and not in our regular checks section) to
         # avoid an error message when a user doesn't intend to run the source
@@ -44,7 +44,10 @@ def get_fs_subjects_dir(config) -> pathlib.Path:
                 .resolve())
 
 
-def get_fs_subject(config, subject) -> str:
+def get_fs_subject(
+    config: SimpleNamespace,
+    subject: str
+) -> str:
     subjects_dir = get_fs_subjects_dir(config)
 
     if config.use_template_mri is not None:
@@ -56,7 +59,7 @@ def get_fs_subject(config, subject) -> str:
         return f'sub-{subject}'
 
 
-def get_bids_root(config) -> pathlib.Path:
+def get_bids_root(config: SimpleNamespace) -> pathlib.Path:
     # BIDS_ROOT environment variable takes precedence over any configuration
     # file values.
     root = os.getenv('BIDS_ROOT')
@@ -79,11 +82,11 @@ def get_bids_root(config) -> pathlib.Path:
 
 
 @functools.lru_cache(maxsize=None)
-def _get_entity_vals_cached(*args, **kwargs):
+def _get_entity_vals_cached(*args, **kwargs) -> List[str]:
     return mne_bids.get_entity_vals(*args, **kwargs)
 
 
-def get_datatype(config) -> Literal['meg', 'eeg']:
+def get_datatype(config: SimpleNamespace) -> Literal['meg', 'eeg']:
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
     if config.data_type is not None:
@@ -98,13 +101,15 @@ def get_datatype(config) -> Literal['meg', 'eeg']:
                            "the MNE-BIDS-pipeline developers. Thank you.")
 
 
-def _get_ignore_datatypes(config):
-    _all_datatypes = mne_bids.get_datatypes(root=get_bids_root(config))
+def _get_ignore_datatypes(config: SimpleNamespace) -> Tuple[str]:
+    _all_datatypes: List[str] = mne_bids.get_datatypes(
+        root=get_bids_root(config)
+    )
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 
 
-def get_subjects(config) -> List[str]:
+def get_subjects(config: SimpleNamespace) -> List[str]:
     env = os.environ
     _valid_subjects = _get_entity_vals_cached(
         root=get_bids_root(config),
@@ -130,7 +135,9 @@ def get_subjects(config) -> List[str]:
     return sorted(subjects)
 
 
-def get_sessions(config):
+def get_sessions(
+    config: SimpleNamespace
+) -> Union[List[None], List[str]]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=get_bids_root(config),
@@ -149,7 +156,9 @@ def get_sessions(config):
         return sessions
 
 
-def get_runs_all_subjects(config) -> dict:
+def get_runs_all_subjects(
+    config: SimpleNamespace
+) -> Dict[str, Union[List[None], List[str]]]:
     """Gives the mapping between subjects and their runs.
 
     Returns
@@ -180,7 +189,7 @@ def get_runs_all_subjects(config) -> dict:
     return subj_runs
 
 
-def get_intersect_run(config) -> List[str]:
+def get_intersect_run(config: SimpleNamespace) -> List[str]:
     """Returns the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects(config)
     return list(set.intersection(*map(set, subj_runs.values())))
@@ -188,7 +197,7 @@ def get_intersect_run(config) -> List[str]:
 
 def get_runs(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
     verbose: bool = False
 ) -> Union[List[str], List[None]]:
@@ -249,7 +258,7 @@ def get_runs(
         return runs
 
 
-def get_mf_reference_run(config) -> str:
+def get_mf_reference_run(config: SimpleNamespace) -> str:
     # Retrieve to run identifier (number, name) of the reference run
     if config.mf_reference_run is not None:
         return config.mf_reference_run
@@ -273,7 +282,7 @@ def get_mf_reference_run(config) -> str:
         )
 
 
-def get_task(config) -> Optional[str]:
+def get_task(config: SimpleNamespace) -> Optional[str]:
     env = os.environ
     task = None
     _valid_tasks = _get_entity_vals_cached(
@@ -295,7 +304,10 @@ def get_task(config) -> Optional[str]:
         return task
 
 
-def get_channels_to_analyze(info, config) -> List[str]:
+def get_channels_to_analyze(
+    info: mne.Info,
+    config: SimpleNamespace
+) -> List[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
@@ -332,7 +344,7 @@ def sanitize_cond_name(cond: str) -> str:
 
 def get_mf_cal_fname(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
     session: str
 ) -> pathlib.Path:
@@ -348,7 +360,8 @@ def get_mf_cal_fname(
                              'file.')
     else:
         mf_cal_fpath = pathlib.Path(
-            config.mf_cal_fname).expanduser().absolute()
+            config.mf_cal_fname
+        ).expanduser().absolute()
         if not mf_cal_fpath.exists():
             raise ValueError(f'Could not find Maxwell Filter Calibration '
                              f'file at {str(mf_cal_fpath)}.')
@@ -358,7 +371,7 @@ def get_mf_cal_fname(
 
 def get_mf_ctc_fname(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
     session: str
 ) -> pathlib.Path:
@@ -382,7 +395,17 @@ def get_mf_ctc_fname(
     return mf_ctc_fpath
 
 
-def _restrict_analyze_channels(inst, cfg):
+
+RawEpochsEvokedT = TypeVar(
+    'RawEpochsEvokedT',
+    bound=Union[mne.io.BaseRaw, mne.BaseEpochs, mne.Evoked]
+)
+
+
+def _restrict_analyze_channels(
+    inst: RawEpochsEvokedT,
+    cfg: SimpleNamespace
+) -> RawEpochsEvokedT:
     if cfg.analyze_channels:
         analyze_channels = cfg.analyze_channels
         if cfg.analyze_channels == 'ch_types':
@@ -402,7 +425,7 @@ def _restrict_analyze_channels(inst, cfg):
     return inst
 
 
-def _get_scalp_in_files(cfg):
+def _get_scalp_in_files(cfg: SimpleNamespace) -> Dict[str, pathlib.Path]:
     subject_path = pathlib.Path(cfg.subjects_dir) / cfg.fs_subject
     seghead = subject_path / 'surf' / 'lh.seghead'
     in_files = dict()
@@ -413,7 +436,9 @@ def _get_scalp_in_files(cfg):
     return in_files
 
 
-def _get_bem_conductivity(cfg):
+def _get_bem_conductivity(
+    cfg: SimpleNamespace
+) -> Tuple[Tuple[float], str]:
     if cfg.fs_subject in ('fsaverage', cfg.use_template_mri):
         conductivity = None  # should never be used
         tag = '5120-5120-5120'
@@ -426,7 +451,7 @@ def _get_bem_conductivity(cfg):
     return conductivity, tag
 
 
-def _meg_in_ch_types(ch_types):
+def _meg_in_ch_types(ch_types: str) -> bool:
     return ('mag' in ch_types or 'grad' in ch_types or 'meg' in ch_types)
 
 
@@ -481,7 +506,7 @@ def get_noise_cov_bids_path(
     return noise_cov_bp
 
 
-def get_all_contrasts(config) -> Iterable[ArbitraryContrast]:
+def get_all_contrasts(config: SimpleNamespace) -> Iterable[ArbitraryContrast]:
     _validate_contrasts(config.contrasts)
     normalized_contrasts = []
     for contrast in config.contrasts:
@@ -498,7 +523,9 @@ def get_all_contrasts(config) -> Iterable[ArbitraryContrast]:
     return normalized_contrasts
 
 
-def get_decoding_contrasts(config) -> Iterable[Tuple[str, str]]:
+def get_decoding_contrasts(
+    config: SimpleNamespace
+) -> Iterable[Tuple[str, str]]:
     _validate_contrasts(config.contrasts)
     normalized_contrasts = []
     for contrast in config.contrasts:
@@ -518,7 +545,9 @@ def get_decoding_contrasts(config) -> Iterable[Tuple[str, str]]:
     return normalized_contrasts
 
 
-def get_eeg_reference(config) -> Union[Literal['average'], Iterable[str]]:
+def get_eeg_reference(
+    config: SimpleNamespace
+) -> Union[Literal['average'], Iterable[str]]:
     if config.eeg_reference == 'average':
         return config.eeg_reference
     elif isinstance(config.eeg_reference, str):
@@ -527,7 +556,7 @@ def get_eeg_reference(config) -> Union[Literal['average'], Iterable[str]]:
         return config.eeg_reference
 
 
-def _validate_contrasts(contrasts):
+def _validate_contrasts(contrasts: SimpleNamespace) -> None:
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:

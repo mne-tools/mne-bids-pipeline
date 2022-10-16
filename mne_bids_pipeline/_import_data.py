@@ -160,7 +160,13 @@ def annotations_to_events(
     return event_name_to_code_map
 
 
-def _rename_events_func(cfg, raw, subject, session, run) -> None:
+def _rename_events_func(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
 
     Modifies ``raw`` in-place.
@@ -201,7 +207,14 @@ def _rename_events_func(cfg, raw, subject, session, run) -> None:
     raw.annotations.description = descriptions
 
 
-def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
+def _find_bad_channels(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    task: Optional[str],
+    run: Optional[str],
+) -> None:
     """Find and mark bad MEG channels.
 
     Modifies ``raw`` in-place.
@@ -324,7 +337,7 @@ def _find_bad_channels(cfg, raw, subject, session, task, run) -> None:
     tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
 
 
-def _load_data(cfg, bids_path):
+def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -349,7 +362,11 @@ def _load_data(cfg, bids_path):
     return raw
 
 
-def _crop_data(cfg, raw, subject):
+def _crop_data(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str,
+) -> None:
     """Crop the data to the desired duration.
 
     Modifies ``raw`` in-place.
@@ -358,7 +375,12 @@ def _crop_data(cfg, raw, subject):
         raw.crop(*cfg.crop_runs)
 
 
-def _drop_channels_func(cfg, raw, subject, session) -> None:
+def _drop_channels_func(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str
+    session: Optional[str],
+) -> None:
     """Drop channels from the data.
 
     Modifies ``raw`` in-place.
@@ -370,7 +392,13 @@ def _drop_channels_func(cfg, raw, subject, session) -> None:
         raw.drop_channels(cfg.drop_channels, on_missing='warn')
 
 
-def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
+def _create_bipolar_channels(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str
+    session: Optional[str],
+    run: Optional[str]
+) -> None:
     """Create a channel from a bipolar referencing scheme..
 
     Modifies ``raw`` in-place.
@@ -410,7 +438,13 @@ def _create_bipolar_channels(cfg, raw, subject, session, run) -> None:
                 raw.set_channel_types({eog_ch_name: 'eog'})
 
 
-def _set_eeg_montage(cfg, raw, subject, session, run) -> None:
+def _set_eeg_montage(
+    cfg: SimpleNamespace,
+    raw: mne.io.BaseRaw,
+    subject: str
+    session: Optional[str],
+    run: Optional[str]
+) -> None:
     """Set an EEG template montage if requested.
 
     Modifies ``raw`` in-place.

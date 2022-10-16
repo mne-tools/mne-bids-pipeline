@@ -3,27 +3,23 @@ Decoding based on common spatial patterns (CSP).
 """
 
 import itertools
-from types import SimpleNamespace
-from typing import Optional, Tuple, Dict
 import logging
 import os.path as op
-
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
-
-import mne
-from mne import BaseEpochs
-from mne.decoding import UnsupervisedSpatialFilter, CSP
-from mne_bids import BIDSPath
+from types import SimpleNamespace
+from typing import Dict, Optional, Tuple
 
 import config
-from config import (
-    gen_log_kwargs, failsafe_run, parallel_func, LogReg,
-    _restrict_analyze_channels
-)
+import mne
+import numpy as np
+import pandas as pd
+from config import (LogReg, _restrict_analyze_channels, failsafe_run,
+                    gen_log_kwargs, parallel_func)
+from mne import BaseEpochs
+from mne.decoding import CSP, UnsupervisedSpatialFilter
+from mne_bids import BIDSPath
+from sklearn.decomposition import PCA
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import make_pipeline
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -399,8 +395,6 @@ def get_config(
 
 def main():
     """Run all subjects decoding in parallel."""
-    msg = 'Running Step 4b: CSP'
-    logger.info(**gen_log_kwargs(message=msg))
 
     if not config.contrasts or not config.decoding_csp:
         if not config.contrasts:
@@ -408,8 +402,9 @@ def main():
         else:
             msg = 'No CSP analysis requested. '
 
-        msg += 'Skipping step CSP ...'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping …'
+        with _script_path(__file__):
+            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with config.get_parallel_backend():
@@ -429,9 +424,6 @@ def main():
         )
 
         config.save_logs(logs)
-
-    msg = 'Completed Step 4b: CSP'
-    logger.info(**gen_log_kwargs(message=msg))
 
 
 if __name__ == '__main__':

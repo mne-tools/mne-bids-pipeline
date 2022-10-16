@@ -13,7 +13,7 @@ from ..._logging import logger
 
 def get_input_fnames_find_empty_room(
     *,
-    subject: Optional[str],
+    subject: str,
     session: Optional[str],
     run:  Optional[str],
     cfg: SimpleNamespace
@@ -55,7 +55,7 @@ def get_input_fnames_find_empty_room(
               get_input_fnames=get_input_fnames_find_empty_room)
 def find_empty_room(
     *,
-    subject: Optional[str],
+    subject: str,
     session: Optional[str],
     run:  Optional[str],
     in_files: Dict[str, BIDSPath],

@@ -10,7 +10,8 @@ import pdb
 import sys
 import traceback
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict
+from types import SimpleNamespace
 import warnings
 
 from joblib import Memory
@@ -28,7 +29,7 @@ def failsafe_run(
     script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
     get_output_fnames: Optional[Callable] = None,
-):
+) -> Callable:
     import config
     if config.interactive:
         on_error = 'debug'
@@ -116,7 +117,7 @@ def failsafe_run(
     return failsafe_run_decorator
 
 
-def hash_file_path(path):
+def hash_file_path(path: pathlib.Path) -> str:
     with open(path, 'rb') as f:
         md5_hash = hashlib.md5(f.read())
         md5_hashed = md5_hash.hexdigest()
@@ -243,11 +244,15 @@ class ConditionalStepMemory:
                                  'need to flush your cache to fix this.')
         return wrapper
 
-    def clear(self):
+    def clear(self) -> None:
         self.memory.clear()
 
 
-def save_logs(*, config, logs):
+def save_logs(
+    *,
+    config: SimpleNamespace,
+    logs  # TODO add type
+) -> None:
     fname = get_deriv_root(config) / f'task-{get_task(config)}_log.xlsx'
 
     # Get the script from which the function is called for logging
@@ -294,7 +299,7 @@ def save_logs(*, config, logs):
 
 
 @contextlib.contextmanager
-def _script_path(script_path):
+def _script_path(script_path: PathLike):
     # Usually failsafe_run dec sets MNE_BIDS_STUDY_SCRIPT_PATH so that log
     # kwargs can be set properly. However, if the script gets skipped
     # outside/before the failsafe_run, whatever the last SCRIPT_PATH was
@@ -312,7 +317,13 @@ def _script_path(script_path):
             os.environ[key] = orig_val
 
 
-def _update_for_splits(files_dict, key, *, single=False, allow_missing=False):
+def _update_for_splits(
+    files_dict: Dict[str, BIDSPath],
+    key: str,
+    *,
+    single: bool = False,
+    allow_missing: bool = False
+) -> BIDSPath:
     if not isinstance(files_dict, dict):  # fake it
         assert key is None
         files_dict, key = dict(x=files_dict), 'x'

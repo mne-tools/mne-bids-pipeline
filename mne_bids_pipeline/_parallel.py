@@ -1,7 +1,8 @@
 """Parallelization."""
 
 import os
-from typing import Literal
+from typing import Literal, Callable
+from types import SimpleNamespace
 
 import joblib
 
@@ -9,7 +10,7 @@ from ._logging import logger
 from ._config_utils import get_deriv_root
 
 
-def get_n_jobs(config) -> int:
+def get_n_jobs(config: SimpleNamespace) -> int:
     env = os.environ
     if config.interactive:
         n_jobs = 1
@@ -28,7 +29,7 @@ def get_n_jobs(config) -> int:
 dask_client = None
 
 
-def setup_dask_client(config):
+def setup_dask_client(config: SimpleNamespace) -> None:
     global dask_client
 
     import dask
@@ -83,7 +84,9 @@ def setup_dask_client(config):
     dask_client = client
 
 
-def get_parallel_backend_name(config) -> Literal['dask', 'loky']:
+def get_parallel_backend_name(
+    config: SimpleNamespace
+) -> Literal['dask', 'loky']:
     if config.parallel_backend == 'loky' or get_n_jobs(config) == 1:
         return 'loky'
     elif config.parallel_backend == 'dask':
@@ -96,7 +99,7 @@ def get_parallel_backend_name(config) -> Literal['dask', 'loky']:
             f'Unknown parallel backend: {config.parallel_backend}')
 
 
-def get_parallel_backend(config):
+def get_parallel_backend(config: SimpleNamespace) -> joblib.parallel_backend:
     import joblib
 
     backend = get_parallel_backend_name(config)
@@ -115,7 +118,11 @@ def get_parallel_backend(config):
     )
 
 
-def parallel_func(func, *, config):
+def parallel_func(
+    func: Callable,
+    *,
+    config: SimpleNamespace
+):
     if get_parallel_backend_name(config) == 'loky':
         if get_n_jobs(config) == 1:
             my_func = func

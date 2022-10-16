@@ -1,17 +1,23 @@
 """Find empty-room data matches."""
 
 from types import SimpleNamespace
-
-from mne_bids import BIDSPath
+from typing import Dict, Optional
 
 import config
-from config import gen_log_kwargs, failsafe_run, _update_for_splits
+from config import _update_for_splits, failsafe_run, gen_log_kwargs
+from mne_bids import BIDSPath
 
-from ..._io import _write_json, _empty_room_match_path
+from ..._io import _empty_room_match_path, _write_json
 from ..._logging import logger
 
 
-def get_input_fnames_find_empty_room(*, subject, session, run, cfg):
+def get_input_fnames_find_empty_room(
+    *,
+    subject: Optional[str],
+    session: Optional[str],
+    run:  Optional[str],
+    cfg: SimpleNamespace
+) -> Dict[str, BIDSPath]:
     """Get paths of files required by filter_data function."""
     bids_path_in = BIDSPath(
         subject=subject,
@@ -26,7 +32,7 @@ def get_input_fnames_find_empty_room(*, subject, session, run, cfg):
         root=cfg.bids_root,
         check=False
     )
-    in_files = dict()
+    in_files: Dict[str, BIDSPath] = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
     _update_for_splits(in_files, f'raw_run-{run}', single=True)
     try:
@@ -47,7 +53,14 @@ def get_input_fnames_find_empty_room(*, subject, session, run, cfg):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_find_empty_room)
-def find_empty_room(*, subject, session, run, in_files, cfg):
+def find_empty_room(
+    *,
+    subject: Optional[str],
+    session: Optional[str],
+    run:  Optional[str],
+    in_files: Dict[str, BIDSPath],
+    cfg: SimpleNamespace
+) -> Dict[str, BIDSPath]:
     raw_path = in_files.pop(f'raw_run-{run}')
     try:
         fname = raw_path.find_empty_room(use_sidecar_only=True)
@@ -77,8 +90,7 @@ def find_empty_room(*, subject, session, run, in_files, cfg):
     return out_files
 
 
-def get_config(
-) -> SimpleNamespace:
+def get_config() -> SimpleNamespace:
     cfg = SimpleNamespace(
         proc=config.proc,
         task=config.get_task(),
@@ -92,7 +104,7 @@ def get_config(
     return cfg
 
 
-def main():
+def main() -> None:
     """Run find_empty_room."""
     if not config.process_empty_room:
         msg = 'Skipping, process_empty_room is set to False …'

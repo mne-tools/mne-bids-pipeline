@@ -27,6 +27,7 @@ from config import (
     get_noise_cov_bids_path, _update_for_splits, _restrict_analyze_channels,
 )
 
+from ..._reject import _get_reject
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -76,7 +77,8 @@ def get_er_path(cfg, subject, session):
                          datatype=cfg.datatype,
                          root=cfg.deriv_root,
                          check=False)
-    raw_fname = _update_for_splits(raw_fname, None, single=True)
+    raw_fname = _update_for_splits(
+        raw_fname, None, single=True, allow_missing=True)
     return raw_fname
 
 
@@ -529,7 +531,8 @@ def run_report_preprocessing(
         )
         del plot_raw_psd
 
-    if cfg.process_er:
+    er_path = get_er_path(cfg=cfg, subject=subject, session=session)
+    if er_path.fpath.exists():
         msg = 'Adding filtered empty-room raw data to report.'
         logger.info(
             **gen_log_kwargs(
@@ -537,7 +540,6 @@ def run_report_preprocessing(
             )
         )
 
-        er_path = get_er_path(cfg=cfg, subject=subject, session=session)
         report.add_raw(
             raw=er_path,
             title='Empty-Room',
@@ -624,8 +626,17 @@ def run_report_preprocessing(
             )
         )
         epochs = mne.read_epochs(fname_epo_not_clean)
-        epochs.drop_bad(cfg.ica_reject)
         ica = mne.preprocessing.read_ica(fname_ica)
+        ica_reject = _get_reject(
+            subject=subject,
+            session=session,
+            reject=cfg.ica_reject,
+            ch_types=cfg.ch_types,
+            param='ica_reject',
+        )
+        # TODO: Ref is set during ICA epochs fitting, we should ensure we do
+        # it here, too
+        epochs.drop_bad(ica_reject)
 
         if ica.exclude:
             report.add_ica(
@@ -989,7 +1000,9 @@ def run_report_sensor(
                                                                f"+{cond}+")
         fname_tfr_itc_cond = str(fname_tfr_itc.copy()).replace("+condition+",
                                                                f"+{cond}+")
-        power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond, condition=0)
+        with mne.use_log_level('error'):  # filename convention
+            power = mne.time_frequency.read_tfrs(
+                fname_tfr_pow_cond, condition=0)
         kwargs = dict(
             show=False, fig_facecolor='w', font_color='k', border='k'
         )
@@ -1003,7 +1016,9 @@ def run_report_sensor(
         plt.close(fig_power)
         del power
 
-        itc = mne.time_frequency.read_tfrs(fname_tfr_itc_cond, condition=0)
+        with mne.use_log_level('error'):  # filename convention
+            itc = mne.time_frequency.read_tfrs(
+                fname_tfr_itc_cond, condition=0)
         fig_itc = itc.plot_topo(**kwargs)
         report.add_figure(
             fig=fig_itc,
@@ -1598,14 +1613,14 @@ def get_config(
         space=config.space,
         proc=config.proc,
         analyze_channels=config.analyze_channels,
-        process_er=config.process_er,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         h_freq=config.h_freq,
         spatial_filter=config.spatial_filter,
         conditions=config.conditions,
         all_contrasts=config.get_all_contrasts(),
         decoding_contrasts=config.get_decoding_contrasts(),
-        ica_reject=config.get_ica_reject(),
+        ica_reject=config.ica_reject,
+        ch_types=config.ch_types,
         time_frequency_conditions=config.time_frequency_conditions,
         decode=config.decode,
         decoding_metric=config.decoding_metric,

@@ -25,7 +25,7 @@ lines = [pre]
 for di, (dir_, modules) in enumerate(script_modules.items(), 1):
     if dir_ == 'all':
         continue  # this is an alias
-    dir_module = importlib.import_module(f'scripts.{dir_}')
+    dir_module = importlib.import_module(f'mne_bids_pipeline.scripts.{dir_}')
     dir_header = dir_module.__doc__.split('\n')[0].rstrip('.')
     dir_body = dir_module.__doc__.split('\n', maxsplit=1)
     if len(dir_body) > 1:

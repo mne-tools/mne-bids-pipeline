@@ -15,7 +15,8 @@
 ::: mne_bids_pipeline.config.space
 ::: mne_bids_pipeline.config.subjects
 ::: mne_bids_pipeline.config.exclude_subjects
-::: mne_bids_pipeline.config.process_er
+::: mne_bids_pipeline.config.process_empty_room
+::: mne_bids_pipeline.config.process_rest
 ::: mne_bids_pipeline.config.ch_types
 ::: mne_bids_pipeline.config.data_type
 ::: mne_bids_pipeline.config.eog_channels

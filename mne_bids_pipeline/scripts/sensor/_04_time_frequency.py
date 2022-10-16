@@ -87,8 +87,12 @@ def run_time_frequency(*, cfg, subject, session, in_files):
         out_files[itc_key] = bids_path.copy().update(
             suffix=f'itc+{condition_str}+tfr', extension='.h5')
 
-        power.save(out_files[power_key], overwrite=True)
-        itc.save(out_files[itc_key], overwrite=True)
+        # TODO: verbose='error' here because we write filenames that do not
+        # conform to MNE filename checks. This is because BIDS has not
+        # finalized how derivatives should be named. Once this is done, we
+        # should update our names and/or MNE's checks.
+        power.save(out_files[power_key], overwrite=True, verbose='error')
+        itc.save(out_files[itc_key], overwrite=True, verbose='error')
 
     assert len(in_files) == 0, in_files.keys()
     return out_files

@@ -189,7 +189,7 @@ authors:
 - ({{ gh(614) }} by {{ authors.larsoner }})
 - Add time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
    (CSP).
-   ({{ gh(xxx) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
+   ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
     {{ authors.hoechenberger }})
 
 ### Behavior changes
@@ -272,7 +272,7 @@ authors:
   ({{ gh(595) }} by {{ authors.larsoner }})
 - Empty-room and resting-state data are processed by default if present,
   regardless of [`config.noise_cov`][mne_bids_pipeline.config.noise_cov] value.
-  This can be controlled by changing the default values from 
+  This can be controlled by changing the default values from
   [`config.process_empty_room = True`][mne_bids_pipeline.config.process_empty_room] and
   [`config.process_rest = True`][mne_bids_pipeline.config.process_rest]
   ({{ gh(633) }} by {{ authors.larsoner }})
@@ -293,7 +293,7 @@ authors:
 - For storing configuration values, we switched from using `BunchConst` to
   Python's built-in `SimpleNamespace`.
   ({{ gh(472) }} by {{ authors.agramfort }})
-- The `config.process_er` variable was renamed 
+- The `config.process_er` variable was renamed
   [`config.process_empty_room`][mne_bids_pipeline.config.process_empty_room]
   for readability, and the default was changed to `True` for consistency
   ({{ gh(633) }} by {{ authors.larsoner }})

@@ -3,12 +3,14 @@
 from types import SimpleNamespace
 from typing import Dict, Optional
 
-import config
-from config import _update_for_splits, failsafe_run, gen_log_kwargs
 from mne_bids import BIDSPath
 
+from ..._config_utils import (
+    get_bids_root, get_datatype, get_task, get_sessions, get_subjects,
+    get_runs)
 from ..._io import _empty_room_match_path, _write_json
-from ..._logging import logger
+from ..._logging import gen_log_kwargs, logger
+from ..._run import _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_find_empty_room(
@@ -90,15 +92,18 @@ def find_empty_room(
     return out_files
 
 
-def get_config() -> SimpleNamespace:
+def get_config(
+    *,
+    config,
+) -> SimpleNamespace:
     cfg = SimpleNamespace(
         proc=config.proc,
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=config.get_bids_root(),
+        bids_root=get_bids_root(config),
         deriv_root=config.deriv_root,
     )
     return cfg
@@ -106,29 +111,30 @@ def get_config() -> SimpleNamespace:
 
 def main() -> None:
     """Run find_empty_room."""
+    import config
     if not config.process_empty_room:
         msg = 'Skipping, process_empty_room is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
-    if config.get_datatype() != 'meg':
+    if get_datatype(config) != 'meg':
         msg = 'Skipping, empty-room data only relevant for MEG …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
     # This will be I/O bound if the sidecar is not complete, so let's not run
     # in parallel.
     logs = list()
-    for subject in config.get_subjects():
+    for subject in get_subjects(config):
         if config.use_maxwell_filter:
             run = config.mf_reference_run
         else:
-            run = config.get_runs(subject=subject)[0]
+            run = get_runs(config=config, subject=subject)[0]
         logs.append(find_empty_room(
-            cfg=get_config(),
+            cfg=get_config(config=config),
             subject=subject,
-            session=config.get_sessions()[0],
+            session=get_sessions(config)[0],
             run=run,
         ))
-    config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

@@ -395,7 +395,6 @@ def get_mf_ctc_fname(
     return mf_ctc_fpath
 
 
-
 RawEpochsEvokedT = TypeVar(
     'RawEpochsEvokedT',
     bound=Union[mne.io.BaseRaw, mne.BaseEpochs, mne.Evoked]

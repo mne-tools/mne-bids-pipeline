@@ -378,7 +378,7 @@ def _crop_data(
 def _drop_channels_func(
     cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
-    subject: str
+    subject: str,
     session: Optional[str],
 ) -> None:
     """Drop channels from the data.
@@ -395,7 +395,7 @@ def _drop_channels_func(
 def _create_bipolar_channels(
     cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
-    subject: str
+    subject: str,
     session: Optional[str],
     run: Optional[str]
 ) -> None:
@@ -441,7 +441,7 @@ def _create_bipolar_channels(
 def _set_eeg_montage(
     cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
-    subject: str
+    subject: str,
     session: Optional[str],
     run: Optional[str]
 ) -> None:

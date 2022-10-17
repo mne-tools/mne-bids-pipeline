@@ -226,6 +226,16 @@ def one_subject_decoding(
     )
     del freq_decoding_table_rows
 
+    def _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name,
+                      tmin=None, tmax=None):
+        msg = (
+            f'Contrast: {cond1} – {cond2}, '
+            f'{fmin:4.1f}–{fmax:4.1f} Hz ({freq_range_name})'
+        )
+        if tmin is not None:
+            msg += f' {tmin:+5.3f}–{tmax:+5.3f} sec'
+        return msg
+
     for idx, row in freq_decoding_table.iterrows():
         fmin = row['f_min']
         fmax = row['f_max']
@@ -233,11 +243,7 @@ def one_subject_decoding(
         cond2 = row['cond_2']
         freq_range_name = row['freq_range_name']
 
-        msg = (
-            f'Contrast: {cond1} – {cond2}, '
-            f'Freqs (Hz): {fmin}–{fmax} '
-            f'({freq_range_name})'
-        )
+        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
         logger.info(
             **gen_log_kwargs(msg, subject=subject, session=session)
         )
@@ -314,16 +320,6 @@ def one_subject_decoding(
         cond2 = row['cond_2']
         freq_range_name = row['freq_range_name']
 
-        msg = (
-            f'Contrast: {cond1} – {cond2}, '
-            f'Freqs (Hz): {fmin}–{fmax} '
-            f'({freq_range_name}), '
-            f'Times (s): {round(tmin, 3)}–{round(tmax, 3)}'
-        )
-        logger.info(
-            **gen_log_kwargs(msg, subject=subject, session=session)
-        )
-
         epochs_filt, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
@@ -341,7 +337,15 @@ def one_subject_decoding(
             cv=cv,
             n_jobs=1,
         )
-        tf_decoding_table.loc[idx, 'mean_crossval_score'] = cv_scores.mean()
+        score = cv_scores.mean()
+        tf_decoding_table.loc[idx, 'mean_crossval_score'] = score
+        msg = _fmt_contrast(
+            cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
+        msg += f': {cfg.decoding_metric}={score:0.3f}'
+        logger.info(
+            **gen_log_kwargs(msg, subject=subject, session=session)
+        )
+
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f'{condition1}+{condition2}'.replace(op.sep, '')

@@ -137,6 +137,9 @@ elif task == 'ERN':
     contrasts = [('response/incorrect', 'response/correct')]
     cluster_forming_t_threshold = 5        # Only for testing!
     cluster_permutation_p_threshold = 0.2  # Only for testing!
+    decoding_csp = True
+    decoding_csp_freqs = {'theta': (4, 7), 'alpha': (8, 12)}
+    decoding_csp_times = [-0.4, -0.2, 0., 0.2, 0.4]
 elif task == 'LRP':
     rename_events = {
         'stimulus/11': 'compatible/left',

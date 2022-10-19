@@ -42,3 +42,6 @@ codespell:  # running manually; auto-fix spelling mistakes
 
 codespell-error:  # running on travis; override interactivity seting
 	@codespell -i 0 -q 7 $(CODESPELL_DIRS)
+
+show:
+	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/docs/site/index.html')"

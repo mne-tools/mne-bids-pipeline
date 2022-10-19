@@ -189,8 +189,8 @@ authors:
 - ({{ gh(614) }} by {{ authors.larsoner }})
 - Add time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
    (CSP).
-   ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }}, and
-    {{ authors.hoechenberger }})
+   ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }},
+    {{ authors.hoechenberger }}, and {{ authors.larsoner }})
 
 ### Behavior changes
 

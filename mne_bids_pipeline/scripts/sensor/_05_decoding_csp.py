@@ -346,7 +346,6 @@ def one_subject_decoding(
             **gen_log_kwargs(msg, subject=subject, session=session)
         )
 
-
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f'{condition1}+{condition2}'.replace(op.sep, '')
     processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'

@@ -196,6 +196,8 @@ for test_dataset_name, test_dataset_options in test_options.items():
     else:
         download_str = ''
 
+    # TODO: For things like ERP_CORE_ERN, decoding_csp are not populated
+    # properly by the root config
     config_path = root / 'tests' / 'configs' / f'config_{dataset_name}.py'
     config = config_path.read_text(encoding='utf-8-sig').strip()
     descr_end_idx = config[2:].find('"""')

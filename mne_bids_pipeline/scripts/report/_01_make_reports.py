@@ -844,7 +844,8 @@ def run_report_sensor(
     #
     # Visualize full-epochs decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    decode = cfg.decode and cfg.decoding_contrasts
+    if decode:
         msg = 'Adding full-epochs decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -902,7 +903,7 @@ def run_report_sensor(
     #
     # Visualize time-by-time decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    if decode:
         msg = 'Adding time-by-time decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -976,6 +977,41 @@ def run_report_sensor(
             del decoding_data, cond_1, cond_2, caption
 
         del epochs
+
+    ###########################################################################
+    #
+    # Visualize CSP decoding results.
+    #
+
+    if decode and cfg.decoding_csp:
+        msg = 'Adding time-by-time decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        epochs = mne.read_epochs(fname_epo_clean)
+
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                f"{contrast[0].lower().replace(' ', '-')}-"
+                f"{contrast[1].lower().replace(' ', '-')}"
+            )
+
+            processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            assert fname_decoding.fpath.is_file, fname_decoding.fpath
+            # TODO: Add an individual subject's plots here
 
     ###########################################################################
     #
@@ -1356,6 +1392,11 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             session=session, cfg=cfg, report=report
         )
 
+    if cfg.decode and cfg.decoding_csp:
+        add_csp_grand_average(
+            session=session, cfg=cfg, report=report
+        )
+
     #######################################################################
     #
     # Visualize forward solution, inverse operator, and inverse solutions.
@@ -1579,6 +1620,224 @@ def add_decoding_grand_average(
             plt.close(fig)
 
 
+def add_csp_grand_average(
+    *,
+    session: str,
+    cfg: SimpleNamespace,
+    report: mne.Report,
+):
+    """Add CSP decoding results to the grand average report."""
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    bids_path = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='decoding',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    # First, plot deocding scores across frequency bins (entire epochs).
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_freq_results = bids_path.copy().update(
+            processing=processing,
+            extension='.xlsx',
+        )
+        csp_freq_results = pd.read_excel(
+            fname_csp_freq_results,
+            sheet_name='CSP Frequency'
+        )
+
+        for freq_range_name in cfg.decoding_csp_freqs.keys():
+            results = csp_freq_results.loc[
+                csp_freq_results['freq_range_name'] == freq_range_name, :
+            ]
+            freq_bin_starts = results['f_min']
+            freq_bin_widths = results['f_max'] - results['f_min']
+            decoding_scores = results['mean']
+            cis_lower = results['mean_ci_lower']
+            cis_upper = results['mean_ci_upper']
+            error_bars_lower = decoding_scores - cis_lower
+            error_bars_upper = cis_upper - decoding_scores
+            error_bars = np.stack([error_bars_lower, error_bars_upper])
+            assert len(error_bars) == 2  # lower, upper
+            del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+
+            if cfg.decoding_metric == 'roc_auc':
+                metric = 'ROC AUC'
+
+            fig, ax = plt.subplots()
+            ax.bar(
+                x=freq_bin_starts,
+                width=freq_bin_widths,
+                height=decoding_scores,
+                align='edge',
+                yerr=error_bars,
+                edgecolor='black',
+            )
+            ax.set_ylim([0, 1.02])
+            ax.axhline(0.5, color='black', linestyle='--', label='chance')
+            ax.legend()
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel(f'Mean decoding score ({metric})')
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
+            )
+            report.add_figure(
+                fig=fig,
+                title=f'Frequency range: {freq_range_name}',
+                section=f'CSP: {cond_1} ./. {cond_2}',
+                caption='Mean decoding scores. Error bars represent '
+                        'bootstrapped 95% confidence intervals.',
+                tags=tags,
+            )
+
+    # Now, plot deocding scores across time-frequency bins.
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_cluster_results = bids_path.copy().update(
+            processing=processing,
+            extension='.mat',
+        )
+        csp_cluster_results = loadmat(fname_csp_cluster_results)
+
+        for freq_range_name in cfg.decoding_csp_freqs.keys():
+            results = csp_cluster_results[freq_range_name][0][0]
+            mean_crossval_scores = results['mean_crossval_scores']
+            # t_vals = results['t_vals']
+            clusters = results['clusters']
+            cluster_p_vals = results['cluster_p_vals'].squeeze()
+            time_bin_edges = results['time_bin_edges'].squeeze()
+            freq_bin_edges = results['freq_bin_edges'].squeeze()
+            cluster_t_threshold = results['cluster_t_threshold'].item()
+
+            significant_cluster_idx = np.where(
+                cluster_p_vals < cfg.cluster_permutation_p_threshold
+            )[0]
+            significant_clusters = clusters[significant_cluster_idx]
+
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            # For diverging gray colormap, we need to combine two existing
+            # colormaps, as there is no diverging colormap with gray/black at
+            # both endpoints.
+            from matplotlib.cm import gray, gray_r
+            from matplotlib.colors import ListedColormap
+
+            black_to_white = gray(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            white_to_black = gray_r(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            black_to_white_to_black = np.vstack(
+                (black_to_white, white_to_black)
+            )
+            diverging_gray_cmap = ListedColormap(
+                black_to_white_to_black, name='DivergingGray'
+            )
+            cmap_gray = diverging_gray_cmap
+            fig, ax = plt.subplots(nrows=1, ncols=2)
+            common_kwargs = dict(
+                interpolation='none',
+                origin='lower',
+                vmin=vmin,
+                vmax=vmax,
+                extent=[
+                    time_bin_edges[0],
+                    time_bin_edges[-1],
+                    freq_bin_edges[0],
+                    freq_bin_edges[-1]
+                ],
+                aspect='auto',
+            )
+            img = ax[0].imshow(
+                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
+                cmap='RdBu_r',
+                **common_kwargs,
+            )
+            ax[0].set_xlabel('Time (s)')
+            ax[0].set_ylabel('Frequency (Hz)')
+            cbar = plt.colorbar(
+                ax=ax[1], shrink=0.75, orientation='vertical', mappable=img,
+            )
+            if cfg.decoding_metric == 'roc_auc':
+                metric = 'ROC AUC'
+            cbar.set_label(f'Mean decoding score ({metric})')
+
+            # Plot the same data in grayscale …
+            ax[1].imshow(
+                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
+                cmap=cmap_gray,
+                **common_kwargs,
+            )
+            ax[1].set_xlabel('Time (s)')
+
+            # If we have significant clusters, plot them in color on top of
+            # the grayscale image.
+            if len(significant_clusters):
+                # Create a masked array that only shows the T-values for
+                # time-frequency bins that belong to significant clusters.
+                if len(significant_clusters) == 1:
+                    mask = ~significant_clusters[0].astype(bool)
+                else:
+                    mask = ~np.logical_or(
+                        *significant_clusters
+                    )
+                mean_crossval_scores_masked = np.ma.masked_where(
+                    mask, mean_crossval_scores
+                )
+                ax[1].imshow(
+                    mean_crossval_scores_masked.T,  # x: time; y: frequency
+                    cmap='RdBu_r',
+                    **common_kwargs,
+                )
+
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
+            )
+            report.add_figure(
+                fig=fig,
+                title=f'Frequency range: {freq_range_name}',
+                section=f'CSP: {cond_1} ./. {cond_2}',
+                caption=f'Found {len(significant_cluster_idx)} '
+                        f'significant cluster(s) '
+                        f'(p < {cfg.cluster_permutation_p_threshold}; '
+                        f'bins with absolute t-values > '
+                        f'{round(cluster_t_threshold, 3)} '
+                        f'were used to form clusters).',
+                tags=tags,
+            )
+
+
 def get_config(
     subject: Optional[str] = None,
     session: Optional[str] = None
@@ -1626,8 +1885,12 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=dtg_decim,
+        decoding_csp=config.decoding_csp,
+        decoding_csp_freqs=config.decoding_csp_freqs,
+        decoding_csp_times=config.decoding_csp_times,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
+        cluster_forming_t_threshold=config.cluster_forming_t_threshold,
         inverse_method=config.inverse_method,
         report_stc_n_time_points=config.report_stc_n_time_points,
         report_evoked_n_time_points=config.report_evoked_n_time_points,

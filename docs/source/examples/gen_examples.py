@@ -1,8 +1,9 @@
 #!/bin/env python
 
+from collections import defaultdict
+import glob
 import os
 import shutil
-import sys
 from pathlib import Path
 import runpy
 import logging
@@ -34,39 +35,50 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
     env['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
 
-    # Set one of the various tasks for ERP CORE, as we currently raise if none
-    # was provided
-    if example_config_path.name == 'config_ERP_CORE.py':
-        env['MNE_BIDS_STUDY_TASK'] = 'N400'
+    # Here we use a defaultdict, and for keys that might vary across configs
+    # we should use an `funcs[key] = funcs[key] or ...` so that we effectively
+    # OR over all configs.
+    funcs = defaultdict(lambda: False)
+    tasks = ['']
+    if example_config_path.stem == 'config_ERP_CORE':
+        tasks[:] = ['N400', 'ERN', 'LRP', 'MMN', 'N2pc', 'N170', 'P3']
+    for task in tasks:
+        env['MNE_BIDS_STUDY_TASK'] = task
 
-    example_config = runpy.run_path(example_config_path)
-    env['BIDS_ROOT'] = example_config['bids_root']
+        # To get all of these to work
+        example_config = runpy.run_path(example_config_path)
+        env['BIDS_ROOT'] = example_config['bids_root']
 
-    config_module_path = root / 'config.py'
-    config = runpy.run_path(config_module_path)
+        config_module_path = root / 'config.py'
+        config = runpy.run_path(config_module_path)
 
-    ch_types = [c.upper() for c in config['ch_types']]
-    funcs = dict()
-    funcs['MEG processing'] = "MEG" in ch_types
-    funcs['EEG processing'] = "EEG" in ch_types
-    funcs['Maxwell filter'] = config["use_maxwell_filter"]
-    funcs['Frequency filter'] = config["l_freq"] or config["h_freq"]
-    funcs['SSP'] = config["spatial_filter"] == "ssp"
-    funcs['ICA'] = config["spatial_filter"] == "ica"
-    funcs['Evoked contrasts'] = config["contrasts"]
-    any_decoding = config["decode"] and config["contrasts"]
-    funcs['Time-by-time decoding'] = any_decoding
-    funcs['Time-generalization decoding'] = (
-        any_decoding and
-        config["decoding_time_generalization"]
-    )
-    funcs['CSP decoding'] = (
-        any_decoding and
-        config['decoding_csp']
-    )
-    funcs['Time-frequency analysis'] = config["time_frequency_conditions"]
-    funcs['BEM surface creation'] = config["recreate_bem"]
-    funcs['Template MRI'] = config["use_template_mri"]
+        ch_types = [c.upper() for c in config['ch_types']]
+        funcs['MEG processing'] = "MEG" in ch_types
+        funcs['EEG processing'] = "EEG" in ch_types
+        key = 'Maxwell filter'
+        funcs[key] = funcs[key] or config["use_maxwell_filter"]
+        funcs['Frequency filter'] = config["l_freq"] or config["h_freq"]
+        key = 'SSP'
+        funcs[key] = funcs[key] or (config["spatial_filter"] == "ssp")
+        key = 'ICA'
+        funcs[key] = funcs[key] or (config["spatial_filter"] == "ica")
+        funcs['Evoked contrasts'] = config["contrasts"]
+        any_decoding = config["decode"] and config["contrasts"]
+        key = 'Time-by-time decoding'
+        funcs[key] = funcs[key] or any_decoding
+        key = 'Time-generalization decoding'
+        funcs[key] = funcs[key] or (
+            any_decoding and
+            config["decoding_time_generalization"]
+        )
+        key = 'CSP decoding'
+        funcs[key] = funcs[key] or (
+            any_decoding and
+            config['decoding_csp']
+        )
+        funcs['Time-frequency analysis'] = config["time_frequency_conditions"]
+        funcs['BEM surface creation'] = config["recreate_bem"]
+        funcs['Template MRI'] = config["use_template_mri"]
     return funcs
 
 
@@ -106,7 +118,13 @@ for test_dataset_name, test_dataset_options in test_options.items():
 
     dataset_options_key = test_dataset_options.get(
         'dataset', test_dataset_name.split('_')[0])
+    if dataset_name in all_demonstrated:
+        logger.warning(
+            f'Duplicate dataset name {test_dataset_name} -> {dataset_name}, '
+            'skipping')
+        continue
     del test_dataset_options, test_dataset_name
+
 
     if dataset_name in datasets_without_html:
         logger.warning(f'Dataset {dataset_name} has no HTML report.')

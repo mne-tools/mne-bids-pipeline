@@ -156,10 +156,10 @@ def plot_auto_scores(cfg, subject, session):
 
 
 def _plot_full_epochs_decoding_scores(
-    contrasts: List[str],
+    contrast_names: List[str],
     scores: List[np.ndarray],
     metric: str,
-    kind: Literal['single-subject', 'grand-average']
+    kind: Literal['single-subject', 'grand-average'] = 'single-subject',
 ):
     """Plot cross-validation results from full-epochs decoding.
     """
@@ -172,8 +172,8 @@ def _plot_full_epochs_decoding_scores(
 
     data = pd.DataFrame({
         'Contrast': np.array([
-            [f'{c[0]} ./.\n{c[1]}'] * len(scores[0])
-            for c in contrasts
+            [c] * len(scores[0])
+            for c in contrast_names
         ]).flatten(),
         score_label: np.hstack(scores),
     })
@@ -186,6 +186,12 @@ def _plot_full_epochs_decoding_scores(
         )
         # … and now add swarmplots on top to visualize every single data point.
         g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+        caption = (
+            f'Based on N={len(scores[0])} '
+            f'subjects. Each dot represents the mean cross-validation score '
+            f'for a single subject. The dashed line is expected chance '
+            f'performance.'
+        )
     else:
         # First create a grid of swarmplots to visualize every single
         # cross-validation score.
@@ -202,13 +208,19 @@ def _plot_full_epochs_decoding_scores(
             _plot_mean_cv_score, score_label, marker='+', color='red',
             ms=15, label='mean score', zorder=99
         )
+        caption = (
+            'Each black dot represents the single cross-validation score. '
+            f'The red cross is the mean of all {len(scores[0])} '
+            'cross-validation scores. '
+            'The dashed line is expected chance performance.'
+        )
 
     g.map(plt.axhline, y=0.5, ls='--', lw=0.5, color='black', zorder=99)
     g.set_titles('{col_name}')  # use this argument literally!
     g.set_xlabels('')
 
     fig = g.fig
-    return fig
+    return fig, caption
 
 
 def _plot_time_by_time_decoding_scores(
@@ -448,6 +460,10 @@ def _gen_empty_report(
 
     report = mne.Report(title=title, raw_psd=True)
     return report
+
+
+def _contrasts_to_names(contrasts: List[List[str]]) -> List[str]:
+    return [f'{c[0]} ./.\n{c[1]}' for c in contrasts]
 
 
 def run_report_preprocessing(
@@ -868,18 +884,11 @@ def run_report_sensor(
             )
             del fname_decoding, processing, a_vs_b, decoding_data
 
-        fig = _plot_full_epochs_decoding_scores(
-            contrasts=cfg.decoding_contrasts,
+        fig, caption = _plot_full_epochs_decoding_scores(
+            contrast_names=_contrasts_to_names(cfg.decoding_contrasts),
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,
-            kind='single-subject'
         )
-        caption = (
-            'Each black dot represents the single cross-validation score. '
-            'The red cross is the mean of all cross-validation scores. '
-            'The dashed line is expected chance performance.'
-        )
-
         title = 'Full-epochs Decoding'
         report.add_figure(
             fig=fig,
@@ -984,25 +993,23 @@ def run_report_sensor(
     #
 
     if decode and cfg.decoding_csp:
-        msg = 'Adding time-by-time decoding results to the report.'
+        msg = 'Adding CSP decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
-
-        epochs = mne.read_epochs(fname_epo_clean)
-
+        all_csp_results = dict()
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+            section = f'CSP decoding: {cond_1} ./. {cond_2}'
             tags = (
                 'epochs',
                 'contrast',
                 'decoding',
-                f"{contrast[0].lower().replace(' ', '-')}-"
-                f"{contrast[1].lower().replace(' ', '-')}"
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
             )
-
             processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding = bids_path.copy().update(
@@ -1011,7 +1018,95 @@ def run_report_sensor(
                 extension='.mat'
             )
             assert fname_decoding.fpath.is_file, fname_decoding.fpath
-            # TODO: Add an individual subject's plots here
+            csp_freq_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Frequency'
+            )
+            all_csp_results[contrast] = csp_freq_results
+            all_decoding_scores = list()
+            contrast_names = list()
+            for freq_range_name in cfg.decoding_csp_freqs.keys():
+                results = csp_freq_results.loc[
+                    csp_freq_results['freq_range_name'] == freq_range_name, :
+                ]
+                all_decoding_scores.append(results['scores'].ravel())
+                contrast_names.append(
+                    f'{freq_range_name}\n'
+                    f'({results["f_min"]:0.1f}-{results["f_max"]:0.1f} Hz)'
+                )
+            fig, caption = _plot_full_epochs_decoding_scores(
+                contrast_names=contrast_names,
+                scores=all_decoding_scores,
+                metric=cfg.decoding_metric,
+            )
+            title = 'CSP Decoding'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                caption=caption,
+                tags=tags,
+            )
+            # close figure to save memory
+            plt.close(fig)
+            del fig, caption, title
+
+        # Now, plot decoding scores across time-frequency bins.
+        for ci, contrast in enumerate(cfg.decoding_contrasts):
+            cond_1, cond_2 = contrast
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{cond_1.lower().replace(' ', '-')}-"
+                f"{cond_2.lower().replace(' ', '-')}"
+            )
+            results = all_csp_results[contrast]
+            for freq_range_name in cfg.decoding_csp_freqs.keys():
+                mean_crossval_scores = results['mean_crossval_scores']
+                time_bin_edges = results['time_bin_edges'].squeeze()
+                freq_bin_edges = results['freq_bin_edges'].squeeze()
+                # XXX Add support for more metrics
+                assert cfg.decoding_metric == 'roc_auc'
+                vmax = max(
+                    np.abs(mean_crossval_scores.min() - 0.5),
+                    np.abs(mean_crossval_scores.max() - 0.5)
+                ) + 0.5
+                vmin = 0.5 - (vmax - 0.5)
+                fig, ax = plt.subplots(constrained_layout=True)
+                common_kwargs = dict(
+                    interpolation='none',
+                    origin='lower',
+                    vmin=vmin,
+                    vmax=vmax,
+                    extent=[
+                        time_bin_edges[0],
+                        time_bin_edges[-1],
+                        freq_bin_edges[0],
+                        freq_bin_edges[-1]
+                    ],
+                    aspect='auto',
+                )
+                img = ax.imshow(
+                    mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
+                    cmap='RdBu_r',
+                    **common_kwargs,
+                )
+                ax[0].set_xlabel('Time (s)')
+                ax[0].set_ylabel('Frequency (Hz)')
+                cbar = fig.colorbar(
+                    ax=ax[1], shrink=0.75, orientation='vertical',
+                    mappable=img)
+                metric = dict(
+                    roc_auc='ROC AUC'
+                ).get(cfg.decoding_metric, cfg.decoding_metric)
+                cbar.set_label(f'Mean decoding score ({metric})')
+                report.add_figure(
+                    fig=fig,
+                    title=f'CSP frequency range: {freq_range_name}',
+                    section=f'CSP: {cond_1} ./. {cond_2}',
+                    tags=tags,
+                )
 
     ###########################################################################
     #
@@ -1492,19 +1587,12 @@ def add_decoding_grand_average(
         )
         del fname_decoding, processing, a_vs_b, decoding_data
 
-    fig = _plot_full_epochs_decoding_scores(
-        contrasts=cfg.decoding_contrasts,
+    fig, caption = _plot_full_epochs_decoding_scores(
+        contrast_names=_contrasts_to_names(cfg.decoding_contrasts),
         scores=all_decoding_scores,
         metric=cfg.decoding_metric,
         kind='grand-average'
     )
-    caption = (
-        f'Based on N={len(all_decoding_scores[0])} '
-        f'subjects. Each dot represents the mean cross-validation score '
-        f'for a single subject. The dashed line is expected chance '
-        f'performance.'
-    )
-
     title = 'Full-epochs Decoding'
     report.add_figure(
         fig=fig,
@@ -1643,7 +1731,7 @@ def add_csp_grand_average(
         check=False
     )
 
-    # First, plot deocding scores across frequency bins (entire epochs).
+    # First, plot decoding scores across frequency bins (entire epochs).
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
@@ -1707,7 +1795,7 @@ def add_csp_grand_average(
                 tags=tags,
             )
 
-    # Now, plot deocding scores across time-frequency bins.
+    # Now, plot decoding scores across time-frequency bins.
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')

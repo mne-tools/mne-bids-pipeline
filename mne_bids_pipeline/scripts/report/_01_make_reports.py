@@ -8,7 +8,6 @@ import contextlib
 import os
 import os.path as op
 from pathlib import Path
-import itertools
 import logging
 from typing import Tuple, Union, Optional, List, Literal
 from types import SimpleNamespace
@@ -146,7 +145,7 @@ def plot_auto_scores(cfg, subject, session):
 #             label='mean score', zorder=99)
 #     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
 
-#     ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
+#     ax.set_xlabel(f'{contrast[0]} vs. {contrast[1]}')
 #     if metric == 'roc_auc':
 #         metric = 'ROC AUC'
 #     ax.set_ylabel(f'Score ({metric})')
@@ -214,6 +213,7 @@ def _plot_full_epochs_decoding_scores(
             'cross-validation scores. '
             'The dashed line is expected chance performance.'
         )
+        plt.xlim([-0.1, 0.1])
 
     g.map(plt.axhline, y=0.5, ls='--', lw=0.5, color='black', zorder=99)
     g.set_titles('{col_name}')  # use this argument literally!
@@ -463,7 +463,7 @@ def _gen_empty_report(
 
 
 def _contrasts_to_names(contrasts: List[List[str]]) -> List[str]:
-    return [f'{c[0]} ./.\n{c[1]}' for c in contrasts]
+    return [f'{c[0]} vs.\n{c[1]}' for c in contrasts]
 
 
 def run_report_preprocessing(
@@ -625,7 +625,7 @@ def run_report_preprocessing(
         psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (before cleaning)',
+        title='Epochs: before cleaning',
         psd=psd,
         drop_log_ignore=()
     )
@@ -726,7 +726,7 @@ def run_report_preprocessing(
         psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (after cleaning)',
+        title='Epochs: after cleaning',
         psd=psd,
         drop_log_ignore=()
     )
@@ -837,16 +837,12 @@ def run_report_sensor(
     for condition, evoked in zip(conditions, evokeds):
         _restrict_analyze_channels(evoked, cfg)
 
+        tags = ('evoked', _sanitize_cond_tag(condition))
         if condition in cfg.conditions:
             title = f'Condition: {condition}'
-            tags = ('evoked', condition.lower().replace(' ', '-'))
         else:  # It's a contrast of two conditions.
             title = f'Contrast: {condition}'
-            tags = (
-                'evoked',
-                'contrast',
-                condition.lower().replace(' ', '-')
-            )
+            tags = tags + ('contrast',)
 
         report.add_evokeds(
             evokeds=evoked,
@@ -889,18 +885,18 @@ def run_report_sensor(
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,
         )
-        title = 'Full-epochs Decoding'
+        title = f'Full-epochs decoding: {cond_1} vs. {cond_2}'
         report.add_figure(
             fig=fig,
             title=title,
             caption=caption,
+            section='Decoding: full-epochs',
             tags=(
                 'epochs',
                 'contrast',
                 'decoding',
-                *[f'{config.sanitize_cond_name(cond_1)}–'
-                  f'{config.sanitize_cond_name(cond_2)}'
-                  .lower().replace(' ', '-')
+                *[f'{_sanitize_cond_tag(cond_1)}–'
+                  f'{_sanitize_cond_tag(cond_2)}'
                   for cond_1, cond_2 in cfg.decoding_contrasts]
             )
         )
@@ -920,16 +916,16 @@ def run_report_sensor(
 
         epochs = mne.read_epochs(fname_epo_clean)
 
+        section = 'Decoding: time-by-time'
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
             tags = (
                 'epochs',
                 'contrast',
                 'decoding',
-                f"{contrast[0].lower().replace(' ', '-')}-"
-                f"{contrast[1].lower().replace(' ', '-')}"
+                f"{_sanitize_cond_tag(contrast[0])}–"
+                f"{_sanitize_cond_tag(contrast[1])}"
             )
 
             processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
@@ -951,12 +947,13 @@ def run_report_sensor(
             )
             caption = (
                 f'Time-by-time decoding: '
-                f'{len(epochs[cond_1])} × {cond_1} ./. '
+                f'{len(epochs[cond_1])} × {cond_1} vs. '
                 f'{len(epochs[cond_2])} × {cond_2}'
             )
+            title = f'Decoding over time: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Decoding performance over time',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -974,9 +971,10 @@ def run_report_sensor(
                     'each classifier is trained on each time point, and '
                     'tested on all other time points.'
                 )
+                title = f'Time generalization: {cond_1} vs. {cond_2}'
                 report.add_figure(
                     fig=fig,
-                    title='Time generalization',
+                    title=title,
                     caption=caption,
                     section=section,
                     tags=tags,
@@ -997,52 +995,63 @@ def run_report_sensor(
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
-        all_csp_results = dict()
+        section = 'Decoding: CSP'
+        all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            section = f'CSP decoding: {cond_1} ./. {cond_2}'
             tags = (
                 'epochs',
                 'contrast',
                 'decoding',
                 'csp',
-                f"{cond_1.lower().replace(' ', '-')}-"
-                f"{cond_2.lower().replace(' ', '-')}"
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
             )
             processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
             processing = processing.replace('_', '-').replace('-', '')
             fname_decoding = bids_path.copy().update(
                 processing=processing,
                 suffix='decoding',
-                extension='.mat'
+                extension='.xlsx'
             )
-            assert fname_decoding.fpath.is_file, fname_decoding.fpath
+            assert fname_decoding.fpath.is_file(), fname_decoding.fpath
             csp_freq_results = pd.read_excel(
                 fname_decoding,
                 sheet_name='CSP Frequency'
             )
-            all_csp_results[contrast] = csp_freq_results
+            csp_freq_results['scores'] = csp_freq_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            csp_tf_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Time-Frequency'
+            )
+            csp_tf_results['scores'] = csp_tf_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            all_csp_tf_results[contrast] = csp_tf_results
+            del csp_tf_results
             all_decoding_scores = list()
             contrast_names = list()
             for freq_range_name in cfg.decoding_csp_freqs.keys():
                 results = csp_freq_results.loc[
                     csp_freq_results['freq_range_name'] == freq_range_name, :
                 ]
-                all_decoding_scores.append(results['scores'].ravel())
+                all_decoding_scores.append(results['scores'].item())
+                f_min = float(results['f_min'])
+                f_max = float(results['f_max'])
                 contrast_names.append(
                     f'{freq_range_name}\n'
-                    f'({results["f_min"]:0.1f}-{results["f_max"]:0.1f} Hz)'
+                    f'({f_min:0.1f}-{f_max:0.1f} Hz)'
                 )
             fig, caption = _plot_full_epochs_decoding_scores(
                 contrast_names=contrast_names,
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,
             )
-            title = 'CSP Decoding'
+            title = f'CSP decoding: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
                 title=title,
+                section=section,
                 caption=caption,
                 tags=tags,
             )
@@ -1058,55 +1067,48 @@ def run_report_sensor(
                 'contrast',
                 'decoding',
                 'csp',
-                f"{cond_1.lower().replace(' ', '-')}-"
-                f"{cond_2.lower().replace(' ', '-')}"
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
             )
-            results = all_csp_results[contrast]
+            results = all_csp_tf_results[contrast]
+            mean_crossval_scores = list()
+            tmin, tmax, fmin, fmax = list(), list(), list(), list()
             for freq_range_name in cfg.decoding_csp_freqs.keys():
-                mean_crossval_scores = results['mean_crossval_scores']
-                time_bin_edges = results['time_bin_edges'].squeeze()
-                freq_bin_edges = results['freq_bin_edges'].squeeze()
-                # XXX Add support for more metrics
-                assert cfg.decoding_metric == 'roc_auc'
-                vmax = max(
-                    np.abs(mean_crossval_scores.min() - 0.5),
-                    np.abs(mean_crossval_scores.max() - 0.5)
-                ) + 0.5
-                vmin = 0.5 - (vmax - 0.5)
-                fig, ax = plt.subplots(constrained_layout=True)
-                common_kwargs = dict(
-                    interpolation='none',
-                    origin='lower',
-                    vmin=vmin,
-                    vmax=vmax,
-                    extent=[
-                        time_bin_edges[0],
-                        time_bin_edges[-1],
-                        freq_bin_edges[0],
-                        freq_bin_edges[-1]
-                    ],
-                    aspect='auto',
-                )
-                img = ax.imshow(
-                    mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
-                    cmap='RdBu_r',
-                    **common_kwargs,
-                )
-                ax[0].set_xlabel('Time (s)')
-                ax[0].set_ylabel('Frequency (Hz)')
-                cbar = fig.colorbar(
-                    ax=ax[1], shrink=0.75, orientation='vertical',
-                    mappable=img)
-                metric = dict(
-                    roc_auc='ROC AUC'
-                ).get(cfg.decoding_metric, cfg.decoding_metric)
-                cbar.set_label(f'Mean decoding score ({metric})')
-                report.add_figure(
-                    fig=fig,
-                    title=f'CSP frequency range: {freq_range_name}',
-                    section=f'CSP: {cond_1} ./. {cond_2}',
-                    tags=tags,
-                )
+                mean_crossval_scores.extend(
+                    results['mean_crossval_score'].ravel())
+                tmin.extend(results['t_min'].ravel())
+                tmax.extend(results['t_max'].ravel())
+                fmin.extend(results['f_min'].ravel())
+                fmax.extend(results['f_max'].ravel())
+            mean_crossval_scores = np.array(mean_crossval_scores, float)
+            fig, ax = plt.subplots(constrained_layout=True)
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            img = _imshow_tf(
+                mean_crossval_scores, ax,
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax)
+            ax.set_xlim([np.min(tmin), np.max(tmax)])
+            ax.set_ylim([np.min(fmin), np.max(fmax)])
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Frequency (Hz)')
+            cbar = fig.colorbar(
+                ax=ax, shrink=0.75, orientation='vertical', mappable=img)
+            metric = dict(
+                roc_auc='ROC AUC'
+            ).get(cfg.decoding_metric, cfg.decoding_metric)
+            cbar.set_label(f'Mean decoding score ({metric})')
+            title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                section=section,
+                tags=tags,
+            )
 
     ###########################################################################
     #
@@ -1142,7 +1144,7 @@ def run_report_sensor(
             fig=fig_power,
             title=f'TFR Power: {condition}',
             caption=f'TFR Power: {condition}',
-            tags=('time-frequency', condition.lower().replace(' ', '-'))
+            tags=('time-frequency', _sanitize_cond_tag(condition))
         )
         plt.close(fig_power)
         del power
@@ -1155,7 +1157,7 @@ def run_report_sensor(
             fig=fig_itc,
             title=f'TFR ITC: {condition}',
             caption=f'TFR Inter-Trial Coherence: {condition}',
-            tags=('time-frequency', condition.lower().replace(' ', '-'))
+            tags=('time-frequency', _sanitize_cond_tag(condition))
         )
         plt.close(fig_power)
         del itc
@@ -1270,7 +1272,7 @@ def run_report_source(
                                      subject=subject, session=session))
 
         if condition in cfg.conditions:
-            title = f'Source: {config.sanitize_cond_name(condition)}'
+            title = f'Source: {condition}'
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue
@@ -1286,7 +1288,7 @@ def run_report_source(
 
         tags = (
             'source-estimate',
-            condition.lower().replace(' ', '-')
+            _sanitize_cond_tag(condition)
         )
         if Path(f'{fname_stc.fpath}-lh.stc').exists():
             report.add_stc(
@@ -1463,7 +1465,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             title = f'Average: {condition}'
             tags = (
                 'evoked',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
+                _sanitize_cond_tag(condition)
             )
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
@@ -1498,22 +1500,17 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     #
 
     for condition, evoked in zip(conditions, evokeds):
+        tags = (
+            'source-estimate',
+            _sanitize_cond_tag(condition),
+        )
         if condition in cfg.conditions:
             title = f'Average: {condition}'
-            cond_str = config.sanitize_cond_name(condition)
-            tags = (
-                'source-estimate',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
-            )
         else:  # It's a contrast of two conditions.
             title = f'Average contrast: {condition}'
-            cond_str = config.sanitize_cond_name(condition)
-            tags = (
-                'source-estimate',
-                'contrast',
-                config.sanitize_cond_name(condition).lower().replace(' ', '')
-            )
+            tags = tags + ('contrast',)
 
+        cond_str = config.sanitize_cond_name(condition)
         fname_stc_avg = evoked_fname.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
             extension=None)
@@ -1593,18 +1590,17 @@ def add_decoding_grand_average(
         metric=cfg.decoding_metric,
         kind='grand-average'
     )
-    title = 'Full-epochs Decoding'
+    title = f'Full-epochs decoding: {cond_1} vs. {cond_2}'
     report.add_figure(
         fig=fig,
         title=title,
+        section='Decoding: full-epochs',
         caption=caption,
         tags=(
             'epochs',
             'contrast',
             'decoding',
-            *[f'{config.sanitize_cond_name(cond_1)}–'
-              f'{config.sanitize_cond_name(cond_2)}'
-              .lower().replace(' ', '-')
+            *[f'{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}'
               for cond_1, cond_2 in cfg.decoding_contrasts]
         )
     )
@@ -1616,14 +1612,12 @@ def add_decoding_grand_average(
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-        section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+        section = 'Decoding: time-by-time'
         tags = (
             'epochs',
             'contrast',
             'decoding',
-            f'{config.sanitize_cond_name(cond_1)}–'
-            f'{config.sanitize_cond_name(cond_2)}'
-            .lower().replace(' ', '-')
+            f'{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}'
         )
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
@@ -1655,9 +1649,10 @@ def add_decoding_grand_average(
                 f'({decoding_data["cluster_n_permutations"].squeeze()} '
                 f'permutations) and are highlighted in yellow.'
             )
+            title = f'Decoding over time: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Decoding performance over time',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -1679,7 +1674,7 @@ def add_decoding_grand_average(
             )
             report.add_figure(
                 fig=fig,
-                title='t-values based on decoding scores over time',
+                title=f't-values across time: {cond_1} vs. {cond_2}',
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -1698,14 +1693,38 @@ def add_decoding_grand_average(
                 f'on all other time points. The results were averaged across '
                 f'N={decoding_data["N"].item()} subjects.'
             )
+            title = f'Time generalization: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Time generalization',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
             )
             plt.close(fig)
+
+
+def _sanitize_cond_tag(cond):
+    return cond.lower().replace(' ', '-')
+
+
+def _imshow_tf(vals, ax, *, tmin, tmax, fmin, fmax, vmin, vmax, cmap='RdBu_r',
+               mask=None, cmap_masked=None):
+    """Plot CSP TF decoding scores."""
+    # XXX Add support for more metrics
+    assert len(vals) == len(tmin) == len(tmax) == len(fmin) == len(fmax)
+    mask = np.zeros(vals.shape, dtype=bool) if mask is None else mask
+    assert len(vals) == len(mask)
+    assert vals.ndim == mask.ndim == 1
+    img = None
+    for v, t1, t2, f1, f2, m in zip(vals, tmin, tmax, fmin, fmax, mask):
+        use_cmap = cmap_masked if m else cmap
+        img = ax.imshow(
+            np.array([[v]], float),
+            cmap=use_cmap, extent=[t1, t2, f1, f2], aspect='auto',
+            interpolation='none', origin='lower', vmin=vmin, vmax=vmax,
+        )
+    return img
 
 
 def add_csp_grand_average(
@@ -1732,6 +1751,7 @@ def add_csp_grand_average(
     )
 
     # First, plot decoding scores across frequency bins (entire epochs).
+    section = 'Decoding: CSP'
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
@@ -1746,54 +1766,70 @@ def add_csp_grand_average(
             sheet_name='CSP Frequency'
         )
 
-        for freq_range_name in cfg.decoding_csp_freqs.keys():
+        freq_bin_starts = list()
+        freq_bin_widths = list()
+        decoding_scores = list()
+        error_bars = list()
+        freq_names = list(cfg.decoding_csp_freqs)
+        for freq_range_name in cfg.decoding_csp_freqs:
             results = csp_freq_results.loc[
                 csp_freq_results['freq_range_name'] == freq_range_name, :
             ]
-            freq_bin_starts = results['f_min']
-            freq_bin_widths = results['f_max'] - results['f_min']
-            decoding_scores = results['mean']
-            cis_lower = results['mean_ci_lower']
-            cis_upper = results['mean_ci_upper']
-            error_bars_lower = decoding_scores - cis_lower
-            error_bars_upper = cis_upper - decoding_scores
-            error_bars = np.stack([error_bars_lower, error_bars_upper])
-            assert len(error_bars) == 2  # lower, upper
+            freq_bin_starts.append(results['f_min'].item())
+            freq_bin_widths.append(
+                (results['f_max'] - results['f_min']).item())
+            decoding_scores.append(results['mean'].item())
+            cis_lower = results['mean_ci_lower'].item()
+            cis_upper = results['mean_ci_upper'].item()
+            error_bars_lower = decoding_scores[-1] - cis_lower
+            error_bars_upper = cis_upper - decoding_scores[-1]
+            error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
+            assert len(error_bars[-1]) == 2  # lower, upper
             del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+        error_bars = np.array(error_bars, float).T
 
-            if cfg.decoding_metric == 'roc_auc':
-                metric = 'ROC AUC'
+        if cfg.decoding_metric == 'roc_auc':
+            metric = 'ROC AUC'
 
-            fig, ax = plt.subplots()
-            ax.bar(
-                x=freq_bin_starts,
-                width=freq_bin_widths,
-                height=decoding_scores,
-                align='edge',
-                yerr=error_bars,
-                edgecolor='black',
+        fig, ax = plt.subplots(constrained_layout=True)
+        ax.bar(
+            x=freq_bin_starts,
+            width=freq_bin_widths,
+            height=decoding_scores,
+            align='edge',
+            yerr=error_bars,
+            edgecolor='black',
+        )
+        ax.set_ylim([0, 1.02])
+        for name, start, width in zip(
+                freq_names, freq_bin_starts, freq_bin_widths):
+            ax.text(
+                x=start + width / 2,
+                y=0.02,
+                s=name,
+                ha='center',
+                va='bottom',
             )
-            ax.set_ylim([0, 1.02])
-            ax.axhline(0.5, color='black', linestyle='--', label='chance')
-            ax.legend()
-            ax.set_xlabel('Frequency (Hz)')
-            ax.set_ylabel(f'Mean decoding score ({metric})')
-            tags = (
-                'epochs',
-                'contrast',
-                'decoding',
-                'csp',
-                f"{cond_1.lower().replace(' ', '-')}-"
-                f"{cond_2.lower().replace(' ', '-')}"
-            )
-            report.add_figure(
-                fig=fig,
-                title=f'Frequency range: {freq_range_name}',
-                section=f'CSP: {cond_1} ./. {cond_2}',
-                caption='Mean decoding scores. Error bars represent '
-                        'bootstrapped 95% confidence intervals.',
-                tags=tags,
-            )
+        ax.axhline(0.5, color='black', linestyle='--', label='chance')
+        ax.legend()
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel(f'Mean decoding score ({metric})')
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            'csp',
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+        )
+        title = f'CSP decoding: {cond_1} vs. {cond_2}'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            section=section,
+            caption='Mean decoding scores. Error bars represent '
+                    'bootstrapped 95% confidence intervals.',
+            tags=tags,
+        )
 
     # Now, plot decoding scores across time-frequency bins.
     for contrast in cfg.decoding_contrasts:
@@ -1807,20 +1843,34 @@ def add_csp_grand_average(
         )
         csp_cluster_results = loadmat(fname_csp_cluster_results)
 
+        fig, ax = plt.subplots(
+            nrows=1, ncols=2, sharex=True, sharey=True,
+            constrained_layout=True)
+        n_clu = 0
+        cbar = None
+        lims = [np.inf, -np.inf, np.inf, -np.inf]
         for freq_range_name in cfg.decoding_csp_freqs.keys():
             results = csp_cluster_results[freq_range_name][0][0]
-            mean_crossval_scores = results['mean_crossval_scores']
+            mean_crossval_scores = results['mean_crossval_scores'].ravel()
             # t_vals = results['t_vals']
             clusters = results['clusters']
             cluster_p_vals = results['cluster_p_vals'].squeeze()
-            time_bin_edges = results['time_bin_edges'].squeeze()
-            freq_bin_edges = results['freq_bin_edges'].squeeze()
-            cluster_t_threshold = results['cluster_t_threshold'].item()
+            tmin = results['time_bin_edges'].ravel()
+            tmin, tmax = tmin[:-1], tmin[1:]
+            lims[0] = min(lims[0], tmin.min())
+            lims[1] = max(lims[1], tmax.max())
+            fmin, fmax = results['freq_bin_edges'].ravel()
+            lims[2] = min(lims[2], fmin.min())
+            lims[3] = max(lims[3], fmax.max())
+            fmin = np.repeat(fmin, len(mean_crossval_scores))
+            fmax = np.repeat(fmax, len(mean_crossval_scores))
+            cluster_t_threshold = results['cluster_t_threshold'].ravel().item()
 
             significant_cluster_idx = np.where(
                 cluster_p_vals < cfg.cluster_permutation_p_threshold
             )[0]
             significant_clusters = clusters[significant_cluster_idx]
+            n_clu += len(significant_cluster_idx)
 
             # XXX Add support for more metrics
             assert cfg.decoding_metric == 'roc_auc'
@@ -1848,44 +1898,25 @@ def add_csp_grand_average(
                 black_to_white_to_black, name='DivergingGray'
             )
             cmap_gray = diverging_gray_cmap
-            fig, ax = plt.subplots(nrows=1, ncols=2)
-            common_kwargs = dict(
-                interpolation='none',
-                origin='lower',
-                vmin=vmin,
-                vmax=vmax,
-                extent=[
-                    time_bin_edges[0],
-                    time_bin_edges[-1],
-                    freq_bin_edges[0],
-                    freq_bin_edges[-1]
-                ],
-                aspect='auto',
-            )
-            img = ax[0].imshow(
-                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
-                cmap='RdBu_r',
-                **common_kwargs,
-            )
-            ax[0].set_xlabel('Time (s)')
-            ax[0].set_ylabel('Frequency (Hz)')
-            cbar = plt.colorbar(
-                ax=ax[1], shrink=0.75, orientation='vertical', mappable=img,
-            )
-            if cfg.decoding_metric == 'roc_auc':
-                metric = 'ROC AUC'
-            cbar.set_label(f'Mean decoding score ({metric})')
+            img = _imshow_tf(
+                mean_crossval_scores, ax[0],
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax)
+            if cbar is None:
+                ax[0].set_xlabel('Time (s)')
+                ax[0].set_ylabel('Frequency (Hz)')
+                ax[1].set_xlabel('Time (s)')
+                cbar = fig.colorbar(
+                    ax=ax[1], shrink=0.75, orientation='vertical',
+                    mappable=img)
+                if cfg.decoding_metric == 'roc_auc':
+                    metric = 'ROC AUC'
+                cbar.set_label(f'Mean decoding score ({metric})')
+            ax[0].text(0.9 * tmin[0] + 0.1 * tmax[0],
+                       0.5 * fmin[0] + 0.5 * fmax[0],
+                       freq_range_name,
+                       ha='left', va='center', rotation=90)
 
-            # Plot the same data in grayscale …
-            ax[1].imshow(
-                mean_crossval_scores.T,  # x-axis: time; y-axis: frequency
-                cmap=cmap_gray,
-                **common_kwargs,
-            )
-            ax[1].set_xlabel('Time (s)')
-
-            # If we have significant clusters, plot them in color on top of
-            # the grayscale image.
             if len(significant_clusters):
                 # Create a masked array that only shows the T-values for
                 # time-frequency bins that belong to significant clusters.
@@ -1895,35 +1926,38 @@ def add_csp_grand_average(
                     mask = ~np.logical_or(
                         *significant_clusters
                     )
-                mean_crossval_scores_masked = np.ma.masked_where(
-                    mask, mean_crossval_scores
-                )
-                ax[1].imshow(
-                    mean_crossval_scores_masked.T,  # x: time; y: frequency
-                    cmap='RdBu_r',
-                    **common_kwargs,
-                )
+                mask = mask.ravel()
+            else:
+                mask = np.ones(mean_crossval_scores.shape, dtype=bool)
+            _imshow_tf(
+                mean_crossval_scores, ax[1],
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax, mask=mask, cmap_masked=cmap_gray)
 
-            tags = (
-                'epochs',
-                'contrast',
-                'decoding',
-                'csp',
-                f"{cond_1.lower().replace(' ', '-')}-"
-                f"{cond_2.lower().replace(' ', '-')}"
-            )
-            report.add_figure(
-                fig=fig,
-                title=f'Frequency range: {freq_range_name}',
-                section=f'CSP: {cond_1} ./. {cond_2}',
-                caption=f'Found {len(significant_cluster_idx)} '
-                        f'significant cluster(s) '
-                        f'(p < {cfg.cluster_permutation_p_threshold}; '
-                        f'bins with absolute t-values > '
-                        f'{round(cluster_t_threshold, 3)} '
-                        f'were used to form clusters).',
-                tags=tags,
-            )
+        ax[0].set_xlim(lims[:2])
+        ax[0].set_ylim(lims[2:])
+        ax[0].set_title('Scores')
+        ax[1].set_title('Masked')
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            'csp',
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+        )
+        title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            section=section,
+            caption=f'Found {n_clu} '
+                    f'significant cluster(s) '
+                    f'(p < {cfg.cluster_permutation_p_threshold}; '
+                    f'bins with absolute t-values > '
+                    f'{round(cluster_t_threshold, 3)} '
+                    f'were used to form clusters).',
+            tags=tags,
+        )
 
 
 def get_config(
@@ -2009,35 +2043,39 @@ def main():
     """Make reports."""
     with config.get_parallel_backend(), _agg_backend():
         parallel, run_func = parallel_func(run_report)
+        sessions = config.get_sessions()
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
+                cfg=get_config(
+                    subject=subject,
+                ),
+                subject=subject,
                 session=session
             )
-            for subject, session in
-            itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
-            )
+            for subject in config.get_subjects()
+            for session in sessions
         )
-
-        config.save_logs(logs)
-
-        sessions = config.get_sessions()
-        if not sessions:
-            sessions = [None]
 
         if config.task_is_rest:
             msg = '    … skipping "average" report for "rest" task.'
             logger.info(**gen_log_kwargs(message=msg))
-            return
+            avg_subjects = []
+        else:
+            avg_subjects = ['average']
 
-        for session in sessions:
-            run_report_average(
-                cfg=get_config(subject='average'),
+        parallel, run_func = parallel_func(run_report_average)
+        logs.extend(parallel(
+            run_func(
+                cfg=get_config(
+                    subject='average',
+                ),
                 subject='average',
-                session=session
+                session=session,
             )
+            for session in sessions
+            for subject in avg_subjects
+        ))
+        config.save_logs(logs)
 
 
 if __name__ == '__main__':

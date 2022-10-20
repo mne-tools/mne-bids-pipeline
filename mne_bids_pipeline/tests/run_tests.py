@@ -195,7 +195,7 @@ def run_tests(test_suite, *, download, debug, cache):
             '--interactive=0'
         ]
         command = [x for x in command if x != '']  # Eliminate "empty" items
-        run_subprocess(command=command)
+        run_subprocess(command=command, stdout=sys.stdout, stderr=sys.stderr)
 
 
 if __name__ == '__main__':

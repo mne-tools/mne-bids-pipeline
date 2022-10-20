@@ -223,9 +223,11 @@ for test_dataset_name, test_dataset_options in test_options.items():
     config_descr += '\n\n'
     config_options = config[descr_end_idx+1:].replace('"""', '').strip()
     config_str = (f'\n## Configuration\n\n'
+                  f'<details><summary>Click to expand</summary>\n\n'
                   f'```python\n'
                   f'{config_options}\n'
-                  f'```\n')
+                  f'```\n'
+                  f'</details>\n\n')
     demonstrated_funcs = _gen_demonstrated_funcs(config_path)
     all_demonstrated[dataset_name] = demonstrated_funcs
     del config, config_options

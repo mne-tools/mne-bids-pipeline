@@ -216,6 +216,7 @@ def one_subject_decoding(
                 'f_max': [f_max],
                 'freq_range_name': [freq_range_name],
                 'mean_crossval_score': [np.nan],
+                'scores': [np.ones(5)],
                 'metric': [cfg.decoding_metric],
             }
             freq_decoding_table_rows.append(row)
@@ -271,6 +272,7 @@ def one_subject_decoding(
             n_jobs=1,
         )
         freq_decoding_table.loc[idx, 'mean_crossval_score'] = cv_scores.mean()
+        freq_decoding_table.at[idx, 'scores'] = cv_scores
 
     # Loop over times x frequencies
     #
@@ -301,6 +303,7 @@ def one_subject_decoding(
                     'f_max': [f_max],
                     'freq_range_name': [freq_range_name],
                     'mean_crossval_score': [np.nan],
+                    'scores': [np.ones(5, dtype=float)],
                     'metric': [cfg.decoding_metric]
                 }
                 tf_decoding_table_rows.append(row)
@@ -339,6 +342,7 @@ def one_subject_decoding(
         )
         score = cv_scores.mean()
         tf_decoding_table.loc[idx, 'mean_crossval_score'] = score
+        tf_decoding_table.at[idx, 'scores'] = cv_scores
         msg = _fmt_contrast(
             cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
         msg += f': {cfg.decoding_metric}={score:0.3f}'

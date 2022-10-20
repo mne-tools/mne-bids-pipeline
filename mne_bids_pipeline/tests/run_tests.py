@@ -123,6 +123,18 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
 }
 
 
+class _enter_wrap:
+    # Works around https://github.com/mne-tools/mne-python/pull/11266
+
+    def __init__(self, val):
+        self.val = val
+
+    def __getattr__(self, attr):
+        if attr in ('__enter__', '__exit__'):
+            return lambda *args, **kwargs: None
+        return getattr(self.val, attr)
+
+
 def run_tests(test_suite, *, download, debug, cache):
     """Run a suite of tests.
 
@@ -195,7 +207,10 @@ def run_tests(test_suite, *, download, debug, cache):
             '--interactive=0'
         ]
         command = [x for x in command if x != '']  # Eliminate "empty" items
-        run_subprocess(command=command, stdout=sys.stdout, stderr=sys.stderr)
+        run_subprocess(
+            command=command,
+            stdout=_enter_wrap(sys.stdout),
+            stderr=_enter_wrap(sys.stderr))
 
 
 if __name__ == '__main__':

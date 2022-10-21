@@ -19,7 +19,9 @@ dependencies = [
     "typing_extensions; python_version < '3.8'",
     "importlib_metadata; python_version < '3.8'",
     "psutil",  # for joblib
+    "packaging",
     "joblib >= 0.14",
+    "threadpoolctl",
     "dask[distributed]",
     "jupyter-server-proxy",  # to have dask and jupyter working together
     "scikit-learn",

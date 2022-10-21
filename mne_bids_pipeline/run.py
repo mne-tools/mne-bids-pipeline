@@ -331,6 +331,10 @@ def process(
 
 
 def main():
+    # Fire does not seem to detect a "--help" in all locations, so let's do it
+    # manually.
+    if '--help' in sys.argv or '-h' in sys.argv:
+        sys.argv = sys.argv[:1] + ['--help']
     fire.Fire(process)
 
 

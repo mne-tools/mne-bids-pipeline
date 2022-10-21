@@ -11,14 +11,8 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-import sys
 import itertools
-import logging
 from typing import List, Optional, Iterable, Tuple
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 from types import SimpleNamespace
 
 import pandas as pd
@@ -29,14 +23,16 @@ from mne.report import Report
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
-import config
-from config import (make_epochs, gen_log_kwargs, failsafe_run, _script_path,
-                    annotations_to_events, _update_for_splits)
-from config import parallel_func
-
+from ..._config_utils import (
+    get_sessions, get_runs, get_subjects, get_task, get_datatype,
+    get_deriv_root, get_eeg_reference,
+)
+from ..._import_data import make_epochs, annotations_to_events
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._run import failsafe_run, _script_path, _update_for_splits, save_logs
+from ..._typing import Literal
 
 
 def filter_for_ica(
@@ -44,7 +40,7 @@ def filter_for_ica(
     cfg,
     raw: mne.io.BaseRaw,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None
 ) -> None:
     """Apply a high-pass filter if needed."""
@@ -65,7 +61,7 @@ def fit_ica(
     cfg,
     epochs: mne.BaseEpochs,
     subject: str,
-    session: str,
+    session: Optional[str],
 ) -> mne.preprocessing.ICA:
     algorithm = cfg.ica_algorithm
     fit_params = None
@@ -97,7 +93,7 @@ def make_ecg_epochs(
     cfg,
     raw_path: BIDSPath,
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None,
     n_runs: int
 ) -> Optional[mne.BaseEpochs]:
@@ -146,7 +142,7 @@ def make_eog_epochs(
     raw: mne.io.BaseRaw,
     eog_channels: Optional[Iterable[str]],
     subject: str,
-    session: str,
+    session: Optional[str],
     run: Optional[str] = None
 ) -> Optional[mne.Epochs]:
     """Create EOG epochs. No rejection thresholds will be applied.
@@ -356,6 +352,8 @@ def run_ica(*, cfg, subject, session, in_files):
             event_repeated=cfg.event_repeated,
             decim=cfg.decim,
             task_is_rest=cfg.task_is_rest,
+            rest_epochs_duration=cfg.rest_epochs_duration,
+            rest_epochs_overlap=cfg.rest_epochs_overlap,
         )
 
         epochs.load_data()  # Remove reference to raw
@@ -515,19 +513,21 @@ def run_ica(*, cfg, subject, session, in_files):
 
 
 def get_config(
+    *,
+    config,
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        task=config.get_task(),
+        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        datatype=config.get_datatype(),
-        runs=config.get_runs(subject=subject),
+        datatype=get_datatype(config),
+        runs=get_runs(config=config, subject=subject),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         interactive=config.interactive,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
@@ -550,35 +550,40 @@ def get_config(
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
-        eeg_reference=config.get_eeg_reference(),
-        eog_channels=config.eog_channels
+        eeg_reference=get_eeg_reference(config),
+        eog_channels=config.eog_channels,
+        rest_epochs_duration=config.rest_epochs_duration,
+        rest_epochs_overlap=config.rest_epochs_overlap,
     )
     return cfg
 
 
 def main():
     """Run ICA."""
+    import config
     if config.spatial_filter != 'ica':
         msg = 'Skipping …'
         with _script_path(__file__):
             logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_ica)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_ica, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject=subject), subject=subject,
-                session=session
+                cfg=get_config(
+                    config=config,
+                    subject=subject),
+                subject=subject,
+                session=session,
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

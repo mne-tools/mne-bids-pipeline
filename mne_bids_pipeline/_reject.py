@@ -10,7 +10,7 @@ from ._logging import logger, gen_log_kwargs
 def _get_reject(
     *,
     subject: str,
-    session: str,
+    session: Optional[str],
     reject: Union[Dict[str, float], Literal['autoreject_global']],
     ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']],
     param: str,

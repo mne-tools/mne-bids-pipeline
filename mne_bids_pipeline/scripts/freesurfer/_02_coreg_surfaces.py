@@ -11,9 +11,12 @@ from types import SimpleNamespace
 
 import mne.bem
 
-import config
-from config import (parallel_func, failsafe_run, _get_scalp_in_files,
-                    gen_log_kwargs)
+from ..._config_utils import (
+    get_fs_subjects_dir, get_fs_subject, get_subjects, _get_scalp_in_files,
+)
+from ..._logging import gen_log_kwargs
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
@@ -41,8 +44,7 @@ def get_output_fnames_coreg_surfaces(*, cfg, subject):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_coreg_surfaces,
-              get_output_fnames=get_output_fnames_coreg_surfaces,
-              force_run=config.recreate_scalp_surface)
+              get_output_fnames=get_output_fnames_coreg_surfaces)
 def make_coreg_surfaces(
     cfg: SimpleNamespace,
     subject: str,
@@ -62,29 +64,30 @@ def make_coreg_surfaces(
     return out_files
 
 
-def get_config(*, subject) -> SimpleNamespace:
+def get_config(*, config, subject) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subject=subject,
-        fs_subject=config.get_fs_subject(subject),
-        subjects_dir=config.get_fs_subjects_dir(),
+        fs_subject=get_fs_subject(config, subject),
+        subjects_dir=get_fs_subjects_dir(config),
     )
     return cfg
 
 
-@failsafe_run(script_path=__file__)
 def main():
+    import config
     # Ensure we're also processing fsaverage if present
-    subjects = config.get_subjects()
-    if (Path(config.get_fs_subjects_dir()) / 'fsaverage').exists():
+    subjects = get_subjects(config)
+    if (Path(get_fs_subjects_dir(config)) / 'fsaverage').exists():
         subjects.append('fsaverage')
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(make_coreg_surfaces)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(make_coreg_surfaces, config=config)
 
         parallel(
             run_func(
-                cfg=get_config(subject=subject),
-                subject=subject
+                cfg=get_config(config=config, subject=subject),
+                subject=subject,
+                force_run=config.recreate_scalp_surface,
             ) for subject in subjects
         )
 

@@ -4,18 +4,16 @@ Generate the BEM surfaces from a T1 or FLASH MRI scan.
 """
 
 import glob
-import logging
 from pathlib import Path
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
 
-import config
-from config import gen_log_kwargs, failsafe_run
-from config import parallel_func, _get_bem_conductivity
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_fs_subject, get_subjects, _get_bem_conductivity, get_fs_subjects_dir)
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import failsafe_run, save_logs
 
 
 def _get_bem_params(cfg):
@@ -56,8 +54,7 @@ def get_output_fnames_make_bem_surfaces(*, cfg, subject):
 
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_make_bem_surfaces,
-              get_output_fnames=get_output_fnames_make_bem_surfaces,
-              force_run=config.recreate_bem)
+              get_output_fnames=get_output_fnames_make_bem_surfaces)
 def make_bem_surfaces(*, cfg, subject, in_files):
     mri_images, _, _ = _get_bem_params(cfg)
     in_files.clear()  # assume we use everything we add
@@ -83,11 +80,13 @@ def make_bem_surfaces(*, cfg, subject, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        fs_subject=config.get_fs_subject(subject=subject),
-        fs_subjects_dir=config.get_fs_subjects_dir(),
+        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subjects_dir=get_fs_subjects_dir(config=config),
         bem_mri_images=config.bem_mri_images,
         interactive=config.interactive,
         freesurfer_verbose=config.freesurfer_verbose,
@@ -99,6 +98,7 @@ def get_config(
 
 def main():
     """Run BEM surface extraction."""
+    import config
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
@@ -109,16 +109,22 @@ def main():
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM
-            mne.datasets.fetch_fsaverage(config.get_fs_subjects_dir())
+            mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(make_bem_surfaces)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(make_bem_surfaces, config=config)
         logs = parallel(
-            run_func(cfg=get_config(subject=subject), subject=subject)
-            for subject in config.get_subjects()
+            run_func(
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                subject=subject,
+                force_run=config.recreate_bem)
+            for subject in get_subjects(config)
         )
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

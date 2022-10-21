@@ -4,7 +4,6 @@ Source estimates are morphed to the ``fsaverage`` brain.
 """
 
 import itertools
-import logging
 from types import SimpleNamespace
 
 import numpy as np
@@ -12,11 +11,12 @@ import numpy as np
 import mne
 from mne_bids import BIDSPath
 
-import config
-from config import gen_log_kwargs, failsafe_run, sanitize_cond_name
-from config import parallel_func
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_fs_subjects_dir, get_subjects, sanitize_cond_name, get_fs_subject,
+    get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root)
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import failsafe_run, save_logs
 
 
 def morph_stc(cfg, subject, fs_subject, session=None):
@@ -98,19 +98,33 @@ def run_average(cfg, session, mean_morphed_stcs):
         stc.save(fname_stc_avg, overwrite=True)
 
 
-def get_config() -> SimpleNamespace:
+def get_config(
+    *,
+    config,
+) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
+        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        datatype=config.get_datatype(),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         proc=config.proc,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
-        fs_subjects_dir=config.get_fs_subjects_dir(),
-        deriv_root=config.get_deriv_root(),
+        fs_subjects_dir=get_fs_subjects_dir(config),
+        deriv_root=get_deriv_root(config),
+        subjects_dir=get_fs_subjects_dir(config),
+        parallel_backend=config.parallel_backend,
+        interactive=config.interactive,
+        N_JOBS=config.N_JOBS,
+        bids_root=get_bids_root(config),
+        data_type=config.data_type,
+        ch_types=config.ch_types,
+        subjects=config.subjects,
+        exclude_subjects=config.exclude_subjects,
+        sessions=get_sessions(config),
+        use_template_mri=config.use_template_mri,
     )
     return cfg
 
@@ -120,26 +134,26 @@ def get_config() -> SimpleNamespace:
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
 
-    mne.datasets.fetch_fsaverage(subjects_dir=config.get_fs_subjects_dir())
+    mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(cfg))
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(morph_stc)
+    with get_parallel_backend(cfg):
+        parallel, run_func = parallel_func(morph_stc, config=cfg)
         all_morphed_stcs = parallel(
             run_func(
                 cfg=cfg, subject=subject,
-                fs_subject=config.get_fs_subject(subject),
+                fs_subject=get_fs_subject(config=cfg, subject=subject),
                 session=session
             )
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(cfg),
+                get_sessions(cfg)
             )
         )
         mean_morphed_stcs = np.array(all_morphed_stcs).mean(axis=0)
 
         # XXX to fix
-        sessions = config.get_sessions()
+        sessions = get_sessions(cfg)
         if sessions:
             session = sessions[0]
         else:
@@ -153,13 +167,14 @@ def run_group_average_source(*, cfg, subject='average'):
 
 
 def main():
+    import config
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    log = run_group_average_source(cfg=get_config())
-    config.save_logs([log])
+    log = run_group_average_source(cfg=get_config(config=config))
+    save_logs(config=config, logs=[log])
 
 
 if __name__ == '__main__':

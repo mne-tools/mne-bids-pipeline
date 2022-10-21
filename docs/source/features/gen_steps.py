@@ -16,7 +16,6 @@ Template. All scripts exist in the `scripts`/ directory.
 
 root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 # We need to provide some valid config
-os.environ['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
 config_path = str(root / 'tests' / 'configs' / 'config_ds000248.py')
 script_modules = _get_script_modules(config=config_path)
 

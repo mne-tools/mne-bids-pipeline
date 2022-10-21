@@ -9,20 +9,19 @@ corrected by the ICA or the SSP processing.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import mne
 from mne_bids import BIDSPath
 
-import config
-from config import gen_log_kwargs, failsafe_run, _update_for_splits
-from config import parallel_func
-
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype,
+    get_deriv_root,
+)
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._reject import _get_reject
-
-logger = logging.getLogger('mne-bids-pipeline')
 
 
 def get_input_fnames_drop_ptp(**kwargs):
@@ -126,12 +125,12 @@ def drop_ptp(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
@@ -140,7 +139,7 @@ def get_config(
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,
         ica_reject=config.ica_reject,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         reject=config.reject,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
@@ -150,19 +149,22 @@ def get_config(
 
 def main():
     """Run epochs."""
-    parallel, run_func = parallel_func(drop_ptp)
+    import config
+    parallel, run_func = parallel_func(drop_ptp, config=config)
 
-    with config.get_parallel_backend():
+    with get_parallel_backend(config):
         logs = parallel(
-            run_func(cfg=get_config(), subject=subject, session=session)
+            run_func(
+                cfg=get_config(config=config),
+                subject=subject,
+                session=session)
             for subject, session in
             itertools.product(
-                config.get_subjects(),
-                config.get_sessions()
+                get_subjects(config),
+                get_sessions(config)
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

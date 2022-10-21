@@ -14,28 +14,26 @@ To save space, the raw data can be resampled.
 If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
-import sys
 import itertools
 
 import numpy as np
 from typing import Optional, Union
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 from types import SimpleNamespace
 
 import mne
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
-import config
-from config import (gen_log_kwargs, failsafe_run,
-                    import_experimental_data, import_er_data, import_rest_data,
-                    _update_for_splits)
-from config import parallel_func
-
+from ..._config_utils import (
+    get_sessions, get_runs, get_subjects, get_task, get_bids_root,
+    get_deriv_root, get_datatype, get_mf_reference_run,
+)
+from ..._import_data import (
+    import_experimental_data, import_er_data, import_rest_data)
 from ..._io import _read_json, _empty_room_match_path
-from ..._logging import logger
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run, save_logs, _update_for_splits
+from ..._typing import Literal
 
 
 def get_input_fnames_frequency_filter(**kwargs):
@@ -114,11 +112,11 @@ def filter(
     raw: mne.io.BaseRaw,
     subject: str,
     session: Optional[str],
-    run: Optional[str],
+    run: str,
     l_freq: Optional[float],
     h_freq: Optional[float],
-    l_trans_bandwidth: Optional[Union[float, Literal['auto']]],
-    h_trans_bandwidth: Optional[Union[float, Literal['auto']]],
+    l_trans_bandwidth: Union[float, Literal['auto']],
+    h_trans_bandwidth: Union[float, Literal['auto']],
     data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     """Filter data channels (MEG and EEG)."""
@@ -151,8 +149,8 @@ def resample(
     raw: mne.io.BaseRaw,
     subject: str,
     session: Optional[str],
-    run: Optional[str],
-    sfreq: Optional[float],
+    run: str,
+    sfreq: float,
     data_type: Literal['experimental', 'empty-room', 'resting-state']
 ) -> None:
     if not sfreq:
@@ -170,8 +168,8 @@ def filter_data(
     *,
     cfg,
     subject: str,
-    session: Optional[str] = None,
-    run: Optional[str] = None,
+    session: Optional[str],
+    run: str,
     in_files: dict,
 ) -> None:
     """Filter data from a single subject."""
@@ -271,24 +269,25 @@ def filter_data(
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         reader_extra_params=config.reader_extra_params,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
-        runs=config.get_runs(subject=subject),
+        runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=config.get_bids_root(),
-        deriv_root=config.get_deriv_root(),
+        bids_root=get_bids_root(config),
+        deriv_root=get_deriv_root(config),
         l_freq=config.l_freq,
         h_freq=config.h_freq,
         l_trans_bandwidth=config.l_trans_bandwidth,
@@ -304,12 +303,16 @@ def get_config(
         stim_artifact_tmax=config.stim_artifact_tmax,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
-        mf_reference_run=config.get_mf_reference_run(),
+        mf_reference_run=get_mf_reference_run(config),
         drop_channels=config.drop_channels,
         find_breaks=config.find_breaks,
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        data_type=config.data_type,
+        ch_types=config.ch_types,
+        eog_channels=config.eog_channels,
+        on_rename_missing_events=config.on_rename_missing_events,
         _raw_split_size=config._raw_split_size,
     )
     return cfg
@@ -317,31 +320,31 @@ def get_config(
 
 def main():
     """Run filter."""
-
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(filter_data)
+    import config
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(filter_data, config=config)
 
         # Enabling different runs for different subjects
         sub_run_ses = []
-        for subject in config.get_subjects():
+        for subject in get_subjects(config):
             sub_run_ses += list(
                 itertools.product(
                     [subject],
-                    config.get_runs(subject=subject),
-                    config.get_sessions()
+                    get_runs(config=config, subject=subject),
+                    get_sessions(config),
                 )
             )
 
         logs = parallel(
             run_func(
-                cfg=get_config(subject),
+                cfg=get_config(config=config, subject=subject),
                 subject=subject,
                 run=run,
                 session=session
             ) for subject, run, session in sub_run_ses
         )
 
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

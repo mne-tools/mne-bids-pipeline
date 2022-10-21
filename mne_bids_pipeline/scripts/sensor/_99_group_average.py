@@ -6,8 +6,6 @@ The M/EEG-channel data are averaged for group averages.
 import os
 import os.path as op
 from collections import defaultdict
-import itertools
-import logging
 from typing import Optional, TypedDict, List, Tuple
 from types import SimpleNamespace
 
@@ -18,10 +16,13 @@ from scipy.io import loadmat, savemat
 import mne
 from mne_bids import BIDSPath
 
-import config
-from config import gen_log_kwargs, failsafe_run, parallel_func
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
+    get_eeg_reference, get_decoding_contrasts, get_bids_root,
+)
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import failsafe_run, save_logs
 
 
 def average_evokeds(cfg, session):
@@ -238,7 +239,7 @@ def average_time_by_time_decoding(
                 scores=cluster_permutation_scores,
                 times=cluster_permutation_times,
                 cluster_forming_t_threshold=cluster_forming_t_threshold,
-                n_permutations=cfg.n_permutations,
+                n_permutations=cfg.cluster_n_permutations,
                 random_seed=cfg.random_state
             )
 
@@ -496,7 +497,7 @@ def average_csp_decoding(
         t_vals, all_clusters, cluster_p_vals, H0 = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
             X=X-0.5,  # One-sample test against zero.
             threshold=cluster_forming_t_threshold,
-            n_permutations=cfg.n_permutations,
+            n_permutations=cfg.cluster_n_permutations,
             adjacency=None,  # each time & freq bin connected to its neighbors
             out_type='mask',
             tail=1,  # one-sided: significantly above chance level
@@ -585,38 +586,45 @@ def _average_csp_time_freq(
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
-        subjects=config.get_subjects(),
-        task=config.get_task(),
+        subjects=get_subjects(config),
+        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        datatype=config.get_datatype(),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         proc=config.proc,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         conditions=config.conditions,
-        contrasts=config.get_decoding_contrasts(),
+        contrasts=get_decoding_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=dtg_decim,
+        decoding_csp=config.decoding_csp,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,
-        n_permutations=config.cluster_n_permutations,
+        cluster_n_permutations=config.cluster_n_permutations,
         analyze_channels=config.analyze_channels,
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference(),
-        interactive=config.interactive
+        eeg_reference=get_eeg_reference(config),
+        interactive=config.interactive,
+        sessions=get_sessions(config),
+        bids_root=get_bids_root(config),
+        data_type=config.data_type,
+        parallel_backend=config.parallel_backend,
+        N_JOBS=config.N_JOBS,
+        exclude_subjects=config.exclude_subjects,
     )
     return cfg
 
@@ -629,39 +637,42 @@ def run_group_average_sensor(*, cfg, subject='average'):
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    sessions = config.get_sessions()
+    sessions = get_sessions(cfg)
     if not sessions:
         sessions = [None]
 
-    with config.get_parallel_backend():
+    with get_parallel_backend(config=cfg):
         for session in sessions:
             evokeds = average_evokeds(cfg, session)
-            if config.interactive:
+            if cfg.interactive:
                 for evoked in evokeds:
                     evoked.plot()
 
-            if config.decode:
+            if cfg.decode:
                 average_full_epochs_decoding(cfg, session)
                 average_time_by_time_decoding(cfg, session)
-        if config.decode and config.decoding_csp:
-            parallel, run_func = parallel_func(average_csp_decoding)
+        if cfg.decode and cfg.decoding_csp:
+            parallel, run_func = parallel_func(
+                average_csp_decoding, config=cfg)
             parallel(
                 run_func(
-                    cfg=get_config(),
+                    cfg=get_config(config=cfg),
                     session=session,
                     condition_1=contrast[0],
                     condition_2=contrast[1]
                 )
-                for session, contrast in itertools.product(
-                    config.get_sessions(),
-                    config.get_decoding_contrasts(),
-                )
+                for session in get_sessions(config=cfg)
+                for contrast in get_decoding_contrasts(config=cfg)
             )
 
 
 def main():
-    log = run_group_average_sensor(cfg=get_config(), subject='average')
-    config.save_logs([log])
+    import config
+    log = run_group_average_sensor(
+        cfg=get_config(config=config),
+        subject='average',
+    )
+    save_logs(config=config, logs=[log])
 
 
 if __name__ == '__main__':

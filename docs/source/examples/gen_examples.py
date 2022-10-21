@@ -33,7 +33,6 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     """Generate dict of demonstrated functionality based on config."""
     env = os.environ
     env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
-    env['_MNE_BIDS_PIPELINE_STRICT_RESOLVE'] = 'false'
 
     # Here we use a defaultdict, and for keys that might vary across configs
     # we should use an `funcs[key] = funcs[key] or ...` so that we effectively

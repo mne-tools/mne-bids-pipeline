@@ -2,8 +2,6 @@
 Decoding based on common spatial patterns (CSP).
 """
 
-import itertools
-import logging
 import os.path as op
 from types import SimpleNamespace
 from typing import Dict, Optional, Tuple
@@ -18,11 +16,14 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 
-import config
-from config import (LogReg, _restrict_analyze_channels, failsafe_run,
-                    gen_log_kwargs, parallel_func, _script_path)
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
+    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
+)
+from ..._decoding import LogReg
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run, _script_path, save_logs
 
 
 def _prepare_labels(
@@ -98,8 +99,9 @@ def prepare_epochs_and_y(
         epochs_filt = epochs_filt[contrast]
 
     # Filtering is costly, so do it last, after the selection of the channels
-    # and epochs.
-    epochs_filt = epochs_filt.filter(fmin, fmax, n_jobs=1)
+    # and epochs. We know that often the filter will be longer than the signal,
+    # so we ignore the warning here.
+    epochs_filt = epochs_filt.filter(fmin, fmax, n_jobs=1, verbose='error')
     y = _prepare_labels(epochs=epochs_filt, contrast=contrast)
 
     return epochs_filt, y
@@ -327,6 +329,8 @@ def one_subject_decoding(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
         # Crop data to the time window of interest
+        if tmax is not None:  # avoid warnings about outside the interval
+            tmax = min(tmax, epochs_filt.times[-1])
         epochs_filt.crop(tmin, tmax)
         X = epochs_filt.get_data()
         X_pca = pca.transform(X)
@@ -373,21 +377,23 @@ def one_subject_decoding(
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
+    subject: str,
+    session: Optional[str]
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters
-        datatype=config.get_datatype(),
-        deriv_root=config.get_deriv_root(),
-        task=config.get_task(),
+        datatype=get_datatype(config),
+        deriv_root=get_deriv_root(config),
+        task=get_task(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         use_maxwell_filter=config.use_maxwell_filter,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference(),
+        eeg_reference=get_eeg_reference(config),
         # Processing parameters
         time_frequency_subtract_evoked=config.time_frequency_subtract_evoked,
         decoding_metric=config.decoding_metric,
@@ -403,7 +409,7 @@ def get_config(
 
 def main():
     """Run all subjects decoding in parallel."""
-
+    import config
     if not config.contrasts or not config.decoding_csp:
         if not config.contrasts:
             msg = 'No contrasts specified. '
@@ -415,23 +421,24 @@ def main():
             logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(one_subject_decoding)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(one_subject_decoding, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(subject, session),
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                    session=session
+                ),
                 subject=subject,
                 session=session,
                 contrast=contrast,
             )
-            for subject, session, contrast in itertools.product(
-                config.get_subjects(),
-                config.get_sessions(),
-                config.get_decoding_contrasts(),
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
+            for contrast in get_decoding_contrasts(config)
         )
-
-        config.save_logs(logs)
+        save_logs(logs=logs, config=config)
 
 
 if __name__ == '__main__':

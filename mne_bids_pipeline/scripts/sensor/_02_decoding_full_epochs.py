@@ -9,8 +9,6 @@ which condition.
 # Let us first import the libraries
 
 import os.path as op
-import logging
-from typing import Optional
 import itertools
 from types import SimpleNamespace
 
@@ -26,14 +24,14 @@ import mne
 from mne.decoding import Scaler, Vectorizer
 from mne_bids import BIDSPath
 
-import config
-from config import (
-    gen_log_kwargs, failsafe_run, LogReg, _restrict_analyze_channels,
-    parallel_func
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
+    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts
 )
-
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._logging import gen_log_kwargs, logger
+from ..._run import failsafe_run, save_logs
+from ..._decoding import LogReg
+from ..._parallel import parallel_func, get_parallel_backend
 
 
 def get_input_fnames_epochs_decoding(**kwargs):
@@ -149,31 +147,32 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         conditions=config.conditions,
-        contrasts=config.get_decoding_contrasts(),
+        contrasts=get_decoding_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference()
+        eeg_reference=get_eeg_reference(config)
     )
     return cfg
 
 
 def main():
     """Run time-by-time decoding."""
+    import config
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -184,22 +183,23 @@ def main():
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_epochs_decoding)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_epochs_decoding, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(), subject=subject,
-                condition1=cond_1, condition2=cond_2,
-                session=session
+                cfg=get_config(config=config),
+                subject=subject,
+                condition1=cond_1,
+                condition2=cond_2,
+                session=session,
             )
             for subject, session, (cond_1, cond_2) in itertools.product(
-                config.get_subjects(),
-                config.get_sessions(),
-                config.get_decoding_contrasts()
+                get_subjects(config),
+                get_sessions(config),
+                get_decoding_contrasts(config)
             )
         )
-
-        config.save_logs(logs)
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

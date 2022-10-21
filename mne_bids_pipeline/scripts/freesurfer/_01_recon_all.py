@@ -11,17 +11,16 @@ import logging
 from typing import Union
 
 from mne.utils import run_subprocess
-from config import parallel_func
 
-import config
+from ..._parallel import parallel_func, get_parallel_backend
+from ..._config_utils import get_fs_subjects_dir, get_bids_root, get_subjects
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
-def run_recon(root_dir, subject, fs_bids_app) -> None:
-    subjects_dir = Path(config.get_fs_subjects_dir())
+def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
@@ -76,17 +75,16 @@ def main() -> None:
     python run.py --steps=freesurfer --config=your_pipeline_config.py
 
     """  # noqa
-
+    import config
     logger.info('Running FreeSurfer')
-
-    subjects = config.get_subjects()
-    root_dir = config.get_bids_root()
-    subjects_dir = Path(config.get_fs_subjects_dir())
+    subjects = get_subjects(config)
+    root_dir = get_bids_root(config)
+    subjects_dir = Path(get_fs_subjects_dir(config))
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
-    with config.get_parallel_backend():
-        parallel, run_func = parallel_func(run_recon)
-        parallel(run_func(root_dir, subject, fs_bids_app)
+    with get_parallel_backend(config):
+        parallel, run_func = parallel_func(run_recon, config=config)
+        parallel(run_func(root_dir, subject, fs_bids_app, subjects_dir)
                  for subject in subjects)
 
         # Handle fsaverage

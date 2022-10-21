@@ -5,8 +5,6 @@ The average power and inter-trial coherence are computed and saved to disk.
 """
 
 import itertools
-import logging
-from typing import Optional
 from types import SimpleNamespace
 
 import numpy as np
@@ -15,12 +13,13 @@ import mne
 
 from mne_bids import BIDSPath
 
-import config
-from config import gen_log_kwargs, failsafe_run, sanitize_cond_name
-from config import parallel_func, _script_path, _restrict_analyze_channels
-
-
-logger = logging.getLogger('mne-bids-pipeline')
+from ..._config_utils import (
+    get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
+    _restrict_analyze_channels, get_eeg_reference, sanitize_cond_name,
+)
+from ..._logging import gen_log_kwargs, logger
+from ..._run import failsafe_run, save_logs, _script_path
+from ..._parallel import get_parallel_backend, parallel_func
 
 
 def get_input_fnames_time_frequency(**kwargs):
@@ -99,21 +98,21 @@ def run_time_frequency(*, cfg, subject, session, in_files):
 
 
 def get_config(
-    subject: Optional[str] = None,
-    session: Optional[str] = None
+    *,
+    config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=config.get_task(),
-        datatype=config.get_datatype(),
+        task=get_task(config),
+        datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=config.get_deriv_root(),
+        deriv_root=get_deriv_root(config),
         time_frequency_conditions=config.time_frequency_conditions,
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        eeg_reference=config.get_eeg_reference(),
+        eeg_reference=get_eeg_reference(config),
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         time_frequency_cycles=config.time_frequency_cycles,
@@ -124,21 +123,26 @@ def get_config(
 
 def main():
     """Run Time-frequency decomposition."""
+    import config
     if not config.time_frequency_conditions:
         msg = 'Skipping …'
         with _script_path(__file__):
             logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func = parallel_func(run_time_frequency)
-    logs = parallel(
-        run_func(cfg=get_config(), subject=subject, session=session)
-        for subject, session in
-        itertools.product(config.get_subjects(),
-                          config.get_sessions())
-    )
-
-    config.save_logs(logs)
+    parallel, run_func = parallel_func(run_time_frequency, config=config)
+    with get_parallel_backend(config):
+        logs = parallel(
+            run_func(
+                cfg=get_config(config=config),
+                subject=subject,
+                session=session,
+            )
+            for subject, session in
+            itertools.product(get_subjects(config),
+                              get_sessions(config))
+        )
+    save_logs(config=config, logs=logs)
 
 
 if __name__ == '__main__':

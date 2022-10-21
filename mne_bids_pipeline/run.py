@@ -327,7 +327,7 @@ def process(
             elapsed = f'{minutes}m {elapsed}'
         if hours:
             elapsed = f'{hours}h {elapsed}'
-        logger.info(f'Done running 👆 ⟮{elapsed}⟯', extra=extra)
+        logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
 
 
 def main():

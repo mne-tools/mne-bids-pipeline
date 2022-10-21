@@ -15,6 +15,7 @@ import itertools
 from typing import List, Optional, Iterable, Tuple
 from types import SimpleNamespace
 
+from packaging.version import Version
 import pandas as pd
 import numpy as np
 import threadpoolctl
@@ -268,9 +269,11 @@ def run_ica(*, cfg, subject, session, in_files):
         processing='ica+components', suffix='report', extension='.html')
     del bids_basename
 
-    # Prevent oversubscription of CPUs in dask on M1 (probably a dask bug)
+    # Prevent oversubscription of CPUs in dask on M1 on older dask
     if cfg.parallel_backend == 'dask':
-        threadpoolctl.threadpool_limits(limits=1, user_api='openmp')
+        import dask
+        if Version(dask.__version__) < Version('2022.10.0'):
+            threadpoolctl.threadpool_limits(limits=1, user_api='openmp')
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.

@@ -72,6 +72,8 @@ def get_input_fnames_maxwell_filter(**kwargs):
             raw_rest = bids_path_in.copy().update(task="rest")
             if raw_rest.fpath.exists():
                 in_files["raw_rest"] = raw_rest
+            elif raw_rest.copy().update(run=None).fpath.exists():
+                in_files["raw_rest"] = raw_rest.update(run=None)
         if cfg.process_empty_room and cfg.datatype == 'meg':
             raw_noise = _read_json(
                 _empty_room_match_path(bids_path_in, cfg))['fname']
@@ -311,6 +313,7 @@ def get_config(
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
         ch_types=config.ch_types,
         data_type=config.data_type,
+        on_rename_missing_events=config.on_rename_missing_events,
         _raw_split_size=config._raw_split_size,
     )
     return cfg

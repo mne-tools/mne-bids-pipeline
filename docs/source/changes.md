@@ -392,3 +392,5 @@ authors:
   ({{ gh(606) }} by {{ authors.larsoner }})
 - Fix bug where only the first run was used to compute SSP
   ({{ gh(607) }} by {{ authors.larsoner }})
+- Fix bug with CPU oversubscription when using the Dask backend on macOS M1
+  ({{ gh(638) }} by {{ authors.larsoner }})

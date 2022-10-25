@@ -330,6 +330,9 @@ def _update_for_splits(
     bids_path = files_dict[key]
     if bids_path.fpath.exists():
         return bids_path  # no modifications needed
+    if bids_path.copy().update(run=None).fpath.exists():
+        # Remove the run information
+        return bids_path.copy().update(run=None)
     bids_path = bids_path.copy().update(split='01')
     missing = not bids_path.fpath.exists()
     if not allow_missing:

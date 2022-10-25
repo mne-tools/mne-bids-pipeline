@@ -511,12 +511,13 @@ def import_experimental_data(
     _create_bipolar_channels(cfg=cfg, raw=raw, subject=subject,
                              session=session, run=run)
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
-    _rename_events_func(
-        cfg=cfg, raw=raw, subject=subject, session=session, run=run
-    )
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
                       run=run)
-    _fix_stim_artifact_func(cfg=cfg, raw=raw)
+    if cfg.task != "rest":
+        _rename_events_func(
+            cfg=cfg, raw=raw, subject=subject, session=session, run=run
+        )
+        _fix_stim_artifact_func(cfg=cfg, raw=raw)
     _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
                        task=get_task(cfg), run=run)
 

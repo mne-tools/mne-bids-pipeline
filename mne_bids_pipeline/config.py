@@ -1461,7 +1461,7 @@ time_frequency_baseline: Optional[Tuple[float, float]] = None
 Baseline period to use for the time-frequency analysis. If `None`, no baseline.
 ???+ example "Example"
     ```python
-    time_frequency_baseline = (None, 0)  # baseline from the first sample to t = 0
+    time_frequency_baseline = (None, 0)
     ```
 """
 

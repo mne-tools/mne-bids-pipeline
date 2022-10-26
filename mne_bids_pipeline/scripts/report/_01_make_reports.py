@@ -1004,6 +1004,11 @@ def run_report_sensor(
         with mne.use_log_level('error'):  # filename convention
             power = mne.time_frequency.read_tfrs(
                 fname_tfr_pow_cond, condition=0)
+            power.apply_baseline(
+                baseline=cfg.time_frequency_baseline,
+                mode=cfg.time_frequency_baseline_mode)
+            if cfg.time_frequency_crop:
+                power.crop(**cfg.time_frequency_crop)
         kwargs = dict(
             show=False, fig_facecolor='w', font_color='k', border='k'
         )
@@ -1623,6 +1628,9 @@ def get_config(
         ica_reject=config.ica_reject,
         ch_types=config.ch_types,
         time_frequency_conditions=config.time_frequency_conditions,
+        time_frequency_baseline=config.time_frequency_baseline,
+        time_frequency_baseline_mode=config.time_frequency_baseline_mode,
+        time_frequency_crop=config.time_frequency_crop,
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,

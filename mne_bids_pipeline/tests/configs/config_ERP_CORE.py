@@ -95,7 +95,7 @@ if task == 'N400':
 
     eeg_reference = ['P9', 'P10']
     ica_n_components = 30 - len(eeg_reference)
-    epochs_tim = -0.2
+    epochs_tmin = -0.2
     epochs_tmax = 0.8
     epochs_metadata_tmin = 0
     epochs_metadata_tmax = 1.5

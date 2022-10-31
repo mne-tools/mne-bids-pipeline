@@ -1552,6 +1552,36 @@ that midpoint to `time_frequency_freq_max`.
     ```
 """
 
+time_frequency_baseline: Optional[Tuple[float, float]] = None
+"""
+Baseline period to use for the time-frequency analysis. If `None`, no baseline.
+???+ example "Example"
+    ```python
+    time_frequency_baseline = (None, 0)
+    ```
+"""
+
+time_frequency_baseline_mode: str = 'mean'
+"""
+Baseline mode to use for the time-frequency analysis. Can be chosen among:
+"mean" or "ratio" or "logratio" or "percent" or "zscore" or "zlogratio".
+???+ example "Example"
+    ```python
+    time_frequency_baseline_mode = 'mean'
+    ```
+"""
+
+time_frequency_crop: Optional[dict] = None
+"""
+Period and frequency range to crop the time-frequency analysis to.
+If `None`, no cropping.
+
+???+ example "Example"
+    ```python
+    time_frequency_crop = dict(tmin=-0.3, tmax=0.5, fmin=5, fmax=20)
+    ```
+"""
+
 ###############################################################################
 # SOURCE ESTIMATION PARAMETERS
 # ----------------------------

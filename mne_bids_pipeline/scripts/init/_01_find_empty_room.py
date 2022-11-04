@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from typing import Dict, Optional
 
+from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
@@ -37,19 +38,17 @@ def get_input_fnames_find_empty_room(
     in_files: Dict[str, BIDSPath] = dict()
     in_files[f'raw_run-{run}'] = bids_path_in
     _update_for_splits(in_files, f'raw_run-{run}', single=True)
+    if hasattr(bids_path_in, 'find_matching_sidecar'):
+        in_files['sidecar'] = \
+            bids_path_in.copy().update(datatype=None).find_matching_sidecar(
+                extension='.json')
     try:
-        fname = in_files[f'raw_run-{run}'].find_empty_room(
-            use_sidecar_only=True)
-    except (FileNotFoundError, AssertionError, ValueError):
-        return in_files
-    if fname is not None:
-        # TODO: We should include the sidecar here...
-        pass
-    else:
-        # TODO: Add all empty-room files that will be traversed by MNE-BIDS.
-        # For this, we need to refactor MNE-BIDS to get a list of possible
-        # empty-room matches.
-        pass
+        fname = bids_path_in.find_empty_room(use_sidecar_only=True)
+    except Exception:
+        fname = None
+    if fname is None and hasattr(bids_path_in, 'get_empty_room_candidates'):
+        for ci, path in enumerate(bids_path_in.get_empty_room_candidates()):
+            in_files[f'empty_room_candidate_{ci}'] = path
     return in_files
 
 
@@ -59,11 +58,12 @@ def find_empty_room(
     *,
     subject: str,
     session: Optional[str],
-    run:  Optional[str],
+    run: Optional[str],
     in_files: Dict[str, BIDSPath],
     cfg: SimpleNamespace
 ) -> Dict[str, BIDSPath]:
     raw_path = in_files.pop(f'raw_run-{run}')
+    in_files.pop('sidecar', None)
     try:
         fname = raw_path.find_empty_room(use_sidecar_only=True)
     except (FileNotFoundError, AssertionError, ValueError):
@@ -71,8 +71,10 @@ def find_empty_room(
     if fname is None:
         # sidecar is very fast and checking all can be slow (seconds), so only
         # log when actually looking through files
-        msg = (
-            f"Nearest-date matching {len(in_files)} empty-room files")
+        ending = 'empty-room files'
+        if len(in_files):  # MNE-BIDS < 0.12 missing get_empty_room_candidates
+            ending = f'{len(in_files)} empty-room file{_pl(in_files)}'
+        msg = f"Nearest-date matching {ending}"
         logger.info(**gen_log_kwargs(
             message=msg, subject=subject, session=session, run=run))
         try:

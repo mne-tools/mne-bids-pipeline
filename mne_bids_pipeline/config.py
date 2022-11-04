@@ -1514,7 +1514,7 @@ This parameter must be a dictionary with:
   specifying the edges of the respective frequency bin(s), e.g., `[8, 12]`.
 
 Defaults to two frequency bins, one from
-[`time_frequency_freq_min`][config.time_frequency_freq_min] to the mindpoint
+[`time_frequency_freq_min`][config.time_frequency_freq_min] to the midpoint
 between this value and
 [`time_frequency_freq_max`][config.time_frequency_freq_max]; and the other from
 that midpoint to `time_frequency_freq_max`.

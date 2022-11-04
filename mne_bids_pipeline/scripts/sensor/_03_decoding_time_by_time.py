@@ -28,25 +28,16 @@ from mne_bids import BIDSPath
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
     get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
 )
+from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs
 from ..._parallel import get_parallel_backend, get_n_jobs
-
-
-class LogReg(LogisticRegression):
-    """Hack to avoid a warning with n_jobs != 1 when using dask
-    """
-    def fit(self, *args, **kwargs):
-        from joblib import parallel_backend
-        with parallel_backend("loky"):
-            return super().fit(*args, **kwargs)
 
 
 def get_input_fnames_time_decoding(**kwargs):

@@ -30,6 +30,8 @@ conditions = ['Famous', 'Unfamiliar', 'Scrambled']
 contrasts = [('Famous', 'Scrambled'),
              ('Unfamiliar', 'Scrambled'),
              ('Famous', 'Unfamiliar')]
+
 decode = True
 decoding_time_generalization = True
+
 run_source_estimation = False

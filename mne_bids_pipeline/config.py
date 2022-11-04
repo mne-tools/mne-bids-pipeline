@@ -18,6 +18,7 @@ import matplotlib
 
 import mne
 from mne_bids import BIDSPath
+import numpy as np
 
 from mne_bids_pipeline._typing import PathLike, ArbitraryContrast, Literal
 from mne_bids_pipeline._logging import gen_log_kwargs
@@ -1422,7 +1423,7 @@ The conditions to compute time-frequency decomposition on.
     ```
 """
 
-time_frequency_freq_min: Optional[float] = 10
+time_frequency_freq_min: Optional[float] = 8
 """
 Minimum frequency for the time frequency analysis, in Hz.
 ???+ example "Example"
@@ -1454,6 +1455,95 @@ time_frequency_subtract_evoked: bool = False
 Whether to subtract the evoked signal (averaged across all epochs) from the
 epochs before passing them to time-frequency analysis. Set this to `True` to
 highlight induced activity.
+
+Note: Note
+     This also applies to CSP analysis.
+"""
+
+###############################################################################
+# TIME-FREQUENCY CSP
+# ------------------
+
+decoding_csp: bool = False
+"""
+Whether to run decoding via Common Spatial Patterns (CSP) analysis on the
+data. CSP takes as input data covariances that are estimated on different
+time and frequency ranges. This allows to obtain decoding scores defined over
+time and frequency.
+"""
+
+decoding_csp_times: Optional[ArrayLike] = np.linspace(
+    max(0, epochs_tmin),
+    epochs_tmax,
+    num=6
+)
+"""
+The edges of the time bins to use for CSP decoding.
+Must contain at least two elements. By default, 5 equally-spaced bins are
+created across the non-negative time range of the epochs.
+All specified time points must be contained in the epochs interval.
+If `None`, do not perform **time-frequency** analysis, and only run CSP on
+**frequency** data.
+
+???+ example "Example"
+    Create 3 equidistant time bins (0–0.2, 0.2–0.4, 0.4–0.6 sec):
+    ```python
+    decoding_csp_times = np.linspace(start=0, stop=0.6, num=4)
+    ```
+    Create 2 time bins of different durations (0–0.4, 0.4–0.6 sec):
+    ```python
+    decoding_csp_times = [0, 0.4, 0.6]
+    ```
+"""
+
+decoding_csp_freqs: Dict[str, ArrayLike] = {
+    'custom': [
+        time_frequency_freq_min,
+        (time_frequency_freq_max + time_frequency_freq_min) / 2,  # noqa: E501
+        time_frequency_freq_max
+    ]
+}
+"""
+The edges of the frequency bins to use for CSP decoding.
+
+This parameter must be a dictionary with:
+- keys specifying the unique identifier or "name" to use for the frequency
+  range to be treated jointly during statistical testing (such as "alpha" or
+  "beta"), and
+- values must be list-like objects containing at least two scalar values,
+  specifying the edges of the respective frequency bin(s), e.g., `[8, 12]`.
+
+Defaults to two frequency bins, one from
+[`time_frequency_freq_min`][config.time_frequency_freq_min] to the midpoint
+between this value and
+[`time_frequency_freq_max`][config.time_frequency_freq_max]; and the other from
+that midpoint to `time_frequency_freq_max`.
+???+ example "Example"
+    Create two frequency bins, one for 4–8 Hz, and another for 8–14 Hz, which
+    will be clustered together during statistical testing (in the
+    time-frequency plane):
+    ```python
+    decoding_csp_freqs = {
+        'custom_range': [4, 8, 14]
+    }
+    ```
+    Create the same two frequency bins, but treat them separately during
+    statistical testing (i.e., temporal clustering only):
+    ```python
+    decoding_csp_freqs = {
+        'theta': [4, 8],
+        'alpha': [8, 14]
+    }
+    ```
+    Create 5 equidistant frequency bins from 4 to 14 Hz:
+    ```python
+    decoding_csp_freqs = {
+        'custom_range': np.linspace(
+            start=4,
+            stop=14,
+            num=5+1  # We need one more to account for the endpoint!
+        )
+    }
 """
 
 time_frequency_baseline: Optional[Tuple[float, float]] = None
@@ -2240,6 +2330,22 @@ if (spatial_filter == 'ica' and
                 f'stringent as that in '
                 f'ica_reject["{ch_type}"] ({ica_reject[ch_type]})'
             )
+
+# check decoding parameters
+if decoding_n_splits < 2:
+    raise ValueError('decoding_n_splits should be at least 2.')
+
+# check cluster permutation parameters
+if not 0 < cluster_permutation_p_threshold < 1:
+    raise ValueError(
+        "cluster_permutation_p_threshold should be in the (0, 1) interval."
+    )
+
+if cluster_n_permutations < 10 / cluster_permutation_p_threshold:
+    raise ValueError(
+        "cluster_n_permutations is not big enough to calculate "
+        "the p-values accurately."
+    )
 
 # Another check that depends on some of the functions defined above
 if (

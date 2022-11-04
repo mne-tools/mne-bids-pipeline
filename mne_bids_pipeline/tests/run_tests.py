@@ -1,5 +1,6 @@
 """Download test data and run a test suite."""
 import difflib
+import subprocess
 import sys
 import shutil
 import os
@@ -10,8 +11,6 @@ if sys.version_info >= (3, 8):
     from typing import TypedDict
 else:
     from typing_extensions import TypedDict
-
-from mne.utils import run_subprocess
 
 
 BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
@@ -195,7 +194,7 @@ def run_tests(test_suite, *, download, debug, cache):
             '--interactive=0'
         ]
         command = [x for x in command if x != '']  # Eliminate "empty" items
-        run_subprocess(command=command)
+        subprocess.check_call(command)
 
 
 if __name__ == '__main__':

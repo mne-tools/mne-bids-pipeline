@@ -8,15 +8,16 @@ import contextlib
 import os
 import os.path as op
 from pathlib import Path
-import itertools
 from typing import Optional, List, Literal
 from types import SimpleNamespace
 
 from scipy.io import loadmat
 import numpy as np
 import pandas as pd
+import matplotlib.transforms
 
 import mne
+from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
@@ -25,6 +26,7 @@ from ..._config_utils import (
     get_task, get_datatype, get_deriv_root, get_sessions,
     _restrict_analyze_channels, get_fs_subjects_dir, get_fs_subject,
     get_runs, get_bids_root, get_decoding_contrasts, get_all_contrasts)
+from ..._decoding import _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import (
@@ -145,7 +147,7 @@ def plot_auto_scores_(cfg, subject, session):
 #             label='mean score', zorder=99)
 #     ax.axhline(0.5, ls='--', lw=0.5, color='black', label='chance')
 
-#     ax.set_xlabel(f'{contrast[0]} ./. {contrast[1]}')
+#     ax.set_xlabel(f'{contrast[0]} vs. {contrast[1]}')
 #     if metric == 'roc_auc':
 #         metric = 'ROC AUC'
 #     ax.set_ylabel(f'Score ({metric})')
@@ -155,10 +157,10 @@ def plot_auto_scores_(cfg, subject, session):
 
 
 def _plot_full_epochs_decoding_scores(
-    contrasts: List[str],
+    contrast_names: List[str],
     scores: List[np.ndarray],
     metric: str,
-    kind: Literal['single-subject', 'grand-average']
+    kind: Literal['single-subject', 'grand-average'] = 'single-subject',
 ):
     """Plot cross-validation results from full-epochs decoding.
     """
@@ -171,8 +173,8 @@ def _plot_full_epochs_decoding_scores(
 
     data = pd.DataFrame({
         'Contrast': np.array([
-            [f'{c[0]} ./.\n{c[1]}'] * len(scores[0])
-            for c in contrasts
+            [c] * len(scores[0])
+            for c in contrast_names
         ]).flatten(),
         score_label: np.hstack(scores),
     })
@@ -185,6 +187,12 @@ def _plot_full_epochs_decoding_scores(
         )
         # … and now add swarmplots on top to visualize every single data point.
         g.map_dataframe(sns.swarmplot, y=score_label, color='black')
+        caption = (
+            f'Based on N={len(scores[0])} '
+            f'subjects. Each dot represents the mean cross-validation score '
+            f'for a single subject. The dashed line is expected chance '
+            f'performance.'
+        )
     else:
         # First create a grid of swarmplots to visualize every single
         # cross-validation score.
@@ -201,13 +209,20 @@ def _plot_full_epochs_decoding_scores(
             _plot_mean_cv_score, score_label, marker='+', color='red',
             ms=15, label='mean score', zorder=99
         )
+        caption = (
+            'Each black dot represents the single cross-validation score. '
+            f'The red cross is the mean of all {len(scores[0])} '
+            'cross-validation scores. '
+            'The dashed line is expected chance performance.'
+        )
+        plt.xlim([-0.1, 0.1])
 
     g.map(plt.axhline, y=0.5, ls='--', lw=0.5, color='black', zorder=99)
     g.set_titles('{col_name}')  # use this argument literally!
     g.set_xlabels('')
 
     fig = g.fig
-    return fig
+    return fig, caption
 
 
 def _plot_time_by_time_decoding_scores(
@@ -449,6 +464,10 @@ def _gen_empty_report(
     return report
 
 
+def _contrasts_to_names(contrasts: List[List[str]]) -> List[str]:
+    return [f'{c[0]} vs.\n{c[1]}' for c in contrasts]
+
+
 def run_report_preprocessing(
     *,
     cfg: SimpleNamespace,
@@ -611,7 +630,7 @@ def run_report_preprocessing(
         psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (before cleaning)',
+        title='Epochs: before cleaning',
         psd=psd,
         drop_log_ignore=()
     )
@@ -712,7 +731,7 @@ def run_report_preprocessing(
         psd = 30
     report.add_epochs(
         epochs=epochs,
-        title='Epochs (after cleaning)',
+        title='Epochs: after cleaning',
         psd=psd,
         drop_log_ignore=()
     )
@@ -822,16 +841,12 @@ def run_report_sensor(
     for condition, evoked in zip(conditions, evokeds):
         _restrict_analyze_channels(evoked, cfg)
 
+        tags = ('evoked', _sanitize_cond_tag(condition))
         if condition in cfg.conditions:
             title = f'Condition: {condition}'
-            tags = ('evoked', condition.lower().replace(' ', '-'))
         else:  # It's a contrast of two conditions.
             title = f'Contrast: {condition}'
-            tags = (
-                'evoked',
-                'contrast',
-                condition.lower().replace(' ', '-')
-            )
+            tags = tags + ('contrast',)
 
         report.add_evokeds(
             evokeds=evoked,
@@ -845,7 +860,8 @@ def run_report_sensor(
     #
     # Visualize full-epochs decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    decode = cfg.decode and cfg.decoding_contrasts
+    if decode:
         msg = 'Adding full-epochs decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -868,30 +884,23 @@ def run_report_sensor(
             )
             del fname_decoding, processing, a_vs_b, decoding_data
 
-        fig = _plot_full_epochs_decoding_scores(
-            contrasts=cfg.decoding_contrasts,
+        fig, caption = _plot_full_epochs_decoding_scores(
+            contrast_names=_contrasts_to_names(cfg.decoding_contrasts),
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,
-            kind='single-subject'
         )
-        caption = (
-            'Each black dot represents the single cross-validation score. '
-            'The red cross is the mean of all cross-validation scores. '
-            'The dashed line is expected chance performance.'
-        )
-
-        title = 'Full-epochs Decoding'
+        title = f'Full-epochs decoding: {cond_1} vs. {cond_2}'
         report.add_figure(
             fig=fig,
             title=title,
             caption=caption,
+            section='Decoding: full-epochs',
             tags=(
                 'epochs',
                 'contrast',
                 'decoding',
-                *[f'{sanitize_cond_name(cond_1)}–'
-                  f'{sanitize_cond_name(cond_2)}'
-                  .lower().replace(' ', '-')
+                *[f'{_sanitize_cond_tag(cond_1)}–'
+                  f'{_sanitize_cond_tag(cond_2)}'
                   for cond_1, cond_2 in cfg.decoding_contrasts]
             )
         )
@@ -903,7 +912,7 @@ def run_report_sensor(
     #
     # Visualize time-by-time decoding results.
     #
-    if cfg.decode and cfg.decoding_contrasts:
+    if decode:
         msg = 'Adding time-by-time decoding results to the report.'
         logger.info(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
@@ -911,16 +920,16 @@ def run_report_sensor(
 
         epochs = mne.read_epochs(fname_epo_clean)
 
+        section = 'Decoding: time-by-time'
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-            section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
             tags = (
                 'epochs',
                 'contrast',
                 'decoding',
-                f"{contrast[0].lower().replace(' ', '-')}-"
-                f"{contrast[1].lower().replace(' ', '-')}"
+                f"{_sanitize_cond_tag(contrast[0])}–"
+                f"{_sanitize_cond_tag(contrast[1])}"
             )
 
             processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
@@ -942,12 +951,13 @@ def run_report_sensor(
             )
             caption = (
                 f'Time-by-time decoding: '
-                f'{len(epochs[cond_1])} × {cond_1} ./. '
+                f'{len(epochs[cond_1])} × {cond_1} vs. '
                 f'{len(epochs[cond_2])} × {cond_2}'
             )
+            title = f'Decoding over time: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Decoding performance over time',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -965,9 +975,10 @@ def run_report_sensor(
                     'each classifier is trained on each time point, and '
                     'tested on all other time points.'
                 )
+                title = f'Time generalization: {cond_1} vs. {cond_2}'
                 report.add_figure(
                     fig=fig,
-                    title='Time generalization',
+                    title=title,
                     caption=caption,
                     section=section,
                     tags=tags,
@@ -977,6 +988,144 @@ def run_report_sensor(
             del decoding_data, cond_1, cond_2, caption
 
         del epochs
+
+    ###########################################################################
+    #
+    # Visualize CSP decoding results.
+    #
+
+    if decode and cfg.decoding_csp:
+        msg = 'Adding CSP decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        section = 'Decoding: CSP'
+        freq_name_to_bins_map = _handle_csp_args(
+            cfg.decoding_csp_times,
+            cfg.decoding_csp_freqs,
+            cfg.decoding_metric,
+        )
+        all_csp_tf_results = dict()
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
+            )
+            processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.xlsx'
+            )
+            assert fname_decoding.fpath.is_file(), fname_decoding.fpath
+            csp_freq_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Frequency'
+            )
+            csp_freq_results['scores'] = csp_freq_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            csp_tf_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Time-Frequency'
+            )
+            csp_tf_results['scores'] = csp_tf_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            all_csp_tf_results[contrast] = csp_tf_results
+            del csp_tf_results
+
+            all_decoding_scores = list()
+            contrast_names = list()
+            for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+                results = csp_freq_results.loc[
+                    csp_freq_results['freq_range_name'] == freq_range_name
+                ]
+                results.reset_index(drop=True, inplace=True)
+                assert len(results['scores']) == len(freq_bins)
+                for bi, freq_bin in enumerate(freq_bins):
+                    all_decoding_scores.append(results['scores'][bi])
+                    f_min = float(freq_bin[0])
+                    f_max = float(freq_bin[1])
+                    contrast_names.append(
+                        f'{freq_range_name}\n'
+                        f'({f_min:0.1f}-{f_max:0.1f} Hz)'
+                    )
+            fig, caption = _plot_full_epochs_decoding_scores(
+                contrast_names=contrast_names,
+                scores=all_decoding_scores,
+                metric=cfg.decoding_metric,
+            )
+            title = f'CSP decoding: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                section=section,
+                caption=caption,
+                tags=tags,
+            )
+            # close figure to save memory
+            plt.close(fig)
+            del fig, caption, title
+
+        # Now, plot decoding scores across time-frequency bins.
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+            )
+            results = all_csp_tf_results[contrast]
+            mean_crossval_scores = list()
+            tmin, tmax, fmin, fmax = list(), list(), list(), list()
+            mean_crossval_scores.extend(
+                results['mean_crossval_score'].ravel())
+            tmin.extend(results['t_min'].ravel())
+            tmax.extend(results['t_max'].ravel())
+            fmin.extend(results['f_min'].ravel())
+            fmax.extend(results['f_max'].ravel())
+            mean_crossval_scores = np.array(mean_crossval_scores, float)
+            fig, ax = plt.subplots(constrained_layout=True)
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
+            metric = 'ROC AUC'
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            img = _imshow_tf(
+                mean_crossval_scores, ax,
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax)
+            offset = matplotlib.transforms.offset_copy(
+                ax.transData, fig, 6, 0, units='points')
+            for freq_range_name, bins in freq_name_to_bins_map.items():
+                ax.text(tmin[0],
+                        0.5 * bins[0][0] + 0.5 * bins[-1][1],
+                        freq_range_name, transform=offset,
+                        ha='left', va='center', rotation=90)
+            ax.set_xlim([np.min(tmin), np.max(tmax)])
+            ax.set_ylim([np.min(fmin), np.max(fmax)])
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Frequency (Hz)')
+            cbar = fig.colorbar(
+                ax=ax, shrink=0.75, orientation='vertical', mappable=img)
+            cbar.set_label(f'Mean decoding score ({metric})')
+            title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                section=section,
+                tags=tags,
+            )
 
     ###########################################################################
     #
@@ -1017,7 +1166,7 @@ def run_report_sensor(
             fig=fig_power,
             title=f'TFR Power: {condition}',
             caption=f'TFR Power: {condition}',
-            tags=('time-frequency', condition.lower().replace(' ', '-'))
+            tags=('time-frequency', _sanitize_cond_tag(condition))
         )
         plt.close(fig_power)
         del power
@@ -1030,7 +1179,7 @@ def run_report_sensor(
             fig=fig_itc,
             title=f'TFR ITC: {condition}',
             caption=f'TFR Inter-Trial Coherence: {condition}',
-            tags=('time-frequency', condition.lower().replace(' ', '-'))
+            tags=('time-frequency', _sanitize_cond_tag(condition))
         )
         plt.close(fig_power)
         del itc
@@ -1144,7 +1293,7 @@ def run_report_source(
                                      subject=subject, session=session))
 
         if condition in cfg.conditions:
-            title = f'Source: {sanitize_cond_name(condition)}'
+            title = f'Source: {condition}'
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
             continue
@@ -1160,7 +1309,7 @@ def run_report_source(
 
         tags = (
             'source-estimate',
-            condition.lower().replace(' ', '-')
+            _sanitize_cond_tag(condition)
         )
         if Path(f'{fname_stc.fpath}-lh.stc').exists():
             report.add_stc(
@@ -1337,7 +1486,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             title = f'Average: {condition}'
             tags = (
                 'evoked',
-                sanitize_cond_name(condition).lower().replace(' ', '')
+                _sanitize_cond_tag(condition)
             )
         else:  # It's a contrast of two conditions.
             # XXX Will change once we process contrasts here too
@@ -1361,28 +1510,28 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
             session=session, cfg=cfg, report=report
         )
 
+    if cfg.decode and cfg.decoding_csp:
+        add_csp_grand_average(
+            session=session, cfg=cfg, report=report
+        )
+
     #######################################################################
     #
     # Visualize forward solution, inverse operator, and inverse solutions.
     #
 
     for condition, evoked in zip(conditions, evokeds):
+        tags = (
+            'source-estimate',
+            _sanitize_cond_tag(condition),
+        )
         if condition in cfg.conditions:
             title = f'Average: {condition}'
-            cond_str = sanitize_cond_name(condition)
-            tags = (
-                'source-estimate',
-                sanitize_cond_name(condition).lower().replace(' ', '')
-            )
         else:  # It's a contrast of two conditions.
             title = f'Average contrast: {condition}'
-            cond_str = sanitize_cond_name(condition)
-            tags = (
-                'source-estimate',
-                'contrast',
-                sanitize_cond_name(condition).lower().replace(' ', '')
-            )
+            tags = tags + ('contrast',)
 
+        cond_str = sanitize_cond_name(condition)
         fname_stc_avg = evoked_fname.copy().update(
             suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}',
             extension=None)
@@ -1456,31 +1605,23 @@ def add_decoding_grand_average(
         )
         del fname_decoding, processing, a_vs_b, decoding_data
 
-    fig = _plot_full_epochs_decoding_scores(
-        contrasts=cfg.decoding_contrasts,
+    fig, caption = _plot_full_epochs_decoding_scores(
+        contrast_names=_contrasts_to_names(cfg.decoding_contrasts),
         scores=all_decoding_scores,
         metric=cfg.decoding_metric,
         kind='grand-average'
     )
-    caption = (
-        f'Based on N={len(all_decoding_scores[0])} '
-        f'subjects. Each dot represents the mean cross-validation score '
-        f'for a single subject. The dashed line is expected chance '
-        f'performance.'
-    )
-
-    title = 'Full-epochs Decoding'
+    title = f'Full-epochs decoding: {cond_1} vs. {cond_2}'
     report.add_figure(
         fig=fig,
         title=title,
+        section='Decoding: full-epochs',
         caption=caption,
         tags=(
             'epochs',
             'contrast',
             'decoding',
-            *[f'{sanitize_cond_name(cond_1)}–'
-              f'{sanitize_cond_name(cond_2)}'
-              .lower().replace(' ', '-')
+            *[f'{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}'
               for cond_1, cond_2 in cfg.decoding_contrasts]
         )
     )
@@ -1492,14 +1633,12 @@ def add_decoding_grand_average(
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
-        section = f'Time-by-time decoding: {cond_1} ./. {cond_2}'
+        section = 'Decoding: time-by-time'
         tags = (
             'epochs',
             'contrast',
             'decoding',
-            f'{sanitize_cond_name(cond_1)}–'
-            f'{sanitize_cond_name(cond_2)}'
-            .lower().replace(' ', '-')
+            f'{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}'
         )
         processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
         processing = processing.replace('_', '-').replace('-', '')
@@ -1531,9 +1670,10 @@ def add_decoding_grand_average(
                 f'({decoding_data["cluster_n_permutations"].squeeze()} '
                 f'permutations) and are highlighted in yellow.'
             )
+            title = f'Decoding over time: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Decoding performance over time',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -1555,7 +1695,7 @@ def add_decoding_grand_average(
             )
             report.add_figure(
                 fig=fig,
-                title='t-values based on decoding scores over time',
+                title=f't-values across time: {cond_1} vs. {cond_2}',
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -1574,14 +1714,287 @@ def add_decoding_grand_average(
                 f'on all other time points. The results were averaged across '
                 f'N={decoding_data["N"].item()} subjects.'
             )
+            title = f'Time generalization: {cond_1} vs. {cond_2}'
             report.add_figure(
                 fig=fig,
-                title='Time generalization',
+                title=title,
                 caption=caption,
                 section=section,
                 tags=tags,
             )
             plt.close(fig)
+
+
+def _sanitize_cond_tag(cond):
+    return cond.lower().replace(' ', '-')
+
+
+def _imshow_tf(vals, ax, *, tmin, tmax, fmin, fmax, vmin, vmax, cmap='RdBu_r',
+               mask=None, cmap_masked=None):
+    """Plot CSP TF decoding scores."""
+    # XXX Add support for more metrics
+    assert len(vals) == len(tmin) == len(tmax) == len(fmin) == len(fmax)
+    mask = np.zeros(vals.shape, dtype=bool) if mask is None else mask
+    assert len(vals) == len(mask)
+    assert vals.ndim == mask.ndim == 1
+    img = None
+    for v, t1, t2, f1, f2, m in zip(vals, tmin, tmax, fmin, fmax, mask):
+        use_cmap = cmap_masked if m else cmap
+        img = ax.imshow(
+            np.array([[v]], float),
+            cmap=use_cmap, extent=[t1, t2, f1, f2], aspect='auto',
+            interpolation='none', origin='lower', vmin=vmin, vmax=vmax,
+        )
+    return img
+
+
+def add_csp_grand_average(
+    *,
+    session: str,
+    cfg: SimpleNamespace,
+    report: mne.Report,
+):
+    """Add CSP decoding results to the grand average report."""
+    import matplotlib.pyplot as plt  # nested import to help joblib
+
+    bids_path = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix='decoding',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
+
+    # First, plot decoding scores across frequency bins (entire epochs).
+    section = 'Decoding: CSP'
+    freq_name_to_bins_map = _handle_csp_args(
+        cfg.decoding_csp_times,
+        cfg.decoding_csp_freqs,
+        cfg.decoding_metric,
+    )
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_freq_results = bids_path.copy().update(
+            processing=processing,
+            extension='.xlsx',
+        )
+        csp_freq_results = pd.read_excel(
+            fname_csp_freq_results,
+            sheet_name='CSP Frequency'
+        )
+
+        freq_bin_starts = list()
+        freq_bin_widths = list()
+        decoding_scores = list()
+        error_bars = list()
+        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+            results = csp_freq_results.loc[
+                csp_freq_results['freq_range_name'] == freq_range_name, :
+            ]
+            results.reset_index(drop=True, inplace=True)
+            assert len(results) == len(freq_bins)
+            for bi, freq_bin in enumerate(freq_bins):
+                freq_bin_starts.append(freq_bin[0])
+                freq_bin_widths.append(np.diff(freq_bin)[0])
+                decoding_scores.append(results['mean'][bi])
+                cis_lower = results['mean_ci_lower'][bi]
+                cis_upper = results['mean_ci_upper'][bi]
+                error_bars_lower = decoding_scores[-1] - cis_lower
+                error_bars_upper = cis_upper - decoding_scores[-1]
+                error_bars.append(
+                    np.stack([error_bars_lower, error_bars_upper]))
+                assert len(error_bars[-1]) == 2  # lower, upper
+                del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+        error_bars = np.array(error_bars, float).T
+
+        if cfg.decoding_metric == 'roc_auc':
+            metric = 'ROC AUC'
+
+        fig, ax = plt.subplots(constrained_layout=True)
+        ax.bar(
+            x=freq_bin_starts,
+            width=freq_bin_widths,
+            height=decoding_scores,
+            align='edge',
+            yerr=error_bars,
+            edgecolor='black',
+        )
+        ax.set_ylim([0, 1.02])
+        offset = matplotlib.transforms.offset_copy(
+            ax.transData, fig, 0, 5, units='points')
+        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+            start = freq_bins[0][0]
+            stop = freq_bins[-1][1]
+            width = stop - start
+            ax.text(
+                x=start + width / 2,
+                y=0.,
+                transform=offset,
+                s=freq_range_name,
+                ha='center',
+                va='bottom',
+            )
+        ax.axhline(0.5, color='black', linestyle='--', label='chance')
+        ax.legend()
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel(f'Mean decoding score ({metric})')
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            'csp',
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+        )
+        title = f'CSP decoding: {cond_1} vs. {cond_2}'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            section=section,
+            caption='Mean decoding scores. Error bars represent '
+                    'bootstrapped 95% confidence intervals.',
+            tags=tags,
+        )
+
+    # Now, plot decoding scores across time-frequency bins.
+    for contrast in cfg.decoding_contrasts:
+        cond_1, cond_2 = contrast
+        a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+        processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+        processing = processing.replace('_', '-').replace('-', '')
+        fname_csp_cluster_results = bids_path.copy().update(
+            processing=processing,
+            extension='.mat',
+        )
+        csp_cluster_results = loadmat(fname_csp_cluster_results)
+
+        fig, ax = plt.subplots(
+            nrows=1, ncols=2, sharex=True, sharey=True,
+            constrained_layout=True)
+        n_clu = 0
+        cbar = None
+        lims = [np.inf, -np.inf, np.inf, -np.inf]
+        for freq_range_name, bins in freq_name_to_bins_map.items():
+            results = csp_cluster_results[freq_range_name][0][0]
+            mean_crossval_scores = results['mean_crossval_scores'].ravel()
+            # t_vals = results['t_vals']
+            clusters = results['clusters']
+            cluster_p_vals = results['cluster_p_vals'].squeeze()
+            tmin = results['time_bin_edges'].ravel()
+            tmin, tmax = tmin[:-1], tmin[1:]
+            fmin = results['freq_bin_edges'].ravel()
+            fmin, fmax = fmin[:-1], fmin[1:]
+            lims[0] = min(lims[0], tmin.min())
+            lims[1] = max(lims[1], tmax.max())
+            lims[2] = min(lims[2], fmin.min())
+            lims[3] = max(lims[3], fmax.max())
+            # replicate, matching time-frequency order during clustering
+            fmin, fmax = np.tile(fmin, len(tmin)), np.tile(fmax, len(tmax))
+            tmin, tmax = np.repeat(tmin, len(bins)), np.repeat(tmax, len(bins))
+            assert fmin.shape == fmax.shape == tmin.shape == tmax.shape
+            assert fmin.shape == mean_crossval_scores.shape
+            cluster_t_threshold = results['cluster_t_threshold'].ravel().item()
+
+            significant_cluster_idx = np.where(
+                cluster_p_vals < cfg.cluster_permutation_p_threshold
+            )[0]
+            significant_clusters = clusters[significant_cluster_idx]
+            n_clu += len(significant_cluster_idx)
+
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
+            metric = 'ROC AUC'
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            # For diverging gray colormap, we need to combine two existing
+            # colormaps, as there is no diverging colormap with gray/black at
+            # both endpoints.
+            from matplotlib.cm import gray, gray_r
+            from matplotlib.colors import ListedColormap
+
+            black_to_white = gray(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            white_to_black = gray_r(
+                np.linspace(start=0, stop=1, endpoint=False, num=128)
+            )
+            black_to_white_to_black = np.vstack(
+                (black_to_white, white_to_black)
+            )
+            diverging_gray_cmap = ListedColormap(
+                black_to_white_to_black, name='DivergingGray'
+            )
+            cmap_gray = diverging_gray_cmap
+            img = _imshow_tf(
+                mean_crossval_scores, ax[0],
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax)
+            if cbar is None:
+                ax[0].set_xlabel('Time (s)')
+                ax[0].set_ylabel('Frequency (Hz)')
+                ax[1].set_xlabel('Time (s)')
+                cbar = fig.colorbar(
+                    ax=ax[1], shrink=0.75, orientation='vertical',
+                    mappable=img)
+                cbar.set_label(f'Mean decoding score ({metric})')
+            offset = matplotlib.transforms.offset_copy(
+                ax[0].transData, fig, 6, 0, units='points')
+            ax[0].text(tmin.min(),
+                       0.5 * fmin.min() + 0.5 * fmax.max(),
+                       freq_range_name, transform=offset,
+                       ha='left', va='center', rotation=90)
+
+            if len(significant_clusters):
+                # Create a masked array that only shows the T-values for
+                # time-frequency bins that belong to significant clusters.
+                if len(significant_clusters) == 1:
+                    mask = ~significant_clusters[0].astype(bool)
+                else:
+                    mask = ~np.logical_or(
+                        *significant_clusters
+                    )
+                mask = mask.ravel()
+            else:
+                mask = np.ones(mean_crossval_scores.shape, dtype=bool)
+            _imshow_tf(
+                mean_crossval_scores, ax[1],
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax, mask=mask, cmap_masked=cmap_gray)
+
+        ax[0].set_xlim(lims[:2])
+        ax[0].set_ylim(lims[2:])
+        ax[0].set_title('Scores')
+        ax[1].set_title('Masked')
+        tags = (
+            'epochs',
+            'contrast',
+            'decoding',
+            'csp',
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+        )
+        title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
+        report.add_figure(
+            fig=fig,
+            title=title,
+            section=section,
+            caption=f'Found {n_clu} '
+                    f'cluster{_pl(n_clu)} with '
+                    f'p < {cfg.cluster_permutation_p_threshold} '
+                    f'(clustering bins with absolute t-values > '
+                    f'{round(cluster_t_threshold, 3)}).',
+            tags=tags,
+        )
 
 
 def get_config(
@@ -1635,8 +2048,12 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=dtg_decim,
+        decoding_csp=config.decoding_csp,
+        decoding_csp_freqs=config.decoding_csp_freqs,
+        decoding_csp_times=config.decoding_csp_times,
         n_boot=config.n_boot,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
+        cluster_forming_t_threshold=config.cluster_forming_t_threshold,
         inverse_method=config.inverse_method,
         report_stc_n_time_points=config.report_stc_n_time_points,
         report_evoked_n_time_points=config.report_evoked_n_time_points,
@@ -1672,6 +2089,7 @@ def main():
     import config
     with get_parallel_backend(config), _agg_backend():
         parallel, run_func = parallel_func(run_report, config=config)
+        sessions = get_sessions(config=config)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -1681,31 +2099,31 @@ def main():
                 subject=subject,
                 session=session
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config=config)
+            for session in sessions
         )
-
-        save_logs(config=config, logs=logs)
-
-        sessions = get_sessions(config)
 
         if config.task_is_rest:
             msg = '    … skipping "average" report for "rest" task.'
             logger.info(**gen_log_kwargs(message=msg))
-            return
+            avg_subjects = []
+        else:
+            avg_subjects = ['average']
 
-        for session in sessions:
-            run_report_average(
+        parallel, run_func = parallel_func(run_report_average, config=config)
+        logs.extend(parallel(
+            run_func(
                 cfg=get_config(
                     config=config,
-                    subject='average',
+                    subject=subject,
                 ),
-                subject='average',
+                subject=subject,
                 session=session,
             )
+            for subject in avg_subjects
+            for session in sessions
+        ))
+        save_logs(logs=logs, config=config)
 
 
 if __name__ == '__main__':

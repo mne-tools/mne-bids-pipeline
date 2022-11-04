@@ -125,9 +125,10 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
     processing = processing.replace('_', '-').replace('-', '')
     mat_key = f'mat_{processing}'
+    tsv_key = f'tsv_{processing}'
     out_files[mat_key] = bids_path.copy().update(
         suffix='decoding', processing=processing, extension='.mat')
-    out_files[f'tsv_{processing}'] = out_files[mat_key].copy().update(
+    out_files[tsv_key] = out_files[mat_key].copy().update(
         extension='.tsv')
     savemat(out_files[f'mat_{processing}'], {'scores': scores})
 
@@ -140,8 +141,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
         }
     )
     tabular_data = pd.DataFrame(tabular_data).T
-    tabular_data.to_csv(
-        out_files[f'tsv_{processing}'], sep='\t', index=False)
+    tabular_data.to_csv(out_files[tsv_key], sep='\t', index=False)
     assert len(in_files) == 0, in_files.keys()
     return out_files
 

@@ -335,10 +335,13 @@ def get_channels_to_analyze(
 
 
 def sanitize_cond_name(cond: str) -> str:
-    cond = (cond
-            .replace(os.path.sep, '')
-            .replace('_', '')
-            .replace('-', ''))
+    cond = (
+        cond
+        .replace(os.path.sep, '')
+        .replace('_', '')
+        .replace('-', '')
+        .replace(' ', '')
+    )
     return cond
 
 

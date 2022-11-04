@@ -20,7 +20,7 @@ from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
     get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
 )
-from ..._decoding import LogReg
+from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run, _script_path, save_logs
@@ -201,11 +201,8 @@ def one_subject_decoding(
     )
 
     # Loop over frequencies (all time points lumped together)
-    freq_name_to_bins_map = dict()
-    for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
-        freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
-        freq_name_to_bins_map[freq_range_name] = freq_bins
-
+    freq_name_to_bins_map = _handle_csp_args(
+        cfg.decoding_csp_times, cfg.decoding_csp_freqs, cfg.decoding_metric)
     freq_decoding_table_rows = []
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
         for freq_bin in freq_bins:

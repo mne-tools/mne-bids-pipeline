@@ -1508,7 +1508,8 @@ The edges of the frequency bins to use for CSP decoding.
 
 This parameter must be a dictionary with:
 - keys specifying the unique identifier or "name" to use for the frequency
-  range (such as "alpha" or "beta"), and
+  range to be treated jointly during statistical testing (such as "alpha" or
+  "beta"), and
 - values must be list-like objects containing at least two scalar values,
   specifying the edges of the respective frequency bin(s), e.g., `[8, 12]`.
 
@@ -1518,10 +1519,20 @@ between this value and
 [`time_frequency_freq_max`][config.time_frequency_freq_max]; and the other from
 that midpoint to `time_frequency_freq_max`.
 ???+ example "Example"
-    Create two frequency bins, one for 4–8 Hz, and another for 8–14 Hz:
+    Create two frequency bins, one for 4–8 Hz, and another for 8–14 Hz, which
+    will be clustered together during statistical testing (in the
+    time-frequency plane):
     ```python
     decoding_csp_freqs = {
         'custom_range': [4, 8, 14]
+    }
+    ```
+    Create the same two frequency bins, but treat them separately during
+    statistical testing (i.e., temporal clustering only):
+    ```python
+    decoding_csp_freqs = {
+        'theta': [4, 8],
+        'alpha': [8, 14]
     }
     ```
     Create 5 equidistant frequency bins from 4 to 14 Hz:
@@ -1533,23 +1544,6 @@ that midpoint to `time_frequency_freq_max`.
             num=5+1  # We need one more to account for the endpoint!
         )
     }
-    ```
-    Create two frquency bins with a "gap" between them, one for 4–8 Hz,
-    and another for 10–14 Hz:
-    ```python
-    decoding_csp_freqs = {
-        'lower_range': [4, 8],
-        'upper_range': [10, 14]
-    ]
-    ```
-    Create partially overlapping frequency bins, one for 4–10 Hz, and another
-    one for 8–14 Hz:
-    ```python
-    decoding_csp_freqs = {
-        'lower_range': [4, 10],
-        'upper_range': [8, 14]
-    ]
-    ```
 """
 
 time_frequency_baseline: Optional[Tuple[float, float]] = None
@@ -2340,33 +2334,6 @@ if (spatial_filter == 'ica' and
 # check decoding parameters
 if decoding_n_splits < 2:
     raise ValueError('decoding_n_splits should be at least 2.')
-
-if decoding_csp:
-    if len(decoding_csp_times) < 2:
-        raise ValueError(
-            'decoding_csp_times should contain at least 2 values.'
-        )
-
-    if list(decoding_csp_times) != sorted(decoding_csp_times):
-        ValueError("decoding_csp_times should be sorted.")
-
-    for freq_range_name, freqs in decoding_csp_freqs.items():
-        if list(freqs) != sorted(freqs):
-            ValueError("decoding_csp_freqs should be sorted.")
-        if min(freqs) < 0:
-            ValueError(
-                "decoding_csp_freqs should contain only positive values."
-            )
-        if len(freqs) < 2:
-            raise ValueError(
-                'decoding_csp_freqs should contain at least 2 values.'
-            )
-        if decoding_metric != "roc_auc":
-            raise ValueError(
-                f'CSP decoding currently only supports the "roc_auc" '
-                f'decoding metric, but received '
-                f'decoding_metric="{decoding_metric}"'
-            )
 
 # check cluster permutation parameters
 if not 0 < cluster_permutation_p_threshold < 1:

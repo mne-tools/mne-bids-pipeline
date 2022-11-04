@@ -14,8 +14,10 @@ from types import SimpleNamespace
 from scipy.io import loadmat
 import numpy as np
 import pandas as pd
+import matplotlib.transforms
 
 import mne
+from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
@@ -24,6 +26,7 @@ from ..._config_utils import (
     get_task, get_datatype, get_deriv_root, get_sessions,
     _restrict_analyze_channels, get_fs_subjects_dir, get_fs_subject,
     get_runs, get_bids_root, get_decoding_contrasts, get_all_contrasts)
+from ..._decoding import _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import (
@@ -997,6 +1000,11 @@ def run_report_sensor(
             **gen_log_kwargs(message=msg, subject=subject, session=session)
         )
         section = 'Decoding: CSP'
+        freq_name_to_bins_map = _handle_csp_args(
+            cfg.decoding_csp_times,
+            cfg.decoding_csp_freqs,
+            cfg.decoding_metric,
+        )
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
@@ -1030,19 +1038,23 @@ def run_report_sensor(
                 lambda x: np.array(x[1:-1].split(), float))
             all_csp_tf_results[contrast] = csp_tf_results
             del csp_tf_results
+
             all_decoding_scores = list()
             contrast_names = list()
-            for freq_range_name in cfg.decoding_csp_freqs.keys():
+            for freq_range_name, freq_bins in freq_name_to_bins_map.items():
                 results = csp_freq_results.loc[
-                    csp_freq_results['freq_range_name'] == freq_range_name, :
+                    csp_freq_results['freq_range_name'] == freq_range_name
                 ]
-                all_decoding_scores.append(results['scores'].item())
-                f_min = float(results['f_min'])
-                f_max = float(results['f_max'])
-                contrast_names.append(
-                    f'{freq_range_name}\n'
-                    f'({f_min:0.1f}-{f_max:0.1f} Hz)'
-                )
+                results.reset_index(drop=True, inplace=True)
+                assert len(results['scores']) == len(freq_bins)
+                for bi, freq_bin in enumerate(freq_bins):
+                    all_decoding_scores.append(results['scores'][bi])
+                    f_min = float(freq_bin[0])
+                    f_max = float(freq_bin[1])
+                    contrast_names.append(
+                        f'{freq_range_name}\n'
+                        f'({f_min:0.1f}-{f_max:0.1f} Hz)'
+                    )
             fig, caption = _plot_full_epochs_decoding_scores(
                 contrast_names=contrast_names,
                 scores=all_decoding_scores,
@@ -1061,7 +1073,7 @@ def run_report_sensor(
             del fig, caption, title
 
         # Now, plot decoding scores across time-frequency bins.
-        for ci, contrast in enumerate(cfg.decoding_contrasts):
+        for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
             tags = (
                 'epochs',
@@ -1073,17 +1085,17 @@ def run_report_sensor(
             results = all_csp_tf_results[contrast]
             mean_crossval_scores = list()
             tmin, tmax, fmin, fmax = list(), list(), list(), list()
-            for freq_range_name in cfg.decoding_csp_freqs.keys():
-                mean_crossval_scores.extend(
-                    results['mean_crossval_score'].ravel())
-                tmin.extend(results['t_min'].ravel())
-                tmax.extend(results['t_max'].ravel())
-                fmin.extend(results['f_min'].ravel())
-                fmax.extend(results['f_max'].ravel())
+            mean_crossval_scores.extend(
+                results['mean_crossval_score'].ravel())
+            tmin.extend(results['t_min'].ravel())
+            tmax.extend(results['t_max'].ravel())
+            fmin.extend(results['f_min'].ravel())
+            fmax.extend(results['f_max'].ravel())
             mean_crossval_scores = np.array(mean_crossval_scores, float)
             fig, ax = plt.subplots(constrained_layout=True)
             # XXX Add support for more metrics
             assert cfg.decoding_metric == 'roc_auc'
+            metric = 'ROC AUC'
             vmax = max(
                 np.abs(mean_crossval_scores.min() - 0.5),
                 np.abs(mean_crossval_scores.max() - 0.5)
@@ -1093,15 +1105,19 @@ def run_report_sensor(
                 mean_crossval_scores, ax,
                 tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
                 vmin=vmin, vmax=vmax)
+            offset = matplotlib.transforms.offset_copy(
+                ax.transData, fig, 6, 0, units='points')
+            for freq_range_name, bins in freq_name_to_bins_map.items():
+                ax.text(tmin[0],
+                        0.5 * bins[0][0] + 0.5 * bins[-1][1],
+                        freq_range_name, transform=offset,
+                        ha='left', va='center', rotation=90)
             ax.set_xlim([np.min(tmin), np.max(tmax)])
             ax.set_ylim([np.min(fmin), np.max(fmax)])
             ax.set_xlabel('Time (s)')
             ax.set_ylabel('Frequency (Hz)')
             cbar = fig.colorbar(
                 ax=ax, shrink=0.75, orientation='vertical', mappable=img)
-            metric = dict(
-                roc_auc='ROC AUC'
-            ).get(cfg.decoding_metric, cfg.decoding_metric)
             cbar.set_label(f'Mean decoding score ({metric})')
             title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
             report.add_figure(
@@ -1757,6 +1773,11 @@ def add_csp_grand_average(
 
     # First, plot decoding scores across frequency bins (entire epochs).
     section = 'Decoding: CSP'
+    freq_name_to_bins_map = _handle_csp_args(
+        cfg.decoding_csp_times,
+        cfg.decoding_csp_freqs,
+        cfg.decoding_metric,
+    )
     for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
@@ -1775,22 +1796,24 @@ def add_csp_grand_average(
         freq_bin_widths = list()
         decoding_scores = list()
         error_bars = list()
-        freq_names = list(cfg.decoding_csp_freqs)
-        for freq_range_name in cfg.decoding_csp_freqs:
+        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
             results = csp_freq_results.loc[
                 csp_freq_results['freq_range_name'] == freq_range_name, :
             ]
-            freq_bin_starts.append(results['f_min'].item())
-            freq_bin_widths.append(
-                (results['f_max'] - results['f_min']).item())
-            decoding_scores.append(results['mean'].item())
-            cis_lower = results['mean_ci_lower'].item()
-            cis_upper = results['mean_ci_upper'].item()
-            error_bars_lower = decoding_scores[-1] - cis_lower
-            error_bars_upper = cis_upper - decoding_scores[-1]
-            error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
-            assert len(error_bars[-1]) == 2  # lower, upper
-            del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+            results.reset_index(drop=True, inplace=True)
+            assert len(results) == len(freq_bins)
+            for bi, freq_bin in enumerate(freq_bins):
+                freq_bin_starts.append(freq_bin[0])
+                freq_bin_widths.append(np.diff(freq_bin)[0])
+                decoding_scores.append(results['mean'][bi])
+                cis_lower = results['mean_ci_lower'][bi]
+                cis_upper = results['mean_ci_upper'][bi]
+                error_bars_lower = decoding_scores[-1] - cis_lower
+                error_bars_upper = cis_upper - decoding_scores[-1]
+                error_bars.append(
+                    np.stack([error_bars_lower, error_bars_upper]))
+                assert len(error_bars[-1]) == 2  # lower, upper
+                del cis_lower, cis_upper, error_bars_lower, error_bars_upper
         error_bars = np.array(error_bars, float).T
 
         if cfg.decoding_metric == 'roc_auc':
@@ -1806,12 +1829,17 @@ def add_csp_grand_average(
             edgecolor='black',
         )
         ax.set_ylim([0, 1.02])
-        for name, start, width in zip(
-                freq_names, freq_bin_starts, freq_bin_widths):
+        offset = matplotlib.transforms.offset_copy(
+            ax.transData, fig, 0, 5, units='points')
+        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+            start = freq_bins[0][0]
+            stop = freq_bins[-1][1]
+            width = stop - start
             ax.text(
                 x=start + width / 2,
-                y=0.02,
-                s=name,
+                y=0.,
+                transform=offset,
+                s=freq_range_name,
                 ha='center',
                 va='bottom',
             )
@@ -1854,7 +1882,7 @@ def add_csp_grand_average(
         n_clu = 0
         cbar = None
         lims = [np.inf, -np.inf, np.inf, -np.inf]
-        for freq_range_name in cfg.decoding_csp_freqs.keys():
+        for freq_range_name, bins in freq_name_to_bins_map.items():
             results = csp_cluster_results[freq_range_name][0][0]
             mean_crossval_scores = results['mean_crossval_scores'].ravel()
             # t_vals = results['t_vals']
@@ -1862,13 +1890,17 @@ def add_csp_grand_average(
             cluster_p_vals = results['cluster_p_vals'].squeeze()
             tmin = results['time_bin_edges'].ravel()
             tmin, tmax = tmin[:-1], tmin[1:]
+            fmin = results['freq_bin_edges'].ravel()
+            fmin, fmax = fmin[:-1], fmin[1:]
             lims[0] = min(lims[0], tmin.min())
             lims[1] = max(lims[1], tmax.max())
-            fmin, fmax = results['freq_bin_edges'].ravel()
             lims[2] = min(lims[2], fmin.min())
             lims[3] = max(lims[3], fmax.max())
-            fmin = np.repeat(fmin, len(mean_crossval_scores))
-            fmax = np.repeat(fmax, len(mean_crossval_scores))
+            # replicate, matching time-frequency order during clustering
+            fmin, fmax = np.tile(fmin, len(tmin)), np.tile(fmax, len(tmax))
+            tmin, tmax = np.repeat(tmin, len(bins)), np.repeat(tmax, len(bins))
+            assert fmin.shape == fmax.shape == tmin.shape == tmax.shape
+            assert fmin.shape == mean_crossval_scores.shape
             cluster_t_threshold = results['cluster_t_threshold'].ravel().item()
 
             significant_cluster_idx = np.where(
@@ -1879,6 +1911,7 @@ def add_csp_grand_average(
 
             # XXX Add support for more metrics
             assert cfg.decoding_metric == 'roc_auc'
+            metric = 'ROC AUC'
             vmax = max(
                 np.abs(mean_crossval_scores.min() - 0.5),
                 np.abs(mean_crossval_scores.max() - 0.5)
@@ -1914,12 +1947,12 @@ def add_csp_grand_average(
                 cbar = fig.colorbar(
                     ax=ax[1], shrink=0.75, orientation='vertical',
                     mappable=img)
-                if cfg.decoding_metric == 'roc_auc':
-                    metric = 'ROC AUC'
                 cbar.set_label(f'Mean decoding score ({metric})')
-            ax[0].text(0.9 * tmin[0] + 0.1 * tmax[0],
-                       0.5 * fmin[0] + 0.5 * fmax[0],
-                       freq_range_name,
+            offset = matplotlib.transforms.offset_copy(
+                ax[0].transData, fig, 6, 0, units='points')
+            ax[0].text(tmin.min(),
+                       0.5 * fmin.min() + 0.5 * fmax.max(),
+                       freq_range_name, transform=offset,
                        ha='left', va='center', rotation=90)
 
             if len(significant_clusters):
@@ -1956,11 +1989,10 @@ def add_csp_grand_average(
             title=title,
             section=section,
             caption=f'Found {n_clu} '
-                    f'significant cluster(s) '
-                    f'(p < {cfg.cluster_permutation_p_threshold}; '
-                    f'bins with absolute t-values > '
-                    f'{round(cluster_t_threshold, 3)} '
-                    f'were used to form clusters).',
+                    f'cluster{_pl(n_clu)} with '
+                    f'p < {cfg.cluster_permutation_p_threshold} '
+                    f'(clustering bins with absolute t-values > '
+                    f'{round(cluster_t_threshold, 3)}).',
             tags=tags,
         )
 

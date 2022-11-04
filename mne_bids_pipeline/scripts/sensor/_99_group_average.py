@@ -20,6 +20,7 @@ from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
     get_eeg_reference, get_decoding_contrasts, get_bids_root,
 )
+from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs
@@ -391,23 +392,23 @@ def average_csp_decoding(
     all_decoding_data_time_freq = []
 
     # First load the data.
+    fname_out = BIDSPath(
+        subject='average',
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        processing=processing,
+        suffix='decoding',
+        extension='.xlsx',
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False
+    )
     for subject in cfg.subjects:
-        fname_xlsx = BIDSPath(
-            subject=subject,
-            session=session,
-            task=cfg.task,
-            acquisition=cfg.acq,
-            run=None,
-            recording=cfg.rec,
-            space=cfg.space,
-            processing=processing,
-            suffix='decoding',
-            extension='.xlsx',
-            datatype=cfg.datatype,
-            root=cfg.deriv_root,
-            check=False
-        )
-
+        fname_xlsx = fname_out.copy().update(subject=subject)
         decoding_data_freq = pd.read_excel(
             fname_xlsx, sheet_name='CSP Frequency',
             dtype={'subject': str}  # don't drop trailing zeros
@@ -418,6 +419,7 @@ def average_csp_decoding(
         )
         all_decoding_data_freq.append(decoding_data_freq)
         all_decoding_data_time_freq.append(decoding_data_time_freq)
+        del fname_xlsx
 
     # Now calculate descriptes and bootstrap CIs.
     grand_average_freq = _average_csp_time_freq(
@@ -429,7 +431,6 @@ def average_csp_decoding(
         data=all_decoding_data_time_freq,
     )
 
-    fname_out = fname_xlsx.copy().update(subject='average')
     with pd.ExcelWriter(fname_out) as w:
         grand_average_freq.to_excel(
             w, sheet_name='CSP Frequency', index=False
@@ -446,15 +447,10 @@ def average_csp_decoding(
             list(zip(time_bins[:-1], time_bins[1:]))
         )
     time_bins = pd.DataFrame(time_bins, columns=['t_min', 't_max'])
-    freq_range_names = list(cfg.decoding_csp_freqs.keys())
-
-    freq_name_to_bins_map = dict()
-    for freq_range_name, freq_range_edges in cfg.decoding_csp_freqs.items():
-        freq_bins = list(zip(freq_range_edges[:-1], freq_range_edges[1:]))
-        freq_name_to_bins_map[freq_range_name] = freq_bins
-
+    freq_name_to_bins_map = _handle_csp_args(
+        cfg.decoding_csp_times, cfg.decoding_csp_freqs, cfg.decoding_metric)
     data_for_clustering = {}
-    for freq_range_name in freq_range_names:
+    for freq_range_name in freq_name_to_bins_map:
         a = np.empty(
             shape=(
                 len(subjects),
@@ -516,14 +512,7 @@ def average_csp_decoding(
             'freq_bin_edges': cfg.decoding_csp_freqs[freq_range_name],
         }
 
-    fname_out = (
-        fname_xlsx
-        .copy()
-        .update(
-            subject='average',
-            extension='.mat'
-        )
-    )
+    fname_out.update(extension='.mat')
     savemat(file_name=fname_out, mdict=cluster_permutation_results)
 
 

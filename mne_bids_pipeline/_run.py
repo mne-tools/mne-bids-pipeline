@@ -165,24 +165,43 @@ class ConditionalStepMemory:
             # If this is ever true, we'll need to improve the logic below
             assert not (unknown_inputs and force_run)
 
-            hashes = []
-            for k, v in in_files.items():
+            def hash_(k, v):
                 if isinstance(v, BIDSPath):
                     v = v.fpath
-                assert isinstance(v, pathlib.Path), f'{type(v)}: {v}'
+                assert isinstance(v, pathlib.Path), \
+                    f'Bad type {type(v)}: in_files["{k}"] = {v}'
                 assert v.exists(), f'missing in_files["{k}"] = {v}'
                 if self.memory_file_method == 'mtime':
                     this_hash = v.lstat().st_mtime
                 else:
                     assert self.memory_file_method == 'hash'  # guaranteed
                     this_hash = hash_file_path(v)
-                hashes.append((str(v), this_hash))
+                return (str(v), this_hash)
+
+            hashes = []
+            for k, v in in_files.items():
+                hashes.append(hash_(k, v))
+                # also hash the sidecar files if this is a BIDSPath and
+                # MNE-BIDS is new enough
+                if not hasattr(v, 'find_matching_sidecar'):
+                    continue
+                # from mne_bids/read.py
+                # The v.datatype is maybe not right, might need to use
+                # _infer_datatype like in read.py...
+                for suffix, extension in (('events', '.tsv'),
+                                          ('channels', '.tsv'),
+                                          ('electrodes', '.tsv'),
+                                          ('coordsystem', '.json'),
+                                          (v.datatype, '.json')):
+                    sidecar = v.find_matching_sidecar(
+                        suffix=suffix, extension=extension, on_error='ignore')
+                    if sidecar is None:
+                        continue
+                    hashes.append(hash_(k, sidecar))
 
             kwargs['cfg'] = copy.deepcopy(kwargs['cfg'])
             kwargs['cfg'].hashes = hashes
             del in_files  # will be modified by func call
-
-            # XXX we should also hash the sidecar files
 
             # Someday we could modify the joblib API to combine this with the
             # call (https://github.com/joblib/joblib/issues/1342), but our hash

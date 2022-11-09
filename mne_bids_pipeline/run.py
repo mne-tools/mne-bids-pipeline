@@ -3,10 +3,9 @@
 import optparse
 import os
 import pathlib
-import sys
 from textwrap import dedent
 import time
-from typing import Union, Optional, Tuple, List
+from typing import List
 from types import ModuleType
 
 import numpy as np
@@ -14,7 +13,6 @@ import numpy as np
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
 from ._logging import logger
-from ._typing import PathLike
 
 
 def main():

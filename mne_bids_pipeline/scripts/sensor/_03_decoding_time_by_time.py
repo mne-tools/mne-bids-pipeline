@@ -98,6 +98,11 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     else:
         epochs_conds = cond_names = [condition1, condition2]
         epochs_conds = [condition1, condition2]
+    epoch_counts = dict()
+    for contrast in cfg.contrasts:
+        for cond in contrast:
+            if cond not in epoch_counts:
+                epoch_counts[cond] = len(epochs[cond])
 
     # We have to use this approach because the conditions could be based on
     # metadata selection, so simply using epochs[conds[0], conds[1]] would
@@ -226,8 +231,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
             )
             caption = (
                 f'Time-by-time decoding: '
-                f'{len(epochs[cond_1])} × {cond_1} vs. '
-                f'{len(epochs[cond_2])} × {cond_2}'
+                f'{epoch_counts[cond_1]} × {cond_1} vs. '
+                f'{epoch_counts[cond_2]} × {cond_2}'
             )
             title = f'Decoding over time: {cond_1} vs. {cond_2}'
             report.add_figure(

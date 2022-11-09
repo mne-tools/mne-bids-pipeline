@@ -162,7 +162,10 @@ def get_config(
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         time_frequency_cycles=config.time_frequency_cycles,
-        time_frequency_subtract_evoked=config.time_frequency_subtract_evoked
+        time_frequency_subtract_evoked=config.time_frequency_subtract_evoked,
+        time_frequency_baseline=config.time_frequency_baseline,
+        time_frequency_baseline_mode=config.time_frequency_baseline_mode,
+        time_frequency_crop=config.time_frequency_crop,
     )
     return cfg
 

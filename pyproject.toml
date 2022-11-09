@@ -31,7 +31,6 @@ dependencies = [
     "json_tricks",
     "coloredlogs",
     "python-picard",
-    "fire",
     "qtpy",
     "pyvista",
     "pyvistaqt",

@@ -5,7 +5,7 @@ import functools
 import os
 import pathlib
 from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar
-from types import SimpleNamespace
+from types import SimpleNamespace, ModuleType
 
 import numpy as np
 import mne
@@ -571,3 +571,40 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
                                  f"inconsistent number of conditions/weights")
         else:
             raise ValueError("Contrasts must be tuples or well-formed dicts")
+
+
+def _get_script_modules() -> Dict[str, Tuple[ModuleType]]:
+    from .scripts import init
+    from .scripts import preprocessing
+    from .scripts import sensor
+    from .scripts import source
+    from .scripts import report
+    from .scripts import freesurfer
+
+    INIT_SCRIPTS = init.SCRIPTS
+    PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
+    SENSOR_SCRIPTS = sensor.SCRIPTS
+    SOURCE_SCRIPTS = source.SCRIPTS
+    REPORT_SCRIPTS = report.SCRIPTS
+    FREESURFER_SCRIPTS = freesurfer.SCRIPTS
+
+    SCRIPT_MODULES = {
+        'init': INIT_SCRIPTS,
+        'freesurfer': FREESURFER_SCRIPTS,
+        'preprocessing': PREPROCESSING_SCRIPTS,
+        'sensor': SENSOR_SCRIPTS,
+        'source': SOURCE_SCRIPTS,
+        'report': REPORT_SCRIPTS,
+    }
+
+    # Do not include the FreeSurfer scripts in "all" – we don't intend to run
+    # recon-all by default!
+    SCRIPT_MODULES['all'] = (
+        SCRIPT_MODULES['init'] +
+        SCRIPT_MODULES['preprocessing'] +
+        SCRIPT_MODULES['sensor'] +
+        SCRIPT_MODULES['source'] +
+        SCRIPT_MODULES['report']
+    )
+
+    return SCRIPT_MODULES

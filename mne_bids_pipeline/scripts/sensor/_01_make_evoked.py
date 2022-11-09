@@ -120,9 +120,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run evoked."""
-    import config
     if config.task_is_rest:
         msg = '    … skipping: for resting-state task.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -143,7 +142,3 @@ def main():
             )
         )
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

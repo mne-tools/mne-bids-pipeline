@@ -111,9 +111,8 @@ def get_config(
     return cfg
 
 
-def main() -> None:
+def main(*, config) -> None:
     """Run find_empty_room."""
-    import config
     if not config.process_empty_room:
         msg = 'Skipping, process_empty_room is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
@@ -137,7 +136,3 @@ def main() -> None:
             run=run,
         ))
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

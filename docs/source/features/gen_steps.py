@@ -14,10 +14,7 @@ The following table provides a concise summary of each step in the Study
 Template. All scripts exist in the `scripts`/ directory.
 """
 
-root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
-# We need to provide some valid config
-config_path = str(root / 'tests' / 'configs' / 'config_ds000248.py')
-script_modules = _get_script_modules(config=config_path)
+script_modules = _get_script_modules()
 
 # Construct the lines of steps.md
 lines = [pre]

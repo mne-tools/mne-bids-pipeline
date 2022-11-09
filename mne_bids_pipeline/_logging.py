@@ -4,9 +4,63 @@ import os
 import pathlib
 from typing import Optional, Union
 
+import coloredlogs
+
 from ._typing import PathLike, LogKwargsT
 
 logger = logging.getLogger('mne-bids-pipeline')
+
+log_level_styles = {
+    'info': {
+        'bright': True,
+        'bold': True,
+    }
+}
+log_field_styles = {
+    'asctime': {
+        'color': 'green'
+    },
+    'step': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
+    'msg': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
+    'box': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
+    },
+}
+log_fmt = '[%(asctime)s] %(box)s%(step)s%(message)s'
+
+
+class LogFilter(logging.Filter):
+    def filter(self, record):
+        if not hasattr(record, 'step'):
+            record.step = ''
+        if not hasattr(record, 'subject'):
+            record.subject = ''
+        if not hasattr(record, 'session'):
+            record.session = ''
+        if not hasattr(record, 'run'):
+            record.run = ''
+        if not hasattr(record, 'box'):
+            record.box = '╶╴'
+
+        return True
+
+
+logger.addFilter(LogFilter())
+
+coloredlogs.install(
+    fmt=log_fmt, level='info', logger=logger,
+    level_styles=log_level_styles, field_styles=log_field_styles,
+)
 
 
 def gen_log_kwargs(

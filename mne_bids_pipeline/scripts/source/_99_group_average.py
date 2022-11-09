@@ -166,8 +166,7 @@ def run_group_average_source(*, cfg, subject='average'):
         )
 
 
-def main():
-    import config
+def main(*, config) -> None:
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
@@ -175,7 +174,3 @@ def main():
 
     log = run_group_average_source(cfg=get_config(config=config))
     save_logs(config=config, logs=[log])
-
-
-if __name__ == '__main__':
-    main()

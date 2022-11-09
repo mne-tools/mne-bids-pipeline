@@ -655,14 +655,9 @@ def run_group_average_sensor(*, cfg, subject='average'):
             )
 
 
-def main():
-    import config
+def main(*, config) -> None:
     log = run_group_average_sensor(
         cfg=get_config(config=config),
         subject='average',
     )
     save_logs(config=config, logs=[log])
-
-
-if __name__ == '__main__':
-    main()

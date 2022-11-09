@@ -53,7 +53,7 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
-def main() -> None:
+def main(*, config) -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
     The script allows to run the freesurfer recon-all
@@ -75,7 +75,6 @@ def main() -> None:
     python run.py --steps=freesurfer --config=your_pipeline_config.py
 
     """  # noqa
-    import config
     logger.info('Running FreeSurfer')
     subjects = get_subjects(config)
     root_dir = get_bids_root(config)
@@ -98,7 +97,3 @@ def main() -> None:
         env = os.environ
         shutil.copytree(f"{env['FREESURFER_HOME']}/subjects/fsaverage",
                         subjects_dir / 'fsaverage')
-
-
-if __name__ == '__main__':
-    main()

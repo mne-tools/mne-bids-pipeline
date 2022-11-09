@@ -158,9 +158,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Apply ICA."""
-    import config
     if not config.spatial_filter == 'ica':
         msg = 'Skipping …'
         with _script_path(__file__):
@@ -181,7 +180,3 @@ def main():
             )
         )
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

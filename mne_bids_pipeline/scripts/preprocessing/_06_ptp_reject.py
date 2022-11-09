@@ -147,9 +147,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run epochs."""
-    import config
     parallel, run_func = parallel_func(drop_ptp, config=config)
 
     with get_parallel_backend(config):
@@ -165,7 +164,3 @@ def main():
             )
         )
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

@@ -73,8 +73,7 @@ def get_config(*, config, subject) -> SimpleNamespace:
     return cfg
 
 
-def main():
-    import config
+def main(*, config) -> None:
     # Ensure we're also processing fsaverage if present
     subjects = get_subjects(config)
     if (Path(get_fs_subjects_dir(config)) / 'fsaverage').exists():
@@ -90,7 +89,3 @@ def main():
                 force_run=config.recreate_scalp_surface,
             ) for subject in subjects
         )
-
-
-if __name__ == '__main__':
-    main()

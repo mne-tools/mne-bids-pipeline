@@ -214,9 +214,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run time-by-time decoding."""
-    import config
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -244,7 +243,3 @@ def main():
         )
         logs.append(log)
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

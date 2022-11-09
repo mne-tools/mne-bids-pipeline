@@ -20,6 +20,7 @@ from ..._config_utils import (
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs, _script_path
 from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _open_report, _sanitize_cond_tag
 
 
 def get_input_fnames_time_frequency(**kwargs):
@@ -52,6 +53,7 @@ def get_input_fnames_time_frequency(**kwargs):
 @failsafe_run(script_path=__file__,
               get_input_fnames=get_input_fnames_time_frequency)
 def run_time_frequency(*, cfg, subject, session, in_files):
+    import matplotlib.pyplot as plt
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
@@ -92,6 +94,50 @@ def run_time_frequency(*, cfg, subject, session, in_files):
         # should update our names and/or MNE's checks.
         power.save(out_files[power_key], overwrite=True, verbose='error')
         itc.save(out_files[itc_key], overwrite=True, verbose='error')
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Adding TFR analysis results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        for condition in cfg.time_frequency_conditions:
+            cond = sanitize_cond_name(condition)
+            fname_tfr_pow_cond = out_files[f'power-{cond}']
+            fname_tfr_itc_cond = out_files[f'itc-{cond}']
+            with mne.use_log_level('error'):  # filename convention
+                power = mne.time_frequency.read_tfrs(
+                    fname_tfr_pow_cond, condition=0)
+                power.apply_baseline(
+                    baseline=cfg.time_frequency_baseline,
+                    mode=cfg.time_frequency_baseline_mode)
+                if cfg.time_frequency_crop:
+                    power.crop(**cfg.time_frequency_crop)
+            kwargs = dict(
+                show=False, fig_facecolor='w', font_color='k', border='k'
+            )
+            fig_power = power.plot_topo(**kwargs)
+            report.add_figure(
+                fig=fig_power,
+                title=f'TFR Power: {condition}',
+                caption=f'TFR Power: {condition}',
+                tags=('time-frequency', _sanitize_cond_tag(condition))
+            )
+            plt.close(fig_power)
+            del power
+
+            with mne.use_log_level('error'):  # filename convention
+                itc = mne.time_frequency.read_tfrs(
+                    fname_tfr_itc_cond, condition=0)
+            fig_itc = itc.plot_topo(**kwargs)
+            report.add_figure(
+                fig=fig_itc,
+                title=f'TFR ITC: {condition}',
+                caption=f'TFR Inter-Trial Coherence: {condition}',
+                tags=('time-frequency', _sanitize_cond_tag(condition))
+            )
+            plt.close(fig_power)
+            del itc
 
     assert len(in_files) == 0, in_files.keys()
     return out_files

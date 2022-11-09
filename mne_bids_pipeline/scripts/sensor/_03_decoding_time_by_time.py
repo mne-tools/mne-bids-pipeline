@@ -17,7 +17,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 
 import mne
 from mne.decoding import (
@@ -39,6 +39,10 @@ from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs
 from ..._parallel import (
     get_parallel_backend, get_n_jobs, get_parallel_backend_name)
+from ..._report import (
+    _open_report, _plot_decoding_time_generalization, _sanitize_cond_tag,
+    _plot_time_by_time_decoding_scores,
+)
 
 
 def get_input_fnames_time_decoding(**kwargs):
@@ -72,6 +76,7 @@ def get_input_fnames_time_decoding(**kwargs):
               get_input_fnames=get_input_fnames_time_decoding)
 def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                       in_files):
+    import matplotlib.pyplot as plt
     if cfg.decoding_time_generalization:
         kind = 'time generalization'
     else:
@@ -180,6 +185,83 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
         )
         tabular_data.to_csv(
             out_files[f'tsv_{processing}'], sep='\t', index=False)
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Adding time-by-time decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        section = 'Decoding: time-by-time'
+        for contrast in cfg.contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                f"{_sanitize_cond_tag(contrast[0])}–"
+                f"{_sanitize_cond_tag(contrast[1])}"
+            )
+
+            processing = f'{a_vs_b}+TimeByTime+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            if not fname_decoding.fpath.is_file():
+                continue
+            decoding_data = loadmat(fname_decoding)
+            del fname_decoding, processing, a_vs_b
+
+            fig = _plot_time_by_time_decoding_scores(
+                times=decoding_data['times'].ravel(),
+                cross_val_scores=decoding_data['scores'],
+                metric=cfg.decoding_metric,
+                time_generalization=cfg.decoding_time_generalization,
+                decim=decoding_data['decim'].item(),
+            )
+            caption = (
+                f'Time-by-time decoding: '
+                f'{len(epochs[cond_1])} × {cond_1} vs. '
+                f'{len(epochs[cond_2])} × {cond_2}'
+            )
+            title = f'Decoding over time: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                caption=caption,
+                section=section,
+                tags=tags,
+            )
+            plt.close(fig)
+
+            if cfg.decoding_time_generalization:
+                fig = _plot_decoding_time_generalization(
+                    decoding_data=decoding_data,
+                    metric=cfg.decoding_metric,
+                    kind='single-subject'
+                )
+                caption = (
+                    'Time generalization (generalization across time, GAT): '
+                    'each classifier is trained on each time point, and '
+                    'tested on all other time points.'
+                )
+                title = f'Time generalization: {cond_1} vs. {cond_2}'
+                report.add_figure(
+                    fig=fig,
+                    title=title,
+                    caption=caption,
+                    section=section,
+                    tags=tags,
+                )
+                plt.close(fig)
+
+            del decoding_data, cond_1, cond_2, caption
+
     assert len(in_files) == 0, in_files.keys()
     return out_files
 

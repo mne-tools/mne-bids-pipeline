@@ -19,11 +19,13 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
     get_eeg_reference, get_decoding_contrasts, get_bids_root,
+    get_all_contrasts,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs
+from ..._report import run_report_average_sensor
 
 
 def average_evokeds(cfg, session):
@@ -155,7 +157,7 @@ def average_time_by_time_decoding(
     subjects = cfg.subjects
     del epochs, fname_epo
 
-    for contrast in cfg.contrasts:
+    for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         if cfg.decoding_time_generalization:
             time_points_shape = (len(times), len(times))
@@ -298,7 +300,7 @@ def average_full_epochs_decoding(
     cfg: SimpleNamespace,
     session: str
 ):
-    for contrast in cfg.contrasts:
+    for contrast in cfg.decoding_contrasts:
         cond_1, cond_2 = contrast
         n_subjects = len(cfg.subjects)
 
@@ -590,7 +592,6 @@ def get_config(
         proc=config.proc,
         deriv_root=get_deriv_root(config),
         conditions=config.conditions,
-        contrasts=get_decoding_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
@@ -599,6 +600,7 @@ def get_config(
         decoding_csp=config.decoding_csp,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
+        decoding_contrasts=get_decoding_contrasts(config),
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,
@@ -614,13 +616,15 @@ def get_config(
         parallel_backend=config.parallel_backend,
         N_JOBS=config.N_JOBS,
         exclude_subjects=config.exclude_subjects,
+        all_contrasts=get_all_contrasts(config),
+        report_evoked_n_time_points=config.report_evoked_n_time_points,
     )
     return cfg
 
 
 # pass 'average' subject for logging
 @failsafe_run(script_path=__file__)
-def run_group_average_sensor(*, cfg, subject='average'):
+def run_group_average_sensor(*, cfg):
     if cfg.task_is_rest:
         msg = '    … skipping: for "rest" task.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -653,11 +657,12 @@ def run_group_average_sensor(*, cfg, subject='average'):
                 for session in get_sessions(config=cfg)
                 for contrast in get_decoding_contrasts(config=cfg)
             )
+        for session in sessions:
+            run_report_average_sensor(cfg=cfg, session=session)
 
 
 def main(*, config) -> None:
     log = run_group_average_sensor(
         cfg=get_config(config=config),
-        subject='average',
     )
     save_logs(config=config, logs=[log])

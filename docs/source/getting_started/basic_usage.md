@@ -91,11 +91,6 @@ Run the pipeline
     mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=source
     ```
 
-    Only generate the report:
-    ```shell
-    mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=report
-    ```
-
     (Re-)run ICA:
     ```shell
     mne_bids_pipeline --config=/path/to/your/custom_config.py --steps=preprocessing/ica

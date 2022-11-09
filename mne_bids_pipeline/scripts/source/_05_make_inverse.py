@@ -17,6 +17,7 @@ from ..._config_utils import (
     get_task, get_datatype, get_deriv_root, get_sessions)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _open_report, _sanitize_cond_tag
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
@@ -79,18 +80,15 @@ def run_inverse(*, cfg, subject, session, in_files):
     else:
         conditions = cfg.conditions
 
+    method = cfg.inverse_method
     if 'evoked' in in_files:
         fname_ave = in_files.pop('evoked')
         evokeds = mne.read_evokeds(fname_ave)
 
         for condition, evoked in zip(conditions, evokeds):
-            method = cfg.inverse_method
             pick_ori = None
-
             cond_str = sanitize_cond_name(condition)
-            inverse_str = method
-            hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-            key = f'{cond_str}+{inverse_str}+{hemi_str}'
+            key = f'{cond_str}+{method}+hemi'
             out_files[key] = fname_ave.copy().update(
                 suffix=key, extension=None)
 
@@ -106,6 +104,33 @@ def run_inverse(*, cfg, subject, session, in_files):
             )
             stc.save(out_files[key], overwrite=True)
             out_files[key] = pathlib.Path(str(out_files[key]) + '-lh.stc')
+
+        with _open_report(cfg=cfg, subject=subject, session=session) as report:
+            for condition in conditions:
+                cond_str = sanitize_cond_name(condition)
+                key = f'{cond_str}+{method}+hemi'
+                if key not in out_files:
+                    continue
+                msg = f'Rendering inverse solution for {condition}'
+                logger.info(
+                    **gen_log_kwargs(
+                        message=msg, subject=subject, session=session)
+                )
+                fname_stc = out_files[key]
+                tags = (
+                    'source-estimate',
+                    _sanitize_cond_tag(condition)
+                )
+                report.add_stc(
+                    stc=fname_stc,
+                    title=f'Source: {condition}',
+                    subject=cfg.fs_subject,
+                    subjects_dir=cfg.fs_subjects_dir,
+                    n_time_points=cfg.report_stc_n_time_points,
+                    tags=tags
+                )
+
+    assert len(in_files) == 0, in_files
     return out_files
 
 
@@ -129,6 +154,7 @@ def get_config(
         inverse_method=config.inverse_method,
         deriv_root=get_deriv_root(config),
         noise_cov=_sanitize_callable(config.noise_cov),
+        report_stc_n_time_points=config.report_stc_n_time_points,
     )
     return cfg
 

@@ -19,6 +19,7 @@ from ..._config_utils import (
 )
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
+from ..._report import _open_report
 from ..._run import (
     failsafe_run, save_logs, _update_for_splits, _sanitize_callable)
 from ..._parallel import parallel_func, get_parallel_backend
@@ -215,11 +216,80 @@ def run_epochs(*, cfg, subject, session, in_files):
         split_size=cfg._epochs_split_size)
     _update_for_splits(out_files, 'epochs')
 
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        if not cfg.task_is_rest:
+            msg = 'Adding events plot to report.'
+            logger.info(
+                **gen_log_kwargs(
+                    message=msg, subject=subject, session=session
+                )
+            )
+            events, event_id, sfreq, first_samp = _get_events(
+                cfg=cfg, subject=subject, session=session
+            )
+            report.add_events(
+                events=events,
+                event_id=event_id,
+                sfreq=sfreq,
+                first_samp=first_samp,
+                title='Events',
+                # caption='Events in filtered continuous data'  # TODO upstream
+            )
+        msg = 'Adding uncleaned epochs to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session
+            )
+        )
+        # Add PSD plots for 30s of data or all epochs if we have less available
+        if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+            psd = True
+        else:
+            psd = 30
+        report.add_epochs(
+            epochs=epochs,
+            title='Epochs: before cleaning',
+            psd=psd,
+            drop_log_ignore=()
+        )
+
+    # Interactive
     if cfg.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
     assert len(in_files) == 0, in_files.keys()
     return out_files
+
+
+# TODO: ideally we wouldn't need this anymore and could refactor the code above
+def _get_events(cfg, subject, session):
+    raws_filt = []
+    raw_fname = BIDSPath(subject=subject,
+                         session=session,
+                         task=cfg.task,
+                         acquisition=cfg.acq,
+                         recording=cfg.rec,
+                         space=cfg.space,
+                         processing='filt',
+                         suffix='raw',
+                         extension='.fif',
+                         datatype=cfg.datatype,
+                         root=cfg.deriv_root,
+                         check=False)
+
+    for run in cfg.runs:
+        this_raw_fname = raw_fname.copy().update(run=run)
+        this_raw_fname = _update_for_splits(this_raw_fname, None, single=True)
+        raw_filt = mne.io.read_raw_fif(this_raw_fname)
+        raws_filt.append(raw_filt)
+        del this_raw_fname
+
+    # Concatenate the filtered raws and extract the events.
+    raw_filt_concat = mne.concatenate_raws(raws_filt, on_mismatch='warn')
+    events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
+    return (events, event_id, raw_filt_concat.info['sfreq'],
+            raw_filt_concat.first_samp)
 
 
 def get_config(

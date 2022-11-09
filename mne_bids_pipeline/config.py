@@ -698,6 +698,20 @@ The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
 """
 
+l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+highpass filter. By default it's `'auto'` and uses default MNE
+parameters.
+"""
+
+h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+lowpass filter. By default it's `'auto'` and uses default MNE
+parameters.
+"""
+
 resample_sfreq: Optional[float] = None
 """
 Specifies at which sampling frequency the data should be resampled.
@@ -981,6 +995,18 @@ epoched, and therefore the conditions should either match or be subsets of
             'weights': [-1.5, -.5, .5, 1.5]
         }
     ]
+    ```
+"""
+
+report_evoked_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each evoked
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 time points per evoked
+    ```python
+    report_evoked_n_time_points = 5
     ```
 """
 
@@ -1879,22 +1905,6 @@ empty list, `[]`.
     ```
 """
 
-###############################################################################
-# ADVANCED
-# --------
-
-report_evoked_n_time_points: Optional[int] = None
-"""
-Specifies the number of time points to display for each evoked
-in the report. If None it defaults to the current default in MNE-Python.
-
-???+ example "Example"
-    Only display 5 time points per evoked
-    ```python
-    report_evoked_n_time_points = 5
-    ```
-"""
-
 report_stc_n_time_points: Optional[int] = None
 """
 Specifies the number of time points to display for each source estimates
@@ -1907,19 +1917,9 @@ in the report. If None it defaults to the current default in MNE-Python.
     ```
 """
 
-l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
-"""
-Specifies the transition bandwidth of the
-highpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
-
-h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
-"""
-Specifies the transition bandwidth of the
-lowpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
+###############################################################################
+# Execution
+# ---------
 
 N_JOBS: int = 1
 """

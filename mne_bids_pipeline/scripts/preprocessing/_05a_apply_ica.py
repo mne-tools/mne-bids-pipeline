@@ -25,9 +25,10 @@ from ..._config_utils import (
     get_subjects, get_sessions, get_task, get_datatype, get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, _update_for_splits, _script_path, save_logs
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
+from ..._report import _open_report
+from ..._run import failsafe_run, _update_for_splits, _script_path, save_logs
 
 
 def get_input_fnames_apply_ica(**kwargs):
@@ -135,6 +136,28 @@ def apply_ica(*, cfg, subject, session, in_files):
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
 
     assert len(in_files) == 0, in_files.keys()
+
+    # Report
+    if ica.exclude:
+        msg = 'Adding ICA to report.'
+    else:
+        msg = 'Skipping ICA addition to report, no components marked as bad.'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+    if ica.exclude:
+        with _open_report(cfg=cfg, subject=subject, session=session) as report:
+            report.add_ica(
+                ica=ica,
+                title='ICA',
+                inst=epochs,
+                picks=ica.exclude
+                # TODO upstream
+                # captions=f'Evoked response (across all epochs) '
+                # f'before and after ICA '
+                # f'({len(ica.exclude)} ICs removed)'
+            )
+
     return out_files
 
 

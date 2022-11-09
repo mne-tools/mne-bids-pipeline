@@ -200,6 +200,9 @@ authors:
     {{ authors.hoechenberger }}, and {{ authors.larsoner }})
 - Add progress bar for time-by-time decoding
   ({{ gh(647) by {{ authors.larsoner }})
+- Make report generation happen within relevant steps instead of at the end
+  of all steps
+  ({{ gh(652) by {{ authors.larsoner }})
 
 ### Behavior changes
 

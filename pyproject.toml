@@ -61,6 +61,7 @@ tests = [
     "openneuro-py >= 2022.2.0",
     "httpx >= 0.20",
     "tqdm",
+    "filelock",
     "Pygments",
     "pyyaml",
 ]

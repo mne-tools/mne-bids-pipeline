@@ -9,7 +9,7 @@ from typing import Dict, Optional, Tuple
 import mne
 import numpy as np
 import pandas as pd
-from mne import BaseEpochs
+import matplotlib.transforms
 from mne.decoding import CSP, UnsupervisedSpatialFilter
 from mne_bids import BIDSPath
 from sklearn.decomposition import PCA
@@ -24,11 +24,15 @@ from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run, _script_path, save_logs
+from ..._report import (
+    _open_report, _sanitize_cond_tag, _plot_full_epochs_decoding_scores,
+    _imshow_tf,
+)
 
 
 def _prepare_labels(
     *,
-    epochs: BaseEpochs,
+    epochs: mne.BaseEpochs,
     contrast: Tuple[str, str]
 ) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
@@ -69,12 +73,12 @@ def _prepare_labels(
 
 def prepare_epochs_and_y(
     *,
-    epochs: BaseEpochs,
+    epochs: mne.BaseEpochs,
     contrast: Tuple[str, str],
     cfg,
     fmin: float,
     fmax: float
-) -> Tuple[BaseEpochs, np.ndarray]:
+) -> Tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
     epochs_filt = (
         epochs
@@ -150,6 +154,7 @@ def one_subject_decoding(
     1. The frequency analysis.
     2. The time-frequency analysis.
     """
+    import matplotlib.pyplot as plt
     condition1, condition2 = contrast
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
@@ -366,10 +371,146 @@ def one_subject_decoding(
         tf_decoding_table.to_excel(
             w, sheet_name='CSP Time-Frequency', index=False
         )
+    out_files = {'csp-excel': fname_results}
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Adding CSP decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        section = 'Decoding: CSP'
+        freq_name_to_bins_map = _handle_csp_args(
+            cfg.decoding_csp_times,
+            cfg.decoding_csp_freqs,
+            cfg.decoding_metric,
+        )
+        all_csp_tf_results = dict()
+        for contrast in cfg.decoding_contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
+            )
+            processing = f'{a_vs_b}+CSP+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.xlsx'
+            )
+            if not fname_decoding.fpath.is_file():
+                continue  # not done yet
+            csp_freq_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Frequency'
+            )
+            csp_freq_results['scores'] = csp_freq_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            csp_tf_results = pd.read_excel(
+                fname_decoding,
+                sheet_name='CSP Time-Frequency'
+            )
+            csp_tf_results['scores'] = csp_tf_results['scores'].apply(
+                lambda x: np.array(x[1:-1].split(), float))
+            all_csp_tf_results[contrast] = csp_tf_results
+            del csp_tf_results
+
+            all_decoding_scores = list()
+            contrast_names = list()
+            for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+                results = csp_freq_results.loc[
+                    csp_freq_results['freq_range_name'] == freq_range_name
+                ]
+                results.reset_index(drop=True, inplace=True)
+                assert len(results['scores']) == len(freq_bins)
+                for bi, freq_bin in enumerate(freq_bins):
+                    all_decoding_scores.append(results['scores'][bi])
+                    f_min = float(freq_bin[0])
+                    f_max = float(freq_bin[1])
+                    contrast_names.append(
+                        f'{freq_range_name}\n'
+                        f'({f_min:0.1f}-{f_max:0.1f} Hz)'
+                    )
+            fig, caption = _plot_full_epochs_decoding_scores(
+                contrast_names=contrast_names,
+                scores=all_decoding_scores,
+                metric=cfg.decoding_metric,
+            )
+            title = f'CSP decoding: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                section=section,
+                caption=caption,
+                tags=tags,
+            )
+            # close figure to save memory
+            plt.close(fig)
+            del fig, caption, title
+
+        # Now, plot decoding scores across time-frequency bins.
+        for contrast in cfg.decoding_contrasts:
+            if contrast not in all_csp_tf_results:
+                continue
+            cond_1, cond_2 = contrast
+            tags = (
+                'epochs',
+                'contrast',
+                'decoding',
+                'csp',
+                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+            )
+            results = all_csp_tf_results[contrast]
+            mean_crossval_scores = list()
+            tmin, tmax, fmin, fmax = list(), list(), list(), list()
+            mean_crossval_scores.extend(
+                results['mean_crossval_score'].ravel())
+            tmin.extend(results['t_min'].ravel())
+            tmax.extend(results['t_max'].ravel())
+            fmin.extend(results['f_min'].ravel())
+            fmax.extend(results['f_max'].ravel())
+            mean_crossval_scores = np.array(mean_crossval_scores, float)
+            fig, ax = plt.subplots(constrained_layout=True)
+            # XXX Add support for more metrics
+            assert cfg.decoding_metric == 'roc_auc'
+            metric = 'ROC AUC'
+            vmax = max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5)
+            ) + 0.5
+            vmin = 0.5 - (vmax - 0.5)
+            img = _imshow_tf(
+                mean_crossval_scores, ax,
+                tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax,
+                vmin=vmin, vmax=vmax)
+            offset = matplotlib.transforms.offset_copy(
+                ax.transData, fig, 6, 0, units='points')
+            for freq_range_name, bins in freq_name_to_bins_map.items():
+                ax.text(tmin[0],
+                        0.5 * bins[0][0] + 0.5 * bins[-1][1],
+                        freq_range_name, transform=offset,
+                        ha='left', va='center', rotation=90)
+            ax.set_xlim([np.min(tmin), np.max(tmax)])
+            ax.set_ylim([np.min(fmin), np.max(fmax)])
+            ax.set_xlabel('Time (s)')
+            ax.set_ylabel('Frequency (Hz)')
+            cbar = fig.colorbar(
+                ax=ax, shrink=0.75, orientation='vertical', mappable=img)
+            cbar.set_label(f'Mean decoding score ({metric})')
+            title = f'CSP TF decoding: {cond_1} vs. {cond_2}'
+            report.add_figure(
+                fig=fig,
+                title=title,
+                section=section,
+                tags=tags,
+            )
 
     assert len(in_files) == 0, in_files.keys()
-
-    out_files = {'csp-excel': fname_results}
     return out_files
 
 

@@ -2,6 +2,7 @@
 
 import optparse
 import os
+import sys
 import pathlib
 from textwrap import dedent
 import time
@@ -12,7 +13,7 @@ import numpy as np
 
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
-from ._logging import logger
+from ._logging import logger, gen_log_kwargs
 
 
 def main():
@@ -182,3 +183,14 @@ def main():
         if hours:
             elapsed = f'{hours}h {elapsed}'
         logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
+
+
+def main_cli():
+    try:
+        main()
+    except Exception as e:
+        message = str(e)
+        logger.critical(**gen_log_kwargs(
+            message=message, emoji='😵'
+        ))
+        sys.exit(1)

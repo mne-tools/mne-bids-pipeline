@@ -14,7 +14,8 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_noise_cov_bids_path, get_subjects, sanitize_cond_name,
-    get_task, get_datatype, get_deriv_root, get_sessions)
+    get_task, get_datatype, get_deriv_root, get_sessions,
+    get_fs_subjects_dir, get_fs_subject)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
@@ -137,6 +138,7 @@ def run_inverse(*, cfg, subject, session, in_files):
 def get_config(
     *,
     config,
+    subject,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         task=get_task(config),
@@ -155,6 +157,8 @@ def get_config(
         deriv_root=get_deriv_root(config),
         noise_cov=_sanitize_callable(config.noise_cov),
         report_stc_n_time_points=config.report_stc_n_time_points,
+        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subjects_dir=get_fs_subjects_dir(config),
     )
     return cfg
 
@@ -170,7 +174,7 @@ def main(*, config) -> None:
         parallel, run_func = parallel_func(run_inverse, config=config)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(config=config, subject=subject),
                 subject=subject,
                 session=session,
             )

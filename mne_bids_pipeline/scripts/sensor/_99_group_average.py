@@ -592,6 +592,7 @@ def get_config(
         proc=config.proc,
         deriv_root=get_deriv_root(config),
         conditions=config.conditions,
+        contrasts=config.contrasts,
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
@@ -618,6 +619,7 @@ def get_config(
         exclude_subjects=config.exclude_subjects,
         all_contrasts=get_all_contrasts(config),
         report_evoked_n_time_points=config.report_evoked_n_time_points,
+        cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
     )
     return cfg
 

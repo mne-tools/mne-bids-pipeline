@@ -538,6 +538,7 @@ def get_config(
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
+        decoding_contrasts=get_decoding_contrasts(config),
         n_boot=config.n_boot,
         random_state=config.random_state,
         interactive=config.interactive

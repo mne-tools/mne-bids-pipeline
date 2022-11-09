@@ -44,6 +44,7 @@ def init_dataset(cfg) -> None:
     _write_json(fname_json, ds_json, overwrite=True)
 
 
+@failsafe_run(script_path=__file__)
 def init_subject_dirs(
     *,
     cfg,
@@ -74,10 +75,8 @@ def get_config(
     return cfg
 
 
-@failsafe_run(script_path=__file__)
-def main():
+def main(*, config):
     """Initialize the output directories."""
-    import config
     with get_parallel_backend(config):
         init_dataset(cfg=get_config(config=config))
         parallel, run_func = parallel_func(init_subject_dirs, config=config)
@@ -93,7 +92,3 @@ def main():
                 get_sessions(config)
             )
         )
-
-
-if __name__ == '__main__':
-    main()

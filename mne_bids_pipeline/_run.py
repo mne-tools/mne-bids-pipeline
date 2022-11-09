@@ -20,7 +20,7 @@ from openpyxl import load_workbook
 import pandas as pd
 from mne_bids import BIDSPath
 
-from ._config_utils import get_task, get_deriv_root
+from ._config_utils import get_task, get_deriv_root, _import_config
 from ._logging import logger, gen_log_kwargs
 from ._typing import PathLike
 
@@ -30,20 +30,21 @@ def failsafe_run(
     get_input_fnames: Optional[Callable] = None,
     get_output_fnames: Optional[Callable] = None,
 ) -> Callable:
-    import config
-    if config.interactive:
-        on_error = 'debug'
-    else:
-        on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR', config.on_error)
-    memory = ConditionalStepMemory(
-        get_input_fnames=get_input_fnames,
-        get_output_fnames=get_output_fnames,
-        memory_file_method=config.memory_file_method,
-    )
-
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            config = _import_config()
+            if config.interactive:
+                on_error = 'debug'
+            else:
+                on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR',
+                                     config.on_error)
+            memory = ConditionalStepMemory(
+                config=config,
+                get_input_fnames=get_input_fnames,
+                get_output_fnames=get_output_fnames,
+                memory_file_method=config.memory_file_method,
+            )
             os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
@@ -125,9 +126,8 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, get_input_fnames, get_output_fnames,
+    def __init__(self, *, config, get_input_fnames, get_output_fnames,
                  memory_file_method):
-        import config
         memory_location = config.memory_location
         if memory_location is True:
             use_location = get_deriv_root(config) / 'joblib'

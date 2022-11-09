@@ -318,9 +318,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run filter."""
-    import config
     with get_parallel_backend(config):
         parallel, run_func = parallel_func(filter_data, config=config)
 
@@ -345,7 +344,3 @@ def main():
         )
 
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

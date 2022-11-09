@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import pathlib
-import logging
+import sys
 import time
-from typing import Union, Optional, Tuple, List, Dict
+from typing import Union, Optional, Tuple, List
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -13,148 +12,11 @@ else:
 from types import ModuleType
 
 import fire
-import coloredlogs
 import numpy as np
 
-
-# Ensure that the "scripts" that we import from is the correct one
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
-
-
-logger = logging.getLogger(__name__)
-
-log_level_styles = {
-    'info': {
-        'bright': True,
-        'bold': True,
-    }
-}
-log_field_styles = {
-    'asctime': {
-        'color': 'green'
-    },
-    'step': {
-        'color': 'cyan',
-        'bold': True,
-        'bright': True,
-    },
-    'msg': {
-        'color': 'cyan',
-        'bold': True,
-        'bright': True,
-    },
-    'box': {
-        'color': 'cyan',
-        'bold': True,
-        'bright': True,
-    },
-}
-log_fmt = '[%(asctime)s] %(box)s%(step)s%(message)s'
-
-
-class LogFilter(logging.Filter):
-    def filter(self, record):
-        if not hasattr(record, 'step'):
-            record.step = ''
-        if not hasattr(record, 'subject'):
-            record.subject = ''
-        if not hasattr(record, 'session'):
-            record.session = ''
-        if not hasattr(record, 'run'):
-            record.run = ''
-        if not hasattr(record, 'box'):
-            record.box = '╶╴'
-
-        return True
-
-
-logger.addFilter(LogFilter())
-
-coloredlogs.install(
-    fmt=log_fmt, level='info', logger=logger,
-    level_styles=log_level_styles, field_styles=log_field_styles,
-)
-
-PathLike = Union[str, pathlib.Path]
-
-
-def _get_script_modules(
-    *,
-    config: PathLike,
-    root_dir: Optional[PathLike] = None,
-    subject: Optional[str] = None,
-    session: Optional[str] = None,
-    task: Optional[str] = None,
-    run: Optional[str] = None,
-    interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None,
-    on_error: Optional[str] = None,
-    cache: Optional[str] = None,
-) -> Dict[str, Tuple[ModuleType]]:
-    env = os.environ
-    env['MNE_BIDS_STUDY_CONFIG'] = config
-
-    if root_dir:
-        env['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
-
-    if task:
-        env['MNE_BIDS_STUDY_TASK'] = task
-
-    if session:
-        env['MNE_BIDS_STUDY_SESSION'] = session
-
-    if run:
-        env['MNE_BIDS_STUDY_RUN'] = run
-
-    if subject:
-        env['MNE_BIDS_STUDY_SUBJECT'] = subject
-
-    if interactive:
-        env['MNE_BIDS_STUDY_INTERACTIVE'] = interactive
-
-    if n_jobs:
-        env['MNE_BIDS_STUDY_NJOBS'] = n_jobs
-
-    if on_error:
-        env['MNE_BIDS_STUDY_ON_ERROR'] = on_error
-
-    if cache:
-        env['MNE_BIDS_STUDY_USE_CACHE'] = cache
-
-    from .scripts import init
-    from .scripts import preprocessing
-    from .scripts import sensor
-    from .scripts import source
-    from .scripts import report
-    from .scripts import freesurfer
-
-    INIT_SCRIPTS = init.SCRIPTS
-    PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
-    SENSOR_SCRIPTS = sensor.SCRIPTS
-    SOURCE_SCRIPTS = source.SCRIPTS
-    REPORT_SCRIPTS = report.SCRIPTS
-    FREESURFER_SCRIPTS = freesurfer.SCRIPTS
-
-    SCRIPT_MODULES = {
-        'init': INIT_SCRIPTS,
-        'freesurfer': FREESURFER_SCRIPTS,
-        'preprocessing': PREPROCESSING_SCRIPTS,
-        'sensor': SENSOR_SCRIPTS,
-        'source': SOURCE_SCRIPTS,
-        'report': REPORT_SCRIPTS,
-    }
-
-    # Do not include the FreeSurfer scripts in "all" – we don't intend to run
-    # recon-all by default!
-    SCRIPT_MODULES['all'] = (
-        SCRIPT_MODULES['init'] +
-        SCRIPT_MODULES['preprocessing'] +
-        SCRIPT_MODULES['sensor'] +
-        SCRIPT_MODULES['source'] +
-        SCRIPT_MODULES['report']
-    )
-
-    return SCRIPT_MODULES
+from ._config_utils import _get_script_modules, _import_config
+from ._logging import logger
+from ._typing import PathLike
 
 
 Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
@@ -260,20 +122,28 @@ def process(
             processing_steps.append(None)
 
     config = str(pathlib.Path(config).expanduser())
-    SCRIPT_MODULES = _get_script_modules(
-        config=config,
-        root_dir=root_dir,
-        subject=subject,
-        session=session,
-        task=task,
-        run=run,
-        interactive=interactive,
-        n_jobs=n_jobs,
-        on_error=on_error,
-        cache=cache,
-    )
+    os.environ['MNE_BIDS_STUDY_CONFIG'] = config
+    if root_dir:
+        os.environ['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
+    if subject:
+        os.environ['MNE_BIDS_STUDY_SUBJECT'] = subject
+    if session:
+        os.environ['MNE_BIDS_STUDY_SESSION'] = session
+    if task:
+        os.environ['MNE_BIDS_STUDY_TASK'] = task
+    if run:
+        os.environ['MNE_BIDS_STUDY_RUN'] = run
+    if interactive:
+        os.environ['MNE_BIDS_STUDY_INTERACTIVE'] = interactive
+    if n_jobs:
+        os.environ['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+    if on_error:
+        os.environ['MNE_BIDS_STUDY_ON_ERROR'] = on_error
+    if cache:
+        os.environ['MNE_BIDS_STUDY_USE_CACHE'] = cache
 
     script_modules: List[ModuleType] = []
+    SCRIPT_MODULES = _get_script_modules()
     for stage, step in zip(processing_stages, processing_steps):
         if stage not in SCRIPT_MODULES.keys():
             raise ValueError(
@@ -308,13 +178,14 @@ def process(
         f"🧾 Using configuration: {config}"
     )
 
+    config_imported = _import_config()
     for script_module in script_modules:
         this_name = script_module.__name__.split('.', maxsplit=1)[-1]
         this_name = this_name.replace('.', '/')
         extra = dict(box='┌╴', step=f'🚀 {this_name} ')
         start = time.time()
         logger.info('Now running  👇', extra=extra)
-        script_module.main()
+        script_module.main(config=config_imported)
         extra = dict(box='└╴', step=f'🎉 {this_name} ')
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)
@@ -336,7 +207,3 @@ def main():
     if '--help' in sys.argv or '-h' in sys.argv:
         sys.argv = sys.argv[:1] + ['--help']
     fire.Fire(process)
-
-
-if __name__ == '__main__':
-    main()

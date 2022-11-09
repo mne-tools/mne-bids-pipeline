@@ -319,9 +319,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run maxwell_filter."""
-    import config
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
         with _script_path(__file__):
@@ -349,7 +348,3 @@ def main():
         )
 
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

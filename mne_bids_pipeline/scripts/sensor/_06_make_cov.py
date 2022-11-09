@@ -12,7 +12,7 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
-    get_noise_cov_bids_path
+    get_noise_cov_bids_path, _import_config,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs, _sanitize_callable
@@ -123,7 +123,7 @@ def retrieve_custom_cov(
 ):
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
-    import config
+    config = _import_config()
     assert cfg.noise_cov == 'custom'
     assert callable(config.noise_cov)
     assert in_files == {}, in_files  # unknown
@@ -213,9 +213,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run cov."""
-    import config
     cfg = get_config(config=config)
 
     if not cfg.run_source_estimation:
@@ -242,7 +241,3 @@ def main():
             )
         )
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

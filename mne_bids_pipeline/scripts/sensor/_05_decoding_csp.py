@@ -404,9 +404,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run all subjects decoding in parallel."""
-    import config
     if not config.contrasts or not config.decoding_csp:
         if not config.contrasts:
             msg = 'No contrasts specified. '
@@ -436,7 +435,3 @@ def main():
             for contrast in get_decoding_contrasts(config)
         )
         save_logs(logs=logs, config=config)
-
-
-if __name__ == '__main__':
-    main()

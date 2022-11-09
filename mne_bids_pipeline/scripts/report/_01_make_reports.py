@@ -2084,9 +2084,8 @@ def _agg_backend():
         matplotlib.use(backend, force=True)
 
 
-def main():
+def main(*, config) -> None:
     """Make reports."""
-    import config
     with get_parallel_backend(config), _agg_backend():
         parallel, run_func = parallel_func(run_report, config=config)
         sessions = get_sessions(config=config)
@@ -2124,7 +2123,3 @@ def main():
             for session in sessions
         ))
         save_logs(logs=logs, config=config)
-
-
-if __name__ == '__main__':
-    main()

@@ -59,9 +59,8 @@ def get_config(
     return cfg
 
 
-def main():
+def main(*, config) -> None:
     """Run forward."""
-    import config
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
@@ -89,7 +88,3 @@ def main():
             for subject in subjects
         )
     save_logs(config=config, logs=logs)
-
-
-if __name__ == '__main__':
-    main()

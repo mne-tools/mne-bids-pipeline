@@ -37,7 +37,8 @@ from ..._config_utils import (
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs
-from ..._parallel import get_parallel_backend, get_n_jobs
+from ..._parallel import (
+    get_parallel_backend, get_n_jobs, get_parallel_backend_name)
 
 
 def get_input_fnames_time_decoding(**kwargs):
@@ -71,7 +72,11 @@ def get_input_fnames_time_decoding(**kwargs):
               get_input_fnames=get_input_fnames_time_decoding)
 def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                       in_files):
-    msg = f'Contrasting conditions: {condition1} – {condition2}'
+    if cfg.decoding_time_generalization:
+        kind = 'time generalization'
+    else:
+        kind = 'sliding estimator'
+    msg = f'Contrasting conditions ({kind}): {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
     out_files = dict()
@@ -103,6 +108,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
 
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
+    # ProgressBar does not work on dask, so only enable it if not using dask
+    verbose = get_parallel_backend_name(cfg) != "dask"
     with get_parallel_backend(cfg):
         clf = make_pipeline(
             StandardScaler(),
@@ -134,7 +141,8 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
             cv_scoring_n_jobs = cfg.n_jobs
 
         scores = cross_val_multiscore(
-            estimator, X=X, y=y, cv=cv, n_jobs=cv_scoring_n_jobs
+            estimator, X=X, y=y, cv=cv, n_jobs=cv_scoring_n_jobs,
+            verbose=verbose,  # ensure ProgressBar is shown (can be slow)
         )
 
         # let's save the scores now

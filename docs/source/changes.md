@@ -198,6 +198,8 @@ authors:
    (CSP).
    ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }},
     {{ authors.hoechenberger }}, and {{ authors.larsoner }})
+- Add progress bar for time-by-time decoding
+  ({{ gh(647) by {{ authors.larsoner }})
 
 ### Behavior changes
 

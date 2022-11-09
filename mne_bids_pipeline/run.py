@@ -155,7 +155,8 @@ def _get_script_modules(
 
 
 def main():
-    parser = optparse.OptionParser()
+    from . import __version__
+    parser = optparse.OptionParser(version=f'%prog {__version__}')
     parser.add_option(
         '-c', '--config', dest='config', default=None, metavar='FILE',
         help='The path of the pipeline configuration file to use.')

@@ -2,18 +2,15 @@
 
 import copy
 import functools
-import importlib
 import os
 import pathlib
 from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar
 from types import SimpleNamespace, ModuleType
 
-import matplotlib
 import numpy as np
 import mne
 import mne_bids
 from mne_bids import BIDSPath
-from mne.utils import _check_option
 
 from ._logging import logger, gen_log_kwargs
 from ._typing import Literal, ArbitraryContrast, _keys_arbitrary_contrast

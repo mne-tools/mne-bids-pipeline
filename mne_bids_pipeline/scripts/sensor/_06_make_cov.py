@@ -12,8 +12,9 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
-    get_noise_cov_bids_path, _import_config,
+    get_noise_cov_bids_path,
 )
+from ..._config_import import _import_config
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 from ..._parallel import get_parallel_backend, parallel_func

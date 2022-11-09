@@ -13,7 +13,9 @@ from mne_bids import BIDSPath, get_head_mri_trans
 from ..._config_utils import (
     get_fs_subject, get_subjects, _get_bem_conductivity, get_fs_subjects_dir,
     get_task, get_runs, get_datatype, get_deriv_root, get_bids_root,
-    _meg_in_ch_types, get_sessions, _import_config)
+    _meg_in_ch_types, get_sessions,
+)
+from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs

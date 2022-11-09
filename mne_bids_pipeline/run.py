@@ -14,7 +14,8 @@ from types import ModuleType
 import fire
 import numpy as np
 
-from ._config_utils import _get_script_modules, _import_config
+from ._config_utils import _get_script_modules
+from ._config_import import _import_config
 from ._logging import logger
 from ._typing import PathLike
 

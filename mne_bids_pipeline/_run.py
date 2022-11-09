@@ -20,7 +20,8 @@ from openpyxl import load_workbook
 import pandas as pd
 from mne_bids import BIDSPath
 
-from ._config_utils import get_task, get_deriv_root, _import_config
+from ._config_utils import get_task, get_deriv_root
+from ._config_import import _import_config
 from ._logging import logger, gen_log_kwargs
 from ._typing import PathLike
 

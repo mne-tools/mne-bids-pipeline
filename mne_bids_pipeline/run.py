@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 
+import optparse
 import os
 import sys
 import pathlib
 import logging
+from textwrap import dedent
 import time
 from typing import Union, Optional, Tuple, List, Dict
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 from types import ModuleType
 
-import fire
 import coloredlogs
 import numpy as np
 
@@ -157,94 +154,80 @@ def _get_script_modules(
     return SCRIPT_MODULES
 
 
-Step_T = Union[Literal['preprocessing', 'sensor', 'source', 'report', 'all',
-                       'freesurfer'], str]
-Steps_T = Union[Step_T, Tuple[Step_T]]
-
-
-def process(
-    *,
-    config: PathLike,
-    steps: Optional[Steps_T] = None,
-    root_dir: Optional[PathLike] = None,
-    subject: Optional[str] = None,
-    session: Optional[str] = None,
-    task: Optional[str] = None,
-    run: Optional[str] = None,
-    interactive: Optional[str] = None,
-    n_jobs: Optional[str] = None,
-    debug: Optional[str] = None,
-    cache: Optional[str] = None,
-    **kwargs: Optional[dict],
-):
-    """Run the BIDS pipeline.
-
-    Parameters
-    ----------
-    config
-        The path of the pipeline configuration file to use.
-    steps
+def main():
+    parser = optparse.OptionParser()
+    parser.add_option(
+        '-c', '--config', dest='config', default=None, metavar='FILE',
+        help='The path of the pipeline configuration file to use.')
+    parser.add_option(
+        '--steps', dest='steps', default='all',
+        help=dedent("""\
         The processing steps to run.
         Can either be one of the processing groups 'preprocessing', sensor',
         'source', 'report',  or 'all',  or the name of a processing group plus
         the desired script sans the step number and
         filename extension, separated by a '/'. For example, to run ICA, you
         would pass 'sensor/run_ica`. If unspecified, will run all processing
-        steps. Can also be a tuple of steps.
-    root_dir
-        BIDS root directory of the data to process.
-    subject
-        The subject to process.
-    session
-        The session to process.
-    task
-        The task to process.
-    run
-        The run to process.
-    interactive
-        Whether or not to enable "interactive" mode.
-    n_jobs
-        The number of parallel processes to execute.
-    debug
-        Whether or not to force on_error='debug'.
-    cache
-        Whether or not to use caching.
-    **kwargs
-        Should not be used. Only used to detect invalid arguments.
-    """
-    if kwargs:
-        raise ValueError(f"Unknown argument(s) to run.py: {list(kwargs)}")
-    if steps is None:
-        steps = ('all',)
-    elif isinstance(steps, str) and ',' in steps:
+        steps. Can also be a tuple of steps."""))
+    parser.add_option(
+        '--root-dir', dest='root_dir', default=None,
+        help="BIDS root directory of the data to process.")
+    parser.add_option(
+        '--subject', dest='subject', default=None,
+        help="The subject to process.")
+    parser.add_option(
+        '--session', dest='session', default=None,
+        help="The session to process.")
+    parser.add_option(
+        '--task', dest='task', default=None,
+        help="The task to process.")
+    parser.add_option(
+        '--run', dest='run', default=None,
+        help="The run to process.")
+    parser.add_option(
+        '--n_jobs', dest='n_jobs', type='int', default=None,
+        help="The number of parallel processes to execute.")
+    parser.add_option(
+        '--interactive', dest='interactive', action='store_true',
+        help="Enable interactive mode.")
+    parser.add_option(
+        '--debug', dest='debug', action='store_true',
+        help="Enable debugging on error.")
+    parser.add_option(
+        '--no-cache', dest='no_cache', action='store_true',
+        help='Disable caching of intermediate results.')
+    options, args = parser.parse_args()
+    config = options.config
+    bad_msg = (
+        'You must specify a configuration file as a single argument '
+        'or with --config.'
+    )
+    if config is None:
+        if len(args) == 1:
+            config = args[0]
+        else:
+            raise ValueError(bad_msg)
+    elif len(args):
+        raise ValueError(bad_msg)
+    steps = options.steps
+    root_dir = options.root_dir
+    subject, session = options.subject, options.session
+    task, run = options.task, options.run
+    n_jobs = options.n_jobs
+    interactive, debug = options.interactive, options.debug
+    cache = not options.no_cache
+
+    if isinstance(steps, str) and ',' in steps:
         # Work around limitation in Fire: --steps=foo,bar/baz won't produce a
         # tuple ('foo', 'bar/baz'), but a string 'foo,bar/baz'.
         steps = tuple(steps.split(','))
     elif isinstance(steps, str):
         steps = (steps,)
 
-    assert isinstance(steps, tuple)
-
-    # Fire auto-detects the input parameter values, but this means e.g. that an
-    # unquoted subject ID "123" will be treated as an int. To avoid this, cast
-    # input values to str.
-    # Note that parameters values starting with a zero padding are
-    # automatically treated as strings by Fire, and are not affected by the
-    # following block of type casts.
-    if subject is not None:
-        subject = str(subject)
-    if session is not None:
-        session = str(session)
-    if run is not None:
-        run = str(run)
-    if task is not None:
-        task = str(task)
-    if interactive is not None:
-        interactive = '1' if interactive in ['1', 'True', True] else '0'
     if n_jobs is not None:
         n_jobs = str(n_jobs)
-    on_error = 'debug' if debug is not None else debug
-    cache = '1' if cache != 0 else '0'
+    on_error = 'debug' if debug else None
+    cache = '1' if cache else '0'
 
     processing_stages = []
     processing_steps = []
@@ -328,14 +311,6 @@ def process(
         if hours:
             elapsed = f'{hours}h {elapsed}'
         logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
-
-
-def main():
-    # Fire does not seem to detect a "--help" in all locations, so let's do it
-    # manually.
-    if '--help' in sys.argv or '-h' in sys.argv:
-        sys.argv = sys.argv[:1] + ['--help']
-    fire.Fire(process)
 
 
 if __name__ == '__main__':

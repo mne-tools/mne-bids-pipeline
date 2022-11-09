@@ -189,9 +189,8 @@ def run_tests(test_suite, *, download, debug, cache):
             f'--steps={",".join(steps)}',
             f'--task={task}' if task else '',
             f'--n_jobs={n_jobs}' if n_jobs else '',
-            '--debug=1' if debug else '',
-            '--cache=0' if not cache else '',
-            '--interactive=0'
+            '--debug' if debug else '',
+            '--no-cache' if not cache else '',
         ]
         command = [x for x in command if x != '']  # Eliminate "empty" items
         subprocess.check_call(command)

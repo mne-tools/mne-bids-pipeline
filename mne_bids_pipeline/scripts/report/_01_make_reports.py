@@ -1375,13 +1375,17 @@ def run_report(
 
 def add_event_counts(*,
                      cfg,
+                     subject: Optional[str],
                      session: Optional[str],
                      report: mne.Report) -> None:
     try:
         df_events = count_events(BIDSPath(root=cfg.bids_root,
                                           session=session))
     except ValueError:
-        logger.warning('Could not read events.')
+        msg = 'Could not read events.'
+        logger.warning(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
         df_events = None
 
     if df_events is not None:
@@ -1475,7 +1479,7 @@ def run_report_average(*, cfg, subject: str, session: str) -> None:
     #
     # Add event stats.
     #
-    add_event_counts(cfg=cfg, report=report, session=session)
+    add_event_counts(cfg=cfg, report=report, subject=subject, session=session)
 
     #######################################################################
     #

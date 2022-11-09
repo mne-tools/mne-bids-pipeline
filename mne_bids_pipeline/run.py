@@ -2,6 +2,7 @@
 
 import optparse
 import os
+import shutil
 import pathlib
 from textwrap import dedent
 import time
@@ -18,6 +19,11 @@ from ._logging import logger
 def main():
     from . import __version__
     parser = optparse.OptionParser(version=f'%prog {__version__}')
+    parser.add_option(
+        '--create-config', dest='create_config', default=None, metavar='FILE',
+        help="Create a template configuration file with the specified name. "
+             "If specified, all other parameters will be ignored."
+    ),
     parser.add_option(
         '-c', '--config', dest='config', default=None, metavar='FILE',
         help='The path of the pipeline configuration file to use.')
@@ -59,6 +65,22 @@ def main():
         '--no-cache', dest='no_cache', action='store_true',
         help='Disable caching of intermediate results.')
     options, args = parser.parse_args()
+
+    if options.create_config is not None:
+        template_config_target = pathlib.Path(options.create_config)
+        template_config_source = pathlib.Path(__file__).parent / 'config.py'
+        if template_config_target.exists():
+            raise FileExistsError(
+                f'The specified path already exists: {template_config_target}'
+            )
+        shutil.copy(src=template_config_source, dst=template_config_target)
+        # XXX use proper logging mechanism once #651 has been merged
+        print(
+            f'Successfully created template configuration file at: '
+            f'{template_config_target}'
+        )
+        return
+
     config = options.config
     bad_msg = (
         'You must specify a configuration file as a single argument '

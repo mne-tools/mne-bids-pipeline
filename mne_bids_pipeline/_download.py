@@ -1,4 +1,5 @@
 """Download test data."""
+import argparse
 from pathlib import Path
 
 import mne
@@ -143,3 +144,14 @@ def main(dataset):
         ds_path = mne_data_dir / ds_name
         _download(ds_name=ds_name, ds_path=ds_path)
         print()
+
+
+if __name__ == '__main__':  # pragma: no cover
+    # This is only used by CircleCI
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        dest='dataset', help='Name of the dataset', metavar='DATASET',
+        nargs='?', default=None)
+    opt = parser.parse_args()
+    dataset = opt.dataset if opt.dataset != '' else None
+    main(dataset)

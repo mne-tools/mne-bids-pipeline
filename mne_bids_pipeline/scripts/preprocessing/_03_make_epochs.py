@@ -20,7 +20,8 @@ from ..._config_utils import (
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
 from ..._run import (
-    failsafe_run, save_logs, _update_for_splits, _sanitize_callable)
+    failsafe_run, save_logs, _update_for_splits, _sanitize_callable,
+    auto_script_path)
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -63,8 +64,9 @@ def get_input_fnames_epochs(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_epochs)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_epochs,
+)
 def run_epochs(*, cfg, subject, session, in_files):
     """Extract epochs for one subject."""
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
@@ -260,6 +262,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run epochs."""
     with get_parallel_backend(config):

@@ -10,7 +10,7 @@ import mne
 from ..._config_utils import (
     get_fs_subject, get_fs_subjects_dir, get_subjects)
 from ..._logging import logger, gen_log_kwargs
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -30,9 +30,10 @@ def get_output_fnames_setup_source_space(*, cfg, subject):
     return out_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_setup_source_space,
-              get_output_fnames=get_output_fnames_setup_source_space)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_setup_source_space,
+    get_output_fnames=get_output_fnames_setup_source_space,
+)
 def run_setup_source_space(*, cfg, subject, in_files):
     msg = f'Creating source space with spacing {repr(cfg.spacing)}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
@@ -59,6 +60,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run forward."""
     if not config.run_source_estimation:

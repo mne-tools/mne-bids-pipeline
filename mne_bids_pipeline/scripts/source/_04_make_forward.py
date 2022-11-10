@@ -18,7 +18,7 @@ from ..._config_utils import (
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 
 
 def _prepare_trans_template(cfg, info):
@@ -106,8 +106,9 @@ def get_input_fnames_forward(*, cfg, subject, session):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_forward)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_forward,
+)
 def run_forward(*, cfg, subject, session, in_files):
     bids_path = BIDSPath(subject=subject,
                          session=session,
@@ -184,6 +185,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run forward."""
     if not config.run_source_estimation:

@@ -16,7 +16,7 @@ from ..._config_utils import (
 )
 from ..._logging import gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run
+from ..._run import failsafe_run, auto_script_path
 
 PathLike = Union[str, Path]
 logger = logging.getLogger('mne-bids-pipeline')
@@ -42,9 +42,10 @@ def get_output_fnames_coreg_surfaces(*, cfg, subject):
     return out_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_coreg_surfaces,
-              get_output_fnames=get_output_fnames_coreg_surfaces)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_coreg_surfaces,
+    get_output_fnames=get_output_fnames_coreg_surfaces,
+)
 def make_coreg_surfaces(
     cfg: SimpleNamespace,
     subject: str,
@@ -73,6 +74,7 @@ def get_config(*, config, subject) -> SimpleNamespace:
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     # Ensure we're also processing fsaverage if present
     subjects = get_subjects(config)

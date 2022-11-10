@@ -16,7 +16,9 @@ from ..._config_utils import (
 )
 from ..._config_import import _import_config
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _sanitize_callable
+from ..._run import (
+    failsafe_run, save_logs, _sanitize_callable, auto_script_path,
+)
 from ..._parallel import get_parallel_backend, parallel_func
 
 
@@ -170,8 +172,9 @@ def _get_cov_type(cfg):
         return 'epochs'
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_cov)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_cov,
+)
 def run_covariance(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(
@@ -214,6 +217,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run cov."""
     cfg = get_config(config=config)

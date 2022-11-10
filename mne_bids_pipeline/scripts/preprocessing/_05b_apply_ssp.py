@@ -16,7 +16,9 @@ from ..._config_utils import (
     get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, _update_for_splits, _script_path, save_logs
+from ..._run import (
+    failsafe_run, _update_for_splits, auto_script_path, save_logs,
+)
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -42,8 +44,9 @@ def get_input_fnames_apply_ssp(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_apply_ssp)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_apply_ssp,
+)
 def apply_ssp(*, cfg, subject, session, in_files):
     # load epochs to reject ICA components
     # compute SSP on first run of raw
@@ -86,12 +89,12 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Apply ssp."""
     if not config.spatial_filter == 'ssp':
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

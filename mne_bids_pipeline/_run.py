@@ -1,9 +1,9 @@
 """Script-running utilities."""
 
-import contextlib
 import copy
 import functools
 import hashlib
+import inspect
 import os
 import pathlib
 import pdb
@@ -23,18 +23,15 @@ from mne_bids import BIDSPath
 from ._config_utils import get_task, get_deriv_root
 from ._config_import import _import_config
 from ._logging import logger, gen_log_kwargs
-from ._typing import PathLike
 
 
 def failsafe_run(
-    script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
     get_output_fnames: Optional[Callable] = None,
 ) -> Callable:
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
-            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             config = _import_config()
             on_error = config.on_error
             memory = ConditionalStepMemory(
@@ -312,23 +309,18 @@ def save_logs(
     writer.close()
 
 
-@contextlib.contextmanager
-def _script_path(script_path: PathLike):
-    # Usually failsafe_run dec sets MNE_BIDS_STUDY_SCRIPT_PATH so that log
-    # kwargs can be set properly. However, if the script gets skipped
-    # outside/before the failsafe_run, whatever the last SCRIPT_PATH was
-    # set will be used, so logs will be incorrect. This context manager
-    # sets it temporarily
-    key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
-    orig_val = os.getenv(key, None)
-    os.environ[key] = str(script_path)
-    try:
-        yield
-    finally:
-        if orig_val is None:
+def auto_script_path(func):
+    """Wrap func while setting MNE_BIDS_STUDY_SCRIPT_PATH."""
+    @functools.wraps(func)
+    def fun(*args, **kwargs):
+        script_path = inspect.getfile(func)
+        key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
+        os.environ[key] = str(script_path)
+        try:
+            func(*args, **kwargs)
+        finally:
             del os.environ[key]
-        else:
-            os.environ[key] = orig_val
+    return fun
 
 
 def _update_for_splits(

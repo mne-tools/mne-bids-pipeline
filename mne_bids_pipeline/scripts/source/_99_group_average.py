@@ -16,7 +16,7 @@ from ..._config_utils import (
     get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 
 
 def morph_stc(cfg, subject, fs_subject, session=None):
@@ -130,7 +130,7 @@ def get_config(
 
 
 # pass 'average' subject for logging
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
 
@@ -166,6 +166,7 @@ def run_group_average_source(*, cfg, subject='average'):
         )
 
 
+@auto_script_path
 def main(*, config) -> None:
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'

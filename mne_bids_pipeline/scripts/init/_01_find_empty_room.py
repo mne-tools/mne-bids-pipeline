@@ -11,7 +11,8 @@ from ..._config_utils import (
     get_runs)
 from ..._io import _empty_room_match_path, _write_json
 from ..._logging import gen_log_kwargs, logger
-from ..._run import _update_for_splits, failsafe_run, save_logs
+from ..._run import (
+    _update_for_splits, failsafe_run, save_logs, auto_script_path)
 
 
 def get_input_fnames_find_empty_room(
@@ -52,8 +53,9 @@ def get_input_fnames_find_empty_room(
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_find_empty_room)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_find_empty_room,
+)
 def find_empty_room(
     *,
     subject: str,
@@ -111,6 +113,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run find_empty_room."""
     if not config.process_empty_room:

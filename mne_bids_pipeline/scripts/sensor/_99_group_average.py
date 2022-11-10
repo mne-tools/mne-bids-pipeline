@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 
 
 def average_evokeds(cfg, session):
@@ -619,7 +619,7 @@ def get_config(
 
 
 # pass 'average' subject for logging
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def run_group_average_sensor(*, cfg, subject='average'):
     if cfg.task_is_rest:
         msg = '    … skipping: for "rest" task.'
@@ -655,6 +655,7 @@ def run_group_average_sensor(*, cfg, subject='average'):
             )
 
 
+@auto_script_path
 def main(*, config) -> None:
     log = run_group_average_sensor(
         cfg=get_config(config=config),

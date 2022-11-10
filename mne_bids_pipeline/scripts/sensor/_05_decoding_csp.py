@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, _script_path, save_logs
+from ..._run import failsafe_run, auto_script_path, save_logs
 
 
 def _prepare_labels(
@@ -133,7 +133,6 @@ def get_input_fnames_csp(**kwargs):
 
 
 @failsafe_run(
-    script_path=__file__,
     get_input_fnames=get_input_fnames_csp
 )
 def one_subject_decoding(
@@ -404,6 +403,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run all subjects decoding in parallel."""
     if not config.contrasts or not config.decoding_csp:
@@ -413,8 +413,7 @@ def main(*, config) -> None:
             msg = 'No CSP analysis requested. '
 
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

@@ -20,7 +20,9 @@ from ..._config_utils import (
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs
+from ..._run import (
+    failsafe_run, _update_for_splits, save_logs, auto_script_path,
+)
 from ..._reject import _get_reject
 
 
@@ -48,8 +50,9 @@ def get_input_fnames_drop_ptp(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_drop_ptp)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_drop_ptp,
+)
 def drop_ptp(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')
@@ -147,6 +150,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run epochs."""
     parallel, run_func = parallel_func(drop_ptp, config=config)

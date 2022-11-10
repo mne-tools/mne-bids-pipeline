@@ -11,7 +11,7 @@ from ..._config_utils import (
     get_deriv_root, get_all_contrasts,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -39,8 +39,9 @@ def get_input_fnames_evoked(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_evoked)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_evoked,
+)
 def run_evoked(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['evoked'] = in_files['epochs'].copy().update(
@@ -120,6 +121,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run evoked."""
     if config.task_is_rest:

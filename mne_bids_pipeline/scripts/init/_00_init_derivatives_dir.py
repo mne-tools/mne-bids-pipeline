@@ -14,7 +14,7 @@ from ..._config_utils import (
     get_datatype, get_deriv_root, get_subjects, get_sessions)
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run
+from ..._run import failsafe_run, auto_script_path
 
 
 def init_dataset(cfg) -> None:
@@ -44,7 +44,7 @@ def init_dataset(cfg) -> None:
     _write_json(fname_json, ds_json, overwrite=True)
 
 
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def init_subject_dirs(
     *,
     cfg,
@@ -75,6 +75,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config):
     """Initialize the output directories."""
     with get_parallel_backend(config):

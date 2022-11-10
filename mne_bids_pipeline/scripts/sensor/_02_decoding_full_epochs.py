@@ -29,7 +29,7 @@ from ..._config_utils import (
     get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, auto_script_path
 from ..._decoding import LogReg
 from ..._parallel import parallel_func, get_parallel_backend
 
@@ -60,8 +60,9 @@ def get_input_fnames_epochs_decoding(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_epochs_decoding)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_epochs_decoding,
+)
 def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
                         in_files):
     msg = f'Contrasting conditions: {condition1} – {condition2}'
@@ -170,6 +171,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:

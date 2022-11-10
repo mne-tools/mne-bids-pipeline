@@ -17,7 +17,9 @@ from ..._config_utils import (
     get_task, get_datatype, get_deriv_root, get_sessions)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs, _sanitize_callable
+from ..._run import (
+    failsafe_run, save_logs, _sanitize_callable, auto_script_path,
+)
 
 
 def get_input_fnames_inverse(*, cfg, subject, session):
@@ -46,8 +48,9 @@ def get_input_fnames_inverse(*, cfg, subject, session):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_inverse)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_inverse,
+)
 def run_inverse(*, cfg, subject, session, in_files):
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs
@@ -133,6 +136,7 @@ def get_config(
     return cfg
 
 
+@auto_script_path
 def main(*, config) -> None:
     """Run inv."""
     if not config.run_source_estimation:

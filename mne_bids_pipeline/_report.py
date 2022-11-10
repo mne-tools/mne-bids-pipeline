@@ -500,15 +500,20 @@ def add_event_counts(*,
 
 def add_system_info(report: mne.Report):
     """Add system information and the pipeline configuration to the report."""
-
     config_path = Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
+    # ensure they are always appended
+    titles = ['Configuration file', 'System information']
+    for title in titles:
+        report.remove(title=title, remove_all=True)
+    # No longer need replace=True in these
     report.add_code(
         code=config_path,
-        title='Configuration file',
+        title=titles[0],
         tags=('configuration',),
-        replace=True,
     )
-    report.add_sys_info(title='System information', replace=True)
+    report.add_sys_info(
+        title=titles[1],
+    )
 
 
 def _all_conditions(*, cfg):

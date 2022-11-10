@@ -9,6 +9,7 @@ CONFIG_SOURCE_PATH = Path(__file__).parent / '_config.py'
 
 def create_template_config(
     target_path: Path,
+    *,
     overwrite: bool = False,
 ) -> None:
     """Create a template configuration file.

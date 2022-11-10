@@ -53,17 +53,19 @@ We recommend that
         ```
         Please see [the tutorials of `mne_bids`](https://mne.tools/mne-bids/stable/use.html) for more information.
 
-Adjust your configuration file
-------------------------------
+Create a configuration file
+---------------------------
 
-The pipeline ships with a default configuration file,
-[`config.py`](https://github.com/mne-tools/mne-bids-pipeline/blob/main/config.py).
-You need to **create a copy** of that configuration file and adjust all
-parameters that are relevant to your data processing and analysis.
+All parameters of the pipeline are controlled via a configuration file. You can
+create a template configuration file by running the following command:
 
-!!! warning "Do not modify the scripts and default configuration file."
-    You should **only** need to modify the **copy** of the configuration file.
-    **None of the scripts from the pipeline should be edited!**
+???+ example "Create a template configuration file"
+    ```shell
+    mne_bids_pipeline --create-config=/path/to/your/custom_config.py
+    ```
+
+You can then edit the file and adjust all parameters that are relevant to your
+data processing and analysis.
 
 Run the pipeline
 ----------------

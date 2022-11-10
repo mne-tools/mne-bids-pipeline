@@ -18,7 +18,7 @@ so you would preserve only the power in the 1Hz to 120 Hz band.
 If you need more fancy analysis, you are already likely past this kind
 of tips! 😇
 
-::: mne_bids_pipeline.config.l_freq
-::: mne_bids_pipeline.config.h_freq
-::: mne_bids_pipeline.config.l_trans_bandwidth
-::: mne_bids_pipeline.config.h_trans_bandwidth
+::: mne_bids_pipeline._config.l_freq
+::: mne_bids_pipeline._config.h_freq
+::: mne_bids_pipeline._config.l_trans_bandwidth
+::: mne_bids_pipeline._config.h_trans_bandwidth

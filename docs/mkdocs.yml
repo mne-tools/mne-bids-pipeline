@@ -98,7 +98,7 @@ plugins:
                     docstring_style: numpy
         watch:
             - .
-            - ./mne_bids_pipeline/config.py
+            - ./mne_bids_pipeline/_config.py
 markdown_extensions:
     - admonition
     - abbr

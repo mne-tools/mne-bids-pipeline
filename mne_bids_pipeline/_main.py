@@ -2,6 +2,7 @@
 
 import optparse
 import os
+import sys
 import pathlib
 from textwrap import dedent
 import time
@@ -12,15 +13,24 @@ import numpy as np
 
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
-from ._logging import logger
+from ._config_template import create_template_config
+from ._logging import logger, gen_log_kwargs
 
 
 def main():
     from . import __version__
     parser = optparse.OptionParser(version=f'%prog {__version__}')
     parser.add_option(
+        '--create-config', dest='create_config', default=None, metavar='FILE',
+        help='Create a template configuration file with the specified name. '
+             'If specified, all other parameters will be ignored.'
+    ),
+    parser.add_option(
         '-c', '--config', dest='config', default=None, metavar='FILE',
-        help='The path of the pipeline configuration file to use.')
+        help='The path of the pipeline configuration file to use. The create '
+              'a template configuration file, use the --create-config '
+              'parameter'
+    )
     parser.add_option(
         '--steps', dest='steps', default='all',
         help=dedent("""\
@@ -59,10 +69,16 @@ def main():
         '--no-cache', dest='no_cache', action='store_true',
         help='Disable caching of intermediate results.')
     options, args = parser.parse_args()
+
+    if options.create_config is not None:
+        target_path = pathlib.Path(options.create_config)
+        create_template_config(target_path=target_path, overwrite=False)
+        return
+
     config = options.config
     bad_msg = (
-        'You must specify a configuration file as a single argument '
-        'or with --config.'
+        'You must specify the path to a configuration file as a single '
+        'argument or via --config'
     )
     if config is None:
         if len(args) == 1:
@@ -182,3 +198,14 @@ def main():
         if hours:
             elapsed = f'{hours}h {elapsed}'
         logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
+
+
+def main_cli():
+    try:
+        main()
+    except Exception as e:
+        message = str(e)
+        logger.critical(**gen_log_kwargs(
+            message=message, emoji='❌'
+        ))
+        sys.exit(1)

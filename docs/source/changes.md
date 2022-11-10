@@ -200,6 +200,8 @@ authors:
     {{ authors.hoechenberger }}, and {{ authors.larsoner }})
 - Add progress bar for time-by-time decoding
   ({{ gh(647) by {{ authors.larsoner }})
+- A template configuration file can now be created via `mne_bids_pipeline --create-config`
+  ({{ gh(653) }} by {{ authors.hoechenberger }})
 
 ### Behavior changes
 

@@ -2,7 +2,6 @@
 
 import optparse
 import os
-import shutil
 import pathlib
 from textwrap import dedent
 import time
@@ -21,12 +20,15 @@ def main():
     parser = optparse.OptionParser(version=f'%prog {__version__}')
     parser.add_option(
         '--create-config', dest='create_config', default=None, metavar='FILE',
-        help="Create a template configuration file with the specified name. "
-             "If specified, all other parameters will be ignored."
+        help='Create a template configuration file with the specified name. '
+             'If specified, all other parameters will be ignored.'
     ),
     parser.add_option(
         '-c', '--config', dest='config', default=None, metavar='FILE',
-        help='The path of the pipeline configuration file to use.')
+        help='The path of the pipeline configuration file to use. The create '
+              'a template configuration file, use the --create-config '
+              'parameter'
+    )
     parser.add_option(
         '--steps', dest='steps', default='all',
         help=dedent("""\
@@ -67,17 +69,29 @@ def main():
     options, args = parser.parse_args()
 
     if options.create_config is not None:
-        template_config_target = pathlib.Path(options.create_config)
-        template_config_source = pathlib.Path(__file__).parent / 'config.py'
-        if template_config_target.exists():
+        config_target_path = pathlib.Path(options.create_config)
+        config_source_path = pathlib.Path(__file__).parent / 'config.py'
+        if config_target_path.exists():
             raise FileExistsError(
-                f'The specified path already exists: {template_config_target}'
+                f'The specified path already exists: {config_target_path}'
             )
-        shutil.copy(src=template_config_source, dst=template_config_target)
+
+        # Create a template by commenting out most of the lines in config.py
+        config: List[str] = []
+        with open(config_source_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = (
+                    line if line.startswith(('#', '\n', 'import', 'from'))
+                    else f'# {line}'
+                )
+                config.append(line)
+
+        config_target_path.write_text(''.join(config), encoding='utf-8')
+
         # XXX use proper logging mechanism once #651 has been merged
         print(
             f'Successfully created template configuration file at: '
-            f'{template_config_target}'
+            f'{config_target_path}'
         )
         return
 

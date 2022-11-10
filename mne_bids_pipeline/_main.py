@@ -64,20 +64,18 @@ def main():
     options = parser.parse_args()
     config = options.config
     config_switch = options.config_switch
-    bad_msg = (
-        'You must specify a configuration file as a single argument '
-        'or with --config.'
-    )
     bad = False
     if config is None:
         if config_switch is None:
-            bad = True
+            bad = 'neither was provided'
         else:
             config = config_switch
     elif config_switch is not None:
-        bad = True
+        bad = 'both were provided'
     if bad:
-        parser.error(bad_msg)
+        parser.error(
+            'You must specify a configuration file either as a single '
+            f'argument or with --config, but {bad}.')
     steps = options.steps
     root_dir = options.root_dir
     subject, session = options.subject, options.session

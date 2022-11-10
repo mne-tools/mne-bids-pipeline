@@ -333,7 +333,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
             ls -al *.xml
-      - codecov/upload:
+      - codecov/upload
       - store_test_results:
           path: ./
       - store_artifacts:

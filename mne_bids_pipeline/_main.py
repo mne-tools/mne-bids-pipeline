@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import sys
 import pathlib
 from textwrap import dedent
 import time
@@ -13,7 +12,7 @@ import numpy as np
 
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
-from ._logging import logger, gen_log_kwargs
+from ._logging import logger
 
 
 def main():

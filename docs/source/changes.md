@@ -195,11 +195,11 @@ authors:
   and [`time_frequency_crop`][mne_bids_pipeline.config.time_frequency_crop].
   ({{ gh(641) }} by {{ authors.agramfort }})
 - Add time-frequency decoding based on [common spatial patterns](https://mne.tools/stable/auto_examples/decoding/decoding_csp_timefreq.html)
-   (CSP).
-   ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }},
-    {{ authors.hoechenberger }}, and {{ authors.larsoner }})
+  (CSP).
+  ({{ gh(625) }} by {{ authors.crsegerie }}, {{ authors.agramfort }},
+  {{ authors.hoechenberger }}, and {{ authors.larsoner }})
 - Add progress bar for time-by-time decoding
-  ({{ gh(647) by {{ authors.larsoner }})
+  ({{ gh(647) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

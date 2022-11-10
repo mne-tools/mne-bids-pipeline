@@ -118,9 +118,9 @@ def main():
     if run:
         os.environ['MNE_BIDS_STUDY_RUN'] = run
     if interactive:
-        os.environ['MNE_BIDS_STUDY_INTERACTIVE'] = interactive
+        os.environ['MNE_BIDS_STUDY_INTERACTIVE'] = str(int(interactive))
     if n_jobs:
-        os.environ['MNE_BIDS_STUDY_NJOBS'] = n_jobs
+        os.environ['MNE_BIDS_STUDY_NJOBS'] = str(n_jobs)
     if on_error:
         os.environ['MNE_BIDS_STUDY_ON_ERROR'] = on_error
     if cache:
@@ -162,7 +162,7 @@ def main():
         f"🧾 Using configuration: {config}"
     )
 
-    config_imported = _import_config()
+    config_imported = _import_config(log=True)
     for script_module in script_modules:
         this_name = script_module.__name__.split('.', maxsplit=1)[-1]
         this_name = this_name.replace('.', '/')
@@ -189,6 +189,9 @@ def main_cli():
     try:
         main()
     except Exception as e:
+        if os.getenv('MNE_BIDS_STUDY_VERBOSE_EXIT', '').lower() in \
+                 ('1', 'true'):
+            raise
         message = str(e)
         logger.critical(**gen_log_kwargs(
             message=message, emoji='😵'

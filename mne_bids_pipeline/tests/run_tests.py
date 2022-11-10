@@ -5,13 +5,13 @@ import sys
 import shutil
 import os
 from pathlib import Path
-import argparse
 from typing import Collection, Dict, Optional
 if sys.version_info >= (3, 8):
     from typing import TypedDict
 else:
     from typing_extensions import TypedDict
 
+import numpy as np
 
 BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
 
@@ -122,7 +122,7 @@ TEST_SUITE: Dict[str, TestOptionsT] = {
 }
 
 
-def run_tests(test_suite, *, download, debug, cache):
+def run_tests(test_suite, *, download):
     """Run a suite of tests.
 
     Parameters
@@ -133,16 +133,12 @@ def run_tests(test_suite, *, download, debug, cache):
         elements function handles to be called.
     download : bool
         Whether to (re-)download the test dataset.
-    debug : bool
-        If True, force debug mode.
-    cache : bool
-        If True (default), use cache. If False, recompute everything.
 
     Notes
     -----
     For every entry in the dict, the function `fetch` is called.
-
     """
+    os.environ['MNE_BIDS_STUDY_VERBOSE_EXIT'] = 'true'
     for dataset, test_options in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset
@@ -173,12 +169,6 @@ def run_tests(test_suite, *, download, debug, cache):
                 dst=Path('~/mne_data/ds001971/participants.tsv').expanduser()
             )
 
-        # Test the `--n_jobs` parameter
-        if dataset == 'ds000117':
-            n_jobs = '1'
-        else:
-            n_jobs = '1' if debug else None
-
         # Run the tests.
         steps = test_options.get(
             'steps', ('preprocessing', 'sensor', 'report'))
@@ -187,67 +177,50 @@ def run_tests(test_suite, *, download, debug, cache):
             'mne_bids_pipeline',
             f'--config={config_path}',
             f'--steps={",".join(steps)}',
-            f'--task={task}' if task else '',
-            f'--n_jobs={n_jobs}' if n_jobs else '',
-            '--debug' if debug else '',
-            '--no-cache' if not cache else '',
-        ]
+            f'--task={task}' if task else '']
+        command.extend(sys.argv[1:])
         command = [x for x in command if x != '']  # Eliminate "empty" items
         subprocess.check_call(command)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('dataset', help='dataset to test. A key in the '
-                                        'TEST_SUITE dictionary, or ALL, '
-                                        'to test all datasets.')
-    parser.add_argument('--download', choices=['0', '1'], default='0',
-                        help='Whether to (re-)download the dataset.',
-                        nargs='?')
-    parser.add_argument('--debug', '-d', choices=['0', '1'], default='0',
-                        nargs='?', help='Run in debug mode')
-    parser.add_argument('--no-cache', dest='cache', action='store_false',
-                        help='Do not use cache')
-
-    args = parser.parse_args()
-    dataset = args.dataset
-    download = args.download
-    if download is None:  # --download
-        download = '0'
-    download = bool(int(download))
-    debug = args.debug
-    if debug is None:  # --debug
-        debug = '1'
-    debug = bool(int(debug))
-    cache = args.cache
-    # Triage the dataset and raise informative error if it does not exist
-    if dataset == 'ALL':
-        test_suite = TEST_SUITE
+    # Don't argparse, just take the first arg, --download (if present), and
+    # pass all the rest
+    try:
+        download = sys.argv.index('--download')
+    except ValueError:
+        download = False
     else:
-        test_suite = {dataset: TEST_SUITE.get(dataset, 'n/a')}
-
-    if 'n/a' in test_suite.values():
-        if os.environ.get('DATASET') is None:
-            parser.print_help()
+        sys.argv.pop(download)
+        download = True
+    which = np.where([not x.startswith('-') for x in sys.argv[1:]])[0]
+    dataset = [sys.argv[w + 1] for w in which]
+    if len(dataset) != 1:
+        raise RuntimeError(
+            'run_tests.py requires exactly one argument, the dataset name, '
+            f'got {dataset}')
+    dataset = sys.argv.pop(which[0] + 1)
+    if dataset != 'ALL' and dataset not in TEST_SUITE:
         print('\n')
         extra = ''
-        matches = difflib.get_close_matches(args.dataset, TEST_SUITE.keys())
+        matches = difflib.get_close_matches(dataset, TEST_SUITE.keys())
         if matches:
             extra = f'\n\nDid you mean one of {matches}?'
         print(
-            f'\n\n{repr(args.dataset)}" is not a valid dataset key in the '
+            f'\n\n{repr(dataset)}" is not a valid dataset key in the '
             f'TEST_SUITE dictionary in the run_tests.py module.{extra}\n\n'
             f'Valid options: {", ".join(sorted(TEST_SUITE.keys()))}.\n'
         )
-        raise KeyError(f'{repr(args.dataset)} is not a valid dataset key.')
+        raise KeyError(f'{repr(dataset)} is not a valid dataset key.')
+
+    if dataset == 'ALL':
+        test_suite = TEST_SUITE
+    else:
+        test_suite = {dataset: TEST_SUITE[dataset]}
 
     # Run the tests
-    extra = ''
-    if download:
-        extra += ' after downloading data'
-    if debug:
-        extra += ' in debug mode'
+    extra = ' after downloading data' if download else ''
     print(f'📝 Running the following tests{extra}: '
           f'{", ".join(test_suite.keys())}')
 
-    run_tests(test_suite, download=download, debug=debug, cache=cache)
+    run_tests(test_suite, download=download)

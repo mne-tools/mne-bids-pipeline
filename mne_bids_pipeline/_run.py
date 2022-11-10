@@ -34,19 +34,14 @@ def failsafe_run(
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             config = _import_config()
-            if config.interactive:
-                on_error = 'debug'
-            else:
-                on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR',
-                                     config.on_error)
+            on_error = config.on_error
             memory = ConditionalStepMemory(
                 config=config,
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
-                memory_file_method=config.memory_file_method,
             )
-            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
             if "cfg" in kwargs_copy:
@@ -127,8 +122,7 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, config, get_input_fnames, get_output_fnames,
-                 memory_file_method):
+    def __init__(self, *, config, get_input_fnames, get_output_fnames):
         memory_location = config.memory_location
         if memory_location is True:
             use_location = get_deriv_root(config) / 'joblib'
@@ -143,7 +137,7 @@ class ConditionalStepMemory:
             self.memory = None
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
-        self.memory_file_method = memory_file_method
+        self.memory_file_method = config.memory_file_method
 
     def cache(self, func):
 

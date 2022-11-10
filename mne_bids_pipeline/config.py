@@ -1989,6 +1989,9 @@ on_error: OnErrorT = 'abort'
 Whether to abort processing as soon as an error occurs, continue with all other
 processing steps for as long as possible, or drop you into a debugger in case
 of an error.
+
+Note: Note
+    Enabling debug mode deactivates parallel processing.
 """
 
 memory_location: Optional[Union[PathLike, bool]] = True

@@ -1,1 +1,1 @@
-::: mne_bids_pipeline.config.run_source_estimation
+::: mne_bids_pipeline._config.run_source_estimation

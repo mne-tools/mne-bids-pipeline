@@ -26,7 +26,7 @@ def test_options_documented():
     settings_path = root_path.parent / "docs" / "source" / "settings"
     assert settings_path.is_dir()
     in_doc = set()
-    key = "::: mne_bids_pipeline.config."
+    key = "::: mne_bids_pipeline._config."
     allowed_duplicates = set(
         [
             "source_info_path_update",

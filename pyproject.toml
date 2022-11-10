@@ -66,7 +66,7 @@ tests = [
 ]
 
 [project.scripts]
-mne_bids_pipeline = "mne_bids_pipeline.run:main"
+mne_bids_pipeline = "mne_bids_pipeline._main:main_cli"
 
 [project.urls]
 homepage = "https://mne.tools/mne-bids-pipeline"

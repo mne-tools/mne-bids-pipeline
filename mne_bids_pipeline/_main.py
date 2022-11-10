@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import optparse
+import argparse
 import os
 import sys
 import pathlib
@@ -18,11 +18,14 @@ from ._logging import logger, gen_log_kwargs
 
 def main():
     from . import __version__
-    parser = optparse.OptionParser(version=f'%prog {__version__}')
-    parser.add_option(
-        '-c', '--config', dest='config', default=None, metavar='FILE',
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--version', action='version', version=f'%(prog)s {__version__}')
+    parser.add_argument('config', nargs='?', default=None)
+    parser.add_argument(
+        '--config', dest='config_switch', default=None, metavar='FILE',
         help='The path of the pipeline configuration file to use.')
-    parser.add_option(
+    parser.add_argument(
         '--steps', dest='steps', default='all',
         help=dedent("""\
         The processing steps to run.
@@ -32,46 +35,50 @@ def main():
         filename extension, separated by a '/'. For example, to run ICA, you
         would pass 'sensor/run_ica`. If unspecified, will run all processing
         steps. Can also be a tuple of steps."""))
-    parser.add_option(
+    parser.add_argument(
         '--root-dir', dest='root_dir', default=None,
         help="BIDS root directory of the data to process.")
-    parser.add_option(
+    parser.add_argument(
         '--subject', dest='subject', default=None,
         help="The subject to process.")
-    parser.add_option(
+    parser.add_argument(
         '--session', dest='session', default=None,
         help="The session to process.")
-    parser.add_option(
+    parser.add_argument(
         '--task', dest='task', default=None,
         help="The task to process.")
-    parser.add_option(
+    parser.add_argument(
         '--run', dest='run', default=None,
         help="The run to process.")
-    parser.add_option(
-        '--n_jobs', dest='n_jobs', type='int', default=None,
+    parser.add_argument(
+        '--n_jobs', dest='n_jobs', type=int, default=None,
         help="The number of parallel processes to execute.")
-    parser.add_option(
+    parser.add_argument(
         '--interactive', dest='interactive', action='store_true',
         help="Enable interactive mode.")
-    parser.add_option(
+    parser.add_argument(
         '--debug', dest='debug', action='store_true',
         help="Enable debugging on error.")
-    parser.add_option(
+    parser.add_argument(
         '--no-cache', dest='no_cache', action='store_true',
         help='Disable caching of intermediate results.')
-    options, args = parser.parse_args()
+    options = parser.parse_args()
     config = options.config
+    config_switch = options.config_switch
     bad_msg = (
         'You must specify a configuration file as a single argument '
         'or with --config.'
     )
+    bad = False
     if config is None:
-        if len(args) == 1:
-            config = args[0]
+        if config_switch is None:
+            bad = True
         else:
-            raise ValueError(bad_msg)
-    elif len(args):
-        raise ValueError(bad_msg)
+            config = config_switch
+    elif config_switch is not None:
+        bad = True
+    if bad:
+        parser.error(bad_msg)
     steps = options.steps
     root_dir = options.root_dir
     subject, session = options.subject, options.session
@@ -183,17 +190,3 @@ def main():
         if hours:
             elapsed = f'{hours}h {elapsed}'
         logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
-
-
-def main_cli():
-    try:
-        main()
-    except Exception as e:
-        if os.getenv('MNE_BIDS_STUDY_VERBOSE_EXIT', '').lower() in \
-                 ('1', 'true'):
-            raise
-        message = str(e)
-        logger.critical(**gen_log_kwargs(
-            message=message, emoji='😵'
-        ))
-        sys.exit(1)

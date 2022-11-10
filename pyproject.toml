@@ -102,3 +102,4 @@ addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=
 testpaths = [
     "mne_bids_pipeline",
 ]
+junit_family = "xunit2"

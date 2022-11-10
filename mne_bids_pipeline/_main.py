@@ -12,6 +12,7 @@ import numpy as np
 
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
+from ._config_template import create_template_config
 from ._logging import logger
 
 
@@ -24,6 +25,11 @@ def main():
     parser.add_argument(
         '--config', dest='config_switch', default=None, metavar='FILE',
         help='The path of the pipeline configuration file to use.')
+    parser.add_argument(
+        '--create-config', dest='create_config', default=None, metavar='FILE',
+        help='Create a template configuration file with the specified name. '
+             'If specified, all other parameters will be ignored.'
+    ),
     parser.add_argument(
         '--steps', dest='steps', default='all',
         help=dedent("""\
@@ -62,6 +68,12 @@ def main():
         '--no-cache', dest='no_cache', action='store_true',
         help='Disable caching of intermediate results.')
     options = parser.parse_args()
+
+    if options.create_config is not None:
+        target_path = pathlib.Path(options.create_config)
+        create_template_config(target_path=target_path, overwrite=False)
+        return
+
     config = options.config
     config_switch = options.config_switch
     bad = False

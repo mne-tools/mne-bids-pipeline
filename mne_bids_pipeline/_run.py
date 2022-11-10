@@ -88,7 +88,7 @@ def failsafe_run(
                             )
                         )
                     logger.critical(**gen_log_kwargs(
-                        message=message, **kwargs_copy, emoji='😵'
+                        message=message, **kwargs_copy, emoji='❌'
                     ))
                     sys.exit(1)
                 elif on_error == 'debug':

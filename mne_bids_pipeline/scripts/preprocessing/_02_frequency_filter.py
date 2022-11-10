@@ -1,6 +1,6 @@
 """Apply low- and high-pass filters.
 
-The data are bandpass filtered to the frequencies defined in config.py
+The data are bandpass filtered to the frequencies defined in the config
 (config.h_freq - config.l_freq Hz) using linear-phase fir filter with
 delay compensation.
 The transition bandwidth is automatically defined. See

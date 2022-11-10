@@ -13,7 +13,7 @@ from ._logging import logger, gen_log_kwargs
 def _import_config(*, check: bool = True, log: bool = False) -> ModuleType:
     """Import the default config and the user's config."""
     # Get the default
-    from . import config
+    from . import _config as config
     # Update with user config
     _update_with_user_config(config=config, log=log)
     # Check it

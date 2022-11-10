@@ -96,13 +96,13 @@ def failsafe_run(
                             )
                         )
                     logger.critical(**gen_log_kwargs(
-                        message=message, **kwargs_copy
+                        message=message, **kwargs_copy, emoji='😵'
                     ))
                     sys.exit(1)
                 elif on_error == 'debug':
                     message += '\n\nStarting post-mortem debugger.'
                     logger.critical(**gen_log_kwargs(
-                        message=message, **kwargs_copy
+                        message=message, **kwargs_copy, emoji='🐛'
                     ))
                     extype, value, tb = sys.exc_info()
                     traceback.print_exc()
@@ -111,7 +111,7 @@ def failsafe_run(
                 else:
                     message += '\n\nContinuing pipeline run.'
                     logger.critical(**gen_log_kwargs(
-                        message=message, **kwargs_copy
+                        message=message, **kwargs_copy, emoji='🔂'
                     ))
             log_info['time'] = round(time.time() - t0, ndigits=1)
             return log_info

@@ -184,9 +184,14 @@ def _rename_events_func(
                f'they are not present in the BIDS input data:\n'
                f'{", ".join(sorted(list(events_not_in_raw)))}')
         if cfg.on_rename_missing_events == 'warn':
-            logger.warning(msg)
-        else:
+            logger.warning(
+                **gen_log_kwargs(message=msg, subject=subject, session=session)
+            )
+        elif cfg.on_rename_missing_events == 'raise':
             raise ValueError(msg)
+        else:
+            # should be guaranteed
+            assert cfg.on_rename_missing_events == 'ignore'
 
     # Do the actual event renaming.
     msg = 'Renaming events …'

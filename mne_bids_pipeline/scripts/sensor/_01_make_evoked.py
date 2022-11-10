@@ -124,6 +124,7 @@ def run_evoked(*, cfg, subject, session, in_files):
                 noise_cov=noise_cov,
                 n_time_points=cfg.report_evoked_n_time_points,
                 tags=tags,
+                replace=True,
             )
 
     # Interaction

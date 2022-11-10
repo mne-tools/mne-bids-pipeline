@@ -765,13 +765,13 @@ Pass an empty dictionary to not perform any renaming.
     ```
 """
 
-on_rename_missing_events: Literal['warn', 'raise'] = 'raise'
+on_rename_missing_events: Literal['warn', 'raise', 'ignore'] = 'raise'
 """
 How to handle the situation where you specified an event to be renamed via
 ``rename_events``, but this particular event is not present in the data. By
 default, we will raise an exception to avoid accidental mistakes due to typos;
 however, if you're sure what you're doing, you may change this to ``'warn'``
-to only get a warning instead.
+to only get a warning instead, or ``'ignore'`` to ignore it completely.
 """
 
 ###############################################################################

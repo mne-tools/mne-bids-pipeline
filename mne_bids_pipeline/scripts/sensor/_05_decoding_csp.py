@@ -448,6 +448,7 @@ def one_subject_decoding(
                 section=section,
                 caption=caption,
                 tags=tags,
+                replace=True,
             )
             # close figure to save memory
             plt.close(fig)
@@ -508,6 +509,7 @@ def one_subject_decoding(
                 title=title,
                 section=section,
                 tags=tags,
+                replace=True,
             )
 
     assert len(in_files) == 0, in_files.keys()

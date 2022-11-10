@@ -480,7 +480,8 @@ def add_event_counts(*,
             f'{df_events.to_html(classes=css_classes, border=0)}\n'
             f'</div>',
             title='Event counts',
-            tags=('events',)
+            tags=('events',),
+            replace=True,
         )
         css = ('.event-counts {\n'
                '  display: -webkit-box;\n'
@@ -493,7 +494,8 @@ def add_event_counts(*,
                'th, td {\n'
                '  text-align: center;\n'
                '}\n')
-        report.add_custom_css(css=css)
+        if css not in report.include:
+            report.add_custom_css(css=css)
 
 
 def add_system_info(report: mne.Report):
@@ -503,9 +505,10 @@ def add_system_info(report: mne.Report):
     report.add_code(
         code=config_path,
         title='Configuration file',
-        tags=('configuration',)
+        tags=('configuration',),
+        replace=True,
     )
-    report.add_sys_info(title='System information')
+    report.add_sys_info(title='System information', replace=True)
 
 
 def _all_conditions(*, cfg):
@@ -582,7 +585,8 @@ def run_report_average_sensor(*, cfg, session: str) -> None:
             projs=False,
             tags=tags,
             n_time_points=cfg.report_evoked_n_time_points,
-            # captions=evoked.comment  # TODO upstream
+            # captions=evoked.comment,  # TODO upstream
+            replace=True,
         )
 
     #######################################################################
@@ -649,7 +653,8 @@ def run_report_average_source(*, cfg, session: str) -> None:
                 subject='fsaverage',
                 subjects_dir=cfg.fs_subjects_dir,
                 n_time_points=cfg.report_stc_n_time_points,
-                tags=tags
+                tags=tags,
+                replace=True,
             )
 
 
@@ -713,7 +718,8 @@ def add_decoding_grand_average(
             'decoding',
             *[f'{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}'
               for cond_1, cond_2 in cfg.decoding_contrasts]
-        )
+        ),
+        replace=True,
     )
     # close figure to save memory
     plt.close(fig)
@@ -767,6 +773,7 @@ def add_decoding_grand_average(
                 caption=caption,
                 section=section,
                 tags=tags,
+                replace=True,
             )
             plt.close(fig)
 
@@ -789,6 +796,7 @@ def add_decoding_grand_average(
                 caption=caption,
                 section=section,
                 tags=tags,
+                replace=True,
             )
             plt.close(fig)
 
@@ -811,6 +819,7 @@ def add_decoding_grand_average(
                 caption=caption,
                 section=section,
                 tags=tags,
+                replace=True,
             )
             plt.close(fig)
 
@@ -952,6 +961,7 @@ def add_csp_grand_average(
             caption='Mean decoding scores. Error bars represent '
                     'bootstrapped 95% confidence intervals.',
             tags=tags,
+            replace=True,
         )
 
     # Now, plot decoding scores across time-frequency bins.
@@ -1084,6 +1094,7 @@ def add_csp_grand_average(
                     f'(clustering bins with absolute t-values > '
                     f'{round(cluster_t_threshold, 3)}).',
             tags=tags,
+            replace=True,
         )
 
 

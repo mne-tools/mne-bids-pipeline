@@ -121,7 +121,8 @@ def run_time_frequency(*, cfg, subject, session, in_files):
                 fig=fig_power,
                 title=f'TFR Power: {condition}',
                 caption=f'TFR Power: {condition}',
-                tags=('time-frequency', _sanitize_cond_tag(condition))
+                tags=('time-frequency', _sanitize_cond_tag(condition)),
+                replace=True,
             )
             plt.close(fig_power)
             del power
@@ -134,7 +135,8 @@ def run_time_frequency(*, cfg, subject, session, in_files):
                 fig=fig_itc,
                 title=f'TFR ITC: {condition}',
                 caption=f'TFR Inter-Trial Coherence: {condition}',
-                tags=('time-frequency', _sanitize_cond_tag(condition))
+                tags=('time-frequency', _sanitize_cond_tag(condition)),
+                replace=True,
             )
             plt.close(fig_power)
             del itc

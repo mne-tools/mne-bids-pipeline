@@ -130,7 +130,8 @@ def apply_ica(*, cfg, subject, session, in_files):
         ica=ica,
         title='Effects of ICA cleaning',
         inst=epochs.copy().apply_baseline(cfg.baseline),
-        picks=picks
+        picks=picks,
+        replace=True,
     )
     report.save(
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
@@ -151,11 +152,12 @@ def apply_ica(*, cfg, subject, session, in_files):
                 ica=ica,
                 title='ICA',
                 inst=epochs,
-                picks=ica.exclude
+                picks=ica.exclude,
                 # TODO upstream
                 # captions=f'Evoked response (across all epochs) '
                 # f'before and after ICA '
                 # f'({len(ica.exclude)} ICs removed)'
+                replace=True,
             )
 
     return out_files

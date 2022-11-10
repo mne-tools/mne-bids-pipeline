@@ -288,7 +288,8 @@ def filter_data(
                 fig=figs,
                 caption=captions,
                 title='Data Quality',
-                tags=tags
+                tags=tags,
+                replace=True,
             )
             for fig in figs:
                 plt.close(fig)
@@ -313,7 +314,8 @@ def filter_data(
                 butterfly=5,
                 psd=plot_raw_psd,
                 tags=('raw', 'filtered', f'run-{fname.run}'),
-                # caption=fname.basename  # TODO upstream
+                # caption=fname.basename,  # TODO upstream
+                replace=True,
             )
 
     return out_files

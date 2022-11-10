@@ -168,8 +168,12 @@ def run_ssp(*, cfg, subject, session, in_files):
                 f'(from {len(proj_epochs.drop_log)} original events)'
             )
             report.add_figure(
-                fig, title=f'SSP: {kind.upper()}', caption=caption,
-                tags=('ssp', kind))
+                fig,
+                title=f'SSP: {kind.upper()}',
+                caption=caption,
+                tags=('ssp', kind),
+                replace=True,
+            )
             plt.close(fig)
     return out_files
 

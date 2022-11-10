@@ -138,7 +138,8 @@ def drop_ptp(*, cfg, subject, session, in_files):
             epochs=epochs,
             title='Epochs: after cleaning',
             psd=psd,
-            drop_log_ignore=()
+            drop_log_ignore=(),
+            replace=True,
         )
     return out_files
 

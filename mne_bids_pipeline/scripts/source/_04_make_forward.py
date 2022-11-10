@@ -168,7 +168,8 @@ def run_forward(*, cfg, subject, session, in_files):
             subjects_dir=cfg.fs_subjects_dir,
             title='BEM',
             width=256,
-            decim=8
+            decim=8,
+            replace=True,
         )
         msg = 'Rendering sensor alignment (coregistration).'
         logger.info(
@@ -180,7 +181,8 @@ def run_forward(*, cfg, subject, session, in_files):
             title='Sensor alignment',
             subject=cfg.fs_subject,
             subjects_dir=cfg.fs_subjects_dir,
-            alpha=1
+            alpha=1,
+            replace=True,
         )
         msg = 'Rendering forward solution.'
         logger.info(
@@ -191,6 +193,7 @@ def run_forward(*, cfg, subject, session, in_files):
             title='Forward solution',
             subject=cfg.fs_subject,
             subjects_dir=cfg.fs_subjects_dir,
+            replace=True,
         )
 
     assert len(in_files) == 0, in_files

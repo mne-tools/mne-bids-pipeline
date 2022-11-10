@@ -241,6 +241,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                 caption=caption,
                 section=section,
                 tags=tags,
+                replace=True,
             )
             plt.close(fig)
 
@@ -262,6 +263,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                     caption=caption,
                     section=section,
                     tags=tags,
+                    replace=True,
                 )
                 plt.close(fig)
 

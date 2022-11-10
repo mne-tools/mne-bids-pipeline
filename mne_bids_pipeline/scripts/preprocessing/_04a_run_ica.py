@@ -488,7 +488,8 @@ def run_ica(*, cfg, subject, session, in_files):
     report.add_epochs(
         epochs=epochs,
         title='Epochs used for ICA fitting',
-        drop_log_ignore=()
+        drop_log_ignore=(),
+        replace=True,
     )
 
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
@@ -503,7 +504,8 @@ def run_ica(*, cfg, subject, session, in_files):
         ecg_evoked=ecg_evoked,
         eog_evoked=eog_evoked,
         ecg_scores=ecg_scores,
-        eog_scores=eog_scores
+        eog_scores=eog_scores,
+        replace=True,
     )
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "

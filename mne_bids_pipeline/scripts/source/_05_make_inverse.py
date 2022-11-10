@@ -128,7 +128,8 @@ def run_inverse(*, cfg, subject, session, in_files):
                     subject=cfg.fs_subject,
                     subjects_dir=cfg.fs_subjects_dir,
                     n_time_points=cfg.report_stc_n_time_points,
-                    tags=tags
+                    tags=tags,
+                    replace=True,
                 )
 
     assert len(in_files) == 0, in_files

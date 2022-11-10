@@ -234,7 +234,8 @@ def run_epochs(*, cfg, subject, session, in_files):
                 sfreq=sfreq,
                 first_samp=first_samp,
                 title='Events',
-                # caption='Events in filtered continuous data'  # TODO upstream
+                # caption='Events in filtered continuous data',  # TODO upstr
+                replace=True,
             )
         msg = 'Adding uncleaned epochs to report.'
         logger.info(
@@ -251,7 +252,8 @@ def run_epochs(*, cfg, subject, session, in_files):
             epochs=epochs,
             title='Epochs: before cleaning',
             psd=psd,
-            drop_log_ignore=()
+            drop_log_ignore=(),
+            replace=True,
         )
 
     # Interactive

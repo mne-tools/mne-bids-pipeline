@@ -205,7 +205,8 @@ def run_covariance(*, cfg, subject, session, in_files):
         report.add_covariance(
             cov=cov,
             info=fname_info,
-            title='Noise covariance'
+            title='Noise covariance',
+            replace=True,
         )
 
     assert len(in_files) == 0, in_files

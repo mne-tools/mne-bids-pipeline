@@ -332,7 +332,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -362,7 +362,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -392,7 +392,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -422,7 +422,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -454,7 +454,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -485,7 +485,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -517,7 +517,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -550,7 +550,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -577,7 +577,7 @@ jobs:
           name: test BEM from FLASH
           command: |
             $RUN_TESTS ds000248_FLASH_BEM
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -597,7 +597,7 @@ jobs:
           command: |
             $RUN_TESTS ds000248_T1_BEM
           no_output_timeout: 20m
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -616,7 +616,7 @@ jobs:
           name: test head surface creation for MNE coregistration
           command: |
             $RUN_TESTS ds000248_coreg_surfaces
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -639,7 +639,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -669,7 +669,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -699,7 +699,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -731,7 +731,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -765,7 +765,7 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -797,7 +797,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -835,7 +835,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -868,7 +868,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -901,7 +901,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -934,7 +934,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -967,7 +967,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -1000,7 +1000,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results
@@ -1033,7 +1033,7 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
-      - codecov/upload
+      - codecov/upload:
           file: ./test-results/junit-results.xml
       - store_test_results:
           path: ./test-results

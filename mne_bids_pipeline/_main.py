@@ -13,7 +13,6 @@ import numpy as np
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
-from ._download import main as download_main
 from ._logging import logger
 
 

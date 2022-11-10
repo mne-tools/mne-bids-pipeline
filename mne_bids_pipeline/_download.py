@@ -3,7 +3,6 @@ from pathlib import Path
 
 import openneuro
 import mne
-from mne.commands.utils import get_optparser
 
 from .tests.datasets import DATASET_OPTIONS
 

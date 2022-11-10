@@ -1,7 +1,6 @@
 """Download test data."""
 from pathlib import Path
 
-import openneuro
 import mne
 
 from .tests.datasets import DATASET_OPTIONS
@@ -30,6 +29,7 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
 
 
 def _download_via_openneuro(*, ds_name: str, ds_path: Path):
+    import openneuro
     openneuro.download(
         dataset=DATASET_OPTIONS[ds_name]['openneuro'],
         target_dir=ds_path,

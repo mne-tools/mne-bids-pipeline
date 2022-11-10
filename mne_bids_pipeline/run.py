@@ -70,7 +70,7 @@ def main():
 
     if options.create_config is not None:
         config_target_path = pathlib.Path(options.create_config)
-        config_source_path = pathlib.Path(__file__).parent / 'config.py'
+        config_source_path = pathlib.Path(__file__).parent / '_config.py'
         if config_target_path.exists():
             raise FileExistsError(
                 f'The specified path already exists: {config_target_path}'
@@ -91,7 +91,8 @@ def main():
         # XXX use proper logging mechanism once #651 has been merged
         print(
             f'Successfully created template configuration file at: '
-            f'{config_target_path}'
+            f'{config_target_path}\nPlease edit the file before running the '
+            f'pipeline.'
         )
         return
 

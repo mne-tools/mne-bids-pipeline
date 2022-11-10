@@ -13,19 +13,19 @@ from ._logging import logger
 def _import_config() -> ModuleType:
     """Import the default config and the user's config."""
     from . import __version__
-    from . import config  # get the default
-    config.PIPELINE_NAME = 'mne-bids-pipeline'
-    config.VERSION = __version__
-    config.CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
+    from . import _config  # get the default
+    _config.PIPELINE_NAME = 'mne-bids-pipeline'
+    _config.VERSION = __version__
+    _config.CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
     os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
-    mne.set_log_level(verbose=config.mne_log_level.upper())
-    config._raw_split_size = '2GB'
-    config._epochs_split_size = '2GB'
+    mne.set_log_level(verbose=_config.mne_log_level.upper())
+    _config._raw_split_size = '2GB'
+    _config._epochs_split_size = '2GB'
     # Now update with user config
-    _update_with_user_config(config)
+    _update_with_user_config(_config)
     # And then check it
-    _check_config(config)
-    return config
+    _check_config(_config)
+    return _config
 
 
 def _update_with_user_config(config: ModuleType) -> ModuleType:

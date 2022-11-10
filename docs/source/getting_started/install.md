@@ -7,12 +7,22 @@ system. See the [installation instructions](https://mne.tools/stable/install/mne
 Install the MNE-BIDS-Pipeline
 -----------------------------
 
-The following command will retrieve the latest development version of the
-pipeline from GitHub and install it, including all dependencies:
+The following command will install the latest stable version of the
+MNE-BIDS-Pipeline and all dependencies:
 
 ???+ example "Installation"
     ```shell
-    pip install https://github.com/mne-tools/mne-bids-pipeline/archive/refs/heads/main.zip
+    pip install --upgrade mne-bids-pipeline
+    ```
+
+This also installs a command-line utility with the name `mne_bids_pipeline`
+(mind the underscores!), which will be used to operate the pipeline.
+
+To check which version of the MNE-BIDS-Pipeline is currently installed, run:
+
+???+ example "Check the installed version"
+    ```shell
+    mne_bids_pipeline --version
     ```
 
 That's it! You're now ready to start using the MNE-BIDS-Pipeline.

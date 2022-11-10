@@ -55,7 +55,7 @@ environment variable `DATASET` to specify which dataset should be downloaded
 Nested in the `/tests` directory is a `/configs` directory, which contains
 config files for specific test datasets. For example, the `config_ds001810.py`
 file specifies parameters only for the `ds001810` data, which should overwrite
-the more general parameters in the main `config.py` file.
+the more general parameters in the main `_config.py` file.
 
 ## Running the tests, and continuous integration
 

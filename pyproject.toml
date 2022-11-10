@@ -48,6 +48,8 @@ dev = [
     "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
 ]
 tests = [
+    "pytest",
+    "pytest-cov",
     "psutil",
     "datalad",
     "mkdocs",

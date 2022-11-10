@@ -2,10 +2,8 @@
 """Generate steps.md."""
 
 import importlib
-import os
 from pathlib import Path
-import mne_bids_pipeline
-from mne_bids_pipeline.run import _get_script_modules
+from mne_bids_pipeline._config_utils import _get_script_modules
 
 pre = """\
 # Processing steps

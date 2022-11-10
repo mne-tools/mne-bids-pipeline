@@ -96,7 +96,7 @@ enable-colors = ""
 count = ""
 
 [tool.pytest.ini_options]
-addopts = "-ra -vv --tb=short"
+addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=junit-results.xml --durations=10"
 testpaths = [
     "mne_bids_pipeline",
 ]

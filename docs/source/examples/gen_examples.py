@@ -17,10 +17,10 @@ logger = logging.getLogger()
 
 
 dataset_opts_path = root / 'tests' / 'datasets.py'
-run_tests_path = root / 'tests' / 'run_tests.py'
+test_run_path = root / 'tests' / 'test_run.py'
 
 dataset_options = runpy.run_path(dataset_opts_path)['DATASET_OPTIONS']
-test_options = runpy.run_path(run_tests_path)['TEST_SUITE']
+test_options = runpy.run_path(test_run_path)['TEST_SUITE']
 
 
 def _bool_to_icon(x: Union[bool, Iterable]) -> str:

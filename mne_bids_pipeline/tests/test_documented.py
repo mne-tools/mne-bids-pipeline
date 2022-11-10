@@ -6,7 +6,7 @@ import re
 import yaml
 
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
-from mne_bids_pipeline.tests.run_tests import TEST_SUITE
+from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
 root_path = Path(__file__).parent.parent
 
@@ -57,7 +57,7 @@ def test_datasets_in_doc():
     # 1. CircleCI caches, tests, etc. (actually multiple things!)
     # 2. docs/mkdocs.yml
     # 3. tests/datasets.py:DATASET_OPTIONS (imported above)
-    # 4. tests/run_tests.py:TEST_SUITE (imported above)
+    # 4. tests/test_run.py:TEST_SUITE (imported above)
     #
     # So let's make sure they stay in sync.
 
@@ -172,4 +172,4 @@ def test_datasets_in_doc():
     assert tests == caches, 'CircleCI tests != CircleCI caches'
     assert tests == examples, 'CircleCI tests != docs/mkdocs.yml Examples'
     assert tests == dataset_names, 'CircleCI tests != tests/datasets.py'
-    assert tests == test_names, 'CircleCI tests != tests/run_tests.py'
+    assert tests == test_names, 'CircleCI tests != tests/test_run.py'

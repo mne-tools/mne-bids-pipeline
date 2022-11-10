@@ -5,7 +5,7 @@ import openneuro
 import mne
 from mne.commands.utils import get_optparser
 
-from datasets import DATASET_OPTIONS
+from .tests.datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path('~/mne_data').expanduser()
 
@@ -138,17 +138,9 @@ def main(dataset):
     ds_names = DATASET_OPTIONS.keys() if not dataset else (dataset,)
 
     for ds_name in ds_names:
-        print('\n----------------------')
+        title = f'Downloading {ds_name}'
+        bar = "-" * len(title)
+        print(f'{title}\n{bar}')
         ds_path = mne_data_dir / ds_name
         _download(ds_name=ds_name, ds_path=ds_path)
-
-
-if __name__ == '__main__':
-    parser = get_optparser(__file__, usage="usage: %prog -dataset DATASET")
-    parser.add_option('-d', '--dataset', dest='dataset',
-                      help='Name of the dataset', metavar='INPUT',
-                      default=None)
-    opt, args = parser.parse_args()
-    dataset = opt.dataset if opt.dataset != '' else None
-
-    main(dataset)
+        print()

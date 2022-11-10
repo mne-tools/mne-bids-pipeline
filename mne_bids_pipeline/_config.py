@@ -48,7 +48,7 @@ the processing results. If ``None``, this will be
 
 Note: Note
     If specified and you wish to run the source analysis steps, you must
-    set [`subjects_dir`][mne_bids_pipeline.config.subjects_dir] as well.
+    set [`subjects_dir`][mne_bids_pipeline._config.subjects_dir] as well.
 """
 
 subjects_dir: Optional[PathLike] = None
@@ -64,11 +64,11 @@ FreeSurfer.
   directory and also store the BEM surfaces there.
 
 If ``None``, this will default to
-[`bids_root`][mne_bids_pipeline.config.bids_root]`/derivatives/freesurfer/subjects`.
+[`bids_root`][mne_bids_pipeline._config.bids_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
     This setting is required if you specify
-    [`deriv_root`][mne_bids_pipeline.config.deriv_root]
+    [`deriv_root`][mne_bids_pipeline._config.deriv_root]
     and want to run the source analysis steps.
 """
 
@@ -457,8 +457,8 @@ The minimal duration (in seconds) of a data segment without any experimental
 events for it to be considered a "break". Note that the minimal duration of the
 generated `BAD_break` annotation will typically be smaller than this, as by
 default, the annotation will not extend across the entire break.
-See [`t_break_annot_start_after_previous_event`][mne_bids_pipeline.config.t_break_annot_start_after_previous_event]
-and [`t_break_annot_stop_before_next_event`][mne_bids_pipeline.config.t_break_annot_stop_before_next_event]
+See [`t_break_annot_start_after_previous_event`][mne_bids_pipeline._config.t_break_annot_start_after_previous_event]
+and [`t_break_annot_stop_before_next_event`][mne_bids_pipeline._config.t_break_annot_stop_before_next_event]
 to control this behavior.
 
 ???+ example "Example"
@@ -472,7 +472,7 @@ to control this behavior.
 t_break_annot_start_after_previous_event: float = 5.
 """
 Once a break of at least
-[`min_break_duration`][mne_bids_pipeline.config.min_break_duration]
+[`min_break_duration`][mne_bids_pipeline._config.min_break_duration]
 seconds has been discovered, we generate a `BAD_break` annotation that does not
 necessarily span the entire break period. Instead, you will typically want to
 start it some time after the last event before the break period, as to not
@@ -499,7 +499,7 @@ period as bad.
 t_break_annot_stop_before_next_event: float = 5.
 """
 Similarly to how
-[`t_break_annot_start_after_previous_event`][mne_bids_pipeline.config.t_break_annot_start_after_previous_event]
+[`t_break_annot_start_after_previous_event`][mne_bids_pipeline._config.t_break_annot_start_after_previous_event]
 controls the "gap" between beginning of the break period and `BAD_break`
 annotation onset,  this parameter controls how far the annotation should extend
 toward the first experimental event immediately following the break period
@@ -853,7 +853,7 @@ Passing a dictionary allows to assign a name to map a complex condition name
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
-[`task_is_rest`][mne_bids_pipeline.config.task_is_rest] is not `True`, we will raise an error.
+[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is not `True`, we will raise an error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -1234,14 +1234,14 @@ will generate a dictionary with (hopefully!) optimal thresholds for each
 channel type.
 
 The thresholds provided here must be at least as stringent as those in
-[`ica_reject`][mne_bids_pipeline.config.ica_reject] if using ICA. In case of
+[`ica_reject`][mne_bids_pipeline._config.ica_reject] if using ICA. In case of
 `'autoreject_global'`, thresholds for any channel that do not meet this
 requirement will be automatically replaced with those used in `ica_reject`.
 
 Note: Note
       The rejection is performed **after** SSP or ICA, if any of those methods
       is used. To reject epochs **before** fitting ICA, see the
-      [`ica_reject`][mne_bids_pipeline.config.ica_reject] setting.
+      [`ica_reject`][mne_bids_pipeline._config.ica_reject] setting.
 
 If `None` (default), do not apply automated rejection. If a dictionary,
 manually specify rejection thresholds (see examples).  If `'auto'`, use
@@ -1292,7 +1292,7 @@ with the last time point.
 decode: bool = True
 """
 Whether to perform decoding (MVPA) on the contrasts specified above as
-[`contrasts`][mne_bids_pipeline.config.contrasts]. Classifiers will be trained
+[`contrasts`][mne_bids_pipeline._config.contrasts]. Classifiers will be trained
 on entire epochs ("full-epochs decoding"), and separately on each time point
 ("time-by-time decoding"), trying to learn how to distinguish the contrasting
 conditions.
@@ -1338,7 +1338,7 @@ decoding_time_generalization_decim: int = 1
 """
 Says how much to decimate data before time generalization decoding.
 This is done in addition to the decimation done at the epochs level via the
-[`decim`][mne_bids_pipeline.config.decim] parameter. This can be used to
+[`decim`][mne_bids_pipeline._config.decim] parameter. This can be used to
 greatly speed up time generalization at the cost of lower time resolution in
 the resulting matrix.
 """
@@ -1376,7 +1376,7 @@ used in the permutation test which takes place after forming the clusters.
 
 Note: Note
     To control how clusters are formed, see
-    [`cluster_forming_t_threshold`][mne_bids_pipeline.config.cluster_forming_t_threshold].
+    [`cluster_forming_t_threshold`][mne_bids_pipeline._config.cluster_forming_t_threshold].
 """
 
 ###############################################################################
@@ -1501,9 +1501,9 @@ This parameter must be a dictionary with:
   specifying the edges of the respective frequency bin(s), e.g., `[8, 12]`.
 
 Defaults to two frequency bins, one from
-[`time_frequency_freq_min`][mne_bids_pipeline.config.time_frequency_freq_min]
+[`time_frequency_freq_min`][mne_bids_pipeline._config.time_frequency_freq_min]
 to the midpoint between this value and
-[`time_frequency_freq_max`][mne_bids_pipeline.config.time_frequency_freq_max];
+[`time_frequency_freq_max`][mne_bids_pipeline._config.time_frequency_freq_max];
 and the other from that midpoint to `time_frequency_freq_max`.
 ???+ example "Example"
     Create two frequency bins, one for 4–8 Hz, and another for 8–14 Hz, which
@@ -1925,7 +1925,7 @@ parallel_backend: Literal['loky', 'dask'] = 'loky'
 """
 Specifies which backend to use for parallel job execution. `loky` is the
 default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
-be installed. Ignored if [`N_JOBS`][mne_bids_pipeline.config.N_JOBS] is set to
+be installed. Ignored if [`N_JOBS`][mne_bids_pipeline._config.N_JOBS] is set to
 `1`.
 """
 
@@ -1945,7 +1945,7 @@ ensure good performance. The directory needs to be writable and will be created
 if it does not exist.
 
 If `None`, will use `.dask-worker-space` inside of
-[`deriv_root`][mne_bids_pipeline.config.deriv_root].
+[`deriv_root`][mne_bids_pipeline._config.deriv_root].
 """
 
 dask_worker_memory_limit: str = '10G'

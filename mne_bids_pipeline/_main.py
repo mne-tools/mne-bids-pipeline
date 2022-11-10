@@ -74,7 +74,7 @@ def main():
         bad = 'both were provided'
     if bad:
         parser.error(
-            '😵 You must specify a configuration file either as a single '
+            '❌ You must specify a configuration file either as a single '
             f'argument or with --config, but {bad}.')
     steps = options.steps
     root_dir = options.root_dir

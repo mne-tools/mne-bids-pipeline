@@ -28,5 +28,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
-    - run: pip install pytest mne
+    - run: pip install pytest
+    - run: pip install --no-build-isolation -ve .
     - run: pytest

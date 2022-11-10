@@ -13,6 +13,7 @@ import numpy as np
 
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
+from ._config_template import create_template_config
 from ._logging import logger, gen_log_kwargs
 
 
@@ -70,32 +71,8 @@ def main():
     options, args = parser.parse_args()
 
     if options.create_config is not None:
-        config_target_path = pathlib.Path(options.create_config)
-        config_source_path = pathlib.Path(__file__).parent / '_config.py'
-        if config_target_path.exists():
-            raise FileExistsError(
-                f'The specified path already exists: {config_target_path}'
-            )
-
-        # Create a template by commenting out most of the lines in _config.py
-        config: List[str] = []
-        with open(config_source_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = (
-                    line if line.startswith(('#', '\n', 'import', 'from'))
-                    else f'# {line}'
-                )
-                config.append(line)
-
-        config_target_path.write_text(''.join(config), encoding='utf-8')
-        message = (
-            f'Successfully created template configuration file at: '
-            f'{config_target_path}'
-        )
-        logger.info(**gen_log_kwargs(message=message, emoji='✅'))
-
-        message = 'Please edit the file before running the pipeline.'
-        logger.info(**gen_log_kwargs(message=message, emoji='💡'))
+        target_path = pathlib.Path(options.create_config)
+        create_template_config(target_path=target_path, overwrite=False)
         return
 
     config = options.config

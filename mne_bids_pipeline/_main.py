@@ -88,19 +88,20 @@ def main():
                 config.append(line)
 
         config_target_path.write_text(''.join(config), encoding='utf-8')
-
-        # XXX use proper logging mechanism once #651 has been merged
-        print(
+        message = (
             f'Successfully created template configuration file at: '
-            f'{config_target_path}\nPlease edit the file before running the '
-            f'pipeline.'
+            f'{config_target_path}'
         )
+        logger.info(**gen_log_kwargs(message=message, emoji='✅'))
+
+        message = 'Please edit the file before running the pipeline.'
+        logger.info(**gen_log_kwargs(message=message, emoji='💡'))
         return
 
     config = options.config
     bad_msg = (
-        'You must specify a configuration file as a single argument '
-        'or with --config.'
+        'You must specify the path to a configuration file as a single '
+        'argument or via --config'
     )
     if config is None:
         if len(args) == 1:
@@ -228,6 +229,6 @@ def main_cli():
     except Exception as e:
         message = str(e)
         logger.critical(**gen_log_kwargs(
-            message=message, emoji='😵'
+            message=message, emoji='❌'
         ))
         sys.exit(1)

@@ -13,8 +13,8 @@ root_path = Path(__file__).parent.parent
 
 def test_options_documented():
     """Test that all options are suitably documented."""
-    # use ast to parse config.py for assignments
-    with open(root_path / "config.py", "r") as fid:
+    # use ast to parse _config.py for assignments
+    with open(root_path / "_config.py", "r") as fid:
         contents = fid.read()
     contents = ast.parse(contents)
     in_config = [

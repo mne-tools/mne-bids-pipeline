@@ -76,7 +76,7 @@ def main():
                 f'The specified path already exists: {config_target_path}'
             )
 
-        # Create a template by commenting out most of the lines in config.py
+        # Create a template by commenting out most of the lines in _config.py
         config: List[str] = []
         with open(config_source_path, 'r', encoding='utf-8') as f:
             for line in f:

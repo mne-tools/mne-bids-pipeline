@@ -48,7 +48,7 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
         example_config = runpy.run_path(example_config_path)
         env['BIDS_ROOT'] = example_config['bids_root']
 
-        config_module_path = root / 'config.py'
+        config_module_path = root / '_config.py'
         config = runpy.run_path(config_module_path)
 
         ch_types = [c.upper() for c in config['ch_types']]

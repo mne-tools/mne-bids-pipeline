@@ -23,7 +23,6 @@ saving the analysis results.
 
 ???+ example "Example"
     ```python
-
     study_name = 'my-study'
     ```
 """

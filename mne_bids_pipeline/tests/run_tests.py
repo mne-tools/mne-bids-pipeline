@@ -138,7 +138,6 @@ def run_tests(test_suite, *, download):
     -----
     For every entry in the dict, the function `fetch` is called.
     """
-    os.environ['MNE_BIDS_STUDY_VERBOSE_EXIT'] = 'true'
     for dataset, test_options in test_suite.items():
         # export the environment variables
         os.environ['DATASET'] = dataset

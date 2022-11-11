@@ -8,11 +8,13 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype,
-    get_deriv_root, get_all_contrasts,
+    get_deriv_root, get_all_contrasts, _restrict_analyze_channels,
+    get_noise_cov_bids_path,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs
 from ..._parallel import parallel_func, get_parallel_backend
+from ..._report import _open_report, _sanitize_cond_tag
+from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
 def get_input_fnames_evoked(**kwargs):
@@ -36,6 +38,14 @@ def get_input_fnames_evoked(**kwargs):
                             check=False)
     in_files = dict()
     in_files['epochs'] = fname_epochs
+
+    fname_noise_cov = get_noise_cov_bids_path(
+        cfg=cfg,
+        subject=subject,
+        session=session
+    )
+    if fname_noise_cov.fpath.is_file():
+        in_files['noise_cov'] = fname_noise_cov
     return in_files
 
 
@@ -88,6 +98,37 @@ def run_evoked(*, cfg, subject, session, in_files):
         evoked.nave = int(round(evoked.nave))  # avoid a warning
     mne.write_evokeds(out_files['evoked'], evokeds, overwrite=True)
 
+    # Report
+    if evokeds:
+        msg = (f'Adding {len(evokeds)} evoked signals and contrasts to the '
+               f'report.')
+    else:
+        msg = 'No evoked conditions or contrasts found.'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+    noise_cov = in_files.pop('noise_cov', None)
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        for condition, evoked in all_evoked.items():
+            _restrict_analyze_channels(evoked, cfg)
+
+            tags = ('evoked', _sanitize_cond_tag(condition))
+            if condition in cfg.conditions:
+                title = f'Condition: {condition}'
+            else:  # It's a contrast of two conditions.
+                title = f'Contrast: {condition}'
+                tags = tags + ('contrast',)
+
+            report.add_evokeds(
+                evokeds=evoked,
+                titles=title,
+                noise_cov=noise_cov,
+                n_time_points=cfg.report_evoked_n_time_points,
+                tags=tags,
+                replace=True,
+            )
+
+    # Interaction
     if cfg.interactive:
         for evoked in evokeds:
             evoked.plot()
@@ -100,6 +141,7 @@ def run_evoked(*, cfg, subject, session, in_files):
         #     evoked.plot_joint(title=condition, ts_args=ts_args,
         #                       topomap_args=topomap_args)
     assert len(in_files) == 0, in_files.keys()
+
     return out_files
 
 
@@ -117,6 +159,11 @@ def get_config(
         conditions=config.conditions,
         contrasts=get_all_contrasts(config),
         interactive=config.interactive,
+        proc=config.proc,
+        noise_cov=_sanitize_callable(config.noise_cov),
+        analyze_channels=config.analyze_channels,
+        ch_types=config.ch_types,
+        report_evoked_n_time_points=config.report_evoked_n_time_points,
     )
     return cfg
 

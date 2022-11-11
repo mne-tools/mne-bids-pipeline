@@ -32,6 +32,7 @@ from ..._import_data import (
 from ..._io import _read_json, _empty_room_match_path
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
+from ..._report import _open_report, plot_auto_scores_
 from ..._run import failsafe_run, save_logs, _update_for_splits
 from ..._typing import Literal
 
@@ -174,7 +175,7 @@ def filter_data(
     in_files: dict,
 ) -> None:
     """Filter data from a single subject."""
-
+    import matplotlib.pyplot as plt
     out_files = dict()
     bids_path = in_files.pop(f"raw_run-{run}")
 
@@ -224,7 +225,7 @@ def filter_data(
             msg = (f'Reading {data_type} recording: '
                    f'{bids_path_noise.basename}')
             logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session))
+                                         session=session, run=task))
             raw_noise = mne.io.read_raw_fif(bids_path_noise)
         elif data_type == 'empty-room':
             raw_noise = import_er_data(
@@ -266,6 +267,58 @@ def filter_data(
             raw_noise.plot_psd(fmax=fmax)
 
     assert len(in_files) == 0, in_files.keys()
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        # This is a weird place for this, but it's the first place we actually
+        # start a report, so let's leave it here. We could put it in
+        # _import_data (where the auto-bad-finding is called), but that seems
+        # worse.
+        if run == cfg.runs[0] and cfg.find_noisy_channels_meg:
+            msg = 'Adding visualization of noisy channel detection to report.'
+            logger.info(
+                **gen_log_kwargs(message=msg, subject=subject, session=session)
+            )
+            figs, captions = plot_auto_scores_(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+            )
+            tags = ('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
+            report.add_figure(
+                fig=figs,
+                caption=captions,
+                title='Data Quality',
+                tags=tags,
+                replace=True,
+            )
+            for fig in figs:
+                plt.close(fig)
+
+        msg = 'Adding filtered raw data to report.'
+        logger.info(
+            **gen_log_kwargs(
+                message=msg, subject=subject, session=session, run=run
+            )
+        )
+        for fname in out_files.values():
+            title = 'Raw'
+            if fname.run is not None:
+                title += f', run {fname.run}'
+            plot_raw_psd = (
+                cfg.plot_psd_for_runs == 'all' or
+                fname.run in cfg.plot_psd_for_runs
+            )
+            report.add_raw(
+                raw=fname,
+                title=title,
+                butterfly=5,
+                psd=plot_raw_psd,
+                tags=('raw', 'filtered', f'run-{fname.run}'),
+                # caption=fname.basename,  # TODO upstream
+                replace=True,
+            )
+
     return out_files
 
 
@@ -314,6 +367,7 @@ def get_config(
         ch_types=config.ch_types,
         eog_channels=config.eog_channels,
         on_rename_missing_events=config.on_rename_missing_events,
+        plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
     )
     return cfg

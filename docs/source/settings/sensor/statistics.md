@@ -1,4 +1,5 @@
 ::: mne_bids_pipeline._config.contrasts
+::: mne_bids_pipeline._config.report_evoked_n_time_points
 ::: mne_bids_pipeline._config.decode
 ::: mne_bids_pipeline._config.decoding_metric
 ::: mne_bids_pipeline._config.decoding_n_splits

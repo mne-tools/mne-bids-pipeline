@@ -20,8 +20,9 @@ from ..._config_utils import (
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._reject import _get_reject
+from ..._report import _open_report
+from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
 def get_input_fnames_drop_ptp(**kwargs):
@@ -122,6 +123,25 @@ def drop_ptp(*, cfg, subject, session, in_files):
         split_size=cfg._epochs_split_size)
     _update_for_splits(out_files, 'epochs')
     assert len(in_files) == 0, in_files.keys()
+
+    # Report
+    msg = 'Adding cleaned epochs to report.'
+    logger.info(
+        **gen_log_kwargs(message=msg, subject=subject, session=session)
+    )
+    # Add PSD plots for 30s of data or all epochs if we have less available
+    if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
+        psd = True
+    else:
+        psd = 30
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        report.add_epochs(
+            epochs=epochs,
+            title='Epochs: after cleaning',
+            psd=psd,
+            drop_log_ignore=(),
+            replace=True,
+        )
     return out_files
 
 

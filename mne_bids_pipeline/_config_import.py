@@ -208,3 +208,7 @@ def _check_config(config: ModuleType) -> None:
             'Please indicate the name of your conditions in your '
             'configuration. Currently the `conditions` parameter is empty. '
             'This is only allowed for resting-state analysis.')
+
+    _check_option(
+        'config.on_rename_missing_events', config.on_rename_missing_events,
+        ('raise', 'warn', 'ignore'))

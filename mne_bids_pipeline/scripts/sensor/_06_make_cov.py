@@ -16,8 +16,9 @@ from ..._config_utils import (
 )
 from ..._config_import import _import_config
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _sanitize_callable
 from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _open_report
+from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
 def get_input_fnames_cov(**kwargs):
@@ -29,6 +30,24 @@ def get_input_fnames_cov(**kwargs):
     # short circuit to say: always re-run
     cov_type = _get_cov_type(cfg)
     in_files = dict()
+    processing = 'clean' if cfg.spatial_filter is not None else None
+    fname_epochs = BIDSPath(subject=subject,
+                            session=session,
+                            task=cfg.task,
+                            acquisition=cfg.acq,
+                            run=None,
+                            recording=cfg.rec,
+                            space=cfg.space,
+                            extension='.fif',
+                            suffix='epo',
+                            processing=processing,
+                            datatype=cfg.datatype,
+                            root=cfg.deriv_root,
+                            check=False)
+    in_files['report_info'] = fname_epochs.copy().update(
+        processing='clean',
+        suffix='epo'
+    )
     if cov_type == 'custom':
         in_files['__unknown_inputs__'] = 'custom noise_cov callable'
         return in_files
@@ -57,22 +76,6 @@ def get_input_fnames_cov(**kwargs):
         in_files['raw'] = bids_path_raw_noise
     else:
         assert cov_type == 'epochs', cov_type
-        processing = None
-        if cfg.spatial_filter is not None:
-            processing = 'clean'
-        fname_epochs = BIDSPath(subject=subject,
-                                session=session,
-                                task=cfg.task,
-                                acquisition=cfg.acq,
-                                run=None,
-                                recording=cfg.rec,
-                                space=cfg.space,
-                                extension='.fif',
-                                suffix='epo',
-                                processing=processing,
-                                datatype=cfg.datatype,
-                                root=cfg.deriv_root,
-                                check=False)
         in_files['epochs'] = fname_epochs
     return in_files
 
@@ -184,6 +187,7 @@ def run_covariance(*, cfg, subject, session, in_files):
     kwargs = dict(
         cfg=cfg, subject=subject, session=session,
         in_files=in_files, out_files=out_files)
+    fname_info = in_files.pop('report_info')
     if cov_type == 'custom':
         cov = retrieve_custom_cov(**kwargs)
     elif cov_type == 'raw':
@@ -192,6 +196,21 @@ def run_covariance(*, cfg, subject, session, in_files):
         tmin, tmax = cfg.noise_cov
         cov = compute_cov_from_epochs(tmin=tmin, tmax=tmax, **kwargs)
     cov.save(out_files['cov'], overwrite=True)
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Rendering noise covariance matrix and corresponding SVD.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        report.add_covariance(
+            cov=cov,
+            info=fname_info,
+            title='Noise covariance',
+            replace=True,
+        )
+
+    assert len(in_files) == 0, in_files
     return out_files
 
 

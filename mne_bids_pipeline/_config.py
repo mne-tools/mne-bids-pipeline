@@ -29,22 +29,22 @@ saving the analysis results.
 
 bids_root: Optional[PathLike] = None
 """
-Specify the BIDS root directory. Pass an empty string or ```None`` to use
-the value specified in the ``BIDS_ROOT`` environment variable instead.
+Specify the BIDS root directory. Pass an empty string or ```None` to use
+the value specified in the `BIDS_ROOT` environment variable instead.
 Raises an exception if the BIDS root has not been specified.
 
 ???+ example "Example"
     ``` python
     bids_root = '/path/to/your/bids_root'  # Use this to specify a path here.
-    bids_root = None  # Make use of the ``BIDS_ROOT`` environment variable.
+    bids_root = None  # Make use of the `BIDS_ROOT` environment variable.
     ```
 """
 
 deriv_root: Optional[PathLike] = None
 """
 The root of the derivatives directory in which the pipeline will store
-the processing results. If ``None``, this will be
-``derivatives/mne-bids-pipeline`` inside the BIDS root.
+the processing results. If `None`, this will be
+`derivatives/mne-bids-pipeline` inside the BIDS root.
 
 Note: Note
     If specified and you wish to run the source analysis steps, you must
@@ -54,16 +54,16 @@ Note: Note
 subjects_dir: Optional[PathLike] = None
 """
 Path to the directory that contains the FreeSurfer reconstructions of all
-subjects. Specifically, this defines the ``SUBJECTS_DIR`` that is used by
+subjects. Specifically, this defines the `SUBJECTS_DIR` that is used by
 FreeSurfer.
 
-- When running the ``freesurfer`` processing step to create the
+- When running the `freesurfer` processing step to create the
   reconstructions from anatomical scans in the BIDS dataset, the
   output will be stored in this directory.
 - When running the source analysis steps, we will look for the surfaces in this
   directory and also store the BEM surfaces there.
 
-If ``None``, this will default to
+If `None`, this will default to
 [`bids_root`][mne_bids_pipeline._config.bids_root]`/derivatives/freesurfer/subjects`.
 
 Note: Note
@@ -85,7 +85,7 @@ Note: Note
 
 sessions: Union[List, Literal['all']] = 'all'
 """
-The sessions to process. If ``'all'``, will process all sessions found in the
+The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
 """
 
@@ -96,7 +96,7 @@ The task to process.
 
 runs: Union[Iterable, Literal['all']] = 'all'
 """
-The runs to process. If ``'all'``, will process all runs found in the
+The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
 """
 
@@ -118,9 +118,9 @@ Specify runs to exclude from analysis, for each participant individually.
 
 crop_runs: Optional[Tuple[float, float]] = None
 """
-Crop the raw data of each run to the specified time interval ``[tmin, tmax]``,
+Crop the raw data of each run to the specified time interval `[tmin, tmax]`,
 in seconds. The runs will be cropped before Maxwell or frequency filtering is
-applied. If ``None``, do not crop the data.
+applied. If `None`, do not crop the data.
 """
 
 acq: Optional[str] = None
@@ -153,14 +153,14 @@ plotting.
 
 subjects: Union[Iterable[str], Literal['all']] = 'all'
 """
-Subjects to analyze. If ``'all'``, include all subjects. To only
+Subjects to analyze. If `'all'`, include all subjects. To only
 include a subset of subjects, pass a list of their identifiers. Even
 if you plan on analyzing only a single subject, pass their identifier
 as a list.
 
 Please note that if you intend to EXCLUDE only a few subjects, you
-should consider setting ``subjects = 'all'`` and adding the
-identifiers of the excluded subjects to ``exclude_subjects`` (see next
+should consider setting `subjects = 'all'` and adding the
+identifiers of the excluded subjects to `exclude_subjects` (see next
 section).
 
 ???+ example "Example"
@@ -180,7 +180,7 @@ is automatically excluded from regular analysis.
     Keep track of the criteria leading you to exclude
     a participant (e.g. too many movements, missing blocks, aborted experiment,
     did not understand the instructions, etc, ...)
-    The ``emptyroom`` subject will be excluded automatically.
+    The `emptyroom` subject will be excluded automatically.
 """
 
 process_empty_room: bool = True
@@ -188,7 +188,7 @@ process_empty_room: bool = True
 Whether to apply the same pre-processing steps to the empty-room data as
 to the experimental data (up until including frequency filtering). This
 is required if you wish to use the empty-room recording to estimate noise
-covariance (via ``noise_cov='emptyroom'``). The empty-room recording
+covariance (via `noise_cov='emptyroom'`). The empty-room recording
 corresponding to the processed experimental data will be retrieved
 automatically.
 """
@@ -198,7 +198,7 @@ process_rest: bool = True
 Whether to apply the same pre-processing steps to the resting-state data as
 to the experimental data (up until including frequency filtering). This
 is required if you wish to use the resting-state recording to estimate noise
-covariance (via ``noise_cov='rest'``).
+covariance (via `noise_cov='rest'`).
 """
 
 ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
@@ -228,7 +228,7 @@ The BIDS data type.
 For MEG recordings, this will usually be 'meg'; and for EEG, 'eeg'.
 However, if your dataset contains simultaneous recordings of MEG and EEG,
 stored in a single file, you will typically need to set this to 'meg'.
-If ``None``, we will assume that the data type matches the channel type.
+If `None`, we will assume that the data type matches the channel type.
 
 ???+ example "Example"
     The dataset contains simultaneous recordings of MEG and EEG, and we only
@@ -273,18 +273,18 @@ the respective EOG signals based on these channels.
 You can specify one or multiple channel names. Each will be treated as if it
 were a dedicated EOG channel, without excluding it from any other analyses.
 
-If ``None``, only actual EOG channels will be used for EOG recovery.
+If `None`, only actual EOG channels will be used for EOG recovery.
 
 If there are multiple actual EOG channels in your data, and you only specify
 a subset of them here, only this subset will be used during processing.
 
 ???+ example "Example"
-    Treat ``Fp1`` as virtual EOG channel:
+    Treat `Fp1` as virtual EOG channel:
     ```python
     eog_channels = ['Fp1']
     ```
 
-    Treat ``Fp1`` and ``Fp2`` as virtual EOG channels:
+    Treat `Fp1` and `Fp2` as virtual EOG channels:
     ```python
     eog_channels = ['Fp1', 'Fp2']
     ```
@@ -325,7 +325,7 @@ Note: Note
 
 eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
 """
-The EEG reference to use. If ``average``, will use the average reference,
+The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
 channel. To use multiple channels as reference, set to a list of channel names.
 
@@ -357,7 +357,7 @@ the cap manufacturers in their respective manual.
 Please be aware that the actual cap placement most likely deviated somewhat
 from the template, and, therefore, source reconstruction may be impaired.
 
-If ``None``, do not apply a template montage. If a string, must be the
+If `None`, do not apply a template montage. If a string, must be the
 name of a built-in template montage in MNE-Python.
 You can find an overview of supported template montages at
 https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
@@ -544,7 +544,7 @@ warning:
     If the data were recorded with internal active compensation (MaxShield),
     they need to be run through Maxwell filter to avoid distortions.
     Bad channels need to be set through BIDS channels.tsv and / or via the
-    ``find_flat_channels_meg`` and ``find_noisy_channels_meg`` options above
+    `find_flat_channels_meg` and `find_noisy_channels_meg` options above
     before applying Maxwell filter.
 """
 
@@ -566,10 +566,10 @@ buffer window will be lumped into the previous buffer.
 
 ???+ info "Good Practice / Advice"
     If you are interested in low frequency activity (<0.1Hz), avoid using
-    tSSS and set ``mf_st_duration`` to ``None``.
+    tSSS and set `mf_st_duration` to `None`.
 
     If you are interested in low frequency above 0.1 Hz, you can use the
-    default ``mf_st_duration`` to 10 s, meaning it acts like a 0.1 Hz
+    default `mf_st_duration` to 10 s, meaning it acts like a 0.1 Hz
     high-pass filter.
 
 ???+ example "Example"
@@ -581,7 +581,7 @@ buffer window will be lumped into the previous buffer.
 
 mf_head_origin: Union[Literal['auto'], ArrayLike] = 'auto'
 """
-``mf_head_origin`` : array-like, shape (3,) | 'auto'
+`mf_head_origin` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
 If 'auto', it will be estimated from headshape points.
 If automatic fitting fails (e.g., due to having too few digitization
@@ -604,7 +604,7 @@ to define a reference run (typically the one in the middle of
 the recording session).
 
 Which run to take as the reference for adjusting the head position of all
-runs. If ``None``, pick the first run.
+runs. If `None`, pick the first run.
 
 ???+ example "Example"
     ```python
@@ -692,6 +692,20 @@ The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
 """
 
+l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+highpass filter. By default it's `'auto'` and uses default MNE
+parameters.
+"""
+
+h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+"""
+Specifies the transition bandwidth of the
+lowpass filter. By default it's `'auto'` and uses default MNE
+parameters.
+"""
+
 resample_sfreq: Optional[float] = None
 """
 Specifies at which sampling frequency the data should be resampled.
@@ -712,7 +726,7 @@ decim: int = 1
 """
 Says how much to decimate data at the epochs level.
 It is typically an alternative to the `resample_sfreq` parameter that
-can be used for resampling raw data. ``1`` means no decimation.
+can be used for resampling raw data. `1` means no decimation.
 
 ???+ info "Good Practice / Advice"
     Decimation requires to lowpass filtered the data to avoid aliasing.
@@ -738,20 +752,20 @@ loading, and before processing begins.
 Pass an empty dictionary to not perform any renaming.
 
 ???+ example "Example"
-    Rename ``audio_left`` in the BIDS dataset to ``audio/left`` in the
+    Rename `audio_left` in the BIDS dataset to `audio/left` in the
     pipeline:
     ```python
     rename_events = {'audio_left': 'audio/left'}
     ```
 """
 
-on_rename_missing_events: Literal['warn', 'raise'] = 'raise'
+on_rename_missing_events: Literal['ignore', 'warn', 'raise'] = 'raise'
 """
 How to handle the situation where you specified an event to be renamed via
-``rename_events``, but this particular event is not present in the data. By
+`rename_events`, but this particular event is not present in the data. By
 default, we will raise an exception to avoid accidental mistakes due to typos;
-however, if you're sure what you're doing, you may change this to ``'warn'``
-to only get a warning instead.
+however, if you're sure what you're doing, you may change this to `'warn'`
+to only get a warning instead, or `'ignore'` to ignore it completely.
 """
 
 ###############################################################################
@@ -781,13 +795,13 @@ epochs_metadata_tmin: Optional[float] = None
 """
 The beginning of the time window for metadata generation, in seconds,
 relative to the time-locked event of the respective epoch. This may be less
-than or larger than the epoch's first time point. If ``None``, use the first
+than or larger than the epoch's first time point. If `None`, use the first
 time point of the epoch.
 """
 
 epochs_metadata_tmax: Optional[float] = None
 """
-Same as ``epochs_metadata_tmin``, but specifying the **end** of the time
+Same as `epochs_metadata_tmin`, but specifying the **end** of the time
 window for metadata generation.
 """
 
@@ -796,34 +810,34 @@ epochs_metadata_keep_first: Optional[Iterable[str]] = None
 Event groupings using hierarchical event descriptors (HEDs) for which to store
 the time of the **first** occurrence of any event of this group in a new column
 with the group name, and the **type** of that event in a column named after the
-group, but with a ``first_`` prefix. If ``None`` (default), no event
+group, but with a `first_` prefix. If `None` (default), no event
 aggregation will take place and no new columns will be created.
 
 ???+ example "Example"
-    Assume you have two response events types, ``response/left`` and
-    ``response/right``; in some trials, both responses occur, because the
+    Assume you have two response events types, `response/left` and
+    `response/right`; in some trials, both responses occur, because the
     participant pressed both buttons. Now, you want to keep the first response
     only. To achieve this, set
     ```python
     epochs_metadata_keep_first = ['response']
     ```
-    This will add two new columns to the metadata: ``response``, indicating
-    the **time** relative to the time-locked event; and ``first_response``,
-    depicting the **type** of event (``'left'`` or ``'right'``).
+    This will add two new columns to the metadata: `response`, indicating
+    the **time** relative to the time-locked event; and `first_response`,
+    depicting the **type** of event (`'left'` or `'right'`).
 
     You may also specify a grouping for multiple event types:
     ```python
     epochs_metadata_keep_first = ['response', 'stimulus']
     ```
-    This will add the columns ``response``, ``first_response``, ``stimulus``,
-    and ``first_stimulus``.
+    This will add the columns `response`, `first_response`, `stimulus`,
+    and `first_stimulus`.
 """
 
 epochs_metadata_keep_last: Optional[Iterable[str]] = None
 """
-Same as ``epochs_metadata_keep_first``, but for keeping the **last**
+Same as `epochs_metadata_keep_first`, but for keeping the **last**
 occurrence of matching event types. The columns indicating the event types
-will be named with a ``last_`` instead of a ``first_`` prefix.
+will be named with a `last_` instead of a `first_` prefix.
 """
 
 epochs_metadata_query: Optional[str] = None
@@ -843,8 +857,8 @@ conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
-BIDS ``*_events.tsv`` file; or the name of condition *groups*, if the condition
-names contain the (MNE-specific) group separator, ``/``. See the [Subselecting
+BIDS `*_events.tsv` file; or the name of condition *groups*, if the condition
+names contain the (MNE-specific) group separator, `/`. See the [Subselecting
 epochs tutorial](https://mne.tools/stable/auto_tutorials/epochs/plot_10_epochs_overview.html#subselecting-epochs)
 for more information.
 
@@ -903,14 +917,14 @@ Duration of epochs in seconds.
 
 rest_epochs_overlap: Optional[float] = None
 """
-Overlap between epochs in seconds. This is used if the task is ``'rest'``
+Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
 baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
-if ``None``, no baseline correction is applied.
+if `None`, no baseline correction is applied.
 
 ???+ example "Example"
     ```python
@@ -946,7 +960,7 @@ epoched, and therefore the conditions should either match or be subsets of
 
 ???+ example "Example"
     Contrast the "left" and the "right" conditions by calculating
-    ``left - right`` at every time point of the evoked responses:
+    `left - right` at every time point of the evoked responses:
     ```python
     contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
     ```
@@ -975,6 +989,18 @@ epoched, and therefore the conditions should either match or be subsets of
             'weights': [-1.5, -.5, .5, 1.5]
         }
     ]
+    ```
+"""
+
+report_evoked_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each evoked
+in the report. If None it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 time points per evoked
+    ```python
+    report_evoked_n_time_points = 5
     ```
 """
 
@@ -1142,11 +1168,11 @@ The cutoff frequency of the high-pass filter to apply before running ICA.
 Using a relatively high cutoff like 1 Hz will remove slow drifts from the
 data, yielding improved ICA results. Must be set to 1 Hz or above.
 
-Set to ``None`` to not apply an additional high-pass filter.
+Set to `None` to not apply an additional high-pass filter.
 
 Note: Note
       The filter will be applied to raw data which was already filtered
-      according to the ``l_freq`` and ``h_freq`` settings. After filtering, the
+      according to the `l_freq` and `h_freq` settings. After filtering, the
       data will be epoched, and the epochs will be submitted to ICA.
 
 !!! info
@@ -1189,7 +1215,7 @@ If float between 0 and 1, all principal components with cumulative
 explained variance less than the value specified here will be passed to
 ICA.
 
-If ``None``, **all** principal components will be used.
+If `None`, **all** principal components will be used.
 
 This setting may drastically alter the time required to compute ICA.
 """
@@ -1199,7 +1225,7 @@ ica_decim: Optional[int] = None
 The decimation parameter to compute ICA. If 5 it means
 that 1 every 5 sample is used by ICA solver. The higher the faster
 it is to run but the less data you have to compute a good ICA. Set to
-``1`` or ``None`` to not perform any decimation.
+`1` or `None` to not perform any decimation.
 """
 
 ica_ctps_ecg_threshold: float = 0.1
@@ -1267,7 +1293,7 @@ Note: Note
 
 reject_tmin: Optional[float] = None
 """
-Start of the time window used to reject epochs. If ``None``, the window will
+Start of the time window used to reject epochs. If `None`, the window will
 start with the first time point.
 ???+ example "Example"
     ```python
@@ -1277,7 +1303,7 @@ start with the first time point.
 
 reject_tmax: Optional[float] = None
 """
-End of the time window used to reject epochs. If ``None``, the window will end
+End of the time window used to reject epochs. If `None`, the window will end
 with the last time point.
 ???+ example "Example"
     ```python
@@ -1609,17 +1635,17 @@ that is different from `fsaverage`.
 bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
 """
 Which types of MRI images to use when creating the BEM model.
-If ``'FLASH'``, use FLASH MRI images, and raise an exception if they cannot be
+If `'FLASH'`, use FLASH MRI images, and raise an exception if they cannot be
 found.
 
 ???+ info "Advice"
     It is recommended to use the FLASH images if available, as the quality
     of the extracted BEM surfaces will be higher.
 
-If ``'T1'``, create the BEM surfaces from the T1-weighted images using the
-``watershed`` algorithm.
+If `'T1'`, create the BEM surfaces from the T1-weighted images using the
+`watershed` algorithm.
 
-If ``'auto'``, use FLASH images if available, and use the ``watershed``
+If `'auto'`, use FLASH images if available, and use the `watershed``
 algorithm with the T1-weighted images otherwise.
 
 *[FLASH MRI]: Fast low angle shot magnetic resonance imaging
@@ -1628,22 +1654,22 @@ algorithm with the T1-weighted images otherwise.
 recreate_bem: bool = False
 """
 Whether to re-create the BEM surfaces, even if existing surfaces have been
-found. If ``False``, the BEM surfaces are only created if they do not exist
-already. ``True`` forces their recreation, overwriting existing BEM surfaces.
+found. If `False`, the BEM surfaces are only created if they do not exist
+already. `True` forces their recreation, overwriting existing BEM surfaces.
 """
 
 recreate_scalp_surface: bool = False
 """
 Whether to re-create the scalp surfaces used for visualization of the
 coregistration in the report and the lower-density coregistration surfaces.
-If ``False``, the scalp surface is only created if it does not exist already.
-If ``True``, forces a re-computation.
+If `False`, the scalp surface is only created if it does not exist already.
+If `True`, forces a re-computation.
 """
 
 freesurfer_verbose: bool = False
 """
 Whether to print the complete output of FreeSurfer commands. Note that if
-``False``, no FreeSurfer output might be displayed at all!"""
+`False`, no FreeSurfer output might be displayed at all!"""
 
 mri_t1_path_generator: Optional[
     Callable[[BIDSPath], BIDSPath]
@@ -1728,9 +1754,9 @@ fiducials derived for the coregistration transformation of a given session.
 
 spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
 """
-The spacing to use. Can be ``'ico#'`` for a recursively subdivided
-icosahedron, ``'oct#'`` for a recursively subdivided octahedron,
-``'all'`` for all points, or an integer to use approximate
+The spacing to use. Can be `'ico#'` for a recursively subdivided
+icosahedron, `'oct#'` for a recursively subdivided octahedron,
+`'all'` for all points, or an integer to use approximate
 distance-based spacing (in mm). See (the respective MNE-Python documentation)
 [https://mne.tools/dev/overview/cookbook.html#setting-up-the-source-space]
 for more info.
@@ -1742,20 +1768,19 @@ Exclude points closer than this distance (mm) to the bounding surface.
 """
 
 loose: Union[float, Literal['auto']] = 0.2
-# ``loose`` : float in [0, 1] | 'auto'
 """
 Value that weights the source variances of the dipole components
-that are parallel (tangential) to the cortical surface. If ``0``, then the
+that are parallel (tangential) to the cortical surface. If `0`, then the
 inverse solution is computed with **fixed orientation.**
-If ``1``, it corresponds to **free orientation.**
-The default value, ``'auto'``, is set to ``0.2`` for surface-oriented source
-spaces, and to ``1.0`` for volumetric, discrete, or mixed source spaces,
-unless ``fixed is True`` in which case the value 0. is used.
+If `1`, it corresponds to **free orientation.**
+The default value, `'auto'`, is set to `0.2` for surface-oriented source
+spaces, and to `1.0` for volumetric, discrete, or mixed source spaces,
+unless `fixed is True` in which case the value 0. is used.
 """
 
 depth: Optional[Union[float, dict]] = 0.8
 """
-If float (default 0.8), it acts as the depth weighting exponent (``exp``)
+If float (default 0.8), it acts as the depth weighting exponent (`exp`)
 to use (must be between 0 and 1). None is equivalent to 0, meaning no
 depth weighting is performed. Can also be a `dict` containing additional
 keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
@@ -1777,22 +1802,22 @@ noise_cov: Union[
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
 
-If a tuple, it takes the form ``(tmin, tmax)`` with the time specified in
-seconds. If the first value of the tuple is ``None``, the considered
+If a tuple, it takes the form `(tmin, tmax)` with the time specified in
+seconds. If the first value of the tuple is `None`, the considered
 period starts at the beginning of the epoch. If the second value of the
-tuple is ``None``, the considered period ends at the end of the epoch.
-The default, ``(None, 0)``, includes the entire period before the event,
+tuple is `None`, the considered period ends at the end of the epoch.
+The default, `(None, 0)`, includes the entire period before the event,
 which is typically the pre-stimulus period.
 
-If ``'emptyroom'``, the noise covariance matrix will be estimated from an
+If `'emptyroom'`, the noise covariance matrix will be estimated from an
 empty-room MEG recording. The empty-room recording will be automatically
 selected based on recording date and time. This cannot be used with EEG data.
 
-If ``'rest'``, the noise covariance will be estimated from a resting-state
+If `'rest'`, the noise covariance will be estimated from a resting-state
 recording (i.e., a recording with `task-rest` and without a `run` in the
 filename).
 
-If ``'ad-hoc'``, a diagonal ad-hoc noise covariance matrix will be used.
+If `'ad-hoc'`, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing
@@ -1873,22 +1898,6 @@ empty list, `[]`.
     ```
 """
 
-###############################################################################
-# ADVANCED
-# --------
-
-report_evoked_n_time_points: Optional[int] = None
-"""
-Specifies the number of time points to display for each evoked
-in the report. If None it defaults to the current default in MNE-Python.
-
-???+ example "Example"
-    Only display 5 time points per evoked
-    ```python
-    report_evoked_n_time_points = 5
-    ```
-"""
-
 report_stc_n_time_points: Optional[int] = None
 """
 Specifies the number of time points to display for each source estimates
@@ -1901,19 +1910,9 @@ in the report. If None it defaults to the current default in MNE-Python.
     ```
 """
 
-l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
-"""
-Specifies the transition bandwidth of the
-highpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
-
-h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
-"""
-Specifies the transition bandwidth of the
-lowpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
+###############################################################################
+# Execution
+# ---------
 
 N_JOBS: int = 1
 """
@@ -1957,7 +1956,7 @@ random_state: Optional[int] = 42
 """
 You can specify the seed of the random number generator (RNG).
 This setting is passed to the ICA algorithm and to the decoding function,
-ensuring reproducible results. Set to ``None`` to avoid setting the RNG
+ensuring reproducible results. Set to `None` to avoid setting the RNG
 to a defined state.
 """
 
@@ -1992,15 +1991,15 @@ memory_location: Optional[Union[PathLike, bool]] = True
 """
 If not None (or False), caching will be enabled and the cache files will be
 stored in the given directory. The default (True) will use a
-``'joblib'`` subdirectory in the BIDS derivative root of the dataset.
+`'joblib'` subdirectory in the BIDS derivative root of the dataset.
 """
 MemoryFileMethodT = Literal['mtime', 'hash']
 memory_file_method: MemoryFileMethodT = 'mtime'
 """
 The method to use for cache invalidation (i.e., detecting changes). Using the
-"modified time" reported by the filesystem (``'mtime'``, default) is very fast
+"modified time" reported by the filesystem (`'mtime'`, default) is very fast
 but requires that the filesystem supports proper mtime reporting. Using file
-hashes (``'hash'``) is slower and requires reading all input files but should
+hashes (`'hash'`) is slower and requires reading all input files but should
 work on any filesystem.
 """
 memory_verbose: int = 0

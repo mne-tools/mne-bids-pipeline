@@ -202,6 +202,9 @@ authors:
   ({{ gh(647) }} by {{ authors.larsoner }})
 - A template configuration file can now be created via `mne_bids_pipeline --create-config`
   ({{ gh(653) }} by {{ authors.hoechenberger }})
+- Make report generation happen within relevant steps instead of at the end
+  of all steps
+  ({{ gh(652) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

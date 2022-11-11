@@ -14,7 +14,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
@@ -29,9 +29,12 @@ from ..._config_utils import (
     get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs
 from ..._decoding import LogReg
 from ..._parallel import parallel_func, get_parallel_backend
+from ..._run import failsafe_run, save_logs
+from ..._report import (
+    _open_report, _contrasts_to_names, _plot_full_epochs_decoding_scores,
+    _sanitize_cond_tag)
 
 
 def get_input_fnames_epochs_decoding(**kwargs):
@@ -65,6 +68,7 @@ def get_input_fnames_epochs_decoding(**kwargs):
 )
 def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
                         in_files):
+    import matplotlib.pyplot as plt
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject,
                                  session=session))
@@ -143,6 +147,58 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     )
     tabular_data = pd.DataFrame(tabular_data).T
     tabular_data.to_csv(out_files[tsv_key], sep='\t', index=False)
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Adding full-epochs decoding results to the report.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+
+        all_decoding_scores = []
+        all_contrasts = []
+        for contrast in cfg.contrasts:
+            cond_1, cond_2 = contrast
+            a_vs_b = f'{cond_1}+{cond_2}'.replace(op.sep, '')
+            processing = f'{a_vs_b}+FullEpochs+{cfg.decoding_metric}'
+            processing = processing.replace('_', '-').replace('-', '')
+            fname_decoding = bids_path.copy().update(
+                processing=processing,
+                suffix='decoding',
+                extension='.mat'
+            )
+            if not fname_decoding.fpath.is_file():  # not done yet
+                continue
+            decoding_data = loadmat(fname_decoding)
+            all_decoding_scores.append(
+                np.atleast_1d(decoding_data['scores'].squeeze())
+            )
+            all_contrasts.append(contrast)
+            del fname_decoding, processing, a_vs_b, decoding_data
+
+        fig, caption = _plot_full_epochs_decoding_scores(
+            contrast_names=_contrasts_to_names(all_contrasts),
+            scores=all_decoding_scores,
+            metric=cfg.decoding_metric,
+        )
+        report.add_figure(
+            fig=fig,
+            title='Full-epochs decoding',
+            caption=caption,
+            section='Decoding: full-epochs',
+            tags=(
+                'epochs',
+                'contrast',
+                'decoding',
+                *[f'{_sanitize_cond_tag(cond_1)}–'
+                  f'{_sanitize_cond_tag(cond_2)}'
+                  for cond_1, cond_2 in cfg.contrasts]
+            ),
+            replace=True,
+        )
+        # close figure to save memory
+        plt.close(fig)
+
     assert len(in_files) == 0, in_files.keys()
     return out_files
 

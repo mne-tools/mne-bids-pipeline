@@ -18,6 +18,7 @@ from ..._config_utils import (
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _open_report
 from ..._run import failsafe_run, save_logs
 
 
@@ -156,6 +157,47 @@ def run_forward(*, cfg, subject, session, in_files):
     out_files['forward'] = bids_path.copy().update(suffix='fwd')
     mne.write_trans(out_files['trans'], fwd['mri_head_t'], overwrite=True)
     mne.write_forward_solution(out_files['forward'], fwd, overwrite=True)
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        msg = 'Rendering MRI slices with BEM contours.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        report.add_bem(
+            subject=cfg.fs_subject,
+            subjects_dir=cfg.fs_subjects_dir,
+            title='BEM',
+            width=256,
+            decim=8,
+            replace=True,
+        )
+        msg = 'Rendering sensor alignment (coregistration).'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        report.add_trans(
+            trans=trans,
+            info=info,
+            title='Sensor alignment',
+            subject=cfg.fs_subject,
+            subjects_dir=cfg.fs_subjects_dir,
+            alpha=1,
+            replace=True,
+        )
+        msg = 'Rendering forward solution.'
+        logger.info(
+            **gen_log_kwargs(message=msg, subject=subject, session=session)
+        )
+        report.add_forward(
+            forward=fwd,
+            title='Forward solution',
+            subject=cfg.fs_subject,
+            subjects_dir=cfg.fs_subjects_dir,
+            replace=True,
+        )
+
+    assert len(in_files) == 0, in_files
     return out_files
 
 

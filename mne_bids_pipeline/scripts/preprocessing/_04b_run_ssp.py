@@ -17,9 +17,10 @@ from ..._config_utils import (
     get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
+from ..._report import _open_report
+from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
 def get_input_fnames_run_ssp(**kwargs):
@@ -51,6 +52,7 @@ def get_input_fnames_run_ssp(**kwargs):
     get_input_fnames=get_input_fnames_run_ssp,
 )
 def run_ssp(*, cfg, subject, session, in_files):
+    import matplotlib.pyplot as plt
     # compute SSP on first run of raw
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
 
@@ -132,6 +134,48 @@ def run_ssp(*, cfg, subject, session, in_files):
 
     mne.write_proj(out_files['proj'], sum(projs.values(), []), overwrite=True)
     assert len(in_files) == 0, in_files.keys()
+
+    # Report
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        for kind in proj_kinds:
+            if f'epochs_{kind}' not in out_files:
+                continue
+
+            msg = f'Adding {kind.upper()} SSP to report.'
+            logger.info(
+                **gen_log_kwargs(
+                    message=msg, subject=subject, session=session
+                )
+            )
+            proj_epochs = mne.read_epochs(out_files[f'epochs_{kind}'])
+            projs = mne.read_proj(out_files['proj'])
+            projs = [p for p in projs if kind.upper() in p['desc']]
+            assert len(projs), len(projs)  # should exist if the epochs do
+            picks_trace = None
+            if kind == 'ecg':
+                if 'ecg' in proj_epochs:
+                    picks_trace = 'ecg'
+            else:
+                assert kind == 'eog'
+                if cfg.eog_channels:
+                    picks_trace = cfg.eog_channels
+                elif 'eog' in proj_epochs:
+                    picks_trace = 'eog'
+            fig = mne.viz.plot_projs_joint(
+                projs, proj_epochs.average(picks='all'),
+                picks_trace=picks_trace)
+            caption = (
+                f'Computed using {len(proj_epochs)} epochs '
+                f'(from {len(proj_epochs.drop_log)} original events)'
+            )
+            report.add_figure(
+                fig,
+                title=f'SSP: {kind.upper()}',
+                caption=caption,
+                tags=('ssp', kind),
+                replace=True,
+            )
+            plt.close(fig)
     return out_files
 
 

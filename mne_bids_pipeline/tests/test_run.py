@@ -33,7 +33,7 @@ class _TestOptionsT(TypedDict, total=False):
 # key: {
 #     'dataset': key.split('_')[0],
 #     'config': f'config_{key}.py',
-#     'steps': ('preprocessing', 'sensor', 'report'),
+#     'steps': ('preprocessing', 'sensor'),
 #     'env': {},
 #     'task': None,
 # }
@@ -51,13 +51,13 @@ TEST_SUITE: Dict[str, _TestOptionsT] = {
     'ds000246': {
         'steps': ('preprocessing',
                   'preprocessing/make_epochs',  # Test the group/step syntax
-                  'sensor', 'report'),
+                  'sensor'),
     },
     'ds000247': {
         'task': 'rest',
     },
     'ds000248_base': {
-        'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'steps': ('preprocessing', 'sensor', 'source'),
     },
     'ds000248_ica': {},
     'ds000248_T1_BEM': {
@@ -70,13 +70,13 @@ TEST_SUITE: Dict[str, _TestOptionsT] = {
         'steps': ('freesurfer/coreg_surfaces',),
     },
     'ds000248_no_mri': {
-        'steps': ('preprocessing', 'sensor', 'source', 'report'),
+        'steps': ('preprocessing', 'sensor', 'source'),
     },
     'ds001810': {
-        'steps': ('preprocessing', 'preprocessing', 'sensor', 'report'),
+        'steps': ('preprocessing', 'preprocessing', 'sensor'),
     },
     'ds003104': {
-        'steps': ('preprocessing', 'sensor',  'source', 'report'),
+        'steps': ('preprocessing', 'sensor',  'source'),
     },
     'ERP_CORE_N400': {
         'dataset': 'ERP_CORE',
@@ -161,7 +161,7 @@ def test_run(dataset, monkeypatch, dataset_test, capsys):
 
     # Run the tests.
     steps = test_options.get(
-        'steps', ('preprocessing', 'sensor', 'report'))
+        'steps', ('preprocessing', 'sensor'))
     task = test_options.get('task', None)
     command = [
         'mne_bids_pipeline',

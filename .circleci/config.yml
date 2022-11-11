@@ -46,7 +46,6 @@ jobs:
           command: |
             pip install --upgrade --progress-bar off pip setuptools
             pip install -ve .[tests,dev]
-            pip install https://github.com/larsoner/mne-python/zipball/report  # fix Report bug
             pip install PyQt6
       - run:
           name: Check Qt

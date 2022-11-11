@@ -33,7 +33,7 @@ from ..._import_data import (
 from ..._io import _read_json, _empty_room_match_path
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, _script_path, save_logs, _update_for_splits
+from ..._run import failsafe_run, save_logs, _update_for_splits
 
 
 def get_input_fnames_maxwell_filter(**kwargs):
@@ -87,8 +87,9 @@ def get_input_fnames_maxwell_filter(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_maxwell_filter)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_maxwell_filter,
+)
 def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     if cfg.proc and 'sss' in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(f'You cannot set use_maxwell_filter to True '
@@ -323,8 +324,7 @@ def main(*, config) -> None:
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

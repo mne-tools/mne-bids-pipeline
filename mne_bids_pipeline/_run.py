@@ -4,6 +4,7 @@ import contextlib
 import copy
 import functools
 import hashlib
+import inspect
 import os
 import pathlib
 import pdb
@@ -23,30 +24,24 @@ from mne_bids import BIDSPath
 from ._config_utils import get_task, get_deriv_root
 from ._config_import import _import_config
 from ._logging import logger, gen_log_kwargs
-from ._typing import PathLike
 
 
 def failsafe_run(
-    script_path: PathLike,
     get_input_fnames: Optional[Callable] = None,
     get_output_fnames: Optional[Callable] = None,
 ) -> Callable:
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            # TODO: This should not be necessary, but for some reason it is
+            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = inspect.getfile(func)
             config = _import_config()
-            if config.interactive:
-                on_error = 'debug'
-            else:
-                on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR',
-                                     config.on_error)
+            on_error = config.on_error
             memory = ConditionalStepMemory(
                 config=config,
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
-                memory_file_method=config.memory_file_method,
             )
-            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(script_path)
             kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
             if "cfg" in kwargs_copy:
@@ -127,8 +122,7 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, config, get_input_fnames, get_output_fnames,
-                 memory_file_method):
+    def __init__(self, *, config, get_input_fnames, get_output_fnames):
         memory_location = config.memory_location
         if memory_location is True:
             use_location = get_deriv_root(config) / 'joblib'
@@ -143,7 +137,7 @@ class ConditionalStepMemory:
             self.memory = None
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
-        self.memory_file_method = memory_file_method
+        self.memory_file_method = config.memory_file_method
 
     def cache(self, func):
 
@@ -319,20 +313,16 @@ def save_logs(
 
 
 @contextlib.contextmanager
-def _script_path(script_path: PathLike):
-    # Usually failsafe_run dec sets MNE_BIDS_STUDY_SCRIPT_PATH so that log
-    # kwargs can be set properly. However, if the script gets skipped
-    # outside/before the failsafe_run, whatever the last SCRIPT_PATH was
-    # set will be used, so logs will be incorrect. This context manager
-    # sets it temporarily
+def _script_path(path):
     key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
-    orig_val = os.getenv(key, None)
-    os.environ[key] = str(script_path)
+    orig_val = os.environ.get(key, None)
+    os.environ[key] = str(path)
     try:
         yield
     finally:
         if orig_val is None:
-            del os.environ[key]
+            if key in os.environ:
+                del os.environ[key]
         else:
             os.environ[key] = orig_val
 

@@ -39,8 +39,9 @@ def get_input_fnames_evoked(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_evoked)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_evoked,
+)
 def run_evoked(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['evoked'] = in_files['epochs'].copy().update(

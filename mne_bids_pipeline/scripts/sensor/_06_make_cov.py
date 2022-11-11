@@ -170,8 +170,9 @@ def _get_cov_type(cfg):
         return 'epochs'
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_cov)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_cov,
+)
 def run_covariance(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(

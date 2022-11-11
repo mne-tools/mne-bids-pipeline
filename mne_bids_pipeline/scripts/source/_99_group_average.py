@@ -130,7 +130,7 @@ def get_config(
 
 
 # pass 'average' subject for logging
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def run_group_average_source(*, cfg, subject='average'):
     """Run group average in source space"""
 

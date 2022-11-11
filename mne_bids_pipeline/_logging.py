@@ -57,18 +57,26 @@ class LogFilter(logging.Filter):
 
 logger.addFilter(LogFilter())
 
-coloredlogs.install(
-    fmt=log_fmt, level='info', logger=logger,
-    level_styles=log_level_styles, field_styles=log_field_styles,
-)
+
+def _install_logs():
+    coloredlogs.install(
+        fmt=log_fmt, level='info', logger=logger,
+        level_styles=log_level_styles, field_styles=log_field_styles,
+    )
+
+
+_install_logs()
 
 
 def gen_log_kwargs(
     message: str,
+    *,
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
+    step: Optional[str] = None,
     emoji: str = '⏳️',
+    box: str = '│ ',
 ) -> LogKwargsT:
     if subject is not None:
         subject = f' sub-{subject}'
@@ -77,23 +85,26 @@ def gen_log_kwargs(
     if run is not None:
         run = f' run-{run}'
 
-    message = f' {message}'
-
     script_path = os.environ.get('MNE_BIDS_STUDY_SCRIPT_PATH')
-    if script_path:
-        script_path = pathlib.Path(script_path)
-        step_name = f'{script_path.parent.name}/{script_path.stem}'
-    else:  # We probably got called from run.py, not from a processing script
-        step_name = ''
+    if step is None:
+        if script_path:
+            script_path = pathlib.Path(script_path)
+            step = f'{script_path.parent.name}/{script_path.stem}'
+        else:
+            step = ''
+    if step:
+        # need an extra space
+        message = f' {message}'
 
     # Choose some to be our standards
     emoji = dict(
         cache='✅',
         skip='⏩',
+        override='❌',
     ).get(emoji, emoji)
     extra = {
-        'step': f'{emoji} {step_name}',
-        'box': '│ ',
+        'step': f'{emoji} {step}',
+        'box': box,
     }
     if subject:
         extra['subject'] = subject

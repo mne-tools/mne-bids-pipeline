@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   browser-tools: circleci/browser-tools@1.2
+  codecov: codecov/codecov@3.2.4
 
 # Aliases to reuse
 _imageconfig: &imageconfig
@@ -77,7 +78,7 @@ jobs:
       - run:
           name: Get ds000117
           command: |
-            $DOWNLOAD_DATA -d ds000117
+            $DOWNLOAD_DATA ds000117
       - save_cache:
           key: data-cache-ds000117-2
           paths:
@@ -96,7 +97,7 @@ jobs:
       - run:
           name: Get ds003775
           command: |
-            $DOWNLOAD_DATA -d ds003775
+            $DOWNLOAD_DATA ds003775
       - save_cache:
           key: data-cache-ds003775-2
           paths:
@@ -115,7 +116,7 @@ jobs:
       - run:
           name: Get ds001971
           command: |
-            $DOWNLOAD_DATA -d ds001971
+            $DOWNLOAD_DATA ds001971
       - save_cache:
           key: data-cache-ds001971-2
           paths:
@@ -134,7 +135,7 @@ jobs:
       - run:
           name: Get ds004107
           command: |
-            $DOWNLOAD_DATA -d ds004107
+            $DOWNLOAD_DATA ds004107
       - save_cache:
           key: data-cache-ds004107-2
           paths:
@@ -153,7 +154,7 @@ jobs:
       - run:
           name: Get ds000246
           command: |
-            $DOWNLOAD_DATA -d ds000246
+            $DOWNLOAD_DATA ds000246
       - save_cache:
           key: data-cache-ds000246-2
           paths:
@@ -172,7 +173,7 @@ jobs:
       - run:
           name: Get ds000247
           command: |
-            $DOWNLOAD_DATA -d ds000247
+            $DOWNLOAD_DATA ds000247
       - save_cache:
           key: data-cache-ds000247-2
           paths:
@@ -191,7 +192,7 @@ jobs:
       - run:
           name: Get ds000248
           command: |
-            $DOWNLOAD_DATA -d ds000248
+            $DOWNLOAD_DATA ds000248
       - save_cache:
           key: data-cache-ds000248-4
           paths:
@@ -210,7 +211,7 @@ jobs:
       - run:
           name: Get ds001810
           command: |
-            $DOWNLOAD_DATA -d ds001810
+            $DOWNLOAD_DATA ds001810
       - save_cache:
           key: data-cache-ds001810-2
           paths:
@@ -229,7 +230,7 @@ jobs:
       - run:
           name: Get ds003104
           command: |
-            $DOWNLOAD_DATA -d ds003104
+            $DOWNLOAD_DATA ds003104
       - save_cache:
           key: data-cache-ds003104-2
           paths:
@@ -248,7 +249,7 @@ jobs:
       - run:
           name: Get ds003392
           command: |
-            $DOWNLOAD_DATA -d ds003392
+            $DOWNLOAD_DATA ds003392
       - save_cache:
           key: data-cache-ds003392-2
           paths:
@@ -267,7 +268,7 @@ jobs:
       - run:
           name: Get ds004229
           command: |
-            $DOWNLOAD_DATA -d ds004229
+            $DOWNLOAD_DATA ds004229
       - save_cache:
           key: data-cache-ds004229-2
           paths:
@@ -288,7 +289,7 @@ jobs:
       - run:
           name: Get eeg_matchingpennies
           command: |
-            $DOWNLOAD_DATA -d eeg_matchingpennies
+            $DOWNLOAD_DATA eeg_matchingpennies
       - save_cache:
           key: data-cache-eeg_matchingpennies-1
           paths:
@@ -307,7 +308,7 @@ jobs:
       - run:
           name: Get ERP_CORE
           command: |
-            $DOWNLOAD_DATA -d ERP_CORE
+            $DOWNLOAD_DATA ERP_CORE
       - save_cache:
           key: data-cache-ERP_CORE-1
           paths:
@@ -331,6 +332,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds000117
           destination: reports/ds000117
@@ -357,6 +365,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds003775
           destination: reports/ds003775
@@ -383,6 +398,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds001971
           destination: reports/ds001971
@@ -409,6 +431,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds004107
           destination: reports/ds004107
@@ -437,6 +466,13 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds000246
           destination: reports/ds000246
@@ -464,6 +500,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds000247
           destination: reports/ds000247
@@ -472,7 +515,7 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/ds000247/*/*/*/*.html
 
-  test_ds000248:
+  test_ds000248_base:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -483,24 +526,31 @@ jobs:
           keys:
             - data-cache-ds000248-4
       - run:
-          name: test ds000248
+          name: test ds000248_base
           command: |
-            DS=ds000248
+            DS=ds000248_base
             $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
       - store_artifacts:
-          path: /home/circleci/reports/ds000248
-          destination: reports/ds000248
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_base
+          destination: reports/ds000248_base
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.html
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.json
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.tsv
 
   test_ds000248_ica:
     <<: *imageconfig
@@ -521,6 +571,13 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds000248_ica
           destination: reports/ds000248_ica
@@ -544,6 +601,13 @@ jobs:
           name: test BEM from FLASH
           command: |
             $RUN_TESTS ds000248_FLASH_BEM
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -557,9 +621,16 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test BEM from T1 (watershed)
+          no_output_timeout: 20m
           command: |
             $RUN_TESTS ds000248_T1_BEM
-          no_output_timeout: 20m
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
 
   test_ds000248_coreg_surfaces:
     <<: *imageconfig
@@ -575,6 +646,13 @@ jobs:
           name: test head surface creation for MNE coregistration
           command: |
             $RUN_TESTS ds000248_coreg_surfaces
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
 
   test_ds000248_no_mri:
     <<: *imageconfig
@@ -594,6 +672,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds000248_no_mri
           destination: reports/ds000248_no_mri
@@ -620,6 +705,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds001810
           destination: reports/ds001810
@@ -646,6 +738,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds003104
           destination: reports/ds003104
@@ -674,6 +773,13 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds003392
           destination: reports/ds003392
@@ -704,6 +810,13 @@ jobs:
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ds004229
           destination: reports/ds004229
@@ -732,6 +845,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/eeg_matchingpennies
           destination: reports/eeg_matchingpennies
@@ -766,6 +886,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -795,6 +922,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -824,6 +958,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -853,6 +994,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -882,6 +1030,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -911,6 +1066,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -940,6 +1102,13 @@ jobs:
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
+            ls -al test-results/*.xml
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
       - store_artifacts:
           path: /home/circleci/reports/ERP_CORE
           destination: reports/ERP_CORE
@@ -1045,7 +1214,7 @@ workflows:
       - cache_ds000248:
           requires:
             - setup_env
-      - test_ds000248:
+      - test_ds000248_base:
           requires:
             - cache_ds000248
       - test_ds000248_ica:
@@ -1132,7 +1301,7 @@ workflows:
             - test_ds004107
             - test_ds000246
             - test_ds000247
-            - test_ds000248
+            - test_ds000248_base
             - test_ds000248_ica
             - test_ds000248_no_mri
             - test_ds001810

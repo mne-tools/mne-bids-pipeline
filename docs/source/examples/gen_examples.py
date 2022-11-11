@@ -1,7 +1,6 @@
 #!/bin/env python
 
 from collections import defaultdict
-import glob
 import os
 import shutil
 from pathlib import Path
@@ -10,16 +9,18 @@ import logging
 from typing import Union, Iterable
 import mne_bids_pipeline
 
+from mne_bids_pipeline._config_import import _import_config
+
 this_dir = Path(__file__).parent
 root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
 
 dataset_opts_path = root / 'tests' / 'datasets.py'
-run_tests_path = root / 'tests' / 'run_tests.py'
+test_run_path = root / 'tests' / 'test_run.py'
 
 dataset_options = runpy.run_path(dataset_opts_path)['DATASET_OPTIONS']
-test_options = runpy.run_path(run_tests_path)['TEST_SUITE']
+test_options = runpy.run_path(test_run_path)['TEST_SUITE']
 
 
 def _bool_to_icon(x: Union[bool, Iterable]) -> str:
@@ -43,41 +44,34 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
         tasks[:] = ['N400', 'ERN', 'LRP', 'MMN', 'N2pc', 'N170', 'P3']
     for task in tasks:
         env['MNE_BIDS_STUDY_TASK'] = task
-
-        # To get all of these to work
-        example_config = runpy.run_path(example_config_path)
-        env['BIDS_ROOT'] = example_config['bids_root']
-
-        config_module_path = root / '_config.py'
-        config = runpy.run_path(config_module_path)
-
-        ch_types = [c.upper() for c in config['ch_types']]
+        config = _import_config(check=False)
+        ch_types = [c.upper() for c in config.ch_types]
         funcs['MEG processing'] = "MEG" in ch_types
         funcs['EEG processing'] = "EEG" in ch_types
         key = 'Maxwell filter'
-        funcs[key] = funcs[key] or config["use_maxwell_filter"]
-        funcs['Frequency filter'] = config["l_freq"] or config["h_freq"]
+        funcs[key] = funcs[key] or config.use_maxwell_filter
+        funcs['Frequency filter'] = config.l_freq or config.h_freq
         key = 'SSP'
-        funcs[key] = funcs[key] or (config["spatial_filter"] == "ssp")
+        funcs[key] = funcs[key] or (config.spatial_filter == "ssp")
         key = 'ICA'
-        funcs[key] = funcs[key] or (config["spatial_filter"] == "ica")
-        funcs['Evoked contrasts'] = config["contrasts"]
-        any_decoding = config["decode"] and config["contrasts"]
+        funcs[key] = funcs[key] or (config.spatial_filter == "ica")
+        funcs['Evoked contrasts'] = config.contrasts
+        any_decoding = config.decode and config.contrasts
         key = 'Time-by-time decoding'
         funcs[key] = funcs[key] or any_decoding
         key = 'Time-generalization decoding'
         funcs[key] = funcs[key] or (
             any_decoding and
-            config["decoding_time_generalization"]
+            config.decoding_time_generalization
         )
         key = 'CSP decoding'
         funcs[key] = funcs[key] or (
             any_decoding and
-            config['decoding_csp']
+            config.decoding_csp
         )
-        funcs['Time-frequency analysis'] = config["time_frequency_conditions"]
-        funcs['BEM surface creation'] = config["recreate_bem"]
-        funcs['Template MRI'] = config["use_template_mri"]
+        funcs['Time-frequency analysis'] = config.time_frequency_conditions
+        funcs['BEM surface creation'] = config.recreate_bem
+        funcs['Template MRI'] = config.use_template_mri
     return funcs
 
 

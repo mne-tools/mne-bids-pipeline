@@ -68,8 +68,9 @@ def get_input_fnames_time_decoding(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_time_decoding)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_time_decoding,
+)
 def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                       in_files):
     if cfg.decoding_time_generalization:

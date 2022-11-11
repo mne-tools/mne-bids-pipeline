@@ -48,8 +48,9 @@ def get_input_fnames_drop_ptp(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_drop_ptp)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_drop_ptp,
+)
 def drop_ptp(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')

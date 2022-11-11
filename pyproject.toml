@@ -48,6 +48,8 @@ dev = [
     "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
 ]
 tests = [
+    "pytest",
+    "pytest-cov",
     "psutil",
     "datalad",
     "mkdocs",
@@ -66,7 +68,7 @@ tests = [
 ]
 
 [project.scripts]
-mne_bids_pipeline = "mne_bids_pipeline._main:main_cli"
+mne_bids_pipeline = "mne_bids_pipeline._main:main"
 
 [project.urls]
 homepage = "https://mne.tools/mne-bids-pipeline"
@@ -96,7 +98,8 @@ enable-colors = ""
 count = ""
 
 [tool.pytest.ini_options]
-addopts = "-ra -vv --tb=short"
+addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=junit-results.xml --durations=10"
 testpaths = [
     "mne_bids_pipeline",
 ]
+junit_family = "xunit2"

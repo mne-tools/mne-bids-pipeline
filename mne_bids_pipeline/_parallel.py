@@ -1,6 +1,5 @@
 """Parallelization."""
 
-import os
 from typing import Literal, Callable
 from types import SimpleNamespace
 
@@ -11,14 +10,7 @@ from ._config_utils import get_deriv_root
 
 
 def get_n_jobs(config: SimpleNamespace) -> int:
-    env = os.environ
-    if config.interactive:
-        n_jobs = 1
-    elif env.get('MNE_BIDS_STUDY_NJOBS'):
-        n_jobs = int(env['MNE_BIDS_STUDY_NJOBS'])
-    else:
-        n_jobs = config.N_JOBS
-
+    n_jobs = config.N_JOBS
     if n_jobs < 0:
         n_cores = joblib.cpu_count()
         n_jobs = min(n_cores + n_jobs + 1, n_cores)
@@ -38,7 +30,6 @@ def setup_dask_client(config: SimpleNamespace) -> None:
     if dask_client is not None:
         return
 
-    # n_workers = multiprocessing.cpu_count()  # FIXME should use N_JOBS
     n_workers = get_n_jobs(config)
     logger.info(f'👾 Initializing Dask client with {n_workers} workers …')
 

@@ -106,8 +106,9 @@ def get_input_fnames_forward(*, cfg, subject, session):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_forward)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_forward,
+)
 def run_forward(*, cfg, subject, session, in_files):
     bids_path = BIDSPath(subject=subject,
                          session=session,

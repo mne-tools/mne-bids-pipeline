@@ -44,7 +44,7 @@ def init_dataset(cfg) -> None:
     _write_json(fname_json, ds_json, overwrite=True)
 
 
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def init_subject_dirs(
     *,
     cfg,

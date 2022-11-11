@@ -30,9 +30,10 @@ def get_output_fnames_setup_source_space(*, cfg, subject):
     return out_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_setup_source_space,
-              get_output_fnames=get_output_fnames_setup_source_space)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_setup_source_space,
+    get_output_fnames=get_output_fnames_setup_source_space,
+)
 def run_setup_source_space(*, cfg, subject, in_files):
     msg = f'Creating source space with spacing {repr(cfg.spacing)}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject))

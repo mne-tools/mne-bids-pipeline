@@ -7,16 +7,13 @@ import os
 import shutil
 import sys
 from pathlib import Path
-import logging
-from typing import Union
 
 from mne.utils import run_subprocess
 
-from ..._parallel import parallel_func, get_parallel_backend
 from ..._config_utils import get_fs_subjects_dir, get_bids_root, get_subjects
+from ..._logging import logger, gen_log_kwargs
+from ..._parallel import parallel_func, get_parallel_backend
 
-PathLike = Union[str, Path]
-logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
@@ -24,11 +21,15 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
-        logger.info(f"Subject {subject} is already present. Please delete the "
-                    f"directory if you want to recompute.")
+        msg = (f"Subject {subject} is already present. Please delete the "
+               f"directory if you want to recompute.")
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
-    logger.info(f"Running recon-all on subject {subject}. This will take "
-                f"a LONG time – it's a good idea to let it run over night.")
+    msg = (
+        "Running recon-all on subject {subject}. This will take "
+        "a LONG time – it's a good idea to let it run over night."
+    )
+    logger.info(**gen_log_kwargs(message=msg, subject=subject))
 
     env = os.environ
     if 'FREESURFER_HOME' not in env:
@@ -75,7 +76,6 @@ def main(*, config) -> None:
     python run.py --steps=freesurfer --config=your_pipeline_config.py
 
     """  # noqa
-    logger.info('Running FreeSurfer')
     subjects = get_subjects(config)
     root_dir = get_bids_root(config)
     subjects_dir = Path(get_fs_subjects_dir(config))

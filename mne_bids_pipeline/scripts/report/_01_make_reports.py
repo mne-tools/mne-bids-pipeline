@@ -30,7 +30,8 @@ from ..._decoding import _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import (
-    failsafe_run, save_logs, _update_for_splits, _sanitize_callable)
+    failsafe_run, save_logs, _update_for_splits, _sanitize_callable,
+)
 from ..._reject import _get_reject
 from ..._viz import plot_auto_scores
 
@@ -1325,7 +1326,7 @@ def run_report_source(
     return report
 
 
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def run_report(
     *,
     cfg: SimpleNamespace,
@@ -1424,7 +1425,7 @@ def add_system_info(report: mne.Report):
     report.add_sys_info(title='System information')
 
 
-@failsafe_run(script_path=__file__)
+@failsafe_run()
 def run_report_average(*, cfg, subject: str, session: str) -> None:
     # Group report
     import matplotlib.pyplot as plt  # nested import to help joblib

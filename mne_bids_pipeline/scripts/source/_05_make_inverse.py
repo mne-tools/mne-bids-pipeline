@@ -46,8 +46,9 @@ def get_input_fnames_inverse(*, cfg, subject, session):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_inverse)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_inverse,
+)
 def run_inverse(*, cfg, subject, session, in_files):
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs

@@ -162,8 +162,9 @@ def resample(
     raw.resample(sfreq, npad='auto')
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_frequency_filter)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_frequency_filter,
+)
 def filter_data(
     *,
     cfg,

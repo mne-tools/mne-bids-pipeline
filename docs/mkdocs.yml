@@ -93,6 +93,7 @@ plugins:
                     show_root_heading: true
                     show_root_full_path: false
                     separate_signature: true
+                    line_length: 80  # needed for long param entries
                     show_bases: false
                 selection:
                     docstring_style: numpy

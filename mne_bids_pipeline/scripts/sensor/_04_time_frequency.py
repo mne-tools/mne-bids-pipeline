@@ -18,7 +18,7 @@ from ..._config_utils import (
     _restrict_analyze_channels, get_eeg_reference, sanitize_cond_name,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _script_path
+from ..._run import failsafe_run, save_logs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
 
@@ -50,8 +50,9 @@ def get_input_fnames_time_frequency(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_time_frequency)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_time_frequency,
+)
 def run_time_frequency(*, cfg, subject, session, in_files):
     import matplotlib.pyplot as plt
     msg = f'Input: {in_files["epochs"].basename}'
@@ -176,8 +177,7 @@ def main(*, config) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     parallel, run_func = parallel_func(run_time_frequency, config=config)

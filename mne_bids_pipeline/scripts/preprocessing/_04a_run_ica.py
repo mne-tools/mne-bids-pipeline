@@ -33,7 +33,7 @@ from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
-from ..._run import failsafe_run, _script_path, _update_for_splits, save_logs
+from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._typing import Literal
 
 
@@ -253,8 +253,9 @@ def get_input_fnames_run_ica(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_run_ica)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_run_ica,
+)
 def run_ica(*, cfg, subject, session, in_files):
     """Run ICA."""
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
@@ -573,8 +574,7 @@ def main(*, config) -> None:
     """Run ICA."""
     if config.spatial_filter != 'ica':
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

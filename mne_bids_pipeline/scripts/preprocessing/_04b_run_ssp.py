@@ -20,7 +20,7 @@ from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
 from ..._report import _open_report
-from ..._run import failsafe_run, _update_for_splits, _script_path, save_logs
+from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
 def get_input_fnames_run_ssp(**kwargs):
@@ -48,8 +48,9 @@ def get_input_fnames_run_ssp(**kwargs):
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_run_ssp)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_run_ssp,
+)
 def run_ssp(*, cfg, subject, session, in_files):
     import matplotlib.pyplot as plt
     # compute SSP on first run of raw
@@ -212,8 +213,7 @@ def main(*, config) -> None:
     """Run SSP."""
     if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

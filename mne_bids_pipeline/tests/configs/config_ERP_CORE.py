@@ -68,7 +68,6 @@ ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
 
-on_error = 'abort'
 on_rename_missing_events = 'ignore'
 
 parallel_backend = 'dask'

@@ -7,28 +7,37 @@ import matplotlib
 import mne
 from mne.utils import _check_option
 
-from ._logging import logger
+from ._logging import logger, gen_log_kwargs
 
 
-def _import_config() -> ModuleType:
+def _import_config(*, check: bool = True, log: bool = False) -> ModuleType:
     """Import the default config and the user's config."""
+    # Get the default
+    from . import _config as config
+    # Update with user config
+    _update_with_user_config(config=config, log=log)
+    # Check it
+    if check:
+        _check_config(config)
+    # Take some standard actions
+    mne.set_log_level(verbose=config.mne_log_level.upper())
+    return config
+
+
+def _update_with_user_config(
+    *,
+    config: ModuleType,  # modified in-place
+    log: bool = False,
+) -> None:
+    # 1. Basics and hidden vars
     from . import __version__
-    from . import _config  # get the default
-    _config.PIPELINE_NAME = 'mne-bids-pipeline'
-    _config.VERSION = __version__
-    _config.CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
-    os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = str(__file__)
-    mne.set_log_level(verbose=_config.mne_log_level.upper())
-    _config._raw_split_size = '2GB'
-    _config._epochs_split_size = '2GB'
-    # Now update with user config
-    _update_with_user_config(_config)
-    # And then check it
-    _check_config(_config)
-    return _config
+    config.PIPELINE_NAME = 'mne-bids-pipeline'
+    config.VERSION = __version__
+    config.CODE_URL = 'https://github.com/mne-tools/mne-bids-pipeline'
+    config._raw_split_size = '2GB'
+    config._epochs_split_size = '2GB'
 
-
-def _update_with_user_config(config: ModuleType) -> ModuleType:
+    # 2. User config
     if "MNE_BIDS_STUDY_CONFIG" in os.environ:
         cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
 
@@ -50,10 +59,30 @@ def _update_with_user_config(config: ModuleType) -> ModuleType:
                 logger.debug('Overwriting: %s -> %s' % (key, val))
                 setattr(config, key, val)
 
+    # 3. Overrides via command-line switches (via env vars)
     config.interactive = bool(int(os.getenv(
         'MNE_BIDS_STUDY_INTERACTIVE', config.interactive)))
-    if not config.interactive:
+    log_kwargs = dict(emoji='override', box='  ', step='')
+    if config.interactive:
+        if log and config.on_error != 'debug':
+            msg = 'Setting config.on_error="debug" because of interactive mode'
+            logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
+        config.on_error = 'debug'
+    else:
         matplotlib.use('Agg')  # do not open any window  # noqa
+        config.on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR', config.on_error)
+    if config.on_error == 'debug':
+        if log and config.N_JOBS != 1:
+            msg = 'Setting config.N_JOBS=1 because config.on_error="debug"'
+            logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
+        config.N_JOBS = 1
+        if log and config.parallel_backend != 'loky':
+            msg = (
+                'Setting config.parallel_backend="loky" because '
+                'config.on_error="debug"'
+            )
+            logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
+        config.parallel_backend = 'loky'
 
     if os.getenv('MNE_BIDS_STUDY_USE_CACHE', '') == '0':
         config.memory_location = False

@@ -52,9 +52,10 @@ def get_output_fnames_make_bem_surfaces(*, cfg, subject):
     return out_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_make_bem_surfaces,
-              get_output_fnames=get_output_fnames_make_bem_surfaces)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_make_bem_surfaces,
+    get_output_fnames=get_output_fnames_make_bem_surfaces,
+)
 def make_bem_surfaces(*, cfg, subject, in_files):
     mri_images, _, _ = _get_bem_params(cfg)
     in_files.clear()  # assume we use everything we add

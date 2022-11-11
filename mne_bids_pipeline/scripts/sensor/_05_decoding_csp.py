@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, _script_path, save_logs
+from ..._run import failsafe_run, save_logs
 from ..._report import (
     _open_report, _sanitize_cond_tag, _plot_full_epochs_decoding_scores,
     _imshow_tf,
@@ -137,7 +137,6 @@ def get_input_fnames_csp(**kwargs):
 
 
 @failsafe_run(
-    script_path=__file__,
     get_input_fnames=get_input_fnames_csp
 )
 def one_subject_decoding(
@@ -557,8 +556,7 @@ def main(*, config) -> None:
             msg = 'No CSP analysis requested. '
 
         msg = 'Skipping …'
-        with _script_path(__file__):
-            logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
     with get_parallel_backend(config):

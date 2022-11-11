@@ -28,6 +28,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
-    - run: pip install --upgrade pytest setuptools[toml] pip
-    - run: pip install --no-build-isolation -ve .
-    - run: pytest
+    - run: pip install --upgrade setuptools[toml] pip
+    - run: pip install --no-build-isolation -ve .[tests]
+    - run: pytest mne_bids_pipeline -m "not dataset_test"
+    - uses: codecov/codecov-action@v3
+      if: success()
+      name: 'Upload coverage to CodeCov'

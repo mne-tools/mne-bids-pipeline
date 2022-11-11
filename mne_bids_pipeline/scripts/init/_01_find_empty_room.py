@@ -52,8 +52,9 @@ def get_input_fnames_find_empty_room(
     return in_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_find_empty_room)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_find_empty_room,
+)
 def find_empty_room(
     *,
     subject: str,

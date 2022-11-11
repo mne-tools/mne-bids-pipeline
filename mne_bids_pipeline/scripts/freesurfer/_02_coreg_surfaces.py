@@ -5,8 +5,6 @@ Use FreeSurfer's ``mkheadsurf`` and related utilities to make head surfaces
 suitable for coregistration.
 """
 from pathlib import Path
-import logging
-from typing import Union
 from types import SimpleNamespace
 
 import mne.bem
@@ -14,12 +12,10 @@ import mne.bem
 from ..._config_utils import (
     get_fs_subjects_dir, get_fs_subject, get_subjects, _get_scalp_in_files,
 )
-from ..._logging import gen_log_kwargs
+from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run
 
-PathLike = Union[str, Path]
-logger = logging.getLogger('mne-bids-pipeline')
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
@@ -42,9 +38,10 @@ def get_output_fnames_coreg_surfaces(*, cfg, subject):
     return out_files
 
 
-@failsafe_run(script_path=__file__,
-              get_input_fnames=get_input_fnames_coreg_surfaces,
-              get_output_fnames=get_output_fnames_coreg_surfaces)
+@failsafe_run(
+    get_input_fnames=get_input_fnames_coreg_surfaces,
+    get_output_fnames=get_output_fnames_coreg_surfaces,
+)
 def make_coreg_surfaces(
     cfg: SimpleNamespace,
     subject: str,

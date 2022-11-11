@@ -21,7 +21,7 @@ from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
 from ..._run import (
     failsafe_run, save_logs, _update_for_splits, _sanitize_callable,
-    auto_script_path)
+)
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -262,7 +262,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run epochs."""
     with get_parallel_backend(config):

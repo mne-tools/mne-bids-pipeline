@@ -12,7 +12,7 @@ from ..._config_utils import (
     _get_bem_conductivity, get_fs_subjects_dir, get_fs_subject, get_subjects)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs, auto_script_path
+from ..._run import failsafe_run, save_logs
 
 
 def get_input_fnames_make_bem_solution(*, cfg, subject):
@@ -66,7 +66,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run BEM solution calculation."""
     if not config.run_source_estimation:

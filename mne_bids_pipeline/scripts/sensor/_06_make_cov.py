@@ -16,9 +16,7 @@ from ..._config_utils import (
 )
 from ..._config_import import _import_config
 from ..._logging import gen_log_kwargs, logger
-from ..._run import (
-    failsafe_run, save_logs, _sanitize_callable, auto_script_path,
-)
+from ..._run import failsafe_run, save_logs, _sanitize_callable
 from ..._parallel import get_parallel_backend, parallel_func
 
 
@@ -217,7 +215,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run cov."""
     cfg = get_config(config=config)

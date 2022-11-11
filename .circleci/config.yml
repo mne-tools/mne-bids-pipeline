@@ -515,7 +515,7 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/ds000247/*/*/*/*.html
 
-  test_ds000248:
+  test_ds000248_base:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -526,9 +526,9 @@ jobs:
           keys:
             - data-cache-ds000248-4
       - run:
-          name: test ds000248
+          name: test ds000248_base
           command: |
-            DS=ds000248
+            DS=ds000248_base
             $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
@@ -543,14 +543,14 @@ jobs:
           path: ./test-results
           destination: test-results
       - store_artifacts:
-          path: /home/circleci/reports/ds000248
-          destination: reports/ds000248
+          path: /home/circleci/reports/ds000248_base
+          destination: reports/ds000248_base
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.html
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.json
-            - mne_data/derivatives/mne-bids-pipeline/ds000248/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_base/*/*/*.tsv
 
   test_ds000248_ica:
     <<: *imageconfig
@@ -1211,10 +1211,10 @@ workflows:
           requires:
             - cache_ds000247
 
-      - cache_ds000248:
+      - cache_ds000248_base:
           requires:
             - setup_env
-      - test_ds000248:
+      - test_ds000248_base:
           requires:
             - cache_ds000248
       - test_ds000248_ica:
@@ -1301,7 +1301,7 @@ workflows:
             - test_ds004107
             - test_ds000246
             - test_ds000247
-            - test_ds000248
+            - test_ds000248_base
             - test_ds000248_ica
             - test_ds000248_no_mri
             - test_ds001810

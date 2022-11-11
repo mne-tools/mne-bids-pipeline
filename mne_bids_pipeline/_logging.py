@@ -57,10 +57,15 @@ class LogFilter(logging.Filter):
 
 logger.addFilter(LogFilter())
 
-coloredlogs.install(
-    fmt=log_fmt, level='info', logger=logger,
-    level_styles=log_level_styles, field_styles=log_field_styles,
-)
+
+def _install_logs():
+    coloredlogs.install(
+        fmt=log_fmt, level='info', logger=logger,
+        level_styles=log_level_styles, field_styles=log_field_styles,
+    )
+
+
+_install_logs()
 
 
 def gen_log_kwargs(

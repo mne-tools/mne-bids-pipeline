@@ -36,7 +36,7 @@ from ..._config_utils import (
 )
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, auto_script_path
+from ..._run import failsafe_run, save_logs
 from ..._parallel import (
     get_parallel_backend, get_n_jobs, get_parallel_backend_name)
 
@@ -215,7 +215,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:

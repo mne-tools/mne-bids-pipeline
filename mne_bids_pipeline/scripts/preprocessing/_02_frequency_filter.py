@@ -32,9 +32,7 @@ from ..._import_data import (
 from ..._io import _read_json, _empty_room_match_path
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import (
-    failsafe_run, save_logs, _update_for_splits, auto_script_path,
-)
+from ..._run import failsafe_run, save_logs, _update_for_splits
 from ..._typing import Literal
 
 
@@ -321,7 +319,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run filter."""
     with get_parallel_backend(config):

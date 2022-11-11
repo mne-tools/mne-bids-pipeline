@@ -1,5 +1,6 @@
 """Script-running utilities."""
 
+import contextlib
 import copy
 import functools
 import hashlib
@@ -32,6 +33,8 @@ def failsafe_run(
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
+            # TODO: This should not be necessary, but for some reason it is
+            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = inspect.getfile(func)
             config = _import_config()
             on_error = config.on_error
             memory = ConditionalStepMemory(
@@ -309,18 +312,19 @@ def save_logs(
     writer.close()
 
 
-def auto_script_path(func):
-    """Wrap func while setting MNE_BIDS_STUDY_SCRIPT_PATH."""
-    @functools.wraps(func)
-    def fun(*args, **kwargs):
-        script_path = inspect.getfile(func)
-        key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
-        os.environ[key] = str(script_path)
-        try:
-            func(*args, **kwargs)
-        finally:
-            del os.environ[key]
-    return fun
+@contextlib.contextmanager
+def _script_path(path):
+    key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
+    orig_val = os.environ.get(key, None)
+    os.environ[key] = str(path)
+    try:
+        yield
+    finally:
+        if orig_val is None:
+            if key in os.environ:
+                del os.environ[key]
+        else:
+            os.environ[key] = orig_val
 
 
 def _update_for_splits(

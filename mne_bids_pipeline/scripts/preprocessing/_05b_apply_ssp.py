@@ -16,9 +16,7 @@ from ..._config_utils import (
     get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import (
-    failsafe_run, _update_for_splits, auto_script_path, save_logs,
-)
+from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -89,7 +87,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Apply ssp."""
     if not config.spatial_filter == 'ssp':

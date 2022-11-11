@@ -18,7 +18,7 @@ from ..._config_utils import (
     _restrict_analyze_channels, get_eeg_reference, sanitize_cond_name,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, auto_script_path
+from ..._run import failsafe_run, save_logs
 from ..._parallel import get_parallel_backend, parallel_func
 
 
@@ -122,7 +122,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:

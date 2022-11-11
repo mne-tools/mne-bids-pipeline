@@ -56,7 +56,7 @@ TEST_SUITE: Dict[str, _TestOptionsT] = {
     'ds000247': {
         'task': 'rest',
     },
-    'ds000248': {
+    'ds000248_base': {
         'steps': ('preprocessing', 'sensor', 'source', 'report'),
     },
     'ds000248_ica': {},

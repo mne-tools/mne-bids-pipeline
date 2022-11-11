@@ -33,8 +33,7 @@ from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
-from ..._run import (
-    failsafe_run, auto_script_path, _update_for_splits, save_logs)
+from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._typing import Literal
 
 
@@ -569,7 +568,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run ICA."""
     if config.spatial_filter != 'ica':

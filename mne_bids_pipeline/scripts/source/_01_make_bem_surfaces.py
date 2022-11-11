@@ -13,7 +13,7 @@ from ..._config_utils import (
     get_fs_subject, get_subjects, _get_bem_conductivity, get_fs_subjects_dir)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs, auto_script_path
+from ..._run import failsafe_run, save_logs
 
 
 def _get_bem_params(cfg):
@@ -97,7 +97,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run BEM surface extraction."""
     if not config.run_source_estimation:

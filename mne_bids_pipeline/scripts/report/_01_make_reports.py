@@ -31,7 +31,7 @@ from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import (
     failsafe_run, save_logs, _update_for_splits, _sanitize_callable,
-    auto_script_path)
+)
 from ..._reject import _get_reject
 from ..._viz import plot_auto_scores
 
@@ -2089,7 +2089,6 @@ def _agg_backend():
         matplotlib.use(backend, force=True)
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Make reports."""
     with get_parallel_backend(config), _agg_backend():

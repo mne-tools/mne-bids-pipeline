@@ -18,7 +18,7 @@ from ..._config_utils import (
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs, auto_script_path
+from ..._run import failsafe_run, save_logs
 
 
 def _prepare_trans_template(cfg, info):
@@ -185,7 +185,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run forward."""
     if not config.run_source_estimation:

@@ -20,9 +20,7 @@ from ..._config_utils import (
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import (
-    failsafe_run, _update_for_splits, save_logs, auto_script_path,
-)
+from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._reject import _get_reject
 
 
@@ -150,7 +148,6 @@ def get_config(
     return cfg
 
 
-@auto_script_path
 def main(*, config) -> None:
     """Run epochs."""
     parallel, run_func = parallel_func(drop_ptp, config=config)

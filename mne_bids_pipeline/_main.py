@@ -13,7 +13,8 @@ import numpy as np
 from ._config_utils import _get_script_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
-from ._logging import logger
+from ._logging import logger, gen_log_kwargs, _install_logs
+from ._run import _script_path
 
 
 def main():
@@ -171,31 +172,30 @@ def main():
         # them twice.
         script_modules = [*SCRIPT_MODULES['init'], *script_modules]
 
-    logger.info(
-        "👋 Welcome aboard the MNE BIDS Pipeline!"
-    )
-    logger.info(
-        f"🧾 Using configuration: {config}"
-    )
+    _install_logs()
+    msg = "Welcome aboard the MNE BIDS Pipeline!"
+    logger.info(**gen_log_kwargs(message=msg, emoji='👋', box='╶╴'))
+    msg = f"Using configuration: {config}"
+    logger.info(**gen_log_kwargs(message=msg, emoji='🧾', box='╶╴'))
 
     config_imported = _import_config(log=True)
     for script_module in script_modules:
-        this_name = script_module.__name__.split('.', maxsplit=1)[-1]
-        this_name = this_name.replace('.', '/')
-        extra = dict(box='┌╴', step=f'🚀 {this_name} ')
-        start = time.time()
-        logger.info('Now running  👇', extra=extra)
-        script_module.main(config=config_imported)
-        extra = dict(box='└╴', step=f'🎉 {this_name} ')
-        elapsed = time.time() - start
-        hours, remainder = divmod(elapsed, 3600)
-        hours = int(hours)
-        minutes, seconds = divmod(remainder, 60)
-        minutes = int(minutes)
-        seconds = int(np.ceil(seconds))  # always take full seconds
-        elapsed = f'{seconds}s'
-        if minutes:
-            elapsed = f'{minutes}m {elapsed}'
-        if hours:
-            elapsed = f'{hours}h {elapsed}'
-        logger.info(f'Done running 👆 [{elapsed}]', extra=extra)
+        this_name = script_module.__file__
+        with _script_path(this_name):
+            start = time.time()
+            msg = 'Now running  👇'
+            logger.info(**gen_log_kwargs(message=msg, box='┌╴', emoji='🚀'))
+            script_module.main(config=config_imported)
+            elapsed = time.time() - start
+            hours, remainder = divmod(elapsed, 3600)
+            hours = int(hours)
+            minutes, seconds = divmod(remainder, 60)
+            minutes = int(minutes)
+            seconds = int(np.ceil(seconds))  # always take full seconds
+            elapsed = f'{seconds}s'
+            if minutes:
+                elapsed = f'{minutes}m {elapsed}'
+            if hours:
+                elapsed = f'{hours}h {elapsed}'
+            msg = f'Done running 👆 [{elapsed}]'
+            logger.info(**gen_log_kwargs(message=msg, box='└╴', emoji='🎉'))

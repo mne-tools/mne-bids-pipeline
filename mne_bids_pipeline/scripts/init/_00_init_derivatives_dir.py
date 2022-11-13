@@ -3,17 +3,14 @@
 Initialize the derivatives directory.
 """
 
-import itertools
 from typing import Optional
 from types import SimpleNamespace
 
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
-from ..._config_utils import (
-    get_datatype, get_deriv_root, get_subjects, get_sessions)
+from ..._config_utils import get_datatype, get_subjects, get_sessions
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run
 
 
@@ -66,29 +63,25 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         datatype=get_datatype(config),
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         PIPELINE_NAME=config.PIPELINE_NAME,
         VERSION=config.VERSION,
-        CODE_URL=config.CODE_URL
+        CODE_URL=config.CODE_URL,
     )
     return cfg
 
 
 def main(*, config):
     """Initialize the output directories."""
-    with get_parallel_backend(config):
-        init_dataset(cfg=get_config(config=config))
-        parallel, run_func = parallel_func(init_subject_dirs, config=config)
-        parallel(
-            run_func(
+    init_dataset(cfg=get_config(config=config))
+    # Don't bother with parallelization here as I/O operations are generally
+    # not well paralellized (and this should be very fast anyway)
+    for subject in get_subjects(config):
+        for session in get_sessions(config):
+            init_subject_dirs(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
-        )

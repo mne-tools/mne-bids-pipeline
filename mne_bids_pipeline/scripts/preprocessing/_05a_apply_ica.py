@@ -11,7 +11,6 @@ order might differ).
 
 """
 
-import itertools
 from types import SimpleNamespace
 
 import pandas as pd
@@ -22,12 +21,12 @@ from mne.report import Report
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_subjects, get_sessions, get_task, get_datatype, get_deriv_root,
+    get_subjects, get_sessions, get_task, get_datatype,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
-from ..._report import _open_report
+from ..._report import _open_report, _agg_backend
 from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
@@ -74,8 +73,7 @@ def apply_ica(*, cfg, subject, session, in_files):
 
     # Load ICA.
     msg = f"Reading ICA: {in_files['ica']}"
-    logger.debug(**gen_log_kwargs(message=msg, subject=subject,
-                                  session=session))
+    logger.debug(**gen_log_kwargs(message=msg))
     ica = read_ica(fname=in_files.pop('ica'))
 
     # Select ICs to remove.
@@ -86,11 +84,9 @@ def apply_ica(*, cfg, subject, session, in_files):
 
     # Load epochs to reject ICA components.
     msg = (f'Input: {in_files["epochs"].basename}')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = (f'Output: {out_files["epochs"].basename}')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
     ica_reject = _get_reject(
@@ -104,13 +100,11 @@ def apply_ica(*, cfg, subject, session, in_files):
 
     # Now actually reject the components.
     msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
     msg = 'Saving reconstructed epochs after ICA.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned.save(
         out_files['epochs'], overwrite=True, split_naming='bids',
         split_size=cfg._epochs_split_size)
@@ -127,13 +121,15 @@ def apply_ica(*, cfg, subject, session, in_files):
     report = Report(
         out_files['report'], title=title, verbose=False)
     picks = ica.exclude if ica.exclude else None
-    report.add_ica(
-        ica=ica,
-        title='Effects of ICA cleaning',
-        inst=epochs.copy().apply_baseline(cfg.baseline),
-        picks=picks,
-        replace=True,
-    )
+    with _agg_backend():
+        report.add_ica(
+            ica=ica,
+            title='Effects of ICA cleaning',
+            inst=epochs.copy().apply_baseline(cfg.baseline),
+            picks=picks,
+            replace=True,
+            n_jobs=1,  # avoid automatic parallelization
+        )
     report.save(
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
 
@@ -144,9 +140,7 @@ def apply_ica(*, cfg, subject, session, in_files):
         msg = 'Adding ICA to report.'
     else:
         msg = 'Skipping ICA addition to report, no components marked as bad.'
-    logger.info(
-        **gen_log_kwargs(message=msg, subject=subject, session=session)
-    )
+    logger.info(**gen_log_kwargs(message=msg))
     if ica.exclude:
         with _open_report(cfg=cfg, subject=subject, session=session) as report:
             report.add_ica(
@@ -169,12 +163,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         interactive=config.interactive,
         baseline=config.baseline,
         ica_reject=config.ica_reject,
@@ -191,17 +186,15 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(apply_ica, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            apply_ica, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session)
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

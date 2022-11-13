@@ -49,7 +49,7 @@ def make_coreg_surfaces(
 ) -> dict:
     """Create head surfaces for use with MNE-Python coregistration tools."""
     msg = 'Creating scalp surfaces for coregistration'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject))
+    logger.info(**gen_log_kwargs(message=msg))
     in_files.pop('t1' if 't1' in in_files else 'seghead')
     mne.bem.make_scalp_surfaces(
         subject=cfg.fs_subject,
@@ -63,6 +63,7 @@ def make_coreg_surfaces(
 
 def get_config(*, config, subject) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         subject=subject,
         fs_subject=get_fs_subject(config, subject),
         subjects_dir=get_fs_subjects_dir(config),
@@ -76,8 +77,9 @@ def main(*, config) -> None:
     if (Path(get_fs_subjects_dir(config)) / 'fsaverage').exists():
         subjects.append('fsaverage')
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(make_coreg_surfaces, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            make_coreg_surfaces, exec_params=config.exec_params)
 
         parallel(
             run_func(

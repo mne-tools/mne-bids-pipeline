@@ -3,7 +3,6 @@
 Compute and apply an inverse solution for each evoked data set.
 """
 
-import itertools
 import pathlib
 from types import SimpleNamespace
 
@@ -13,9 +12,9 @@ from mne.minimum_norm import (make_inverse_operator, apply_inverse,
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_noise_cov_bids_path, get_subjects, sanitize_cond_name,
-    get_task, get_datatype, get_deriv_root, get_sessions,
-    get_fs_subjects_dir, get_fs_subject)
+    get_noise_cov_bids_path, get_subjects, sanitize_cond_name, get_task,
+    get_datatype, get_sessions, get_fs_subjects_dir, get_fs_subject,
+)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
@@ -114,10 +113,7 @@ def run_inverse(*, cfg, subject, session, in_files):
                 if key not in out_files:
                     continue
                 msg = f'Rendering inverse solution for {condition}'
-                logger.info(
-                    **gen_log_kwargs(
-                        message=msg, subject=subject, session=session)
-                )
+                logger.info(**gen_log_kwargs(message=msg))
                 fname_stc = out_files[key]
                 tags = (
                     'source-estimate',
@@ -143,6 +139,7 @@ def get_config(
     subject,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -156,7 +153,7 @@ def get_config(
         loose=config.loose,
         depth=config.depth,
         inverse_method=config.inverse_method,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         noise_cov=_sanitize_callable(config.noise_cov),
         report_stc_n_time_points=config.report_stc_n_time_points,
         fs_subject=get_fs_subject(config=config, subject=subject),
@@ -172,18 +169,16 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_inverse, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_inverse, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject),
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

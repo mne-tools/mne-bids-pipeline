@@ -18,7 +18,7 @@ from sklearn.pipeline import make_pipeline
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
-    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
+    _restrict_analyze_channels, get_decoding_contrasts,
 )
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
@@ -156,7 +156,7 @@ def one_subject_decoding(
     import matplotlib.pyplot as plt
     condition1, condition2 = contrast
     msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
+    logger.info(**gen_log_kwargs(msg))
 
     bids_path = in_files['epochs'].copy().update(processing=None)
     epochs = mne.read_epochs(in_files.pop('epochs'))
@@ -178,7 +178,7 @@ def one_subject_decoding(
     del ch_type_smallest_rank, ranks
 
     msg = f'Reducing data dimension via PCA; new rank: {rank}.'
-    logger.info(**gen_log_kwargs(msg, subject=subject, session=session))
+    logger.info(**gen_log_kwargs(msg))
     pca = UnsupervisedSpatialFilter(
         PCA(rank),
         average=False
@@ -248,9 +248,7 @@ def one_subject_decoding(
         freq_range_name = row['freq_range_name']
 
         msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
-        logger.info(
-            **gen_log_kwargs(msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(msg))
 
         # XXX We're filtering here again in each iteration. This should be
         # XXX optimized.
@@ -351,9 +349,7 @@ def one_subject_decoding(
         msg = _fmt_contrast(
             cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
         msg += f': {cfg.decoding_metric}={score:0.3f}'
-        logger.info(
-            **gen_log_kwargs(msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(msg))
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f'{condition1}+{condition2}'.replace(op.sep, '')
@@ -375,9 +371,7 @@ def one_subject_decoding(
     # Report
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         msg = 'Adding CSP decoding results to the report.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         section = 'Decoding: CSP'
         freq_name_to_bins_map = _handle_csp_args(
             cfg.decoding_csp_times,
@@ -522,9 +516,10 @@ def get_config(
     session: Optional[str]
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         # Data parameters
         datatype=get_datatype(config),
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         task=get_task(config),
         acq=config.acq,
         rec=config.rec,
@@ -559,8 +554,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(one_subject_decoding, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            one_subject_decoding, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(

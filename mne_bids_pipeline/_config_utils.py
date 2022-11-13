@@ -2,7 +2,6 @@
 
 import copy
 import functools
-import os
 import pathlib
 from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar
 from types import SimpleNamespace, ModuleType
@@ -14,15 +13,6 @@ from mne_bids import BIDSPath
 
 from ._logging import logger, gen_log_kwargs
 from ._typing import Literal, ArbitraryContrast, _keys_arbitrary_contrast
-
-
-def get_deriv_root(config: SimpleNamespace) -> pathlib.Path:
-    if config.deriv_root is None:
-        return get_bids_root(config) / 'derivatives' / config.PIPELINE_NAME
-    else:
-        return (pathlib.Path(config.deriv_root)
-                .expanduser()
-                .resolve())
 
 
 def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
@@ -37,7 +27,7 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
 
     if not config.subjects_dir:
         return (
-            get_bids_root(config) / 'derivatives' / 'freesurfer' / 'subjects')
+            config.bids_root / 'derivatives' / 'freesurfer' / 'subjects')
     else:
         return (pathlib.Path(config.subjects_dir)
                 .expanduser()
@@ -57,28 +47,6 @@ def get_fs_subject(
         return subject
     else:
         return f'sub-{subject}'
-
-
-def get_bids_root(config: SimpleNamespace) -> pathlib.Path:
-    # BIDS_ROOT environment variable takes precedence over any configuration
-    # file values.
-    root = os.getenv('BIDS_ROOT')
-    if root is not None:
-        return (pathlib.Path(root)
-                .expanduser()
-                .resolve(strict=True))
-
-    # If we don't have a bids_root until now, raise an exception as we cannot
-    # proceed.
-    if not config.bids_root:
-        msg = ('You need to specify `bids_root` in your configuration, or '
-               'define an environment variable `BIDS_ROOT` pointing to the '
-               'root folder of your BIDS dataset')
-        raise ValueError(msg)
-
-    return (pathlib.Path(config.bids_root)
-            .expanduser()
-            .resolve(strict=True))
 
 
 @functools.lru_cache(maxsize=None)
@@ -103,27 +71,19 @@ def get_datatype(config: SimpleNamespace) -> Literal['meg', 'eeg']:
 
 def _get_ignore_datatypes(config: SimpleNamespace) -> Tuple[str]:
     _all_datatypes: List[str] = mne_bids.get_datatypes(
-        root=get_bids_root(config)
+        root=config.bids_root
     )
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 
 
 def get_subjects(config: SimpleNamespace) -> List[str]:
-    env = os.environ
     _valid_subjects = _get_entity_vals_cached(
-        root=get_bids_root(config),
+        root=config.bids_root,
         entity_key='subject',
         ignore_datatypes=_get_ignore_datatypes(config),
     )
-    if env.get('MNE_BIDS_STUDY_SUBJECT'):
-        env_subject = env['MNE_BIDS_STUDY_SUBJECT']
-        if env_subject not in _valid_subjects:
-            raise ValueError(
-                f'Invalid subject. It can be {_valid_subjects} but '
-                f'got {env_subject}')
-        s = [env_subject]
-    elif config.subjects == 'all':
+    if config.subjects == 'all':
         s = _valid_subjects
     else:
         s = config.subjects
@@ -140,14 +100,11 @@ def get_sessions(
 ) -> Union[List[None], List[str]]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
-        root=get_bids_root(config),
+        root=config.bids_root,
         entity_key='session',
         ignore_datatypes=_get_ignore_datatypes(config),
     )
-    env = os.environ
-    if env.get('MNE_BIDS_STUDY_SESSION'):
-        sessions = env['MNE_BIDS_STUDY_SESSION']
-    elif sessions == 'all':
+    if sessions == 'all':
         sessions = _all_sessions
 
     if not sessions:
@@ -172,7 +129,7 @@ def get_runs_all_subjects(
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
         valid_runs_subj = _get_entity_vals_cached(
-            get_bids_root(config) / f'sub-{subject}', entity_key='run',
+            config.bids_root / f'sub-{subject}', entity_key='run',
             ignore_datatypes=_get_ignore_datatypes(config),
         )
 
@@ -237,14 +194,7 @@ def get_runs(
                    'set of runs.')
             logger.info(**gen_log_kwargs(message=msg))
 
-    env_run = os.environ.get('MNE_BIDS_STUDY_RUN')
-    if env_run and env_run not in valid_runs:
-        raise ValueError(
-            f'Invalid run. It can be {valid_runs} but '
-            f'got {env_run}')
-    elif env_run:
-        runs = [env_run]
-    elif runs == 'all':
+    if runs == 'all':
         runs = valid_runs
 
     if not runs:
@@ -283,18 +233,12 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
 
 
 def get_task(config: SimpleNamespace) -> Optional[str]:
-    env = os.environ
     task = None
     _valid_tasks = _get_entity_vals_cached(
-        root=get_bids_root(config),
+        root=config.bids_root,
         entity_key='task',
         ignore_datatypes=_get_ignore_datatypes(config),
     )
-    if env.get('MNE_BIDS_STUDY_TASK'):
-        task = env['MNE_BIDS_STUDY_TASK']
-        if task not in _valid_tasks:
-            raise ValueError(f'Invalid task. It can be: '
-                             f'{", ".join(_valid_tasks)} but got: {task}')
     if not task:
         if not _valid_tasks:
             return None
@@ -337,7 +281,7 @@ def get_channels_to_analyze(
 def sanitize_cond_name(cond: str) -> str:
     cond = (
         cond
-        .replace(os.path.sep, '')
+        .replace('/', '')
         .replace('_', '')
         .replace('-', '')
         .replace(' ', '')
@@ -356,7 +300,7 @@ def get_mf_cal_fname(
                                  session=session,
                                  suffix='meg',
                                  datatype='meg',
-                                 root=get_bids_root(config))
+                                 root=config.bids_root)
                         .meg_calibration_fpath)
         if mf_cal_fpath is None:
             raise ValueError('Could not find Maxwell Filter Calibration '
@@ -383,7 +327,7 @@ def get_mf_ctc_fname(
                                  session=session,
                                  suffix='meg',
                                  datatype='meg',
-                                 root=get_bids_root(config))
+                                 root=config.bids_root)
                         .meg_crosstalk_fpath)
         if mf_ctc_fpath is None:
             raise ValueError('Could not find Maxwell Filter cross-talk '

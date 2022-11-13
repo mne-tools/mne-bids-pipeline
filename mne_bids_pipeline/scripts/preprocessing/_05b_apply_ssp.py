@@ -5,7 +5,6 @@ projections components are removed from the data.
 
 """
 
-import itertools
 from types import SimpleNamespace
 
 import mne
@@ -13,7 +12,6 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype,
-    get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, _update_for_splits, save_logs
@@ -52,14 +50,11 @@ def apply_ssp(*, cfg, subject, session, in_files):
     out_files['epochs'] = in_files['epochs'].copy().update(
         processing='ssp', check=False)
     msg = f"Input epochs: {in_files['epochs'].basename}"
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = f'Input SSP:    {in_files["proj"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output:       {out_files['epochs'].basename}"
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
     projs = mne.read_proj(in_files.pop('proj'))
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
@@ -76,12 +71,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg
@@ -94,17 +90,15 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(apply_ssp, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            apply_ssp, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session)
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

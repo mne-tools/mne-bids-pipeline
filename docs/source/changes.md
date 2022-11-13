@@ -290,6 +290,9 @@ authors:
   [`config.process_empty_room = True`][mne_bids_pipeline._config.process_empty_room] and
   [`config.process_rest = True`][mne_bids_pipeline._config.process_rest]
   ({{ gh(633) }} by {{ authors.larsoner }})
+- Environment variables are no longer used to control execution and variables,
+  use command-line switches instead
+  ({{ gh(663) }} by {{ authors.larsoner}} )
 
 ### Code health
 

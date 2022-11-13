@@ -3,7 +3,6 @@
 Source estimates are morphed to the ``fsaverage`` brain.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import numpy as np
@@ -13,8 +12,8 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_fs_subjects_dir, get_subjects, sanitize_cond_name, get_fs_subject,
-    get_task, get_datatype, get_deriv_root, get_sessions, get_bids_root,
-    get_all_contrasts)
+    get_task, get_datatype, get_sessions, get_all_contrasts,
+)
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs
@@ -104,6 +103,7 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         task_is_rest=config.task_is_rest,
         datatype=get_datatype(config),
@@ -114,12 +114,9 @@ def get_config(
         conditions=config.conditions,
         inverse_method=config.inverse_method,
         fs_subjects_dir=get_fs_subjects_dir(config),
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         subjects_dir=get_fs_subjects_dir(config),
-        parallel_backend=config.parallel_backend,
-        interactive=config.interactive,
-        N_JOBS=config.N_JOBS,
-        bids_root=get_bids_root(config),
+        bids_root=config.bids_root,
         data_type=config.data_type,
         ch_types=config.ch_types,
         subjects=config.subjects,
@@ -128,6 +125,9 @@ def get_config(
         use_template_mri=config.use_template_mri,
         all_contrasts=get_all_contrasts(config),
         report_stc_n_time_points=config.report_stc_n_time_points,
+        # TODO: This deviates in the same way as the sensor group avg script
+        exec_params_inner=config.exec_params,
+        interactive=config.interactive,
     )
     return cfg
 
@@ -139,19 +139,17 @@ def run_group_average_source(*, cfg, subject='average'):
 
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(cfg))
 
-    with get_parallel_backend(cfg):
-        parallel, run_func = parallel_func(morph_stc, config=cfg)
+    with get_parallel_backend(cfg.exec_params_inner):
+        parallel, run_func = parallel_func(
+            morph_stc, exec_params=cfg.exec_params_inner)
         all_morphed_stcs = parallel(
             run_func(
                 cfg=cfg, subject=subject,
                 fs_subject=get_fs_subject(config=cfg, subject=subject),
                 session=session
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(cfg),
-                get_sessions(cfg)
-            )
+            for subject, session in get_subjects(cfg)
+            for session in get_sessions(cfg)
         )
         mean_morphed_stcs = np.array(all_morphed_stcs).mean(axis=0)
 

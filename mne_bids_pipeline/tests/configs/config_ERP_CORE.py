@@ -23,14 +23,23 @@ components from a total of 6 experimental tasks:
                 event-related potential research. *NeuroImage* 225: 117465.
                 [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
-import os
+import argparse
 import mne
+import sys
 
 study_name = 'ERP-CORE'
 bids_root = '~/mne_data/ERP_CORE'
 deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE'
 
-task = os.environ.get('MNE_BIDS_STUDY_TASK')
+# Find the --task option
+args = [arg for arg in sys.argv
+        if arg.startswith('--task') or not arg.startswith('-')]
+parser = argparse.ArgumentParser()
+parser.add_argument('ignored', nargs='*')
+parser.add_argument(
+    '--task', choices=('N400', 'ERN', 'LRP', 'MMN', 'N2pc', 'N170', 'P3'),
+    required=True)
+task = parser.parse_args(args).task
 sessions = [task]
 
 subjects = ['015', '016', '017', '018', '019']

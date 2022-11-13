@@ -52,6 +52,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
         fs_subject=get_fs_subject(config=config, subject=subject),
@@ -74,11 +75,9 @@ def main(*, config) -> None:
     else:
         subjects = get_subjects(config=config)
 
-    with get_parallel_backend(config):
+    with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_setup_source_space,
-            config=config,
-        )
+            run_setup_source_space, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(

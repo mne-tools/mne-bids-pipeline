@@ -1,7 +1,6 @@
 """Logging."""
+import inspect
 import logging
-import os
-import pathlib
 from typing import Optional, Union
 
 import coloredlogs
@@ -14,11 +13,28 @@ log_level_styles = {
     'info': {
         'bright': True,
         'bold': True,
-    }
+    },
+    'warning': {
+        'color': 202,
+        'bold': True
+    },
+    'error': {
+        'background': 'red',
+        'bold': True
+    },
+    'critical': {
+        'background': 'red',
+        'bold': True
+    },
 }
 log_field_styles = {
     'asctime': {
         'color': 'green'
+    },
+    'box': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': True,
     },
     'step': {
         'color': 'cyan',
@@ -28,15 +44,33 @@ log_field_styles = {
     'msg': {
         'color': 'cyan',
         'bold': True,
-        'bright': True,
+        'bright': False,
     },
-    'box': {
+    'subject': {
         'color': 'cyan',
+        'bright': True,
+        'bold': True,
+    },
+    'session': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': False,
+    },
+    'run': {
+        'color': 'cyan',
+        'bold': True,
+        'bright': False,
+    },
+    'message': {
+        'color': 'white',
         'bold': True,
         'bright': True,
     },
 }
-log_fmt = '[%(asctime)s] %(box)s%(step)s%(message)s'
+log_fmt = (
+    '[%(asctime)s] %(box)s%(step)s%(subject)s%(session)s%(run)s%(message)s'
+)
+log_date_fmt = '%H:%M:%S'
 
 
 class LogFilter(logging.Filter):
@@ -50,7 +84,7 @@ class LogFilter(logging.Filter):
         if not hasattr(record, 'run'):
             record.run = ''
         if not hasattr(record, 'box'):
-            record.box = '╶╴'
+            record.box = '│ '
 
         return True
 
@@ -59,9 +93,11 @@ logger.addFilter(LogFilter())
 
 
 def _install_logs():
+    coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
     coloredlogs.install(
         fmt=log_fmt, level='info', logger=logger,
         level_styles=log_level_styles, field_styles=log_field_styles,
+        date_fmt=log_date_fmt,
     )
 
 
@@ -78,21 +114,33 @@ def gen_log_kwargs(
     emoji: str = '⏳️',
     box: str = '│ ',
 ) -> LogKwargsT:
+    from ._run import _get_script_path, _short_script_path
+    # Try to figure these out
+    stack = inspect.stack()
+    up_locals = stack[1].frame.f_locals
+    if subject is None:
+        subject = up_locals.get('subject', None)
+    if session is None:
+        session = up_locals.get('session', None)
+    if run is None:
+        run = up_locals.get('run', None)
+    if step is None:
+        script_path = _get_script_path(stack)
+        if script_path:
+            step = _short_script_path(_get_script_path())
+            if 'maxwell' in step and not subject:
+                raise RuntimeError
+        else:
+            step = ''
+
+    # Do some nice formatting
     if subject is not None:
         subject = f' sub-{subject}'
     if session is not None:
         session = f' ses-{session}'
     if run is not None:
         run = f' run-{run}'
-
-    script_path = os.environ.get('MNE_BIDS_STUDY_SCRIPT_PATH')
-    if step is None:
-        if script_path:
-            script_path = pathlib.Path(script_path)
-            step = f'{script_path.parent.name}/{script_path.stem}'
-        else:
-            step = ''
-    if step:
+    if step != '':
         # need an extra space
         message = f' {message}'
 

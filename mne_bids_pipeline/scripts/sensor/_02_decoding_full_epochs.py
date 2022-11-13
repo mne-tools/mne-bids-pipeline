@@ -9,7 +9,6 @@ which condition.
 # Let us first import the libraries
 
 import os.path as op
-import itertools
 from types import SimpleNamespace
 
 import numpy as np
@@ -26,7 +25,7 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
-    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts
+    _restrict_analyze_channels, get_decoding_contrasts
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._decoding import LogReg
@@ -70,8 +69,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
                         in_files):
     import matplotlib.pyplot as plt
     msg = f'Contrasting conditions: {condition1} – {condition2}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files['epochs'].copy()
 
@@ -90,8 +88,9 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     # We have to use this approach because the conditions could be based on
     # metadata selection, so simply using epochs[conds[0], conds[1]] would
     # not work.
-    epochs = mne.concatenate_epochs([epochs[epochs_conds[0]],
-                                     epochs[epochs_conds[1]]])
+    epochs = mne.concatenate_epochs(
+        [epochs[epochs_conds[0]], epochs[epochs_conds[1]]],
+        verbose='error')
 
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
@@ -151,9 +150,7 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     # Report
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         msg = 'Adding full-epochs decoding results to the report.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
 
         all_decoding_scores = []
         all_contrasts = []
@@ -208,12 +205,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
@@ -239,8 +237,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_epochs_decoding, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_epochs_decoding, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
@@ -249,10 +248,8 @@ def main(*, config) -> None:
                 condition2=cond_2,
                 session=session,
             )
-            for subject, session, (cond_1, cond_2) in itertools.product(
-                get_subjects(config),
-                get_sessions(config),
-                get_decoding_contrasts(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
+            for (cond_1, cond_2) in get_decoding_contrasts(config)
         )
     save_logs(config=config, logs=logs)

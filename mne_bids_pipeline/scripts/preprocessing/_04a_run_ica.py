@@ -11,14 +11,11 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-import itertools
 from typing import List, Optional, Iterable, Tuple
 from types import SimpleNamespace
 
-from packaging.version import Version
 import pandas as pd
 import numpy as np
-import threadpoolctl
 
 import mne
 from mne.report import Report
@@ -27,12 +24,13 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_runs, get_subjects, get_task, get_datatype,
-    get_deriv_root, get_eeg_reference,
+    get_eeg_reference,
 )
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
+from ..._report import _agg_backend
 from ..._run import failsafe_run, _update_for_splits, save_logs
 from ..._typing import Literal
 
@@ -49,12 +47,10 @@ def filter_for_ica(
     if cfg.ica_l_freq is None:
         msg = (f'Not applying high-pass filter (data is already filtered, '
                f'cutoff: {raw.info["highpass"]} Hz).')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
     else:
         msg = f'Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
 
 
@@ -85,8 +81,7 @@ def fit_ica(
     msg = (f'Fit {ica.n_components_} components (explaining '
            f'{round(explained_var * 100, 1)}% of the variance) in '
            f'{ica.n_iter_} iterations.')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     return ica
 
 
@@ -105,8 +100,7 @@ def make_ecg_epochs(
     if ('ecg' in raw.get_channel_types() or 'meg' in cfg.ch_types or
             'mag' in cfg.ch_types):
         msg = 'Creating ECG epochs …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
 
         # We want to extract a total of 5 min of data for ECG epochs generation
         # (across all runs)
@@ -126,14 +120,12 @@ def make_ecg_epochs(
         if len(ecg_epochs) == 0:
             msg = ('No ECG events could be found. Not running ECG artifact '
                    'detection.')
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session, run=run))
+            logger.info(**gen_log_kwargs(message=msg))
             ecg_epochs = None
     else:
         msg = ('No ECG or magnetometer channels are present. Cannot '
                'automate artifact detection for ECG')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         ecg_epochs = None
 
     return ecg_epochs
@@ -160,8 +152,7 @@ def make_eog_epochs(
 
     if ch_names:
         msg = 'Creating EOG epochs …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
 
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names,
                                        baseline=(None, -0.2))
@@ -169,15 +160,12 @@ def make_eog_epochs(
         if len(eog_epochs) == 0:
             msg = ('No EOG events could be found. Not running EOG artifact '
                    'detection.')
-            logger.warning(**gen_log_kwargs(message=msg,
-                                            subject=subject,
-                                            session=session, run=run))
+            logger.warning(**gen_log_kwargs(message=msg))
             eog_epochs = None
     else:
         msg = ('No EOG channel is present. Cannot automate IC detection '
                'for EOG')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         eog_epochs = None
 
     return eog_epochs
@@ -195,8 +183,7 @@ def detect_bad_components(
 ) -> Tuple[List[int], np.ndarray]:
     artifact = which.upper()
     msg = f'Performing automated {artifact} artifact detection …'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if which == 'eog':
         inds, scores = ica.find_bads_eog(
@@ -217,14 +204,11 @@ def detect_bad_components(
         warn = (f'No {artifact}-related ICs detected, this is highly '
                 f'suspicious. A manual check is suggested. You may wish to '
                 f'lower "{adjust_setting}".')
-        logger.warning(**gen_log_kwargs(message=warn,
-                                        subject=subject,
-                                        session=session))
+        logger.warning(**gen_log_kwargs(message=warn))
     else:
         msg = (f'Detected {len(inds)} {artifact}-related ICs in '
                f'{len(epochs)} {artifact} epochs.')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(message=msg))
 
     return inds, scores
 
@@ -270,12 +254,6 @@ def run_ica(*, cfg, subject, session, in_files):
         processing='ica+components', suffix='report', extension='.html')
     del bids_basename
 
-    # Prevent oversubscription of CPUs in dask on M1 on older dask
-    if cfg.parallel_backend == 'dask':
-        import dask
-        if Version(dask.__version__) < Version('2022.10.0'):
-            threadpoolctl.threadpool_limits(limits=1, user_api='openmp')
-
     # Generate a list of raw data paths (i.e., paths of individual runs)
     # we want to create epochs from.
 
@@ -291,8 +269,7 @@ def run_ica(*, cfg, subject, session, in_files):
         zip(cfg.runs, raw_fnames)
     ):
         msg = f'Loading filtered raw data from {raw_fname.basename}'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
 
         # ECG epochs
         ecg_epochs = make_ecg_epochs(
@@ -342,8 +319,7 @@ def run_ica(*, cfg, subject, session, in_files):
                 del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         epochs = make_epochs(
             subject=subject,
             session=session,
@@ -399,8 +375,7 @@ def run_ica(*, cfg, subject, session, in_files):
     )
 
     msg = f'Using PTP rejection thresholds: {ica_reject}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     epochs.drop_bad(reject=ica_reject)
     if epochs_eog is not None:
@@ -410,8 +385,7 @@ def run_ica(*, cfg, subject, session, in_files):
 
     # Now actually perform ICA.
     msg = 'Calculating ICA solution.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     ica = fit_ica(cfg=cfg, epochs=epochs, subject=subject, session=session)
 
     # Start a report
@@ -451,8 +425,7 @@ def run_ica(*, cfg, subject, session, in_files):
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
     msg = 'Saving ICA solution and detected artifacts to disk.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(out_files['ica'], overwrite=True)
     _update_for_splits(out_files, 'ica')
@@ -482,39 +455,38 @@ def run_ica(*, cfg, subject, session, in_files):
     # Lastly, add info about the epochs used for the ICA fit, and plot all ICs
     # for manual inspection.
     msg = 'Adding diagnostic plots for all ICA components to the HTML report …'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     report = Report(info_fname=epochs, title=title, verbose=False)
-    report.add_epochs(
-        epochs=epochs,
-        title='Epochs used for ICA fitting',
-        drop_log_ignore=(),
-        replace=True,
-    )
-
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
     eog_evoked = None if epochs_eog is None else epochs_eog.average()
     ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
     eog_scores = None if len(eog_scores) == 0 else eog_scores
 
-    report.add_ica(
-        ica=ica,
-        title='ICA cleaning',
-        inst=epochs,
-        ecg_evoked=ecg_evoked,
-        eog_evoked=eog_evoked,
-        ecg_scores=ecg_scores,
-        eog_scores=eog_scores,
-        replace=True,
-    )
+    with _agg_backend():
+        report.add_epochs(
+            epochs=epochs,
+            title='Epochs used for ICA fitting',
+            drop_log_ignore=(),
+            replace=True,
+        )
+        report.add_ica(
+            ica=ica,
+            title='ICA cleaning',
+            inst=epochs,
+            ecg_evoked=ecg_evoked,
+            eog_evoked=eog_evoked,
+            ecg_scores=ecg_scores,
+            eog_scores=eog_scores,
+            replace=True,
+            n_jobs=1,  # avoid automatic parallelization
+        )
 
     msg = (f"ICA completed. Please carefully review the extracted ICs in the "
            f"report {out_files['report'].basename}, and mark all components "
            f"you wish to reject as 'bad' in "
            f"{out_files['components'].basename}")
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     report.save(
         out_files['report'], overwrite=True, open_browser=cfg.interactive)
@@ -530,6 +502,7 @@ def get_config(
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         conditions=config.conditions,
         task=get_task(config),
         task_is_rest=config.task_is_rest,
@@ -538,7 +511,7 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         interactive=config.interactive,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
@@ -565,7 +538,6 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
-        parallel_backend=config.parallel_backend,
     )
     return cfg
 
@@ -577,8 +549,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_ica, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_ica, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -587,10 +560,7 @@ def main(*, config) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

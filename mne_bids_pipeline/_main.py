@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-
 import argparse
-import os
 import pathlib
 from textwrap import dedent
 import time
 from typing import List
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import numpy as np
 
@@ -14,7 +11,7 @@ from ._config_utils import _get_script_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
 from ._logging import logger, gen_log_kwargs, _install_logs
-from ._run import _script_path
+from ._run import _short_script_path
 
 
 def main():
@@ -104,8 +101,6 @@ def main():
     elif isinstance(steps, str):
         steps = (steps,)
 
-    if n_jobs is not None:
-        n_jobs = str(n_jobs)
     on_error = 'debug' if debug else None
     cache = '1' if cache else '0'
 
@@ -122,26 +117,27 @@ def main():
             processing_stages.append(steps_)
             processing_steps.append(None)
 
-    config = str(pathlib.Path(config).expanduser())
-    os.environ['MNE_BIDS_STUDY_CONFIG'] = config
+    config_path = pathlib.Path(config).expanduser().resolve(strict=True)
+    overrides = SimpleNamespace()
     if root_dir:
-        os.environ['BIDS_ROOT'] = str(pathlib.Path(root_dir).expanduser())
+        overrides.bids_root = \
+            pathlib.Path(root_dir).expanduser().resolve(strict=True)
     if subject:
-        os.environ['MNE_BIDS_STUDY_SUBJECT'] = subject
+        overrides.subjects = [subject]
     if session:
-        os.environ['MNE_BIDS_STUDY_SESSION'] = session
+        overrides.sessions = [session]
     if task:
-        os.environ['MNE_BIDS_STUDY_TASK'] = task
+        overrides.task = task
     if run:
-        os.environ['MNE_BIDS_STUDY_RUN'] = run
+        overrides.runs = run
     if interactive:
-        os.environ['MNE_BIDS_STUDY_INTERACTIVE'] = str(int(interactive))
+        overrides.interactive = interactive
     if n_jobs:
-        os.environ['MNE_BIDS_STUDY_NJOBS'] = str(n_jobs)
+        overrides.N_JOBS = int(n_jobs)
     if on_error:
-        os.environ['MNE_BIDS_STUDY_ON_ERROR'] = on_error
-    if cache:
-        os.environ['MNE_BIDS_STUDY_USE_CACHE'] = cache
+        overrides.on_error = on_error
+    if not cache:
+        overrides.memory_location = False
 
     script_modules: List[ModuleType] = []
     SCRIPT_MODULES = _get_script_modules()
@@ -174,28 +170,35 @@ def main():
 
     _install_logs()
     msg = "Welcome aboard the MNE BIDS Pipeline!"
-    logger.info(**gen_log_kwargs(message=msg, emoji='👋', box='╶╴'))
+    logger.info(**gen_log_kwargs(message=msg, emoji='👋', box='╶╴', step=''))
     msg = f"Using configuration: {config}"
-    logger.info(**gen_log_kwargs(message=msg, emoji='🧾', box='╶╴'))
+    logger.info(**gen_log_kwargs(message=msg, emoji='🧾', box='╶╴', step=''))
 
-    config_imported = _import_config(log=True)
+    config_imported = _import_config(
+        config_path=config_path,
+        overrides=overrides,
+        log=True,
+    )
     for script_module in script_modules:
-        this_name = script_module.__file__
-        with _script_path(this_name):
-            start = time.time()
-            msg = 'Now running  👇'
-            logger.info(**gen_log_kwargs(message=msg, box='┌╴', emoji='🚀'))
-            script_module.main(config=config_imported)
-            elapsed = time.time() - start
-            hours, remainder = divmod(elapsed, 3600)
-            hours = int(hours)
-            minutes, seconds = divmod(remainder, 60)
-            minutes = int(minutes)
-            seconds = int(np.ceil(seconds))  # always take full seconds
-            elapsed = f'{seconds}s'
-            if minutes:
-                elapsed = f'{minutes}m {elapsed}'
-            if hours:
-                elapsed = f'{hours}h {elapsed}'
-            msg = f'Done running 👆 [{elapsed}]'
-            logger.info(**gen_log_kwargs(message=msg, box='└╴', emoji='🎉'))
+        start = time.time()
+        step = _short_script_path(pathlib.Path(script_module.__file__))
+        msg = 'Now running  👇'
+        logger.info(
+            **gen_log_kwargs(message=msg, box='┌╴', emoji='🚀', step=step)
+        )
+        script_module.main(config=config_imported)
+        elapsed = time.time() - start
+        hours, remainder = divmod(elapsed, 3600)
+        hours = int(hours)
+        minutes, seconds = divmod(remainder, 60)
+        minutes = int(minutes)
+        seconds = int(np.ceil(seconds))  # always take full seconds
+        elapsed = f'{seconds}s'
+        if minutes:
+            elapsed = f'{minutes}m {elapsed}'
+        if hours:
+            elapsed = f'{hours}h {elapsed}'
+        msg = f'Done running  👆 [{elapsed}]'
+        logger.info(
+            **gen_log_kwargs(message=msg, box='└╴', emoji='🎉', step=step)
+        )

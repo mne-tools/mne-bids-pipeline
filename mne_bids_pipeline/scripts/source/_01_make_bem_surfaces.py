@@ -86,6 +86,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config=config),
         bem_mri_images=config.bem_mri_images,
@@ -112,8 +113,9 @@ def main(*, config) -> None:
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(make_bem_surfaces, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            make_bem_surfaces, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(

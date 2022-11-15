@@ -1008,7 +1008,7 @@ def add_csp_grand_average(
             mean_crossval_scores = results['mean_crossval_scores'].ravel()
             # t_vals = results['t_vals']
             clusters = results['clusters']
-            cluster_p_vals = results['cluster_p_vals'].squeeze()
+            cluster_p_vals = np.atleast_1d(results['cluster_p_vals'].squeeze())
             tmin = results['time_bin_edges'].ravel()
             tmin, tmax = tmin[:-1], tmin[1:]
             fmin = results['freq_bin_edges'].ravel()

@@ -1,6 +1,6 @@
 import copy
 from types import SimpleNamespace
-from typing import Dict, Optional, Iterable, Union, List
+from typing import Dict, Optional, Iterable, Union, List, Literal
 
 import mne
 from mne_bids import BIDSPath, read_raw_bids
@@ -10,8 +10,8 @@ import pandas as pd
 from ._config_utils import get_channels_to_analyze, get_task
 from ._io import _write_json
 from ._logging import gen_log_kwargs, logger
-from ._typing import PathLike, Literal
 from ._viz import plot_auto_scores
+from .typing import PathLike
 
 
 def make_epochs(

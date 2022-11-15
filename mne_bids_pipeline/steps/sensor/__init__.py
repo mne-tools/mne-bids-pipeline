@@ -8,7 +8,7 @@ from . import _05_decoding_csp
 from . import _06_make_cov
 from . import _99_group_average
 
-SCRIPTS = (
+_STEPS = (
     _01_make_evoked,
     _02_decoding_full_epochs,
     _03_decoding_time_by_time,

@@ -7,11 +7,11 @@ from types import ModuleType, SimpleNamespace
 
 import numpy as np
 
-from ._config_utils import _get_script_modules
+from ._config_utils import _get_step_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
 from ._logging import logger, gen_log_kwargs, _install_logs
-from ._run import _short_script_path
+from ._run import _short_step_path
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
         The processing steps to run.
         Can either be one of the processing groups 'preprocessing', sensor',
         'source', 'report',  or 'all',  or the name of a processing group plus
-        the desired script sans the step number and
+        the desired step sans the step number and
         filename extension, separated by a '/'. For example, to run ICA, you
         would pass 'sensor/run_ica`. If unspecified, will run all processing
         steps. Can also be a tuple of steps."""))
@@ -139,34 +139,34 @@ def main():
     if not cache:
         overrides.memory_location = False
 
-    script_modules: List[ModuleType] = []
-    SCRIPT_MODULES = _get_script_modules()
+    step_modules: List[ModuleType] = []
+    STEP_MODULES = _get_step_modules()
     for stage, step in zip(processing_stages, processing_steps):
-        if stage not in SCRIPT_MODULES.keys():
+        if stage not in STEP_MODULES.keys():
             raise ValueError(
                 f"Invalid step requested: '{stage}'. "
-                f'It should be one of {list(SCRIPT_MODULES.keys())}.'
+                f'It should be one of {list(STEP_MODULES.keys())}.'
             )
 
         if step is None:
             # User specified `sensors`, `source`, or similar
-            script_modules.extend(SCRIPT_MODULES[stage])
+            step_modules.extend(STEP_MODULES[stage])
         else:
             # User specified 'stage/step'
-            for script_module in SCRIPT_MODULES[stage]:
-                script_name = pathlib.Path(script_module.__file__).name
-                if step in script_name:
-                    script_modules.append(script_module)
+            for step_module in STEP_MODULES[stage]:
+                step_name = pathlib.Path(step_module.__file__).name
+                if step in step_name:
+                    step_modules.append(step_module)
                     break
             else:
-                # We've iterated over all scripts, but none matched!
+                # We've iterated over all steps, but none matched!
                 raise ValueError(f'Invalid steps requested: {stage}/{step}')
 
     if processing_stages[0] != 'all':
-        # Always run the directory initialization scripts, but skip for 'all',
+        # Always run the directory initialization steps, but skip for 'all',
         # because it already includes them – and we want to avoid running
         # them twice.
-        script_modules = [*SCRIPT_MODULES['init'], *script_modules]
+        step_modules = [*STEP_MODULES['init'], *step_modules]
 
     _install_logs()
     msg = "Welcome aboard the MNE BIDS Pipeline!"
@@ -179,14 +179,14 @@ def main():
         overrides=overrides,
         log=True,
     )
-    for script_module in script_modules:
+    for step_module in step_modules:
         start = time.time()
-        step = _short_script_path(pathlib.Path(script_module.__file__))
+        step = _short_step_path(pathlib.Path(step_module.__file__))
         msg = 'Now running  👇'
         logger.info(
             **gen_log_kwargs(message=msg, box='┌╴', emoji='🚀', step=step)
         )
-        script_module.main(config=config_imported)
+        step_module.main(config=config_imported)
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)
         hours = int(hours)

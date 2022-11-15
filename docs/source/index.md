@@ -1,7 +1,7 @@
 What is the MNE-BIDS-Pipeline?
 ==============================
 
-**The MNE-BIDS-Pipeline is a full-fledged processing pipeline for your MEG and
+**The MNE-BIDS-Pipeline is a standardized processing pipeline for your MEG and
 EEG data.**
 
 It operates on raw data stored according to the Brain Imaging Data

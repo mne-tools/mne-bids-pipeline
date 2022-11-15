@@ -9,7 +9,7 @@ from . import _05a_apply_ica
 from . import _05b_apply_ssp
 from . import _06_ptp_reject
 
-SCRIPTS = (
+_STEPS = (
     _01_maxfilter,
     _02_frequency_filter,
     _03_make_epochs,

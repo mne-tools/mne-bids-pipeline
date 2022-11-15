@@ -304,9 +304,11 @@ authors:
   than just `mne.Evoked` by introducing
   [`inverse_targets`][mne_bids_pipeline._config.inverse_targets].
   ({{ gh(452) }} by {{ authors.apmellot }})
-- All processing scripts have been renamed and can be imported like regular
-  Python modules.
-  ({{ gh(470) }} by {{ authors.agramfort }})
+- All processing scripts have been renamed and turned into submodules, and the 
+  pipeline is now organized like a standard Python package with a command-line
+  interface `mne_bids_pipeline ...`
+  ({{ gh(470) }}, {{ gh(611) }}, {{ gh(664) }} by {{ authors.agramfort }}, 
+   {{ authors.hoechenberger }}, and {{ authors.larsoner }})
 - For storing configuration values, we switched from using `BunchConst` to
   Python's built-in `SimpleNamespace`.
   ({{ gh(472) }} by {{ authors.agramfort }})

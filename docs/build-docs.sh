@@ -1,13 +1,13 @@
 #!/bin/bash -e
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+STEP_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "Generating example templates …"
-python $SCRIPT_DIR/source/examples/gen_examples.py
+python $STEP_DIR/source/examples/gen_examples.py
 
 echo "Generating pipeline table …"
-python $SCRIPT_DIR/source/features/gen_steps.py
+python $STEP_DIR/source/features/gen_steps.py
 
 echo "Building the documentation …"
-cd $SCRIPT_DIR
+cd $STEP_DIR
 PYTHONPATH=../ mkdocs build

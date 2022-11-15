@@ -15,7 +15,7 @@ If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
 import numpy as np
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 from types import SimpleNamespace
 
 import mne
@@ -32,7 +32,6 @@ from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._report import _open_report, plot_auto_scores_
 from ..._run import failsafe_run, save_logs, _update_for_splits
-from ..._typing import Literal
 
 
 def get_input_fnames_frequency_filter(**kwargs):

@@ -1,7 +1,8 @@
 """Default settings for data processing and analysis.
 """
 
-from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable
+from typing import (
+    Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal)
 
 from numpy.typing import ArrayLike
 
@@ -9,7 +10,7 @@ import mne
 from mne_bids import BIDSPath
 import numpy as np
 
-from mne_bids_pipeline._typing import PathLike, ArbitraryContrast, Literal
+from mne_bids_pipeline.typing import PathLike, ArbitraryContrast
 
 
 ###############################################################################
@@ -74,8 +75,8 @@ Note: Note
 
 interactive: bool = False
 """
-If True, the scripts will provide some interactive elements, such as
-figures. If running the scripts from a notebook or Spyder,
+If True, the steps will provide some interactive elements, such as
+figures. If running the steps from a notebook or Spyder,
 run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 
@@ -1011,8 +1012,8 @@ in the report. If None it defaults to the current default in MNE-Python.
 # You can choose between ICA and SSP to remove eye and heart artifacts.
 # SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp # noqa
 # ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica # noqa
-# if you choose ICA, run scripts 5a and 6a
-# if you choose SSP, run scripts 5b and 6b
+# if you choose ICA, run steps 5a and 6a
+# if you choose SSP, run steps 5b and 6b
 #
 # Currently you cannot use both.
 

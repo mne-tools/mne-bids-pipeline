@@ -1,11 +1,6 @@
 """Definition of the testing datasets."""
 
-import sys
-from typing import Dict, List
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
+from typing import Dict, List, TypedDict
 
 
 class DATASET_OPTIONS_T(TypedDict):

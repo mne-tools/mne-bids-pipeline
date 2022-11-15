@@ -3,7 +3,8 @@
 import copy
 import functools
 import pathlib
-from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar
+from typing import (
+    List, Optional, Union, Iterable, Tuple, Dict, TypeVar, Literal)
 from types import SimpleNamespace, ModuleType
 
 import numpy as np
@@ -12,7 +13,12 @@ import mne_bids
 from mne_bids import BIDSPath
 
 from ._logging import logger, gen_log_kwargs
-from ._typing import Literal, ArbitraryContrast, _keys_arbitrary_contrast
+from .typing import ArbitraryContrast
+
+try:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+except Exception:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
 
 
 def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
@@ -516,34 +522,34 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
             raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
-def _get_script_modules() -> Dict[str, Tuple[ModuleType]]:
-    from .scripts import init
-    from .scripts import preprocessing
-    from .scripts import sensor
-    from .scripts import source
-    from .scripts import freesurfer
+def _get_step_modules() -> Dict[str, Tuple[ModuleType]]:
+    from .steps import init
+    from .steps import preprocessing
+    from .steps import sensor
+    from .steps import source
+    from .steps import freesurfer
 
-    INIT_SCRIPTS = init.SCRIPTS
-    PREPROCESSING_SCRIPTS = preprocessing.SCRIPTS
-    SENSOR_SCRIPTS = sensor.SCRIPTS
-    SOURCE_SCRIPTS = source.SCRIPTS
-    FREESURFER_SCRIPTS = freesurfer.SCRIPTS
+    INIT_STEPS = init._STEPS
+    PREPROCESSING_STEPS = preprocessing._STEPS
+    SENSOR_STEPS = sensor._STEPS
+    SOURCE_STEPS = source._STEPS
+    FREESURFER_STEPS = freesurfer._STEPS
 
-    SCRIPT_MODULES = {
-        'init': INIT_SCRIPTS,
-        'freesurfer': FREESURFER_SCRIPTS,
-        'preprocessing': PREPROCESSING_SCRIPTS,
-        'sensor': SENSOR_SCRIPTS,
-        'source': SOURCE_SCRIPTS,
+    STEP_MODULES = {
+        'init': INIT_STEPS,
+        'freesurfer': FREESURFER_STEPS,
+        'preprocessing': PREPROCESSING_STEPS,
+        'sensor': SENSOR_STEPS,
+        'source': SOURCE_STEPS,
     }
 
-    # Do not include the FreeSurfer scripts in "all" – we don't intend to run
+    # Do not include the FreeSurfer steps in "all" – we don't intend to run
     # recon-all by default!
-    SCRIPT_MODULES['all'] = (
-        SCRIPT_MODULES['init'] +
-        SCRIPT_MODULES['preprocessing'] +
-        SCRIPT_MODULES['sensor'] +
-        SCRIPT_MODULES['source']
+    STEP_MODULES['all'] = (
+        STEP_MODULES['init'] +
+        STEP_MODULES['preprocessing'] +
+        STEP_MODULES['sensor'] +
+        STEP_MODULES['source']
     )
 
-    return SCRIPT_MODULES
+    return STEP_MODULES

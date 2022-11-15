@@ -11,7 +11,7 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-from typing import List, Optional, Iterable, Tuple
+from typing import List, Optional, Iterable, Tuple, Literal
 from types import SimpleNamespace
 
 import pandas as pd
@@ -32,7 +32,6 @@ from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
 from ..._report import _agg_backend
 from ..._run import failsafe_run, _update_for_splits, save_logs
-from ..._typing import Literal
 
 
 def filter_for_ica(

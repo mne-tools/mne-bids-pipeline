@@ -96,8 +96,14 @@ def compute_cov_from_epochs(
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
-    cov = mne.compute_covariance(epochs, tmin=tmin, tmax=tmax, method='shrunk',
-                                 rank='info')
+    cov = mne.compute_covariance(
+        epochs,
+        tmin=tmin,
+        tmax=tmax,
+        method='shrunk',
+        rank='info',
+        verbose='error',  # TODO: not baseline corrected, maybe problematic?
+    )
     return cov
 
 
@@ -220,7 +226,7 @@ def run_covariance(*, cfg, subject, session, in_files):
                 else:  # It's a contrast of two conditions.
                     title = f'Whitening: {condition}'
                     tags = tags + ('contrast',)
-                fig = evoked.plot_white(cov)
+                fig = evoked.plot_white(cov, verbose='error')
                 report.add_figure(
                     fig=fig,
                     title=title,

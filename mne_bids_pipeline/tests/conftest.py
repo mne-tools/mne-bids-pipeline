@@ -19,6 +19,7 @@ def pytest_configure(config):
     ignore:There is no current event loop:DeprecationWarning
     ignore:distutils Version classes are deprecated.*:DeprecationWarning
     ignore:The register_cmap function.*:PendingDeprecationWarning
+    ignore:Jupyter is migrating its paths[.\n]*:DeprecationWarning
     ignore:numpy\.ndarray size changed, may indicate binary.*:RuntimeWarning
     """
     for warning_line in warning_lines.split('\n'):

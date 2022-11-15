@@ -7,7 +7,7 @@ from . import _04_make_forward
 from . import _05_make_inverse
 from . import _99_group_average
 
-SCRIPTS = (
+_STEPS = (
     _01_make_bem_surfaces,
     _02_make_bem_solution,
     _03_setup_source_space,

@@ -1,8 +1,8 @@
 [project]
 name = "mne-bids-pipeline"
-description = "Automated processing and report generation for MNE-Python."
+description = "A standardized processing pipeline for your MEG and EEG data"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE.txt"}
 keywords = ["science", "neuroscience", "psychology"]
 authors = [
@@ -87,10 +87,10 @@ build-backend = "setuptools.build_meta"
 exclude = ["false"]  # on CircleCI this folder appears during pip install -ve. for an unknown reason
 
 [tool.setuptools.package-data]
-"mne_bids_pipeline.scripts.freesurfer.contrib" = ["version"]
+"mne_bids_pipeline.steps.freesurfer.contrib" = ["version"]
 
 [tool.codespell]
-skip = "docs/site/*,*.html,scripts/freesurfer/contrib/*"
+skip = "docs/site/*,*.html,steps/freesurfer/contrib/*"
 ignore-words = "ignore_words.txt"
 builtin = "clear,rare,informal,names,usage"
 quiet-level = 3

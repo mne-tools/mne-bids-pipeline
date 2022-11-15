@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 import coloredlogs
 
-from ._typing import LogKwargsT
+from .typing import LogKwargsT
 
 logger = logging.getLogger('mne-bids-pipeline')
 
@@ -114,7 +114,7 @@ def gen_log_kwargs(
     emoji: str = '⏳️',
     box: str = '│ ',
 ) -> LogKwargsT:
-    from ._run import _get_script_path, _short_script_path
+    from ._run import _get_step_path, _short_step_path
     # Try to figure these out
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
@@ -125,11 +125,9 @@ def gen_log_kwargs(
     if run is None:
         run = up_locals.get('run', None)
     if step is None:
-        script_path = _get_script_path(stack)
-        if script_path:
-            step = _short_script_path(_get_script_path())
-            if 'maxwell' in step and not subject:
-                raise RuntimeError
+        step_path = _get_step_path(stack)
+        if step_path:
+            step = _short_step_path(_get_step_path())
         else:
             step = ''
 

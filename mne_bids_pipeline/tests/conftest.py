@@ -23,6 +23,7 @@ def pytest_configure(config):
     ignore:numpy\.ndarray size changed, may indicate binary.*:RuntimeWarning
     always::ResourceWarning
     ignore:subprocess .* is still running:ResourceWarning
+    ignore:`np.MachAr` is deprecated.*:DeprecationWarning
     """
     for warning_line in warning_lines.split('\n'):
         warning_line = warning_line.strip()

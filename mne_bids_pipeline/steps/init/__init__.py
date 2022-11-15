@@ -3,7 +3,7 @@
 from . import _00_init_derivatives_dir
 from . import _01_find_empty_room
 
-SCRIPTS = (
+_STEPS = (
     _00_init_derivatives_dir,
     _01_find_empty_room,
 )

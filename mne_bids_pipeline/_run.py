@@ -233,7 +233,7 @@ class ConditionalStepMemory:
                     emoji = '🔍'
                     short_circuit = True
             if msg is not None:
-                step = _short_script_path(pathlib.Path(inspect.getfile(func)))
+                step = _short_step_path(pathlib.Path(inspect.getfile(func)))
                 logger.info(**gen_log_kwargs(
                     message=msg, subject=subject, session=session, run=run,
                     emoji=emoji, step=step))
@@ -270,7 +270,7 @@ def save_logs(
     fname = config.deriv_root / f'task-{get_task(config)}_log.xlsx'
 
     # Get the script from which the function is called for logging
-    sheet_name = _short_script_path(_get_script_path()).replace('/', '-')
+    sheet_name = _short_step_path(_get_step_path()).replace('/', '-')
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
     df = pd.DataFrame(logs)
@@ -354,18 +354,18 @@ def _sanitize_callable(val):
         return val
 
 
-def _get_script_path(
+def _get_step_path(
     stack: Optional[List[inspect.FrameInfo]] = None,
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
     for frame in stack:
         fname = pathlib.Path(frame.filename)
-        if 'scripts' in fname.parts:
+        if 'steps' in fname.parts:
             return fname
     else:  # pragma: no cover
-        raise RuntimeError('Could not find script path')
+        raise RuntimeError('Could not find step path')
 
 
-def _short_script_path(script_path: pathlib.Path) -> str:
-    return f'{script_path.parent.name}/{script_path.stem}'
+def _short_step_path(step_path: pathlib.Path) -> str:
+    return f'{step_path.parent.name}/{step_path.stem}'

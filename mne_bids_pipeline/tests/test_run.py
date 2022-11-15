@@ -2,11 +2,7 @@
 import sys
 import shutil
 from pathlib import Path
-from typing import Collection, Dict, Optional
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
+from typing import Collection, Dict, Optional, TypedDict
 
 import pytest
 

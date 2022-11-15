@@ -10,7 +10,7 @@ import mne
 from mne.utils import _check_option, _validate_type
 
 from ._logging import logger, gen_log_kwargs
-from ._typing import PathLike
+from .typing import PathLike
 
 
 def _import_config(

@@ -7,6 +7,7 @@ import yaml
 
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
+from mne_bids_pipeline._config_import import _get_default_config
 
 root_path = Path(__file__).parent.parent
 
@@ -23,6 +24,10 @@ def test_options_documented():
     ]
     assert len(set(in_config)) == len(in_config)
     in_config = set(in_config)
+    # ensure we clean our namespace correctly
+    config = _get_default_config()
+    config_names = set(d for d in dir(config) if not d.startswith('_'))
+    assert in_config == config_names
     settings_path = root_path.parent / "docs" / "source" / "settings"
     assert settings_path.is_dir()
     in_doc = set()

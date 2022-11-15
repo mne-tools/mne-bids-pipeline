@@ -131,7 +131,11 @@ def retrieve_custom_cov(
 ):
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
-    config = _import_config(config_path=cfg.config_path, check=False)
+    config = _import_config(
+        config_path=cfg.config_path,
+        check=False,
+        log=False,
+    )
     assert cfg.noise_cov == 'custom'
     assert callable(config.noise_cov)
     assert in_files == {}, in_files  # unknown

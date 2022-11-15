@@ -15,7 +15,10 @@ from mne_bids import BIDSPath
 from ._logging import logger, gen_log_kwargs
 from .typing import ArbitraryContrast
 
-_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+try:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+except Exception:
+    _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
 
 
 def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:

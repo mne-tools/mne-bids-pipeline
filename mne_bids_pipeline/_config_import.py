@@ -122,7 +122,7 @@ def _update_with_user_config(
                 'root folder of your BIDS dataset')
         config.bids_root = root
     config.bids_root = \
-        pathlib.Path(config.bids_root).expanduser().resolve(strict=True)
+        pathlib.Path(config.bids_root).expanduser().resolve()
     if config.deriv_root is None:
         config.deriv_root = \
             config.bids_root / 'derivatives' / config.PIPELINE_NAME
@@ -156,6 +156,8 @@ def _check_config(config: SimpleNamespace) -> None:
     # https://github.com/mne-tools/mne-bids-pipeline/issues/646
     _check_option(
         'config.parallel_backend', config.parallel_backend, ('dask', 'loky'))
+
+    config.bids_root.resolve(strict=True)
 
     if (config.use_maxwell_filter and
             len(set(

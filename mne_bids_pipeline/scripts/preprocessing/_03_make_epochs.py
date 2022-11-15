@@ -7,15 +7,14 @@ Finally the epochs are saved to disk. For the moment, no rejection is applied.
 To save space, the epoch data can be decimated.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_bids_root, get_deriv_root, get_task, get_runs, get_subjects,
-    get_eeg_reference, get_sessions, get_datatype,
+    get_task, get_runs, get_subjects, get_eeg_reference, get_sessions,
+    get_datatype,
 )
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
@@ -92,8 +91,7 @@ def run_epochs(*, cfg, subject, session, in_files):
         zip(cfg.runs, raw_fnames)
     ):
         msg = (f'Loading filtered raw data from {raw_fname.basename}')
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
         # Only keep the subset of the mapping that applies to the current run
@@ -106,8 +104,7 @@ def run_epochs(*, cfg, subject, session, in_files):
                     del event_id[event_name]
 
         msg = 'Creating task-related epochs …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         epochs = make_epochs(
             subject=subject,
             session=session,
@@ -167,8 +164,7 @@ def run_epochs(*, cfg, subject, session, in_files):
                 f'object of the concatenated "{cfg.task}" epochs with '
                 f'information from the resting-state run.'
             )
-            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                            session=session, run='rest'))
+            logger.warning(**gen_log_kwargs(message=msg, run='rest'))
             smallest_rank = rank_rest
             smallest_rank_info = raw_rest_filt.info.copy()
 
@@ -189,8 +185,7 @@ def run_epochs(*, cfg, subject, session, in_files):
                 f'The MEG rank of the "{cfg.task}" epochs is now: '
                 f'{rank_epochs_new}'
             )
-            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                            session=session))
+            logger.warning(**gen_log_kwargs(message=msg))
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
@@ -201,15 +196,12 @@ def run_epochs(*, cfg, subject, session, in_files):
 
     msg = (f'Created {n_epochs_before_metadata_query} epochs with time '
            f'interval: {epochs.tmin} – {epochs.tmax} sec.')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = (f'Selected {len(epochs)} epochs via metadata query: '
            f'{cfg.epochs_metadata_query}')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = (f'Writing {len(epochs)} epochs to disk.')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files['epochs'] = bids_path_in.copy().update(
         suffix='epo', processing=None, check=False)
@@ -219,14 +211,13 @@ def run_epochs(*, cfg, subject, session, in_files):
     _update_for_splits(out_files, 'epochs')
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(cfg=cfg,
+                      subject=subject,
+                      session=session,
+                      run=run) as report:
         if not cfg.task_is_rest:
             msg = 'Adding events plot to report.'
-            logger.info(
-                **gen_log_kwargs(
-                    message=msg, subject=subject, session=session
-                )
-            )
+            logger.info(**gen_log_kwargs(message=msg))
             events, event_id, sfreq, first_samp = _get_events(
                 cfg=cfg, subject=subject, session=session
             )
@@ -240,11 +231,7 @@ def run_epochs(*, cfg, subject, session, in_files):
                 replace=True,
             )
         msg = 'Adding uncleaned epochs to report.'
-        logger.info(
-            **gen_log_kwargs(
-                message=msg, subject=subject, session=session
-            )
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         # Add PSD plots for 30s of data or all epochs if we have less available
         if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
             psd = True
@@ -302,6 +289,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
@@ -310,8 +298,8 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=get_bids_root(config),
-        deriv_root=get_deriv_root(config),
+        bids_root=config.bids_root,
+        deriv_root=config.deriv_root,
         interactive=config.interactive,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
@@ -329,6 +317,7 @@ def get_config(
         eeg_reference=get_eeg_reference(config),
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
+        config_path=config.config_path,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg
@@ -336,8 +325,9 @@ def get_config(
 
 def main(*, config) -> None:
     """Run epochs."""
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_epochs, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_epochs, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -347,9 +337,7 @@ def main(*, config) -> None:
                 subject=subject,
                 session=session
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config))
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

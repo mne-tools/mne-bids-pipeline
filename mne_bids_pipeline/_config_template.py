@@ -34,7 +34,7 @@ def create_template_config(
         f'Successfully created template configuration file at: '
         f'{target_path}'
     )
-    logger.info(**gen_log_kwargs(message=message, emoji='✅'))
+    logger.info(**gen_log_kwargs(message=message, emoji='✅', step=''))
 
     message = 'Please edit the file before running the pipeline.'
-    logger.info(**gen_log_kwargs(message=message, emoji='💡'))
+    logger.info(**gen_log_kwargs(message=message, emoji='💡', step=''))

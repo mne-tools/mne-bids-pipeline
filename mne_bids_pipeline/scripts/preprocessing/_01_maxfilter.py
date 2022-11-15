@@ -14,7 +14,6 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
-import itertools
 from typing import Optional
 from types import SimpleNamespace
 
@@ -24,8 +23,7 @@ from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 
 from ..._config_utils import (
     get_mf_cal_fname, get_mf_ctc_fname, get_subjects, get_sessions,
-    get_runs, get_task, get_datatype, get_bids_root, get_deriv_root,
-    get_mf_reference_run
+    get_runs, get_task, get_datatype, get_mf_reference_run,
 )
 from ..._import_data import (
     import_experimental_data, import_er_data, import_rest_data
@@ -104,8 +102,8 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         check=False
     )
     # Now take everything from the bids_path_in and overwrite the parameters
-    subject = bids_path_in.subject
-    session = bids_path_in.session
+    subject = bids_path_in.subject  # noqa: F841
+    session = bids_path_in.session  # noqa: F841
     run = bids_path_in.run
 
     out_files = dict()
@@ -113,8 +111,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
         msg = f'Loading reference run: {cfg.mf_reference_run}.'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
 
     ref_fname = in_files.pop("raw_ref_run")
     raw = read_raw_bids(bids_path=ref_fname,
@@ -134,16 +131,14 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         msg += f'tSSS (st_duration: {cfg.mf_st_duration} sec).'
     else:
         msg += 'SSS.'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg))
 
     # Warn if no bad channels are set before Maxwell filter
     if not raw.info['bads']:
         msg = ('No channels were marked as bad. Please carefully check '
                'your data to ensure this is correct; otherwise, Maxwell '
                'filtering WILL cause problems.')
-        logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                        session=session, run=run))
+        logger.warning(**gen_log_kwargs(message=msg))
 
     # Keyword arguments shared between Maxwell filtering of the
     # experimental and the empty-room data.
@@ -160,8 +155,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
     raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
     out_files['sss_raw'] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
-    logger.info(**gen_log_kwargs(
-        message=msg, subject=subject, session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg))
     raw_sss.save(out_files['sss_raw'], split_naming='bids',
                  overwrite=True, split_size=cfg._raw_split_size)
     # we need to be careful about split files
@@ -184,8 +178,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
             continue
         recording_type = nice_names[task]
         msg = f'Processing {recording_type} recording …'
-        logger.info(**gen_log_kwargs(subject=subject,
-                                     session=session, run=run, message=msg))
+        logger.info(**gen_log_kwargs(message=msg))
         bids_path_in = in_files.pop(in_key)
         if task == 'rest':
             raw_noise = import_rest_data(
@@ -202,9 +195,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
 
         # Maxwell-filter noise data.
         msg = f'Applying Maxwell filter to {recording_type} recording'
-        logger.info(**gen_log_kwargs(message=msg,
-                                     subject=subject, session=session,
-                                     run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw_noise_sss = mne.preprocessing.maxwell_filter(
             raw_noise, **common_mf_kws
         )
@@ -229,8 +220,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
                     f'take care of this during epoching of the experimental '
                     f'data.'
                 )
-                logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                                session=session))
+                logger.warning(**gen_log_kwargs(message=msg))
             else:
                 pass  # Should cause no problems!
         elif not np.isclose(rank_exp, rank_noise):
@@ -251,8 +241,7 @@ def run_maxwell_filter(*, cfg, subject, session, run, in_files):
         # (same as for experimental data above).
         msg = ("Writing "
                f"{out_files[out_key].fpath.relative_to(cfg.deriv_root)}")
-        logger.info(**gen_log_kwargs(
-            message=msg, subject=subject, session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw_noise_sss.save(
             out_files[out_key], overwrite=True,
             split_naming='bids', split_size=cfg._raw_split_size,
@@ -270,6 +259,7 @@ def get_config(
     session: Optional[str],
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         reader_extra_params=config.reader_extra_params,
         mf_cal_fname=get_mf_cal_fname(
             config=config,
@@ -295,8 +285,8 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=get_bids_root(config),
-        deriv_root=get_deriv_root(config),
+        bids_root=config.bids_root,
+        deriv_root=config.deriv_root,
         crop_runs=config.crop_runs,
         interactive=config.interactive,
         rename_events=config.rename_events,
@@ -327,8 +317,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_maxwell_filter, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_maxwell_filter, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -339,11 +330,8 @@ def main(*, config) -> None:
                 session=session,
                 run=run
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
             for run in get_runs(config=config, subject=subject)
         )
 

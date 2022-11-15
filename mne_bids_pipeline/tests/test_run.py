@@ -168,10 +168,11 @@ def test_run(dataset, monkeypatch, dataset_test, capsys):
         str(config_path),
         f'--steps={",".join(steps)}']
     if task:
-        command.append(f'--task={task}' if task else '')
+        command.append(f'--task={task}')
     if '--pdb' in sys.argv:
-        monkeypatch.setenv('MNE_BIDS_STUDY_PARALLEL_BACKEND', 'loky')
         command.append('--n_jobs=1')
+    monkeypatch.setenv('_MNE_BIDS_STUDY_TESTING', 'true')
     monkeypatch.setattr(sys, 'argv', command)
     with capsys.disabled():
+        print()
         main()

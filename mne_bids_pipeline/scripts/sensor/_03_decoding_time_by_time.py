@@ -12,7 +12,6 @@ can learn about the entire time course of the signal.
 # Let us first import the libraries
 
 import os.path as op
-import itertools
 from types import SimpleNamespace
 
 import numpy as np
@@ -32,7 +31,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
-    get_deriv_root, _restrict_analyze_channels, get_decoding_contrasts,
+    _restrict_analyze_channels, get_decoding_contrasts,
 )
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
@@ -83,8 +82,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     else:
         kind = 'sliding estimator'
     msg = f'Contrasting conditions ({kind}): {condition1} – {condition2}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files['epochs'].copy()
 
@@ -120,8 +118,12 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
     # ProgressBar does not work on dask, so only enable it if not using dask
-    verbose = get_parallel_backend_name(cfg) != "dask"
-    with get_parallel_backend(cfg):
+    exec_params = SimpleNamespace(
+        parallel_backend=cfg.parallel_backend,
+        N_JOBS=cfg.N_JOBS,
+    )
+    verbose = get_parallel_backend_name(exec_params=exec_params) != "dask"
+    with get_parallel_backend(exec_params):
         clf = make_pipeline(
             StandardScaler(),
             LogReg(
@@ -195,9 +197,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     # Report
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         msg = 'Adding time-by-time decoding results to the report.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
 
         section = 'Decoding: time-by-time'
         for contrast in cfg.contrasts:
@@ -279,12 +279,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
@@ -296,10 +297,12 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
-        n_jobs=get_n_jobs(config),
-        parallel_backend=config.parallel_backend,
+        # TODO: None of these should affect caching, but they will...
+        n_jobs=get_n_jobs(exec_params=config.exec_params),
+        parallel_backend=config.exec_params.parallel_backend,
         interactive=config.interactive,
-        N_JOBS=config.N_JOBS,
+        N_JOBS=config.exec_params.N_JOBS,
+        config_path=config.config_path,
     )
     return cfg
 
@@ -318,18 +321,16 @@ def main(*, config) -> None:
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`
     # so we don't dispatch manually to multiple jobs.
-    logs = []
-    for subject, session, (cond_1, cond_2) in itertools.product(
-        get_subjects(config),
-        get_sessions(config),
-        get_decoding_contrasts(config)
-    ):
-        log = run_time_decoding(
+    logs = [
+        run_time_decoding(
             cfg=get_config(config=config),
             subject=subject,
             condition1=cond_1,
             condition2=cond_2,
             session=session,
         )
-        logs.append(log)
+        for subject in get_subjects(config)
+        for session in get_sessions(config)
+        for cond_1, cond_2 in get_decoding_contrasts(config)
+    ]
     save_logs(config=config, logs=logs)

@@ -8,7 +8,6 @@ but also epochs containing biological artifacts not sufficiently
 corrected by the ICA or the SSP processing.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import mne
@@ -16,7 +15,6 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype,
-    get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -56,11 +54,9 @@ def drop_ptp(*, cfg, subject, session, in_files):
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')
     msg = f'Input:  {in_files["epochs"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["epochs"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
@@ -92,13 +88,11 @@ def drop_ptp(*, cfg, subject, session, in_files):
                 msg = (f'Adjusting PTP rejection threshold proposed by '
                        f'autoreject, as it is greater than ica_reject: '
                        f'{ch_type}: {reject[ch_type]} -> {threshold}')
-                logger.info(**gen_log_kwargs(message=msg,
-                                             subject=subject, session=session))
+                logger.info(**gen_log_kwargs(message=msg))
                 reject[ch_type] = threshold
 
     msg = f'Using PTP rejection thresholds: {reject}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     n_epochs_before_reject = len(epochs)
     epochs.reject_tmin = cfg.reject_tmin
@@ -109,8 +103,7 @@ def drop_ptp(*, cfg, subject, session, in_files):
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = ('More than 50% of all epochs rejected. Please check the '
                'rejection thresholds.')
-        logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                        session=session))
+        logger.warning(**gen_log_kwargs(message=msg))
     elif n_epochs_after_reject == 0:
         raise RuntimeError('No epochs remaining after peak-to-peak-based '
                            'rejection. Cannot continue.')
@@ -126,9 +119,7 @@ def drop_ptp(*, cfg, subject, session, in_files):
 
     # Report
     msg = 'Adding cleaned epochs to report.'
-    logger.info(
-        **gen_log_kwargs(message=msg, subject=subject, session=session)
-    )
+    logger.info(**gen_log_kwargs(message=msg))
     # Add PSD plots for 30s of data or all epochs if we have less available
     if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
         psd = True
@@ -150,6 +141,7 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -160,7 +152,7 @@ def get_config(
         reject_tmax=config.reject_tmax,
         spatial_filter=config.spatial_filter,
         ica_reject=config.ica_reject,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         reject=config.reject,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
@@ -170,18 +162,16 @@ def get_config(
 
 def main(*, config) -> None:
     """Run epochs."""
-    parallel, run_func = parallel_func(drop_ptp, config=config)
+    parallel, run_func = parallel_func(
+        drop_ptp, exec_params=config.exec_params)
 
-    with get_parallel_backend(config):
+    with get_parallel_backend(config.exec_params):
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session)
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

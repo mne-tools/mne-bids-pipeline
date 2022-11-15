@@ -7,8 +7,7 @@ from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_bids_root, get_datatype, get_task, get_sessions, get_subjects,
-    get_runs)
+    get_datatype, get_task, get_sessions, get_subjects, get_runs)
 from ..._io import _empty_room_match_path, _write_json
 from ..._logging import gen_log_kwargs, logger
 from ..._run import _update_for_splits, failsafe_run, save_logs
@@ -76,8 +75,7 @@ def find_empty_room(
         if len(in_files):  # MNE-BIDS < 0.12 missing get_empty_room_candidates
             ending = f'{len(in_files)} empty-room file{_pl(in_files)}'
         msg = f"Nearest-date matching {ending}"
-        logger.info(**gen_log_kwargs(
-            message=msg, subject=subject, session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         try:
             fname = raw_path.find_empty_room()
         except (ValueError,  # non-MEG data
@@ -100,13 +98,14 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         proc=config.proc,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=get_bids_root(config),
+        bids_root=config.bids_root,
         deriv_root=config.deriv_root,
     )
     return cfg

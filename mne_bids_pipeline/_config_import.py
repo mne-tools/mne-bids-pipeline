@@ -1,32 +1,76 @@
-from types import ModuleType
+import copy
+import importlib
 import os
 import pathlib
-import importlib
+from types import SimpleNamespace
+from typing import Optional
 
 import matplotlib
 import mne
-from mne.utils import _check_option
+from mne.utils import _check_option, _validate_type
 
 from ._logging import logger, gen_log_kwargs
+from ._typing import PathLike
 
 
-def _import_config(*, check: bool = True, log: bool = False) -> ModuleType:
+def _import_config(
+    *,
+    config_path: Optional[PathLike],
+    overrides: Optional[SimpleNamespace] = None,
+    check: bool = True,
+    log: bool = False,
+) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
-    from . import _config as config
+    from . import _config
+    # Don't use _config itself as it's mutable -- make a new object
+    # with deepcopies of vals (keys are immutable strings so no need to copy)
+    ignore_keys = {'mne', 'np'}  # avoid modules
+    config = SimpleNamespace(
+        **{key: copy.deepcopy(val) for key, val in _config.__dict__.items()
+           if not (key.startswith('__') or key in ignore_keys)})
+
     # Update with user config
-    _update_with_user_config(config=config, log=log)
+    _update_with_user_config(
+        config=config,
+        config_path=config_path,
+        overrides=overrides,
+        log=log,
+    )
     # Check it
     if check:
         _check_config(config)
     # Take some standard actions
     mne.set_log_level(verbose=config.mne_log_level.upper())
+
+    # Take variables out of config (which affects the pipeline outputs) and
+    # put into config.exec_params (which affect the pipeline execution methods,
+    # but not the outputs)
+    keys = (
+        # Parallelization
+        'N_JOBS', 'parallel_backend',
+        'dask_temp_dir', 'dask_worker_memory_limit', 'dask_open_dashboard',
+        # Interaction
+        'on_error', 'interactive',
+        # Caching
+        'memory_location', 'memory_verbose', 'memory_file_method',
+        # Misc
+        'deriv_root',
+    )
+    in_both = {'deriv_root', 'interactive'}
+    exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    for k in keys:
+        if k not in in_both:
+            delattr(config, k)
+    config.exec_params = exec_params
     return config
 
 
 def _update_with_user_config(
     *,
-    config: ModuleType,  # modified in-place
+    config: SimpleNamespace,  # modified in-place
+    config_path: Optional[PathLike],
+    overrides: Optional[SimpleNamespace],
     log: bool = False,
 ) -> None:
     # 1. Basics and hidden vars
@@ -38,19 +82,13 @@ def _update_with_user_config(
     config._epochs_split_size = '2GB'
 
     # 2. User config
-    if "MNE_BIDS_STUDY_CONFIG" in os.environ:
-        cfg_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
-
-        if not cfg_path.exists():
-            raise ValueError(
-                'The custom configuration file specified in the '
-                'MNE_BIDS_STUDY_CONFIG environment variable could not be '
-                f'found: {cfg_path}')
-
+    if config_path is not None:
+        config_path = pathlib.Path(
+            config_path).expanduser().resolve(strict=True)
         # Import configuration from an arbitrary path without having to fiddle
         # with `sys.path`.
         spec = importlib.util.spec_from_file_location(
-            name='custom_config', location=cfg_path)
+            name='custom_config', location=config_path)
         custom_cfg = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(custom_cfg)
         for key in dir(custom_cfg):
@@ -58,10 +96,39 @@ def _update_with_user_config(
                 val = getattr(custom_cfg, key)
                 logger.debug('Overwriting: %s -> %s' % (key, val))
                 setattr(config, key, val)
+    config.config_path = config_path
 
-    # 3. Overrides via command-line switches (via env vars)
-    config.interactive = bool(int(os.getenv(
-        'MNE_BIDS_STUDY_INTERACTIVE', config.interactive)))
+    # 3. Overrides via command-line switches
+    overrides = overrides or SimpleNamespace()
+    for name in dir(overrides):
+        if not name.startswith('__'):
+            val = getattr(overrides, name)
+            if log:
+                msg = f'Overridding config.{name} = {repr(val)}'
+                logger.info(
+                    **gen_log_kwargs(
+                        message=msg, step='', emoji='override', box='╶╴'
+                    )
+                )
+            setattr(config, name, val)
+
+    # 4. Env vars and other triaging
+    if not config.bids_root:
+        root = os.getenv('BIDS_ROOT', None)
+        if root is None:
+            raise ValueError(
+                'You need to specify `bids_root` in your configuration, or '
+                'define an environment variable `BIDS_ROOT` pointing to the '
+                'root folder of your BIDS dataset')
+        config.bids_root = root
+    config.bids_root = \
+        pathlib.Path(config.bids_root).expanduser().resolve()
+    if config.deriv_root is None:
+        config.deriv_root = \
+            config.bids_root / 'derivatives' / config.PIPELINE_NAME
+    config.deriv_root = pathlib.Path(config.deriv_root).expanduser().resolve()
+
+    # 5. Consistency
     log_kwargs = dict(emoji='override', box='  ', step='')
     if config.interactive:
         if log and config.on_error != 'debug':
@@ -70,7 +137,6 @@ def _update_with_user_config(
         config.on_error = 'debug'
     else:
         matplotlib.use('Agg')  # do not open any window  # noqa
-        config.on_error = os.getenv('MNE_BIDS_STUDY_ON_ERROR', config.on_error)
     if config.on_error == 'debug':
         if log and config.N_JOBS != 1:
             msg = 'Setting config.N_JOBS=1 because config.on_error="debug"'
@@ -84,15 +150,14 @@ def _update_with_user_config(
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.parallel_backend = 'loky'
 
-    if os.getenv('MNE_BIDS_STUDY_USE_CACHE', '') == '0':
-        config.memory_location = False
 
-
-def _check_config(config: ModuleType) -> None:
+def _check_config(config: SimpleNamespace) -> None:
     # TODO: Use pydantic to do these validations
     # https://github.com/mne-tools/mne-bids-pipeline/issues/646
     _check_option(
         'config.parallel_backend', config.parallel_backend, ('dask', 'loky'))
+
+    config.bids_root.resolve(strict=True)
 
     if (config.use_maxwell_filter and
             len(set(
@@ -212,3 +277,5 @@ def _check_config(config: ModuleType) -> None:
     _check_option(
         'config.on_rename_missing_events', config.on_rename_missing_events,
         ('raise', 'warn', 'ignore'))
+
+    _validate_type(config.N_JOBS, int, 'N_JOBS')

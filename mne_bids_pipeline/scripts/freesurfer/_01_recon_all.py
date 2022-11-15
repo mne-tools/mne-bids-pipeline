@@ -10,7 +10,7 @@ from pathlib import Path
 
 from mne.utils import run_subprocess
 
-from ..._config_utils import get_fs_subjects_dir, get_bids_root, get_subjects
+from ..._config_utils import get_fs_subjects_dir, get_subjects
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
 
@@ -23,13 +23,13 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     if subj_dir.exists():
         msg = (f"Subject {subject} is already present. Please delete the "
                f"directory if you want to recompute.")
-        logger.info(**gen_log_kwargs(message=msg, subject=subject))
+        logger.info(**gen_log_kwargs(message=msg))
         return
     msg = (
         "Running recon-all on subject {subject}. This will take "
         "a LONG time – it's a good idea to let it run over night."
     )
-    logger.info(**gen_log_kwargs(message=msg, subject=subject))
+    logger.info(**gen_log_kwargs(message=msg))
 
     env = os.environ
     if 'FREESURFER_HOME' not in env:
@@ -77,12 +77,13 @@ def main(*, config) -> None:
 
     """  # noqa
     subjects = get_subjects(config)
-    root_dir = get_bids_root(config)
+    root_dir = config.bids_root
     subjects_dir = Path(get_fs_subjects_dir(config))
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_recon, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_recon, exec_params=config.exec_params)
         parallel(run_func(root_dir, subject, fs_bids_app, subjects_dir)
                  for subject in subjects)
 

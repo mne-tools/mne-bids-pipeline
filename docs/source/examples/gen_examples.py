@@ -1,26 +1,23 @@
 #!/bin/env python
 
 from collections import defaultdict
-import os
+import contextlib
+import logging
 import shutil
 from pathlib import Path
-import runpy
-import logging
+import sys
 from typing import Union, Iterable
-import mne_bids_pipeline
 
+import mne_bids_pipeline
 from mne_bids_pipeline._config_import import _import_config
+import mne_bids_pipeline.tests.datasets
+from mne_bids_pipeline.tests.test_run import TEST_SUITE
+from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 
 this_dir = Path(__file__).parent
 root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
-
-dataset_opts_path = root / 'tests' / 'datasets.py'
-test_run_path = root / 'tests' / 'test_run.py'
-
-dataset_options = runpy.run_path(dataset_opts_path)['DATASET_OPTIONS']
-test_options = runpy.run_path(test_run_path)['TEST_SUITE']
 
 
 def _bool_to_icon(x: Union[bool, Iterable]) -> str:
@@ -30,11 +27,19 @@ def _bool_to_icon(x: Union[bool, Iterable]) -> str:
         return '❌'
 
 
+@contextlib.contextmanager
+def _task_context(task):
+    old_argv = sys.argv
+    if task:
+        sys.argv = [sys.argv[0], f'--task={task}']
+    try:
+        yield
+    finally:
+        sys.argv = old_argv
+
+
 def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     """Generate dict of demonstrated functionality based on config."""
-    env = os.environ
-    env['MNE_BIDS_STUDY_CONFIG'] = str(example_config_path.expanduser())
-
     # Here we use a defaultdict, and for keys that might vary across configs
     # we should use an `funcs[key] = funcs[key] or ...` so that we effectively
     # OR over all configs.
@@ -43,8 +48,12 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
     if example_config_path.stem == 'config_ERP_CORE':
         tasks[:] = ['N400', 'ERN', 'LRP', 'MMN', 'N2pc', 'N170', 'P3']
     for task in tasks:
-        env['MNE_BIDS_STUDY_TASK'] = task
-        config = _import_config(check=False)
+        with _task_context(task):
+            config = _import_config(
+                config_path=example_config_path,
+                overrides=None,
+                check=False,
+            )
         ch_types = [c.upper() for c in config.ch_types]
         funcs['MEG processing'] = "MEG" in ch_types
         funcs['EEG processing'] = "EEG" in ch_types
@@ -77,7 +86,7 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
 
 # Copy reports to the correct place.
 datasets_without_html = []
-for test_name, test_dataset_options in test_options.items():
+for test_name, test_dataset_options in TEST_SUITE.items():
     if 'ERP_CORE' in test_name:
         dataset_name = test_dataset_options['dataset']
     else:
@@ -103,7 +112,7 @@ for test_name, test_dataset_options in test_options.items():
 
 # Now, generate the respective markdown example descriptions.
 all_demonstrated = dict()
-for test_dataset_name, test_dataset_options in test_options.items():
+for test_dataset_name, test_dataset_options in TEST_SUITE.items():
     if 'ERP_CORE' in test_dataset_name:
         dataset_name = test_dataset_options['dataset']
     else:
@@ -125,7 +134,7 @@ for test_dataset_name, test_dataset_options in test_options.items():
 
     logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
-    options = dataset_options[dataset_options_key]
+    options = DATASET_OPTIONS[dataset_options_key]
 
     report_str = '\n## Generated output\n\n'
     example_target_dir = this_dir / dataset_name
@@ -249,7 +258,7 @@ Here you will find a number of examples using publicly available
 datasets, mostly taken from [OpenNeuro](https://openneuro.org).
 
 For a first example, see the results obtained with the
-[MNE sample dataset](ds000248.md).
+[MNE sample dataset](ds000248_base.md).
 
 ## Demonstrated features
 

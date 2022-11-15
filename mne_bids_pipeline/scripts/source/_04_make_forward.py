@@ -3,7 +3,6 @@
 Calculate forward solution for M/EEG channels.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import mne
@@ -12,8 +11,7 @@ from mne_bids import BIDSPath, get_head_mri_trans
 
 from ..._config_utils import (
     get_fs_subject, get_subjects, _get_bem_conductivity, get_fs_subjects_dir,
-    get_task, get_runs, get_datatype, get_deriv_root, get_bids_root,
-    _meg_in_ch_types, get_sessions,
+    get_task, get_runs, get_datatype, _meg_in_ch_types, get_sessions,
 )
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
@@ -50,7 +48,7 @@ def _prepare_trans(cfg, bids_path):
     subject, session = bids_path.subject, bids_path.session
 
     # TODO: This breaks our encapsulation
-    config = _import_config()
+    config = _import_config(config_path=cfg.config_path, check=False)
     if config.mri_t1_path_generator is None:
         t1_bids_path = None
     else:
@@ -71,8 +69,7 @@ def _prepare_trans(cfg, bids_path):
         )
 
     msg = 'Estimating head ↔ MRI transform'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0],
@@ -148,8 +145,7 @@ def run_forward(*, cfg, subject, session, in_files):
         trans = _prepare_trans(cfg, bids_path)
 
     msg = 'Calculating forward solution'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     fwd = mne.make_forward_solution(info, trans=trans, src=src,
                                     bem=bem, mindist=cfg.mindist)
     out_files = dict()
@@ -161,9 +157,7 @@ def run_forward(*, cfg, subject, session, in_files):
     # Report
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         msg = 'Rendering MRI slices with BEM contours.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         report.add_bem(
             subject=cfg.fs_subject,
             subjects_dir=cfg.fs_subjects_dir,
@@ -171,11 +165,10 @@ def run_forward(*, cfg, subject, session, in_files):
             width=256,
             decim=8,
             replace=True,
+            n_jobs=1,  # prevent automatic parallelization
         )
         msg = 'Rendering sensor alignment (coregistration).'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         report.add_trans(
             trans=trans,
             info=info,
@@ -186,9 +179,7 @@ def run_forward(*, cfg, subject, session, in_files):
             replace=True,
         )
         msg = 'Rendering forward solution.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         report.add_forward(
             forward=fwd,
             title='Forward solution',
@@ -207,6 +198,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         runs=get_runs(config=config, subject=subject),
         datatype=get_datatype(config),
@@ -221,8 +213,9 @@ def get_config(
         ch_types=config.ch_types,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
-        deriv_root=get_deriv_root(config),
-        bids_root=get_bids_root(config),
+        deriv_root=config.deriv_root,
+        bids_root=config.bids_root,
+        config_path=config.config_path,
     )
     return cfg
 
@@ -234,8 +227,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_forward, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_forward, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -244,10 +238,7 @@ def main(*, config) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config),
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

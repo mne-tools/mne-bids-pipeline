@@ -17,9 +17,8 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
-    get_eeg_reference, get_decoding_contrasts, get_bids_root,
-    get_all_contrasts,
+    get_sessions, get_subjects, get_task, get_datatype, get_eeg_reference,
+    get_decoding_contrasts, get_all_contrasts,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
@@ -47,8 +46,7 @@ def average_evokeds(cfg, session):
                             check=False)
 
         msg = f'Input: {fname_in.basename}'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(message=msg))
 
         evokeds = mne.read_evokeds(fname_in)
         for idx, evoked in enumerate(evokeds):
@@ -80,8 +78,7 @@ def average_evokeds(cfg, session):
         os.makedirs(fname_out.fpath.parent)
 
     msg = f'Saving grand-averaged evoked sensor data: {fname_out.basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     mne.write_evokeds(fname_out, list(all_evokeds.values()), overwrite=True)
     return list(all_evokeds.values())
 
@@ -582,6 +579,7 @@ def get_config(
 ) -> SimpleNamespace:
     dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         subjects=get_subjects(config),
         task=get_task(config),
         task_is_rest=config.task_is_rest,
@@ -590,7 +588,7 @@ def get_config(
         rec=config.rec,
         space=config.space,
         proc=config.proc,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=config.contrasts,
         decode=config.decode,
@@ -612,14 +610,17 @@ def get_config(
         eeg_reference=get_eeg_reference(config),
         interactive=config.interactive,
         sessions=get_sessions(config),
-        bids_root=get_bids_root(config),
+        bids_root=config.bids_root,
         data_type=config.data_type,
-        parallel_backend=config.parallel_backend,
-        N_JOBS=config.N_JOBS,
         exclude_subjects=config.exclude_subjects,
         all_contrasts=get_all_contrasts(config),
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
+        # TODO: This script deviates from our standard procedure, when we
+        # eventually cache and have in/out_files we'll want to remove this
+        # since it breaks the "execution params should only be in
+        # cfg.exec_params" idea
+        exec_params_inner=config.exec_params,
     )
     return cfg
 
@@ -636,7 +637,7 @@ def run_group_average_sensor(*, cfg):
     if not sessions:
         sessions = [None]
 
-    with get_parallel_backend(config=cfg):
+    with get_parallel_backend(cfg.exec_params_inner):
         for session in sessions:
             evokeds = average_evokeds(cfg, session)
             if cfg.interactive:
@@ -648,10 +649,10 @@ def run_group_average_sensor(*, cfg):
                 average_time_by_time_decoding(cfg, session)
         if cfg.decode and cfg.decoding_csp:
             parallel, run_func = parallel_func(
-                average_csp_decoding, config=cfg)
+                average_csp_decoding, exec_params=cfg.exec_params_inner)
             parallel(
                 run_func(
-                    cfg=get_config(config=cfg),
+                    cfg=cfg,
                     session=session,
                     condition_1=contrast[0],
                     condition_2=contrast[1]
@@ -659,6 +660,7 @@ def run_group_average_sensor(*, cfg):
                 for session in get_sessions(config=cfg)
                 for contrast in get_decoding_contrasts(config=cfg)
             )
+
         for session in sessions:
             run_report_average_sensor(cfg=cfg, session=session)
 

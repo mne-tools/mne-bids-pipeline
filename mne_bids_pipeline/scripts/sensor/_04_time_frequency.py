@@ -4,7 +4,6 @@ The epoched data is transformed to time-frequency domain using morlet wavelets.
 The average power and inter-trial coherence are computed and saved to disk.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import numpy as np
@@ -14,7 +13,7 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions, get_subjects, get_task, get_datatype, get_deriv_root,
+    get_sessions, get_subjects, get_task, get_datatype,
     _restrict_analyze_channels, get_eeg_reference, sanitize_cond_name,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -56,8 +55,7 @@ def get_input_fnames_time_frequency(**kwargs):
 def run_time_frequency(*, cfg, subject, session, in_files):
     import matplotlib.pyplot as plt
     msg = f'Input: {in_files["epochs"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     bids_path = in_files['epochs'].copy().update(processing=None)
 
     epochs = mne.read_epochs(in_files.pop('epochs'))
@@ -99,9 +97,7 @@ def run_time_frequency(*, cfg, subject, session, in_files):
     # Report
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         msg = 'Adding TFR analysis results to the report.'
-        logger.info(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         for condition in cfg.time_frequency_conditions:
             cond = sanitize_cond_name(condition)
             fname_tfr_pow_cond = out_files[f'power-{cond}']
@@ -151,12 +147,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         time_frequency_conditions=config.time_frequency_conditions,
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
@@ -180,16 +177,16 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    parallel, run_func = parallel_func(run_time_frequency, config=config)
-    with get_parallel_backend(config):
+    parallel, run_func = parallel_func(
+        run_time_frequency, exec_params=config.exec_params)
+    with get_parallel_backend(config.exec_params):
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(get_subjects(config),
-                              get_sessions(config))
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

@@ -1,6 +1,5 @@
 """Extract evoked data for each condition."""
 
-import itertools
 from types import SimpleNamespace
 
 import mne
@@ -8,8 +7,7 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_sessions, get_subjects, get_task, get_datatype,
-    get_deriv_root, get_all_contrasts, _restrict_analyze_channels,
-    get_noise_cov_bids_path,
+    get_all_contrasts, _restrict_analyze_channels,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -38,14 +36,6 @@ def get_input_fnames_evoked(**kwargs):
                             check=False)
     in_files = dict()
     in_files['epochs'] = fname_epochs
-
-    fname_noise_cov = get_noise_cov_bids_path(
-        cfg=cfg,
-        subject=subject,
-        session=session
-    )
-    if fname_noise_cov.fpath.is_file():
-        in_files['noise_cov'] = fname_noise_cov
     return in_files
 
 
@@ -58,17 +48,14 @@ def run_evoked(*, cfg, subject, session, in_files):
         suffix='ave', processing=None, check=False)
 
     msg = f'Input: {in_files["epochs"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["evoked"].basename}'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     msg = 'Creating evoked data based on experimental conditions …'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     all_evoked = dict()
 
     if isinstance(cfg.conditions, dict):
@@ -84,8 +71,7 @@ def run_evoked(*, cfg, subject, session, in_files):
 
     if cfg.contrasts:
         msg = 'Contrasting evoked responses …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(message=msg))
 
         for contrast in cfg.contrasts:
             evoked_list = [epochs[x].average() for x in contrast["conditions"]]
@@ -105,9 +91,8 @@ def run_evoked(*, cfg, subject, session, in_files):
     else:
         msg = 'No evoked conditions or contrasts found.'
     logger.info(
-        **gen_log_kwargs(message=msg, subject=subject, session=session)
+        **gen_log_kwargs(message=msg)
     )
-    noise_cov = in_files.pop('noise_cov', None)
     with _open_report(cfg=cfg, subject=subject, session=session) as report:
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
@@ -122,10 +107,10 @@ def run_evoked(*, cfg, subject, session, in_files):
             report.add_evokeds(
                 evokeds=evoked,
                 titles=title,
-                noise_cov=noise_cov,
                 n_time_points=cfg.report_evoked_n_time_points,
                 tags=tags,
                 replace=True,
+                n_jobs=1,  # don't auto parallelize
             )
 
     # Interaction
@@ -150,12 +135,13 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_all_contrasts(config),
         interactive=config.interactive,
@@ -175,18 +161,16 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_evoked, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_evoked, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

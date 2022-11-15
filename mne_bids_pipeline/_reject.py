@@ -35,8 +35,7 @@ def _get_reject(
                 ch_types_autoreject.append('grad')
 
         msg = 'Generating rejection thresholds using autoreject …'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(message=msg))
         reject = autoreject.get_rejection_threshold(
             epochs=epochs,
             ch_types=ch_types_autoreject,

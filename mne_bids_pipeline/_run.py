@@ -1,6 +1,5 @@
 """Script-running utilities."""
 
-import contextlib
 import copy
 import functools
 import hashlib
@@ -11,7 +10,7 @@ import pdb
 import sys
 import traceback
 import time
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional, Dict, List
 from types import SimpleNamespace
 import warnings
 
@@ -21,8 +20,7 @@ from openpyxl import load_workbook
 import pandas as pd
 from mne_bids import BIDSPath
 
-from ._config_utils import get_task, get_deriv_root
-from ._config_import import _import_config
+from ._config_utils import get_task
 from ._logging import logger, gen_log_kwargs
 
 
@@ -33,21 +31,19 @@ def failsafe_run(
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
-            # TODO: This should not be necessary, but for some reason it is
-            os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'] = inspect.getfile(func)
-            config = _import_config()
-            on_error = config.on_error
+            exec_params = kwargs['cfg'].exec_params
+            delattr(kwargs['cfg'], 'exec_params')
+            on_error = exec_params.on_error
             memory = ConditionalStepMemory(
-                config=config,
+                exec_params=exec_params,
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
             )
             kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
-            if "cfg" in kwargs_copy:
-                kwargs_copy["cfg"] = json_tricks.dumps(
-                    kwargs_copy["cfg"], sort_keys=False, indent=4
-                )
+            kwargs_copy["cfg"] = json_tricks.dumps(
+                kwargs_copy["cfg"], sort_keys=False, indent=4
+            )
             log_info = pd.concat([
                 pd.Series(kwargs_copy, dtype=object),
                 pd.Series(index=['time', 'success', 'error_message'],
@@ -90,6 +86,8 @@ def failsafe_run(
                                 tb=e.__traceback__
                             )
                         )
+                    if os.getenv('_MNE_BIDS_STUDY_TESTING', '') == 'true':
+                        raise
                     logger.critical(**gen_log_kwargs(
                         message=message, **kwargs_copy, emoji='❌'
                     ))
@@ -122,22 +120,23 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, config, get_input_fnames, get_output_fnames):
-        memory_location = config.memory_location
+    def __init__(self, *, exec_params, get_input_fnames, get_output_fnames):
+        memory_location = exec_params.memory_location
         if memory_location is True:
-            use_location = get_deriv_root(config) / 'joblib'
+            use_location = exec_params.deriv_root / 'joblib'
         elif not memory_location:
             use_location = None
         else:
             use_location = pathlib.Path(memory_location)
         # Actually make the Memory object only if necessary
         if use_location is not None and get_input_fnames is not None:
-            self.memory = Memory(use_location, verbose=config.memory_verbose)
+            self.memory = Memory(
+                use_location, verbose=exec_params.memory_verbose)
         else:
             self.memory = None
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
-        self.memory_file_method = config.memory_file_method
+        self.memory_file_method = exec_params.memory_file_method
 
     def cache(self, func):
 
@@ -234,9 +233,10 @@ class ConditionalStepMemory:
                     emoji = '🔍'
                     short_circuit = True
             if msg is not None:
+                step = _short_script_path(pathlib.Path(inspect.getfile(func)))
                 logger.info(**gen_log_kwargs(
                     message=msg, subject=subject, session=session, run=run,
-                    emoji=emoji))
+                    emoji=emoji, step=step))
             if short_circuit:
                 return
 
@@ -267,11 +267,10 @@ def save_logs(
     config: SimpleNamespace,
     logs  # TODO add type
 ) -> None:
-    fname = get_deriv_root(config) / f'task-{get_task(config)}_log.xlsx'
+    fname = config.deriv_root / f'task-{get_task(config)}_log.xlsx'
 
     # Get the script from which the function is called for logging
-    script_path = pathlib.Path(os.environ['MNE_BIDS_STUDY_SCRIPT_PATH'])
-    sheet_name = f'{script_path.parent.name}-{script_path.stem}'
+    sheet_name = _short_script_path(_get_script_path()).replace('/', '-')
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
     df = pd.DataFrame(logs)
@@ -310,21 +309,6 @@ def save_logs(
         warnings.simplefilter("ignore")
         writer.save()
     writer.close()
-
-
-@contextlib.contextmanager
-def _script_path(path):
-    key = 'MNE_BIDS_STUDY_SCRIPT_PATH'
-    orig_val = os.environ.get(key, None)
-    os.environ[key] = str(path)
-    try:
-        yield
-    finally:
-        if orig_val is None:
-            if key in os.environ:
-                del os.environ[key]
-        else:
-            os.environ[key] = orig_val
 
 
 def _update_for_splits(
@@ -368,3 +352,20 @@ def _sanitize_callable(val):
         return 'custom'
     else:
         return val
+
+
+def _get_script_path(
+    stack: Optional[List[inspect.FrameInfo]] = None,
+) -> pathlib.Path:
+    if stack is None:
+        stack = inspect.stack()
+    for frame in stack:
+        fname = pathlib.Path(frame.filename)
+        if 'scripts' in fname.parts:
+            return fname
+    else:  # pragma: no cover
+        raise RuntimeError('Could not find script path')
+
+
+def _short_script_path(script_path: pathlib.Path) -> str:
+    return f'{script_path.parent.name}/{script_path.stem}'

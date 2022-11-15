@@ -14,8 +14,6 @@ To save space, the raw data can be resampled.
 If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
-import itertools
-
 import numpy as np
 from typing import Optional, Union
 from types import SimpleNamespace
@@ -24,8 +22,8 @@ import mne
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from ..._config_utils import (
-    get_sessions, get_runs, get_subjects, get_task, get_bids_root,
-    get_deriv_root, get_datatype, get_mf_reference_run,
+    get_sessions, get_runs, get_subjects, get_task, get_datatype,
+    get_mf_reference_run,
 )
 from ..._import_data import (
     import_experimental_data, import_er_data, import_rest_data)
@@ -133,8 +131,7 @@ def filter(
     else:
         msg = (f'Not applying frequency filtering to {data_type} data.')
 
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run))
+    logger.info(**gen_log_kwargs(message=msg))
 
     if l_freq is None and h_freq is None:
         return
@@ -158,8 +155,7 @@ def resample(
         return
 
     msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session, run=run,))
+    logger.info(**gen_log_kwargs(message=msg))
     raw.resample(sfreq, npad='auto')
 
 
@@ -182,8 +178,7 @@ def filter_data(
     # Create paths for reading and writing the filtered data.
     if cfg.use_maxwell_filter:
         msg = f'Reading: {bids_path.basename}'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session, run=run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(bids_path)
     else:
         raw = import_experimental_data(bids_path_in=bids_path,
@@ -224,8 +219,7 @@ def filter_data(
         if cfg.use_maxwell_filter:
             msg = (f'Reading {data_type} recording: '
                    f'{bids_path_noise.basename}')
-            logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                         session=session, run=task))
+            logger.info(**gen_log_kwargs(message=msg, run=task))
             raw_noise = mne.io.read_raw_fif(bids_path_noise)
         elif data_type == 'empty-room':
             raw_noise = import_er_data(
@@ -276,9 +270,7 @@ def filter_data(
         # worse.
         if run == cfg.runs[0] and cfg.find_noisy_channels_meg:
             msg = 'Adding visualization of noisy channel detection to report.'
-            logger.info(
-                **gen_log_kwargs(message=msg, subject=subject, session=session)
-            )
+            logger.info(**gen_log_kwargs(message=msg))
             figs, captions = plot_auto_scores_(
                 cfg=cfg,
                 subject=subject,
@@ -296,11 +288,7 @@ def filter_data(
                 plt.close(fig)
 
         msg = 'Adding filtered raw data to report.'
-        logger.info(
-            **gen_log_kwargs(
-                message=msg, subject=subject, session=session, run=run
-            )
-        )
+        logger.info(**gen_log_kwargs(message=msg))
         for fname in out_files.values():
             title = 'Raw'
             if fname.run is not None:
@@ -328,6 +316,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         reader_extra_params=config.reader_extra_params,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
@@ -340,8 +329,8 @@ def get_config(
         acq=config.acq,
         rec=config.rec,
         space=config.space,
-        bids_root=get_bids_root(config),
-        deriv_root=get_deriv_root(config),
+        bids_root=config.bids_root,
+        deriv_root=config.deriv_root,
         l_freq=config.l_freq,
         h_freq=config.h_freq,
         l_trans_bandwidth=config.l_trans_bandwidth,
@@ -369,33 +358,29 @@ def get_config(
         on_rename_missing_events=config.on_rename_missing_events,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        config_path=config.config_path,
     )
+    if config.sessions == ['N170'] and config.task == 'ERN':
+        raise RuntimeError
     return cfg
 
 
 def main(*, config) -> None:
     """Run filter."""
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(filter_data, config=config)
-
-        # Enabling different runs for different subjects
-        sub_run_ses = []
-        for subject in get_subjects(config):
-            sub_run_ses += list(
-                itertools.product(
-                    [subject],
-                    get_runs(config=config, subject=subject),
-                    get_sessions(config),
-                )
-            )
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            filter_data, exec_params=config.exec_params)
 
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject),
                 subject=subject,
+                session=session,
                 run=run,
-                session=session
-            ) for subject, run, session in sub_run_ses
+            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
+            for run in get_runs(config=config, subject=subject)
         )
 
     save_logs(config=config, logs=logs)

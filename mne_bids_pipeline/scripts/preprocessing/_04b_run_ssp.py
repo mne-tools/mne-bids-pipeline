@@ -3,7 +3,6 @@
 These are often also referred to as PCA vectors.
 """
 
-import itertools
 from types import SimpleNamespace
 
 import mne
@@ -14,7 +13,6 @@ from mne.utils import _pl
 
 from ..._config_utils import (
     get_sessions, get_runs, get_subjects, get_task, get_datatype,
-    get_deriv_root,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -63,11 +61,9 @@ def run_ssp(*, cfg, subject, session, in_files):
 
     msg = (f'Input{_pl(raw_fnames)} ({len(raw_fnames)}): '
            f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
     msg = (f'Output: {out_files["proj"].basename}')
-    logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                 session=session))
+    logger.info(**gen_log_kwargs(message=msg))
 
     raw = mne.concatenate_raws([
         mne.io.read_raw_fif(raw_fname_in) for raw_fname_in in raw_fnames])
@@ -96,8 +92,7 @@ def run_ssp(*, cfg, subject, session, in_files):
         n_orig = len(proj_epochs)
         rate = n_orig / raw.times[-1] * 60
         msg = f'Detected {rate_names[kind]} rate: {rate:5.1f} bpm'
-        logger.info(**gen_log_kwargs(message=msg, subject=subject,
-                                     session=session))
+        logger.info(**gen_log_kwargs(message=msg))
         # Enough to start
         if len(proj_epochs) >= minimums[kind]:
             reject_ = _get_reject(
@@ -128,8 +123,7 @@ def run_ssp(*, cfg, subject, session, in_files):
             msg = (f'No {kind.upper()} projectors computed: got '
                    f'{len(proj_epochs)} good epochs < {minimums[kind]} '
                    f'(from {n_orig} original events).')
-            logger.warning(**gen_log_kwargs(message=msg, subject=subject,
-                                            session=session))
+            logger.warning(**gen_log_kwargs(message=msg))
         del proj_epochs
 
     mne.write_proj(out_files['proj'], sum(projs.values(), []), overwrite=True)
@@ -142,11 +136,7 @@ def run_ssp(*, cfg, subject, session, in_files):
                 continue
 
             msg = f'Adding {kind.upper()} SSP to report.'
-            logger.info(
-                **gen_log_kwargs(
-                    message=msg, subject=subject, session=session
-                )
-            )
+            logger.info(**gen_log_kwargs(message=msg))
             proj_epochs = mne.read_epochs(out_files[f'epochs_{kind}'])
             projs = mne.read_proj(out_files['proj'])
             projs = [p for p in projs if kind.upper() in p['desc']]
@@ -185,6 +175,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        exec_params=config.exec_params,
         runs=get_runs(config=config, subject=subject),
         task=get_task(config),
         datatype=get_datatype(config),
@@ -192,7 +183,7 @@ def get_config(
         rec=config.rec,
         space=config.space,
         eog_channels=config.eog_channels,
-        deriv_root=get_deriv_root(config),
+        deriv_root=config.deriv_root,
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
@@ -216,8 +207,9 @@ def main(*, config) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    with get_parallel_backend(config):
-        parallel, run_func = parallel_func(run_ssp, config=config)
+    with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_ssp, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -227,10 +219,7 @@ def main(*, config) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, session in
-            itertools.product(
-                get_subjects(config),
-                get_sessions(config)
-            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

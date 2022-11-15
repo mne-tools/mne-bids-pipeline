@@ -1,5 +1,4 @@
 import contextlib
-import os
 import os.path as op
 from pathlib import Path
 from typing import Optional, List, Literal
@@ -28,14 +27,17 @@ def _open_report(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str]
+    session: Optional[str],
+    run: Optional[str] = None,
 ):
     fname_report = BIDSPath(
         subject=subject,
         session=session,
+        # Report is across all runs, but for logging purposes it's helpful
+        # to pass the run for gen_log_kwargs
+        run=None,
         task=cfg.task,
         acquisition=cfg.acq,
-        run=None,
         recording=cfg.rec,
         space=cfg.space,
         extension='.h5',
@@ -48,9 +50,7 @@ def _open_report(
     with FileLock(f'{fname_report}.lock'), _agg_backend():
         if not fname_report.is_file():
             msg = 'Initializing report HDF5 file'
-            logger.info(
-                **gen_log_kwargs(message=msg, subject=subject, session=session)
-            )
+            logger.info(**gen_log_kwargs(message=msg))
             report = _gen_empty_report(
                 cfg=cfg,
                 subject=subject,
@@ -59,17 +59,25 @@ def _open_report(
             report.save(fname_report)
         try:
             report = mne.open_report(fname_report)
-        except OSError as exc:
-            raise OSError(
+        except Exception as exc:
+            raise exc.__class__(
                 f'Could not open report HDF5 file:\n{fname_report}\n'
                 f'Got error:\n{exc}\nPerhaps you need to delete it?') from None
-        add_system_info(report)
         try:
             yield report
         finally:
+            try:
+                msg = 'Adding config and sys info to report'
+                logger.info(**gen_log_kwargs(message=msg))
+                _finalize(report=report, cfg=cfg)
+            except Exception:
+                pass
+            fname_report_html = fname_report.with_suffix('.html')
+            msg = f'Saving report: {fname_report_html}'
+            logger.info(**gen_log_kwargs(message=msg))
             report.save(fname_report, overwrite=True)
             report.save(
-                fname_report.with_suffix('.html'), overwrite=True,
+                fname_report_html, overwrite=True,
                 open_browser=False)
 
 
@@ -467,9 +475,7 @@ def add_event_counts(*,
                                           session=session))
     except ValueError:
         msg = 'Could not read events.'
-        logger.warning(
-            **gen_log_kwargs(message=msg, subject=subject, session=session)
-        )
+        logger.warning(**gen_log_kwargs(message=msg))
         df_events = None
 
     if df_events is not None:
@@ -498,22 +504,30 @@ def add_event_counts(*,
             report.add_custom_css(css=css)
 
 
-def add_system_info(report: mne.Report):
+def _finalize(*, report: mne.Report, cfg: SimpleNamespace):
     """Add system information and the pipeline configuration to the report."""
-    config_path = Path(os.environ['MNE_BIDS_STUDY_CONFIG'])
     # ensure they are always appended
     titles = ['Configuration file', 'System information']
     for title in titles:
         report.remove(title=title, remove_all=True)
     # No longer need replace=True in these
     report.add_code(
-        code=config_path,
+        code=cfg.config_path,
         title=titles[0],
         tags=('configuration',),
     )
     report.add_sys_info(
         title=titles[1],
     )
+    # Make our code sections take 50% of screen height
+    css = """
+div.accordion-body pre.my-0 code {
+    overflow-y: auto;
+    max-height: 50vh;
+ }
+"""
+    if css not in report.include:
+        report.add_custom_css(css=css)
 
 
 def _all_conditions(*, cfg):
@@ -528,9 +542,8 @@ def _all_conditions(*, cfg):
 def run_report_average_sensor(*, cfg, session: str) -> None:
     subject = 'average'
     msg = 'Generating grand average report …'
-    logger.info(
-        **gen_log_kwargs(message=msg, subject=subject, session=session)
-    )
+    logger.info(**gen_log_kwargs(message=msg))
+    assert matplotlib.get_backend() == 'agg', matplotlib.get_backend()
 
     evoked_fname = BIDSPath(
         subject=subject,
@@ -553,60 +566,63 @@ def run_report_average_sensor(*, cfg, session: str) -> None:
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    report = mne.Report(
-        title=title,
-        raw_psd=True
-    )
     evokeds = mne.read_evokeds(evoked_fname)
     for evoked in evokeds:
         _restrict_analyze_channels(evoked, cfg)
 
     conditions = _all_conditions(cfg=cfg)
+    with _open_report(cfg=cfg, subject=subject, session=session) as report:
 
-    #######################################################################
-    #
-    # Add event stats.
-    #
-    add_event_counts(cfg=cfg, report=report, subject=subject, session=session)
+        #######################################################################
+        #
+        # Add event stats.
+        #
+        add_event_counts(
+            cfg=cfg,
+            report=report,
+            subject=subject,
+            session=session,
+        )
 
-    #######################################################################
-    #
-    # Visualize evoked responses.
-    #
-    for condition, evoked in zip(conditions, evokeds):
-        if condition in cfg.conditions:
-            title = f'Average: {condition}'
-            tags = (
-                'evoked',
-                _sanitize_cond_tag(condition)
+        #######################################################################
+        #
+        # Visualize evoked responses.
+        #
+        for condition, evoked in zip(conditions, evokeds):
+            if condition in cfg.conditions:
+                title = f'Average: {condition}'
+                tags = (
+                    'evoked',
+                    _sanitize_cond_tag(condition)
+                )
+            else:  # It's a contrast of two conditions.
+                # XXX Will change once we process contrasts here too
+                continue
+
+            report.add_evokeds(
+                evokeds=evoked,
+                titles=title,
+                projs=False,
+                tags=tags,
+                n_time_points=cfg.report_evoked_n_time_points,
+                # captions=evoked.comment,  # TODO upstream
+                replace=True,
+                n_jobs=1,  # don't auto parallelize
             )
-        else:  # It's a contrast of two conditions.
-            # XXX Will change once we process contrasts here too
-            continue
 
-        report.add_evokeds(
-            evokeds=evoked,
-            titles=title,
-            projs=False,
-            tags=tags,
-            n_time_points=cfg.report_evoked_n_time_points,
-            # captions=evoked.comment,  # TODO upstream
-            replace=True,
-        )
+        #######################################################################
+        #
+        # Visualize decoding results.
+        #
+        if cfg.decode and cfg.decoding_contrasts:
+            add_decoding_grand_average(
+                session=session, cfg=cfg, report=report
+            )
 
-    #######################################################################
-    #
-    # Visualize decoding results.
-    #
-    if cfg.decode and cfg.decoding_contrasts:
-        add_decoding_grand_average(
-            session=session, cfg=cfg, report=report
-        )
-
-    if cfg.decode and cfg.decoding_csp:
-        add_csp_grand_average(
-            session=session, cfg=cfg, report=report
-        )
+        if cfg.decode and cfg.decoding_csp:
+            add_csp_grand_average(
+                session=session, cfg=cfg, report=report
+            )
 
 
 def run_report_average_source(*, cfg, session: str) -> None:
@@ -992,7 +1008,7 @@ def add_csp_grand_average(
             mean_crossval_scores = results['mean_crossval_scores'].ravel()
             # t_vals = results['t_vals']
             clusters = results['clusters']
-            cluster_p_vals = results['cluster_p_vals'].squeeze()
+            cluster_p_vals = np.atleast_1d(results['cluster_p_vals'].squeeze())
             tmin = results['time_bin_edges'].ravel()
             tmin, tmax = tmin[:-1], tmin[1:]
             fmin = results['freq_bin_edges'].ravel()

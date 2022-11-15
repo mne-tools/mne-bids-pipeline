@@ -148,7 +148,7 @@ def run_group_average_source(*, cfg, subject='average'):
                 fs_subject=get_fs_subject(config=cfg, subject=subject),
                 session=session
             )
-            for subject, session in get_subjects(cfg)
+            for subject in get_subjects(cfg)
             for session in get_sessions(cfg)
         )
         mean_morphed_stcs = np.array(all_morphed_stcs).mean(axis=0)

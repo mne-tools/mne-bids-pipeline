@@ -233,19 +233,18 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
 
 
 def get_task(config: SimpleNamespace) -> Optional[str]:
-    task = None
+    task = config.task
+    if task:
+        return task
     _valid_tasks = _get_entity_vals_cached(
         root=config.bids_root,
         entity_key='task',
         ignore_datatypes=_get_ignore_datatypes(config),
     )
-    if not task:
-        if not _valid_tasks:
-            return None
-        else:
-            return _valid_tasks[0]
+    if not _valid_tasks:
+        return None
     else:
-        return task
+        return _valid_tasks[0]
 
 
 def get_channels_to_analyze(

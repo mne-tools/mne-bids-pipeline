@@ -360,6 +360,8 @@ def get_config(
         _raw_split_size=config._raw_split_size,
         config_path=config.config_path,
     )
+    if config.sessions == ['N170'] and config.task == 'ERN':
+        raise RuntimeError
     return cfg
 
 

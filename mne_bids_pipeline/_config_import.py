@@ -1,3 +1,4 @@
+import copy
 import importlib
 import os
 import pathlib
@@ -23,9 +24,11 @@ def _import_config(
     # Get the default
     from . import _config
     # Don't use _config itself as it's mutable -- make a new object
+    # with deepcopies of vals (keys are immutable strings so no need to copy)
+    ignore_keys = {'mne', 'np'}  # avoid modules
     config = SimpleNamespace(
-        **{key: val for key, val in _config.__dict__.items()
-           if not key.startswith('__')})
+        **{key: copy.deepcopy(val) for key, val in _config.__dict__.items()
+           if not (key.startswith('__') or key in ignore_keys)})
 
     # Update with user config
     _update_with_user_config(

@@ -261,9 +261,7 @@ def get_config(
 
 def main(*, config) -> None:
     """Run cov."""
-    cfg = get_config(config=config)
-
-    if not cfg.run_source_estimation:
+    if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
@@ -280,7 +278,11 @@ def main(*, config) -> None:
         parallel, run_func = parallel_func(
             run_covariance, exec_params=config.exec_params)
         logs = parallel(
-            run_func(cfg=cfg, subject=subject, session=session)
+            run_func(
+                cfg=get_config(config=config),
+                subject=subject,
+                session=session,
+            )
             for subject in get_subjects(config)
             for session in get_sessions(config)
         )

@@ -19,16 +19,19 @@ from ..._run import failsafe_run
 fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
 
 
-def get_input_fnames_coreg_surfaces(**kwargs):
-    cfg = kwargs.pop('cfg')
-    kwargs.pop('subject')  # unused
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
-    in_files = _get_scalp_in_files(cfg)
-    return in_files
+def get_input_fnames_coreg_surfaces(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+) -> dict:
+    return _get_scalp_in_files(cfg)
 
 
-def get_output_fnames_coreg_surfaces(*, cfg, subject):
+def get_output_fnames_coreg_surfaces(
+    *,
+    cfg: SimpleNamespace,
+    subject: str
+) -> dict:
     out_files = dict()
     subject_path = Path(cfg.subjects_dir) / cfg.fs_subject
     out_files['seghead'] = subject_path / 'surf' / 'lh.seghead'
@@ -44,6 +47,7 @@ def get_output_fnames_coreg_surfaces(*, cfg, subject):
 )
 def make_coreg_surfaces(
     cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     in_files: dict,
 ) -> dict:
@@ -63,7 +67,6 @@ def make_coreg_surfaces(
 
 def get_config(*, config, subject) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         subject=subject,
         fs_subject=get_fs_subject(config, subject),
         subjects_dir=get_fs_subjects_dir(config),
@@ -83,8 +86,12 @@ def main(*, config) -> None:
 
         parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
-                subject=subject,
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
                 force_run=config.recreate_scalp_surface,
+                subject=subject,
             ) for subject in subjects
         )

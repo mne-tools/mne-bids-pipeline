@@ -5,6 +5,7 @@ Compute and apply an inverse solution for each evoked data set.
 
 import pathlib
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
@@ -21,7 +22,12 @@ from ..._report import _open_report, _sanitize_cond_tag
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
-def get_input_fnames_inverse(*, cfg, subject, session):
+def get_input_fnames_inverse(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -50,7 +56,14 @@ def get_input_fnames_inverse(*, cfg, subject, session):
 @failsafe_run(
     get_input_fnames=get_input_fnames_inverse,
 )
-def run_inverse(*, cfg, subject, session, in_files):
+def run_inverse(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs
     fname_fwd = in_files.pop('forward')
@@ -106,7 +119,11 @@ def run_inverse(*, cfg, subject, session, in_files):
             stc.save(out_files[key], overwrite=True)
             out_files[key] = pathlib.Path(str(out_files[key]) + '-lh.stc')
 
-        with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        with _open_report(
+                cfg=cfg,
+                exec_params=exec_params,
+                subject=subject,
+                session=session) as report:
             for condition in conditions:
                 cond_str = sanitize_cond_name(condition)
                 key = f'{cond_str}+{method}+hemi'

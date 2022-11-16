@@ -3,6 +3,7 @@
 These are often also referred to as PCA vectors.
 """
 
+from typing import Optional
 from types import SimpleNamespace
 
 import mne
@@ -21,12 +22,12 @@ from ..._report import _open_report
 from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
-def get_input_fnames_run_ssp(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_run_ssp(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=cfg.task,
@@ -49,7 +50,14 @@ def get_input_fnames_run_ssp(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_run_ssp,
 )
-def run_ssp(*, cfg, subject, session, in_files):
+def run_ssp(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     import matplotlib.pyplot as plt
     # compute SSP on first run of raw
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
@@ -130,7 +138,11 @@ def run_ssp(*, cfg, subject, session, in_files):
     assert len(in_files) == 0, in_files.keys()
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         for kind in proj_kinds:
             if f'epochs_{kind}' not in out_files:
                 continue
@@ -171,11 +183,10 @@ def run_ssp(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         runs=get_runs(config=config, subject=subject),
         task=get_task(config),
         datatype=get_datatype(config),
@@ -200,7 +211,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run SSP."""
     if config.spatial_filter != 'ssp':
         msg = 'Skipping …'
@@ -216,6 +227,7 @@ def main(*, config) -> None:
                     config=config,
                     subject=subject,
                 ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

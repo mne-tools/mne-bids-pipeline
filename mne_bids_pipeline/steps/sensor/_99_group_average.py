@@ -27,7 +27,12 @@ from ..._run import failsafe_run, save_logs
 from ..._report import run_report_average_sensor
 
 
-def average_evokeds(cfg, session):
+def average_evokeds(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> List[mne.Evoked]:
     # Container for all conditions:
     all_evokeds = defaultdict(list)
 
@@ -59,7 +64,6 @@ def average_evokeds(cfg, session):
         # Keep condition in comment
         all_evokeds[idx].comment = 'Grand average: ' + evokeds[0].comment
 
-    subject = 'average'
     fname_out = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -579,7 +583,6 @@ def get_config(
 ) -> SimpleNamespace:
     dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         subjects=get_subjects(config),
         task=get_task(config),
         task_is_rest=config.task_is_rest,
@@ -608,7 +611,6 @@ def get_config(
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
-        interactive=config.interactive,
         sessions=get_sessions(config),
         bids_root=config.bids_root,
         data_type=config.data_type,
@@ -616,18 +618,18 @@ def get_config(
         all_contrasts=get_all_contrasts(config),
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
-        # TODO: This script deviates from our standard procedure, when we
-        # eventually cache and have in/out_files we'll want to remove this
-        # since it breaks the "execution params should only be in
-        # cfg.exec_params" idea
-        exec_params_inner=config.exec_params,
     )
     return cfg
 
 
 # pass 'average' subject for logging
 @failsafe_run()
-def run_group_average_sensor(*, cfg):
+def run_group_average_sensor(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+) -> None:
     if cfg.task_is_rest:
         msg = '    … skipping: for "rest" task.'
         logger.info(**gen_log_kwargs(message=msg))
@@ -637,10 +639,14 @@ def run_group_average_sensor(*, cfg):
     if not sessions:
         sessions = [None]
 
-    with get_parallel_backend(cfg.exec_params_inner):
+    with get_parallel_backend(exec_params):
         for session in sessions:
-            evokeds = average_evokeds(cfg, session)
-            if cfg.interactive:
+            evokeds = average_evokeds(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+            )
+            if exec_params.interactive:
                 for evoked in evokeds:
                     evoked.plot()
 
@@ -649,7 +655,7 @@ def run_group_average_sensor(*, cfg):
                 average_time_by_time_decoding(cfg, session)
         if cfg.decode and cfg.decoding_csp:
             parallel, run_func = parallel_func(
-                average_csp_decoding, exec_params=cfg.exec_params_inner)
+                average_csp_decoding)
             parallel(
                 run_func(
                     cfg=cfg,
@@ -662,11 +668,17 @@ def run_group_average_sensor(*, cfg):
             )
 
         for session in sessions:
-            run_report_average_sensor(cfg=cfg, session=session)
+            run_report_average_sensor(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+            )
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     log = run_group_average_sensor(
         cfg=get_config(config=config),
+        exec_params=config.exec_params,
+        subject='average',
     )
     save_logs(config=config, logs=[log])

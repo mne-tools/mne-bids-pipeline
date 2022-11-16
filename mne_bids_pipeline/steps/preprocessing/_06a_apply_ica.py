@@ -12,6 +12,7 @@ order might differ).
 """
 
 from types import SimpleNamespace
+from typing import Optional
 
 import pandas as pd
 import mne
@@ -30,12 +31,12 @@ from ..._report import _open_report, _agg_backend
 from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
-def get_input_fnames_apply_ica(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_apply_ica(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=cfg.task,
@@ -58,7 +59,14 @@ def get_input_fnames_apply_ica(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_apply_ica,
 )
-def apply_ica(*, cfg, subject, session, in_files):
+def apply_ica(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     bids_basename = in_files['ica'].copy().update(processing=None)
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(processing='ica')
@@ -131,7 +139,10 @@ def apply_ica(*, cfg, subject, session, in_files):
             n_jobs=1,  # avoid automatic parallelization
         )
     report.save(
-        out_files['report'], overwrite=True, open_browser=cfg.interactive)
+        out_files['report'],
+        overwrite=True,
+        open_browser=exec_params.interactive,
+    )
 
     assert len(in_files) == 0, in_files.keys()
 
@@ -142,7 +153,11 @@ def apply_ica(*, cfg, subject, session, in_files):
         msg = 'Skipping ICA addition to report, no components marked as bad.'
     logger.info(**gen_log_kwargs(message=msg))
     if ica.exclude:
-        with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        with _open_report(
+                cfg=cfg,
+                exec_params=exec_params,
+                subject=subject,
+                session=session) as report:
             report.add_ica(
                 ica=ica,
                 title='ICA',
@@ -160,17 +175,15 @@ def apply_ica(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,
         space=config.space,
         deriv_root=config.deriv_root,
-        interactive=config.interactive,
         baseline=config.baseline,
         ica_reject=config.ica_reject,
         ch_types=config.ch_types,
@@ -179,7 +192,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Apply ICA."""
     if not config.spatial_filter == 'ica':
         msg = 'Skipping …'
@@ -191,7 +204,10 @@ def main(*, config) -> None:
             apply_ica, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(
+                    config=config,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session)
             for subject in get_subjects(config)

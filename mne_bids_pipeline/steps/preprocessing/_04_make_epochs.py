@@ -8,6 +8,7 @@ To save space, the epoch data can be decimated.
 """
 
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -25,14 +26,13 @@ from ..._run import (
 from ..._parallel import parallel_func, get_parallel_backend
 
 
-def get_input_fnames_epochs(**kwargs):
+def get_input_fnames_epochs(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     """Get paths of files required by filter_data function."""
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
-
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
     # The basenames of the empty-room recording output file does not contain
@@ -67,7 +67,14 @@ def get_input_fnames_epochs(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_epochs,
 )
-def run_epochs(*, cfg, subject, session, in_files):
+def run_epochs(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     """Extract epochs for one subject."""
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
     bids_path_in = raw_fnames[0].copy().update(
@@ -147,7 +154,7 @@ def run_epochs(*, cfg, subject, session, in_files):
                 smallest_rank = new_rank
                 smallest_rank_info = epochs.info.copy()
 
-        del epochs
+        del epochs, run
 
     # Clean up namespace
     epochs = epochs_all_runs
@@ -211,10 +218,11 @@ def run_epochs(*, cfg, subject, session, in_files):
     _update_for_splits(out_files, 'epochs')
 
     # Report
-    with _open_report(cfg=cfg,
-                      subject=subject,
-                      session=session,
-                      run=run) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         if not cfg.task_is_rest:
             msg = 'Adding events plot to report.'
             logger.info(**gen_log_kwargs(message=msg))
@@ -246,7 +254,7 @@ def run_epochs(*, cfg, subject, session, in_files):
         )
 
     # Interactive
-    if cfg.interactive:
+    if exec_params.interactive:
         epochs.plot()
         epochs.plot_image(combine='gfp', sigma=2., cmap='YlGnBu_r')
     assert len(in_files) == 0, in_files.keys()
@@ -289,7 +297,6 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
@@ -300,7 +307,6 @@ def get_config(
         space=config.space,
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
-        interactive=config.interactive,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
@@ -317,7 +323,6 @@ def get_config(
         eeg_reference=get_eeg_reference(config),
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
-        config_path=config.config_path,
         _epochs_split_size=config._epochs_split_size,
     )
     return cfg
@@ -334,6 +339,7 @@ def main(*, config) -> None:
                     config=config,
                     subject=subject,
                 ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session
             )

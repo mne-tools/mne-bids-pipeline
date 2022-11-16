@@ -21,13 +21,12 @@ from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
-def get_input_fnames_cov(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
-    # short circuit to say: always re-run
+def get_input_fnames_cov(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
     processing = 'clean' if cfg.spatial_filter is not None else None
@@ -124,6 +123,7 @@ def compute_cov_from_raw(*, cfg, subject, session, in_files, out_files):
 
 def retrieve_custom_cov(
     cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
     in_files: None,
@@ -132,7 +132,7 @@ def retrieve_custom_cov(
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
     config = _import_config(
-        config_path=cfg.config_path,
+        config_path=exec_params.config_path,
         check=False,
         log=False,
     )
@@ -182,7 +182,14 @@ def _get_cov_type(cfg):
 @failsafe_run(
     get_input_fnames=get_input_fnames_cov,
 )
-def run_covariance(*, cfg, subject, session, in_files):
+def run_covariance(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str] = None,
+    in_files: dict,
+) -> dict:
     import matplotlib.pyplot as plt
     out_files = dict()
     out_files['cov'] = get_noise_cov_bids_path(
@@ -193,7 +200,7 @@ def run_covariance(*, cfg, subject, session, in_files):
     cov_type = _get_cov_type(cfg)
     kwargs = dict(
         cfg=cfg, subject=subject, session=session,
-        in_files=in_files, out_files=out_files)
+        in_files=in_files, out_files=out_files, exec_params=exec_params)
     fname_info = in_files.pop('report_info')
     fname_evoked = in_files.pop('evoked', None)
     if cov_type == 'custom':
@@ -206,7 +213,11 @@ def run_covariance(*, cfg, subject, session, in_files):
     cov.save(out_files['cov'], overwrite=True)
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Rendering noise covariance matrix and corresponding SVD.'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_covariance(
@@ -246,10 +257,9 @@ def run_covariance(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -264,12 +274,11 @@ def get_config(
         conditions=config.conditions,
         all_contrasts=get_all_contrasts(config),
         analyze_channels=config.analyze_channels,
-        config_path=config.config_path,
     )
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run cov."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -290,6 +299,7 @@ def main(*, config) -> None:
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

@@ -13,6 +13,7 @@ can learn about the entire time course of the signal.
 
 import os.path as op
 from types import SimpleNamespace
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -36,23 +37,21 @@ from ..._config_utils import (
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs
-from ..._parallel import (
-    get_parallel_backend, get_n_jobs, get_parallel_backend_name)
+from ..._parallel import get_parallel_backend, get_parallel_backend_name
 from ..._report import (
     _open_report, _plot_decoding_time_generalization, _sanitize_cond_tag,
     _plot_time_by_time_decoding_scores,
 )
 
 
-def get_input_fnames_time_decoding(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    # TODO: Somehow remove these?
-    del kwargs['condition1']
-    del kwargs['condition2']
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_time_decoding(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    condition1: str,
+    condition2: str,
+) -> dict:
     # TODO: Shouldn't this at least use the PTP-rejected epochs if available?
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
@@ -74,8 +73,16 @@ def get_input_fnames_time_decoding(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_time_decoding,
 )
-def run_time_decoding(*, cfg, subject, condition1, condition2, session,
-                      in_files):
+def run_time_decoding(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    condition1: str,
+    condition2: str,
+    in_files: dict,
+) -> dict:
     import matplotlib.pyplot as plt
     if cfg.decoding_time_generalization:
         kind = 'time generalization'
@@ -118,10 +125,6 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
     X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
     # ProgressBar does not work on dask, so only enable it if not using dask
-    exec_params = SimpleNamespace(
-        parallel_backend=cfg.parallel_backend,
-        N_JOBS=cfg.N_JOBS,
-    )
     verbose = get_parallel_backend_name(exec_params=exec_params) != "dask"
     with get_parallel_backend(exec_params):
         clf = make_pipeline(
@@ -142,7 +145,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
             estimator = GeneralizingEstimator(
                 clf,
                 scoring=cfg.decoding_metric,
-                n_jobs=cfg.n_jobs,
+                n_jobs=exec_params.N_JOBS,
             )
             cv_scoring_n_jobs = 1
         else:
@@ -151,7 +154,7 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
                 scoring=cfg.decoding_metric,
                 n_jobs=1,
             )
-            cv_scoring_n_jobs = cfg.n_jobs
+            cv_scoring_n_jobs = exec_params.N_JOBS
 
         scores = cross_val_multiscore(
             estimator, X=X, y=y, cv=cv, n_jobs=cv_scoring_n_jobs,
@@ -195,7 +198,11 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
             out_files[f'tsv_{processing}'], sep='\t', index=False)
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Adding time-by-time decoding results to the report.'
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -276,10 +283,9 @@ def run_time_decoding(*, cfg, subject, condition1, condition2, session,
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -297,17 +303,11 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
-        # TODO: None of these should affect caching, but they will...
-        n_jobs=get_n_jobs(exec_params=config.exec_params),
-        parallel_backend=config.exec_params.parallel_backend,
-        interactive=config.interactive,
-        N_JOBS=config.exec_params.N_JOBS,
-        config_path=config.config_path,
     )
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'

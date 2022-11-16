@@ -5,6 +5,7 @@ The average power and inter-trial coherence are computed and saved to disk.
 """
 
 from types import SimpleNamespace
+from typing import Optional
 
 import numpy as np
 
@@ -22,12 +23,12 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
 
 
-def get_input_fnames_time_frequency(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_time_frequency(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     processing = None
     if cfg.spatial_filter is not None:
         processing = 'clean'
@@ -52,7 +53,14 @@ def get_input_fnames_time_frequency(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_time_frequency,
 )
-def run_time_frequency(*, cfg, subject, session, in_files):
+def run_time_frequency(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     import matplotlib.pyplot as plt
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
@@ -95,7 +103,11 @@ def run_time_frequency(*, cfg, subject, session, in_files):
         itc.save(out_files[itc_key], overwrite=True, verbose='error')
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Adding TFR analysis results to the report.'
         logger.info(**gen_log_kwargs(message=msg))
         for condition in cfg.time_frequency_conditions:
@@ -144,10 +156,9 @@ def run_time_frequency(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -170,7 +181,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:
         msg = 'Skipping …'
@@ -182,7 +193,10 @@ def main(*, config) -> None:
     with get_parallel_backend(config.exec_params):
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(
+                    config=config,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

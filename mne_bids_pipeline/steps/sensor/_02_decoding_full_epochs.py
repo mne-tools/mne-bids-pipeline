@@ -10,6 +10,7 @@ which condition.
 
 import os.path as op
 from types import SimpleNamespace
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -36,15 +37,14 @@ from ..._report import (
     _sanitize_cond_tag)
 
 
-def get_input_fnames_epochs_decoding(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    # TODO: Somehow remove these?
-    del kwargs['condition1']
-    del kwargs['condition2']
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_epochs_decoding(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    condition1: str,
+    condition2: str,
+) -> dict:
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -65,8 +65,16 @@ def get_input_fnames_epochs_decoding(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_epochs_decoding,
 )
-def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
-                        in_files):
+def run_epochs_decoding(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    condition1: str,
+    condition2: str,
+    in_files: dict,
+) -> dict:
     import matplotlib.pyplot as plt
     msg = f'Contrasting conditions: {condition1} – {condition2}'
     logger.info(**gen_log_kwargs(message=msg))
@@ -148,7 +156,11 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
     tabular_data.to_csv(out_files[tsv_key], sep='\t', index=False)
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Adding full-epochs decoding results to the report.'
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -202,10 +214,9 @@ def run_epochs_decoding(*, cfg, subject, condition1, condition2, session,
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -225,7 +236,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:
         msg = 'No contrasts specified; not performing decoding.'
@@ -243,6 +254,7 @@ def main(*, config) -> None:
         logs = parallel(
             run_func(
                 cfg=get_config(config=config),
+                exec_params=config.exec_params,
                 subject=subject,
                 condition1=cond_1,
                 condition2=cond_2,

@@ -15,95 +15,40 @@ If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
 import numpy as np
-from typing import Optional, Union, Literal
 from types import SimpleNamespace
+from typing import Optional, Union, Literal
 
 import mne
-from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from ..._config_utils import (
     get_sessions, get_runs, get_subjects, get_task, get_datatype,
     get_mf_reference_run,
 )
 from ..._import_data import (
-    import_experimental_data, import_er_data, import_rest_data)
-from ..._io import _read_json, _empty_room_match_path
+    import_experimental_data, import_er_data, _get_raw_paths,
+)
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, plot_auto_scores_
+from ..._report import _open_report, _add_raw
 from ..._run import failsafe_run, save_logs, _update_for_splits
 
 
-def get_input_fnames_frequency_filter(**kwargs):
+def get_input_fnames_frequency_filter(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: str,
+) -> dict:
     """Get paths of files required by filter_data function."""
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    run = kwargs.pop('run')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
-
-    # Construct the basenames of the files we wish to load, and of the empty-
-    # room recording we wish to save.
-    # The basenames of the empty-room recording output file does not contain
-    # the "run" entity.
-    path_kwargs = dict(
+    kind = 'sss' if cfg.use_maxwell_filter else 'orig'
+    return _get_raw_paths(
+        cfg=cfg,
         subject=subject,
-        run=run,
         session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        recording=cfg.rec,
-        space=cfg.space,
-        datatype=cfg.datatype,
-        check=False
+        run=run,
+        kind=kind,
     )
-    if cfg.use_maxwell_filter:
-        path_kwargs['root'] = cfg.deriv_root
-        path_kwargs['suffix'] = 'raw'
-        path_kwargs['extension'] = '.fif'
-        path_kwargs['processing'] = 'sss'
-    else:
-        path_kwargs['root'] = cfg.bids_root
-        path_kwargs['suffix'] = None
-        path_kwargs['extension'] = None
-        path_kwargs['processing'] = cfg.proc
-    bids_path_in = BIDSPath(**path_kwargs)
-
-    in_files = dict()
-    in_files[f'raw_run-{run}'] = bids_path_in
-    _update_for_splits(in_files, f'raw_run-{run}', single=True)
-
-    if run == cfg.runs[0]:
-        do = dict(
-            rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_empty_room and cfg.datatype == 'meg',
-        )
-        for task in ('rest', 'noise'):
-            if not do[task]:
-                continue
-            key = f'raw_{task}'
-            if cfg.use_maxwell_filter:
-                raw_fname = bids_path_in.copy().update(
-                    run=None, task=task)
-            else:
-                if task == 'rest':
-                    raw_fname = bids_path_in.copy().update(
-                        run=None, task=task)
-                else:
-                    raw_fname = _read_json(
-                        _empty_room_match_path(bids_path_in, cfg))['fname']
-                    if raw_fname is not None:
-                        raw_fname = get_bids_path_from_fname(raw_fname)
-            if raw_fname is None:
-                continue
-            in_files[key] = raw_fname
-            _update_for_splits(
-                in_files, key, single=True, allow_missing=True)
-            if not in_files[key].fpath.exists():
-                in_files.pop(key)
-
-    return in_files
 
 
 def filter(
@@ -163,16 +108,18 @@ def resample(
 )
 def filter_data(
     *,
-    cfg,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
     run: str,
     in_files: dict,
-) -> None:
+) -> dict:
     """Filter data from a single subject."""
-    import matplotlib.pyplot as plt
     out_files = dict()
-    bids_path = in_files.pop(f"raw_run-{run}")
+    in_key = f"raw_run-{run}"
+    bids_path = in_files.pop(in_key)
+    bids_path_bads_in = in_files.pop(f'{in_key}-bads', None)
 
     # Create paths for reading and writing the filtered data.
     if cfg.use_maxwell_filter:
@@ -180,10 +127,14 @@ def filter_data(
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(bids_path)
     else:
-        raw = import_experimental_data(bids_path_in=bids_path,
-                                       cfg=cfg)
+        raw = import_experimental_data(
+            cfg=cfg,
+            bids_path_in=bids_path,
+            bids_path_bads_in=bids_path_bads_in,
+            data_is_rest=False,
+        )
 
-    out_files['raw_filt'] = bids_path.copy().update(
+    out_files[in_key] = bids_path.copy().update(
         root=cfg.deriv_root, processing='filt', extension='.fif',
         suffix='raw', split=None)
     raw.load_data()
@@ -197,10 +148,10 @@ def filter_data(
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=cfg.resample_sfreq, data_type='experimental')
 
-    raw.save(out_files['raw_filt'], overwrite=True, split_naming='bids',
+    raw.save(out_files[in_key], overwrite=True, split_naming='bids',
              split_size=cfg._raw_split_size)
-    _update_for_splits(out_files, 'raw_filt')
-    if cfg.interactive:
+    _update_for_splits(out_files, in_key)
+    if exec_params.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
         fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
@@ -215,6 +166,7 @@ def filter_data(
             continue
         data_type = nice_names[task]
         bids_path_noise = in_files.pop(in_key)
+        bids_path_noise_bads = in_files.pop(f'{in_key}-bads', None)
         if cfg.use_maxwell_filter:
             msg = (f'Reading {data_type} recording: '
                    f'{bids_path_noise.basename}')
@@ -224,15 +176,19 @@ def filter_data(
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
-                bids_path_ref_in=bids_path,  # will take bads from this run (0)
+                bids_path_ref_in=bids_path,
+                bids_path_er_bads_in=bids_path_noise_bads,
+                # take bads from this run (0)
+                bids_path_ref_bads_in=bids_path_bads_in,
             )
         else:
-            raw_noise = import_rest_data(
+            raw_noise = import_experimental_data(
                 cfg=cfg,
                 bids_path_in=bids_path_noise,
+                bids_path_bads_in=bids_path_noise_bads,
+                data_is_rest=True,
             )
-        out_key = f'raw_{task}_filt'
-        out_files[out_key] = \
+        out_files[in_key] = \
             bids_path.copy().update(
                 root=cfg.deriv_root, processing='filt', extension='.fif',
                 suffix='raw', split=None, task=task, run=None)
@@ -249,11 +205,11 @@ def filter_data(
                  sfreq=cfg.resample_sfreq, data_type=data_type)
 
         raw_noise.save(
-            out_files[out_key], overwrite=True, split_naming='bids',
+            out_files[in_key], overwrite=True, split_naming='bids',
             split_size=cfg._raw_split_size,
         )
-        _update_for_splits(out_files, out_key)
-        if cfg.interactive:
+        _update_for_splits(out_files, in_key)
+        if exec_params.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)
             fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
@@ -261,49 +217,19 @@ def filter_data(
 
     assert len(in_files) == 0, in_files.keys()
 
-    # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
-        # This is a weird place for this, but it's the first place we actually
-        # start a report, so let's leave it here. We could put it in
-        # _import_data (where the auto-bad-finding is called), but that seems
-        # worse.
-        if run == cfg.runs[0] and cfg.find_noisy_channels_meg:
-            msg = 'Adding visualization of noisy channel detection to report.'
-            logger.info(**gen_log_kwargs(message=msg))
-            figs, captions = plot_auto_scores_(
-                cfg=cfg,
-                subject=subject,
-                session=session,
-            )
-            tags = ('raw', 'data-quality', *[f'run-{i}' for i in cfg.runs])
-            report.add_figure(
-                fig=figs,
-                caption=captions,
-                title='Data Quality',
-                tags=tags,
-                replace=True,
-            )
-            for fig in figs:
-                plt.close(fig)
-
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Adding filtered raw data to report.'
         logger.info(**gen_log_kwargs(message=msg))
         for fname in out_files.values():
-            title = 'Raw'
-            if fname.run is not None:
-                title += f', run {fname.run}'
-            plot_raw_psd = (
-                cfg.plot_psd_for_runs == 'all' or
-                fname.run in cfg.plot_psd_for_runs
-            )
-            report.add_raw(
-                raw=fname,
-                title=title,
-                butterfly=5,
-                psd=plot_raw_psd,
-                tags=('raw', 'filtered', f'run-{fname.run}'),
-                # caption=fname.basename,  # TODO upstream
-                replace=True,
+            _add_raw(
+                cfg=cfg,
+                report=report,
+                bids_path_in=fname,
+                title='Raw (filtered)',
             )
 
     return out_files
@@ -311,11 +237,10 @@ def filter_data(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         reader_extra_params=config.reader_extra_params,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
@@ -336,7 +261,6 @@ def get_config(
         h_trans_bandwidth=config.h_trans_bandwidth,
         resample_sfreq=config.resample_sfreq,
         crop_runs=config.crop_runs,
-        interactive=config.interactive,
         rename_events=config.rename_events,
         eeg_bipolar_channels=config.eeg_bipolar_channels,
         eeg_template_montage=config.eeg_template_montage,
@@ -357,14 +281,11 @@ def get_config(
         on_rename_missing_events=config.on_rename_missing_events,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
-        config_path=config.config_path,
     )
-    if config.sessions == ['N170'] and config.task == 'ERN':
-        raise RuntimeError
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run filter."""
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
@@ -372,7 +293,11 @@ def main(*, config) -> None:
 
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
                 run=run,

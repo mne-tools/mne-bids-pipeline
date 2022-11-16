@@ -177,7 +177,6 @@ def main():
     config_imported = _import_config(
         config_path=config_path,
         overrides=overrides,
-        log=True,
     )
     for step_module in step_modules:
         start = time.time()

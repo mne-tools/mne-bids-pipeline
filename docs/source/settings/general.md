@@ -37,6 +37,7 @@
 ::: mne_bids_pipeline._config.memory_location
 ::: mne_bids_pipeline._config.memory_file_method
 ::: mne_bids_pipeline._config.memory_verbose
+::: mne_bids_pipeline._config.config_validation
 ::: mne_bids_pipeline._config.log_level
 ::: mne_bids_pipeline._config.mne_log_level
 ::: mne_bids_pipeline._config.on_error

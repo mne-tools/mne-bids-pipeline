@@ -1977,8 +1977,7 @@ mne_log_level: Literal['info', 'error'] = 'error'
 Set the MNE-Python logging verbosity.
 """
 
-OnErrorT = Literal['continue', 'abort', 'debug']
-on_error: OnErrorT = 'abort'
+on_error: Literal['continue', 'abort', 'debug'] = 'abort'
 """
 Whether to abort processing as soon as an error occurs, continue with all other
 processing steps for as long as possible, or drop you into a debugger in case
@@ -1994,8 +1993,8 @@ If not None (or False), caching will be enabled and the cache files will be
 stored in the given directory. The default (True) will use a
 `'joblib'` subdirectory in the BIDS derivative root of the dataset.
 """
-MemoryFileMethodT = Literal['mtime', 'hash']
-memory_file_method: MemoryFileMethodT = 'mtime'
+
+memory_file_method: Literal['mtime', 'hash'] = 'mtime'
 """
 The method to use for cache invalidation (i.e., detecting changes). Using the
 "modified time" reported by the filesystem (`'mtime'`, default) is very fast
@@ -2003,8 +2002,17 @@ but requires that the filesystem supports proper mtime reporting. Using file
 hashes (`'hash'`) is slower and requires reading all input files but should
 work on any filesystem.
 """
+
 memory_verbose: int = 0
 """
 The verbosity to use when using memory. The default (0) does not print, while
 1 will print the function calls that will be cached. See the documentation for
 the joblib.Memory class for more information."""
+
+config_validation: Literal['raise', 'warn', 'ignore'] = 'raise'
+"""
+How strictly to validate the configuration. Errors are always raised for
+invalid entries (e.g., not providing `ch_types`). This setting controls
+how to handle *possibly* or *likely* incorrect entries, such as likely
+misspellings (e.g., providing `session` instead of `sessions`).
+"""

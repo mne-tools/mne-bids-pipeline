@@ -1,9 +1,11 @@
+import ast
 import copy
+import difflib
 import importlib
 import os
 import pathlib
 from types import SimpleNamespace
-from typing import Optional
+from typing import Optional, List
 
 import matplotlib
 import mne
@@ -18,20 +20,15 @@ def _import_config(
     config_path: Optional[PathLike],
     overrides: Optional[SimpleNamespace] = None,
     check: bool = True,
-    log: bool = False,
+    log: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
-    from . import _config
-    # Don't use _config itself as it's mutable -- make a new object
-    # with deepcopies of vals (keys are immutable strings so no need to copy)
-    ignore_keys = {'mne', 'np'}  # avoid modules
-    config = SimpleNamespace(
-        **{key: copy.deepcopy(val) for key, val in _config.__dict__.items()
-           if not (key.startswith('__') or key in ignore_keys)})
+    config = _get_default_config()
+    valid_names = [d for d in dir(config) if not d.startswith('_')]
 
     # Update with user config
-    _update_with_user_config(
+    user_names = _update_with_user_config(
         config=config,
         config_path=config_path,
         overrides=overrides,
@@ -40,6 +37,13 @@ def _import_config(
     # Check it
     if check:
         _check_config(config)
+        _check_misspellings(
+            config,
+            valid_names=valid_names,
+            user_names=user_names,
+            log=log,
+        )
+
     # Take some standard actions
     mne.set_log_level(verbose=config.mne_log_level.upper())
 
@@ -66,13 +70,31 @@ def _import_config(
     return config
 
 
+def _get_default_config():
+    from . import _config
+    # Don't use _config itself as it's mutable -- make a new object
+    # with deepcopies of vals (keys are immutable strings so no need to copy)
+    # except modules and imports
+    tree = ast.parse(pathlib.Path(_config.__file__).read_text())
+    ignore_keys = {
+        name.asname or name.name
+        for element in tree.body
+        if isinstance(element, (ast.Import, ast.ImportFrom))
+        for name in element.names
+    }
+    config = SimpleNamespace(
+        **{key: copy.deepcopy(val) for key, val in _config.__dict__.items()
+           if not (key.startswith('__') or key in ignore_keys)})
+    return config
+
+
 def _update_with_user_config(
     *,
     config: SimpleNamespace,  # modified in-place
     config_path: Optional[PathLike],
     overrides: Optional[SimpleNamespace],
     log: bool = False,
-) -> None:
+) -> List[str]:
     # 1. Basics and hidden vars
     from . import __version__
     config.PIPELINE_NAME = 'mne-bids-pipeline'
@@ -82,6 +104,7 @@ def _update_with_user_config(
     config._epochs_split_size = '2GB'
 
     # 2. User config
+    user_names = list()
     if config_path is not None:
         config_path = pathlib.Path(
             config_path).expanduser().resolve(strict=True)
@@ -93,6 +116,10 @@ def _update_with_user_config(
         spec.loader.exec_module(custom_cfg)
         for key in dir(custom_cfg):
             if not key.startswith('__'):
+                # don't validate private vars, but do add to config
+                # (e.g., so that our hidden _raw_split_size is included)
+                if not key.startswith('_'):
+                    user_names.append(key)
                 val = getattr(custom_cfg, key)
                 logger.debug('Overwriting: %s -> %s' % (key, val))
                 setattr(config, key, val)
@@ -149,6 +176,7 @@ def _update_with_user_config(
             )
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.parallel_backend = 'loky'
+    return user_names
 
 
 def _check_config(config: SimpleNamespace) -> None:
@@ -279,3 +307,39 @@ def _check_config(config: SimpleNamespace) -> None:
         ('raise', 'warn', 'ignore'))
 
     _validate_type(config.N_JOBS, int, 'N_JOBS')
+
+    _check_option(
+        'config.config_validation', config.config_validation,
+        ('raise', 'warn', 'ignore'))
+
+
+def _check_misspellings(
+    config: SimpleNamespace,
+    *,
+    valid_names: List[str],
+    user_names: List[str],
+    log: bool,
+) -> None:
+    # for each name in the user names, check if it's in the valid names but
+    # the correct one is not defined
+    valid_names = set(valid_names)
+    for user_name in user_names:
+        if user_name not in valid_names:
+            # find the closest match
+            closest_match = difflib.get_close_matches(
+                user_name, valid_names, n=1)
+            if closest_match and closest_match[0] not in user_names:
+                msg = (
+                    f'Found a variable named {repr(user_name)} in your custom '
+                    f'config, did you mean {repr(closest_match[0])}? '
+                    'If so, please correct the error. If not, please rename '
+                    'the variable to reduce ambiguity and avoid this message, '
+                    "or set config.config_validation to 'warn' or 'ignore'."
+                )
+                if config.config_validation == 'raise':
+                    raise ValueError(msg)
+                elif config.config_validation == 'warn':
+                    if log:
+                        logger.warning(
+                            **gen_log_kwargs(message=msg, step='', emoji='🛟')
+                        )

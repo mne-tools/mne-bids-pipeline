@@ -48,7 +48,11 @@ def _prepare_trans(cfg, bids_path):
     subject, session = bids_path.subject, bids_path.session
 
     # TODO: This breaks our encapsulation
-    config = _import_config(config_path=cfg.config_path, check=False)
+    config = _import_config(
+        config_path=cfg.config_path,
+        check=False,
+        log=False,
+    )
     if config.mri_t1_path_generator is None:
         t1_bids_path = None
     else:

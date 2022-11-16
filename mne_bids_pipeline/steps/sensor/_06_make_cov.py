@@ -84,6 +84,9 @@ def get_input_fnames_cov(
 
 
 def compute_cov_from_epochs(
+    *,
+    tmin: Optional[float],
+    tmax: Optional[float],
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
@@ -113,6 +116,7 @@ def compute_cov_from_epochs(
 
 
 def compute_cov_from_raw(
+    *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
@@ -135,6 +139,7 @@ def compute_cov_from_raw(
 
 
 def retrieve_custom_cov(
+    *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,

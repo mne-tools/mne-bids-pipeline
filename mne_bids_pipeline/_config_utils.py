@@ -260,8 +260,9 @@ def get_channels_to_analyze(
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
+    kwargs = dict(eog=True, ecg=True, exclude=())
     if get_datatype(config) == 'meg' and _meg_in_ch_types(config.ch_types):
-        pick_idx = mne.pick_types(info, eog=True, ecg=True, exclude=[])
+        pick_idx = mne.pick_types(info, **kwargs)
 
         if 'mag' in config.ch_types:
             pick_idx = np.concatenate(
@@ -270,8 +271,8 @@ def get_channels_to_analyze(
             pick_idx = np.concatenate(
                 [pick_idx, mne.pick_types(info, meg='grad', exclude=[])])
         if 'meg' in config.ch_types:
-            pick_idx = mne.pick_types(info, meg=True, eog=True, ecg=True,
-                                      exclude=[])
+            pick_idx = mne.pick_types(info, meg=True, exclude=[])
+        pick_idx.sort()
     elif config.ch_types == ['eeg']:
         pick_idx = mne.pick_types(info, meg=False, eeg=True, eog=True,
                                   ecg=True, exclude=[])

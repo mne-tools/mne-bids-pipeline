@@ -380,6 +380,7 @@ def average_full_epochs_decoding(
 def average_csp_decoding(
     cfg: SimpleNamespace,
     session: str,
+    subject: str,
     condition_1: str,
     condition_2: str,
 ):
@@ -622,7 +623,6 @@ def get_config(
     return cfg
 
 
-# pass 'average' subject for logging
 @failsafe_run()
 def run_group_average_sensor(
     *,
@@ -655,11 +655,12 @@ def run_group_average_sensor(
                 average_time_by_time_decoding(cfg, session)
         if cfg.decode and cfg.decoding_csp:
             parallel, run_func = parallel_func(
-                average_csp_decoding)
+                average_csp_decoding, exec_params=exec_params)
             parallel(
                 run_func(
                     cfg=cfg,
                     session=session,
+                    subject=subject,
                     condition_1=contrast[0],
                     condition_2=contrast[1]
                 )
@@ -670,6 +671,7 @@ def run_group_average_sensor(
         for session in sessions:
             run_report_average_sensor(
                 cfg=cfg,
+                exec_params=exec_params,
                 subject=subject,
                 session=session,
             )
@@ -677,7 +679,9 @@ def run_group_average_sensor(
 
 def main(*, config: SimpleNamespace) -> None:
     log = run_group_average_sensor(
-        cfg=get_config(config=config),
+        cfg=get_config(
+            config=config,
+        ),
         exec_params=config.exec_params,
         subject='average',
     )

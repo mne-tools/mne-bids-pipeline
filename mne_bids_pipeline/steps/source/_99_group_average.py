@@ -189,7 +189,9 @@ def main(*, config: SimpleNamespace) -> None:
         return
 
     log = run_group_average_source(
-        cfg=get_config(config=config),
+        cfg=get_config(
+            config=config,
+        ),
         exec_params=config.exec_params,
         subject='average',
     )

@@ -323,7 +323,10 @@ def main(*, config: SimpleNamespace) -> None:
     # so we don't dispatch manually to multiple jobs.
     logs = [
         run_time_decoding(
-            cfg=get_config(config=config),
+            cfg=get_config(
+                config=config,
+            ),
+            exec_params=config.exec_params,
             subject=subject,
             condition1=cond_1,
             condition2=cond_2,

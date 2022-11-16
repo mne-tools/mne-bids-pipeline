@@ -6,6 +6,7 @@ from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
 
+from ._config_utils import get_channels_to_analyze
 from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
@@ -212,6 +213,9 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     subject = bids_path.subject
     raw = read_raw_bids(bids_path=bids_path,
                         extra_params=cfg.reader_extra_params)
+
+    picks = get_channels_to_analyze(raw.info, cfg)
+    raw.pick(picks)
 
     _crop_data(cfg, raw=raw, subject=subject)
 

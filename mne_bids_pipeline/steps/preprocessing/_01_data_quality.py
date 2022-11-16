@@ -141,7 +141,6 @@ def _find_bads(
             bids_path_ref_in=None,
             bids_path_ref_bads_in=None,
             cfg=cfg,
-            datatype='meg',
         )
     else:
         data_is_rest = (key == 'raw_rest')

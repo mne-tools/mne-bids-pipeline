@@ -84,7 +84,13 @@ def get_input_fnames_cov(
 
 
 def compute_cov_from_epochs(
-        *, cfg, subject, session, tmin, tmax, in_files, out_files):
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+    out_files: dict,
+) -> mne.Covariance:
     epo_fname = in_files.pop('epochs')
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
@@ -106,7 +112,14 @@ def compute_cov_from_epochs(
     return cov
 
 
-def compute_cov_from_raw(*, cfg, subject, session, in_files, out_files):
+def compute_cov_from_raw(
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+    out_files: dict,
+) -> mne.Covariance:
     fname_raw = in_files.pop('raw')
     data_type = 'resting-state' if fname_raw.task == 'rest' else 'empty-room'
     msg = f'Computing regularized covariance based on {data_type} recording.'
@@ -126,9 +139,9 @@ def retrieve_custom_cov(
     exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    in_files: None,
+    in_files: dict,
     out_files: dict,
-):
+) -> mne.Covariance:
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
     config = _import_config(

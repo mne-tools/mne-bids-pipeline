@@ -398,6 +398,7 @@ def import_er_data(
     bids_path_ref_in: Optional[BIDSPath],
     bids_path_er_bads_in: Optional[BIDSPath],
     bids_path_ref_bads_in: Optional[BIDSPath],
+    prepare_maxwell_filter: bool,
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -446,7 +447,7 @@ def import_er_data(
         raw_ref.info._check_consistency()
     raw_ref.pick_types(meg=True, exclude=[])
 
-    if cfg.use_maxwell_filter:
+    if prepare_maxwell_filter:
         # We need to include any automatically found bad channels, if relevant.
         # TODO: This 'union' operation should affect the raw runs, too,
         # otherwise rank mismatches will still occur (eventually for some
@@ -502,6 +503,7 @@ def _get_raw_paths(
     run: Optional[str],
     kind: Literal['raw', 'sss'],
     add_bads: bool = True,
+    include_mf_ref: bool = True,
 ) -> dict:
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -541,6 +543,7 @@ def _get_raw_paths(
             in_files=in_files,
             key=key,
         )
+    orig_key = key
 
     if run == cfg.runs[0]:
         do = dict(
@@ -576,6 +579,20 @@ def _get_raw_paths(
                     in_files=in_files,
                     key=key,
                 )
+            if include_mf_ref and task == 'noise':
+                key = 'raw_ref_noise'
+                in_files[key] = in_files[orig_key].copy().update(
+                    run=cfg.mf_reference_run, check=True)
+                _update_for_splits(
+                    in_files, key, single=True, allow_missing=True)
+                if not in_files[key].fpath.exists():
+                    in_files.pop(key)
+                elif add_bads:
+                    _add_bads_file(
+                        cfg=cfg,
+                        in_files=in_files,
+                        key=key,
+                    )
 
     return in_files
 

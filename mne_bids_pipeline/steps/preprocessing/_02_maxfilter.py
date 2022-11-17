@@ -51,8 +51,7 @@ def get_input_fnames_maxwell_filter(
     )
     ref_bids_path = list(in_files.values())[0].copy().update(
         run=cfg.mf_reference_run,
-        extension='.fif',
-        check=True
+        check=True,
     )
     key = "raw_ref_run"
     in_files[key] = ref_bids_path
@@ -200,6 +199,7 @@ def run_maxwell_filter(
                 bids_path_ref_in=bids_path_ref_in,
                 bids_path_er_bads_in=bids_path_noise_bads,
                 bids_path_ref_bads_in=bids_path_ref_bads_in,
+                prepare_maxwell_filter=True,
             )
 
         # Maxwell-filter noise data.

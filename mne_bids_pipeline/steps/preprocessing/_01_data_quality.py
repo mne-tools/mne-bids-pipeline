@@ -10,7 +10,7 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_mf_cal_fname, get_mf_ctc_fname, get_subjects, get_sessions,
-    get_runs, get_task, get_datatype,
+    get_runs, get_task, get_datatype, get_mf_reference_run,
 )
 from ..._import_data import (
     _get_raw_paths, import_experimental_data, import_er_data,
@@ -57,18 +57,33 @@ def assess_data_quality(
     """Assess data quality and find and mark bad channels."""
     import matplotlib.pyplot as plt
     out_files = dict()
+    orig_run = run
     for key in list(in_files.keys()):
         bids_path_in = in_files.pop(key)
-        auto_scores = _find_bads(
-            cfg=cfg,
-            exec_params=exec_params,
-            bids_path_in=bids_path_in,
-            key=key,
-            subject=subject,
-            session=session,
-            run=run,
-            out_files=out_files,
-        )
+        if key == 'raw_noise':
+            run = 'noise'
+        elif key == 'raw_rest':
+            run = 'rest'
+        else:
+            run = orig_run
+        if cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg:
+            if key == 'raw_noise':
+                bids_path_ref_in = in_files.pop('raw_ref_noise')
+            else:
+                bids_path_ref_in = None
+            auto_scores = _find_bads_maxwell(
+                cfg=cfg,
+                exec_params=exec_params,
+                bids_path_in=bids_path_in,
+                bids_path_ref_in=bids_path_ref_in,
+                key=key,
+                subject=subject,
+                session=session,
+                run=run,
+                out_files=out_files,
+            )
+        else:
+            auto_scores = None
 
         # Report
         with _open_report(
@@ -85,7 +100,7 @@ def assess_data_quality(
                 cfg=cfg,
                 report=report,
                 bids_path_in=bids_path_in,
-                title=f'Raw ({kind})',
+                title=f'Raw ({kind} run {run})',
             )
             if cfg.find_noisy_channels_meg:
                 assert auto_scores is not None
@@ -109,20 +124,18 @@ def assess_data_quality(
     return out_files
 
 
-def _find_bads(
+def _find_bads_maxwell(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     bids_path_in: BIDSPath,
+    bids_path_ref_in: Optional[BIDSPath],
     subject: str,
     session: Optional[str],
     run: str,
     key: str,
     out_files: dict,
 ):
-    if not (cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg):
-        return None
-
     if (cfg.find_flat_channels_meg and
             not cfg.find_noisy_channels_meg):
         msg = 'Finding flat channels.'
@@ -130,17 +143,18 @@ def _find_bads(
             not cfg.find_flat_channels_meg):
         msg = 'Finding noisy channels using Maxwell filtering.'
     else:
-        msg = ('Finding flat channels, and noisy channels using '
+        msg = ('Finding flat channels and noisy channels using '
                'Maxwell filtering.')
     logger.info(**gen_log_kwargs(message=msg))
 
     if key == 'raw_noise':
         raw = import_er_data(
+            cfg=cfg,
             bids_path_er_in=bids_path_in,
             bids_path_er_bads_in=None,
-            bids_path_ref_in=None,
+            bids_path_ref_in=bids_path_ref_in,
             bids_path_ref_bads_in=None,
-            cfg=cfg,
+            prepare_maxwell_filter=True,
         )
     else:
         data_is_rest = (key == 'raw_rest')
@@ -241,19 +255,20 @@ def get_config(
     subject: str,
     session: Optional[str],
 ) -> SimpleNamespace:
+    extra_kwargs = dict()
     if config.find_noisy_channels_meg or config.find_flat_channels_meg:
-        mf_cal_fname = get_mf_cal_fname(
+        extra_kwargs['mf_cal_fname'] = get_mf_cal_fname(
                 config=config,
                 subject=subject,
                 session=session,
             )
-        mf_ctc_fname = get_mf_ctc_fname(
+        extra_kwargs['mf_ctc_fname'] = get_mf_ctc_fname(
             config=config,
             subject=subject,
             session=session,
         )
-    else:
-        mf_cal_fname = mf_ctc_fname = None
+        extra_kwargs['mf_reference_run'] = get_mf_reference_run(config=config)
+        extra_kwargs['mf_head_origin' ] = config.mf_head_origin
     cfg = SimpleNamespace(
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
@@ -267,9 +282,6 @@ def get_config(
         space=config.space,
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
-        mf_cal_fname=mf_cal_fname,
-        mf_ctc_fname=mf_ctc_fname,
-        mf_head_origin=config.mf_head_origin,
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,
         rename_events=config.rename_events,
@@ -290,6 +302,7 @@ def get_config(
         eog_channels=config.eog_channels,
         on_rename_missing_events=config.on_rename_missing_events,
         plot_psd_for_runs=config.plot_psd_for_runs,
+        **extra_kwargs,
     )
     return cfg
 
@@ -308,7 +321,7 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
-                run=run
+                run=run,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)

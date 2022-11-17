@@ -1127,12 +1127,13 @@ def _add_raw(
         bids_path_in.run in cfg.plot_psd_for_runs or
         bids_path_in.task in cfg.plot_psd_for_runs
     )
-    report.add_raw(
-        raw=bids_path_in,
-        title=title,
-        butterfly=5,
-        psd=plot_raw_psd,
-        tags=('raw', 'filtered', f'run-{bids_path_in.run}'),
-        # caption=bids_path_in.basename,  # TODO upstream
-        replace=True,
-    )
+    with mne.use_log_level('error'):
+        report.add_raw(
+            raw=bids_path_in,
+            title=title,
+            butterfly=5,
+            psd=plot_raw_psd,
+            tags=('raw', 'filtered', f'run-{bids_path_in.run}'),
+            # caption=bids_path_in.basename,  # TODO upstream
+            replace=True,
+        )

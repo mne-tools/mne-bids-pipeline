@@ -180,6 +180,7 @@ def filter_data(
                 bids_path_er_bads_in=bids_path_noise_bads,
                 # take bads from this run (0)
                 bids_path_ref_bads_in=bids_path_bads_in,
+                prepare_maxwell_filter=False,
             )
         else:
             raw_noise = import_experimental_data(

@@ -373,6 +373,7 @@ def average_full_epochs_decoding(
         del bootstrapped_means, se, ci_lower, ci_upper
 
         fname_out = fname_mat.copy().update(subject='average')
+        fname_out.parent.mkdir(exist_ok=True, parents=True)
         savemat(fname_out, contrast_score_stats)
         del contrast_score_stats, fname_out
 

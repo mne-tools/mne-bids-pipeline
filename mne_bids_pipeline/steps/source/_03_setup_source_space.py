@@ -34,7 +34,13 @@ def get_output_fnames_setup_source_space(*, cfg, subject):
     get_input_fnames=get_input_fnames_setup_source_space,
     get_output_fnames=get_output_fnames_setup_source_space,
 )
-def run_setup_source_space(*, cfg, subject, in_files):
+def run_setup_source_space(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    in_files: dict,
+) -> dict:
     msg = f'Creating source space with spacing {repr(cfg.spacing)}'
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
     src = mne.setup_source_space(

@@ -144,7 +144,7 @@ def filter_data(
         h_freq=cfg.h_freq, l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        data_type='experimental'
+        data_type='experimental',
     )
     resample(raw=raw, subject=subject, session=session, run=run,
              sfreq=cfg.resample_sfreq, data_type='experimental')
@@ -197,13 +197,13 @@ def filter_data(
 
         raw_noise.load_data()
         filter(
-            raw=raw_noise, subject=subject, session=session, run=None,
+            raw=raw_noise, subject=subject, session=session, run=task,
             h_freq=cfg.h_freq, l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth,
-            data_type=data_type
+            data_type=data_type,
         )
-        resample(raw=raw_noise, subject=subject, session=session, run=None,
+        resample(raw=raw_noise, subject=subject, session=session, run=task,
                  sfreq=cfg.resample_sfreq, data_type=data_type)
 
         raw_noise.save(

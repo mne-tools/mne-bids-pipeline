@@ -469,8 +469,6 @@ def _find_breaks_func(
     run: Optional[str],
 ) -> None:
     if not cfg.find_breaks:
-        msg = 'Finding breaks has been disabled by the user.'
-        logger.info(**gen_log_kwargs(message=msg))
         return
 
     msg = (f'Finding breaks with a minimum duration of '

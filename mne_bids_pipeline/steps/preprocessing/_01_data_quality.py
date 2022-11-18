@@ -6,6 +6,7 @@ from typing import Optional
 import pandas as pd
 
 import mne
+from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
@@ -31,6 +32,7 @@ def get_input_fnames_data_quality(
     run: str,
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
+    include_mf_ref = _do_mf_autobad(cfg=cfg)
     in_files = _get_raw_paths(
         cfg=cfg,
         subject=subject,
@@ -38,6 +40,7 @@ def get_input_fnames_data_quality(
         run=run,
         kind='orig',
         add_bads=False,
+        include_mf_ref=include_mf_ref,
     )
     return in_files
 
@@ -58,17 +61,19 @@ def assess_data_quality(
     import matplotlib.pyplot as plt
     out_files = dict()
     orig_run = run
-    for key in list(in_files.keys()):
+    # raw_ref_run will be .pop()ed inside this loop, do not include it
+    raw_keys = list(key for key in in_files.keys() if key != 'raw_ref_run')
+    for key in raw_keys:
         bids_path_in = in_files.pop(key)
         if key == 'raw_noise':
             run = 'noise'
         elif key == 'raw_rest':
             run = 'rest'
-        else:
+        else:  # raw_run-{run}
             run = orig_run
-        if cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg:
+        if _do_mf_autobad(cfg=cfg):
             if key == 'raw_noise':
-                bids_path_ref_in = in_files.pop('raw_ref_noise')
+                bids_path_ref_in = in_files.pop('raw_ref_run')
             else:
                 bids_path_ref_in = None
             auto_scores = _find_bads_maxwell(
@@ -94,7 +99,7 @@ def assess_data_quality(
                 run=run) as report:
             # Original data
             kind = 'original' if not cfg.proc else cfg.proc
-            msg = f'Adding {kind} raw data to report.'
+            msg = f'Adding {kind} raw data to report'
             logger.info(**gen_log_kwargs(message=msg))
             _add_raw(
                 cfg=cfg,
@@ -104,7 +109,7 @@ def assess_data_quality(
             )
             if cfg.find_noisy_channels_meg:
                 assert auto_scores is not None
-                msg = 'Adding noisy channel detection to report.'
+                msg = 'Adding noisy channel detection to report'
                 logger.info(**gen_log_kwargs(message=msg))
                 figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
                 captions = [f'Run {run}'] * len(figs)
@@ -194,8 +199,11 @@ def _find_bads_maxwell(
 
     if cfg.find_noisy_channels_meg:
         if auto_noisy_chs:
-            msg = (f'Found {len(auto_noisy_chs)} noisy channels: '
-                   f'{", ".join(auto_noisy_chs)}')
+            msg = (
+                f'Found {len(auto_noisy_chs)} noisy '
+                f'channel{_pl(auto_noisy_chs)}: '
+                f'{", ".join(auto_noisy_chs)}'
+            )
         else:
             msg = 'Found no noisy channels.'
 
@@ -213,10 +221,15 @@ def _find_bads_maxwell(
             cfg=cfg,
             bids_path_in=bids_path_in,
         )
+        if not out_files['auto_scores'].fpath.parent.exists():
+            out_files['auto_scores'].fpath.parent.mkdir(parents=True)
         _write_json(out_files['auto_scores'], auto_scores)
 
     # Write the bad channels to disk.
-    out_files['bads_tsv'] = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
+    out_files['bads_tsv'] = _bads_path(
+        cfg=cfg,
+        bids_path_in=bids_path_in,
+    )
     bads_for_tsv = []
     reasons = []
 
@@ -268,7 +281,7 @@ def get_config(
             session=session,
         )
         extra_kwargs['mf_reference_run'] = get_mf_reference_run(config=config)
-        extra_kwargs['mf_head_origin' ] = config.mf_head_origin
+        extra_kwargs['mf_head_origin'] = config.mf_head_origin
     cfg = SimpleNamespace(
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
@@ -329,3 +342,7 @@ def main(*, config: SimpleNamespace) -> None:
         )
 
     save_logs(config=config, logs=logs)
+
+
+def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
+    return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg

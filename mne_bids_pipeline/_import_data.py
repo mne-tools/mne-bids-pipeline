@@ -6,7 +6,6 @@ from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
 
-from ._config_utils import get_channels_to_analyze
 from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
@@ -213,9 +212,6 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     subject = bids_path.subject
     raw = read_raw_bids(bids_path=bids_path,
                         extra_params=cfg.reader_extra_params)
-
-    picks = get_channels_to_analyze(raw.info, cfg)
-    raw.pick(picks)
 
     _crop_data(cfg, raw=raw, subject=subject)
 
@@ -441,7 +437,7 @@ def import_er_data(
     if bids_path_ref_bads_in is not None:
         bads = _read_bads_tsv(
             cfg=cfg,
-            bids_path_in=bids_path_ref_bads_in,
+            bids_path_bads=bids_path_ref_bads_in,
         )
         raw_ref.info['bads'] = bads
         raw_ref.info._check_consistency()
@@ -580,9 +576,9 @@ def _get_raw_paths(
                     key=key,
                 )
             if include_mf_ref and task == 'noise':
-                key = 'raw_ref_noise'
+                key = 'raw_ref_run'
                 in_files[key] = in_files[orig_key].copy().update(
-                    run=cfg.mf_reference_run, check=True)
+                    run=cfg.mf_reference_run)
                 _update_for_splits(
                     in_files, key, single=True, allow_missing=True)
                 if not in_files[key].fpath.exists():
@@ -604,7 +600,10 @@ def _add_bads_file(
     key: str,
 ) -> None:
     bids_path_in = in_files[key]
-    bads_tsv_fname = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
+    bads_tsv_fname = _bads_path(
+        cfg=cfg,
+        bids_path_in=bids_path_in,
+        )
     if bads_tsv_fname.fpath.is_file():
         in_files[f'{key}-bads'] = bads_tsv_fname
 

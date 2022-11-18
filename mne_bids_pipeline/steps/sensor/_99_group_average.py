@@ -36,8 +36,8 @@ def average_evokeds(
     # Container for all conditions:
     all_evokeds = defaultdict(list)
 
-    for subject in cfg.subjects:
-        fname_in = BIDSPath(subject=subject,
+    for this_subject in cfg.subjects:
+        fname_in = BIDSPath(subject=this_subject,
                             session=session,
                             task=cfg.task,
                             acquisition=cfg.acq,
@@ -373,7 +373,8 @@ def average_full_epochs_decoding(
         del bootstrapped_means, se, ci_lower, ci_upper
 
         fname_out = fname_mat.copy().update(subject='average')
-        fname_out.parent.mkdir(exist_ok=True, parents=True)
+        if not fname_out.fpath.parent.exists():
+            os.makedirs(fname_out.fpath.parent)
         savemat(fname_out, contrast_score_stats)
         del contrast_score_stats, fname_out
 

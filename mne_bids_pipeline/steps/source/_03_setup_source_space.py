@@ -48,11 +48,10 @@ def run_setup_source_space(*, cfg, subject, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
         fs_subject=get_fs_subject(config=config, subject=subject),
@@ -61,7 +60,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run forward."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -82,7 +81,9 @@ def main(*, config) -> None:
             run_func(
                 cfg=get_config(
                     config=config,
-                    subject=subject),
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
             )
             for subject in subjects

@@ -181,6 +181,8 @@ def run_forward(
             exec_params=exec_params,
             subject=subject,
             session=session) as report:
+        msg = 'Adding forward information to report'
+        logger.info(**gen_log_kwargs(message=msg))
         msg = 'Rendering MRI slices with BEM contours.'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_bem(
@@ -192,7 +194,7 @@ def run_forward(
             replace=True,
             n_jobs=1,  # prevent automatic parallelization
         )
-        msg = 'Rendering sensor alignment (coregistration).'
+        msg = 'Rendering sensor alignment (coregistration)'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_trans(
             trans=trans,
@@ -203,7 +205,7 @@ def run_forward(
             alpha=1,
             replace=True,
         )
-        msg = 'Rendering forward solution.'
+        msg = 'Rendering forward solution'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_forward(
             forward=fwd,

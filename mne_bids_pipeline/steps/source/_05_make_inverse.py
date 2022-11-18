@@ -66,6 +66,8 @@ def run_inverse(
 ) -> dict:
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs
+    msg = 'Computing inverse solutions'
+    logger.info(**gen_log_kwargs(message=msg))
     fname_fwd = in_files.pop('forward')
     out_files = dict()
     out_files['inverse'] = fname_fwd.copy().update(suffix='inv')
@@ -124,6 +126,8 @@ def run_inverse(
                 exec_params=exec_params,
                 subject=subject,
                 session=session) as report:
+            msg = 'Adding inverse information to report'
+            logger.info(**gen_log_kwargs(message=msg))
             for condition in conditions:
                 cond_str = sanitize_cond_name(condition)
                 key = f'{cond_str}+{method}+hemi'
@@ -152,11 +156,10 @@ def run_inverse(
 
 def get_config(
     *,
-    config,
-    subject,
+    config: SimpleNamespace,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -179,7 +182,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run inv."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -191,7 +194,11 @@ def main(*, config) -> None:
             run_inverse, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

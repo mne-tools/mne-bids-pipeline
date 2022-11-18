@@ -69,7 +69,13 @@ def _open_report(
             try:
                 msg = 'Adding config and sys info to report'
                 logger.info(**gen_log_kwargs(message=msg))
-                _finalize(report=report, exec_params=exec_params)
+                _finalize(
+                    report=report,
+                    exec_params=exec_params,
+                    subject=subject,
+                    session=session,
+                    run=run,
+                )
             except Exception:
                 pass
             fname_report_html = fname_report.with_suffix('.html')
@@ -467,7 +473,14 @@ def add_event_counts(*,
             report.add_custom_css(css=css)
 
 
-def _finalize(*, report: mne.Report, exec_params: SimpleNamespace):
+def _finalize(
+    *,
+    report: mne.Report,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+) -> None:
     """Add system information and the pipeline configuration to the report."""
     # ensure they are always appended
     titles = ['Configuration file', 'System information']

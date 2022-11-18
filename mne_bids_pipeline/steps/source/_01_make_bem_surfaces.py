@@ -96,11 +96,10 @@ def make_bem_surfaces(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config=config),
         bem_mri_images=config.bem_mri_images,
@@ -111,7 +110,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run BEM surface extraction."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'

@@ -48,6 +48,7 @@ def get_input_fnames_frequency_filter(
         session=session,
         run=run,
         kind=kind,
+        include_mf_ref=False,
     )
 
 
@@ -222,8 +223,9 @@ def filter_data(
             cfg=cfg,
             exec_params=exec_params,
             subject=subject,
-            session=session) as report:
-        msg = 'Adding filtered raw data to report.'
+            session=session,
+            run=run) as report:
+        msg = 'Adding filtered raw data to report'
         logger.info(**gen_log_kwargs(message=msg))
         for fname in out_files.values():
             _add_raw(

@@ -164,7 +164,8 @@ def run_maxwell_filter(
             cfg=cfg,
             exec_params=exec_params,
             subject=subject,
-            session=session) as report:
+            session=session,
+            run=run) as report:
         msg = 'Adding Maxwell filtered raw data to report.'
         _add_raw(
             cfg=cfg,
@@ -197,7 +198,11 @@ def run_maxwell_filter(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
                 bids_path_ref_in=bids_path_ref_in,
-                bids_path_er_bads_in=bids_path_noise_bads,
+                # TODO: This can break processing, need to use union for all,
+                # otherwise can get for ds003392:
+                # "Reference run data rank does not match empty-room data rank"
+                # bids_path_er_bads_in=bids_path_noise_bads,
+                bids_path_er_bads_in=None,
                 bids_path_ref_bads_in=bids_path_ref_bads_in,
                 prepare_maxwell_filter=True,
             )
@@ -257,18 +262,18 @@ def run_maxwell_filter(
         _update_for_splits(out_files, in_key)
         del raw_noise_sss
 
-    with _open_report(
-            cfg=cfg,
-            exec_params=exec_params,
-            subject=subject,
-            session=session) as report:
-        msg = 'Adding Maxwell filtered raw data to report.'
-        logger.info(**gen_log_kwargs(message=msg))
-        for fname in out_files.values():
+        with _open_report(
+                cfg=cfg,
+                exec_params=exec_params,
+                subject=subject,
+                session=session,
+                run=task) as report:
+            msg = 'Adding Maxwell filtered raw data to report'
+            logger.info(**gen_log_kwargs(message=msg, run=task))
             _add_raw(
                 cfg=cfg,
                 report=report,
-                bids_path_in=fname,
+                bids_path_in=out_files[in_key],
                 title='Raw (maxwell filtered)',
             )
 

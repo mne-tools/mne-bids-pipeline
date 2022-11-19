@@ -21,7 +21,11 @@ from ..._report import _open_report
 from ..._run import failsafe_run, save_logs
 
 
-def _prepare_trans_template(cfg, info):
+def _prepare_trans_template(
+    *,
+    cfg: SimpleNamespace,
+    info: mne.Info,
+) -> mne.transforms.Transform:
     assert isinstance(cfg.use_template_mri, str)
     assert cfg.use_template_mri == cfg.fs_subject
 
@@ -47,7 +51,7 @@ def _prepare_trans(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     bids_path: BIDSPath,
-):
+) -> mne.transforms.Transform:
     # Generate a head ↔ MRI transformation matrix from the
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
@@ -157,7 +161,10 @@ def run_forward(
 
     # trans
     if cfg.use_template_mri is not None:
-        trans = _prepare_trans_template(cfg, exec_params)
+        trans = _prepare_trans_template(
+            cfg=cfg,
+            info=info,
+        )
     else:
         trans = _prepare_trans(
             cfg=cfg,

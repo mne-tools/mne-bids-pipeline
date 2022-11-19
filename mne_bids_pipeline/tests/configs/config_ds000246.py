@@ -10,7 +10,7 @@ bids_root = '~/mne_data/ds000246'
 deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds000246'
 
 runs = ['01']
-crop_runs = (0, 180)  # Reduce memory usage on CI system
+crop_runs = (0, 120)  # Reduce memory usage on CI system
 l_freq = 0.3
 h_freq = 100
 decim = 4
@@ -23,6 +23,7 @@ decode = True
 decoding_time_generalization = True
 decoding_time_generalization_decim = 4
 on_error = 'abort'
+plot_psd_for_runs = []  # too much memory on CIs
 
 parallel_backend = 'dask'
 dask_worker_memory_limit = '2G'

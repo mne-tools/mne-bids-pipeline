@@ -111,14 +111,13 @@ def prepare_epochs_and_y(
     return epochs_filt, y
 
 
-def get_input_fnames_csp(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    # TODO: Somehow remove this?
-    del kwargs['contrast']
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_csp(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    contrast: Tuple[str],
+) -> dict:
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -141,12 +140,13 @@ def get_input_fnames_csp(**kwargs):
 )
 def one_subject_decoding(
     *,
-    cfg,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: str,
     contrast: Tuple[str, str],
     in_files: Dict[str, BIDSPath]
-) -> None:
+) -> dict:
     """Run one subject.
 
     There are two steps in this function:
@@ -369,7 +369,11 @@ def one_subject_decoding(
     out_files = {'csp-excel': fname_results}
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         msg = 'Adding CSP decoding results to the report.'
         logger.info(**gen_log_kwargs(message=msg))
         section = 'Decoding: CSP'
@@ -511,12 +515,11 @@ def one_subject_decoding(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
     session: Optional[str]
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         # Data parameters
         datatype=get_datatype(config),
         deriv_root=config.deriv_root,
@@ -537,12 +540,11 @@ def get_config(
         decoding_contrasts=get_decoding_contrasts(config),
         n_boot=config.n_boot,
         random_state=config.random_state,
-        interactive=config.interactive
     )
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run all subjects decoding in parallel."""
     if not config.contrasts or not config.decoding_csp:
         if not config.contrasts:
@@ -564,6 +566,7 @@ def main(*, config) -> None:
                     subject=subject,
                     session=session
                 ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
                 contrast=contrast,

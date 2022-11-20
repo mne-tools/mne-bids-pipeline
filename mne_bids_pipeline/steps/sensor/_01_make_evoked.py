@@ -1,6 +1,7 @@
 """Extract evoked data for each condition."""
 
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -15,12 +16,12 @@ from ..._report import _open_report, _sanitize_cond_tag
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
-def get_input_fnames_evoked(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_evoked(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     fname_epochs = BIDSPath(subject=subject,
                             session=session,
                             task=cfg.task,
@@ -42,7 +43,14 @@ def get_input_fnames_evoked(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_evoked,
 )
-def run_evoked(*, cfg, subject, session, in_files):
+def run_evoked(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     out_files = dict()
     out_files['evoked'] = in_files['epochs'].copy().update(
         suffix='ave', processing=None, check=False)
@@ -93,7 +101,11 @@ def run_evoked(*, cfg, subject, session, in_files):
     logger.info(
         **gen_log_kwargs(message=msg)
     )
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
 
@@ -114,7 +126,7 @@ def run_evoked(*, cfg, subject, session, in_files):
             )
 
     # Interaction
-    if cfg.interactive:
+    if exec_params.interactive:
         for evoked in evokeds:
             evoked.plot()
 
@@ -132,10 +144,9 @@ def run_evoked(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -144,7 +155,6 @@ def get_config(
         deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_all_contrasts(config),
-        interactive=config.interactive,
         proc=config.proc,
         noise_cov=_sanitize_callable(config.noise_cov),
         analyze_channels=config.analyze_channels,
@@ -154,7 +164,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run evoked."""
     if config.task_is_rest:
         msg = '    … skipping: for resting-state task.'
@@ -166,7 +176,10 @@ def main(*, config) -> None:
             run_evoked, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(
+                    config=config,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

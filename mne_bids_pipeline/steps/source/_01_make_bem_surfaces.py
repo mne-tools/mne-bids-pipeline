@@ -16,7 +16,7 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs
 
 
-def _get_bem_params(cfg):
+def _get_bem_params(cfg: SimpleNamespace):
     mri_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / 'mri'
     flash_dir = mri_dir / 'flash' / 'parameter_maps'
     if cfg.bem_mri_images == 'FLASH' and not flash_dir.exists():
@@ -30,7 +30,11 @@ def _get_bem_params(cfg):
     return mri_images, mri_dir, flash_dir
 
 
-def get_input_fnames_make_bem_surfaces(*, cfg, subject):
+def get_input_fnames_make_bem_surfaces(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+) -> dict:
     in_files = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
     in_files['t1'] = mri_dir / 'T1.mgz'
@@ -42,7 +46,11 @@ def get_input_fnames_make_bem_surfaces(*, cfg, subject):
     return in_files
 
 
-def get_output_fnames_make_bem_surfaces(*, cfg, subject):
+def get_output_fnames_make_bem_surfaces(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+) -> dict:
     out_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
     n_layers = len(conductivity)
@@ -56,7 +64,13 @@ def get_output_fnames_make_bem_surfaces(*, cfg, subject):
     get_input_fnames=get_input_fnames_make_bem_surfaces,
     get_output_fnames=get_output_fnames_make_bem_surfaces,
 )
-def make_bem_surfaces(*, cfg, subject, in_files):
+def make_bem_surfaces(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    in_files: dict,
+) -> dict:
     mri_images, _, _ = _get_bem_params(cfg)
     in_files.clear()  # assume we use everything we add
     if mri_images == 'FLASH':
@@ -67,7 +81,7 @@ def make_bem_surfaces(*, cfg, subject, in_files):
                'watershed algorithm')
         bem_func = mne.bem.make_watershed_bem
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
-    show = True if cfg.interactive else False
+    show = True if exec_params.interactive else False
     bem_func(
         subject=cfg.fs_subject,
         subjects_dir=cfg.fs_subjects_dir,
@@ -82,15 +96,13 @@ def make_bem_surfaces(*, cfg, subject, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config=config),
         bem_mri_images=config.bem_mri_images,
-        interactive=config.interactive,
         freesurfer_verbose=config.freesurfer_verbose,
         use_template_mri=config.use_template_mri,
         ch_types=config.ch_types,
@@ -98,7 +110,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run BEM surface extraction."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -122,6 +134,7 @@ def main(*, config) -> None:
                     config=config,
                     subject=subject,
                 ),
+                exec_params=config.exec_params,
                 subject=subject,
                 force_run=config.recreate_bem)
             for subject in get_subjects(config)

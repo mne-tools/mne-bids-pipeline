@@ -205,6 +205,9 @@ authors:
 - Make report generation happen within relevant steps instead of at the end
   of all steps
   ({{ gh(652) }} by {{ authors.larsoner }})
+- Initial raw data plots are now added to reports and bad channel detection
+  is executed in a dedicated step
+  ({{ gh(666) }} by {{ authors.larsoner }})
 
 ### Behavior changes
 

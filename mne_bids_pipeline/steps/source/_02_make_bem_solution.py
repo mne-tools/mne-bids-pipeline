@@ -15,7 +15,11 @@ from ..._parallel import parallel_func, get_parallel_backend
 from ..._run import failsafe_run, save_logs
 
 
-def get_input_fnames_make_bem_solution(*, cfg, subject):
+def get_input_fnames_make_bem_solution(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+) -> dict:
     in_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
     n_layers = len(conductivity)
@@ -25,7 +29,11 @@ def get_input_fnames_make_bem_solution(*, cfg, subject):
     return in_files
 
 
-def get_output_fnames_make_bem_solution(*, cfg, subject):
+def get_output_fnames_make_bem_solution(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+) -> dict:
     out_files = dict()
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / 'bem'
     _, tag = _get_bem_conductivity(cfg)
@@ -38,7 +46,13 @@ def get_output_fnames_make_bem_solution(*, cfg, subject):
     get_input_fnames=get_input_fnames_make_bem_solution,
     get_output_fnames=get_output_fnames_make_bem_solution,
 )
-def make_bem_solution(*, cfg, subject, in_files):
+def make_bem_solution(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    in_files: dict,
+) -> dict:
     msg = 'Calculating BEM solution'
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
     conductivity, _ = _get_bem_conductivity(cfg)
@@ -54,11 +68,10 @@ def make_bem_solution(*, cfg, subject, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
         ch_types=config.ch_types,
@@ -89,6 +102,7 @@ def main(*, config) -> None:
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject),
+                exec_params=config.exec_params,
                 subject=subject,
                 force_run=config.recreate_bem)
             for subject in get_subjects(config)

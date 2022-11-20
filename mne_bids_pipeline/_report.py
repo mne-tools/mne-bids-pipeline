@@ -19,13 +19,13 @@ from ._config_utils import (
     sanitize_cond_name, get_subjects, _restrict_analyze_channels)
 from ._decoding import _handle_csp_args
 from ._logging import logger, gen_log_kwargs
-from ._viz import plot_auto_scores
 
 
 @contextlib.contextmanager
 def _open_report(
     *,
     cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
     run: Optional[str] = None,
@@ -69,7 +69,13 @@ def _open_report(
             try:
                 msg = 'Adding config and sys info to report'
                 logger.info(**gen_log_kwargs(message=msg))
-                _finalize(report=report, cfg=cfg)
+                _finalize(
+                    report=report,
+                    exec_params=exec_params,
+                    subject=subject,
+                    session=session,
+                    run=run,
+                )
             except Exception:
                 pass
             fname_report_html = fname_report.with_suffix('.html')
@@ -79,43 +85,6 @@ def _open_report(
             report.save(
                 fname_report_html, overwrite=True,
                 open_browser=False)
-
-
-def plot_auto_scores_(cfg, subject, session):
-    """Plot automated bad channel detection scores.
-    """
-    import json_tricks
-    fname_scores = BIDSPath(subject=subject,
-                            session=session,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            run=None,
-                            processing=cfg.proc,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix='scores',
-                            extension='.json',
-                            datatype=cfg.datatype,
-                            root=cfg.deriv_root,
-                            check=False)
-
-    all_figs = []
-    all_captions = []
-    for run in cfg.runs:
-        fname_scores.update(run=run)
-        auto_scores = json_tricks.loads(
-            fname_scores.fpath.read_text(encoding='utf-8-sig')
-        )
-
-        figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
-        all_figs.extend(figs)
-
-        # Could be more than 1 fig, e.g. "grad" and "mag"
-        captions = [f'Run {run}'] * len(figs)
-        all_captions.extend(captions)
-
-    assert all_figs
-    return all_figs, all_captions
 
 
 # def plot_full_epochs_decoding_scores(
@@ -504,7 +473,14 @@ def add_event_counts(*,
             report.add_custom_css(css=css)
 
 
-def _finalize(*, report: mne.Report, cfg: SimpleNamespace):
+def _finalize(
+    *,
+    report: mne.Report,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+) -> None:
     """Add system information and the pipeline configuration to the report."""
     # ensure they are always appended
     titles = ['Configuration file', 'System information']
@@ -512,7 +488,7 @@ def _finalize(*, report: mne.Report, cfg: SimpleNamespace):
         report.remove(title=title, remove_all=True)
     # No longer need replace=True in these
     report.add_code(
-        code=cfg.config_path,
+        code=exec_params.config_path,
         title=titles[0],
         tags=('configuration',),
     )
@@ -539,8 +515,13 @@ def _all_conditions(*, cfg):
     return conditions
 
 
-def run_report_average_sensor(*, cfg, session: str) -> None:
-    subject = 'average'
+def run_report_average_sensor(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> None:
     msg = 'Generating grand average report …'
     logger.info(**gen_log_kwargs(message=msg))
     assert matplotlib.get_backend() == 'agg', matplotlib.get_backend()
@@ -571,7 +552,11 @@ def run_report_average_sensor(*, cfg, session: str) -> None:
         _restrict_analyze_channels(evoked, cfg)
 
     conditions = _all_conditions(cfg=cfg)
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
 
         #######################################################################
         #
@@ -625,12 +610,17 @@ def run_report_average_sensor(*, cfg, session: str) -> None:
             )
 
 
-def run_report_average_source(*, cfg, session: str) -> None:
+def run_report_average_source(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> None:
     #######################################################################
     #
     # Visualize forward solution, inverse operator, and inverse solutions.
     #
-    subject = 'average'
     evoked_fname = BIDSPath(
         subject=subject,
         session=session,
@@ -651,7 +641,11 @@ def run_report_average_source(*, cfg, session: str) -> None:
     hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
     morph_str = 'morph2fsaverage'
     conditions = _all_conditions(cfg=cfg)
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         for condition, evoked in zip(conditions, evokeds):
             tags = (
                 'source-estimate',
@@ -1128,3 +1122,31 @@ def _agg_backend():
         yield
     finally:
         matplotlib.use(backend, force=True)
+
+
+def _add_raw(
+    *,
+    cfg: SimpleNamespace,
+    report: mne.report.Report,
+    bids_path_in: BIDSPath,
+    title: str,
+):
+    if bids_path_in.run is not None:
+        title += f', run {bids_path_in.run}'
+    elif bids_path_in.task in ('noise', 'rest'):
+        title += f', run {bids_path_in.task}'
+    plot_raw_psd = (
+        cfg.plot_psd_for_runs == 'all' or
+        bids_path_in.run in cfg.plot_psd_for_runs or
+        bids_path_in.task in cfg.plot_psd_for_runs
+    )
+    with mne.use_log_level('error'):
+        report.add_raw(
+            raw=bids_path_in,
+            title=title,
+            butterfly=5,
+            psd=plot_raw_psd,
+            tags=('raw', 'filtered', f'run-{bids_path_in.run}'),
+            # caption=bids_path_in.basename,  # TODO upstream
+            replace=True,
+        )

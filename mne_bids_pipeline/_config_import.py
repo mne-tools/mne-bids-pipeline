@@ -34,6 +34,7 @@ def _import_config(
         overrides=overrides,
         log=log,
     )
+
     # Check it
     if check:
         _check_config(config)
@@ -59,9 +60,9 @@ def _import_config(
         # Caching
         'memory_location', 'memory_verbose', 'memory_file_method',
         # Misc
-        'deriv_root',
+        'deriv_root', 'config_path',
     )
-    in_both = {'deriv_root', 'interactive'}
+    in_both = {'deriv_root'}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
     for k in keys:
         if k not in in_both:

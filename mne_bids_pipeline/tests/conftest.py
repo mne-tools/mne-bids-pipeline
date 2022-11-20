@@ -24,6 +24,7 @@ def pytest_configure(config):
     always::ResourceWarning
     ignore:subprocess .* is still running:ResourceWarning
     ignore:`np.MachAr` is deprecated.*:DeprecationWarning
+    ignore:The get_cmap function will be deprecated.*:
     """
     for warning_line in warning_lines.split('\n'):
         warning_line = warning_line.strip()

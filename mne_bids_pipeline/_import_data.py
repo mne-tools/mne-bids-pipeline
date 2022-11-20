@@ -1,16 +1,14 @@
-import copy
 from types import SimpleNamespace
 from typing import Dict, Optional, Iterable, Union, List, Literal
 
 import mne
-from mne_bids import BIDSPath, read_raw_bids
+from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
 
-from ._config_utils import get_channels_to_analyze, get_task
-from ._io import _write_json
+from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
-from ._viz import plot_auto_scores
+from ._run import _update_for_splits
 from .typing import PathLike
 
 
@@ -205,129 +203,6 @@ def _rename_events_func(
     raw.annotations.description = descriptions
 
 
-def _find_bad_channels(
-    cfg: SimpleNamespace,
-    raw: mne.io.BaseRaw,
-    subject: str,
-    session: Optional[str],
-    task: Optional[str],
-    run: Optional[str],
-) -> None:
-    """Find and mark bad MEG channels.
-
-    Modifies ``raw`` in-place.
-    """
-    if not (cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg):
-        return
-
-    if (cfg.find_flat_channels_meg and
-            not cfg.find_noisy_channels_meg):
-        msg = 'Finding flat channels.'
-    elif (cfg.find_noisy_channels_meg and
-            not cfg.find_flat_channels_meg):
-        msg = 'Finding noisy channels using Maxwell filtering.'
-    else:
-        msg = ('Finding flat channels, and noisy channels using '
-               'Maxwell filtering.')
-
-    logger.info(**gen_log_kwargs(message=msg))
-
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=task,
-                         run=run,
-                         acquisition=cfg.acq,
-                         processing=cfg.proc,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         suffix=cfg.datatype,
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root)
-
-    # Filter the data manually before passing it to find_bad_channels_maxwell()
-    # This reduces memory usage, as we can control the number of jobs used
-    # during filtering.
-    raw_filt = raw.copy().filter(l_freq=None, h_freq=40, n_jobs=1)
-
-    auto_noisy_chs, auto_flat_chs, auto_scores = \
-        mne.preprocessing.find_bad_channels_maxwell(
-            raw=raw_filt,
-            calibration=cfg.mf_cal_fname,
-            cross_talk=cfg.mf_ctc_fname,
-            origin=cfg.mf_head_origin,
-            coord_frame='head',
-            return_scores=True,
-            h_freq=None  # we filtered manually above
-        )
-    del raw_filt
-
-    preexisting_bads = raw.info['bads'].copy()
-    bads = preexisting_bads.copy()
-
-    if cfg.find_flat_channels_meg:
-        if auto_flat_chs:
-            msg = (f'Found {len(auto_flat_chs)} flat channels: '
-                   f'{", ".join(auto_flat_chs)}')
-        else:
-            msg = 'Found no flat channels.'
-        logger.info(**gen_log_kwargs(message=msg))
-        bads.extend(auto_flat_chs)
-
-    if cfg.find_noisy_channels_meg:
-        if auto_noisy_chs:
-            msg = (f'Found {len(auto_noisy_chs)} noisy channels: '
-                   f'{", ".join(auto_noisy_chs)}')
-        else:
-            msg = 'Found no noisy channels.'
-
-        logger.info(**gen_log_kwargs(message=msg))
-        bads.extend(auto_noisy_chs)
-
-    bads = sorted(set(bads))
-    raw.info['bads'] = bads
-    msg = f'Marked {len(raw.info["bads"])} channels as bad.'
-    logger.info(**gen_log_kwargs(message=msg))
-
-    if cfg.find_noisy_channels_meg:
-        auto_scores_fname = bids_path.copy().update(
-            suffix='scores', extension='.json', check=False)
-        # TODO: This should be in our list of output files!
-        _write_json(auto_scores_fname, auto_scores)
-
-        if cfg.interactive:
-            import matplotlib.pyplot as plt
-            plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
-            plt.show()
-
-    # Write the bad channels to disk.
-    # TODO: This should also be in our list of output files
-    bads_tsv_fname = bids_path.copy().update(suffix='bads',
-                                             extension='.tsv',
-                                             check=False)
-    bads_for_tsv = []
-    reasons = []
-
-    if cfg.find_flat_channels_meg:
-        bads_for_tsv.extend(auto_flat_chs)
-        reasons.extend(['auto-flat'] * len(auto_flat_chs))
-        preexisting_bads = set(preexisting_bads) - set(auto_flat_chs)
-
-    if cfg.find_noisy_channels_meg:
-        bads_for_tsv.extend(auto_noisy_chs)
-        reasons.extend(['auto-noisy'] * len(auto_noisy_chs))
-        preexisting_bads = set(preexisting_bads) - set(auto_noisy_chs)
-
-    preexisting_bads = list(preexisting_bads)
-    if preexisting_bads:
-        bads_for_tsv.extend(preexisting_bads)
-        reasons.extend(['pre-existing (before MNE-BIDS-pipeline was run)'] *
-                       len(preexisting_bads))
-
-    tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
-    tsv_data = tsv_data.sort_values(by='name')
-    tsv_data.to_csv(bads_tsv_fname, sep='\t', index=False)
-
-
 def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
@@ -337,12 +212,6 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     subject = bids_path.subject
     raw = read_raw_bids(bids_path=bids_path,
                         extra_params=cfg.reader_extra_params)
-
-    # Save only the channel types we wish to analyze (including the
-    # channels marked as "bad").
-    if not cfg.use_maxwell_filter:
-        picks = get_channels_to_analyze(raw.info, cfg)
-        raw.pick(picks)
 
     _crop_data(cfg, raw=raw, subject=subject)
 
@@ -465,6 +334,8 @@ def import_experimental_data(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
+    bids_path_bads_in: Optional[BIDSPath],
+    data_is_rest: Optional[bool],
 ) -> mne.io.BaseRaw:
     """Run the data import.
 
@@ -474,6 +345,11 @@ def import_experimental_data(
         The local configuration.
     bids_path_in
         The BIDS path to the data to import.
+    bids_path_bads_in
+        The BIDS path to the bad channels file.
+    data_is_rest : bool | None
+        Whether the data is resting state data. If ``None``, ``cfg.task``
+        is checked.
 
     Returns
     -------
@@ -493,13 +369,20 @@ def import_experimental_data(
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session,
                       run=run)
-    if cfg.task != "rest":
+    if data_is_rest is None:
+        data_is_rest = (cfg.task == 'rest') or cfg.task_is_rest
+    if not data_is_rest:
         _rename_events_func(
             cfg=cfg, raw=raw, subject=subject, session=session, run=run
         )
         _fix_stim_artifact_func(cfg=cfg, raw=raw)
-    _find_bad_channels(cfg=cfg, raw=raw, subject=subject, session=session,
-                       task=get_task(cfg), run=run)
+
+    if bids_path_bads_in is not None:
+        bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
+        msg = f'Marking {len(bads)} channels as bad.'
+        logger.info(**gen_log_kwargs(message=msg))
+        raw.info['bads'] = bads
+        raw.info._check_consistency()
 
     return raw
 
@@ -508,7 +391,10 @@ def import_er_data(
     *,
     cfg: SimpleNamespace,
     bids_path_er_in: BIDSPath,
-    bids_path_ref_in: BIDSPath,
+    bids_path_ref_in: Optional[BIDSPath],
+    bids_path_er_bads_in: Optional[BIDSPath],
+    bids_path_ref_bads_in: Optional[BIDSPath],
+    prepare_maxwell_filter: bool,
 ) -> mne.io.BaseRaw:
     """Import empty-room data.
 
@@ -520,6 +406,10 @@ def import_er_data(
         The BIDS path to the empty room data.
     bids_path_ref_in
         The BIDS path to the reference data.
+    bids_path_er_bads_in
+        The BIDS path to the empty room bad channels file.
+    bids_path_ref_bads_in
+        The BIDS path to the reference data bad channels file.
 
     Returns
     -------
@@ -530,72 +420,44 @@ def import_er_data(
     session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject='emptyroom', session=session)
-
-    # Only keep MEG channels.
+    if bids_path_er_bads_in is not None:
+        raw_er.info['bads'] = _read_bads_tsv(
+            cfg=cfg,
+            bids_path_bads=bids_path_er_bads_in,
+        )
     raw_er.pick_types(meg=True, exclude=[])
 
-    # TODO: This 'union' operation should affect the raw runs, too, otherwise
-    # rank mismatches will still occur (eventually for some configs).
-    # But at least using the union here should reduce them.
-    # TODO: We should also uso automatic bad finding on the empty room data
+    # Don't deal with ref for now (initial data quality / auto bad step)
+    if bids_path_ref_in is None:
+        return raw_er
+
+    # Load reference run plus its auto-bads
     raw_ref = read_raw_bids(bids_path_ref_in,
                             extra_params=cfg.reader_extra_params)
-    if cfg.use_maxwell_filter:
+    if bids_path_ref_bads_in is not None:
+        bads = _read_bads_tsv(
+            cfg=cfg,
+            bids_path_bads=bids_path_ref_bads_in,
+        )
+        raw_ref.info['bads'] = bads
+        raw_ref.info._check_consistency()
+    raw_ref.pick_types(meg=True, exclude=[])
+
+    if prepare_maxwell_filter:
         # We need to include any automatically found bad channels, if relevant.
-        # TODO this is a bit of a hack because we don't use "in_files" access
-        # here, but this is *in the same step where this file is generated*
-        # so we cannot / should not put it in `in_files`.
-        if cfg.find_flat_channels_meg or cfg.find_noisy_channels_meg:
-            # match filename from _find_bad_channels
-            bads_tsv_fname = bids_path_ref_in.copy().update(
-                suffix='bads', extension='.tsv', root=cfg.deriv_root,
-                check=False)
-            bads_tsv = pd.read_csv(bads_tsv_fname.fpath, sep='\t', header=0)
-            bads_tsv = bads_tsv[bads_tsv.columns[0]].tolist()
-            raw_ref.info['bads'] = sorted(
-                set(raw_ref.info['bads']) | set(bads_tsv))
-            raw_ref.info._check_consistency()
+        # TODO: This 'union' operation should affect the raw runs, too,
+        # otherwise rank mismatches will still occur (eventually for some
+        # configs). But at least using the union here should reduce them.
         raw_er = mne.preprocessing.maxwell_filter_prepare_emptyroom(
             raw_er=raw_er,
             raw=raw_ref,
             bads='union',
         )
     else:
-        # Set same set of bads as in the reference run, but only for MEG
-        # channels (we might not have non-MEG channels in empty-room
-        # recordings).
-        raw_er.info['bads'] = [ch for ch in raw_ref.info['bads']
-                               if ch.startswith('MEG')]
+        # Take bads from the reference run
+        raw_er.info['bads'] = raw_ref.info['bads']
 
     return raw_er
-
-
-def import_rest_data(
-    *,
-    cfg: SimpleNamespace,
-    bids_path_in: BIDSPath,
-) -> mne.io.BaseRaw:
-    """Import resting-state data for use as a noise source.
-
-    Parameters
-    ----------
-    cfg
-        The local configuration.
-    bids_path_in : BIDSPath
-        The path.
-
-    Returns
-    -------
-    raw_rest
-        The imported data.
-    """
-    cfg = copy.deepcopy(cfg)
-    cfg.task = 'rest'
-
-    raw_rest = import_experimental_data(
-        cfg=cfg, bids_path_in=bids_path_in,
-    )
-    return raw_rest
 
 
 def _find_breaks_func(
@@ -607,8 +469,6 @@ def _find_breaks_func(
     run: Optional[str],
 ) -> None:
     if not cfg.find_breaks:
-        msg = 'Finding breaks has been disabled by the user.'
-        logger.info(**gen_log_kwargs(message=msg))
         return
 
     msg = (f'Finding breaks with a minimum duration of '
@@ -627,3 +487,157 @@ def _find_breaks_func(
     logger.info(**gen_log_kwargs(message=msg))
 
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
+
+
+def _get_raw_paths(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+    kind: Literal['raw', 'sss'],
+    add_bads: bool = True,
+    include_mf_ref: bool = True,
+) -> dict:
+    # Construct the basenames of the files we wish to load, and of the empty-
+    # room recording we wish to save.
+    # The basenames of the empty-room recording output file does not contain
+    # the "run" entity.
+    path_kwargs = dict(
+        subject=subject,
+        run=run,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        check=False
+    )
+    if kind == 'sss':
+        path_kwargs['root'] = cfg.deriv_root
+        path_kwargs['suffix'] = 'raw'
+        path_kwargs['extension'] = '.fif'
+        path_kwargs['processing'] = 'sss'
+    else:
+        assert kind == 'orig', kind
+        path_kwargs['root'] = cfg.bids_root
+        path_kwargs['suffix'] = None
+        path_kwargs['extension'] = None
+        path_kwargs['processing'] = cfg.proc
+    bids_path_in = BIDSPath(**path_kwargs)
+
+    in_files = dict()
+    key = f'raw_run-{run}'
+    in_files[key] = bids_path_in
+    _update_for_splits(in_files, key, single=True)
+    if add_bads:
+        _add_bads_file(
+            cfg=cfg,
+            in_files=in_files,
+            key=key,
+        )
+    orig_key = key
+
+    if run == cfg.runs[0]:
+        do = dict(
+            rest=cfg.process_rest and not cfg.task_is_rest,
+            noise=cfg.process_empty_room and cfg.datatype == 'meg',
+        )
+        for task in ('rest', 'noise'):
+            if not do[task]:
+                continue
+            key = f'raw_{task}'
+            if kind == 'sss':
+                raw_fname = bids_path_in.copy().update(
+                    run=None, task=task)
+            else:
+                if task == 'rest':
+                    raw_fname = bids_path_in.copy().update(
+                        run=None, task=task)
+                else:
+                    raw_fname = _read_json(
+                        _empty_room_match_path(bids_path_in, cfg))['fname']
+                    if raw_fname is not None:
+                        raw_fname = get_bids_path_from_fname(raw_fname)
+            if raw_fname is None:
+                continue
+            in_files[key] = raw_fname
+            _update_for_splits(
+                in_files, key, single=True, allow_missing=True)
+            if not in_files[key].fpath.exists():
+                in_files.pop(key)
+            elif add_bads:
+                _add_bads_file(
+                    cfg=cfg,
+                    in_files=in_files,
+                    key=key,
+                )
+            if include_mf_ref and task == 'noise':
+                key = 'raw_ref_run'
+                in_files[key] = in_files[orig_key].copy().update(
+                    run=cfg.mf_reference_run)
+                _update_for_splits(
+                    in_files, key, single=True, allow_missing=True)
+                if not in_files[key].fpath.exists():
+                    in_files.pop(key)
+                elif add_bads:
+                    _add_bads_file(
+                        cfg=cfg,
+                        in_files=in_files,
+                        key=key,
+                    )
+
+    return in_files
+
+
+def _add_bads_file(
+    *,
+    cfg: SimpleNamespace,
+    in_files: dict,
+    key: str,
+) -> None:
+    bids_path_in = in_files[key]
+    bads_tsv_fname = _bads_path(
+        cfg=cfg,
+        bids_path_in=bids_path_in,
+        )
+    if bads_tsv_fname.fpath.is_file():
+        in_files[f'{key}-bads'] = bads_tsv_fname
+
+
+def _auto_scores_path(
+    *,
+    cfg: SimpleNamespace,
+    bids_path_in: BIDSPath,
+) -> BIDSPath:
+    return bids_path_in.copy().update(
+        suffix='scores',
+        extension='.json',
+        root=cfg.deriv_root,
+        split=None,
+        check=False,
+    )
+
+
+def _bads_path(
+    *,
+    cfg: SimpleNamespace,
+    bids_path_in: BIDSPath,
+) -> BIDSPath:
+    return bids_path_in.copy().update(
+        suffix='bads',
+        extension='.tsv',
+        root=cfg.deriv_root,
+        split=None,
+        check=False,
+    )
+
+
+def _read_bads_tsv(
+    *,
+    cfg: SimpleNamespace,
+    bids_path_bads: BIDSPath,
+) -> List[str]:
+    bads_tsv = pd.read_csv(bids_path_bads.fpath, sep='\t', header=0)
+    return bads_tsv[bads_tsv.columns[0]].tolist()

@@ -4,6 +4,7 @@ Source estimates are morphed to the ``fsaverage`` brain.
 """
 
 from types import SimpleNamespace
+from typing import Optional, List
 
 import numpy as np
 
@@ -16,6 +17,7 @@ from ..._config_utils import (
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import run_report_average_source
 from ..._run import failsafe_run, save_logs
 
 
@@ -67,8 +69,13 @@ def morph_stc(cfg, subject, fs_subject, session=None):
     return morphed_stcs
 
 
-def run_average(cfg, session, mean_morphed_stcs):
-    subject = 'average'
+def run_average(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    mean_morphed_stcs: List[mne.SourceEstimate],
+):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -100,10 +107,9 @@ def run_average(cfg, session, mean_morphed_stcs):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         task_is_rest=config.task_is_rest,
         datatype=get_datatype(config),
@@ -125,23 +131,25 @@ def get_config(
         use_template_mri=config.use_template_mri,
         all_contrasts=get_all_contrasts(config),
         report_stc_n_time_points=config.report_stc_n_time_points,
-        # TODO: This deviates in the same way as the sensor group avg script
-        exec_params_inner=config.exec_params,
-        interactive=config.interactive,
     )
     return cfg
 
 
 # pass 'average' subject for logging
 @failsafe_run()
-def run_group_average_source(*, cfg, subject='average'):
+def run_group_average_source(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+) -> None:
     """Run group average in source space"""
 
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(cfg))
 
-    with get_parallel_backend(cfg.exec_params_inner):
+    with get_parallel_backend(exec_params):
         parallel, run_func = parallel_func(
-            morph_stc, exec_params=cfg.exec_params_inner)
+            morph_stc, exec_params=exec_params)
         all_morphed_stcs = parallel(
             run_func(
                 cfg=cfg, subject=subject,
@@ -163,15 +171,28 @@ def run_group_average_source(*, cfg, subject='average'):
         run_average(
             cfg=cfg,
             session=session,
+            subject=subject,
             mean_morphed_stcs=mean_morphed_stcs
+        )
+        run_report_average_source(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session,
         )
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
         logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
         return
 
-    log = run_group_average_source(cfg=get_config(config=config))
+    log = run_group_average_source(
+        cfg=get_config(
+            config=config,
+        ),
+        exec_params=config.exec_params,
+        subject='average',
+    )
     save_logs(config=config, logs=[log])

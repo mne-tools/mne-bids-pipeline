@@ -4,6 +4,7 @@ Calculate forward solution for M/EEG channels.
 """
 
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne.coreg import Coregistration
@@ -20,7 +21,11 @@ from ..._report import _open_report
 from ..._run import failsafe_run, save_logs
 
 
-def _prepare_trans_template(cfg, info):
+def _prepare_trans_template(
+    *,
+    cfg: SimpleNamespace,
+    info: mne.Info,
+) -> mne.transforms.Transform:
     assert isinstance(cfg.use_template_mri, str)
     assert cfg.use_template_mri == cfg.fs_subject
 
@@ -41,7 +46,12 @@ def _prepare_trans_template(cfg, info):
     return trans
 
 
-def _prepare_trans(cfg, bids_path):
+def _prepare_trans(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    bids_path: BIDSPath,
+) -> mne.transforms.Transform:
     # Generate a head ↔ MRI transformation matrix from the
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
@@ -49,7 +59,7 @@ def _prepare_trans(cfg, bids_path):
 
     # TODO: This breaks our encapsulation
     config = _import_config(
-        config_path=cfg.config_path,
+        config_path=exec_params.config_path,
         check=False,
         log=False,
     )
@@ -111,7 +121,14 @@ def get_input_fnames_forward(*, cfg, subject, session):
 @failsafe_run(
     get_input_fnames=get_input_fnames_forward,
 )
-def run_forward(*, cfg, subject, session, in_files):
+def run_forward(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -144,9 +161,16 @@ def run_forward(*, cfg, subject, session, in_files):
 
     # trans
     if cfg.use_template_mri is not None:
-        trans = _prepare_trans_template(cfg, info)
+        trans = _prepare_trans_template(
+            cfg=cfg,
+            info=info,
+        )
     else:
-        trans = _prepare_trans(cfg, bids_path)
+        trans = _prepare_trans(
+            cfg=cfg,
+            exec_params=exec_params,
+            bids_path=bids_path,
+        )
 
     msg = 'Calculating forward solution'
     logger.info(**gen_log_kwargs(message=msg))
@@ -159,7 +183,13 @@ def run_forward(*, cfg, subject, session, in_files):
     mne.write_forward_solution(out_files['forward'], fwd, overwrite=True)
 
     # Report
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
+        msg = 'Adding forward information to report'
+        logger.info(**gen_log_kwargs(message=msg))
         msg = 'Rendering MRI slices with BEM contours.'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_bem(
@@ -171,7 +201,7 @@ def run_forward(*, cfg, subject, session, in_files):
             replace=True,
             n_jobs=1,  # prevent automatic parallelization
         )
-        msg = 'Rendering sensor alignment (coregistration).'
+        msg = 'Rendering sensor alignment (coregistration)'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_trans(
             trans=trans,
@@ -182,7 +212,7 @@ def run_forward(*, cfg, subject, session, in_files):
             alpha=1,
             replace=True,
         )
-        msg = 'Rendering forward solution.'
+        msg = 'Rendering forward solution'
         logger.info(**gen_log_kwargs(message=msg))
         report.add_forward(
             forward=fwd,
@@ -198,11 +228,10 @@ def run_forward(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         runs=get_runs(config=config, subject=subject),
         datatype=get_datatype(config),
@@ -219,12 +248,11 @@ def get_config(
         fs_subjects_dir=get_fs_subjects_dir(config),
         deriv_root=config.deriv_root,
         bids_root=config.bids_root,
-        config_path=config.config_path,
     )
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run forward."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -239,6 +267,7 @@ def main(*, config) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

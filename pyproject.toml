@@ -23,7 +23,7 @@ dependencies = [
     "joblib >= 0.14",
     "threadpoolctl",
     "dask[distributed]",
-    "bokeh",  # for distributed dashboard
+    "bokeh < 3",  # for distributed dashboard
     "jupyter-server-proxy",  # to have dask and jupyter working together
     "scikit-learn",
     "pandas",

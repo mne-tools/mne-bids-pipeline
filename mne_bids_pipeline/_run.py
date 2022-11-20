@@ -31,8 +31,7 @@ def failsafe_run(
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
         def wrapper(*args, **kwargs):
-            exec_params = kwargs['cfg'].exec_params
-            delattr(kwargs['cfg'], 'exec_params')
+            exec_params = kwargs['exec_params']
             on_error = exec_params.on_error
             memory = ConditionalStepMemory(
                 exec_params=exec_params,
@@ -134,6 +133,8 @@ class ConditionalStepMemory:
                 use_location, verbose=exec_params.memory_verbose)
         else:
             self.memory = None
+        # Ignore these as they have no effect on the output
+        self.ignore = ['exec_params']
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
         self.memory_file_method = exec_params.memory_file_method
@@ -143,10 +144,15 @@ class ConditionalStepMemory:
         def wrapper(*args, **kwargs):
             in_files = out_files = None
             force_run = kwargs.pop('force_run', False)
+            these_kwargs = kwargs.copy()
+            these_kwargs.pop('exec_params', None)
             if self.get_output_fnames is not None:
-                out_files = self.get_output_fnames(**kwargs)
+                out_files = self.get_output_fnames(
+                    **these_kwargs)
             if self.get_input_fnames is not None:
-                in_files = kwargs['in_files'] = self.get_input_fnames(**kwargs)
+                in_files = kwargs['in_files'] = self.get_input_fnames(
+                    **these_kwargs)
+            del these_kwargs
             if self.memory is None:
                 func(*args, **kwargs)
                 return
@@ -200,13 +206,17 @@ class ConditionalStepMemory:
             # Someday we could modify the joblib API to combine this with the
             # call (https://github.com/joblib/joblib/issues/1342), but our hash
             # should be plenty fast so let's not bother for now.
-            memorized_func = self.memory.cache(func)
+            memorized_func = self.memory.cache(func, ignore=self.ignore)
             msg = emoji = None
             short_circuit = False
             subject = kwargs.get('subject', None)
             session = kwargs.get('session', None)
             run = kwargs.get('run', None)
-            if memorized_func.check_call_in_cache(*args, **kwargs):
+            try:
+                done = memorized_func.check_call_in_cache(*args, **kwargs)
+            except Exception:
+                done = False
+            if done:
                 if unknown_inputs:
                     msg = ('Computation forced because input files cannot '
                            f'be determined ({unknown_inputs}) …')

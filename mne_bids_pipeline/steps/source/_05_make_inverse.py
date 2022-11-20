@@ -5,6 +5,7 @@ Compute and apply an inverse solution for each evoked data set.
 
 import pathlib
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
@@ -21,7 +22,12 @@ from ..._report import _open_report, _sanitize_cond_tag
 from ..._run import failsafe_run, save_logs, _sanitize_callable
 
 
-def get_input_fnames_inverse(*, cfg, subject, session):
+def get_input_fnames_inverse(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+):
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -50,9 +56,18 @@ def get_input_fnames_inverse(*, cfg, subject, session):
 @failsafe_run(
     get_input_fnames=get_input_fnames_inverse,
 )
-def run_inverse(*, cfg, subject, session, in_files):
+def run_inverse(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create
     # MEG, EEG, and MEG+EEG inverses and STCs
+    msg = 'Computing inverse solutions'
+    logger.info(**gen_log_kwargs(message=msg))
     fname_fwd = in_files.pop('forward')
     out_files = dict()
     out_files['inverse'] = fname_fwd.copy().update(suffix='inv')
@@ -106,7 +121,13 @@ def run_inverse(*, cfg, subject, session, in_files):
             stc.save(out_files[key], overwrite=True)
             out_files[key] = pathlib.Path(str(out_files[key]) + '-lh.stc')
 
-        with _open_report(cfg=cfg, subject=subject, session=session) as report:
+        with _open_report(
+                cfg=cfg,
+                exec_params=exec_params,
+                subject=subject,
+                session=session) as report:
+            msg = 'Adding inverse information to report'
+            logger.info(**gen_log_kwargs(message=msg))
             for condition in conditions:
                 cond_str = sanitize_cond_name(condition)
                 key = f'{cond_str}+{method}+hemi'
@@ -135,11 +156,10 @@ def run_inverse(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
-    subject,
+    config: SimpleNamespace,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -162,7 +182,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run inv."""
     if not config.run_source_estimation:
         msg = 'Skipping, run_source_estimation is set to False …'
@@ -174,7 +194,11 @@ def main(*, config) -> None:
             run_inverse, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

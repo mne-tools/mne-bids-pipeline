@@ -9,6 +9,7 @@ corrected by the ICA or the SSP processing.
 """
 
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -23,12 +24,12 @@ from ..._report import _open_report
 from ..._run import failsafe_run, _update_for_splits, save_logs
 
 
-def get_input_fnames_drop_ptp(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_drop_ptp(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     bids_path = BIDSPath(subject=subject,
                          session=session,
                          task=cfg.task,
@@ -50,7 +51,14 @@ def get_input_fnames_drop_ptp(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_drop_ptp,
 )
-def drop_ptp(*, cfg, subject, session, in_files):
+def drop_ptp(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     out_files = dict()
     out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')
     msg = f'Input:  {in_files["epochs"].basename}'
@@ -125,7 +133,11 @@ def drop_ptp(*, cfg, subject, session, in_files):
         psd = True
     else:
         psd = 30
-    with _open_report(cfg=cfg, subject=subject, session=session) as report:
+    with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session) as report:
         report.add_epochs(
             epochs=epochs,
             title='Epochs: after cleaning',
@@ -138,10 +150,9 @@ def drop_ptp(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
@@ -160,7 +171,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
     parallel, run_func = parallel_func(
         drop_ptp, exec_params=config.exec_params)
@@ -168,7 +179,10 @@ def main(*, config) -> None:
     with get_parallel_backend(config.exec_params):
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(
+                    config=config,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session)
             for subject in get_subjects(config)

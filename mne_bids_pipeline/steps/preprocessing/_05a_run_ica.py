@@ -212,12 +212,12 @@ def detect_bad_components(
     return inds, scores
 
 
-def get_input_fnames_run_ica(**kwargs):
-    cfg = kwargs.pop('cfg')
-    subject = kwargs.pop('subject')
-    session = kwargs.pop('session')
-    assert len(kwargs) == 0, kwargs.keys()
-    del kwargs
+def get_input_fnames_run_ica(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
     bids_basename = BIDSPath(subject=subject,
                              session=session,
                              task=cfg.task,
@@ -239,7 +239,14 @@ def get_input_fnames_run_ica(**kwargs):
 @failsafe_run(
     get_input_fnames=get_input_fnames_run_ica,
 )
-def run_ica(*, cfg, subject, session, in_files):
+def run_ica(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
     """Run ICA."""
     raw_fnames = [in_files.pop(f'raw_run-{run}') for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(
@@ -488,7 +495,10 @@ def run_ica(*, cfg, subject, session, in_files):
     logger.info(**gen_log_kwargs(message=msg))
 
     report.save(
-        out_files['report'], overwrite=True, open_browser=cfg.interactive)
+        out_files['report'],
+        overwrite=True,
+        open_browser=exec_params.interactive,
+    )
 
     assert len(in_files) == 0, in_files.keys()
     return out_files
@@ -496,12 +506,11 @@ def run_ica(*, cfg, subject, session, in_files):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: Optional[str] = None,
     session: Optional[str] = None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         conditions=config.conditions,
         task=get_task(config),
         task_is_rest=config.task_is_rest,
@@ -511,7 +520,6 @@ def get_config(
         rec=config.rec,
         space=config.space,
         deriv_root=config.deriv_root,
-        interactive=config.interactive,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
@@ -541,7 +549,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run ICA."""
     if config.spatial_filter != 'ica':
         msg = 'Skipping …'
@@ -556,6 +564,7 @@ def main(*, config) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

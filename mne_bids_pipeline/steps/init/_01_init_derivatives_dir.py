@@ -44,7 +44,8 @@ def init_dataset(cfg) -> None:
 @failsafe_run()
 def init_subject_dirs(
     *,
-    cfg,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
 ) -> None:
@@ -63,7 +64,6 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         datatype=get_datatype(config),
         deriv_root=config.deriv_root,
         PIPELINE_NAME=config.PIPELINE_NAME,
@@ -81,7 +81,10 @@ def main(*, config):
     for subject in get_subjects(config):
         for session in get_sessions(config):
             init_subject_dirs(
-                cfg=get_config(config=config),
+                cfg=get_config(
+                    config=config,
+                ),
+                exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )

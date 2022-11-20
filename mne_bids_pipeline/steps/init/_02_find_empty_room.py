@@ -56,11 +56,12 @@ def get_input_fnames_find_empty_room(
 )
 def find_empty_room(
     *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
     run: Optional[str],
     in_files: Dict[str, BIDSPath],
-    cfg: SimpleNamespace
 ) -> Dict[str, BIDSPath]:
     raw_path = in_files.pop(f'raw_run-{run}')
     in_files.pop('sidecar', None)
@@ -98,7 +99,6 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        exec_params=config.exec_params,
         proc=config.proc,
         task=get_task(config),
         datatype=get_datatype(config),
@@ -130,7 +130,10 @@ def main(*, config) -> None:
         else:
             run = get_runs(config=config, subject=subject)[0]
         logs.append(find_empty_room(
-            cfg=get_config(config=config),
+            cfg=get_config(
+                config=config,
+            ),
+            exec_params=config.exec_params,
             subject=subject,
             session=get_sessions(config)[0],
             run=run,

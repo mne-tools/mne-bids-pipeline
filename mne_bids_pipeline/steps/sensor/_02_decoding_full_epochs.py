@@ -83,7 +83,7 @@ def run_epochs_decoding(
 
     epochs = mne.read_epochs(in_files.pop('epochs'))
     _restrict_analyze_channels(epochs, cfg)
-    epochs.crop(cfg.decode_epochs_tmin, cfg.decode_epochs_tmax)
+    epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
 
     # We define the epochs and the labels
     if isinstance(cfg.conditions, dict):
@@ -228,8 +228,8 @@ def get_config(
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
-        decode_epochs_tmin=config.decode_epochs_tmin,
-        decode_epochs_tmax=config.decode_epochs_tmax,
+        decoding_epochs_tmin=config.decoding_epochs_tmin,
+        decoding_epochs_tmax=config.decoding_epochs_tmax,
         decoding_n_splits=config.decoding_n_splits,
         random_state=config.random_state,
         analyze_channels=config.analyze_channels,

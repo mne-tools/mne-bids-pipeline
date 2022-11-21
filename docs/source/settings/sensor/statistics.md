@@ -1,8 +1,8 @@
 ::: mne_bids_pipeline._config.contrasts
 ::: mne_bids_pipeline._config.report_evoked_n_time_points
 ::: mne_bids_pipeline._config.decode
-::: mne_bids_pipeline._config.decode_epochs_tmin
-::: mne_bids_pipeline._config.decode_epochs_tmax
+::: mne_bids_pipeline._config.decoding_epochs_tmin
+::: mne_bids_pipeline._config.decoding_epochs_tmax
 ::: mne_bids_pipeline._config.decoding_metric
 ::: mne_bids_pipeline._config.decoding_n_splits
 ::: mne_bids_pipeline._config.decoding_time_generalization

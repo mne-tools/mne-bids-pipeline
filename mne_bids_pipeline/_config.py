@@ -1325,13 +1325,13 @@ on entire epochs ("full-epochs decoding"), and separately on each time point
 conditions.
 """
 
-decode_epochs_tmin: Optional[float] = 0.
+decoding_epochs_tmin: Optional[float] = 0.
 """
 The first time sample to use for full epochs decoding. By default it starts
 at 0. If None, it starts at the beginning of the epoch.
 """
 
-decode_epochs_tmax: Optional[float] = None
+decoding_epochs_tmax: Optional[float] = None
 """
 The last time sample to use for full epochs decoding. By default it is set
 to None so it ends at the end of the epoch.

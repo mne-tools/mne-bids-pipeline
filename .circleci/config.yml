@@ -45,7 +45,8 @@ jobs:
           name: Get Python running
           command: |
             pip install --upgrade --progress-bar off pip setuptools
-            pip install -ve .[tests,dev]
+            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main"
+            pip install -ve .[tests]
             pip install PyQt6
       - run:
           name: Check Qt

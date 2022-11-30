@@ -43,11 +43,6 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = [
-    "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master",
-    "mne[hdf5] @ https://api.github.com/repos/mne-tools/mne-python/zipball/main",
-    "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main",
-]
 tests = [
     "pytest",
     "pytest-cov",

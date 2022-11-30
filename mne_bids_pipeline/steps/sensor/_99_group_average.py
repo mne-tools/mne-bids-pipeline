@@ -596,7 +596,7 @@ def get_config(
         proc=config.proc,
         deriv_root=config.deriv_root,
         conditions=config.conditions,
-        contrasts=config.contrasts,
+        contrasts=get_all_contrasts(config),
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,

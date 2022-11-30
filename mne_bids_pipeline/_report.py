@@ -547,11 +547,16 @@ def run_report_average_sensor(
     if cfg.task is not None:
         title += f', task-{cfg.task}'
 
-    evokeds = mne.read_evokeds(evoked_fname)
-    for evoked in evokeds:
+    all_evokeds = mne.read_evokeds(evoked_fname)
+    for evoked in all_evokeds:
         _restrict_analyze_channels(evoked, cfg)
-
     conditions = _all_conditions(cfg=cfg)
+    assert len(conditions) == len(all_evokeds)
+    all_evokeds = {
+        cond: evoked
+        for cond, evoked in zip(conditions, all_evokeds)
+    }
+
     with _open_report(
             cfg=cfg,
             exec_params=exec_params,
@@ -573,16 +578,13 @@ def run_report_average_sensor(
         #
         # Visualize evoked responses.
         #
-        for condition, evoked in zip(conditions, evokeds):
+        for condition, evoked in all_evokeds.items():
+            tags = ('evoked', _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f'Average: {condition}'
-                tags = (
-                    'evoked',
-                    _sanitize_cond_tag(condition)
-                )
+                title = f'Condition: {condition}'
             else:  # It's a contrast of two conditions.
-                # XXX Will change once we process contrasts here too
-                continue
+                title = f'Contrast: {condition}'
+                tags = tags + ('contrast',)
 
             report.add_evokeds(
                 evokeds=evoked,

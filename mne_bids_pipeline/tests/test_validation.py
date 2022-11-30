@@ -21,6 +21,9 @@ def test_validation(tmp_path, caplog):
     with pytest.raises(ValueError, match='name of your conditions'):
         _import_config(config_path=config_path)
     bad_text += "conditions = ['foo']\n"
+    config_path.write_text(bad_text)
+    _import_config(config_path=config_path)  # working
+    working_text = bad_text
     # misspelled sessions
     bad_text += "session = ['foo']\n"
     config_path.write_text(bad_text)
@@ -38,3 +41,12 @@ def test_validation(tmp_path, caplog):
     config_path.write_text(bad_text)
     _import_config(config_path=config_path)
     assert len(caplog.record_tuples) == 1  # no new message
+    # old values
+    bad_text = working_text
+    bad_text += "debug = True\n"
+    config_path.write_text(bad_text)
+    with pytest.raises(ValueError, match='Found a variable.*use on_error=.*'):
+        _import_config(config_path=config_path)
+    bad_text += "on_error = 'debug' if debug else 'raise'\n"
+    config_path.write_text(bad_text)
+    _import_config(config_path=config_path)  # this is okay

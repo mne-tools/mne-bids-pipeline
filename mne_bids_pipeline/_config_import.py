@@ -38,7 +38,7 @@ def _import_config(
     # Check it
     if check:
         _check_config(config)
-        _check_misspellings(
+        _check_misspellings_removals(
             config,
             valid_names=valid_names,
             user_names=user_names,
@@ -314,7 +314,15 @@ def _check_config(config: SimpleNamespace) -> None:
         ('raise', 'warn', 'ignore'))
 
 
-def _check_misspellings(
+_REMOVED_NAMES = {
+    'debug': dict(
+        new_name='on_error',
+        instead='use on_error="debug" instead'
+    ),
+}
+
+
+def _check_misspellings_removals(
     config: SimpleNamespace,
     *,
     valid_names: List[str],
@@ -329,18 +337,38 @@ def _check_misspellings(
             # find the closest match
             closest_match = difflib.get_close_matches(
                 user_name, valid_names, n=1)
+            msg = (
+                f'Found a variable named {repr(user_name)} in your custom '
+                'config,'
+            )
             if closest_match and closest_match[0] not in user_names:
-                msg = (
-                    f'Found a variable named {repr(user_name)} in your custom '
-                    f'config, did you mean {repr(closest_match[0])}? '
+                this_msg = (
+                    f'{msg} did you mean {repr(closest_match[0])}? '
                     'If so, please correct the error. If not, please rename '
                     'the variable to reduce ambiguity and avoid this message, '
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
-                if config.config_validation == 'raise':
-                    raise ValueError(msg)
-                elif config.config_validation == 'warn':
-                    if log:
-                        logger.warning(
-                            **gen_log_kwargs(message=msg, step='', emoji='🛟')
-                        )
+                _handle_config_error(this_msg, log, config)
+            if user_name in _REMOVED_NAMES:
+                new = _REMOVED_NAMES[user_name]['new_name']
+                if new not in user_names:
+                    this_msg = (
+                        f'{msg} this variable has been removed as a valid '
+                        'config option, '
+                        f'{_REMOVED_NAMES[user_name]["instead"]}.'
+                    )
+                    _handle_config_error(this_msg, log, config)
+
+
+def _handle_config_error(
+    msg: str,
+    log: bool,
+    config: SimpleNamespace,
+) -> None:
+    if config.config_validation == 'raise':
+        raise ValueError(msg)
+    elif config.config_validation == 'warn':
+        if log:
+            logger.warning(
+                **gen_log_kwargs(message=msg, step='', emoji='🛟')
+            )

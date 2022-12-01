@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/base:current-22.04
+    - image: cimg/base:2022.10-22.04
 
 _git: &git
   name: Configure git

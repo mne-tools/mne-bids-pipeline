@@ -1,4 +1,6 @@
-#!/bin/bash -e -o pipefail
+#!/bin/bash -e
+
+set -o pipefail
 
 # skip job if not in a [circle full] or on main
 export COMMIT_MESSAGE=$(git log --format=oneline -n 1);

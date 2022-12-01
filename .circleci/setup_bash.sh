@@ -65,9 +65,9 @@ echo "export RUN_TESTS=\"pytest mne_bids_pipeline --junit-xml=test-results/junit
 echo "export DOWNLOAD_DATA=\"python -m mne_bids_pipeline._download\"" >> $BASH_ENV
 
 # Similar CircleCI setup to mne-python (Xvfb, venv, minimal commands, env vars)
+sudo apt update --allow-insecure-repositories
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
 bash setup_xvfb.sh
-sudo apt update --allow-insecure-repositories
 sudo apt install -qq tcsh git-annex-standalone python3.10-venv python3-venv libxft2
 python3.10 -m venv ~/python_env
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh

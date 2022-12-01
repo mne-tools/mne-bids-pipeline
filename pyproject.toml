@@ -52,6 +52,7 @@ tests = [
     "mkdocs-material",
     "mkdocs-material-extensions",
     "mkdocs-macros-plugin",
+    "mkdocs-include-markdown-plugin",
     "mkdocstrings-python",
     "jinja2",
     "black",  # function signature formatting

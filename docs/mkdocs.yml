@@ -15,11 +15,16 @@ theme:
         - navigation.tabs
         - navigation.instant  # Load pages via XMLHttpRequest (XHR)
         - navigation.tracking
+    palette:
+        primary: white
 extra:
     social:
         - icon: fontawesome/brands/github
           link: https://github.com/mne-tools/mne-bids-pipeline
           name: GitHub repository
+        - icon: fontawesome/brands/mastodon
+          link: https://fosstodon.org/@mne
+          name: MNE news on Mastodon
         - icon: fontawesome/brands/twitter
           link: https://twitter.com/mne_news
           name: MNE news on Twitter
@@ -84,11 +89,12 @@ nav:
 plugins:
     - search
     - macros
+    - include-markdown
     - mkdocstrings:
         default_handler: python
         handlers:
             python:
-                rendering:
+                options:
                     show_source: true
                     show_if_no_docstring: false
                     show_root_heading: true
@@ -96,7 +102,6 @@ plugins:
                     separate_signature: true
                     line_length: 80  # needed for long param entries
                     show_bases: false
-                selection:
                     docstring_style: numpy
         watch:
             - .

@@ -50,6 +50,7 @@ if [[
     ]]; then
         echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
         circleci-agent step halt
+        exit 0
 # Otherwise, run everything
 elif [[ -v CIRCLE_PULL_REQUEST ]]; then
     echo "Running job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}"

@@ -296,8 +296,9 @@ authors:
 - Environment variables are no longer used to control execution and variables,
   use command-line switches instead
   ({{ gh(663) }} by {{ authors.larsoner}} )
-- Misspellings are now checked in config
-- ({{ gh(665) }} by {{ authors.larsoner }} )
+- Config validation of likely misspellings and (some) outdated variables
+  are now checked
+  ({{ gh(665) }}, {{ gh(670) }} by {{ authors.larsoner }} )
 
 ### Code health
 

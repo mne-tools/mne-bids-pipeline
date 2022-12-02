@@ -1,4 +1,6 @@
 import contextlib
+from functools import lru_cache
+from io import StringIO
 import os.path as op
 from pathlib import Path
 from typing import Optional, List, Literal
@@ -492,9 +494,10 @@ def _finalize(
         title=titles[0],
         tags=('configuration',),
     )
-    report.add_sys_info(
-        title=titles[1],
-    )
+    # We don't use report.add_sys_info so we can use our own cached version
+    tags = ('mne-sysinfo',)
+    info = _cached_sys_info()
+    report.add_code(code=info, title=titles[1], language='shell', tags=tags)
     # Make our code sections take 50% of screen height
     css = """
 div.accordion-body pre.my-0 code {
@@ -504,6 +507,15 @@ div.accordion-body pre.my-0 code {
 """
     if css not in report.include:
         report.add_custom_css(css=css)
+
+
+# We make a lot of calls to this function and it takes > 1 sec generally
+# to run, so run it just once (it shouldn't meaningfully change anyway)
+@lru_cache(maxsize=1)
+def _cached_sys_info(f):
+    with StringIO() as f:
+        mne.sys_info(f)
+        return f.getvalue()
 
 
 def _all_conditions(*, cfg):

@@ -54,6 +54,7 @@ tests = [
     "mkdocs-macros-plugin",
     "mkdocs-include-markdown-plugin",
     "mkdocstrings-python",
+    "mike",
     "jinja2",
     "black",  # function signature formatting
     "livereload",

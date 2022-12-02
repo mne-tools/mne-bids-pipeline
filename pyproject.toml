@@ -48,6 +48,8 @@ tests = [
     "pytest-cov",
     "psutil",
     "datalad",
+    "flake8",
+    "flake8-pyproject",
     "mkdocs",
     "mkdocs-material",
     "mkdocs-material-extensions",
@@ -101,3 +103,6 @@ testpaths = [
     "mne_bids_pipeline",
 ]
 junit_family = "xunit2"
+
+[tool.flake8]
+exclude = "**/freesurfer/contrib,docs/,dist/,build/"

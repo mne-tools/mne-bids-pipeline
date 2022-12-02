@@ -592,7 +592,7 @@ def run_report_average_sensor(
         #
         if all_evokeds:
             msg = (
-                f'Adding {len(evokeds)} evoked signals and contrasts to '
+                f'Adding {len(all_evokeds)} evoked signals and contrasts to '
                 'the report.'
             )
         else:

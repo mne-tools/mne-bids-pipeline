@@ -16,7 +16,7 @@ echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 # On a PR
 if [[ -v CIRCLE_PULL_REQUEST ]]; then
     # Skip if circle skip has been requested
-    if [[ "$COMMIT_MESSAGE" == *"[skip circle]"* || "$COMMIT_MESSAGE" == *"[circle skip]"* ]]; then
+    if [[ "$CIRCLE_JOB" != "setup_env" && ( "$COMMIT_MESSAGE" == *"[skip circle]"* || "$COMMIT_MESSAGE" == *"[circle skip]"* ) ]]; then
         echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
         circleci-agent step halt
         exit 0

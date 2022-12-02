@@ -16,9 +16,12 @@ echo "CIRCLE_REQUESTED_JOB=$CIRCLE_REQUESTED_JOB"
 # On a PR
 if [[ -v CIRCLE_PULL_REQUEST ]]; then
     # Skip if circle skip has been requested
-    if [[ "$CIRCLE_JOB" != "setup_env" && ( "$COMMIT_MESSAGE" == *"[skip circle]"* || "$COMMIT_MESSAGE" == *"[circle skip]"* ) ]]; then
+    if [[ "$COMMIT_MESSAGE" == *"[skip circle]"* || "$COMMIT_MESSAGE" == *"[circle skip]"* ]]; then
         echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
-        circleci-agent step halt
+        if [[ "$CIRCLE_JOB" != "setup_env" ]]; then
+            # only halt on other jobs -- for setup_env we need to persist stuff
+            circleci-agent step halt
+        fi
         exit 0
     # If no jobs have been specifically requested via [circle jobname], run all tests.
     elif [[ "$CIRCLE_JOB" != "setup_env" && "$CIRCLE_JOB" != "build_docs" && -n $CIRCLE_REQUESTED_JOB && "$CIRCLE_JOB" != *"$CIRCLE_REQUESTED_JOB"* ]]; then

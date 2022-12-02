@@ -578,6 +578,14 @@ def run_report_average_sensor(
         #
         # Visualize evoked responses.
         #
+        if all_evokeds:
+            msg = (
+                f'Adding {len(evokeds)} evoked signals and contrasts to '
+                'the report.'
+            )
+        else:
+            msg = 'No evoked conditions or contrasts found.'
+        logger.info(**gen_log_kwargs(message=msg))
         for condition, evoked in all_evokeds.items():
             tags = ('evoked', _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
@@ -602,11 +610,15 @@ def run_report_average_sensor(
         # Visualize decoding results.
         #
         if cfg.decode and cfg.decoding_contrasts:
+            msg = 'Adding decoding results.'
+            logger.info(**gen_log_kwargs(message=msg))
             add_decoding_grand_average(
                 session=session, cfg=cfg, report=report
             )
 
         if cfg.decode and cfg.decoding_csp:
+            # No need for a separate message here because these are very quick
+            # and the general message above is sufficient
             add_csp_grand_average(
                 session=session, cfg=cfg, report=report
             )

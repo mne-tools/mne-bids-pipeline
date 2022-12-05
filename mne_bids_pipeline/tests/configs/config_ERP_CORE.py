@@ -47,7 +47,7 @@ subjects = ['015', '016', '017', '018', '019']
 ch_types = ['eeg']
 interactive = False
 
-resample_sfreq = 128
+raw_resample_sfreq = 128
 
 eeg_template_montage = mne.channels.make_standard_montage('standard_1005')
 eeg_bipolar_channels = {'HEOG': ('HEOG_left', 'HEOG_right'),

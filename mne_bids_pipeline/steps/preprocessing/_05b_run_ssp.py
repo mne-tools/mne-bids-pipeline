@@ -96,7 +96,7 @@ def run_ssp(
         if not any(n_projs[kind]):
             continue
         proj_epochs = epochs_fun[kind](
-            raw, ch_name=ch_name[kind], decim=cfg.decim)
+            raw, ch_name=ch_name[kind], decim=cfg.epochs_decim)
         n_orig = len(proj_epochs)
         rate = n_orig / raw.times[-1] * 60
         msg = f'Detected {rate_names[kind]} rate: {rate:5.1f} bpm'
@@ -205,7 +205,7 @@ def get_config(
         n_proj_ecg=config.n_proj_ecg,
         ssp_meg=config.ssp_meg,
         ch_types=config.ch_types,
-        decim=config.decim,
+        epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
     )
     return cfg

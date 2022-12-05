@@ -147,7 +147,7 @@ def filter_data(
         data_type='experimental',
     )
     resample(raw=raw, subject=subject, session=session, run=run,
-             sfreq=cfg.resample_sfreq, data_type='experimental')
+             sfreq=cfg.raw_resample_sfreq, data_type='experimental')
 
     raw.save(out_files[in_key], overwrite=True, split_naming='bids',
              split_size=cfg._raw_split_size)
@@ -204,7 +204,7 @@ def filter_data(
             data_type=data_type,
         )
         resample(raw=raw_noise, subject=subject, session=session, run=task,
-                 sfreq=cfg.resample_sfreq, data_type=data_type)
+                 sfreq=cfg.raw_resample_sfreq, data_type=data_type)
 
         raw_noise.save(
             out_files[in_key], overwrite=True, split_naming='bids',
@@ -262,7 +262,7 @@ def get_config(
         h_freq=config.h_freq,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
-        resample_sfreq=config.resample_sfreq,
+        raw_resample_sfreq=config.raw_resample_sfreq,
         crop_runs=config.crop_runs,
         rename_events=config.rename_events,
         eeg_bipolar_channels=config.eeg_bipolar_channels,

@@ -41,7 +41,7 @@ n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 ssp_meg = 'combined'
 ecg_proj_from_average = True
 eog_proj_from_average = False
-decim = 4
+epochs_decim = 4
 
 bem_mri_images = 'FLASH'
 recreate_bem = True

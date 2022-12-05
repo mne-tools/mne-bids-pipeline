@@ -12,6 +12,6 @@ authors:
   larsoner: "[Eric Larson](https://github.com/larsoner)"
 ---
 
-{% include-markdown "./v1.1.0.md.inc" %}
+{% include-markdown "./v1.1.md.inc" %}
 
-{% include-markdown "./v1.0.0.md.inc" %}
+{% include-markdown "./v1.0.md.inc" %}

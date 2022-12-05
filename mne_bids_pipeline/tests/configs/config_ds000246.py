@@ -13,7 +13,7 @@ runs = ['01']
 crop_runs = (0, 120)  # Reduce memory usage on CI system
 l_freq = 0.3
 h_freq = 100
-decim = 4
+epochs_decim = 4
 subjects = ['0001']
 ch_types = ['meg']
 reject = dict(mag=4e-12, eog=250e-6)

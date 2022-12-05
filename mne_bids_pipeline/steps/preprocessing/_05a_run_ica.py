@@ -310,8 +310,8 @@ def run_ica(
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!
-        if cfg.resample_sfreq is not None:
-            assert np.allclose(raw.info['sfreq'], cfg.resample_sfreq)
+        if cfg.raw_resample_sfreq is not None:
+            assert np.allclose(raw.info['sfreq'], cfg.raw_resample_sfreq)
         if cfg.l_freq is not None:
             assert np.allclose(raw.info['highpass'], cfg.l_freq)
 
@@ -341,7 +341,7 @@ def run_ica(
             metadata_keep_last=cfg.epochs_metadata_keep_last,
             metadata_query=cfg.epochs_metadata_query,
             event_repeated=cfg.event_repeated,
-            decim=cfg.decim,
+            epochs_decim=cfg.epochs_decim,
             task_is_rest=cfg.task_is_rest,
             rest_epochs_duration=cfg.rest_epochs_duration,
             rest_epochs_overlap=cfg.rest_epochs_overlap,
@@ -531,8 +531,8 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,
-        decim=config.decim,
-        resample_sfreq=config.resample_sfreq,
+        epochs_decim=config.epochs_decim,
+        raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,

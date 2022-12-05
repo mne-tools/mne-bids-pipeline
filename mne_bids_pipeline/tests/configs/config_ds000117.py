@@ -14,7 +14,7 @@ interactive = False
 acq = None
 subjects = ['01']
 
-resample_sfreq = 125.
+raw_resample_sfreq = 125.
 crop_runs = (0, 300)  # Reduce memory usage on CI system
 
 find_flat_channels_meg = False

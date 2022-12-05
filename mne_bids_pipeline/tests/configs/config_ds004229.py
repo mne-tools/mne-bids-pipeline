@@ -22,7 +22,7 @@ h_freq = 40.
 # Epochs
 epochs_tmin = -0.2
 epochs_tmax = 6
-decim = 5
+epochs_decim = 5
 baseline = (None, 0)
 
 # Conditions / events to consider when epoching

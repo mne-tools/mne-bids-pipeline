@@ -317,7 +317,14 @@ def _check_config(config: SimpleNamespace) -> None:
 _REMOVED_NAMES = {
     'debug': dict(
         new_name='on_error',
-        instead='use on_error="debug" instead'
+        instead='use on_error="debug" instead',
+    ),
+    'decim': dict(
+        new_name='epochs_decim',
+        instead=None,
+    ),
+    'resample_sfreq': dict(
+        new_name='raw_resample_sfreq',
     ),
 }
 
@@ -352,10 +359,12 @@ def _check_misspellings_removals(
             if user_name in _REMOVED_NAMES:
                 new = _REMOVED_NAMES[user_name]['new_name']
                 if new not in user_names:
+                    instead = _REMOVED_NAMES[user_name].get("instead", None)
+                    if instead is None:
+                        instead = f'use {new} instead'
                     this_msg = (
                         f'{msg} this variable has been removed as a valid '
-                        'config option, '
-                        f'{_REMOVED_NAMES[user_name]["instead"]}.'
+                        f'config option, {instead}.'
                     )
                     _handle_config_error(this_msg, log, config)
 

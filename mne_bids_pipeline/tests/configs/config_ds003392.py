@@ -15,7 +15,7 @@ ch_types = ['meg']
 
 l_freq = 1.
 h_freq = 40.
-resample_sfreq = 250
+raw_resample_sfreq = 250
 crop_runs = (0, 180)
 
 # Artifact correction.

@@ -707,15 +707,15 @@ lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
-resample_sfreq: Optional[float] = None
+raw_resample_sfreq: Optional[float] = None
 """
 Specifies at which sampling frequency the data should be resampled.
 If `None`, then no resampling will be done.
 
 ???+ example "Example"
     ```python
-    resample_sfreq = None  # no resampling
-    resample_sfreq = 500  # resample to 500Hz
+    raw_resample_sfreq = None  # no resampling
+    raw_resample_sfreq = 500  # resample to 500Hz
     ```
 """
 
@@ -723,7 +723,7 @@ If `None`, then no resampling will be done.
 # DECIMATION
 # ----------
 
-decim: int = 1
+epochs_decim: int = 1
 """
 Says how much to decimate data at the epochs level.
 It is typically an alternative to the `resample_sfreq` parameter that
@@ -735,8 +735,8 @@ can be used for resampling raw data. `1` means no decimation.
 
 ???+ example "Example"
     ```python
-    decim = 1  # no decimation
-    decim = 4  # decimate by 4, i.e., divide sampling frequency by 4
+    epochs_decim = 1  # no decimation
+    epochs_decim = 4  # decimate by 4, i.e., divide sampling frequency by 4
     ```
 """
 
@@ -1377,9 +1377,9 @@ decoding_time_generalization_decim: int = 1
 """
 Says how much to decimate data before time generalization decoding.
 This is done in addition to the decimation done at the epochs level via the
-[`decim`][mne_bids_pipeline._config.decim] parameter. This can be used to
-greatly speed up time generalization at the cost of lower time resolution in
-the resulting matrix.
+[`epochs_decim`][mne_bids_pipeline._config.epochs_decim] parameter. This can be
+used to greatly speed up time generalization at the cost of lower time
+resolution in the resulting matrix.
 """
 
 n_boot: int = 5000

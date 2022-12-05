@@ -1,3 +1,18 @@
+## v1.0.1 (released 2022/12/05)
+
+### Behavior changes
+
+These backward-incompatible changes have been made before officially announcing
+the release, so we are bumping the patch version number rather than the major
+version number.
+
+- The [`epochs_decim`][mne_bids_pipeline._config.epochs_decim] setting
+  replaces `decim` for consistency and readability
+  ({{ gh(502) }} by {{ authors.larsoner }} )
+- The [`raw_resample_sfreq`][mne_bids_pipeline._config.raw_resample_sfreq]
+  setting replaces `resample_sfreq` for consistency and readability
+  ({{ gh(502) }} by {{ authors.larsoner }} )
+
 ## v1.0.0 (released 2022/12/01)
 
 Changes were only tracked starting April 15, 2021.

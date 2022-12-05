@@ -28,7 +28,7 @@ def make_epochs(
     metadata_keep_last: Optional[Iterable[str]],
     metadata_query: Optional[str],
     event_repeated: Literal['error', 'drop', 'merge'],
-    decim: int,
+    epochs_decim: int,
     task_is_rest: bool,
     rest_epochs_duration: float,
     rest_epochs_overlap: float,
@@ -98,7 +98,7 @@ def make_epochs(
     epochs = mne.Epochs(raw, events=events, event_id=event_id,
                         tmin=tmin, tmax=tmax,
                         proj=False, baseline=None,
-                        preload=False, decim=decim,
+                        preload=False, decim=epochs_decim,
                         metadata=metadata,
                         event_repeated=event_repeated,
                         reject=None)

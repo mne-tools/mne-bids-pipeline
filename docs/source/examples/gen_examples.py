@@ -13,6 +13,7 @@ from mne_bids_pipeline._config_import import _import_config
 import mne_bids_pipeline.tests.datasets
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
+from tqdm import tqdm
 
 this_dir = Path(__file__).parent
 root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
@@ -87,6 +88,7 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
 
 # Copy reports to the correct place.
 datasets_without_html = []
+logger.warning(f'  Copying reports to {this_dir}/<dataset_name> …')
 for test_name, test_dataset_options in TEST_SUITE.items():
     if 'ERP_CORE' in test_name:
         dataset_name = test_dataset_options['dataset']
@@ -107,13 +109,25 @@ for test_name, test_dataset_options in TEST_SUITE.items():
         datasets_without_html.append(dataset_name)
         continue
 
-    for fname in html_report_fnames:
-        logger.info(f'Copying {fname} to {example_target_dir}')
+    fname_iter = tqdm(
+        html_report_fnames,
+        desc=f'  {test_name}',
+        unit='file',
+        leave=False,
+    )
+    for fname in fname_iter:
         shutil.copy(src=fname, dst=example_target_dir)
 
 # Now, generate the respective markdown example descriptions.
 all_demonstrated = dict()
-for test_dataset_name, test_dataset_options in TEST_SUITE.items():
+logger.warning('  Generating example markdown files …')
+ds_iter = tqdm(
+    list(TEST_SUITE.items()),
+    desc='  ',
+    unit='file',
+    leave=False,
+)
+for test_dataset_name, test_dataset_options in ds_iter:
     if 'ERP_CORE' in test_dataset_name:
         dataset_name = test_dataset_options['dataset']
     else:
@@ -132,8 +146,6 @@ for test_dataset_name, test_dataset_options in TEST_SUITE.items():
     if dataset_name in datasets_without_html:
         logger.warning(f'Dataset {dataset_name} has no HTML report.')
         continue
-
-    logger.warning(f'Generating markdown file for dataset: {dataset_name}')
 
     options = DATASET_OPTIONS[dataset_options_key]
 

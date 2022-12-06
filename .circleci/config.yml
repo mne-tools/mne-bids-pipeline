@@ -1156,12 +1156,37 @@ jobs:
       - run:
           <<: *git
       - run:
-          name: Install "gh-pages" CLI app
-          command: |
-            npm install -g --silent gh-pages@3.0.0  # Work around https://github.com/tschaub/gh-pages/issues/354
+          <<: *bashenv
       - run:
           name: Deploy docs to gh-pages branch
-          command: gh-pages --no-history --message "[skip ci] Update docs" --dist docs/site
+          # https://github.com/jimporter/mike
+          command: |
+            git config --global user.email "circle@mne.com"
+            git config --global user.name "Circle CI"
+            # Arguments used in all mike commands
+            ARGS="--config-file docs/mkdocs.yml"
+            echo "Deploying dev"
+            # If it's tagged as v*, deploy as "v*" and "stable" as well
+            if git describe --tags --exact-match $(git rev-parse HEAD); then
+              VERSION="$(git describe --tags --exact-match $(git rev-parse HEAD))"
+            else
+              VERSION=""
+            fi
+            if [[ "$VERSION" == "v"* ]]; then
+              # Trim v1.0.0 to 1.0
+              KIND='stable'
+              DEPLOY_VERSION=$(echo $VERSION | sed -nE 's/^v([0-9]+\.[0-9]+).*$$/\1/p')
+              echo "Deploying $VERSION as $DEPLOY_VERSION with alias \"stable\""
+              mike deploy $DEPLOY_VERSION stable --update-aliases $ARGS
+            else
+              KIND='dev'
+              mike deploy dev $ARGS
+            fi
+            git checkout gh-pages
+            git reset $(git commit-tree HEAD^{tree} -m "Deploy and squash docs [ci skip]")
+            git log -n1
+            git push origin --force gh-pages
+
 
 workflows:
   version: 2

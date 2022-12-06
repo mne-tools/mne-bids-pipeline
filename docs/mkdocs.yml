@@ -28,6 +28,9 @@ extra:
         - icon: fontawesome/brands/twitter
           link: https://twitter.com/mne_news
           name: MNE news on Twitter
+    version:
+        provider: mike
+        default: stable
 
 copyright: Copyright &copy; MNE-BIDS-Pipeline authors
 
@@ -106,6 +109,8 @@ plugins:
         watch:
             - .
             - ./mne_bids_pipeline/_config.py
+    - mike:
+        canonical_version: stable
 markdown_extensions:
     - admonition
     - abbr

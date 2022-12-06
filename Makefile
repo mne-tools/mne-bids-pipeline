@@ -34,7 +34,7 @@ trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
 flake:
-	flake8 . --exclude "**/freesurfer/contrib,docs/,dist/,build/"
+	flake8
 	@echo "flake8 passed"
 
 codespell:  # running manually; auto-fix spelling mistakes

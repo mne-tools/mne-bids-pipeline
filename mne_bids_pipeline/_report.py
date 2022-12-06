@@ -1,4 +1,6 @@
 import contextlib
+from functools import lru_cache
+from io import StringIO
 import os.path as op
 from pathlib import Path
 from typing import Optional, List, Literal
@@ -492,9 +494,10 @@ def _finalize(
         title=titles[0],
         tags=('configuration',),
     )
-    report.add_sys_info(
-        title=titles[1],
-    )
+    # We don't use report.add_sys_info so we can use our own cached version
+    tags = ('mne-sysinfo',)
+    info = _cached_sys_info()
+    report.add_code(code=info, title=titles[1], language='shell', tags=tags)
     # Make our code sections take 50% of screen height
     css = """
 div.accordion-body pre.my-0 code {
@@ -504,6 +507,15 @@ div.accordion-body pre.my-0 code {
 """
     if css not in report.include:
         report.add_custom_css(css=css)
+
+
+# We make a lot of calls to this function and it takes > 1 sec generally
+# to run, so run it just once (it shouldn't meaningfully change anyway)
+@lru_cache(maxsize=1)
+def _cached_sys_info(f):
+    with StringIO() as f:
+        mne.sys_info(f)
+        return f.getvalue()
 
 
 def _all_conditions(*, cfg):
@@ -578,6 +590,14 @@ def run_report_average_sensor(
         #
         # Visualize evoked responses.
         #
+        if all_evokeds:
+            msg = (
+                f'Adding {len(all_evokeds)} evoked signals and contrasts to '
+                'the report.'
+            )
+        else:
+            msg = 'No evoked conditions or contrasts found.'
+        logger.info(**gen_log_kwargs(message=msg))
         for condition, evoked in all_evokeds.items():
             tags = ('evoked', _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
@@ -602,11 +622,15 @@ def run_report_average_sensor(
         # Visualize decoding results.
         #
         if cfg.decode and cfg.decoding_contrasts:
+            msg = 'Adding decoding results.'
+            logger.info(**gen_log_kwargs(message=msg))
             add_decoding_grand_average(
                 session=session, cfg=cfg, report=report
             )
 
         if cfg.decode and cfg.decoding_csp:
+            # No need for a separate message here because these are very quick
+            # and the general message above is sufficient
             add_csp_grand_average(
                 session=session, cfg=cfg, report=report
             )

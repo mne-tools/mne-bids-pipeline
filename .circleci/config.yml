@@ -1183,8 +1183,7 @@ jobs:
               mike deploy dev $ARGS
             fi
             git checkout gh-pages
-            git reset --soft HEAD~2
-            git commit -qam '${KIND} squash and deploy [ci skip]'
+            git reset $(git commit-tree HEAD^{tree} -m "Deploy and squash docs [ci skip]")
             git log -n1
             git push origin --force gh-pages
 

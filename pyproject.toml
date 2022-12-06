@@ -39,6 +39,7 @@ dependencies = [
     "mne[hdf5]",
     "mne-bids[full]",
     "filelock",
+    "setuptools >=65",
 ]
 dynamic = ["version"]
 

@@ -12,6 +12,7 @@ The following table provides a concise summary of each step in the Study
 Template. All steps exist in the `steps`/ directory.
 """
 
+print('Generating steps …')
 step_modules = _get_step_modules()
 
 # Construct the lines of steps.md

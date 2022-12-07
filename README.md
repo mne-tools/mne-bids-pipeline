@@ -9,7 +9,7 @@ Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-P
 * 🐾 Data processing as a sequence of processing steps.
 * ⏏ Your data can be "ejected" from the pipeline at **any** stage. No lock-in!
 * 🧾 Extensive processing and analysis summary reports.
-* 🎬 Process as just single participant, or as many as several hundreds of participants – in parallel.
+* 🎬 Process just a single participant, or as many as several hundreds of participants – in parallel.
 * 🛠 Configuration via a simple text file.
 * 💻 Execution via an easy-to-use command-line utility.
 * 🆘 Helpful error messages in case something goes wrong.

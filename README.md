@@ -1,19 +1,27 @@
-[![CircleCI](https://circleci.com/gh/mne-tools/mne-bids-pipeline.svg?style=svg)](https://circleci.com/gh/mne-tools/mne-bids-pipeline)
+# <img src="https://raw.github.com/mne-tools/mne-bids-pipeline/main/docs/source/assets/mne.svg" alt="MNE Logo" height="20"> The MNE-BIDS-Pipeline
 
-# MNE-BIDS-Pipeline
+**The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
+EEG data.** It operates on data stored according to the [Brain Imaging Data
+Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-Python](https://mne.tools).
 
-The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
-EEG data. It operates on data stored according to the Brain Imaging Data
-Structure (BIDS).
+## 💡 Basic concepts and features
 
-# Documentation
+* 🐾 Data processing as a sequence of processing steps.
+* ⏏ Your data can be "ejected" from the pipeline at **any** stage. No lock-in!
+* 🧾 Extensive processing and analysis summary reports.
+* 🎬 Process as just single participant, or as many as several hundreds of participants – in parallel.
+* 🛠 Configuration via a simple text file.
+* 💻 Execution via an easy-to-use command-line utility.
+* 🆘 Helpful error messages in case something goes wrong.
 
-Please find the installation and usage instructions at
-[mne.tools/mne-bids-pipeline](https://mne.tools/mne-bids-pipeline).
+## 📘 Installation and usage instructions
 
-# Acknowledgments
+Please find the documentation at
+[**mne.tools/mne-bids-pipeline**](https://mne.tools/mne-bids-pipeline).
 
-The original pipeline for MEG/EEG data processing with MNE python was built
+## 🤝 Acknowledgments
+
+The original pipeline for MEG/EEG data processing with MNE-Python was built
 jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/)
 and the [MNE Python Team](https://mne.tools), based on scripts originally
 developed for this publication:

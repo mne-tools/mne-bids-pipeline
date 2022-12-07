@@ -1137,8 +1137,7 @@ jobs:
           paths: project/docs/site
 
   deploy_docs:
-    docker:
-      - image: node:10
+    <<: *imageconfig
     steps:
       - add_ssh_keys:
           fingerprints:

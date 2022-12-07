@@ -1132,9 +1132,6 @@ jobs:
       - store_artifacts:
           path: docs/site
           destination: site
-      - persist_to_workspace: # For documentation deployment to gh-pages
-          root: ~/
-          paths: project/docs/site
 
   deploy_docs:
     <<: *imageconfig
@@ -1157,14 +1154,22 @@ jobs:
       - run:
           <<: *bashenv
       - run:
+          # This is a bit computationally inefficient, but it should be much
+          # faster to "cp" directly on the machine rather than persist
+          # 1GB doc build to workspace then go retrieve it
+          name: Build documentation again
+          command: |
+            make doc
+      - run:
           name: Deploy docs to gh-pages branch
           # https://github.com/jimporter/mike
           command: |
-            git config --global user.email "circle@mne.com"
-            git config --global user.name "Circle CI"
             # Arguments used in all mike commands
             ARGS="--config-file docs/mkdocs.yml"
-            echo "Deploying dev"
+            # First we need to actually check out our current version of
+            # gh-pages so we don't remove it!
+            git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+            git fetch origin
             # If it's tagged as v*, deploy as "v*" and "stable" as well
             if git describe --tags --exact-match $(git rev-parse HEAD); then
               VERSION="$(git describe --tags --exact-match $(git rev-parse HEAD))"
@@ -1183,7 +1188,7 @@ jobs:
             fi
             git checkout gh-pages
             git reset $(git commit-tree HEAD^{tree} -m "Deploy and squash docs [ci skip]")
-            git log -n1
+            git log -n3  # should just be one, but let's be sure
             git push origin --force gh-pages
 
 

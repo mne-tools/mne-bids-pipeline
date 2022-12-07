@@ -19,7 +19,7 @@ Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-P
 Please find the documentation at
 [**mne.tools/mne-bids-pipeline**](https://mne.tools/mne-bids-pipeline).
 
-## 🤝 Acknowledgments
+## ❤ Acknowledgments
 
 The original pipeline for MEG/EEG data processing with MNE-Python was built
 jointly by the [Cognition and Brain Dynamics Team](https://brainthemind.com/)

@@ -1194,9 +1194,9 @@ workflows:
   test_and_docs:
     jobs:
       - setup_env: &filter_tags
-        filters: &filter_tag_tags
-          tags:
-            only: /^v.*/
+          filters: &filter_tag_tags
+            tags:
+              only: /^v.*/
 
       - cache_ds000117:
           requires:

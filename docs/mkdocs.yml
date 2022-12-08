@@ -2,7 +2,7 @@ site_name: MNE-BIDS-Pipeline
 repo_url: https://github.com/mne-tools/mne-bids-pipeline
 edit_uri: edit/main/docs/source/
 # Keep this in sync with pyproject.toml and index.md
-site_description: The MNE-BIDS-Pipeline is a standardized pipeline for automated processing of MEG and EEG data.
+site_description: The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and EEG data.
 site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
@@ -17,6 +17,7 @@ theme:
         - navigation.tracking
     palette:
         primary: white
+    custom_dir: overrides
 extra:
     social:
         - icon: fontawesome/brands/github
@@ -31,6 +32,8 @@ extra:
     version:
         provider: mike
         default: stable
+hooks:
+    - ./hooks.py
 
 copyright: Copyright &copy; MNE-BIDS-Pipeline authors
 

@@ -1,4 +1,20 @@
-## v1.0.1 (released 2022/12/05)
+## v1.0.3 (released 2022/12/08)
+
+### Bug fixes
+
+- The `stable` documentation deployment was fixed
+  ({{ gh(682) }} by {{ authors.larsoner }} )
+
+
+## v1.0.2 (released 2022/12/07)
+
+### Code health
+
+- The repository README.md was improved
+  ({{ gh(680) }} by {{ authors.hoechenberger }} )
+
+
+## v1.0.1 (released 2022/12/06)
 
 ### Behavior changes
 
@@ -12,6 +28,7 @@ version number.
 - The [`raw_resample_sfreq`][mne_bids_pipeline._config.raw_resample_sfreq]
   setting replaces `resample_sfreq` for consistency and readability
   ({{ gh(502) }} by {{ authors.larsoner }} )
+
 
 ## v1.0.0 (released 2022/12/01)
 

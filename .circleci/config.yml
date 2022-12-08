@@ -9,16 +9,7 @@ _imageconfig: &imageconfig
   docker:
     - image: cimg/base:2022.10-22.04
 
-_git: &git
-  name: Configure git
-  command: |
-    git config --global user.email "ci-build@mne.tools"
-    git config --global user.name "ci-build"
-
-_bashenv: &bashenv
-  name: Set BASH_ENV
-  command: |
-    ./.circleci/setup_bash.sh
+# https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
 jobs:
   setup_env:
@@ -37,10 +28,15 @@ jobs:
               git remote set-url origin "$CIRCLE_REPOSITORY_URL"
             fi
       - checkout
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *git
+      - run: &bashenv
+          name: Set BASH_ENV
+          command: |
+            ./.circleci/setup_bash.sh
+      - run: &git
+          name: Configure git
+          command: |
+            git config --global user.email "ci-build@mne.tools"
+            git config --global user.name "ci-build"
       - run:
           name: Get Python running
           command: |
@@ -1195,133 +1191,173 @@ jobs:
 workflows:
   version: 2
 
-  commit:
+  test_and_docs:
     jobs:
-      - setup_env
+      - setup_env: &filter_tags
+          filters: &filter_tag_tags
+            tags:
+              only: /^v.*/
 
       - cache_ds000117:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds000117:
           requires:
             - cache_ds000117
+          <<: *filter_tags
 
       - cache_ds003775:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds003775:
           requires:
             - cache_ds003775
+          <<: *filter_tags
 
       - cache_ds001971:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds001971:
           requires:
             - cache_ds001971
+          <<: *filter_tags
 
       - cache_ds004107:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds004107:
           requires:
             - cache_ds004107
+          <<: *filter_tags
 
       - cache_ds000246:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds000246:
           requires:
             - cache_ds000246
+          <<: *filter_tags
 
       - cache_ds000247:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds000247:
           requires:
             - cache_ds000247
+          <<: *filter_tags
 
       - cache_ds000248:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds000248_base:
           requires:
             - cache_ds000248
+          <<: *filter_tags
       - test_ds000248_ica:
           requires:
             - cache_ds000248
+          <<: *filter_tags
       - test_ds000248_FLASH_BEM:
           requires:
             - cache_ds000248
+          <<: *filter_tags
       - test_ds000248_T1_BEM:
           requires:
             - cache_ds000248
+          <<: *filter_tags
       - test_ds000248_coreg_surfaces:
           requires:
             - cache_ds000248
+          <<: *filter_tags
       - test_ds000248_no_mri:
           requires:
             - cache_ds000248
+          <<: *filter_tags
 
       - cache_ds001810:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds001810:
           requires:
             - cache_ds001810
+          <<: *filter_tags
 
       - cache_ds003104:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds003104:
           requires:
             - cache_ds003104
+          <<: *filter_tags
 
       - cache_ds003392:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds003392:
           requires:
             - cache_ds003392
+          <<: *filter_tags
 
       - cache_ds004229:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ds004229:
           requires:
             - cache_ds004229
+          <<: *filter_tags
 
       - cache_eeg_matchingpennies:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_eeg_matchingpennies:
           requires:
             - cache_eeg_matchingpennies
+          <<: *filter_tags
 
       - cache_ERP_CORE:
           requires:
             - setup_env
+          <<: *filter_tags
       - test_ERP_CORE_N400:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_ERN:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_LRP:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_MMN:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_N2pc:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_N170:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
       - test_ERP_CORE_P3:
           requires:
             - cache_ERP_CORE
+          <<: *filter_tags
 
       - build_docs:
           requires:
@@ -1346,6 +1382,7 @@ workflows:
             - test_ERP_CORE_N2pc
             - test_ERP_CORE_N170
             - test_ERP_CORE_P3
+          <<: *filter_tags
       - deploy_docs:
           requires:
             - build_docs
@@ -1353,3 +1390,4 @@ workflows:
             branches:
               only:
                 - main
+            <<: *filter_tag_tags

@@ -6,10 +6,12 @@ Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-P
 
 ## 💡 Basic concepts and features
 
-* 🐾 Data processing as a sequence of processing steps.
-* ⏏ Your data can be "ejected" from the pipeline at **any** stage. No lock-in!
+* 🐾 Data processing as a sequence of standard processing steps.
+* ⏩ Steps are cached to avoid unnecessary recomputation.
+* ⏏ Data can be "ejected" from the pipeline at **any** stage. No lock-in!
 * 🧾 Extensive processing and analysis summary reports.
 * 🎬 Process just a single participant, or as many as several hundreds of participants – in parallel.
+* ☁️ Parallel processing can be done locally or using dask.
 * 🛠 Configuration via a simple text file.
 * 💻 Execution via an easy-to-use command-line utility.
 * 🆘 Helpful error messages in case something goes wrong.

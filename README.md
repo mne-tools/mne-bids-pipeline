@@ -1,10 +1,17 @@
 # <img src="https://raw.github.com/mne-tools/mne-bids-pipeline/main/docs/source/assets/mne.svg" alt="MNE Logo" height="20"> The MNE-BIDS-Pipeline
 
+<!--keep description in sync with pyproject.toml-->
+
+<!--tagline-start-->
 **The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
 EEG data.** It operates on data stored according to the [Brain Imaging Data
 Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-Python](https://mne.tools).
 
+<!--tagline-end-->
+
 ## 💡 Basic concepts and features
+
+<!--features-list-start-->
 
 * 🐾 Data processing as a sequence of standard processing steps.
 * ⏩ Steps are cached to avoid unnecessary recomputation.
@@ -15,6 +22,8 @@ Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-P
 * 🛠 Configuration via a simple text file.
 * 💻 Execution via an easy-to-use command-line utility.
 * 🆘 Helpful error messages in case something goes wrong.
+
+<!--features-list-end-->
 
 ## 📘 Installation and usage instructions
 

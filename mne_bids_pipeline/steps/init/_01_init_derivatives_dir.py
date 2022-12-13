@@ -15,9 +15,8 @@ from ..._run import failsafe_run
 
 
 def init_dataset(cfg) -> None:
-    """Prepare the pipeline directory in /derivatives.
-    """
-    fname_json = cfg.deriv_root / 'dataset_description.json'
+    """Prepare the pipeline directory in /derivatives."""
+    fname_json = cfg.deriv_root / "dataset_description.json"
     if fname_json.is_file():
         return  # already exists
     msg = "Initializing output directories."
@@ -27,15 +26,15 @@ def init_dataset(cfg) -> None:
 
     # Write a dataset_description.json for the pipeline
     ds_json = dict()
-    ds_json['Name'] = cfg.PIPELINE_NAME + ' outputs'
-    ds_json['BIDSVersion'] = BIDS_VERSION
-    ds_json['PipelineDescription'] = {
-        'Name': cfg.PIPELINE_NAME,
-        'Version': cfg.VERSION,
-        'CodeURL': cfg.CODE_URL,
+    ds_json["Name"] = cfg.PIPELINE_NAME + " outputs"
+    ds_json["BIDSVersion"] = BIDS_VERSION
+    ds_json["PipelineDescription"] = {
+        "Name": cfg.PIPELINE_NAME,
+        "Version": cfg.VERSION,
+        "CodeURL": cfg.CODE_URL,
     }
-    ds_json['SourceDatasets'] = {
-        'URL': 'n/a',
+    ds_json["SourceDatasets"] = {
+        "URL": "n/a",
     }
 
     _write_json(fname_json, ds_json, overwrite=True)
@@ -49,11 +48,10 @@ def init_subject_dirs(
     subject: str,
     session: Optional[str],
 ) -> None:
-    """Create processing data output directories for individual participants.
-    """
-    out_dir = cfg.deriv_root / f'sub-{subject}'
+    """Create processing data output directories for individual participants."""
+    out_dir = cfg.deriv_root / f"sub-{subject}"
     if session is not None:
-        out_dir /= f'ses-{session}'
+        out_dir /= f"ses-{session}"
     out_dir /= cfg.datatype
 
     out_dir.mkdir(exist_ok=True, parents=True)

@@ -3,21 +3,21 @@ Single-subject infant dataset for testing maxwell_filter with movecomp.
 
 https://openneuro.org/datasets/ds004229
 """
-study_name = 'amnoise'
-bids_root = '~/mne_data/ds004229'
-deriv_root = '~/mne_data/derivatives/mne-bids-pipeline/ds004229'
+study_name = "amnoise"
+bids_root = "~/mne_data/ds004229"
+deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds004229"
 
-task = 'amnoise'
-crop_runs = (0., 300.)
+task = "amnoise"
+crop_runs = (0.0, 300.0)
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
-mf_cal_fname = bids_root + '/derivatives/meg_derivatives/sss_cal.dat'
-mf_ctc_fname = bids_root + '/derivatives/meg_derivatives/ct_sparse.fif'
-ch_types = ['meg']
+mf_cal_fname = bids_root + "/derivatives/meg_derivatives/sss_cal.dat"
+mf_ctc_fname = bids_root + "/derivatives/meg_derivatives/ct_sparse.fif"
+ch_types = ["meg"]
 
 l_freq = None
-h_freq = 40.
+h_freq = 40.0
 
 # Epochs
 epochs_tmin = -0.2
@@ -32,4 +32,4 @@ conditions = ["auditory"]
 decode = False
 
 # Noise estimation
-noise_cov = 'emptyroom'
+noise_cov = "emptyroom"

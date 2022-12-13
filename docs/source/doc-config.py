@@ -1,2 +1,2 @@
-bids_root = '/tmp'
-ch_types = ['meg']
+bids_root = "/tmp"
+ch_types = ["meg"]

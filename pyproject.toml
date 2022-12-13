@@ -106,4 +106,7 @@ testpaths = [
 junit_family = "xunit2"
 
 [tool.ruff]
-exclude = ["**/freesurfer/contrib", "docs/", "dist/" , "build/"]
+exclude = ["**/freesurfer/contrib", "dist/" , "build/"]
+
+[tool.black]
+exclude = "(.*/freesurfer/contrib/.*)|(dist/)|(build/)"

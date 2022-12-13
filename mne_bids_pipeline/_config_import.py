@@ -145,7 +145,7 @@ def _update_with_user_config(
         if not name.startswith("__"):
             val = getattr(overrides, name)
             if log:
-                msg = f"Overridding config.{name} = {repr(val)}"
+                msg = f"Overriding config.{name} = {repr(val)}"
                 logger.info(
                     **gen_log_kwargs(message=msg, step="", emoji="override", box="╶╴")
                 )

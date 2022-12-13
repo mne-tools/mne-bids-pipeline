@@ -1,0 +1,22 @@
+---
+# Eventually we should use yamllint, too
+files: ^(.*\.(py|yaml))$
+exclude: ^(\.[^/]*cache/.*)$
+repos:
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+        args:
+          - --safe
+          - --quiet
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.178
+    hooks:
+      - id: ruff
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.2
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli

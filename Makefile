@@ -33,8 +33,6 @@ check:
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
-flake: ruff
-
 ruff:
 	ruff .
 	@echo "ruff passed"

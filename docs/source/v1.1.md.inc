@@ -6,8 +6,10 @@
 
 [//]: # (### Behavior changes)
 
-[//]: # (### Code health)
+### Code health
+
+- Code quality now checked by [black](https://black.readthedocs.io/en/stable/)
+  and [ruff]()
+  ({{ gh(867) }} by {{ authors.larsoner }} )
 
 [//]: # (### Bug fixes)
-
-- None yet

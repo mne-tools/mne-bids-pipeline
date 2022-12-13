@@ -19,6 +19,7 @@ jobs:
       run: pip install ruff codespell tomli
     - run: make ruff
     - run: make codespell-error
+    - uses: psf/black@stable
   check-doc:
     name: Doc consistency
     runs-on: ubuntu-latest

@@ -3,6 +3,13 @@
 files: ^(.*\.(py|yaml))$
 exclude: ^(\.[^/]*cache/.*)$
 repos:
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+        args:
+          - --safe
+          - --quiet
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.0.178
     hooks:

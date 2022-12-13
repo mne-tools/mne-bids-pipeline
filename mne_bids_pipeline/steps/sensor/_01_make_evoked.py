@@ -7,8 +7,12 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions, get_subjects, get_task, get_datatype,
-    get_all_contrasts, _restrict_analyze_channels,
+    get_sessions,
+    get_subjects,
+    get_task,
+    get_datatype,
+    get_all_contrasts,
+    _restrict_analyze_channels,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -22,21 +26,23 @@ def get_input_fnames_evoked(
     subject: str,
     session: Optional[str],
 ) -> dict:
-    fname_epochs = BIDSPath(subject=subject,
-                            session=session,
-                            task=cfg.task,
-                            acquisition=cfg.acq,
-                            run=None,
-                            recording=cfg.rec,
-                            space=cfg.space,
-                            suffix='epo',
-                            extension='.fif',
-                            datatype=cfg.datatype,
-                            root=cfg.deriv_root,
-                            processing='clean',  # always use clean epochs
-                            check=False)
+    fname_epochs = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix="epo",
+        extension=".fif",
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        processing="clean",  # always use clean epochs
+        check=False,
+    )
     in_files = dict()
-    in_files['epochs'] = fname_epochs
+    in_files["epochs"] = fname_epochs
     return in_files
 
 
@@ -52,8 +58,9 @@ def run_evoked(
     in_files: dict,
 ) -> dict:
     out_files = dict()
-    out_files['evoked'] = in_files['epochs'].copy().update(
-        suffix='ave', processing=None, check=False)
+    out_files["evoked"] = (
+        in_files["epochs"].copy().update(suffix="ave", processing=None, check=False)
+    )
 
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
@@ -62,15 +69,14 @@ def run_evoked(
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
-    msg = 'Creating evoked data based on experimental conditions …'
+    msg = "Creating evoked data based on experimental conditions …"
     logger.info(**gen_log_kwargs(message=msg))
     all_evoked = dict()
 
     if isinstance(cfg.conditions, dict):
         for new_cond_name, orig_cond_name in cfg.conditions.items():
             evoked = epochs[orig_cond_name].average()
-            evoked.comment = evoked.comment.replace(orig_cond_name,
-                                                    new_cond_name)
+            evoked.comment = evoked.comment.replace(orig_cond_name, new_cond_name)
             all_evoked[new_cond_name] = evoked
     else:
         for condition in cfg.conditions:
@@ -78,43 +84,37 @@ def run_evoked(
             all_evoked[condition] = evoked
 
     if cfg.contrasts:
-        msg = 'Contrasting evoked responses …'
+        msg = "Contrasting evoked responses …"
         logger.info(**gen_log_kwargs(message=msg))
 
         for contrast in cfg.contrasts:
             evoked_list = [epochs[x].average() for x in contrast["conditions"]]
-            evoked_diff = mne.combine_evoked(evoked_list,
-                                             weights=contrast["weights"])
+            evoked_diff = mne.combine_evoked(evoked_list, weights=contrast["weights"])
             all_evoked[contrast["name"]] = evoked_diff
 
     evokeds = list(all_evoked.values())
     for evoked in evokeds:
         evoked.nave = int(round(evoked.nave))  # avoid a warning
-    mne.write_evokeds(out_files['evoked'], evokeds, overwrite=True)
+    mne.write_evokeds(out_files["evoked"], evokeds, overwrite=True)
 
     # Report
     if evokeds:
-        msg = (f'Adding {len(evokeds)} evoked signals and contrasts to the '
-               f'report.')
+        msg = f"Adding {len(evokeds)} evoked signals and contrasts to the " f"report."
     else:
-        msg = 'No evoked conditions or contrasts found.'
-    logger.info(
-        **gen_log_kwargs(message=msg)
-    )
+        msg = "No evoked conditions or contrasts found."
+    logger.info(**gen_log_kwargs(message=msg))
     with _open_report(
-            cfg=cfg,
-            exec_params=exec_params,
-            subject=subject,
-            session=session) as report:
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+    ) as report:
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
 
-            tags = ('evoked', _sanitize_cond_tag(condition))
+            tags = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f'Condition: {condition}'
+                title = f"Condition: {condition}"
             else:  # It's a contrast of two conditions.
-                title = f'Contrast: {condition}'
-                tags = tags + ('contrast',)
+                title = f"Contrast: {condition}"
+                tags = tags + ("contrast",)
 
             report.add_evokeds(
                 evokeds=evoked,
@@ -167,13 +167,12 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run evoked."""
     if config.task_is_rest:
-        msg = '    … skipping: for resting-state task.'
+        msg = "    … skipping: for resting-state task."
         logger.info(**gen_log_kwargs(message=msg))
         return
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(
-            run_evoked, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(run_evoked, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(

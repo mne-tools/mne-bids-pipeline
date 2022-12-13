@@ -11,9 +11,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     # register an additional marker
-    config.addinivalue_line(
-        "markers", "dataset_test: mark that a test runs a dataset"
-    )
+    config.addinivalue_line("markers", "dataset_test: mark that a test runs a dataset")
     warning_lines = r"""
     error::
     ignore:There is no current event loop:DeprecationWarning
@@ -27,7 +25,7 @@ def pytest_configure(config):
     ignore:The get_cmap function will be deprecated.*:
     ignore:make_current is deprecated.*:DeprecationWarning
     """
-    for warning_line in warning_lines.split('\n'):
+    for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()
-        if warning_line and not warning_line.startswith('#'):
-            config.addinivalue_line('filterwarnings', warning_line)
+        if warning_line and not warning_line.startswith("#"):
+            config.addinivalue_line("filterwarnings", warning_line)

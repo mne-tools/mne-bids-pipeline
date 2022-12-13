@@ -1,8 +1,7 @@
 """Default settings for data processing and analysis.
 """
 
-from typing import (
-    Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal)
+from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal
 
 from numpy.typing import ArrayLike
 
@@ -17,7 +16,7 @@ from mne_bids_pipeline.typing import PathLike, ArbitraryContrast
 # Config parameters
 # -----------------
 
-study_name: str = ''
+study_name: str = ""
 """
 Specify the name of your study. It will be used to populate filenames for
 saving the analysis results.
@@ -84,18 +83,18 @@ Note: Note
     Enabling interactive mode deactivates parallel processing.
 """
 
-sessions: Union[List, Literal['all']] = 'all'
+sessions: Union[List, Literal["all"]] = "all"
 """
 The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
 """
 
-task: str = ''
+task: str = ""
 """
 The task to process.
 """
 
-runs: Union[Iterable, Literal['all']] = 'all'
+runs: Union[Iterable, Literal["all"]] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
@@ -144,7 +143,7 @@ space: Optional[str] = None
 The BIDS `space` entity.
 """
 
-plot_psd_for_runs: Union[Literal['all'], Iterable[str]] = 'all'
+plot_psd_for_runs: Union[Literal["all"], Iterable[str]] = "all"
 """
 For which runs to add a power spectral density (PSD) plot to the generated
 report. This can take a considerable amount of time if you have many long
@@ -152,7 +151,7 @@ runs. In this case, specify the runs, or pass an empty list to disable raw PSD
 plotting.
 """
 
-subjects: Union[Iterable[str], Literal['all']] = 'all'
+subjects: Union[Iterable[str], Literal["all"]] = "all"
 """
 Subjects to analyze. If `'all'`, include all subjects. To only
 include a subset of subjects, pass a list of their identifiers. Even
@@ -202,7 +201,7 @@ is required if you wish to use the resting-state recording to estimate noise
 covariance (via `noise_cov='rest'`).
 """
 
-ch_types: Iterable[Literal['meg', 'mag', 'grad', 'eeg']] = []
+ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]] = []
 """
 The channel types to consider.
 
@@ -222,7 +221,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[Literal['meg', 'eeg']] = None
+data_type: Optional[Literal["meg", "eeg"]] = None
 """
 The BIDS data type.
 
@@ -324,7 +323,7 @@ Note: Note
     ```
 """
 
-eeg_reference: Union[Literal['average'], str, Iterable['str']] = 'average'
+eeg_reference: Union[Literal["average"], str, Iterable["str"]] = "average"
 """
 The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
@@ -389,7 +388,8 @@ to remove the anode, cathode, or both.
 """
 
 analyze_channels: Union[
-    Literal['all'], Literal['ch_types'], Iterable['str']] = 'ch_types'
+    Literal["all"], Literal["ch_types"], Iterable["str"]
+] = "ch_types"
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain
@@ -452,7 +452,7 @@ ignored in all following processing steps.
     ```
 """
 
-min_break_duration: float = 15.
+min_break_duration: float = 15.0
 """
 The minimal duration (in seconds) of a data segment without any experimental
 events for it to be considered a "break". Note that the minimal duration of the
@@ -470,7 +470,7 @@ to control this behavior.
     ```
 """  # noqa : E501
 
-t_break_annot_start_after_previous_event: float = 5.
+t_break_annot_start_after_previous_event: float = 5.0
 """
 Once a break of at least
 [`min_break_duration`][mne_bids_pipeline._config.min_break_duration]
@@ -497,7 +497,7 @@ period as bad.
     ```
 """
 
-t_break_annot_stop_before_next_event: float = 5.
+t_break_annot_stop_before_next_event: float = 5.0
 """
 Similarly to how
 [`t_break_annot_start_after_previous_event`][mne_bids_pipeline._config.t_break_annot_start_after_previous_event]
@@ -580,7 +580,7 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
-mf_head_origin: Union[Literal['auto'], ArrayLike] = 'auto'
+mf_head_origin: Union[Literal["auto"], ArrayLike] = "auto"
 """
 `mf_head_origin` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
@@ -656,7 +656,7 @@ Apply interpolation to fix stimulation artifact.
     ```
 """
 
-stim_artifact_tmin: float = 0.
+stim_artifact_tmin: float = 0.0
 """
 Start time of the interpolation window in seconds.
 
@@ -687,20 +687,20 @@ The low-frequency cut-off in the highpass filtering step.
 Keep it None if no highpass filtering should be applied.
 """
 
-h_freq: Optional[float] = 40.
+h_freq: Optional[float] = 40.0
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it None if no lowpass filtering should be applied.
 """
 
-l_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+l_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
 """
 Specifies the transition bandwidth of the
 highpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
-h_trans_bandwidth: Union[float, Literal['auto']] = 'auto'
+h_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
 """
 Specifies the transition bandwidth of the
 lowpass filter. By default it's `'auto'` and uses default MNE
@@ -760,7 +760,7 @@ Pass an empty dictionary to not perform any renaming.
     ```
 """
 
-on_rename_missing_events: Literal['ignore', 'warn', 'raise'] = 'raise'
+on_rename_missing_events: Literal["ignore", "warn", "raise"] = "raise"
 """
 How to handle the situation where you specified an event to be renamed via
 `rename_events`, but this particular event is not present in the data. By
@@ -773,7 +773,7 @@ to only get a warning instead, or `'ignore'` to ignore it completely.
 # HANDLING OF REPEATED EVENTS
 # ---------------------------
 
-event_repeated: Literal['error', 'drop', 'merge'] = 'error'
+event_repeated: Literal["error", "drop", "merge"] = "error"
 """
 How to handle repeated events. We call events "repeated" if more than one event
 occurred at the exact same time point. Currently, MNE-Python cannot handle
@@ -933,12 +933,7 @@ if `None`, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[
-    Union[
-        Tuple[str, str],
-        ArbitraryContrast
-    ]
-] = []
+contrasts: Iterable[Union[Tuple[str, str], ArbitraryContrast]] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
@@ -1017,7 +1012,7 @@ in the report. If None it defaults to the current default in MNE-Python.
 #
 # Currently you cannot use both.
 
-spatial_filter: Optional[Literal['ssp', 'ica']] = None
+spatial_filter: Optional[Literal["ssp", "ica"]] = None
 """
 Whether to use a spatial filter to detect and remove artifacts. The BIDS
 Pipeline offers the use of signal-space projection (SSP) and independent
@@ -1071,7 +1066,7 @@ Whether to calculate the EOG projection vectors based on the the averaged or
 on individual EOG epochs.
 """
 
-ssp_meg: Literal['separate', 'combined', 'auto'] = 'auto'
+ssp_meg: Literal["separate", "combined", "auto"] = "auto"
 """
 Whether to compute SSP vectors for MEG channels separately (`'separate'`)
 or jointly (`'combined'`) for magnetometers and gradiomenters. When using
@@ -1082,12 +1077,7 @@ estimate projectors from all MEG sensors simultaneously. The default is
 `'separate'` otherwise.
 """
 
-ssp_reject_ecg: Optional[
-    Union[
-        Dict[str, float],
-        Literal['autoreject_global']
-    ]
-] = None
+ssp_reject_ecg: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
 """
 Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1105,12 +1095,7 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Optional[
-    Union[
-        Dict[str, float],
-        Literal['autoreject_global']
-    ]
-] = None
+ssp_reject_eog: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
 """
 Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1158,12 +1143,12 @@ manually specify peak-to-peak rejection thresholds (see examples).
     ```
 """
 
-ica_algorithm: Literal['picard', 'fastica', 'extended_infomax'] = 'picard'
+ica_algorithm: Literal["picard", "fastica", "extended_infomax"] = "picard"
 """
 The ICA algorithm to use.
 """
 
-ica_l_freq: Optional[float] = 1.
+ica_l_freq: Optional[float] = 1.0
 """
 The cutoff frequency of the high-pass filter to apply before running ICA.
 Using a relatively high cutoff like 1 Hz will remove slow drifts from the
@@ -1245,10 +1230,7 @@ false-alarm rate increases dramatically.
 # Rejection based on peak-to-peak amplitude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-reject: Optional[
-    Union[Dict[str, float],
-          Literal['autoreject_global']]
-] = None
+reject: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
@@ -1325,7 +1307,7 @@ on entire epochs ("full-epochs decoding"), and separately on each time point
 conditions.
 """
 
-decoding_epochs_tmin: Optional[float] = 0.
+decoding_epochs_tmin: Optional[float] = 0.0
 """
 The first time sample to use for full epochs decoding. By default it starts
 at 0. If None, it starts at the beginning of the epoch.
@@ -1337,7 +1319,7 @@ The last time sample to use for full epochs decoding. By default it is set
 to None so it ends at the end of the epoch.
 """
 
-decoding_metric: str = 'roc_auc'
+decoding_metric: str = "roc_auc"
 """
 The metric to use for estimating classification performance. It can be
 `'roc_auc'` or `'accuracy'` – or any other metric supported by `scikit-learn`.
@@ -1499,9 +1481,7 @@ time and frequency.
 """
 
 decoding_csp_times: Optional[ArrayLike] = np.linspace(
-    max(0, epochs_tmin),
-    epochs_tmax,
-    num=6
+    max(0, epochs_tmin), epochs_tmax, num=6
 )
 """
 The edges of the time bins to use for CSP decoding.
@@ -1523,10 +1503,10 @@ If `None`, do not perform **time-frequency** analysis, and only run CSP on
 """
 
 decoding_csp_freqs: Dict[str, ArrayLike] = {
-    'custom': [
+    "custom": [
         time_frequency_freq_min,
         (time_frequency_freq_max + time_frequency_freq_min) / 2,  # noqa: E501
-        time_frequency_freq_max
+        time_frequency_freq_max,
     ]
 }
 """
@@ -1581,7 +1561,7 @@ Baseline period to use for the time-frequency analysis. If `None`, no baseline.
     ```
 """
 
-time_frequency_baseline_mode: str = 'mean'
+time_frequency_baseline_mode: str = "mean"
 """
 Baseline mode to use for the time-frequency analysis. Can be chosen among:
 "mean" or "ratio" or "logratio" or "percent" or "zscore" or "zlogratio".
@@ -1645,7 +1625,7 @@ that is different from `fsaverage`.
     ```
 """
 
-bem_mri_images: Literal['FLASH', 'T1', 'auto'] = 'auto'
+bem_mri_images: Literal["FLASH", "T1", "auto"] = "auto"
 """
 Which types of MRI images to use when creating the BEM model.
 If `'FLASH'`, use FLASH MRI images, and raise an exception if they cannot be
@@ -1684,9 +1664,7 @@ freesurfer_verbose: bool = False
 Whether to print the complete output of FreeSurfer commands. Note that if
 `False`, no FreeSurfer output might be displayed at all!"""
 
-mri_t1_path_generator: Optional[
-    Callable[[BIDSPath], BIDSPath]
-] = None
+mri_t1_path_generator: Optional[Callable[[BIDSPath], BIDSPath]] = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
 transformation matrix that translates coordinates from MEG and EEG sensor
@@ -1746,9 +1724,7 @@ Note: Note
     ```
 """
 
-mri_landmarks_kind: Optional[
-    Callable[[BIDSPath], str]
-] = None
+mri_landmarks_kind: Optional[Callable[[BIDSPath], str]] = None
 """
 This config option allows to look for specific landmarks in the json
 sidecar file of the T1 MRI file. This can be useful when we have different
@@ -1765,7 +1741,7 @@ fiducials derived for the coregistration transformation of a given session.
     ```
 """
 
-spacing: Union[Literal['oct5', 'oct6', 'ico4', 'ico5', 'all'], int] = 'oct6'
+spacing: Union[Literal["oct5", "oct6", "ico4", "ico5", "all"], int] = "oct6"
 """
 The spacing to use. Can be `'ico#'` for a recursively subdivided
 icosahedron, `'oct#'` for a recursively subdivided octahedron,
@@ -1780,7 +1756,7 @@ mindist: float = 5
 Exclude points closer than this distance (mm) to the bounding surface.
 """
 
-loose: Union[float, Literal['auto']] = 0.2
+loose: Union[float, Literal["auto"]] = 0.2
 """
 Value that weights the source variances of the dipole components
 that are parallel (tangential) to the cortical surface. If `0`, then the
@@ -1800,7 +1776,7 @@ keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
 (see docstring for details and defaults).
 """
 
-inverse_method: Literal['MNE', 'dSPM', 'sLORETA', 'eLORETA'] = 'dSPM'
+inverse_method: Literal["MNE", "dSPM", "sLORETA", "eLORETA"] = "dSPM"
 """
 Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
@@ -1808,8 +1784,8 @@ solution.
 
 noise_cov: Union[
     Tuple[Optional[float], Optional[float]],
-    Literal['emptyroom', 'rest', 'ad-hoc'],
-    Callable[[BIDSPath], mne.Covariance]
+    Literal["emptyroom", "rest", "ad-hoc"],
+    Callable[[BIDSPath], mne.Covariance],
 ] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
@@ -1874,7 +1850,7 @@ the generated evoked data.
     ```
 """
 
-source_info_path_update: Optional[Dict[str, str]] = dict(suffix='ave')
+source_info_path_update: Optional[Dict[str, str]] = dict(suffix="ave")
 """
 When computing the forward and inverse solutions, by default the pipeline
 retrieves the `mne.Info` object from the cleaned evoked data. However, in
@@ -1892,7 +1868,7 @@ This parameter allows you to explicitly specify from which file to retrieve the
     ```
 """
 
-inverse_targets: List[Literal['evoked']] = ['evoked']
+inverse_targets: List[Literal["evoked"]] = ["evoked"]
 """
 
 On which data to apply the inverse operator. Currently, the only supported
@@ -1933,7 +1909,7 @@ Specifies how many subjects you want to process in parallel. If `1`, disables
 parallel processing.
 """
 
-parallel_backend: Literal['loky', 'dask'] = 'loky'
+parallel_backend: Literal["loky", "dask"] = "loky"
 """
 Specifies which backend to use for parallel job execution. `loky` is the
 default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
@@ -1960,7 +1936,7 @@ If `None`, will use `.dask-worker-space` inside of
 [`deriv_root`][mne_bids_pipeline._config.deriv_root].
 """
 
-dask_worker_memory_limit: str = '10G'
+dask_worker_memory_limit: str = "10G"
 """
 The maximum amount of RAM per Dask worker.
 """
@@ -1979,17 +1955,17 @@ Minimum number of samples an event must last. If the
 duration is less than this, an exception will be raised.
 """
 
-log_level: Literal['info', 'error'] = 'info'
+log_level: Literal["info", "error"] = "info"
 """
 Set the pipeline logging verbosity.
 """
 
-mne_log_level: Literal['info', 'error'] = 'error'
+mne_log_level: Literal["info", "error"] = "error"
 """
 Set the MNE-Python logging verbosity.
 """
 
-on_error: Literal['continue', 'abort', 'debug'] = 'abort'
+on_error: Literal["continue", "abort", "debug"] = "abort"
 """
 Whether to abort processing as soon as an error occurs, continue with all other
 processing steps for as long as possible, or drop you into a debugger in case
@@ -2006,7 +1982,7 @@ stored in the given directory. The default (True) will use a
 `'joblib'` subdirectory in the BIDS derivative root of the dataset.
 """
 
-memory_file_method: Literal['mtime', 'hash'] = 'mtime'
+memory_file_method: Literal["mtime", "hash"] = "mtime"
 """
 The method to use for cache invalidation (i.e., detecting changes). Using the
 "modified time" reported by the filesystem (`'mtime'`, default) is very fast
@@ -2021,7 +1997,7 @@ The verbosity to use when using memory. The default (0) does not print, while
 1 will print the function calls that will be cached. See the documentation for
 the joblib.Memory class for more information."""
 
-config_validation: Literal['raise', 'warn', 'ignore'] = 'raise'
+config_validation: Literal["raise", "warn", "ignore"] = "raise"
 """
 How strictly to validate the configuration. Errors are always raised for
 invalid entries (e.g., not providing `ch_types`). This setting controls

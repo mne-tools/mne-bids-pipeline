@@ -22,7 +22,10 @@ from mne.report import Report
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_subjects, get_sessions, get_task, get_datatype,
+    get_subjects,
+    get_sessions,
+    get_task,
+    get_datatype,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -37,22 +40,23 @@ def get_input_fnames_apply_ica(
     subject: str,
     session: Optional[str],
 ) -> dict:
-    bids_basename = BIDSPath(subject=subject,
-                             session=session,
-                             task=cfg.task,
-                             acquisition=cfg.acq,
-                             recording=cfg.rec,
-                             space=cfg.space,
-                             datatype=cfg.datatype,
-                             root=cfg.deriv_root,
-                             check=False)
+    bids_basename = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+    )
     in_files = dict()
-    in_files['ica'] = bids_basename.copy().update(
-        suffix='ica', extension='.fif')
-    in_files['components'] = bids_basename.copy().update(
-        processing='ica', suffix='components', extension='.tsv')
-    in_files['epochs'] = bids_basename.copy().update(
-        suffix='epo', extension='.fif')
+    in_files["ica"] = bids_basename.copy().update(suffix="ica", extension=".fif")
+    in_files["components"] = bids_basename.copy().update(
+        processing="ica", suffix="components", extension=".tsv"
+    )
+    in_files["epochs"] = bids_basename.copy().update(suffix="epo", extension=".fif")
     return in_files
 
 
@@ -67,42 +71,41 @@ def apply_ica(
     session: Optional[str],
     in_files: dict,
 ) -> dict:
-    bids_basename = in_files['ica'].copy().update(processing=None)
+    bids_basename = in_files["ica"].copy().update(processing=None)
     out_files = dict()
-    out_files['epochs'] = in_files['epochs'].copy().update(processing='ica')
-    out_files['report'] = bids_basename.copy().update(
-        processing='ica', suffix='report', extension='.html')
+    out_files["epochs"] = in_files["epochs"].copy().update(processing="ica")
+    out_files["report"] = bids_basename.copy().update(
+        processing="ica", suffix="report", extension=".html"
+    )
 
-    title = f'ICA artifact removal – sub-{subject}'
+    title = f"ICA artifact removal – sub-{subject}"
     if session is not None:
-        title += f', ses-{session}'
+        title += f", ses-{session}"
     if cfg.task is not None:
-        title += f', task-{cfg.task}'
+        title += f", task-{cfg.task}"
 
     # Load ICA.
     msg = f"Reading ICA: {in_files['ica']}"
     logger.debug(**gen_log_kwargs(message=msg))
-    ica = read_ica(fname=in_files.pop('ica'))
+    ica = read_ica(fname=in_files.pop("ica"))
 
     # Select ICs to remove.
-    tsv_data = pd.read_csv(in_files.pop('components'), sep='\t')
-    ica.exclude = (tsv_data
-                   .loc[tsv_data['status'] == 'bad', 'component']
-                   .to_list())
+    tsv_data = pd.read_csv(in_files.pop("components"), sep="\t")
+    ica.exclude = tsv_data.loc[tsv_data["status"] == "bad", "component"].to_list()
 
     # Load epochs to reject ICA components.
-    msg = (f'Input: {in_files["epochs"].basename}')
+    msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
-    msg = (f'Output: {out_files["epochs"].basename}')
+    msg = f'Output: {out_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
 
-    epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
     ica_reject = _get_reject(
         subject=subject,
         session=session,
         reject=cfg.ica_reject,
         ch_types=cfg.ch_types,
-        param='ica_reject',
+        param="ica_reject",
     )
     epochs.drop_bad(ica_reject)
 
@@ -111,12 +114,15 @@ def apply_ica(
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
-    msg = 'Saving reconstructed epochs after ICA.'
+    msg = "Saving reconstructed epochs after ICA."
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned.save(
-        out_files['epochs'], overwrite=True, split_naming='bids',
-        split_size=cfg._epochs_split_size)
-    _update_for_splits(out_files, 'epochs')
+        out_files["epochs"],
+        overwrite=True,
+        split_naming="bids",
+        split_size=cfg._epochs_split_size,
+    )
+    _update_for_splits(out_files, "epochs")
 
     # Compare ERP/ERF before and after ICA artifact rejection. The evoked
     # response is calculated across ALL epochs, just like ICA was run on
@@ -126,20 +132,19 @@ def apply_ica(
     # ICA easier to see. Otherwise, individual channels might just have
     # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
     # going on!
-    report = Report(
-        out_files['report'], title=title, verbose=False)
+    report = Report(out_files["report"], title=title, verbose=False)
     picks = ica.exclude if ica.exclude else None
     with _agg_backend():
         report.add_ica(
             ica=ica,
-            title='Effects of ICA cleaning',
+            title="Effects of ICA cleaning",
             inst=epochs.copy().apply_baseline(cfg.baseline),
             picks=picks,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
         )
     report.save(
-        out_files['report'],
+        out_files["report"],
         overwrite=True,
         open_browser=exec_params.interactive,
     )
@@ -148,19 +153,17 @@ def apply_ica(
 
     # Report
     if ica.exclude:
-        msg = 'Adding ICA to report.'
+        msg = "Adding ICA to report."
     else:
-        msg = 'Skipping ICA addition to report, no components marked as bad.'
+        msg = "Skipping ICA addition to report, no components marked as bad."
     logger.info(**gen_log_kwargs(message=msg))
     if ica.exclude:
         with _open_report(
-                cfg=cfg,
-                exec_params=exec_params,
-                subject=subject,
-                session=session) as report:
+            cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        ) as report:
             report.add_ica(
                 ica=ica,
-                title='ICA',
+                title="ICA",
                 inst=epochs,
                 picks=ica.exclude,
                 # TODO upstream
@@ -194,14 +197,13 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Apply ICA."""
-    if not config.spatial_filter == 'ica':
-        msg = 'Skipping …'
-        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+    if not config.spatial_filter == "ica":
+        msg = "Skipping …"
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(
-            apply_ica, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(apply_ica, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -209,7 +211,8 @@ def main(*, config: SimpleNamespace) -> None:
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
-                session=session)
+                session=session,
+            )
             for subject in get_subjects(config)
             for session in get_sessions(config)
         )

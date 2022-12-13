@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 from mkdocs.config.defaults import MkDocsConfig
 
-logger = logging.getLogger('mkdocs')
+logger = logging.getLogger("mkdocs")
 
 config_updated = False
 
@@ -19,6 +19,6 @@ def on_template_context(
     global config_updated
     if not config_updated:
         config_updated = True
-        now = context['build_date_utc'].strftime('%Y/%m/%d')
-        config.copyright = f'{config.copyright}, last updated {now}'
-        logger.info(f'Updated copyright to {config.copyright}')
+        now = context["build_date_utc"].strftime("%Y/%m/%d")
+        config.copyright = f"{config.copyright}, last updated {now}"
+        logger.info(f"Updated copyright to {config.copyright}")

@@ -11,6 +11,14 @@ _imageconfig: &imageconfig
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
+commands:
+  bash_env:
+    steps:
+      - run:
+          name: Set BASH_ENV
+          command: |
+            ./.circleci/setup_bash.sh
+
 jobs:
   setup_env:
     <<: *imageconfig
@@ -28,15 +36,7 @@ jobs:
               git remote set-url origin "$CIRCLE_REPOSITORY_URL"
             fi
       - checkout
-      - run: &bashenv
-          name: Set BASH_ENV
-          command: |
-            ./.circleci/setup_bash.sh
-      - run: &git
-          name: Configure git
-          command: |
-            git config --global user.email "ci-build@mne.tools"
-            git config --global user.name "ci-build"
+      - bash_env
       - run:
           name: Get Python running
           command: |
@@ -70,8 +70,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds000117-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds000117
           command: |
@@ -89,8 +88,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds003775-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds003775
           command: |
@@ -108,8 +106,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds001971-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds001971
           command: |
@@ -127,8 +124,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds004107-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds004107
           command: |
@@ -146,8 +142,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds000246-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds000246
           command: |
@@ -165,8 +160,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds000247-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds000247
           command: |
@@ -184,8 +178,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds000248-4
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds000248
           command: |
@@ -203,8 +196,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds001810-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds001810
           command: |
@@ -222,8 +214,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds003104-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds003104
           command: |
@@ -241,8 +232,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds003392-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds003392
           command: |
@@ -260,8 +250,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ds004229-2
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ds004229
           command: |
@@ -279,10 +268,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-eeg_matchingpennies-1
-      - run:
-          <<: *bashenv
-      - run:
-          <<: *git
+      - bash_env
       - run:
           name: Get eeg_matchingpennies
           command: |
@@ -300,8 +286,7 @@ jobs:
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Get ERP_CORE
           command: |
@@ -316,8 +301,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000117-2
@@ -349,8 +333,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds003775-2
@@ -382,8 +365,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds001971-2
@@ -415,8 +397,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds004107-2
@@ -448,8 +429,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000246-2
@@ -484,8 +464,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000247-2
@@ -517,8 +496,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -554,8 +532,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -589,8 +566,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -611,8 +587,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -634,8 +609,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -656,8 +630,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds000248-4
@@ -689,8 +662,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds001810-2
@@ -722,8 +694,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds003104-2
@@ -755,8 +726,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds003392-2
@@ -792,8 +762,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ds004229-2
@@ -829,8 +798,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-eeg_matchingpennies-1
@@ -862,8 +830,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -903,8 +870,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -939,8 +905,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -975,8 +940,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -1011,8 +975,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -1047,8 +1010,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -1083,8 +1045,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - restore_cache:
           keys:
             - data-cache-ERP_CORE-1
@@ -1119,8 +1080,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           name: Build documentation
           command: |
@@ -1145,10 +1105,7 @@ jobs:
             - ".git"
       - attach_workspace:
           at: ~/
-      - run:
-          <<: *git
-      - run:
-          <<: *bashenv
+      - bash_env
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist
@@ -1160,6 +1117,8 @@ jobs:
           name: Deploy docs to gh-pages branch
           # https://github.com/jimporter/mike
           command: |
+            git config --global user.email "ci-build@mne.tools"
+            git config --global user.name "ci-build"
             # Arguments used in all mike commands
             ARGS="--config-file docs/mkdocs.yml"
             # First we need to actually check out our current version of

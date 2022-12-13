@@ -50,8 +50,7 @@ tests = [
     "pytest-cov",
     "psutil",
     "datalad",
-    "flake8",
-    "flake8-pyproject",
+    "ruff",
     "mkdocs",
     "mkdocs-material",
     "mkdocs-material-extensions",
@@ -106,5 +105,5 @@ testpaths = [
 ]
 junit_family = "xunit2"
 
-[tool.flake8]
-exclude = "**/freesurfer/contrib,docs/,dist/,build/"
+[tool.ruff]
+exclude = ["**/freesurfer/contrib", "docs/", "dist/" , "build/"]

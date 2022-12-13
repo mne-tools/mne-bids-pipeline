@@ -33,9 +33,11 @@ check:
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
 
-flake:
-	flake8
-	@echo "flake8 passed"
+flake: ruff
+
+ruff:
+	ruff .
+	@echo "ruff passed"
 
 codespell:  # running manually; auto-fix spelling mistakes
 	@codespell --write-changes $(CODESPELL_DIRS)

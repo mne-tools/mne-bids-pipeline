@@ -12,8 +12,14 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_fs_subjects_dir, get_subjects, sanitize_cond_name, get_fs_subject,
-    get_task, get_datatype, get_sessions, get_all_contrasts,
+    get_fs_subjects_dir,
+    get_subjects,
+    sanitize_cond_name,
+    get_fs_subject,
+    get_task,
+    get_datatype,
+    get_sessions,
+    get_all_contrasts,
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
@@ -22,16 +28,18 @@ from ..._run import failsafe_run, save_logs
 
 
 def morph_stc(cfg, subject, fs_subject, session=None):
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+    )
 
     morphed_stcs = []
 
@@ -47,19 +55,24 @@ def morph_stc(cfg, subject, fs_subject, session=None):
         method = cfg.inverse_method
         cond_str = sanitize_cond_name(condition)
         inverse_str = method
-        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph2fsaverage'
+        hemi_str = "hemi"  # MNE will auto-append '-lh' and '-rh'.
+        morph_str = "morph2fsaverage"
 
         fname_stc = bids_path.copy().update(
-            suffix=f'{cond_str}+{inverse_str}+{hemi_str}')
+            suffix=f"{cond_str}+{inverse_str}+{hemi_str}"
+        )
         fname_stc_fsaverage = bids_path.copy().update(
-            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
+            suffix=f"{cond_str}+{inverse_str}+{morph_str}+{hemi_str}"
+        )
 
         stc = mne.read_source_estimate(fname_stc)
 
         morph = mne.compute_source_morph(
-            stc, subject_from=fs_subject, subject_to='fsaverage',
-            subjects_dir=cfg.fs_subjects_dir)
+            stc,
+            subject_from=fs_subject,
+            subject_to="fsaverage",
+            subjects_dir=cfg.fs_subjects_dir,
+        )
         stc_fsaverage = morph.apply(stc)
         stc_fsaverage.save(fname_stc_fsaverage, overwrite=True)
         morphed_stcs.append(stc_fsaverage)
@@ -76,17 +89,19 @@ def run_average(
     session: Optional[str],
     mean_morphed_stcs: List[mne.SourceEstimate],
 ):
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         processing=cfg.proc,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        processing=cfg.proc,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+    )
 
     if isinstance(cfg.conditions, dict):
         conditions = list(cfg.conditions.keys())
@@ -97,11 +112,12 @@ def run_average(
         method = cfg.inverse_method
         cond_str = sanitize_cond_name(condition)
         inverse_str = method
-        hemi_str = 'hemi'  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = 'morph2fsaverage'
+        hemi_str = "hemi"  # MNE will auto-append '-lh' and '-rh'.
+        morph_str = "morph2fsaverage"
 
         fname_stc_avg = bids_path.copy().update(
-            suffix=f'{cond_str}+{inverse_str}+{morph_str}+{hemi_str}')
+            suffix=f"{cond_str}+{inverse_str}+{morph_str}+{hemi_str}"
+        )
         stc.save(fname_stc_avg, overwrite=True)
 
 
@@ -148,13 +164,13 @@ def run_group_average_source(
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(cfg))
 
     with get_parallel_backend(exec_params):
-        parallel, run_func = parallel_func(
-            morph_stc, exec_params=exec_params)
+        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
         all_morphed_stcs = parallel(
             run_func(
-                cfg=cfg, subject=subject,
+                cfg=cfg,
+                subject=subject,
                 fs_subject=get_fs_subject(config=cfg, subject=subject),
-                session=session
+                session=session,
             )
             for subject in get_subjects(cfg)
             for session in get_sessions(cfg)
@@ -172,7 +188,7 @@ def run_group_average_source(
             cfg=cfg,
             session=session,
             subject=subject,
-            mean_morphed_stcs=mean_morphed_stcs
+            mean_morphed_stcs=mean_morphed_stcs,
         )
         run_report_average_source(
             cfg=cfg,
@@ -184,8 +200,8 @@ def run_group_average_source(
 
 def main(*, config: SimpleNamespace) -> None:
     if not config.run_source_estimation:
-        msg = 'Skipping, run_source_estimation is set to False …'
-        logger.info(**gen_log_kwargs(message=msg, emoji='skip'))
+        msg = "Skipping, run_source_estimation is set to False …"
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     log = run_group_average_source(
@@ -193,6 +209,6 @@ def main(*, config: SimpleNamespace) -> None:
             config=config,
         ),
         exec_params=config.exec_params,
-        subject='average',
+        subject="average",
     )
     save_logs(config=config, logs=[log])

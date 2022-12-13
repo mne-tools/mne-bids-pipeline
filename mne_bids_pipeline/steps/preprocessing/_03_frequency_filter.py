@@ -21,11 +21,17 @@ from typing import Optional, Union, Literal
 import mne
 
 from ..._config_utils import (
-    get_sessions, get_runs, get_subjects, get_task, get_datatype,
+    get_sessions,
+    get_runs,
+    get_subjects,
+    get_task,
+    get_datatype,
     get_mf_reference_run,
 )
 from ..._import_data import (
-    import_experimental_data, import_er_data, _get_raw_paths,
+    import_experimental_data,
+    import_er_data,
+    _get_raw_paths,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -41,7 +47,7 @@ def get_input_fnames_frequency_filter(
     run: str,
 ) -> dict:
     """Get paths of files required by filter_data function."""
-    kind = 'sss' if cfg.use_maxwell_filter else 'orig'
+    kind = "sss" if cfg.use_maxwell_filter else "orig"
     return _get_raw_paths(
         cfg=cfg,
         subject=subject,
@@ -59,33 +65,36 @@ def filter(
     run: str,
     l_freq: Optional[float],
     h_freq: Optional[float],
-    l_trans_bandwidth: Union[float, Literal['auto']],
-    h_trans_bandwidth: Union[float, Literal['auto']],
-    data_type: Literal['experimental', 'empty-room', 'resting-state']
+    l_trans_bandwidth: Union[float, Literal["auto"]],
+    h_trans_bandwidth: Union[float, Literal["auto"]],
+    data_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
-        msg = (f'High-pass filtering {data_type} data; lower bound: '
-               f'{l_freq} Hz')
+        msg = f"High-pass filtering {data_type} data; lower bound: " f"{l_freq} Hz"
     elif l_freq is None and h_freq is not None:
-        msg = (f'Low-pass filtering {data_type} data; upper bound: '
-               f'{h_freq} Hz')
+        msg = f"Low-pass filtering {data_type} data; upper bound: " f"{h_freq} Hz"
     elif l_freq is not None and h_freq is not None:
-        msg = (f'Band-pass filtering {data_type} data; range: '
-               f'{l_freq} – {h_freq} Hz')
+        msg = f"Band-pass filtering {data_type} data; range: " f"{l_freq} – {h_freq} Hz"
     else:
-        msg = (f'Not applying frequency filtering to {data_type} data.')
+        msg = f"Not applying frequency filtering to {data_type} data."
 
     logger.info(**gen_log_kwargs(message=msg))
 
     if l_freq is None and h_freq is None:
         return
 
-    raw.filter(l_freq=l_freq, h_freq=h_freq,
-               l_trans_bandwidth=l_trans_bandwidth,
-               h_trans_bandwidth=h_trans_bandwidth,
-               filter_length='auto', phase='zero', fir_window='hamming',
-               fir_design='firwin', n_jobs=1)
+    raw.filter(
+        l_freq=l_freq,
+        h_freq=h_freq,
+        l_trans_bandwidth=l_trans_bandwidth,
+        h_trans_bandwidth=h_trans_bandwidth,
+        filter_length="auto",
+        phase="zero",
+        fir_window="hamming",
+        fir_design="firwin",
+        n_jobs=1,
+    )
 
 
 def resample(
@@ -94,14 +103,14 @@ def resample(
     session: Optional[str],
     run: str,
     sfreq: float,
-    data_type: Literal['experimental', 'empty-room', 'resting-state']
+    data_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     if not sfreq:
         return
 
-    msg = f'Resampling {data_type} data to {sfreq:.1f} Hz'
+    msg = f"Resampling {data_type} data to {sfreq:.1f} Hz"
     logger.info(**gen_log_kwargs(message=msg))
-    raw.resample(sfreq, npad='auto')
+    raw.resample(sfreq, npad="auto")
 
 
 @failsafe_run(
@@ -120,11 +129,11 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_run-{run}"
     bids_path = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f'{in_key}-bads', None)
+    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
 
     # Create paths for reading and writing the filtered data.
     if cfg.use_maxwell_filter:
-        msg = f'Reading: {bids_path.basename}'
+        msg = f"Reading: {bids_path.basename}"
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(bids_path)
     else:
@@ -136,21 +145,39 @@ def filter_data(
         )
 
     out_files[in_key] = bids_path.copy().update(
-        root=cfg.deriv_root, processing='filt', extension='.fif',
-        suffix='raw', split=None)
+        root=cfg.deriv_root,
+        processing="filt",
+        extension=".fif",
+        suffix="raw",
+        split=None,
+    )
     raw.load_data()
     filter(
-        raw=raw, subject=subject, session=session, run=run,
-        h_freq=cfg.h_freq, l_freq=cfg.l_freq,
+        raw=raw,
+        subject=subject,
+        session=session,
+        run=run,
+        h_freq=cfg.h_freq,
+        l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        data_type='experimental',
+        data_type="experimental",
     )
-    resample(raw=raw, subject=subject, session=session, run=run,
-             sfreq=cfg.raw_resample_sfreq, data_type='experimental')
+    resample(
+        raw=raw,
+        subject=subject,
+        session=session,
+        run=run,
+        sfreq=cfg.raw_resample_sfreq,
+        data_type="experimental",
+    )
 
-    raw.save(out_files[in_key], overwrite=True, split_naming='bids',
-             split_size=cfg._raw_split_size)
+    raw.save(
+        out_files[in_key],
+        overwrite=True,
+        split_naming="bids",
+        split_size=cfg._raw_split_size,
+    )
     _update_for_splits(out_files, in_key)
     if exec_params.interactive:
         # Plot raw data and power spectral density.
@@ -160,20 +187,19 @@ def filter_data(
 
     del raw
 
-    nice_names = dict(rest='resting-state', noise='empty-room')
-    for task in ('rest', 'noise'):
-        in_key = f'raw_{task}'
+    nice_names = dict(rest="resting-state", noise="empty-room")
+    for task in ("rest", "noise"):
+        in_key = f"raw_{task}"
         if in_key not in in_files:
             continue
         data_type = nice_names[task]
         bids_path_noise = in_files.pop(in_key)
-        bids_path_noise_bads = in_files.pop(f'{in_key}-bads', None)
+        bids_path_noise_bads = in_files.pop(f"{in_key}-bads", None)
         if cfg.use_maxwell_filter:
-            msg = (f'Reading {data_type} recording: '
-                   f'{bids_path_noise.basename}')
+            msg = f"Reading {data_type} recording: " f"{bids_path_noise.basename}"
             logger.info(**gen_log_kwargs(message=msg, run=task))
             raw_noise = mne.io.read_raw_fif(bids_path_noise)
-        elif data_type == 'empty-room':
+        elif data_type == "empty-room":
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
@@ -190,24 +216,41 @@ def filter_data(
                 bids_path_bads_in=bids_path_noise_bads,
                 data_is_rest=True,
             )
-        out_files[in_key] = \
-            bids_path.copy().update(
-                root=cfg.deriv_root, processing='filt', extension='.fif',
-                suffix='raw', split=None, task=task, run=None)
+        out_files[in_key] = bids_path.copy().update(
+            root=cfg.deriv_root,
+            processing="filt",
+            extension=".fif",
+            suffix="raw",
+            split=None,
+            task=task,
+            run=None,
+        )
 
         raw_noise.load_data()
         filter(
-            raw=raw_noise, subject=subject, session=session, run=task,
-            h_freq=cfg.h_freq, l_freq=cfg.l_freq,
+            raw=raw_noise,
+            subject=subject,
+            session=session,
+            run=task,
+            h_freq=cfg.h_freq,
+            l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth,
             data_type=data_type,
         )
-        resample(raw=raw_noise, subject=subject, session=session, run=task,
-                 sfreq=cfg.raw_resample_sfreq, data_type=data_type)
+        resample(
+            raw=raw_noise,
+            subject=subject,
+            session=session,
+            run=task,
+            sfreq=cfg.raw_resample_sfreq,
+            data_type=data_type,
+        )
 
         raw_noise.save(
-            out_files[in_key], overwrite=True, split_naming='bids',
+            out_files[in_key],
+            overwrite=True,
+            split_naming="bids",
             split_size=cfg._raw_split_size,
         )
         _update_for_splits(out_files, in_key)
@@ -220,19 +263,16 @@ def filter_data(
     assert len(in_files) == 0, in_files.keys()
 
     with _open_report(
-            cfg=cfg,
-            exec_params=exec_params,
-            subject=subject,
-            session=session,
-            run=run) as report:
-        msg = 'Adding filtered raw data to report'
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+    ) as report:
+        msg = "Adding filtered raw data to report"
         logger.info(**gen_log_kwargs(message=msg))
         for fname in out_files.values():
             _add_raw(
                 cfg=cfg,
                 report=report,
                 bids_path_in=fname,
-                title='Raw (filtered)',
+                title="Raw (filtered)",
             )
 
     return out_files
@@ -291,8 +331,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run filter."""
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(
-            filter_data, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(filter_data, exec_params=config.exec_params)
 
         logs = parallel(
             run_func(

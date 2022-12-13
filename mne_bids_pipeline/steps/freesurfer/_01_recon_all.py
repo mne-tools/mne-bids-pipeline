@@ -14,15 +14,17 @@ from ..._config_utils import get_fs_subjects_dir, get_subjects
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
 
-fs_bids_app = Path(__file__).parent / 'contrib' / 'run.py'
+fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 
 
 def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
 
     if subj_dir.exists():
-        msg = (f"Subject {subject} is already present. Please delete the "
-               f"directory if you want to recompute.")
+        msg = (
+            f"Subject {subject} is already present. Please delete the "
+            f"directory if you want to recompute."
+        )
         logger.info(**gen_log_kwargs(message=msg))
         return
     msg = (
@@ -32,7 +34,7 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
     logger.info(**gen_log_kwargs(message=msg))
 
     env = os.environ
-    if 'FREESURFER_HOME' not in env:
+    if "FREESURFER_HOME" not in env:
         raise RuntimeError("FreeSurfer is not available.")
 
     license_file = Path(f"{env['FREESURFER_HOME']}/license.txt")
@@ -45,10 +47,13 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
         f"{sys.executable}",
         f"{fs_bids_app}",
         f"{root_dir}",
-        f"{subjects_dir}", "participant",
-        "--n_cpus=2", "--stages=all", "--skip_bids_validator",
+        f"{subjects_dir}",
+        "participant",
+        "--n_cpus=2",
+        "--stages=all",
+        "--skip_bids_validator",
         f"--license_file={license_file}",
-        f"--participant_label={subject}"
+        f"--participant_label={subject}",
     ]
     logger.debug("Running: " + " ".join(cmd))
     run_subprocess(cmd, env=env, verbose=logger.level)
@@ -82,13 +87,14 @@ def main(*, config) -> None:
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(
-            run_recon, exec_params=config.exec_params)
-        parallel(run_func(root_dir, subject, fs_bids_app, subjects_dir)
-                 for subject in subjects)
+        parallel, run_func = parallel_func(run_recon, exec_params=config.exec_params)
+        parallel(
+            run_func(root_dir, subject, fs_bids_app, subjects_dir)
+            for subject in subjects
+        )
 
         # Handle fsaverage
-        fsaverage_dir = subjects_dir / 'fsaverage'
+        fsaverage_dir = subjects_dir / "fsaverage"
         if fsaverage_dir.exists():
             if fsaverage_dir.is_symlink():
                 fsaverage_dir.unlink()
@@ -96,5 +102,6 @@ def main(*, config) -> None:
                 shutil.rmtree(fsaverage_dir)
 
         env = os.environ
-        shutil.copytree(f"{env['FREESURFER_HOME']}/subjects/fsaverage",
-                        subjects_dir / 'fsaverage')
+        shutil.copytree(
+            f"{env['FREESURFER_HOME']}/subjects/fsaverage", subjects_dir / "fsaverage"
+        )

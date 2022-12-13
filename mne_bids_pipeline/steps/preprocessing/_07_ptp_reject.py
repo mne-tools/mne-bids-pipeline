@@ -15,7 +15,10 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions, get_subjects, get_task, get_datatype,
+    get_sessions,
+    get_subjects,
+    get_task,
+    get_datatype,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -30,21 +33,22 @@ def get_input_fnames_drop_ptp(
     subject: str,
     session: Optional[str],
 ) -> dict:
-    bids_path = BIDSPath(subject=subject,
-                         session=session,
-                         task=cfg.task,
-                         acquisition=cfg.acq,
-                         run=None,
-                         recording=cfg.rec,
-                         space=cfg.space,
-                         suffix='epo',
-                         extension='.fif',
-                         datatype=cfg.datatype,
-                         root=cfg.deriv_root,
-                         check=False)
+    bids_path = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        suffix="epo",
+        extension=".fif",
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+    )
     in_files = dict()
-    in_files['epochs'] = bids_path.copy().update(
-        processing=cfg.spatial_filter)
+    in_files["epochs"] = bids_path.copy().update(processing=cfg.spatial_filter)
     return in_files
 
 
@@ -60,46 +64,47 @@ def drop_ptp(
     in_files: dict,
 ) -> dict:
     out_files = dict()
-    out_files['epochs'] = in_files['epochs'].copy().update(processing='clean')
+    out_files["epochs"] = in_files["epochs"].copy().update(processing="clean")
     msg = f'Input:  {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
 
     # Get rejection parameters and drop bad epochs
-    epochs = mne.read_epochs(in_files.pop('epochs'), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
     reject = _get_reject(
         subject=subject,
         session=session,
         reject=cfg.reject,
         ch_types=cfg.ch_types,
-        param='reject',
+        param="reject",
         epochs=epochs,
     )
-    if cfg.spatial_filter == 'ica':
+    if cfg.spatial_filter == "ica":
         ica_reject = _get_reject(
             subject=subject,
             session=session,
             reject=cfg.ica_reject,
             ch_types=cfg.ch_types,
-            param='ica_reject',
+            param="ica_reject",
         )
     else:
         ica_reject = None
 
     if ica_reject is not None:
         for ch_type, threshold in ica_reject.items():
-            if (ch_type in reject and
-                    threshold < reject[ch_type]):
+            if ch_type in reject and threshold < reject[ch_type]:
                 # This can only ever happen in case of
                 # reject = 'autoreject_global'
-                msg = (f'Adjusting PTP rejection threshold proposed by '
-                       f'autoreject, as it is greater than ica_reject: '
-                       f'{ch_type}: {reject[ch_type]} -> {threshold}')
+                msg = (
+                    f"Adjusting PTP rejection threshold proposed by "
+                    f"autoreject, as it is greater than ica_reject: "
+                    f"{ch_type}: {reject[ch_type]} -> {threshold}"
+                )
                 logger.info(**gen_log_kwargs(message=msg))
                 reject[ch_type] = threshold
 
-    msg = f'Using PTP rejection thresholds: {reject}'
+    msg = f"Using PTP rejection thresholds: {reject}"
     logger.info(**gen_log_kwargs(message=msg))
 
     n_epochs_before_reject = len(epochs)
@@ -109,24 +114,31 @@ def drop_ptp(
     n_epochs_after_reject = len(epochs)
 
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
-        msg = ('More than 50% of all epochs rejected. Please check the '
-               'rejection thresholds.')
+        msg = (
+            "More than 50% of all epochs rejected. Please check the "
+            "rejection thresholds."
+        )
         logger.warning(**gen_log_kwargs(message=msg))
     elif n_epochs_after_reject == 0:
-        raise RuntimeError('No epochs remaining after peak-to-peak-based '
-                           'rejection. Cannot continue.')
+        raise RuntimeError(
+            "No epochs remaining after peak-to-peak-based "
+            "rejection. Cannot continue."
+        )
 
-    msg = 'Saving cleaned, baseline-corrected epochs …'
+    msg = "Saving cleaned, baseline-corrected epochs …"
 
     epochs.apply_baseline(cfg.baseline)
     epochs.save(
-        out_files['epochs'], overwrite=True, split_naming='bids',
-        split_size=cfg._epochs_split_size)
-    _update_for_splits(out_files, 'epochs')
+        out_files["epochs"],
+        overwrite=True,
+        split_naming="bids",
+        split_size=cfg._epochs_split_size,
+    )
+    _update_for_splits(out_files, "epochs")
     assert len(in_files) == 0, in_files.keys()
 
     # Report
-    msg = 'Adding cleaned epochs to report.'
+    msg = "Adding cleaned epochs to report."
     logger.info(**gen_log_kwargs(message=msg))
     # Add PSD plots for 30s of data or all epochs if we have less available
     if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
@@ -134,13 +146,11 @@ def drop_ptp(
     else:
         psd = 30
     with _open_report(
-            cfg=cfg,
-            exec_params=exec_params,
-            subject=subject,
-            session=session) as report:
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+    ) as report:
         report.add_epochs(
             epochs=epochs,
-            title='Epochs: after cleaning',
+            title="Epochs: after cleaning",
             psd=psd,
             drop_log_ignore=(),
             replace=True,
@@ -173,8 +183,7 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
-    parallel, run_func = parallel_func(
-        drop_ptp, exec_params=config.exec_params)
+    parallel, run_func = parallel_func(drop_ptp, exec_params=config.exec_params)
 
     with get_parallel_backend(config.exec_params):
         logs = parallel(
@@ -184,7 +193,8 @@ def main(*, config: SimpleNamespace) -> None:
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
-                session=session)
+                session=session,
+            )
             for subject in get_subjects(config)
             for session in get_sessions(config)
         )

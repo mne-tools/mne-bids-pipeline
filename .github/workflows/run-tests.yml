@@ -15,9 +15,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
-    - name: Install flake8 and codespell
-      run: pip install flake8 flake8-pyproject codespell tomli
-    - run: make flake
+    - name: Install ruff and codespell
+      run: pip install ruff codespell tomli
+    - run: make ruff
     - run: make codespell-error
   check-doc:
     name: Doc consistency

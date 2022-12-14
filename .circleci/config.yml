@@ -18,6 +18,13 @@ commands:
           name: Set BASH_ENV
           command: |
             ./.circleci/setup_bash.sh
+  gitconfig:
+    steps:
+      - run:
+          name: Set up git config
+          command: |
+            git config --global user.email "ci-build@mne.tools"
+            git config --global user.name "ci-build"
 
 jobs:
   setup_env:
@@ -269,6 +276,7 @@ jobs:
           keys:
             - data-cache-eeg_matchingpennies-1
       - bash_env
+      - gitconfig  # email address is needed for datalad
       - run:
           name: Get eeg_matchingpennies
           command: |
@@ -1106,6 +1114,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - bash_env
+      - gitconfig
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist
@@ -1117,8 +1126,6 @@ jobs:
           name: Deploy docs to gh-pages branch
           # https://github.com/jimporter/mike
           command: |
-            git config --global user.email "ci-build@mne.tools"
-            git config --global user.name "ci-build"
             # Arguments used in all mike commands
             ARGS="--config-file docs/mkdocs.yml"
             # First we need to actually check out our current version of

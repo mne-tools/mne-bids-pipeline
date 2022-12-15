@@ -1,1 +1,4 @@
-::: mne_bids_pipeline._config.interpolate_bads_grand_average
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - interpolate_bads_grand_average

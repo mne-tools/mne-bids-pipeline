@@ -1,16 +1,19 @@
-::: mne_bids_pipeline._config.contrasts
-::: mne_bids_pipeline._config.report_evoked_n_time_points
-::: mne_bids_pipeline._config.decode
-::: mne_bids_pipeline._config.decoding_epochs_tmin
-::: mne_bids_pipeline._config.decoding_epochs_tmax
-::: mne_bids_pipeline._config.decoding_metric
-::: mne_bids_pipeline._config.decoding_n_splits
-::: mne_bids_pipeline._config.decoding_time_generalization
-::: mne_bids_pipeline._config.decoding_time_generalization_decim
-::: mne_bids_pipeline._config.decoding_csp
-::: mne_bids_pipeline._config.decoding_csp_times
-::: mne_bids_pipeline._config.decoding_csp_freqs
-::: mne_bids_pipeline._config.n_boot
-::: mne_bids_pipeline._config.cluster_forming_t_threshold
-::: mne_bids_pipeline._config.cluster_n_permutations
-::: mne_bids_pipeline._config.cluster_permutation_p_threshold
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - contrasts
+        - report_evoked_n_time_points
+        - decode
+        - decoding_epochs_tmin
+        - decoding_epochs_tmax
+        - decoding_metric
+        - decoding_n_splits
+        - decoding_time_generalization
+        - decoding_time_generalization_decim
+        - decoding_csp
+        - decoding_csp_times
+        - decoding_csp_freqs
+        - n_boot
+        - cluster_forming_t_threshold
+        - cluster_n_permutations
+        - cluster_permutation_p_threshold

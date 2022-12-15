@@ -4,6 +4,9 @@
     You can do a quick average of blink data and check what the amplitude looks
     like.
 
-::: mne_bids_pipeline._config.reject
-::: mne_bids_pipeline._config.reject_tmin
-::: mne_bids_pipeline._config.reject_tmax
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - reject
+        - reject_tmin
+        - reject_tmax

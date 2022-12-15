@@ -1,1 +1,4 @@
-::: mne_bids_pipeline._config.run_source_estimation
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - run_source_estimation

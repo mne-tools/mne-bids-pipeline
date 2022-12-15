@@ -1,5 +1,4 @@
-"""Default settings for data processing and analysis.
-"""
+# Default settings for data processing and analysis.
 
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal
 

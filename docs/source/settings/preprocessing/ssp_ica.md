@@ -1,18 +1,21 @@
-::: mne_bids_pipeline._config.spatial_filter
-::: mne_bids_pipeline._config.min_ecg_epochs
-::: mne_bids_pipeline._config.min_eog_epochs
-::: mne_bids_pipeline._config.n_proj_eog
-::: mne_bids_pipeline._config.n_proj_ecg
-::: mne_bids_pipeline._config.ssp_meg
-::: mne_bids_pipeline._config.ecg_proj_from_average
-::: mne_bids_pipeline._config.eog_proj_from_average
-::: mne_bids_pipeline._config.ssp_reject_eog
-::: mne_bids_pipeline._config.ssp_reject_ecg
-::: mne_bids_pipeline._config.ica_reject
-::: mne_bids_pipeline._config.ica_algorithm
-::: mne_bids_pipeline._config.ica_l_freq
-::: mne_bids_pipeline._config.ica_max_iterations
-::: mne_bids_pipeline._config.ica_n_components
-::: mne_bids_pipeline._config.ica_decim
-::: mne_bids_pipeline._config.ica_ctps_ecg_threshold
-::: mne_bids_pipeline._config.ica_eog_threshold
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - spatial_filter
+        - min_ecg_epochs
+        - min_eog_epochs
+        - n_proj_eog
+        - n_proj_ecg
+        - ssp_meg
+        - ecg_proj_from_average
+        - eog_proj_from_average
+        - ssp_reject_eog
+        - ssp_reject_ecg
+        - ica_reject
+        - ica_algorithm
+        - ica_l_freq
+        - ica_max_iterations
+        - ica_n_components
+        - ica_decim
+        - ica_ctps_ecg_threshold
+        - ica_eog_threshold

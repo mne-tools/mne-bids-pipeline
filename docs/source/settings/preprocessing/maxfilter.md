@@ -1,6 +1,9 @@
-::: mne_bids_pipeline._config.use_maxwell_filter
-::: mne_bids_pipeline._config.mf_st_duration
-::: mne_bids_pipeline._config.mf_head_origin
-::: mne_bids_pipeline._config.mf_reference_run
-::: mne_bids_pipeline._config.mf_cal_fname
-::: mne_bids_pipeline._config.mf_ctc_fname
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - use_maxwell_filter
+        - mf_st_duration
+        - mf_head_origin
+        - mf_reference_run
+        - mf_cal_fname
+        - mf_ctc_fname

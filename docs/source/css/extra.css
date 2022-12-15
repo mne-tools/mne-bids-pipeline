@@ -80,6 +80,6 @@ td p {
 }
 
 /* Hide "module-attribute" annotation */
-span.doc-properties {
+.doc-label-module-attribute {
   display: none;
 }

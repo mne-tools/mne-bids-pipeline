@@ -1,3 +1,8 @@
+---
+tags:
+  - inverse-solution
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

@@ -1,3 +1,10 @@
+---
+tags:
+  - inverse-solution
+  - bem
+  - freesurfer
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

@@ -1,3 +1,9 @@
+---
+tags:
+  - inverse-solution
+  - forward-model
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

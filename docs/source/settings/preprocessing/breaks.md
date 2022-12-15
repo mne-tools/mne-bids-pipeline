@@ -1,3 +1,11 @@
+---
+tags:
+  - preprocessing
+  - artifact-removal
+  - raw
+  - events
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

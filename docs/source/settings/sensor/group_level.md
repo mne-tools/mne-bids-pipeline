@@ -1,3 +1,9 @@
+---
+tags:
+  - evoked
+  - group-level
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

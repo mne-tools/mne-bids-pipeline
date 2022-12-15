@@ -1,3 +1,10 @@
+---
+tags:
+  - preprocessing
+  - artifact-removal
+  - epochs
+---
+
 ???+ info "Good Practice / Advice"
     Have a look at your raw data and train yourself to detect a blink, a heart
     beat and an eye movement.

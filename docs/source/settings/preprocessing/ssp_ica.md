@@ -1,3 +1,13 @@
+---
+tags:
+  - preprocessing
+  - artifact-removal
+  - raw
+  - epochs
+  - ssp
+  - ica
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

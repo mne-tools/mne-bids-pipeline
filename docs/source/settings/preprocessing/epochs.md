@@ -1,3 +1,12 @@
+---
+tags:
+  - preprocessing
+  - epochs
+  - events
+  - metadata
+  - resting-state
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

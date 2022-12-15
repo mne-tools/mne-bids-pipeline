@@ -63,7 +63,7 @@ nav:
             - Artifact removal:
                 - Stimulation artifact: settings/preprocessing/stim_artifact.md
                 - SSP & ICA: settings/preprocessing/ssp_ica.md
-                - Amplitude-based: settings/preprocessing/artifacts.md
+                - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
             - Statistics: settings/sensor/statistics.md
             - Time-frequency analysis: settings/sensor/time_freq.md
@@ -93,10 +93,13 @@ nav:
         - examples/ds001971.md
         - examples/ERP_CORE.md
     - What's new: changes.md
+    - Tags: tags.md
 
 plugins:
     - search
     - macros
+    - tags:
+        tags_file: tags.md
     - include-markdown
     - mkdocstrings:
         default_handler: python

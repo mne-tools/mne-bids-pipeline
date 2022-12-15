@@ -1,3 +1,10 @@
+---
+tags:
+  - preprocessing
+  - maxwell-filter
+  - raw
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

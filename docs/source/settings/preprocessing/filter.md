@@ -1,3 +1,10 @@
+---
+tags:
+  - preprocessing
+  - frequency-filter
+  - raw
+---
+
 It is typically better to set your filtering properties on the raw data so
 as to avoid what we call border (or edge) effects.
 

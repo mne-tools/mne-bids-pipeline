@@ -1,3 +1,10 @@
+---
+tags:
+  - epochs
+  - evoked
+  - time-frequency
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

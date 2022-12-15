@@ -1,3 +1,11 @@
+---
+tags:
+  - epochs
+  - evoked
+  - contrast
+  - decoding
+---
+
 ::: mne_bids_pipeline._config
     options:
       members:

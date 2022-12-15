@@ -1,3 +1,10 @@
+---
+tags:
+  - preprocessing
+  - raw
+  - bad-channels
+---
+
 !!! warning
     This functionality will soon be removed from the pipeline, and
     will be integrated into MNE-BIDS.

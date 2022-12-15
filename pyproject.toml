@@ -52,7 +52,7 @@ tests = [
     "datalad",
     "ruff",
     "mkdocs",
-    "mkdocs-material",
+    "mkdocs-material >= 8.5.11",
     "mkdocs-material-extensions",
     "mkdocs-macros-plugin",
     "mkdocs-include-markdown-plugin",

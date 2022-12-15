@@ -100,6 +100,8 @@ plugins:
         default_handler: python
         handlers:
             python:
+                paths:  # Where to find the packages and modules to import
+                    - ../
                 options:
                     show_source: true
                     show_if_no_docstring: false

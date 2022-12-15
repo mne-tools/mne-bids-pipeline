@@ -7,6 +7,8 @@ site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
+watch:  # Additional directories to watch for changes during `mkdocs serve`
+    - ../mne_bids_pipeline
 theme:
     name: material
     logo: assets/mne.svg
@@ -111,9 +113,6 @@ plugins:
                     line_length: 80  # needed for long param entries
                     show_bases: false
                     docstring_style: numpy
-        watch:
-            - .
-            - ./mne_bids_pipeline/_config.py
     - mike:
         canonical_version: stable
 markdown_extensions:

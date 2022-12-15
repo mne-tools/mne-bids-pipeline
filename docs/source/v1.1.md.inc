@@ -2,7 +2,7 @@
 
 [//]: # (### New features & enhancements)
 
-[//]: # (- Whatever ({{ gh(000) }} by {{ authors.whoever }} )
+[//]: # (- Whatever (#000 by {{ authors.whoever }} )
 
 [//]: # (### Behavior changes)
 
@@ -10,6 +10,6 @@
 
 - Code quality now checked by [ruff](https://github.com/charliermarsh/ruff)
   and [black](https://black.readthedocs.io/en/stable/)
-  ({{ gh(689) }}, {{ gh(690) }}, and {{ gh(691) }} by {{ authors.larsoner }} )
+  (#689, #690, and #691 by {{ authors.larsoner }})
 
 [//]: # (### Bug fixes)

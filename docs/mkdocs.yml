@@ -124,5 +124,9 @@ markdown_extensions:
         emoji_index: !!python/name:materialx.emoji.twemoji
         emoji_generator: !!python/name:materialx.emoji.to_svg
     - pymdownx.superfences
+    - pymdownx.magiclink:  # turns e.g. GitHub PR & issues numbers and usernames into proper links
+        repo_url_shorthand: true
+        repo: mne-bids-pipeline
+        user: mne-tools
     - toc:
         permalink: true  # Add paragraph symbol to link to current headline

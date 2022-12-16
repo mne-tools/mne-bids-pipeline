@@ -27,7 +27,7 @@
 ::: mne_bids_pipeline._config.reader_extra_params
 ::: mne_bids_pipeline._config.analyze_channels
 ::: mne_bids_pipeline._config.plot_psd_for_runs
-::: mne_bids_pipeline._config.N_JOBS
+::: mne_bids_pipeline._config.n_jobs
 ::: mne_bids_pipeline._config.parallel_backend
 ::: mne_bids_pipeline._config.dask_open_dashboard
 ::: mne_bids_pipeline._config.dask_temp_dir

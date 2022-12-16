@@ -1903,7 +1903,7 @@ in the report. If None it defaults to the current default in MNE-Python.
 # Execution
 # ---------
 
-N_JOBS: int = 1
+n_jobs: int = 1
 """
 Specifies how many subjects you want to process in parallel. If `1`, disables
 parallel processing.
@@ -1913,7 +1913,7 @@ parallel_backend: Literal["loky", "dask"] = "loky"
 """
 Specifies which backend to use for parallel job execution. `loky` is the
 default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
-be installed. Ignored if [`N_JOBS`][mne_bids_pipeline._config.N_JOBS] is set to
+be installed. Ignored if [`n_jobs`][mne_bids_pipeline._config.n_jobs] is set to
 `1`.
 """
 

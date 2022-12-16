@@ -44,7 +44,7 @@ epochs_decim = 4
 bem_mri_images = "FLASH"
 recreate_bem = True
 
-N_JOBS = 2
+n_jobs = 2
 
 
 def mri_t1_path_generator(bids_path):

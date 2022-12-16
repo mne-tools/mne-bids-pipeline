@@ -82,7 +82,7 @@ on_rename_missing_events = "ignore"
 
 parallel_backend = "dask"
 dask_worker_memory_limit = "2G"
-N_JOBS = 2
+n_jobs = 2
 
 if task == "N400":
     dask_open_dashboard = True

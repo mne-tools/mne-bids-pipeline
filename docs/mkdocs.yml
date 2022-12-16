@@ -114,7 +114,7 @@ plugins:
                     show_root_toc_entry: false
                     show_root_full_path: false
                     separate_signature: true
-                    line_length: 80  # needed for long param entries
+                    line_length: 88  # Black's default
                     show_bases: false
                     docstring_style: numpy
     - mike:

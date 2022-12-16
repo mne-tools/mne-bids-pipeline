@@ -18,7 +18,29 @@ theme:
         - navigation.instant  # Load pages via XMLHttpRequest (XHR)
         - navigation.tracking
     palette:
+      # Palette toggle for automated theme selection
+      # Currently only available to sponsors
+      #
+      # - media: "(prefers-color-scheme)"
+      #   toggle:
+      #     icon: material/brightness-auto
+      #     name: Switch to light mode
+
+      # Palette toggle for light mode
+      - media: "(prefers-color-scheme: light)"
+        scheme: default
         primary: white
+        toggle:
+          icon: material/brightness-7
+          name: Switch to dark mode
+
+      # Palette toggle for dark mode
+      - media: "(prefers-color-scheme: dark)"
+        scheme: slate
+        toggle:
+          icon: material/brightness-4
+          name: Switch to system preference
+
     custom_dir: overrides
 extra:
     social:

@@ -39,4 +39,4 @@ dask_open_dashboard = True
 
 log_level = "info"
 
-N_JOBS = 1
+n_jobs = 1

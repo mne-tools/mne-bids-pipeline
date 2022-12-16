@@ -9,7 +9,7 @@ from ._logging import logger
 
 
 def get_n_jobs(*, exec_params: SimpleNamespace) -> int:
-    n_jobs = exec_params.N_JOBS
+    n_jobs = exec_params.n_jobs
     if n_jobs < 0:
         n_cores = joblib.cpu_count()
         n_jobs = min(n_cores + n_jobs + 1, n_cores)

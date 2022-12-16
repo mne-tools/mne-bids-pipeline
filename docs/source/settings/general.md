@@ -30,7 +30,7 @@
         - reader_extra_params
         - analyze_channels
         - plot_psd_for_runs
-        - N_JOBS
+        - n_jobs
         - parallel_backend
         - dask_open_dashboard
         - dask_temp_dir

@@ -156,3 +156,5 @@ markdown_extensions:
         user: mne-tools
     - toc:
         permalink: true  # Add paragraph symbol to link to current headline
+    - pymdownx.tabbed:
+        alternate_style: true

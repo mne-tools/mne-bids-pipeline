@@ -11,14 +11,15 @@ If you used the MNE-Python installer for version 1.3 or later,
 MNE-BIDS-Pipeline should already be installed in the environment.
 
 The latest stable version of the MNE-BIDS-Pipeline and all dependencies
-can be installed with `pip` or `conda` the standard ways:
+can be installed with `pip` or `conda`.
 
-???+ example "Installation via pip"
+
+=== "pip"
     ```shell
     pip install --upgrade mne-bids-pipeline
     ```
 
-???+ example "Installation via conda"
+=== "conda"
     ```shell
     conda install -c conda-forge mne-bids-pipeline
     ```

@@ -1,4 +1,4 @@
-# :brain: What is the MNE-BIDS-Pipeline?
+# :brain: What is MNE-BIDS-Pipeline?
 
 {%
   include-markdown "../../README.md"

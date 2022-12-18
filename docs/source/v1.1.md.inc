@@ -6,8 +6,8 @@
 
 ### Behavior changes
 
-- The `N_JOBS` parameter has been renamed [`n_jobs`](mne_bids_pipeline._config.n_jobs)
-  for consistency
+- The `N_JOBS` parameter has been renamed to
+  [`n_jobs`](mne_bids_pipeline._config.n_jobs) for consistency
   (#694 by @larsoner)
 
 ### Code health

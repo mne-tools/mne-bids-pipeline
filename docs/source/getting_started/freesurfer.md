@@ -1,3 +1,14 @@
+!!! info
+    Preparations for inverse modeling involve the installation of
+    [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/).
+    If you do not intend to run the source reconstruction steps of MNE-BIDS-Pipeline,
+    you can skip the instructions below.
+
+!!! warning
+    FreeSurfer does not natively run on Windows. We are currently working on
+    ways to make it possible to use it on Windows, too.
+
+## :bulb: Prerequisites
 To perform inverse modeling, or also called source estimation or source
 localization, we need to ensure that a couple prerequisites are met.
 Essentially, starting from a collection of 2-dimensional MRI images of coronal,
@@ -14,7 +25,7 @@ distributed along with a datasets inside a `derivatives/` folder). Instead,
 they ship e.g. with T1-weighted images only (and, sometimes, include FLASH
 images too).
 
-## Install FreeSurfer
+## :package: Install FreeSurfer
 
 Before running the source-analysis parts of the pipeline, you need to
 create the above-mentioned 3D surfaces and parcellations. This is done using
@@ -27,11 +38,7 @@ nstructions](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads).
 !!! info
     The only currently tested FreeSurfer version is **6.0**.
 
-!!! warning
-    FreeSurfer does not natively run on Windows. We are currently working on
-    ways to make it possible to use it on Windows, too.
-
-## Generate surfaces and brain parcellation
+## :brain: Generate surfaces and brain parcellation
 
 MNE-BIDS-Pipeline provides a convenient way to invoke FreeSurfer. After
 [adjusting your configuration file](basic_usage.md#adjust-your-configuration-file),
@@ -50,7 +57,7 @@ to create the required surfaces.
     several hours to complete. It's a good idea to let this command run
     over night.
 
-## Run source-level analyses
+## :woman_running_tone5: Run source-level analyses
 
 Now you are ready to run MNE-BIDS-Pipeline, including all parts of inverse
 modeling. To perform the projection, MNE-Python will first need to detect

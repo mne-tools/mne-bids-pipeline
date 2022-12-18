@@ -1,19 +1,22 @@
 ## v1.1.0-dev (unreleased)
 
-[//]: # (### New features & enhancements)
+[//]: # (### :new: New features & enhancements)
 
-[//]: # (- Whatever ({{ gh(000) }} by {{ authors.whoever }} )
+[//]: # (- Whatever (#000 by @whoever )
 
-### Behavior changes
+### :warning: Behavior changes
 
-- The `N_JOBS` parameter has been renamed [`n_jobs`](mne_bids_pipeline._config.n_jobs)
-  for consistency
-  ({{ gh(694) }} by {{ authors.larsoner }})
+- The `N_JOBS` parameter has been renamed to
+  [`n_jobs`](mne_bids_pipeline._config.n_jobs) for consistency
+  (#694 by @larsoner)
 
-### Code health
+### :medical_symbol: Code health
 
 - Code quality now checked by [ruff](https://github.com/charliermarsh/ruff)
   and [black](https://black.readthedocs.io/en/stable/)
-  ({{ gh(689) }}, {{ gh(690) }}, and {{ gh(691) }} by {{ authors.larsoner }})
+  (#689, #690, and #691 by @larsoner)
+- Documentation building infrastructure improved by using newer mkdocs
+  extensions
+  (#693 by @hoechenberger)
 
-[//]: # (### Bug fixes)
+[//]: # (### :bug: Bug fixes)

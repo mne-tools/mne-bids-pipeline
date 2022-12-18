@@ -1,43 +1,46 @@
-::: mne_bids_pipeline._config.study_name
-::: mne_bids_pipeline._config.bids_root
-::: mne_bids_pipeline._config.deriv_root
-::: mne_bids_pipeline._config.subjects_dir
-::: mne_bids_pipeline._config.interactive
-::: mne_bids_pipeline._config.sessions
-::: mne_bids_pipeline._config.task
-::: mne_bids_pipeline._config.task_is_rest
-::: mne_bids_pipeline._config.runs
-::: mne_bids_pipeline._config.exclude_runs
-::: mne_bids_pipeline._config.crop_runs
-::: mne_bids_pipeline._config.acq
-::: mne_bids_pipeline._config.proc
-::: mne_bids_pipeline._config.rec
-::: mne_bids_pipeline._config.space
-::: mne_bids_pipeline._config.subjects
-::: mne_bids_pipeline._config.exclude_subjects
-::: mne_bids_pipeline._config.process_empty_room
-::: mne_bids_pipeline._config.process_rest
-::: mne_bids_pipeline._config.ch_types
-::: mne_bids_pipeline._config.data_type
-::: mne_bids_pipeline._config.eog_channels
-::: mne_bids_pipeline._config.eeg_bipolar_channels
-::: mne_bids_pipeline._config.eeg_reference
-::: mne_bids_pipeline._config.eeg_template_montage
-::: mne_bids_pipeline._config.drop_channels
-::: mne_bids_pipeline._config.reader_extra_params
-::: mne_bids_pipeline._config.analyze_channels
-::: mne_bids_pipeline._config.plot_psd_for_runs
-::: mne_bids_pipeline._config.n_jobs
-::: mne_bids_pipeline._config.parallel_backend
-::: mne_bids_pipeline._config.dask_open_dashboard
-::: mne_bids_pipeline._config.dask_temp_dir
-::: mne_bids_pipeline._config.dask_worker_memory_limit
-::: mne_bids_pipeline._config.random_state
-::: mne_bids_pipeline._config.shortest_event
-::: mne_bids_pipeline._config.memory_location
-::: mne_bids_pipeline._config.memory_file_method
-::: mne_bids_pipeline._config.memory_verbose
-::: mne_bids_pipeline._config.config_validation
-::: mne_bids_pipeline._config.log_level
-::: mne_bids_pipeline._config.mne_log_level
-::: mne_bids_pipeline._config.on_error
+::: mne_bids_pipeline._config
+    options:
+      members:
+        - study_name
+        - bids_root
+        - deriv_root
+        - subjects_dir
+        - interactive
+        - sessions
+        - task
+        - task_is_rest
+        - runs
+        - exclude_runs
+        - crop_runs
+        - acq
+        - proc
+        - rec
+        - space
+        - subjects
+        - exclude_subjects
+        - process_empty_room
+        - process_rest
+        - ch_types
+        - data_type
+        - eog_channels
+        - eeg_bipolar_channels
+        - eeg_reference
+        - eeg_template_montage
+        - drop_channels
+        - reader_extra_params
+        - analyze_channels
+        - plot_psd_for_runs
+        - n_jobs
+        - parallel_backend
+        - dask_open_dashboard
+        - dask_temp_dir
+        - dask_worker_memory_limit
+        - random_state
+        - shortest_event
+        - memory_location
+        - memory_file_method
+        - memory_verbose
+        - config_validation
+        - log_level
+        - mne_log_level
+        - on_error

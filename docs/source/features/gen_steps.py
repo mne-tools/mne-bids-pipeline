@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 """Generate steps.md."""
 
 import importlib
@@ -6,10 +6,11 @@ from pathlib import Path
 from mne_bids_pipeline._config_utils import _get_step_modules
 
 pre = """\
-# Processing steps
+# Detailed lis of processing steps
 
-The following table provides a concise summary of each step in the Study
-Template. All steps exist in the `steps`/ directory.
+The following table provides a concise summary of each processing step. The
+step names can be used to run individual steps or entire groups of steps by
+passing their name(s) to `mne_bids_pipeline` via the `steps=...` argument.
 """
 
 print("Generating steps …")
@@ -30,8 +31,8 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
     lines.append(f"## {di}. {dir_header}\n")
     if dir_body:
         lines.append(f"{dir_body}\n")
-    lines.append("| Processing step | Description |")
-    lines.append("|:----------------|:------------|")
+    lines.append("| Step name | Description |")
+    lines.append("|:----------|:------------|")
     # the "all" option
     dir_name, step_title = dir_, f"Run all {dir_header.lower()} steps."
     lines.append(f"`{dir_name}` | {step_title} |")

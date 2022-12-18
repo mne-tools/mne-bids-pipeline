@@ -1,9 +1,9 @@
-# <img src="https://raw.github.com/mne-tools/mne-bids-pipeline/main/docs/source/assets/mne.svg" alt="MNE Logo" height="20"> The MNE-BIDS-Pipeline
+# <img src="https://raw.github.com/mne-tools/mne-bids-pipeline/main/docs/source/assets/mne.svg" alt="MNE Logo" height="20"> MNE-BIDS-Pipeline
 
 <!--keep description in sync with pyproject.toml-->
 
 <!--tagline-start-->
-**The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
+**MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
 EEG data.** It operates on data stored according to the [Brain Imaging Data
 Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-Python](https://mne.tools).
 

@@ -79,7 +79,21 @@ td p {
   min-width: 200px;
 }
 
-/* Hide "module-attribute" annotation */
-span.doc-properties {
+/* Hide "module-attribute" annotation. */
+.doc-label-module-attribute {
   display: none;
 }
+
+/* Make the currently active tab name bold. */
+.md-tabs__link--active {
+  font-weight: 600;
+}
+
+.tabbed-set {
+  /* border-width: 5px;
+  border-color: black; */
+  /* border-style: none none none dotted; */
+  padding-left: 0.5rem;
+  border-left: 6px solid var(--md-code-bg-color);
+}
+

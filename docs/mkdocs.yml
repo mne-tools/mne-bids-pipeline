@@ -7,6 +7,8 @@ site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
 use_directory_urls: false  # For easier navigation on CircleCI
+watch:  # Additional directories to watch for changes during `mkdocs serve`
+    - ../mne_bids_pipeline
 theme:
     name: material
     logo: assets/mne.svg
@@ -16,7 +18,29 @@ theme:
         - navigation.instant  # Load pages via XMLHttpRequest (XHR)
         - navigation.tracking
     palette:
+      # Palette toggle for automated theme selection
+      # Currently only available to sponsors
+      #
+      # - media: "(prefers-color-scheme)"
+      #   toggle:
+      #     icon: material/brightness-auto
+      #     name: Switch to light mode
+
+      # Palette toggle for light mode
+      - media: "(prefers-color-scheme: light)"
+        scheme: default
         primary: white
+        toggle:
+          icon: material/brightness-7
+          name: Switch to dark mode
+
+      # Palette toggle for dark mode
+      - media: "(prefers-color-scheme: dark)"
+        scheme: slate
+        toggle:
+          icon: material/brightness-4
+          name: Switch to system preference
+
     custom_dir: overrides
 extra:
     social:
@@ -45,10 +69,10 @@ nav:
         - Installation: getting_started/install.md
         - Basic usage: getting_started/basic_usage.md
         - Preparations for source-level analyses: getting_started/freesurfer.md
-    - Features:
-        - What the pipeline can do: features/features.md
-        - List of processing steps: features/steps.md
-    - Configuration Options:
+    - Processing steps:
+        - Overview: features/overview.md
+        - Detailed list of processing steps: features/steps.md
+    - Configuration options:
         - General settings: settings/general.md
         - Preprocessing:
             - Break detection: settings/preprocessing/breaks.md
@@ -61,7 +85,7 @@ nav:
             - Artifact removal:
                 - Stimulation artifact: settings/preprocessing/stim_artifact.md
                 - SSP & ICA: settings/preprocessing/ssp_ica.md
-                - Amplitude-based: settings/preprocessing/artifacts.md
+                - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
             - Statistics: settings/sensor/statistics.md
             - Time-frequency analysis: settings/sensor/time_freq.md
@@ -91,27 +115,30 @@ nav:
         - examples/ds001971.md
         - examples/ERP_CORE.md
     - What's new: changes.md
+    - Tags: tags.md
 
 plugins:
     - search
     - macros
+    - tags:
+        tags_file: tags.md
     - include-markdown
     - mkdocstrings:
         default_handler: python
         handlers:
             python:
+                paths:  # Where to find the packages and modules to import
+                    - ../
                 options:
                     show_source: true
                     show_if_no_docstring: false
-                    show_root_heading: true
+                    show_root_heading: false
+                    show_root_toc_entry: false
                     show_root_full_path: false
                     separate_signature: true
-                    line_length: 80  # needed for long param entries
+                    line_length: 88  # Black's default
                     show_bases: false
                     docstring_style: numpy
-        watch:
-            - .
-            - ./mne_bids_pipeline/_config.py
     - mike:
         canonical_version: stable
 markdown_extensions:
@@ -122,6 +149,22 @@ markdown_extensions:
     - pymdownx.emoji:
         emoji_index: !!python/name:materialx.emoji.twemoji
         emoji_generator: !!python/name:materialx.emoji.to_svg
-    - pymdownx.superfences
+    - pymdownx.superfences:
+        custom_fences:
+          - name: mermaid
+            class: mermaid
+            format: !!python/name:pymdownx.superfences.fence_code_format
+    - pymdownx.highlight:
+        # linenums: true
+        # linenums_style: auto
+        auto_title: true
+        auto_title_map:
+            "Bash": Run in your terminal
+    - pymdownx.magiclink:  # turns e.g. GitHub PR & issues numbers and usernames into proper links
+        repo_url_shorthand: true
+        repo: mne-bids-pipeline
+        user: mne-tools
     - toc:
         permalink: true  # Add paragraph symbol to link to current headline
+    - pymdownx.tabbed:
+        alternate_style: true

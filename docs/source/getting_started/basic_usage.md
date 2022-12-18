@@ -1,5 +1,5 @@
-Prepare your dataset
---------------------
+## :face_with_monocle: Prepare your dataset
+
 MNE-BIDS-Pipeline **only** works with
 [BIDS-formatted raw data](https://bids-specification.readthedocs.io/en/stable/). To find out
 more about BIDS and how to convert your data to the BIDS format, please see
@@ -53,8 +53,7 @@ We recommend that
         ```
         Please see [the tutorials of `mne_bids`](https://mne.tools/mne-bids/stable/use.html) for more information.
 
-Create a configuration file
----------------------------
+## :open_file_folder: Create a configuration file
 
 All parameters of the pipeline are controlled via a configuration file. You can
 create a template configuration file by running the following command:
@@ -67,8 +66,7 @@ create a template configuration file by running the following command:
 You can then edit the file and adjust all parameters that are relevant to your
 data processing and analysis.
 
-Run the pipeline
-----------------
+## :woman_running_tone5: Run the pipeline
 
 ???+ example "Run the full pipeline"
     To run the full pipeline, execute the following command in your

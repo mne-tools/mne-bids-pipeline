@@ -10,4 +10,4 @@ python $STEP_DIR/source/features/gen_steps.py
 
 echo "Building the documentation …"
 cd $STEP_DIR
-PYTHONPATH=../ mkdocs build
+mkdocs build

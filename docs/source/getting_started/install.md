@@ -1,38 +1,60 @@
-Install MNE-Python
-------------------
 
-First, you need to make sure you have MNE-Python installed and working on your
-system. See the [installation instructions](https://mne.tools/stable/install).
+## :package: Installing MNE-BIDS-Pipeline and all dependencies
 
-Install the MNE-BIDS-Pipeline
------------------------------
+There are a few different ways to install MNE-BIDS-Pipeline, depending on how
+you installed MNE-Python.
 
-If you used the MNE-Python installer for version 1.3 or later,
-MNE-BIDS-Pipeline should already be installed in the environment.
+=== "MNE installer"
+    :white_check_mark: Nothing to do!
+    If you used the MNE-Python installer for version 1.3 or later,
+    MNE-BIDS-Pipeline is already installed!
 
-The latest stable version of the MNE-BIDS-Pipeline and all dependencies
-can be installed with `pip` or `conda` the standard ways:
+=== "conda (new environment)"
+    :person_tipping_hand_tone2: We **strongly** advise you to install
+    MNE-BIDS-Pipeline into a dedicated environment.
 
-???+ example "Installation via pip"
+    :package: Running the following commands
+    will first install `mamba`, an extremely fast drop-in replacement for `conda`, and then
+    proceed to create an environment named `mne` with MNE-BIDS-Pipeline and all
+    required dependencies:
+    ```shell
+    conda install --channel=conda-forge mamba
+    mamba create --override-channels --channel=conda-forge --name=mne mne-bids-pipeline
+    ```
+
+=== "conda (existing environment)"
+    :snake: If you already have a `conda` environment with MNE-Python installed following the
+    [official installation instructions](https://mne.tools/stable/install/manual_install.html#installing-mne-python-with-all-dependencies),
+    you can install the pipeline into the existing environment. We recommend
+    using `mamba`, an extremely fast drop-in replacement for `conda`:
+    ```shell
+    conda install --channel=conda-forge mamba
+    mamba install --override-channels --channel=conda-forge --name=mne mne-bids-pipeline
+    ```
+
+=== "pip"
+    :package: Activate your Python environment and run:
     ```shell
     pip install --upgrade mne-bids-pipeline
     ```
 
-???+ example "Installation via conda"
-    ```shell
-    conda install -c conda-forge mne-bids-pipeline
-    ```
 
-This installs the command-line interface `mne_bids_pipeline`
-(mind the underscores!) which will be used to operate the pipeline.
+## :mag: Testing the installation
 
-To check which version of the MNE-BIDS-Pipeline is currently installed, run:
+If the installation was successful, the command-line utility `mne_bids_pipeline`
+(mind the underscores!) should now be available in your Python environment.
 
-???+ example "Check the installed version"
-    ```shell
-    mne_bids_pipeline --version
-    ```
+!!! info
 
-That's it! You're now ready to start using the MNE-BIDS-Pipeline.
+    `mne_bids_pipeline` will be used to operate the pipeline.
 
-[Discover Basic Usage :fontawesome-solid-rocket:](basic_usage.md){: .md-button .md-button--primary }
+To check whether the command exists, and to verify which version of
+MNE-BIDS-Pipeline is currently installed, run:
+
+```shell
+mne_bids_pipeline --version
+```
+
+**That's it! :partying_face:**
+
+You're now ready to start using MNE-BIDS-Pipeline.

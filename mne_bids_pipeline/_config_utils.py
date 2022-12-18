@@ -516,10 +516,10 @@ def _get_step_modules() -> Dict[str, Tuple[ModuleType]]:
 
     STEP_MODULES = {
         "init": INIT_STEPS,
-        "freesurfer": FREESURFER_STEPS,
         "preprocessing": PREPROCESSING_STEPS,
         "sensor": SENSOR_STEPS,
         "source": SOURCE_STEPS,
+        "freesurfer": FREESURFER_STEPS,
     }
 
     # Do not include the FreeSurfer steps in "all" – we don't intend to run

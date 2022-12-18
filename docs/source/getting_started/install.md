@@ -41,8 +41,8 @@ you installed MNE-Python.
 
 ## :mag: Testing the installation
 
-If the installation was successfull, the command-line utility `mne_bids_pipeline`
-(mind the underscores!) sould now be available in your Python environment.
+If the installation was successful, the command-line utility `mne_bids_pipeline`
+(mind the underscores!) should now be available in your Python environment.
 
 !!! info
 

@@ -4,7 +4,11 @@
 
 [//]: # (- Whatever (#000 by @whoever )
 
-[//]: # (### Behavior changes)
+### Behavior changes
+
+- The `N_JOBS` parameter has been renamed [`n_jobs`](mne_bids_pipeline._config.n_jobs)
+  for consistency
+  ({{ gh(694) }} by {{ authors.larsoner }})
 
 ### Code health
 

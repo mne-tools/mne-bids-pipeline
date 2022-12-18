@@ -158,7 +158,7 @@ def main():
     if interactive:
         overrides.interactive = interactive
     if n_jobs:
-        overrides.N_JOBS = int(n_jobs)
+        overrides.n_jobs = int(n_jobs)
     if on_error:
         overrides.on_error = on_error
     if not cache:

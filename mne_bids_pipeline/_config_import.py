@@ -53,7 +53,7 @@ def _import_config(
     # but not the outputs)
     keys = (
         # Parallelization
-        "N_JOBS",
+        "n_jobs",
         "parallel_backend",
         "dask_temp_dir",
         "dask_worker_memory_limit",
@@ -176,10 +176,10 @@ def _update_with_user_config(
     else:
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
-        if log and config.N_JOBS != 1:
-            msg = 'Setting config.N_JOBS=1 because config.on_error="debug"'
+        if log and config.n_jobs != 1:
+            msg = 'Setting config.n_jobs=1 because config.on_error="debug"'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
-        config.N_JOBS = 1
+        config.n_jobs = 1
         if log and config.parallel_backend != "loky":
             msg = (
                 'Setting config.parallel_backend="loky" because '
@@ -335,7 +335,7 @@ def _check_config(config: SimpleNamespace) -> None:
         ("raise", "warn", "ignore"),
     )
 
-    _validate_type(config.N_JOBS, int, "N_JOBS")
+    _validate_type(config.n_jobs, int, "n_jobs")
 
     _check_option(
         "config.config_validation",
@@ -355,6 +355,9 @@ _REMOVED_NAMES = {
     ),
     "resample_sfreq": dict(
         new_name="raw_resample_sfreq",
+    ),
+    "N_JOBS": dict(
+        new_name="n_jobs",
     ),
 }
 

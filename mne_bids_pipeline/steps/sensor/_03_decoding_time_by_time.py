@@ -151,7 +151,7 @@ def run_time_decoding(
             estimator = GeneralizingEstimator(
                 clf,
                 scoring=cfg.decoding_metric,
-                n_jobs=exec_params.N_JOBS,
+                n_jobs=exec_params.n_jobs,
             )
             cv_scoring_n_jobs = 1
         else:
@@ -160,7 +160,7 @@ def run_time_decoding(
                 scoring=cfg.decoding_metric,
                 n_jobs=1,
             )
-            cv_scoring_n_jobs = exec_params.N_JOBS
+            cv_scoring_n_jobs = exec_params.n_jobs
 
         scores = cross_val_multiscore(
             estimator,

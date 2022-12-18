@@ -2,21 +2,14 @@
 
 [//]: # (### :new: New features & enhancements)
 
-[//]: # (- Whatever (#000 by @whoever )
+[//]: # (- Whatever (#000 by @whoever) )
 
-### :warning: Behavior changes
+[//]: # (### :warning: Behavior changes)
 
-- The `N_JOBS` parameter has been renamed to
-  [`n_jobs`](mne_bids_pipeline._config.n_jobs) for consistency
-  (#694 by @larsoner)
+[//]: # (- Whatever (#000 by @whoever) )
 
-### :medical_symbol: Code health
-
-- Code quality now checked by [ruff](https://github.com/charliermarsh/ruff)
-  and [black](https://black.readthedocs.io/en/stable/)
-  (#689, #690, and #691 by @larsoner)
-- Documentation building infrastructure improved by using newer mkdocs
-  extensions
-  (#693 by @hoechenberger)
+[//]: # (### :medical_symbol: Code health)
 
 [//]: # (### :bug: Bug fixes)
+
+- Nothing yet

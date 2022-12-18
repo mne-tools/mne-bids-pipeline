@@ -1,6 +1,6 @@
 ## v1.0.3 (released 2022/12/08)
 
-### Bug fixes
+### :bug: Bug fixes
 
 - The `stable` documentation deployment was fixed
   (#682 by @larsoner )
@@ -8,7 +8,7 @@
 
 ## v1.0.2 (released 2022/12/07)
 
-### Code health
+### :medical_symbol: Code health
 
 - The repository README.md was improved
   (#680 by @hoechenberger )
@@ -16,7 +16,7 @@
 
 ## v1.0.1 (released 2022/12/06)
 
-### Behavior changes
+### :warning: Behavior changes
 
 These backward-incompatible changes have been made before officially announcing
 the release, so we are bumping the patch version number rather than the major
@@ -34,7 +34,7 @@ version number.
 
 Changes were only tracked starting April 15, 2021.
 
-### New features & enhancements
+### :new: New features & enhancements
 
 - An official [project governance](governance.md) structure has officially
   been adopted.
@@ -226,7 +226,7 @@ Changes were only tracked starting April 15, 2021.
   is executed in a dedicated step
   (#666 by @larsoner)
 
-### Behavior changes
+### :warning: Behavior changes
 
 - The [`conditions`][mne_bids_pipeline._config.conditions] setting will now be `None` by default.
   It is a required setting so it will raise an error if left as `None`.
@@ -317,7 +317,7 @@ Changes were only tracked starting April 15, 2021.
   are now checked
   (#665, #670 by @larsoner )
 
-### Code health
+### :medical_symbol: Code health
 
 - Each processing script now extracts the required subset of configuration
   options from the user config and operates solely on these. This helps make it
@@ -340,7 +340,7 @@ Changes were only tracked starting April 15, 2021.
   for readability, and the default was changed to `True` for consistency
   (#633 by @larsoner)
 
-### Bug fixes
+### :bug: Bug fixes
 
 - The FreeSurfer script could only be run if `--n_jobs` was passed explicitly
   (#287 by @MerlinDumeur)

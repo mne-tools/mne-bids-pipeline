@@ -1,10 +1,17 @@
 ## v1.0.3 (released 2022/12/18)
 
-### :bug: Bug fixes
+### :warning: Behavior changes
+
+This backward-incompatible change was made before officially announcing
+the release, so we are bumping the patch version number rather than the major
+version number.
 
 - The `N_JOBS` parameter has been renamed to
   [`n_jobs`](mne_bids_pipeline._config.n_jobs) for consistency
   (#694 by @larsoner)
+
+### :bug: Bug fixes
+
 - The `stable` documentation deployment was fixed
   (#682 by @larsoner )
 

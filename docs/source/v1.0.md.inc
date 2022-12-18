@@ -1,9 +1,28 @@
-## v1.0.3 (released 2022/12/08)
+## v1.0.3 (released 2022/12/18)
+
+### :warning: Behavior changes
+
+This backward-incompatible change was made before officially announcing
+the release, so we are bumping the patch version number rather than the major
+version number.
+
+- The `N_JOBS` parameter has been renamed to
+  [`n_jobs`](mne_bids_pipeline._config.n_jobs) for consistency
+  (#694 by @larsoner)
 
 ### :bug: Bug fixes
 
 - The `stable` documentation deployment was fixed
   (#682 by @larsoner )
+
+### :medical_symbol: Code health
+
+- Code quality now checked by [ruff](https://github.com/charliermarsh/ruff)
+  and [black](https://black.readthedocs.io/en/stable/)
+  (#689, #690, and #691 by @larsoner)
+- Documentation building infrastructure improved by using newer mkdocs
+  extensions
+  (#693 by @hoechenberger)
 
 
 ## v1.0.2 (released 2022/12/07)

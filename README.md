@@ -13,15 +13,16 @@ Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-P
 
 <!--features-list-start-->
 
-* 🐾 Data processing as a sequence of standard processing steps.
-* ⏩ Steps are cached to avoid unnecessary recomputation.
-* ⏏ Data can be "ejected" from the pipeline at **any** stage. No lock-in!
-* 🧾 Extensive processing and analysis summary reports.
-* 🎬 Process just a single participant, or as many as several hundreds of participants – in parallel.
-* ☁️ Parallel processing can be done locally or using dask.
-* 🛠 Configuration via a simple text file.
+* 🏆 Automated processing of MEG and EEG data from raw data to inverse solutions.
+* 🛠️ Configuration via a simple text file.
+* 📘 Extensive processing and analysis summary reports.
+* 🧑‍🤝‍🧑 Process just a single participant, or as many as several hundreds of participants – in parallel.
 * 💻 Execution via an easy-to-use command-line utility.
 * 🆘 Helpful error messages in case something goes wrong.
+* 👣 Data processing as a sequence of standard processing steps.
+* ⏩ Steps are cached to avoid unnecessary recomputation.
+* ⏏️ Data can be "ejected" from the pipeline at any stage. No lock-in!
+* ☁️ Runs on your laptop, on a powerful server, or on a high-performance cluster via Dash.
 
 <!--features-list-end-->
 

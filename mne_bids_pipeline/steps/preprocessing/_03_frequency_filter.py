@@ -16,7 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 import numpy as np
 from types import SimpleNamespace
-from typing import Optional, Union, Literal
+from typing import Optional, Union, Literal, Iterable
 
 import mne
 

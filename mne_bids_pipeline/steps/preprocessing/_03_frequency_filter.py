@@ -65,6 +65,7 @@ def notch_filter(
     run: str,
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
+    notch_widths: Optional[Union[float, Iterable[float]]],
     data_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
@@ -81,6 +82,7 @@ def notch_filter(
     raw.notch_filter(
         freqs=freqs,
         trans_bandwidth=trans_bandwidth,
+        notch_widths=notch_widths,
         n_jobs=1,
     )
 
@@ -182,6 +184,7 @@ def filter_data(
         run=run,
         freqs=cfg.notch_freq,
         trans_bandwidth=cfg.notch_trans_bandwidth,
+        notch_widths=cfg.notch_widths,
         data_type="experimental",
     )
     bandpass_filter(
@@ -211,10 +214,10 @@ def filter_data(
         split_size=cfg._raw_split_size,
     )
     _update_for_splits(out_files, in_key)
+    fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
     if exec_params.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
-        fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
     del raw
@@ -266,6 +269,7 @@ def filter_data(
             run=task,
             freqs=cfg.notch_freq,
             trans_bandwidth=cfg.notch_trans_bandwidth,
+            notch_widths=cfg.notch_widths,
             data_type=data_type,
         )
         bandpass_filter(
@@ -298,7 +302,6 @@ def filter_data(
         if exec_params.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)
-            fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
             raw_noise.plot_psd(fmax=fmax)
 
     assert len(in_files) == 0, in_files.keys()
@@ -345,6 +348,7 @@ def get_config(
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
         notch_trans_bandwidth=config.notch_trans_bandwidth,
+        notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
         crop_runs=config.crop_runs,
         rename_events=config.rename_events,

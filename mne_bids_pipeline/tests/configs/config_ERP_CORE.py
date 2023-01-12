@@ -57,7 +57,8 @@ drop_channels = ["HEOG_left", "HEOG_right", "VEOG_lower"]
 eog_channels = ["HEOG", "VEOG"]
 
 l_freq = 0.1
-h_freq = 40
+h_freq = 100
+notch_freq = 60
 
 decode = True
 decoding_time_generalization = True
@@ -148,6 +149,7 @@ elif task == "ERN":
         "theta": [4, 7],
         "alpha": [8, 12],
         "beta": [13, 20, 30],
+        "gamma": [50, 63],
     }
     decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]
 elif task == "LRP":

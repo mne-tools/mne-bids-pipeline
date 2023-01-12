@@ -725,11 +725,14 @@ lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
-notch_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
+notch_trans_bandwidth: float = 1.0
 """
-Specifies the transition bandwidth of the
-notch filter. By default it's `'auto'` and uses default MNE
-parameters.
+Specifies the transition bandwidth of the notch filter. The default is `1.`.
+"""
+
+notch_widths: Optional[Union[float, Iterable[float]]] = None
+"""
+Specifies the width of each stop band. `None` uses the MNE default.
 """
 
 raw_resample_sfreq: Optional[float] = None

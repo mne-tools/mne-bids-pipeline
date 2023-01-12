@@ -32,3 +32,6 @@ of tips! 😇
         - h_freq
         - l_trans_bandwidth
         - h_trans_bandwidth
+        - notch_freq
+        - notch_trans_bandwidth
+        - notch_widths

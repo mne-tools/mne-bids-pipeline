@@ -50,8 +50,9 @@ def test_options_documented():
                     if val not in allowed_duplicates:
                         assert val not in in_doc, "Duplicate documentation"
                     in_doc.add(val)
-    assert in_doc.difference(in_config) == set(), "Extra values in doc"
-    assert in_config.difference(in_doc) == set(), "Values missing from doc"
+    what = "docs/source/settings doc"
+    assert in_doc.difference(in_config) == set(), f"Extra values in {what}"
+    assert in_config.difference(in_doc) == set(), f"Values missing from {what}"
 
 
 def test_datasets_in_doc():

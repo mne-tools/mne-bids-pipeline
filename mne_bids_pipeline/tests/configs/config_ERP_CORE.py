@@ -57,7 +57,7 @@ drop_channels = ["HEOG_left", "HEOG_right", "VEOG_lower"]
 eog_channels = ["HEOG", "VEOG"]
 
 l_freq = 0.1
-h_freq = 100
+h_freq = None
 notch_freq = 60
 
 decode = True

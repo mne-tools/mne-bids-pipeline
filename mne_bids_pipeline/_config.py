@@ -683,19 +683,19 @@ End time of the interpolation window in seconds.
 l_freq: Optional[float] = None
 """
 The low-frequency cut-off in the highpass filtering step.
-Keep it ``None`` if no highpass filtering should be applied.
+Keep it `None` if no highpass filtering should be applied.
 """
 
 h_freq: Optional[float] = 40.0
 """
 The high-frequency cut-off in the lowpass filtering step.
-Keep it ``None`` if no lowpass filtering should be applied.
+Keep it `None` if no lowpass filtering should be applied.
 """
 
 notch_freq: Optional[Union[float, Iterable[float]]] = None
 """
 Notch filter frequency. More than one frequency can be supplied, e.g. to remove
-harmonics. Keep it ``None`` if no notch filter should be applied.
+harmonics. Keep it `None` if no notch filter should be applied.
 
 Note: Note
     The notch filter will be applied before high- and lowpass filtering.

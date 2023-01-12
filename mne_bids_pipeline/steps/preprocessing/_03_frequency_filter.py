@@ -16,7 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 import numpy as np
 from types import SimpleNamespace
-from typing import Optional, Union, Literal
+from typing import Optional, Union, Literal, Iterable
 
 import mne
 
@@ -58,7 +58,36 @@ def get_input_fnames_frequency_filter(
     )
 
 
-def filter(
+def notch_filter(
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: Optional[str],
+    run: str,
+    freqs: Optional[Union[float, Iterable[float]]],
+    trans_bandwidth: Union[float, Literal["auto"]],
+    notch_widths: Optional[Union[float, Iterable[float]]],
+    data_type: Literal["experimental", "empty-room", "resting-state"],
+) -> None:
+    """Filter data channels (MEG and EEG)."""
+    if freqs is None:
+        msg = f"Not applying notch filter to {data_type} data."
+    else:
+        msg = f"Notch filtering {data_type} data at {freqs} Hz."
+
+    logger.info(**gen_log_kwargs(message=msg))
+
+    if freqs is None:
+        return
+
+    raw.notch_filter(
+        freqs=freqs,
+        trans_bandwidth=trans_bandwidth,
+        notch_widths=notch_widths,
+        n_jobs=1,
+    )
+
+
+def bandpass_filter(
     raw: mne.io.BaseRaw,
     subject: str,
     session: Optional[str],
@@ -89,10 +118,6 @@ def filter(
         h_freq=h_freq,
         l_trans_bandwidth=l_trans_bandwidth,
         h_trans_bandwidth=h_trans_bandwidth,
-        filter_length="auto",
-        phase="zero",
-        fir_window="hamming",
-        fir_design="firwin",
         n_jobs=1,
     )
 
@@ -152,7 +177,17 @@ def filter_data(
         split=None,
     )
     raw.load_data()
-    filter(
+    notch_filter(
+        raw=raw,
+        subject=subject,
+        session=session,
+        run=run,
+        freqs=cfg.notch_freq,
+        trans_bandwidth=cfg.notch_trans_bandwidth,
+        notch_widths=cfg.notch_widths,
+        data_type="experimental",
+    )
+    bandpass_filter(
         raw=raw,
         subject=subject,
         session=session,
@@ -179,10 +214,10 @@ def filter_data(
         split_size=cfg._raw_split_size,
     )
     _update_for_splits(out_files, in_key)
+    fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
     if exec_params.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
-        fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
         raw.plot_psd(fmax=fmax)
 
     del raw
@@ -227,7 +262,17 @@ def filter_data(
         )
 
         raw_noise.load_data()
-        filter(
+        notch_filter(
+            raw=raw_noise,
+            subject=subject,
+            session=session,
+            run=task,
+            freqs=cfg.notch_freq,
+            trans_bandwidth=cfg.notch_trans_bandwidth,
+            notch_widths=cfg.notch_widths,
+            data_type=data_type,
+        )
+        bandpass_filter(
             raw=raw_noise,
             subject=subject,
             session=session,
@@ -257,7 +302,6 @@ def filter_data(
         if exec_params.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)
-            fmax = 1.5 * cfg.h_freq if cfg.h_freq is not None else np.inf
             raw_noise.plot_psd(fmax=fmax)
 
     assert len(in_files) == 0, in_files.keys()
@@ -300,8 +344,11 @@ def get_config(
         deriv_root=config.deriv_root,
         l_freq=config.l_freq,
         h_freq=config.h_freq,
+        notch_freq=config.notch_freq,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
+        notch_trans_bandwidth=config.notch_trans_bandwidth,
+        notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
         crop_runs=config.crop_runs,
         rename_events=config.rename_events,

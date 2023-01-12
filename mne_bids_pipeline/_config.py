@@ -683,13 +683,32 @@ End time of the interpolation window in seconds.
 l_freq: Optional[float] = None
 """
 The low-frequency cut-off in the highpass filtering step.
-Keep it None if no highpass filtering should be applied.
+Keep it `None` if no highpass filtering should be applied.
 """
 
 h_freq: Optional[float] = 40.0
 """
 The high-frequency cut-off in the lowpass filtering step.
-Keep it None if no lowpass filtering should be applied.
+Keep it `None` if no lowpass filtering should be applied.
+"""
+
+notch_freq: Optional[Union[float, Iterable[float]]] = None
+"""
+Notch filter frequency. More than one frequency can be supplied, e.g. to remove
+harmonics. Keep it `None` if no notch filter should be applied.
+
+Note: Note
+    The notch filter will be applied before high- and lowpass filtering.
+
+???+ example "Example"
+    Remove line noise at 50 Hz:
+    ```python
+    notch_freq = 50
+    ```
+    Remove line noise at 50 Hz and its (sub-)harmonics
+    ```python
+    notch_freq = [25, 50, 100, 150]
+    ```
 """
 
 l_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
@@ -704,6 +723,16 @@ h_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
 Specifies the transition bandwidth of the
 lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
+"""
+
+notch_trans_bandwidth: float = 1.0
+"""
+Specifies the transition bandwidth of the notch filter. The default is `1.`.
+"""
+
+notch_widths: Optional[Union[float, Iterable[float]]] = None
+"""
+Specifies the width of each stop band. `None` uses the MNE default.
 """
 
 raw_resample_sfreq: Optional[float] = None

@@ -1,4 +1,4 @@
-## v1.1.0-dev (unreleased)
+## v1.1.0 (released 2022/01/13)
 
 ### :new: New features & enhancements
 

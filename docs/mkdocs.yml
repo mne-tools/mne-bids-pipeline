@@ -95,6 +95,7 @@ nav:
             - BEM surface: settings/source/bem.md
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
+        - Report generation: settings/reports/report_generation.md
     - Examples:
         - Examples Gallery: examples/examples.md
         - examples/ds003392.md

@@ -618,7 +618,7 @@ warning:
      This parameter should only be used for BIDS datasets that don't store
      the fine-calibration file
      [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files).
-Path to the Maxwell Filter calibration file. If None the recommended
+Path to the Maxwell Filter calibration file. If `None`, the recommended
 location is used.
 ???+ example "Example"
     ```python
@@ -628,8 +628,9 @@ location is used.
 
 mf_ctc_fname: Optional[str] = None
 """
-Path to the Maxwell Filter cross-talk file. If None the recommended
+Path to the Maxwell Filter cross-talk file. If `None`, the recommended
 location is used.
+
 warning:
      This parameter should only be used for BIDS datasets that don't store
      the cross-talk file
@@ -1016,18 +1017,6 @@ epoched, and therefore the conditions should either match or be subsets of
     ```
 """
 
-report_evoked_n_time_points: Optional[int] = None
-"""
-Specifies the number of time points to display for each evoked
-in the report. If None it defaults to the current default in MNE-Python.
-
-???+ example "Example"
-    Only display 5 time points per evoked
-    ```python
-    report_evoked_n_time_points = 5
-    ```
-"""
-
 ###############################################################################
 # ARTIFACT REMOVAL
 # ----------------
@@ -1070,8 +1059,6 @@ Minimal number of EOG epochs needed to compute SSP or ICA rejection.
 
 # Rejection based on SSP
 # ~~~~~~~~~~~~~~~~~~~~~~
-
-
 n_proj_eog: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors to create for EOG artifacts for each channel type.
@@ -1141,11 +1128,8 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-
 # Rejection based on ICA
 # ~~~~~~~~~~~~~~~~~~~~~~
-
-
 ica_reject: Optional[Dict[str, float]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
@@ -1254,7 +1238,6 @@ that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
 
-
 # Rejection based on peak-to-peak amplitude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1338,7 +1321,7 @@ conditions.
 decoding_epochs_tmin: Optional[float] = 0.0
 """
 The first time sample to use for full epochs decoding. By default it starts
-at 0. If None, it starts at the beginning of the epoch.
+at 0. If `None`,, it starts at the beginning of the epoch.
 """
 
 decoding_epochs_tmax: Optional[float] = None
@@ -1915,10 +1898,26 @@ empty list, `[]`.
     ```
 """
 
+###############################################################################
+# Report generation
+# -----------------
+
+report_evoked_n_time_points: Optional[int] = None
+"""
+Specifies the number of time points to display for each evoked
+in the report. If `None`, it defaults to the current default in MNE-Python.
+
+???+ example "Example"
+    Only display 5 time points per evoked
+    ```python
+    report_evoked_n_time_points = 5
+    ```
+"""
+
 report_stc_n_time_points: Optional[int] = None
 """
 Specifies the number of time points to display for each source estimates
-in the report. If None it defaults to the current default in MNE-Python.
+in the report. If `None`, it defaults to the current default in MNE-Python.
 
 ???+ example "Example"
     Only display 5 images per source estimate:

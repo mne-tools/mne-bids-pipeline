@@ -10,7 +10,6 @@ tags:
     options:
       members:
         - contrasts
-        - report_evoked_n_time_points
         - decode
         - decoding_epochs_tmin
         - decoding_epochs_tmax

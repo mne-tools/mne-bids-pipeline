@@ -540,7 +540,7 @@ use_maxwell_filter: bool = False
 """
 Whether or not to use Maxwell filtering to preprocess the data.
 
-warning:
+!!! warning
     If the data were recorded with internal active compensation (MaxShield),
     they need to be run through Maxwell filter to avoid distortions.
     Bad channels need to be set through BIDS channels.tsv and / or via the
@@ -614,7 +614,7 @@ runs. If `None`, pick the first run.
 
 mf_cal_fname: Optional[str] = None
 """
-warning:
+!!! warning
      This parameter should only be used for BIDS datasets that don't store
      the fine-calibration file
      [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files).
@@ -631,7 +631,7 @@ mf_ctc_fname: Optional[str] = None
 Path to the Maxwell Filter cross-talk file. If `None`, the recommended
 location is used.
 
-warning:
+!!! warning
      This parameter should only be used for BIDS datasets that don't store
      the cross-talk file
      [according to BIDS](https://bids-specification.readthedocs.io/en/stable/99-appendices/06-meg-file-formats.html#cross-talk-and-fine-calibration-files).
@@ -812,7 +812,7 @@ the order that events appear in `*_events.tsv`), pass `'drop'`. You can also
 request to create a new type of event by merging repeated events by setting
 this to `'merge'`.
 
-warning:
+!!! warning
     The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
     April 1st, 2021.
 """

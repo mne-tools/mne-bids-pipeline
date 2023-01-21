@@ -87,6 +87,7 @@ nav:
                 - SSP & ICA: settings/preprocessing/ssp_ica.md
                 - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
+            - Conditon contrasts: settings/sensor/contrasts.md
             - Decoding / MVPA: settings/sensor/mvpa.md
             - Time-frequency analysis: settings/sensor/time_freq.md
             - Group-level analysis: settings/sensor/group_level.md

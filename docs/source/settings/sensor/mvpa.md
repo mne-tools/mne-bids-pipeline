@@ -9,7 +9,6 @@ tags:
 ::: mne_bids_pipeline._config
     options:
       members:
-        - contrasts
         - decode
         - decoding_epochs_tmin
         - decoding_epochs_tmax

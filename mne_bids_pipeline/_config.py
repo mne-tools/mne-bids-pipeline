@@ -1311,7 +1311,7 @@ with the last time point.
 
 decode: bool = True
 """
-Whether to perform decoding (MVPA) on the contrasts specified above as
+Whether to perform decoding (MVPA) on the specified
 [`contrasts`][mne_bids_pipeline._config.contrasts]. Classifiers will be trained
 on entire epochs ("full-epochs decoding"), and separately on each time point
 ("time-by-time decoding"), trying to learn how to distinguish the contrasting

@@ -4,8 +4,11 @@
 
 <!--tagline-start-->
 **MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
-EEG data.** It operates on data stored according to the [Brain Imaging Data
-Structure (BIDS)](https://bids.neuroimaging.io/). Under the hood, it uses [MNE-Python](https://mne.tools).
+EEG data.**
+
+* It operates on data stored according to the [Brain Imaging Data
+Structure (BIDS)](https://bids.neuroimaging.io/).
+* Under the hood, it uses [MNE-Python](https://mne.tools).
 
 <!--tagline-end-->
 

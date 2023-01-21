@@ -45,7 +45,7 @@ The root of the derivatives directory in which the pipeline will store
 the processing results. If `None`, this will be
 `derivatives/mne-bids-pipeline` inside the BIDS root.
 
-!!! note
+!!! info
     If specified and you wish to run the source analysis steps, you must
     set [`subjects_dir`][mne_bids_pipeline._config.subjects_dir] as well.
 """
@@ -65,7 +65,7 @@ FreeSurfer.
 If `None`, this will default to
 [`bids_root`][mne_bids_pipeline._config.bids_root]`/derivatives/freesurfer/subjects`.
 
-!!! note
+!!! info
     This setting is required if you specify
     [`deriv_root`][mne_bids_pipeline._config.deriv_root]
     and want to run the source analysis steps.
@@ -78,7 +78,7 @@ figures. If running the steps from a notebook or Spyder,
 run `%matplotlib qt` in the command line to open the figures in a separate
 window.
 
-!!! note
+!!! info
     Enabling interactive mode deactivates parallel processing.
 """
 
@@ -304,7 +304,7 @@ pairs. See the examples below.
 
 Can also be `None` if you do not want to create bipolar channels.
 
-!!! note
+!!! info
     The channels used to create the bipolar channels are **not** automatically
     dropped from the data. To drop channels, set `drop_channels`.
 
@@ -697,7 +697,7 @@ notch_freq: Optional[Union[float, Iterable[float]]] = None
 Notch filter frequency. More than one frequency can be supplied, e.g. to remove
 harmonics. Keep it `None` if no notch filter should be applied.
 
-!!! note
+!!! info
     The notch filter will be applied before high- and lowpass filtering.
 
 ???+ example "Example"
@@ -1184,7 +1184,7 @@ data, yielding improved ICA results. Must be set to 1 Hz or above.
 
 Set to `None` to not apply an additional high-pass filter.
 
-!!! note
+!!! info
       The filter will be applied to raw data which was already filtered
       according to the `l_freq` and `h_freq` settings. After filtering, the
       data will be epoched, and the epochs will be submitted to ICA.
@@ -1275,7 +1275,7 @@ The thresholds provided here must be at least as stringent as those in
 `'autoreject_global'`, thresholds for any channel that do not meet this
 requirement will be automatically replaced with those used in `ica_reject`.
 
-!!! note
+!!! info
       The rejection is performed **after** SSP or ICA, if any of those methods
       is used. To reject epochs **before** fitting ICA, see the
       [`ica_reject`][mne_bids_pipeline._config.ica_reject] setting.
@@ -1287,7 +1287,7 @@ rejection thresholds for each channel type, i.e. `autoreject` will generate
 a dictionary with (hopefully!) optimal thresholds for each channel type. Note
 that using `autoreject` can be a time-consuming process.
 
-!!! note
+!!! info
       `autoreject` basically offers two modes of operation: "global" and
       "local". In "global" mode, it will try to estimate one rejection
       threshold **per channel type.** In "local" mode, it will generate
@@ -1407,7 +1407,7 @@ will be used to form clusters. If `None`, the threshold will be automatically
 determined to correspond to a p-value of 0.05 for the given number of
 participants in a one-tailed test.
 
-!!! note
+!!! info
     Only points with the same sign will be clustered together.
 """
 
@@ -1423,7 +1423,7 @@ The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
 that the clusters show no significant difference between conditions. This is
 used in the permutation test which takes place after forming the clusters.
 
-!!! note
+!!! info
     To control how clusters are formed, see
     [`cluster_forming_t_threshold`][mne_bids_pipeline._config.cluster_forming_t_threshold].
 """
@@ -1492,7 +1492,7 @@ Whether to subtract the evoked signal (averaged across all epochs) from the
 epochs before passing them to time-frequency analysis. Set this to `True` to
 highlight induced activity.
 
-!!! note
+!!! info
      This also applies to CSP analysis.
 """
 
@@ -1726,7 +1726,7 @@ electrophysiological data:
 This `BIDSPath` can then be modified – or an entirely new `BIDSPath` can be
 generated – and returned by the function, pointing to the T1-weighted image.
 
-!!! note
+!!! info
     The function accepts and returns a single `BIDSPath`.
 
 ???+ example "Example"
@@ -1999,7 +1999,7 @@ Whether to abort processing as soon as an error occurs, continue with all other
 processing steps for as long as possible, or drop you into a debugger in case
 of an error.
 
-!!! note
+!!! info
     Enabling debug mode deactivates parallel processing.
 """
 

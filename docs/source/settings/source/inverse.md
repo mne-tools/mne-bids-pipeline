@@ -12,4 +12,3 @@ tags:
         - noise_cov
         - source_info_path_update
         - inverse_targets
-        - report_stc_n_time_points

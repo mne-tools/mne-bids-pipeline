@@ -1,3 +1,9 @@
+---
+hide:
+  - navigation
+  - toc
+---
+
 # :brain: What is MNE-BIDS-Pipeline?
 
 {%

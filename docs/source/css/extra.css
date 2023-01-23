@@ -97,3 +97,7 @@ td p {
   border-left: 6px solid var(--md-code-bg-color);
 }
 
+/* Add a bit more margin above the buttons. */
+.md-button {
+  margin-top: 1rem !important;
+}

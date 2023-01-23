@@ -321,7 +321,7 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
         writer = pd.ExcelWriter(fname, engine="openpyxl")
 
     df.to_excel(writer, sheet_name=sheet_name, index=False)
-    # TODO: "FutureWarning: save is not part of the public API, usage can give
+    # TODO: "Future!!! warning save is not part of the public API, usage can give
     # in unexpected results and will be removed in a future version"
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("ignore")

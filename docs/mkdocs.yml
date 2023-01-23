@@ -87,7 +87,8 @@ nav:
                 - SSP & ICA: settings/preprocessing/ssp_ica.md
                 - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
-            - Statistics: settings/sensor/statistics.md
+            - Condition contrasts: settings/sensor/contrasts.md
+            - Decoding / MVPA: settings/sensor/mvpa.md
             - Time-frequency analysis: settings/sensor/time_freq.md
             - Group-level analysis: settings/sensor/group_level.md
         - Source-level analysis:
@@ -95,6 +96,7 @@ nav:
             - BEM surface: settings/source/bem.md
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
+        - Report generation: settings/reports/report_generation.md
     - Examples:
         - Examples Gallery: examples/examples.md
         - examples/ds003392.md

@@ -3,7 +3,8 @@
 import copy
 import functools
 import pathlib
-from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar, Literal
+from functools import lru_cache
+from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar, Literal, Any
 from types import SimpleNamespace, ModuleType
 
 import numpy as np
@@ -110,6 +111,13 @@ def get_sessions(config: SimpleNamespace) -> Union[List[None], List[str]]:
         return sessions
 
 
+@functools.lru_cache(maxsize=None)
+def _get_runs_all_subjects_cached(
+    **config_dict: Dict[str, Any],
+) -> Dict[str, Union[List[None], List[str]]]:
+    return get_runs_all_subjects(SimpleNamespace(**config_dict))
+
+
 def get_runs_all_subjects(
     config: SimpleNamespace,
 ) -> Dict[str, Union[List[None], List[str]]]:
@@ -173,7 +181,14 @@ def get_runs(
 
     runs = copy.deepcopy(config.runs)
 
-    subj_runs = get_runs_all_subjects(config)
+    subj_runs = _get_runs_all_subjects_cached(
+        bids_root=config.bids_root,
+        data_type=config.data_type,
+        ch_types=tuple(config.ch_types),
+        subjects=tuple(config.subjects) if config.subjects != "all" else "all",
+        exclude_subjects=tuple(config.exclude_subjects),
+        exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
+    )
     valid_runs = subj_runs[subject]
 
     if len(get_subjects(config)) > 1:
@@ -227,7 +242,7 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
         raise ValueError(
             f"The intersection of runs by subjects is empty. "
             f"Check the list of runs: "
-            f"{get_runs_all_subjects()}"
+            f"{get_runs_all_subjects(config)}"
         )
 
 

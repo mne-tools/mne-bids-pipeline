@@ -593,7 +593,6 @@ def run_report_average_sensor(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
-
         #######################################################################
         #
         # Add event stats.

@@ -25,6 +25,10 @@ def pytest_configure(config):
     ignore:The get_cmap function will be deprecated.*:
     ignore:make_current is deprecated.*:DeprecationWarning
     ignore:`np.*` is a deprecated alias for .*:DeprecationWarning
+    ignore:.*implicit namespace.*:DeprecationWarning
+    ignore:Deprecated call to `pkg_resources.*:DeprecationWarning
+    ignore:.*declare_namespace.*mpl_toolkits.*:DeprecationWarning
+    ignore:_SixMetaPathImporter\.find_spec.*:ImportWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

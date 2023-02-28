@@ -122,7 +122,7 @@ def dataset_test(request):
     test_options = TEST_SUITE[dataset]
     dataset_name = test_options.get("dataset", dataset.split("_")[0])
     with capsys.disabled():
-        if request.config.getoption("--download"):  # download requested
+        if request.config.getoption("--download", False):  # download requested
             download_main(dataset_name)
         yield
 

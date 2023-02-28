@@ -65,7 +65,10 @@ def get_datatype(config: SimpleNamespace) -> Literal["meg", "eeg"]:
         return "meg"
     else:
         raise RuntimeError(
-            "This probably shouldn't happen. Please contact "
+            "This probably shouldn't happen, got "
+            f"config.data_type={repr(config.data_type)} and "
+            f"config.ch_types={repr(config.ch_types)} "
+            "but could not determine the datatype. Please contact "
             "the MNE-BIDS-pipeline developers. Thank you."
         )
 
@@ -114,7 +117,10 @@ def get_sessions(config: SimpleNamespace) -> Union[List[None], List[str]]:
 def _get_runs_all_subjects_cached(
     **config_dict: Dict[str, Any],
 ) -> Dict[str, Union[List[None], List[str]]]:
-    return get_runs_all_subjects(SimpleNamespace(**config_dict))
+    config = SimpleNamespace(**config_dict)
+    # Sometimes we check list equivalence for ch_types, so convert it back
+    config.ch_types = list(config.ch_types)
+    return get_runs_all_subjects(config)
 
 
 def get_runs_all_subjects(

@@ -28,6 +28,7 @@ def pytest_configure(config):
     ignore:.*implicit namespace.*:DeprecationWarning
     ignore:Deprecated call to `pkg_resources.*:DeprecationWarning
     ignore:.*declare_namespace.*mpl_toolkits.*:DeprecationWarning
+    ignore:_SixMetaPathImporter\.find_spec.*:ImportWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

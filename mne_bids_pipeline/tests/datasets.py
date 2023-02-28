@@ -17,16 +17,25 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         "git": "",
         "openneuro": "",
         "osf": "",  # original dataset: '9f5w7'
-        "web": "https://osf.io/3zk6n/download",
+        "web": "https://osf.io/3zk6n/download?version=2",
         "include": [],
         "exclude": [],
     },
     "eeg_matchingpennies": {
-        "git": "https://gin.g-node.org/sappelhoff/eeg_matchingpennies",
+        # This dataset started out on osf.io as dataset https://osf.io/cj2dr
+        # then moved to g-node.org. As of 2023/02/28 when we download it via
+        # datalad it's too (~200 kB/sec!) and times out at the end:
+        #
+        #   "git": "https://gin.g-node.org/sappelhoff/eeg_matchingpennies",
+        #   "web": "",
+        #   "include": ["sub-05"],
+        #
+        # So now we mirror this datalad-fetched git repo back on osf.io!
+        "git": "",
         "openneuro": "",
         "osf": "",  # original dataset: 'cj2dr'
-        "web": "",
-        "include": ["sub-05"],
+        "web": "https://osf.io/download/8rbfk?version=1",
+        "include": [],
         "exclude": [],
     },
     "ds003104": {  # Anonymized "somato" dataset.

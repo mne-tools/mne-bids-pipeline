@@ -73,8 +73,13 @@ def get_datatype(config: SimpleNamespace) -> Literal["meg", "eeg"]:
         )
 
 
+@functools.lru_cache(maxsize=None)
+def _get_datatypes_cached(root):
+    return mne_bids.get_datatypes(root=root)
+
+
 def _get_ignore_datatypes(config: SimpleNamespace) -> Tuple[str]:
-    _all_datatypes: List[str] = mne_bids.get_datatypes(root=config.bids_root)
+    _all_datatypes: List[str] = _get_datatypes_cached(root=config.bids_root)
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 

@@ -14,3 +14,5 @@
 
 [//]: # (### :bug: Bug fixes)
 
+- Replace legacy `plot_psd()` calls with `compute_psd().plot()`
+  (#725 by @drammock)

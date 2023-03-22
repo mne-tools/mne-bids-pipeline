@@ -218,7 +218,7 @@ def filter_data(
     if exec_params.interactive:
         # Plot raw data and power spectral density.
         raw.plot(n_channels=50, butterfly=True)
-        raw.plot_psd(fmax=fmax)
+        raw.compute_psd(fmax=fmax).plot()
 
     del raw
 
@@ -302,7 +302,7 @@ def filter_data(
         if exec_params.interactive:
             # Plot raw data and power spectral density.
             raw_noise.plot(n_channels=50, butterfly=True)
-            raw_noise.plot_psd(fmax=fmax)
+            raw_noise.compute_psd(fmax=fmax).plot()
 
     assert len(in_files) == 0, in_files.keys()
 

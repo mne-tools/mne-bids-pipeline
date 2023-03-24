@@ -37,7 +37,7 @@ dependencies = [
     "pyvistaqt",
     "openpyxl",
     "autoreject",
-    "mne[hdf5]",
+    "mne[hdf5] >=1.2",
     "mne-bids[full]",
     "filelock",
     "setuptools >=65",

@@ -969,7 +969,7 @@ can either be tuples or dictionaries (or a mix of both). Each element in the
 list corresponds to a single contrast.
 
 A tuple specifies a one-vs-one contrast, where the second condition is
-subtraced from the first.
+subtracted from the first.
 
 If a dictionary, must contain the following keys:
 

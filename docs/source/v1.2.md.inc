@@ -1,4 +1,4 @@
-## v1.2.0-dev (unreleased)
+## v1.2.0 (released 2023/03/23)
 
 ### :new: New features & enhancements
 
@@ -6,13 +6,13 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 
-[//]: # (- Whatever (#000 by @whoever))
+- MNE-BIDS-Pipeline now requires MNE-Python 1.2 or newer.
 
-[//]: # (### :medical_symbol: Code health)
-
-[//]: # (### :bug: Bug fixes)
+### :medical_symbol: Code health
 
 - Replace legacy `plot_psd()` calls with `compute_psd().plot()`
   (#725 by @drammock)
+
+[//]: # (### :bug: Bug fixes)

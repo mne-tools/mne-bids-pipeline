@@ -12,7 +12,6 @@ import traceback
 import time
 from typing import Callable, Optional, Dict, List
 from types import SimpleNamespace
-import warnings
 
 from joblib import Memory
 import json_tricks

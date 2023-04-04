@@ -30,7 +30,7 @@ dependencies = [
     "pandas",
     "seaborn",
     "json_tricks",
-    "coloredlogs",
+    "rich",
     "python-picard",
     "qtpy",
     "pyvista",

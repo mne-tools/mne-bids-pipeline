@@ -10,7 +10,7 @@ import numpy as np
 from ._config_utils import _get_step_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
-from ._logging import logger, gen_log_kwargs, _install_logs
+from ._logging import logger, gen_log_kwargs
 from ._run import _short_step_path
 
 
@@ -193,7 +193,6 @@ def main():
         # them twice.
         step_modules = [*STEP_MODULES["init"], *step_modules]
 
-    _install_logs()
     msg = "Welcome aboard the MNE BIDS Pipeline!"
     logger.info(**gen_log_kwargs(message=msg, emoji="👋", box="╶╴", step=""))
     msg = f"Using configuration: {config}"

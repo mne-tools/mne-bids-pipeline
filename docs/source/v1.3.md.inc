@@ -14,4 +14,5 @@
 
 ### :bug: Bug fixes)
 
+- Fix pandas 2.0 compatibility (#732 by @larsoner)
 - Fix bug with `mne.sys_info` insertion in reports (#732 by @larsoner)

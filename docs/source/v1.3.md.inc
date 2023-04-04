@@ -12,6 +12,6 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes)
 
-[//]: # (- Whatever (#000 by @whoever))
+- Fix bug with `mne.sys_info` insertion in reports (#732 by @larsoner)

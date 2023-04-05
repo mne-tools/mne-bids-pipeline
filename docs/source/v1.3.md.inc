@@ -18,3 +18,4 @@
 
 - Fix pandas 2.0 compatibility (#732 by @larsoner)
 - Fix bug with `mne.sys_info` insertion in reports (#732 by @larsoner)
+- Always generate CSP decdoing grand average analysis if CSP decoding was used on the single-subject level (#733 by @hoechenberger)

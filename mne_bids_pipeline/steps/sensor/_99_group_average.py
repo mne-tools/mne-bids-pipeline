@@ -665,7 +665,7 @@ def run_group_average_sensor(
             if cfg.decode:
                 average_full_epochs_decoding(cfg, session)
                 average_time_by_time_decoding(cfg, session)
-        if cfg.decode and cfg.decoding_csp:
+        if cfg.decoding_csp:
             parallel, run_func = parallel_func(
                 average_csp_decoding, exec_params=exec_params
             )

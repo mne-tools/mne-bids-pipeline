@@ -17,6 +17,7 @@ theme:
         - navigation.tabs
         - navigation.instant  # Load pages via XMLHttpRequest (XHR)
         - navigation.tracking
+        - content.code.copy  # copy button
     palette:
       # Palette toggle for automated theme selection
       # Currently only available to sponsors

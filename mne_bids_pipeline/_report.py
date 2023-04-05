@@ -78,8 +78,8 @@ def _open_report(
                     session=session,
                     run=run,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(f"Failed: {exc}")
             fname_report_html = fname_report.with_suffix(".html")
             msg = f"Saving report: {fname_report_html}"
             logger.info(**gen_log_kwargs(message=msg))
@@ -536,7 +536,7 @@ div.accordion-body pre.my-0 code {
 # We make a lot of calls to this function and it takes > 1 sec generally
 # to run, so run it just once (it shouldn't meaningfully change anyway)
 @lru_cache(maxsize=1)
-def _cached_sys_info(f):
+def _cached_sys_info():
     with StringIO() as f:
         mne.sys_info(f)
         return f.getvalue()

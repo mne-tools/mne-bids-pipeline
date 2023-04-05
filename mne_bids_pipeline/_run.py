@@ -12,7 +12,6 @@ import traceback
 import time
 from typing import Callable, Optional, Dict, List
 from types import SimpleNamespace
-import warnings
 
 from joblib import Memory
 import json_tricks
@@ -320,13 +319,8 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
     else:
         writer = pd.ExcelWriter(fname, engine="openpyxl")
 
-    df.to_excel(writer, sheet_name=sheet_name, index=False)
-    # TODO: "Future!!! warning save is not part of the public API, usage can give
-    # in unexpected results and will be removed in a future version"
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("ignore")
-        writer.save()
-    writer.close()
+    with writer:
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
 def _update_for_splits(

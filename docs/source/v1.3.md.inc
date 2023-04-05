@@ -1,6 +1,8 @@
 ## v1.3.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
+
+- Provide a more helpful log message if the CSP decoding step is being skipped (#734 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))
 

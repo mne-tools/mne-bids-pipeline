@@ -544,7 +544,7 @@ def main(*, config: SimpleNamespace) -> None:
         else:
             msg = "No CSP analysis requested. "
 
-        msg = "Skipping …"
+        msg += "Skipping …"
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 

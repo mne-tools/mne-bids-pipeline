@@ -303,7 +303,7 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
     writer = pd.ExcelWriter(
         fname,
         engine="openpyxl",
-        mode="a",
+        mode="a" if fname.exists() else "w",
         if_sheet_exists="replace",
     )
     with writer:

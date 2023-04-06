@@ -1,97 +1,104 @@
 """Logging."""
+import datetime
 import inspect
 import logging
+import os
 from typing import Optional, Union
 
-import coloredlogs
+import rich.console
+import rich.theme
 
 from .typing import LogKwargsT
 
-logger = logging.getLogger("mne-bids-pipeline")
 
-log_level_styles = {
-    "info": {
-        "bright": True,
-        "bold": True,
-    },
-    "warning": {"color": 202, "bold": True},
-    "error": {"background": "red", "bold": True},
-    "critical": {"background": "red", "bold": True},
-}
-log_field_styles = {
-    "asctime": {"color": "green"},
-    "box": {
-        "color": "cyan",
-        "bold": True,
-        "bright": True,
-    },
-    "step": {
-        "color": "cyan",
-        "bold": True,
-        "bright": True,
-    },
-    "msg": {
-        "color": "cyan",
-        "bold": True,
-        "bright": False,
-    },
-    "subject": {
-        "color": "cyan",
-        "bright": True,
-        "bold": True,
-    },
-    "session": {
-        "color": "cyan",
-        "bold": True,
-        "bright": False,
-    },
-    "run": {
-        "color": "cyan",
-        "bold": True,
-        "bright": False,
-    },
-    "message": {
-        "color": "white",
-        "bold": True,
-        "bright": True,
-    },
-}
-log_fmt = "[%(asctime)s] %(box)s%(step)s%(subject)s%(session)s%(run)s%(message)s"
-log_date_fmt = "%H:%M:%S"
+class _MBPLogger:
+    def __init__(self):
+        self._level = logging.INFO
+
+    # Do lazy instantiation of _console so that pytest's output capture
+    # mechanics don't get messed up
+    @property
+    def _console(self):
+        try:
+            return self.__console
+        except AttributeError:
+            pass  # need to instantiate it, continue
+
+        force_terminal = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)
+        if force_terminal is not None:
+            force_terminal = force_terminal.lower() in ("true", "1")
+        kwargs = dict(soft_wrap=True, force_terminal=force_terminal)
+        kwargs["theme"] = rich.theme.Theme(
+            dict(
+                default="white",
+                # Prefixes
+                asctime="green",
+                step="bold cyan",
+                # Messages
+                debug="dim",
+                info="bold",
+                warning="bold magenta",
+                error="bold red",
+            )
+        )
+        self.__console = rich.console.Console(**kwargs)
+        return self.__console
+
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, level):
+        level = int(level)
+        self._level = level
+
+    def debug(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+        self._log_message(kind="debug", msg=msg, **(extra or {}))
+
+    def info(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+        self._log_message(kind="info", msg=msg, **(extra or {}))
+
+    def warning(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+        self._log_message(kind="warning", msg=msg, **(extra or {}))
+
+    def error(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+        self._log_message(kind="error", msg=msg, **(extra or {}))
+
+    def _log_message(
+        self,
+        kind: str,
+        msg: str,
+        subject: Optional[Union[str, int]] = None,
+        session: Optional[Union[str, int]] = None,
+        run: Optional[Union[str, int]] = None,
+        step: Optional[str] = None,
+        emoji: str = "",
+        box: str = "",
+    ):
+        this_level = getattr(logging, kind.upper())
+        if this_level < self.level:
+            return
+        if not subject:
+            subject = ""
+        if not session:
+            session = ""
+        if not run:
+            run = ""
+        if not step:
+            step = ""
+        if step and emoji:
+            step = f"{emoji} {step}"
+        asctime = datetime.datetime.now().strftime("[%H:%M:%S]")
+        msg = (
+            f"[asctime]{asctime}[/asctime] "
+            f"[step]{box}{step}{subject}{session}{run}[/step]"
+            f"[{kind}]{msg}[/{kind}]"
+        )
+        self._console.print(msg)
 
 
-class LogFilter(logging.Filter):
-    def filter(self, record):
-        if not hasattr(record, "step"):
-            record.step = ""
-        if not hasattr(record, "subject"):
-            record.subject = ""
-        if not hasattr(record, "session"):
-            record.session = ""
-        if not hasattr(record, "run"):
-            record.run = ""
-        if not hasattr(record, "box"):
-            record.box = "│ "
-
-        return True
-
-
-logger.addFilter(LogFilter())
-
-
-def _install_logs():
-    coloredlogs.DEFAULT_DATE_FORMAT = log_date_fmt
-    coloredlogs.install(
-        fmt=log_fmt,
-        level="info",
-        logger=logger,
-        level_styles=log_level_styles,
-        field_styles=log_field_styles,
-        date_fmt=log_date_fmt,
-    )
-
-
-_install_logs()
+logger = _MBPLogger()
 
 
 def gen_log_kwargs(

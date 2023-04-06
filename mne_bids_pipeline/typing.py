@@ -17,7 +17,6 @@ class ArbitraryContrast(TypedDict):
 class LogKwargsT(TypedDict):
     msg: str
     extra: Dict[str, str]
-    box: str
 
 
 class ReferenceRunParams(TypedDict):

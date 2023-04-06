@@ -2,7 +2,7 @@ import pytest
 from mne_bids_pipeline._config_import import _import_config
 
 
-def test_validation(tmp_path, caplog):
+def test_validation(tmp_path, capsys):
     """Test that misspellings are caught by our config import validator."""
     config_path = tmp_path / "config.py"
     bad_text = ""
@@ -31,16 +31,18 @@ def test_validation(tmp_path, caplog):
         _import_config(config_path=config_path)
     bad_text += "config_validation = 'warn'\n"
     config_path.write_text(bad_text)
-    assert caplog.record_tuples == []
+    capsys.readouterr()
     _import_config(config_path=config_path)
-    assert len(caplog.record_tuples) == 1
-    assert caplog.record_tuples[0][:2] == ("mne-bids-pipeline", 30)
-    msg = caplog.record_tuples[0][2]
+    msg, err = capsys.readouterr()
+    assert err == ""
+    assert len(msg.splitlines()) == 1
     assert "did you mean 'sessions'?" in msg
     bad_text += "config_validation = 'ignore'\n"
     config_path.write_text(bad_text)
+    capsys.readouterr()
     _import_config(config_path=config_path)
-    assert len(caplog.record_tuples) == 1  # no new message
+    msg, err = capsys.readouterr()
+    assert msg == err == ""  # no new message
     # old values
     bad_text = working_text
     bad_text += "debug = True\n"

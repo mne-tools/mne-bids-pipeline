@@ -82,13 +82,13 @@ def failsafe_run(
                         )
                     if os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true":
                         raise
-                    logger.critical(
+                    logger.error(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="❌")
                     )
                     sys.exit(1)
                 elif on_error == "debug":
                     message += "\n\nStarting post-mortem debugger."
-                    logger.critical(
+                    logger.error(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="🐛")
                     )
                     extype, value, tb = sys.exc_info()
@@ -97,7 +97,7 @@ def failsafe_run(
                     sys.exit(1)
                 else:
                     message += "\n\nContinuing pipeline run."
-                    logger.critical(
+                    logger.error(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="🔂")
                     )
             log_info["time"] = round(time.time() - t0, ndigits=1)

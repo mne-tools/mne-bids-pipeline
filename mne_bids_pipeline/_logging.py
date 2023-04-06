@@ -23,7 +23,7 @@ class _MBPLogger:
         except AttributeError:
             pass  # need to instantiate it, continue
 
-        kwargs = dict()
+        kwargs = dict(soft_wrap=True)
         kwargs["theme"] = rich.theme.Theme(
             dict(
                 default="white",

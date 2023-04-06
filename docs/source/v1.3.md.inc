@@ -3,7 +3,7 @@
 ### :new: New features & enhancements
 
 - Provide a more helpful log message if the CSP decoding step is being skipped (#734 by @hoechenberger)
-- Use `rich` for improved logging control and styling (#736 by @larsoner)
+- Use `rich` for improved logging control and styling (#737 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 

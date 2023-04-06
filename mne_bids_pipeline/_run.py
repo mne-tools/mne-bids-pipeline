@@ -13,6 +13,7 @@ import time
 from typing import Callable, Optional, Dict, List
 from types import SimpleNamespace
 
+from filelock import FileLock
 from joblib import Memory
 import json_tricks
 import pandas as pd
@@ -300,14 +301,15 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
     df = df[columns]
 
-    writer = pd.ExcelWriter(
-        fname,
-        engine="openpyxl",
-        mode="a" if fname.exists() else "w",
-        if_sheet_exists="replace",
-    )
-    with writer:
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
+    with FileLock(fname.with_suffix(fname.suffix + ".lock")):
+        writer = pd.ExcelWriter(
+            fname,
+            engine="openpyxl",
+            mode="a" if fname.exists() else "w",
+            if_sheet_exists="replace",
+        )
+        with writer:
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
 def _update_for_splits(

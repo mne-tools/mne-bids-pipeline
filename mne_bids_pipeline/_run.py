@@ -301,8 +301,8 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
     df = df[columns]
 
-    append = fname.exists()
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):
+        append = fname.exists()
         writer = pd.ExcelWriter(
             fname,
             engine="openpyxl",

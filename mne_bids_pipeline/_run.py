@@ -301,12 +301,13 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
     df = df[columns]
 
+    append = fname.exists()
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):
         writer = pd.ExcelWriter(
             fname,
             engine="openpyxl",
-            mode="a" if fname.exists() else "w",
-            if_sheet_exists="replace",
+            mode="a" if append else "w",
+            if_sheet_exists="replace" if append else None,
         )
         with writer:
             df.to_excel(writer, sheet_name=sheet_name, index=False)

@@ -2,6 +2,7 @@
 import datetime
 import inspect
 import logging
+import os
 from typing import Optional, Union
 
 import rich.console
@@ -23,7 +24,10 @@ class _MBPLogger:
         except AttributeError:
             pass  # need to instantiate it, continue
 
-        kwargs = dict(soft_wrap=True)
+        force_terminal = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)
+        if force_terminal is not None:
+            force_terminal = force_terminal.lower() in ("true", "1")
+        kwargs = dict(soft_wrap=True, force_terminal=force_terminal)
         kwargs["theme"] = rich.theme.Theme(
             dict(
                 default="white",

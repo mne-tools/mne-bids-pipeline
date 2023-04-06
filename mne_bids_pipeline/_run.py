@@ -15,7 +15,6 @@ from types import SimpleNamespace
 
 from joblib import Memory
 import json_tricks
-from openpyxl import load_workbook
 import pandas as pd
 from mne_bids import BIDSPath
 
@@ -301,24 +300,12 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
     df = df[columns]
 
-    if fname.exists():
-        book = None
-        try:
-            book = load_workbook(fname)
-        except Exception:  # bad file
-            pass
-        else:
-            if sheet_name in book:
-                book.remove(book[sheet_name])
-        writer = pd.ExcelWriter(fname, engine="openpyxl")
-        if book is not None:
-            try:
-                writer.book = book
-            except Exception:
-                pass  # AttributeError: can't set attribute 'book' (?)
-    else:
-        writer = pd.ExcelWriter(fname, engine="openpyxl")
-
+    writer = pd.ExcelWriter(
+        fname,
+        engine="openpyxl",
+        mode="a",
+        if_sheet_exists="replace",
+    )
     with writer:
         df.to_excel(writer, sheet_name=sheet_name, index=False)
 

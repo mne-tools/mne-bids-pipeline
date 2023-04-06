@@ -10,9 +10,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :medical_symbol: Code health)
+### :medical_symbol: Code health
 
-[//]: # (- Whatever (#000 by @whoever))
+- Avoid using deprecated `openpyxl` API when working with Excel spreadsheets (#735 by @larsoner)
 
 ### :bug: Bug fixes)
 

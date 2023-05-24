@@ -30,6 +30,7 @@ def pytest_configure(config):
     ignore:.*declare_namespace.*mpl_toolkits.*:DeprecationWarning
     ignore:_SixMetaPathImporter\.find_spec.*:ImportWarning
     ignore:pkg_resources is deprecated.*:DeprecationWarning
+    ignore:`product` is deprecated as of NumPy.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

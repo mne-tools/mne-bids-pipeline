@@ -292,9 +292,7 @@ def get_config(
             subject=subject,
             session=session,
         )
-        extra_kwargs["mf_reference_run"] = get_mf_reference_run(config=config)
         extra_kwargs["mf_head_origin"] = config.mf_head_origin
-        extra_kwargs["use_maxwell_filter"] = config.use_maxwell_filter
     cfg = SimpleNamespace(
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
@@ -323,6 +321,8 @@ def get_config(
         min_break_duration=config.min_break_duration,
         t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
         t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        use_maxwell_filter=config.use_maxwell_filter,
+        mf_reference_run=get_mf_reference_run(config=config),
         data_type=config.data_type,
         ch_types=config.ch_types,
         eog_channels=config.eog_channels,

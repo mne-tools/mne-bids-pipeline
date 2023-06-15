@@ -17,11 +17,11 @@ subjects = ["01"]
 raw_resample_sfreq = 125.0
 crop_runs = (0, 300)  # Reduce memory usage on CI system
 
-find_flat_channels_meg = False
-find_noisy_channels_meg = False
+find_flat_channels_meg = True
+find_noisy_channels_meg = True
 use_maxwell_filter = True
 
-mf_reference_run = "01"
+mf_reference_run = "02"
 mf_cal_fname = bids_root + "/derivatives/meg_derivatives/sss_cal.dat"
 mf_ctc_fname = bids_root + "/derivatives/meg_derivatives/ct_sparse.fif"
 

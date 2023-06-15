@@ -294,6 +294,7 @@ def get_config(
         )
         extra_kwargs["mf_reference_run"] = get_mf_reference_run(config=config)
         extra_kwargs["mf_head_origin"] = config.mf_head_origin
+        extra_kwargs["use_maxwell_filter"] = config.use_maxwell_filter
     cfg = SimpleNamespace(
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,

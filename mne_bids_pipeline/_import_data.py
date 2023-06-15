@@ -561,9 +561,17 @@ def _get_raw_paths(
                 if task == "rest":
                     raw_fname = bids_path_in.copy().update(run=None, task=task)
                 else:
-                    raw_fname = _read_json(_empty_room_match_path(bids_path_in, cfg))[
-                        "fname"
-                    ]
+                    # This must match the logic of _02_find_empty_room.py
+                    update_kwargs = dict()
+                    if cfg.use_maxwell_filter:
+                        update_kwargs["run"] = cfg.mf_reference_run
+                    raw_fname = _read_json(
+                        _empty_room_match_path(
+                            bids_path_in.copy().update(**update_kwargs),
+                            cfg,
+                        )
+                    )
+                    raw_fname = raw_fname["fname"]
                     if raw_fname is not None:
                         raw_fname = get_bids_path_from_fname(raw_fname)
             if raw_fname is None:

@@ -37,3 +37,4 @@ decode = True
 decoding_time_generalization = True
 
 run_source_estimation = False
+n_jobs = 4

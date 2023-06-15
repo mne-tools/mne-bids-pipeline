@@ -18,3 +18,4 @@ process_empty_room = False
 
 use_template_mri = "fsaverage"
 adjust_coreg = True
+n_jobs = 4

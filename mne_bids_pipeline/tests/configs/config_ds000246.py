@@ -29,4 +29,3 @@ parallel_backend = "dask"
 dask_worker_memory_limit = "2G"
 dask_temp_dir = "./.dask-worker-space"
 dask_open_dashboard = True
-n_jobs = 4

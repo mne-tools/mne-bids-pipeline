@@ -306,7 +306,6 @@ jobs:
 
   test_ds000117:
     <<: *imageconfig
-    resource_class: large
     steps:
       - attach_workspace:
           at: ~/
@@ -435,7 +434,6 @@ jobs:
 
   test_ds000246:
     <<: *imageconfig
-    resource_class: large
     steps:
       - attach_workspace:
           at: ~/
@@ -503,7 +501,6 @@ jobs:
 
   test_ds000248_base:
     <<: *imageconfig
-    resource_class: large
     steps:
       - attach_workspace:
           at: ~/
@@ -638,7 +635,6 @@ jobs:
 
   test_ds000248_no_mri:
     <<: *imageconfig
-    resource_class: large
     steps:
       - attach_workspace:
           at: ~/

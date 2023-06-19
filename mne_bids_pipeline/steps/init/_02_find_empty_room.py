@@ -41,7 +41,7 @@ def get_input_fnames_find_empty_room(
     if hasattr(bids_path_in, "find_matching_sidecar"):
         in_files["sidecar"] = (
             bids_path_in.copy()
-            .update(datatype=None)
+            .update(datatype=None, suffix="meg")
             .find_matching_sidecar(extension=".json")
         )
     try:

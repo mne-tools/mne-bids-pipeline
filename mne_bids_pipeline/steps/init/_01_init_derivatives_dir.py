@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
-from ..._config_utils import get_datatype, get_subjects, get_sessions
+from ..._config_utils import get_subjects, get_sessions, _bids_kwargs
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run
 
@@ -62,11 +62,10 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        datatype=get_datatype(config),
-        deriv_root=config.deriv_root,
         PIPELINE_NAME=config.PIPELINE_NAME,
         VERSION=config.VERSION,
         CODE_URL=config.CODE_URL,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

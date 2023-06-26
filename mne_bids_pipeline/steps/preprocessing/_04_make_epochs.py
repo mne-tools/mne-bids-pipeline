@@ -14,12 +14,11 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_task,
     get_runs,
     get_subjects,
     get_eeg_reference,
     get_sessions,
-    get_datatype,
+    _bids_kwargs,
 )
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
@@ -303,16 +302,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs=get_runs(config=config, subject=subject),
         use_maxwell_filter=config.use_maxwell_filter,
-        proc=config.proc,
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.bids_root,
-        deriv_root=config.deriv_root,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
@@ -330,6 +320,8 @@ def get_config(
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
+        runs=get_runs(config=config, subject=subject),
+        **_bids_kwargs(config=config),
     )
     return cfg
 

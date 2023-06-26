@@ -19,11 +19,10 @@ from ..._config_utils import (
     get_noise_cov_bids_path,
     get_subjects,
     sanitize_cond_name,
-    get_task,
-    get_datatype,
     get_sessions,
     get_fs_subjects_dir,
     get_fs_subject,
+    _bids_kwargs,
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
@@ -162,12 +161,6 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        proc=config.proc,
-        space=config.space,
         source_info_path_update=config.source_info_path_update,
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
@@ -175,11 +168,11 @@ def get_config(
         loose=config.loose,
         depth=config.depth,
         inverse_method=config.inverse_method,
-        deriv_root=config.deriv_root,
         noise_cov=_sanitize_callable(config.noise_cov),
         report_stc_n_time_points=config.report_stc_n_time_points,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
+        **_bids_kwargs(config=config),
     )
     return cfg
 

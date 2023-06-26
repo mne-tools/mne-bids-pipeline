@@ -24,8 +24,7 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_subjects,
     get_sessions,
-    get_task,
-    get_datatype,
+    _bids_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -181,16 +180,11 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        deriv_root=config.deriv_root,
         baseline=config.baseline,
         ica_reject=config.ica_reject,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

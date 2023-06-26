@@ -23,12 +23,11 @@ from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions,
     get_runs,
+    get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
     get_eeg_reference,
+    _bids_kwargs,
 )
 from ..._import_data import make_epochs, annotations_to_events
 from ..._logging import gen_log_kwargs, logger
@@ -539,14 +538,8 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        task=get_task(config),
-        task_is_rest=config.task_is_rest,
-        datatype=get_datatype(config),
         runs=get_runs(config=config, subject=subject),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        deriv_root=config.deriv_root,
+        task_is_rest=config.task_is_rest,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
@@ -572,6 +565,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

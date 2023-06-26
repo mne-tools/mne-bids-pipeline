@@ -19,11 +19,10 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
     get_eeg_reference,
     get_decoding_contrasts,
     get_all_contrasts,
+    _bids_kwargs,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
@@ -597,14 +596,7 @@ def get_config(
     dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
-        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        proc=config.proc,
-        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_all_contrasts(config),
         decode=config.decode,
@@ -625,12 +617,13 @@ def get_config(
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
         sessions=get_sessions(config),
-        bids_root=config.bids_root,
-        data_type=config.data_type,
         exclude_subjects=config.exclude_subjects,
         all_contrasts=get_all_contrasts(config),
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
+        # TODO: needed because get_datatype gets called again...
+        data_type=config.data_type,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

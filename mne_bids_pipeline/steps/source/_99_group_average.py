@@ -137,6 +137,8 @@ def get_config(
         use_template_mri=config.use_template_mri,
         all_contrasts=get_all_contrasts(config),
         report_stc_n_time_points=config.report_stc_n_time_points,
+        # TODO: needed because get_datatype gets called again...
+        data_type=config.data_type,
         **_bids_kwargs(config=config),
     )
     return cfg

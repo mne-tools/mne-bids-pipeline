@@ -12,6 +12,7 @@ crop_runs = (0.0, 300.0)
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
+mf_movecomp = True
 mf_cal_fname = bids_root + "/derivatives/meg_derivatives/sss_cal.dat"
 mf_ctc_fname = bids_root + "/derivatives/meg_derivatives/ct_sparse.fif"
 ch_types = ["meg"]

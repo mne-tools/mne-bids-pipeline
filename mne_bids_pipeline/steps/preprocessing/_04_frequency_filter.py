@@ -357,8 +357,6 @@ def get_config(
         fix_stim_artifact=config.fix_stim_artifact,
         stim_artifact_tmin=config.stim_artifact_tmin,
         stim_artifact_tmax=config.stim_artifact_tmax,
-        find_flat_channels_meg=config.find_flat_channels_meg,
-        find_noisy_channels_meg=config.find_noisy_channels_meg,
         mf_reference_run=get_mf_reference_run(config),
         drop_channels=config.drop_channels,
         find_breaks=config.find_breaks,

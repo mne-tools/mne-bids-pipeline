@@ -576,6 +576,16 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
+mf_st_correlation: float = 0.98
+"""
+The correlation limit for spatio-temporal SSS (tSSS).
+
+???+ example "Example"
+    ```python
+    st_correlation = 0.98
+    ```
+"""
+
 mf_head_origin: Union[Literal["auto"], ArrayLike] = "auto"
 """
 `mf_head_origin` : array-like, shape (3,) | 'auto'
@@ -637,6 +647,11 @@ location is used.
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
 """  # noqa : E501
+
+mf_mc: bool = False
+"""
+If True, perform movement compensation on the data.
+"""
 
 ###############################################################################
 # STIMULATION ARTIFACT

@@ -10,7 +10,9 @@ tags:
       members:
         - use_maxwell_filter
         - mf_st_duration
+        - mf_st_correlation
         - mf_head_origin
         - mf_reference_run
         - mf_cal_fname
         - mf_ctc_fname
+        - mf_movecomp

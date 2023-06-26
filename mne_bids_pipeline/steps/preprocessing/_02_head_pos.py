@@ -1,18 +1,4 @@
-"""Maxwell-filter MEG data.
-
-If you chose to run Maxwell filter (config.use_maxwell_filter = True),
-the data are Maxwell filtered using SSS or tSSS (if config.mf_st_duration
-is not None) and movement compensation.
-
-Using tSSS with a short duration can be used as an alternative to highpass
-filtering. For instance, a duration of 10 s acts like a 0.1 Hz highpass.
-
-The head position of all runs is corrected to the run specified in
-config.mf_reference_run.
-It is critical to mark bad channels before Maxwell filtering.
-
-The function loads machine-specific calibration files.
-"""
+"""Estimate head positions."""
 
 from typing import Optional
 from types import SimpleNamespace
@@ -22,8 +8,6 @@ import mne
 from mne_bids import read_raw_bids
 
 from ..._config_utils import (
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
     get_subjects,
     get_sessions,
     get_runs,
@@ -43,7 +27,7 @@ from ..._report import _open_report, _add_raw
 from ..._run import failsafe_run, save_logs, _update_for_splits
 
 
-def get_input_fnames_maxwell_filter(
+def get_input_fnames_head_pos(
     *,
     cfg: SimpleNamespace,
     subject: str,
@@ -73,15 +57,13 @@ def get_input_fnames_maxwell_filter(
         in_files=in_files,
         key=key,
     )
-    in_files["mf_cal_fname"] = cfg.mf_cal_fname
-    in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
     return in_files
 
 
 @failsafe_run(
-    get_input_fnames=get_input_fnames_maxwell_filter,
+    get_input_fnames=get_input_fnames_head_pos,
 )
-def run_maxwell_filter(
+def run_head_pos(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -137,7 +119,10 @@ def run_maxwell_filter(
     msg = "Applying Maxwell filter to experimental data: "
 
     if cfg.mf_st_duration:
-        msg += f"tSSS (st_duration: {cfg.mf_st_duration} sec)."
+        msg += (
+            f"tSSS (st_duration: {cfg.mf_st_duration} sec, "
+            f"st_correlation: {cfg.mf_st_correlation})."
+        )
     else:
         msg += "SSS."
     logger.info(**gen_log_kwargs(message=msg))
@@ -154,10 +139,11 @@ def run_maxwell_filter(
     # Keyword arguments shared between Maxwell filtering of the
     # experimental and the empty-room data.
     common_mf_kws = dict(
-        # TODO: Add head_pos, st_correlation, eSSS
+        # TODO: Add head_pos, eSSS
         calibration=in_files.pop("mf_cal_fname"),
         cross_talk=in_files.pop("mf_ctc_fname"),
         st_duration=cfg.mf_st_duration,
+        st_correlation=cfg.mf_st_correlation,
         origin=cfg.mf_head_origin,
         coord_frame="head",
         destination=dev_head_t,
@@ -304,24 +290,11 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         reader_extra_params=config.reader_extra_params,
-        mf_cal_fname=get_mf_cal_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
-        mf_ctc_fname=get_mf_ctc_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
-        mf_st_duration=config.mf_st_duration,
-        mf_head_origin=config.mf_head_origin,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
         # XXX needs to accept session!
         runs=get_runs(config=config, subject=subject),
-        use_maxwell_filter=config.use_maxwell_filter,
         proc=config.proc,
         task=get_task(config),
         datatype=get_datatype(config),
@@ -336,8 +309,6 @@ def get_config(
         fix_stim_artifact=config.fix_stim_artifact,
         stim_artifact_tmin=config.stim_artifact_tmin,
         stim_artifact_tmax=config.stim_artifact_tmax,
-        find_flat_channels_meg=config.find_flat_channels_meg,
-        find_noisy_channels_meg=config.find_noisy_channels_meg,
         mf_reference_run=get_mf_reference_run(config),
         drop_channels=config.drop_channels,
         find_breaks=config.find_breaks,
@@ -354,16 +325,14 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
-    """Run maxwell_filter."""
-    if not config.use_maxwell_filter:
+    """Run head position estimation."""
+    if not config.use_maxwell_filter or not config.mf_mc:
         msg = "Skipping …"
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(
-            run_maxwell_filter, exec_params=config.exec_params
-        )
+        parallel, run_func = parallel_func(run_head_pos, exec_params=config.exec_params)
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject, session=session),

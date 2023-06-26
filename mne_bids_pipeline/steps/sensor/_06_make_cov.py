@@ -12,9 +12,8 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
     get_noise_cov_bids_path,
+    _bids_kwargs,
 )
 from ..._config_import import _import_config
 from ..._config_utils import _restrict_analyze_channels, get_all_contrasts
@@ -75,8 +74,8 @@ def get_input_fnames_cov(
             root=cfg.deriv_root,
             check=False,
         )
-        data_type = "resting-state" if cfg.noise_cov == "rest" else "empty-room"
-        if data_type == "resting-state":
+        run_type = "resting-state" if cfg.noise_cov == "rest" else "empty-room"
+        if run_type == "resting-state":
             bids_path_raw_noise.task = "rest"
         else:
             bids_path_raw_noise.task = "noise"
@@ -129,8 +128,8 @@ def compute_cov_from_raw(
     out_files: dict,
 ) -> mne.Covariance:
     fname_raw = in_files.pop("raw")
-    data_type = "resting-state" if fname_raw.task == "rest" else "empty-room"
-    msg = f"Computing regularized covariance based on {data_type} recording."
+    run_type = "resting-state" if fname_raw.task == "rest" else "empty-room"
+    msg = f"Computing regularized covariance based on {run_type} recording."
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Input:  {fname_raw.basename}"
     logger.info(**gen_log_kwargs(message=msg))
@@ -283,20 +282,14 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        proc=config.proc,
         spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
-        deriv_root=config.deriv_root,
         run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
         conditions=config.conditions,
         all_contrasts=get_all_contrasts(config),
         analyze_channels=config.analyze_channels,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

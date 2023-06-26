@@ -27,11 +27,10 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
     get_eeg_reference,
-    _restrict_analyze_channels,
     get_decoding_contrasts,
+    _bids_kwargs,
+    _restrict_analyze_channels,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._decoding import LogReg
@@ -218,12 +217,6 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        deriv_root=config.deriv_root,
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
@@ -235,6 +228,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
+        **_bids_kwargs(config=config),
     )
     return cfg
 

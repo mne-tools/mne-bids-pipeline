@@ -16,11 +16,10 @@ from mne_bids import BIDSPath
 from ..._config_utils import (
     get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
-    _restrict_analyze_channels,
     get_eeg_reference,
     sanitize_cond_name,
+    _bids_kwargs,
+    _restrict_analyze_channels,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run, save_logs
@@ -162,12 +161,6 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        deriv_root=config.deriv_root,
         time_frequency_conditions=config.time_frequency_conditions,
         analyze_channels=config.analyze_channels,
         spatial_filter=config.spatial_filter,
@@ -180,6 +173,7 @@ def get_config(
         time_frequency_baseline=config.time_frequency_baseline,
         time_frequency_baseline_mode=config.time_frequency_baseline_mode,
         time_frequency_crop=config.time_frequency_crop,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

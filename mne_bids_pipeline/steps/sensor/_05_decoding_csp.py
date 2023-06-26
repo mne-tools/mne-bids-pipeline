@@ -19,11 +19,10 @@ from sklearn.pipeline import make_pipeline
 from ..._config_utils import (
     get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
     get_eeg_reference,
-    _restrict_analyze_channels,
     get_decoding_contrasts,
+    _bids_kwargs,
+    _restrict_analyze_channels,
 )
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
@@ -513,12 +512,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters
-        datatype=get_datatype(config),
-        deriv_root=config.deriv_root,
-        task=get_task(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
         use_maxwell_filter=config.use_maxwell_filter,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
@@ -532,6 +525,7 @@ def get_config(
         decoding_contrasts=get_decoding_contrasts(config),
         n_boot=config.n_boot,
         random_state=config.random_state,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

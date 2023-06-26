@@ -16,10 +16,9 @@ from ..._config_utils import (
     get_subjects,
     sanitize_cond_name,
     get_fs_subject,
-    get_task,
-    get_datatype,
     get_sessions,
     get_all_contrasts,
+    _bids_kwargs,
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
@@ -126,20 +125,11 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
         task_is_rest=config.task_is_rest,
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        proc=config.proc,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
         fs_subjects_dir=get_fs_subjects_dir(config),
-        deriv_root=config.deriv_root,
         subjects_dir=get_fs_subjects_dir(config),
-        bids_root=config.bids_root,
-        data_type=config.data_type,
         ch_types=config.ch_types,
         subjects=config.subjects,
         exclude_subjects=config.exclude_subjects,
@@ -147,6 +137,9 @@ def get_config(
         use_template_mri=config.use_template_mri,
         all_contrasts=get_all_contrasts(config),
         report_stc_n_time_points=config.report_stc_n_time_points,
+        # TODO: needed because get_datatype gets called again...
+        data_type=config.data_type,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

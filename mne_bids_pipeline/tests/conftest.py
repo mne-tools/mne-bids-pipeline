@@ -31,8 +31,9 @@ def pytest_configure(config):
     ignore:_SixMetaPathImporter\.find_spec.*:ImportWarning
     ignore:pkg_resources is deprecated.*:DeprecationWarning
     ignore:`product` is deprecated as of NumPy.*:DeprecationWarning
-    # seaborn calling tight layout
+    # seaborn calling tight layout, etc.
     ignore:The figure layout has changed to tight:UserWarning
+    ignore:The \S+_cmap function was deprecated.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

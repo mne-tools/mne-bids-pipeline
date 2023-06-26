@@ -13,11 +13,10 @@ from mne_bids import BIDSPath
 from mne.utils import _pl
 
 from ..._config_utils import (
-    get_sessions,
     get_runs,
+    get_sessions,
     get_subjects,
-    get_task,
-    get_datatype,
+    _bids_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -206,14 +205,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs=get_runs(config=config, subject=subject),
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
         eog_channels=config.eog_channels,
-        deriv_root=config.deriv_root,
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,
@@ -226,6 +218,8 @@ def get_config(
         ch_types=config.ch_types,
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
+        runs=get_runs(config=config, subject=subject),
+        **_bids_kwargs(config=config),
     )
     return cfg
 

@@ -6,6 +6,11 @@ from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
 
+from ._config_utils import (
+    get_mf_reference_run,
+    get_runs,
+    _bids_kwargs,
+)
 from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
@@ -368,17 +373,24 @@ def import_experimental_data(
     session = bids_path_in.session
     run = bids_path_in.run
 
+    # 1. _load_data (_crop_data)
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
+    # 2. _set_eeg_montage
     _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
+    # 3. _create_bipolar_channels
     _create_bipolar_channels(
         cfg=cfg, raw=raw, subject=subject, session=session, run=run
     )
+    # 4. _drop_channels_func
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    # 5. _find_breaks_func
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
     if data_is_rest is None:
         data_is_rest = (cfg.task == "rest") or cfg.task_is_rest
     if not data_is_rest:
+        # 6. _rename_events_func
         _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
+        # 7. _fix_stim_artifact_func
         _fix_stim_artifact_func(cfg=cfg, raw=raw)
 
     if bids_path_bads_in is not None:
@@ -654,3 +666,44 @@ def _read_bads_tsv(
 ) -> List[str]:
     bads_tsv = pd.read_csv(bids_path_bads.fpath, sep="\t", header=0)
     return bads_tsv[bads_tsv.columns[0]].tolist()
+
+
+def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
+    """Get config params needed for any raw data loading."""
+    return dict(
+        # import_experimental_data / general
+        process_empty_room=config.process_empty_room,
+        process_rest=config.process_rest,
+        task_is_rest=config.task_is_rest,
+        # _get_raw_paths
+        use_maxwell_filter=config.use_maxwell_filter,
+        mf_reference_run=get_mf_reference_run(config=config),
+        # 1. _load_data
+        reader_extra_params=config.reader_extra_params,
+        crop_runs=config.crop_runs,
+        # 2. _set_eeg_montage
+        eeg_template_montage=config.eeg_template_montage,
+        # 3. _create_bipolar_channels
+        eeg_bipolar_channels=config.eeg_bipolar_channels,
+        ch_types=config.ch_types,
+        eog_channels=config.eog_channels,
+        # 4. _drop_channels_func
+        drop_channels=config.drop_channels,
+        # 5. _find_breaks_func
+        find_breaks=config.find_breaks,
+        min_break_duration=config.min_break_duration,
+        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
+        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
+        # 6. _rename_events_func
+        rename_events=config.rename_events,
+        on_rename_missing_events=config.on_rename_missing_events,
+        # 7. _fix_stim_artifact_func
+        fix_stim_artifact=config.fix_stim_artifact,
+        stim_artifact_tmin=config.stim_artifact_tmin,
+        stim_artifact_tmax=config.stim_artifact_tmax,
+        # args used for all runs that process raw (reporting / writing)
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
+        runs=get_runs(config=config, subject=subject),  # XXX needs to accept session!
+        **_bids_kwargs(config=config),
+    )

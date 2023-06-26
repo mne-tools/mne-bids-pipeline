@@ -15,9 +15,6 @@ from ..._config_utils import (
     get_subjects,
     get_sessions,
     get_runs,
-    get_task,
-    get_datatype,
-    get_mf_reference_run,
 )
 from ..._import_data import (
     _get_raw_paths,
@@ -25,6 +22,7 @@ from ..._import_data import (
     import_er_data,
     _bads_path,
     _auto_scores_path,
+    _import_data_kwargs,
 )
 from ..._io import _write_json
 from ..._logging import gen_log_kwargs, logger
@@ -294,40 +292,9 @@ def get_config(
         )
         extra_kwargs["mf_head_origin"] = config.mf_head_origin
     cfg = SimpleNamespace(
-        process_empty_room=config.process_empty_room,
-        process_rest=config.process_rest,
-        task_is_rest=config.task_is_rest,
-        runs=get_runs(config=config, subject=subject),
-        proc=config.proc,
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.bids_root,
-        deriv_root=config.deriv_root,
-        reader_extra_params=config.reader_extra_params,
-        crop_runs=config.crop_runs,
-        rename_events=config.rename_events,
-        eeg_bipolar_channels=config.eeg_bipolar_channels,
-        eeg_template_montage=config.eeg_template_montage,
-        fix_stim_artifact=config.fix_stim_artifact,
-        stim_artifact_tmin=config.stim_artifact_tmin,
-        stim_artifact_tmax=config.stim_artifact_tmax,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_noisy_channels_meg=config.find_noisy_channels_meg,
-        drop_channels=config.drop_channels,
-        find_breaks=config.find_breaks,
-        min_break_duration=config.min_break_duration,
-        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
-        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
-        use_maxwell_filter=config.use_maxwell_filter,
-        mf_reference_run=get_mf_reference_run(config=config),
-        data_type=config.data_type,
-        ch_types=config.ch_types,
-        eog_channels=config.eog_channels,
-        on_rename_missing_events=config.on_rename_missing_events,
-        plot_psd_for_runs=config.plot_psd_for_runs,
+        **_import_data_kwargs(config=config, subject=subject),
         **extra_kwargs,
     )
     return cfg

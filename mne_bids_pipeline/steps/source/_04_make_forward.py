@@ -15,11 +15,10 @@ from ..._config_utils import (
     get_subjects,
     _get_bem_conductivity,
     get_fs_subjects_dir,
-    get_task,
     get_runs,
-    get_datatype,
     _meg_in_ch_types,
     get_sessions,
+    _bids_kwargs,
 )
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
@@ -243,12 +242,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task=get_task(config),
         runs=get_runs(config=config, subject=subject),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
@@ -257,8 +251,7 @@ def get_config(
         ch_types=config.ch_types,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
-        deriv_root=config.deriv_root,
-        bids_root=config.bids_root,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

@@ -204,9 +204,6 @@ ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]] = []
 """
 The channel types to consider.
 
-!!! info
-    Currently, MEG and EEG data cannot be processed together.
-
 ???+ example "Example"
     ```python
     # Use EEG channels:
@@ -215,7 +212,7 @@ The channel types to consider.
     # Use magnetometer and gradiometer MEG channels:
     ch_types = ['mag', 'grad']
 
-    # Currently does not work and will raise an error message:
+    # Use MEG and EEG channels:
     ch_types = ['meg', 'eeg']
     ```
 """

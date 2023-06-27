@@ -24,14 +24,12 @@ from ..._config_utils import (
     get_sessions,
     get_runs,
     get_subjects,
-    get_task,
-    get_datatype,
-    get_mf_reference_run,
 )
 from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_raw_paths,
+    _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -66,13 +64,13 @@ def notch_filter(
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],
-    data_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if freqs is None:
-        msg = f"Not applying notch filter to {data_type} data."
+        msg = f"Not applying notch filter to {run_type} data."
     else:
-        msg = f"Notch filtering {data_type} data at {freqs} Hz."
+        msg = f"Notch filtering {run_type} data at {freqs} Hz."
 
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -96,17 +94,17 @@ def bandpass_filter(
     h_freq: Optional[float],
     l_trans_bandwidth: Union[float, Literal["auto"]],
     h_trans_bandwidth: Union[float, Literal["auto"]],
-    data_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
-        msg = f"High-pass filtering {data_type} data; lower bound: " f"{l_freq} Hz"
+        msg = f"High-pass filtering {run_type} data; lower bound: " f"{l_freq} Hz"
     elif l_freq is None and h_freq is not None:
-        msg = f"Low-pass filtering {data_type} data; upper bound: " f"{h_freq} Hz"
+        msg = f"Low-pass filtering {run_type} data; upper bound: " f"{h_freq} Hz"
     elif l_freq is not None and h_freq is not None:
-        msg = f"Band-pass filtering {data_type} data; range: " f"{l_freq} – {h_freq} Hz"
+        msg = f"Band-pass filtering {run_type} data; range: " f"{l_freq} – {h_freq} Hz"
     else:
-        msg = f"Not applying frequency filtering to {data_type} data."
+        msg = f"Not applying frequency filtering to {run_type} data."
 
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -128,12 +126,12 @@ def resample(
     session: Optional[str],
     run: str,
     sfreq: float,
-    data_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
     if not sfreq:
         return
 
-    msg = f"Resampling {data_type} data to {sfreq:.1f} Hz"
+    msg = f"Resampling {run_type} data to {sfreq:.1f} Hz"
     logger.info(**gen_log_kwargs(message=msg))
     raw.resample(sfreq, npad="auto")
 
@@ -185,7 +183,7 @@ def filter_data(
         freqs=cfg.notch_freq,
         trans_bandwidth=cfg.notch_trans_bandwidth,
         notch_widths=cfg.notch_widths,
-        data_type="experimental",
+        run_type="experimental",
     )
     bandpass_filter(
         raw=raw,
@@ -196,7 +194,7 @@ def filter_data(
         l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        data_type="experimental",
+        run_type="experimental",
     )
     resample(
         raw=raw,
@@ -204,7 +202,7 @@ def filter_data(
         session=session,
         run=run,
         sfreq=cfg.raw_resample_sfreq,
-        data_type="experimental",
+        run_type="experimental",
     )
 
     raw.save(
@@ -227,14 +225,14 @@ def filter_data(
         in_key = f"raw_{task}"
         if in_key not in in_files:
             continue
-        data_type = nice_names[task]
+        run_type = nice_names[task]
         bids_path_noise = in_files.pop(in_key)
         bids_path_noise_bads = in_files.pop(f"{in_key}-bads", None)
         if cfg.use_maxwell_filter:
-            msg = f"Reading {data_type} recording: " f"{bids_path_noise.basename}"
+            msg = f"Reading {run_type} recording: " f"{bids_path_noise.basename}"
             logger.info(**gen_log_kwargs(message=msg, run=task))
             raw_noise = mne.io.read_raw_fif(bids_path_noise)
-        elif data_type == "empty-room":
+        elif run_type == "empty-room":
             raw_noise = import_er_data(
                 cfg=cfg,
                 bids_path_er_in=bids_path_noise,
@@ -270,7 +268,7 @@ def filter_data(
             freqs=cfg.notch_freq,
             trans_bandwidth=cfg.notch_trans_bandwidth,
             notch_widths=cfg.notch_widths,
-            data_type=data_type,
+            run_type=run_type,
         )
         bandpass_filter(
             raw=raw_noise,
@@ -281,7 +279,7 @@ def filter_data(
             l_freq=cfg.l_freq,
             h_trans_bandwidth=cfg.h_trans_bandwidth,
             l_trans_bandwidth=cfg.l_trans_bandwidth,
-            data_type=data_type,
+            run_type=run_type,
         )
         resample(
             raw=raw_noise,
@@ -289,7 +287,7 @@ def filter_data(
             session=session,
             run=task,
             sfreq=cfg.raw_resample_sfreq,
-            data_type=data_type,
+            run_type=run_type,
         )
 
         raw_noise.save(
@@ -328,20 +326,6 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        reader_extra_params=config.reader_extra_params,
-        process_empty_room=config.process_empty_room,
-        process_rest=config.process_rest,
-        task_is_rest=config.task_is_rest,
-        runs=get_runs(config=config, subject=subject),
-        use_maxwell_filter=config.use_maxwell_filter,
-        proc=config.proc,
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.bids_root,
-        deriv_root=config.deriv_root,
         l_freq=config.l_freq,
         h_freq=config.h_freq,
         notch_freq=config.notch_freq,
@@ -350,25 +334,7 @@ def get_config(
         notch_trans_bandwidth=config.notch_trans_bandwidth,
         notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
-        crop_runs=config.crop_runs,
-        rename_events=config.rename_events,
-        eeg_bipolar_channels=config.eeg_bipolar_channels,
-        eeg_template_montage=config.eeg_template_montage,
-        fix_stim_artifact=config.fix_stim_artifact,
-        stim_artifact_tmin=config.stim_artifact_tmin,
-        stim_artifact_tmax=config.stim_artifact_tmax,
-        mf_reference_run=get_mf_reference_run(config),
-        drop_channels=config.drop_channels,
-        find_breaks=config.find_breaks,
-        min_break_duration=config.min_break_duration,
-        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
-        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
-        data_type=config.data_type,
-        ch_types=config.ch_types,
-        eog_channels=config.eog_channels,
-        on_rename_missing_events=config.on_rename_missing_events,
-        plot_psd_for_runs=config.plot_psd_for_runs,
-        _raw_split_size=config._raw_split_size,
+        **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg
 

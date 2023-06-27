@@ -27,15 +27,13 @@ from ..._config_utils import (
     get_subjects,
     get_sessions,
     get_runs,
-    get_task,
-    get_datatype,
-    get_mf_reference_run,
 )
 from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_raw_paths,
     _add_bads_file,
+    _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
@@ -307,7 +305,6 @@ def get_config(
     session: Optional[str],
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        reader_extra_params=config.reader_extra_params,
         mf_cal_fname=get_mf_cal_fname(
             config=config,
             subject=subject,
@@ -322,37 +319,7 @@ def get_config(
         mf_st_correlation=config.mf_st_correlation,
         mf_head_origin=config.mf_head_origin,
         mf_mc=config.mf_mc,
-        process_empty_room=config.process_empty_room,
-        process_rest=config.process_rest,
-        task_is_rest=config.task_is_rest,
-        # XXX needs to accept session!
-        runs=get_runs(config=config, subject=subject),
-        use_maxwell_filter=config.use_maxwell_filter,
-        proc=config.proc,
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.bids_root,
-        deriv_root=config.deriv_root,
-        crop_runs=config.crop_runs,
-        rename_events=config.rename_events,
-        eeg_template_montage=config.eeg_template_montage,
-        fix_stim_artifact=config.fix_stim_artifact,
-        stim_artifact_tmin=config.stim_artifact_tmin,
-        stim_artifact_tmax=config.stim_artifact_tmax,
-        mf_reference_run=get_mf_reference_run(config),
-        drop_channels=config.drop_channels,
-        find_breaks=config.find_breaks,
-        min_break_duration=config.min_break_duration,
-        t_break_annot_start_after_previous_event=config.t_break_annot_start_after_previous_event,  # noqa:E501
-        t_break_annot_stop_before_next_event=config.t_break_annot_stop_before_next_event,  # noqa:E501
-        ch_types=config.ch_types,
-        data_type=config.data_type,
-        on_rename_missing_events=config.on_rename_missing_events,
-        plot_psd_for_runs=config.plot_psd_for_runs,
-        _raw_split_size=config._raw_split_size,
+        **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg
 

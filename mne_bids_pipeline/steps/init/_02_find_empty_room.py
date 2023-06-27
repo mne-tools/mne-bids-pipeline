@@ -8,10 +8,10 @@ from mne_bids import BIDSPath
 
 from ..._config_utils import (
     get_datatype,
-    get_task,
     get_sessions,
     get_subjects,
     get_runs,
+    _bids_kwargs,
 )
 from ..._io import _empty_room_match_path, _write_json
 from ..._logging import gen_log_kwargs, logger
@@ -21,7 +21,7 @@ from ..._run import _update_for_splits, failsafe_run, save_logs
 def get_input_fnames_find_empty_room(
     *, subject: str, session: Optional[str], run: Optional[str], cfg: SimpleNamespace
 ) -> Dict[str, BIDSPath]:
-    """Get paths of files required by filter_data function."""
+    """Get paths of files required by find_empty_room function."""
     bids_path_in = BIDSPath(
         subject=subject,
         run=run,
@@ -104,14 +104,7 @@ def get_config(
     config,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        proc=config.proc,
-        task=get_task(config),
-        datatype=get_datatype(config),
-        acq=config.acq,
-        rec=config.rec,
-        space=config.space,
-        bids_root=config.bids_root,
-        deriv_root=config.deriv_root,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

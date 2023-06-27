@@ -78,7 +78,7 @@ def get_input_fnames_maxwell_filter(
                     check=False,
                 )
             )
-    # reference run (used for `destination`)
+    # reference run (used for `destination` and also bad channels for noise)
     ref_bids_path = (
         list(in_files.values())[0]
         .copy()
@@ -94,6 +94,7 @@ def get_input_fnames_maxwell_filter(
         in_files=in_files,
         key=key,
     )
+    # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
     in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
     return in_files
@@ -117,6 +118,14 @@ def run_maxwell_filter(
             f"if data have already processed with Maxwell-filter."
             f" Got proc={cfg.proc}."
         )
+    if isinstance(cfg.mf_destination, str):
+        destination = cfg.mf_destination
+        assert destination == "reference_run"
+    else:
+        destination = np.array(cfg.mf_destination, float)
+        assert destination.shape == (4, 4)
+        destination = mne.transforms.Transform("meg", "head", destination)
+
     filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
     in_key = f"raw_run-{run}"
     bids_path_in = in_files.pop(in_key)
@@ -137,7 +146,7 @@ def run_maxwell_filter(
     # Load dev_head_t and digitization points from MaxFilter reference run.
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
-        msg = f"Loading reference run: {cfg.mf_reference_run}."
+        msg = f"Loading reference run: {cfg.mf_reference_run or cfg.runs[0]}."
         logger.info(**gen_log_kwargs(message=msg))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
@@ -145,8 +154,11 @@ def run_maxwell_filter(
         bids_path=bids_path_ref_in, extra_params=cfg.reader_extra_params
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
-    dev_head_t = raw.info["dev_head_t"]
+    if isinstance(destination, str):
+        assert destination == "reference_run"
+        destination = raw.info["dev_head_t"]
     del raw
+    assert isinstance(destination, mne.transforms.Transform), destination
 
     raw = import_experimental_data(
         cfg=cfg,
@@ -188,7 +200,7 @@ def run_maxwell_filter(
         st_correlation=cfg.mf_st_correlation,
         origin=cfg.mf_head_origin,
         coord_frame="head",
-        destination=dev_head_t,
+        destination=destination,
     )
 
     raw_sss = mne.preprocessing.maxwell_filter(
@@ -368,6 +380,8 @@ def get_config(
         mf_head_origin=config.mf_head_origin,
         mf_mc=config.mf_mc,
         mf_filter_chpi=config.mf_filter_chpi,
+        mf_destination=config.mf_destination,
+        mf_int_order=config.mf_int_order,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

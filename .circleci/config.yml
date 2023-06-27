@@ -402,6 +402,7 @@ jobs:
 
   test_ds004107:
     <<: *imageconfig
+    resource_class: large  # memory
     steps:
       - attach_workspace:
           at: ~/

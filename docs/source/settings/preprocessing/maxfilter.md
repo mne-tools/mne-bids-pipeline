@@ -12,6 +12,8 @@ tags:
         - mf_st_duration
         - mf_st_correlation
         - mf_head_origin
+        - mf_destination
+        - mf_int_order
         - mf_reference_run
         - mf_cal_fname
         - mf_ctc_fname

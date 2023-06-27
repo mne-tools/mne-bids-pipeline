@@ -601,17 +601,42 @@ options or specifying the origin manually.
     ```
 """
 
-mf_reference_run: Optional[str] = None
+mf_destination: Union[Literal["reference_run"], ArrayLike] = "reference_run"
 """
 Despite all possible care to avoid movements in the MEG, the participant
 will likely slowly drift down from the Dewar or slightly shift the head
 around in the course of the recording session. Hence, to take this into
-account, we are realigning all data to a single position. For this, you need
-to define a reference run (typically the one in the middle of
-the recording session).
+account, we are realigning all data to a single position. For this, you can:
 
+1. Choose a reference run. Often one from the middle of the recording session
+   is a good choice. Set `mf_destination = "reference_run" and then set
+   [`config.mf_reference_run`](mne_bids_pipeline._config.mf_reference_run).
+   This will result in a device-to-head transformation that differs between
+   subjects.
+2. Choose a standard position in the MEG coordinate frame. For this, pass
+   a 4x4 transformation matrix for the device-to-head
+   transform. This will result in a device-to-head transformation that is
+   the same across all subjects.
+
+   ???+ example "A Standardized Position"
+   ```python
+   from mne.transforms import translation
+   mf_destination = translation(z=0.04)
+   ```
+"""
+
+mf_int_order: int = 8
+"""
+Internal order for the Maxwell basis. Can be set to something lower (e.g., 6
+or higher for datasets where lower or higher spatial complexity, respectively,
+is expected.
+"""
+
+mf_reference_run: Optional[str] = None
+"""
 Which run to take as the reference for adjusting the head position of all
-runs. If `None`, pick the first run.
+runs when [`mf_destination="reference_run"`](mne_bids_pipeline._config.mf_destination).
+If `None`, pick the first run.
 
 ???+ example "Example"
     ```python

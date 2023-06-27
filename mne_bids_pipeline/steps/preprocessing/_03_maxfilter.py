@@ -167,7 +167,8 @@ def run_maxwell_filter(
         apply_msg += " with MC"
     else:
         head_pos = None
-    logger.info(**gen_log_kwargs(message=f"{apply_msg} to experimental data"))
+    apply_msg += " to"
+    logger.info(**gen_log_kwargs(message=f"{apply_msg} experimental data"))
 
     # Warn if no bad channels are set before Maxwell filter
     if not raw.info["bads"]:
@@ -276,7 +277,7 @@ def run_maxwell_filter(
             **common_mf_kws,
         )
         if filter_chpi:
-            logger.info(**gen_log_kwargs(message="Filtering cHPI"))
+            logger.info(**gen_log_kwargs(message="Filtering cHPI", run=task))
             # allow_line_only=True is really mostly for the "noise" run
             mne.chpi.filter_chpi(raw_noise_sss, allow_line_only=True)
 

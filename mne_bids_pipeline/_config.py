@@ -653,6 +653,28 @@ mf_mc: bool = False
 If True, perform movement compensation on the data.
 """
 
+mf_mc_t_step_min: float = 0.01
+"""
+Minimum time step to use during cHPI coil amplitude estimation.
+"""
+
+mf_mc_gof_limit: float = 0.98
+"""
+Minimum goodness of fit to accept for each cHPI coil.
+"""
+
+mf_mc_dist_limit: float = 0.005
+"""
+Minimum distance (m) to accept for cHPI position fitting.
+"""
+
+mf_filter_chpi: Optional[bool] = None
+"""
+Use mne.chpi.filter_chpi after Maxwell filtering. Can be None to use
+the same value as [`mf_mc`][mne_bids_pipeline._config.mf_mc].
+Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter]
+"""  # noqa: E501
+
 ###############################################################################
 # STIMULATION ARTIFACT
 # --------------------

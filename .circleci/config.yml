@@ -768,6 +768,7 @@ jobs:
 
   test_ds004229:
     <<: *imageconfig
+    resource_class: large  # head position estimation
     steps:
       - attach_workspace:
           at: ~/

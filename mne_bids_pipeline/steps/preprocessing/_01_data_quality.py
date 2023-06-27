@@ -37,10 +37,9 @@ def get_input_fnames_data_quality(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    run: str,
+    run: Optional[str],
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
-    include_mf_ref = _do_mf_autobad(cfg=cfg)
     in_files = _get_raw_paths(
         cfg=cfg,
         subject=subject,
@@ -48,7 +47,7 @@ def get_input_fnames_data_quality(
         run=run,
         kind="orig",
         add_bads=False,
-        include_mf_ref=include_mf_ref,
+        include_mf_ref=_do_mf_autobad(cfg=cfg),
     )
     return in_files
 
@@ -62,7 +61,7 @@ def assess_data_quality(
     exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    run: str,
+    run: Optional[str],
     in_files: dict,
 ) -> None:
     """Assess data quality and find and mark bad channels."""
@@ -111,7 +110,8 @@ def assess_data_quality(
                 cfg=cfg,
                 report=report,
                 bids_path_in=bids_path_in,
-                title=f"Raw ({kind} run {run})",
+                title=f"Raw ({kind})",
+                tags=("data-quality",),
             )
             if cfg.find_noisy_channels_meg:
                 assert auto_scores is not None
@@ -143,7 +143,7 @@ def _find_bads_maxwell(
     bids_path_ref_in: Optional[BIDSPath],
     subject: str,
     session: Optional[str],
-    run: str,
+    run: Optional[str],
     key: str,
     out_files: dict,
 ):

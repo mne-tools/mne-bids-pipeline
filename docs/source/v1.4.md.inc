@@ -1,8 +1,8 @@
 ## v1.4.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- Add movement compensation and cHPI filtering to the Maxwell filtering step (#747 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

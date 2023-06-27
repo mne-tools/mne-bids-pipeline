@@ -9,6 +9,7 @@ import pandas as pd
 from ._config_utils import (
     get_mf_reference_run,
     get_runs,
+    get_datatype,
     _bids_kwargs,
 )
 from ._io import _read_json, _empty_room_match_path
@@ -508,29 +509,29 @@ def _find_breaks_func(
     raw.set_annotations(raw.annotations + break_annots)  # add to existing
 
 
-def _get_raw_paths(
+def _get_bids_path_in(
     *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
     run: Optional[str],
-    kind: Literal["raw", "sss"],
-    add_bads: bool = True,
-    include_mf_ref: bool = True,
-) -> dict:
-    # Construct the basenames of the files we wish to load, and of the empty-
-    # room recording we wish to save.
-    # The basenames of the empty-room recording output file does not contain
-    # the "run" entity.
+    task: Optional[str],
+    kind: Literal["orig", "sss"] = "orig",
+) -> BIDSPath:
+    # b/c can be used before this is updated
+    if hasattr(cfg, "datatype"):
+        datatype = cfg.datatype
+    else:
+        datatype = get_datatype(config=cfg)
     path_kwargs = dict(
         subject=subject,
         run=run,
         session=session,
-        task=cfg.task,
+        task=task or cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
-        datatype=cfg.datatype,
+        datatype=datatype,
         check=False,
     )
     if kind == "sss":
@@ -545,7 +546,31 @@ def _get_raw_paths(
         path_kwargs["extension"] = None
         path_kwargs["processing"] = cfg.proc
     bids_path_in = BIDSPath(**path_kwargs)
+    return bids_path_in
 
+
+def _get_raw_paths(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+    kind: Literal["orig", "sss"],
+    add_bads: bool = True,
+    include_mf_ref: bool = True,
+) -> dict:
+    # Construct the basenames of the files we wish to load, and of the empty-
+    # room recording we wish to save.
+    # The basenames of the empty-room recording output file does not contain
+    # the "run" entity.
+    bids_path_in = _get_bids_path_in(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=run,
+        task=None,
+        kind=kind,
+    )
     in_files = dict()
     key = f"raw_run-{run}"
     in_files[key] = bids_path_in
@@ -556,8 +581,6 @@ def _get_raw_paths(
             in_files=in_files,
             key=key,
         )
-    orig_key = key
-
     if run == cfg.runs[0]:
         do = dict(
             rest=cfg.process_rest and not cfg.task_is_rest,
@@ -600,9 +623,7 @@ def _get_raw_paths(
                 )
             if include_mf_ref and task == "noise":
                 key = "raw_ref_run"
-                in_files[key] = (
-                    in_files[orig_key].copy().update(run=cfg.mf_reference_run)
-                )
+                in_files[key] = bids_path_in.copy().update(run=cfg.mf_reference_run)
                 _update_for_splits(in_files, key, single=True, allow_missing=True)
                 if not in_files[key].fpath.exists():
                     in_files.pop(key)
@@ -612,7 +633,6 @@ def _get_raw_paths(
                         in_files=in_files,
                         key=key,
                     )
-
     return in_files
 
 

@@ -170,7 +170,10 @@ def get_intersect_run(config: SimpleNamespace) -> List[str]:
 
 
 def get_runs(
-    *, config: SimpleNamespace, subject: str, verbose: bool = False
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    verbose: bool = False,
 ) -> Union[List[str], List[None]]:
     """Returns a list of runs in the BIDS input data.
 
@@ -218,17 +221,43 @@ def get_runs(
             logger.info(**gen_log_kwargs(message=msg))
 
     if runs == "all":
-        runs = valid_runs
+        runs = list(valid_runs)
 
     if not runs:
-        return [None]
+        runs = [None]
     else:
         inclusion = set(runs).issubset(set(valid_runs))
         if not inclusion:
             raise ValueError(
                 f"Invalid run. It can be a subset of {valid_runs} but " f"got {runs}"
             )
-        return runs
+    return runs
+
+
+def get_runs_tasks(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> List[Tuple[str]]:
+    """Get (run, task) tuples for all runs plus (maybe) rest."""
+    from ._import_data import _get_bids_path_in
+
+    runs = get_runs(config=config, subject=subject)
+    tasks = [config.task] * len(runs)
+    if config.process_rest and not config.task_is_rest:
+        run, task = None, "rest"
+        bids_path_in = _get_bids_path_in(
+            cfg=config,
+            subject=subject,
+            session=session,
+            run=run,
+            task=task,
+        )
+        if bids_path_in.fpath.exists():
+            runs.append(None)
+            tasks.append("rest")
+    return tuple(zip(runs, tasks))
 
 
 def get_mf_reference_run(config: SimpleNamespace) -> str:

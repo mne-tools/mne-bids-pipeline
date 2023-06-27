@@ -315,6 +315,7 @@ def filter_data(
                 report=report,
                 bids_path_in=fname,
                 title="Raw (filtered)",
+                tags=("filtered",),
             )
 
     return out_files

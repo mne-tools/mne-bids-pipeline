@@ -632,8 +632,9 @@ def _add_rest_noise(
                 kind=kind,
             )
             raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
+            if raw_fname is not None:
+                raw_fname = get_bids_path_from_fname(raw_fname)
         if raw_fname is not None:
-            raw_fname = get_bids_path_from_fname(raw_fname)
             _add_if_exists(
                 cfg=cfg,
                 in_files=in_files,

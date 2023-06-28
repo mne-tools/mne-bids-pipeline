@@ -21,6 +21,7 @@ tags:
         - eog_proj_from_average
         - ssp_reject_eog
         - ssp_reject_ecg
+        - ssp_ecg_channel
         - ica_reject
         - ica_algorithm
         - ica_l_freq

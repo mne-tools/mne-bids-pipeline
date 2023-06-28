@@ -582,6 +582,26 @@ def _get_raw_paths(
             key=key,
         )
     if run == cfg.runs[0]:
+        _add_rest_noise(
+            cfg=cfg,
+            in_files=in_files,
+            bids_path_in=bids_path_in,
+            kind=kind,
+            include_mf_ref=include_mf_ref,
+        )
+    return in_files
+
+
+def _add_rest_noise(
+    *,
+    cfg: SimpleNamespace,
+    in_files: dict,
+    bids_path_in: BIDSPath,
+    kind: Literal["orig", "sss"],
+    add_bads: bool = True,
+    include_mf_ref: bool = True,
+):
+    if True:  # just for indentation
         do = dict(
             rest=cfg.process_rest and not cfg.task_is_rest,
             noise=cfg.process_empty_room and cfg.datatype == "meg",
@@ -633,7 +653,6 @@ def _get_raw_paths(
                         in_files=in_files,
                         key=key,
                     )
-    return in_files
 
 
 def _add_bads_file(

@@ -39,21 +39,24 @@ def get_input_fnames_data_quality(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
 ) -> dict:
-    """Get paths of files required by maxwell_filter function."""
+    """Get paths of files required by assess_data_quality function."""
     in_files = _get_raw_paths(
         cfg=cfg,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         kind="orig",
         add_bads=False,
     )
     if run == cfg.runs[0]:
         _add_rest_noise(
             cfg=cfg,
+            subject=subject,
+            session=session,
             in_files=in_files,
-            bids_path_in=in_files[f"raw_run-{run}"],
             kind="orig",
             include_mf_ref=_do_mf_autobad(cfg=cfg),
             add_bads=False,
@@ -71,6 +74,7 @@ def assess_data_quality(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
     in_files: dict,
 ) -> None:
     """Assess data quality and find and mark bad channels."""
@@ -322,6 +326,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
+                task=None,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)

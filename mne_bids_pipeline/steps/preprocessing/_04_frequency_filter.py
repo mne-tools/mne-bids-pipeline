@@ -44,6 +44,7 @@ def get_input_fnames_frequency_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
 ) -> dict:
     """Get paths of files required by filter_data function."""
     kind = "sss" if cfg.use_maxwell_filter else "orig"
@@ -52,14 +53,16 @@ def get_input_fnames_frequency_filter(
         subject=subject,
         session=session,
         run=run,
+        task=task,
         kind=kind,
         add_bads=True,
     )
     if run == cfg.runs[0]:
         _add_rest_noise(
             cfg=cfg,
+            subject=subject,
+            session=session,
             in_files=in_files,
-            bids_path_in=in_files[f"raw_run-{run}"],
             kind=kind,
             include_mf_ref=False,
             add_bads=True,
@@ -72,6 +75,7 @@ def notch_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],
@@ -366,6 +370,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
+                task=None,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)

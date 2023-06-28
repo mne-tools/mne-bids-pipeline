@@ -239,14 +239,23 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: Optional[str],
+    include_noise: bool = True,
 ) -> List[Tuple[str]]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
     from ._import_data import _get_bids_path_in
 
     runs = get_runs(config=config, subject=subject)
     tasks = [config.task] * len(runs)
+    check_runs_tasks = list()
     if config.process_rest and not config.task_is_rest:
-        run, task = None, "rest"
+        check_runs_tasks.append((None, "rest"))
+    if (
+        include_noise
+        and config.process_empty_room
+        and get_datatype(config=config) == "meg"
+    ):
+        check_runs_tasks.append((None, "noise"))
+    for run, task in check_runs_tasks:
         bids_path_in = _get_bids_path_in(
             cfg=config,
             subject=subject,
@@ -255,8 +264,8 @@ def get_runs_tasks(
             task=task,
         )
         if bids_path_in.fpath.exists():
-            runs.append(None)
-            tasks.append("rest")
+            runs.append(run)
+            tasks.append(task)
     return tuple(zip(runs, tasks))
 
 

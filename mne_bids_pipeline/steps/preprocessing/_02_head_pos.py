@@ -44,6 +44,7 @@ def get_input_fnames_head_pos(
         subject=subject,
         session=session,
         run=use_run,
+        task=task,
         kind="orig",
         add_bads=True,
     )
@@ -51,7 +52,8 @@ def get_input_fnames_head_pos(
         _add_rest_noise(
             cfg=cfg,
             in_files=in_files,
-            bids_path_in=in_files[f"raw_run-{use_run}"],
+            subject=subject,
+            session=session,
             kind="orig",
             add_bads=True,
             include_mf_ref=False,
@@ -209,6 +211,7 @@ def main(*, config: SimpleNamespace) -> None:
                 config=config,
                 subject=subject,
                 session=session,
+                include_noise=False,
             )
         )
 

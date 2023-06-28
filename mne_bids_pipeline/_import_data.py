@@ -555,6 +555,7 @@ def _get_raw_paths(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
     kind: Literal["orig", "sss"],
     add_bads: bool,
 ) -> dict:
@@ -567,7 +568,7 @@ def _get_raw_paths(
         subject=subject,
         session=session,
         run=run,
-        task=None,
+        task=task,
         kind=kind,
     )
     in_files = dict()
@@ -586,64 +587,96 @@ def _get_raw_paths(
 def _add_rest_noise(
     *,
     cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
     in_files: dict,
-    bids_path_in: BIDSPath,
     kind: Literal["orig", "sss"],
     add_bads: bool = True,
     include_mf_ref: bool = True,
 ):
-    if True:  # just for indentation
-        do = dict(
-            rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_empty_room and cfg.datatype == "meg",
+    if cfg.process_rest and not cfg.task_is_rest:
+        raw_fname = _get_bids_path_in(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=None,
+            task="rest",
+            kind=kind,
         )
-        for task in ("rest", "noise"):
-            if not do[task]:
-                continue
-            key = f"raw_{task}"
-            if kind == "sss":
-                raw_fname = bids_path_in.copy().update(run=None, task=task)
-            else:
-                if task == "rest":
-                    raw_fname = bids_path_in.copy().update(run=None, task=task)
-                else:
-                    # This must match the logic of _02_find_empty_room.py
-                    update_kwargs = dict()
-                    if cfg.use_maxwell_filter:
-                        update_kwargs["run"] = cfg.mf_reference_run
-                    raw_fname = _read_json(
-                        _empty_room_match_path(
-                            bids_path_in.copy().update(**update_kwargs),
-                            cfg,
-                        )
-                    )
-                    raw_fname = raw_fname["fname"]
-                    if raw_fname is not None:
-                        raw_fname = get_bids_path_from_fname(raw_fname)
-            if raw_fname is None:
-                continue
-            in_files[key] = raw_fname
-            _update_for_splits(in_files, key, single=True, allow_missing=True)
-            if not in_files[key].fpath.exists():
-                in_files.pop(key)
-            elif add_bads:
-                _add_bads_file(
+        _add_if_exists(
+            cfg=cfg,
+            in_files=in_files,
+            bids_path_in=raw_fname,
+            key="raw_rest",
+            add_bads=add_bads,
+        )
+    if cfg.process_empty_room and cfg.datatype == "meg":
+        if kind == "sss":
+            raw_fname = _get_bids_path_in(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                run=None,
+                task="noise",
+                kind=kind,
+            )
+        else:
+            # This must match the logic of _02_find_empty_room.py
+            run = cfg.mf_reference_run if cfg.use_maxwell_filter else cfg.runs[0]
+            raw_fname = _get_bids_path_in(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                run=run,
+                task=None,
+                kind=kind,
+            )
+            raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
+        if raw_fname is not None:
+            raw_fname = get_bids_path_from_fname(raw_fname)
+            _add_if_exists(
+                cfg=cfg,
+                in_files=in_files,
+                bids_path_in=raw_fname,
+                key="raw_noise",
+                add_bads=add_bads,
+            )
+            if include_mf_ref:
+                raw_fname = _get_bids_path_in(
+                    cfg=cfg,
+                    subject=subject,
+                    session=session,
+                    run=cfg.mf_reference_run,
+                    task=None,
+                    kind=kind,
+                )
+                _add_if_exists(
                     cfg=cfg,
                     in_files=in_files,
-                    key=key,
+                    bids_path_in=raw_fname,
+                    key="raw_ref_run",
+                    add_bads=add_bads,
                 )
-            if include_mf_ref and task == "noise":
-                key = "raw_ref_run"
-                in_files[key] = bids_path_in.copy().update(run=cfg.mf_reference_run)
-                _update_for_splits(in_files, key, single=True, allow_missing=True)
-                if not in_files[key].fpath.exists():
-                    in_files.pop(key)
-                elif add_bads:
-                    _add_bads_file(
-                        cfg=cfg,
-                        in_files=in_files,
-                        key=key,
-                    )
+
+
+def _add_if_exists(
+    *,
+    cfg: SimpleNamespace,
+    in_files: dict,
+    bids_path_in: BIDSPath,
+    key: str,
+    add_bads: bool,
+):
+    in_files[key] = bids_path_in
+    _update_for_splits(in_files, key, single=True, allow_missing=True)
+    if not in_files[key].fpath.exists():
+        in_files.pop(key)
+    elif add_bads:
+        _add_bads_file(
+            cfg=cfg,
+            in_files=in_files,
+            key=key,
+        )
 
 
 def _add_bads_file(

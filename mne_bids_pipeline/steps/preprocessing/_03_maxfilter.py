@@ -48,6 +48,7 @@ def get_input_fnames_maxwell_filter(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
     in_files = _get_raw_paths(
@@ -55,14 +56,16 @@ def get_input_fnames_maxwell_filter(
         subject=subject,
         session=session,
         run=run,
+        task=task,
         kind="orig",
         add_bads=True,
     )
     if run == cfg.runs[0]:
         _add_rest_noise(
             cfg=cfg,
+            subject=subject,
+            session=session,
             in_files=in_files,
-            bids_path_in=in_files[f"raw_run-{run}"],
             kind="orig",
             add_bads=True,
         )
@@ -120,6 +123,7 @@ def run_maxwell_filter(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
     in_files: dict,
 ) -> dict:
     if cfg.proc and "sss" in cfg.proc and cfg.use_maxwell_filter:
@@ -434,6 +438,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
+                task=None,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)

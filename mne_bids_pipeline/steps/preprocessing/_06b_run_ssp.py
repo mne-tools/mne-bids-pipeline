@@ -101,19 +101,25 @@ def run_ssp(
     ch_name = dict(ecg=None, eog=None)
     if cfg.eog_channels:
         ch_name["eog"] = cfg.eog_channels
-        assert all([ch_name in raw.ch_names for ch_name in ch_name["eog"]])
+        assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
+    if cfg.ssp_ecg_channel:
+        ch_name["ecg"] = cfg.ssp_ecg_channel
+        assert ch_name["ecg"] in raw.ch_names, ch_name["ecg"]
     if cfg.ssp_meg == "auto":
         cfg.ssp_meg = "combined" if cfg.use_maxwell_filter else "separate"
     for kind in proj_kinds:
         projs[kind] = []
-        if not any(n_projs[kind]):
+        if not any(n_projs[kind].values()):
             continue
         proj_epochs = epochs_fun[kind](
-            raw, ch_name=ch_name[kind], decim=cfg.epochs_decim
+            raw,
+            ch_name=ch_name[kind],
+            decim=cfg.epochs_decim,
         )
-        n_orig = len(proj_epochs)
+        n_orig = len(proj_epochs.selection)
         rate = n_orig / raw.times[-1] * 60
-        msg = f"Detected {rate_names[kind]} rate: {rate:5.1f} bpm"
+        bpm_msg = f"{rate:5.1f} bpm"
+        msg = f"Detected {rate_names[kind]} rate: {bpm_msg}"
         logger.info(**gen_log_kwargs(message=msg))
         # Enough to start
         if len(proj_epochs) >= minimums[kind]:
@@ -139,17 +145,17 @@ def run_ssp(
             projs[kind] = fun(
                 use, meg=cfg.ssp_meg, **n_projs[kind], desc_prefix=desc_prefix
             )
-            out_files[f"{kind}_epochs"] = (
+            out_files[f"epochs_{kind}"] = (
                 out_files["proj"]
                 .copy()
                 .update(suffix=f"{kind}-epo", split=None, check=False)
             )
-            proj_epochs.save(out_files[f"{kind}_epochs"], overwrite=True)
+            proj_epochs.save(out_files[f"epochs_{kind}"], overwrite=True)
         else:
             msg = (
                 f"No {kind.upper()} projectors computed: got "
                 f"{len(proj_epochs)} good epochs < {minimums[kind]} "
-                f"(from {n_orig} original events)."
+                f"(from {n_orig} original events; {bpm_msg})."
             )
             logger.warning(**gen_log_kwargs(message=msg))
         del proj_epochs
@@ -162,7 +168,8 @@ def run_ssp(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
         for kind in proj_kinds:
-            if f"epochs_{kind}" not in out_files:
+            key = f"epochs_{kind}"
+            if key not in out_files:
                 continue
 
             msg = f"Adding {kind.upper()} SSP to report."
@@ -206,6 +213,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         eog_channels=config.eog_channels,
+        ssp_ecg_channel=config.ssp_ecg_channel,
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,
         ssp_reject_eog=config.ssp_reject_eog,

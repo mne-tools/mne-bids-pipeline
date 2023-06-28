@@ -182,6 +182,21 @@ def run_maxwell_filter(
     apply_msg += " to"
     logger.info(**gen_log_kwargs(message=f"{apply_msg} experimental data"))
 
+    # Give some information about the transformation
+    fr = raw.info["dev_head_t"]["trans"]
+    to = destination["trans"]
+    dist = 1000 * np.linalg.norm(fr[:3, 3] - to[:3, 3])
+    angle = np.rad2deg(
+        mne.transforms._angle_between_quats(
+            *mne.transforms.rot_to_quat(np.array([to[:3, :3], fr[:3, :3]]))
+        )
+    )
+    msg = (
+        f"Destination head position is {dist:0.1f} mm and {angle:0.1f}° "
+        "from dev_head_t"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+
     # Warn if no bad channels are set before Maxwell filter
     if not raw.info["bads"]:
         msg = (

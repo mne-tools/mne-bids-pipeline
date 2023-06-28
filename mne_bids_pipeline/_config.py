@@ -1193,6 +1193,12 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
+ssp_ecg_channel: Optional[str] = None
+"""
+Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
+is not reliable.
+"""
+
 # Rejection based on ICA
 # ~~~~~~~~~~~~~~~~~~~~~~
 ica_reject: Optional[Dict[str, float]] = None

@@ -161,6 +161,7 @@ def filter_data(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     in_files: dict,
 ) -> dict:
     """Filter data from a single subject."""

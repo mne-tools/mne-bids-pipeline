@@ -13,6 +13,7 @@ from ..._config_utils import (
 from ..._import_data import (
     import_experimental_data,
     _get_raw_paths,
+    _add_rest_noise,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -45,8 +46,16 @@ def get_input_fnames_head_pos(
         run=use_run,
         kind="orig",
         add_bads=True,
-        include_mf_ref=False,
     )
+    if run == cfg.runs[0]:
+        _add_rest_noise(
+            cfg=cfg,
+            in_files=in_files,
+            bids_path_in=in_files[f"raw_run-{use_run}"],
+            kind="orig",
+            add_bads=True,
+            include_mf_ref=False,
+        )
     # ... finally remove the shim to get the right rest path
     remove_keys = list()
     if run is None and task == "rest":

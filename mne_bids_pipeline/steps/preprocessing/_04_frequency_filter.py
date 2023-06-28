@@ -29,6 +29,7 @@ from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_raw_paths,
+    _add_rest_noise,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -46,14 +47,24 @@ def get_input_fnames_frequency_filter(
 ) -> dict:
     """Get paths of files required by filter_data function."""
     kind = "sss" if cfg.use_maxwell_filter else "orig"
-    return _get_raw_paths(
+    in_files = _get_raw_paths(
         cfg=cfg,
         subject=subject,
         session=session,
         run=run,
         kind=kind,
-        include_mf_ref=False,
+        add_bads=True,
     )
+    if run == cfg.runs[0]:
+        _add_rest_noise(
+            cfg=cfg,
+            in_files=in_files,
+            bids_path_in=in_files[f"raw_run-{run}"],
+            kind=kind,
+            include_mf_ref=False,
+            add_bads=True,
+        )
+    return in_files
 
 
 def notch_filter(

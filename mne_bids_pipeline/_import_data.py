@@ -556,8 +556,7 @@ def _get_raw_paths(
     session: Optional[str],
     run: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool = True,
-    include_mf_ref: bool = True,
+    add_bads: bool,
 ) -> dict:
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -580,14 +579,6 @@ def _get_raw_paths(
             cfg=cfg,
             in_files=in_files,
             key=key,
-        )
-    if run == cfg.runs[0]:
-        _add_rest_noise(
-            cfg=cfg,
-            in_files=in_files,
-            bids_path_in=bids_path_in,
-            kind=kind,
-            include_mf_ref=include_mf_ref,
         )
     return in_files
 

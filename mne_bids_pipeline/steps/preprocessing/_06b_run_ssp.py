@@ -180,7 +180,9 @@ def run_ssp(
             assert len(projs), len(projs)  # should exist if the epochs do
             picks_trace = None
             if kind == "ecg":
-                if "ecg" in proj_epochs:
+                if cfg.ssp_ecg_channel:
+                    picks_trace = [cfg.ssp_ecg_channel]
+                elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:
                 assert kind == "eog"

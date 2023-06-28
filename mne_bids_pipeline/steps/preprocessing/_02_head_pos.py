@@ -13,7 +13,7 @@ from ..._config_utils import (
 from ..._import_data import (
     import_experimental_data,
     _get_raw_paths,
-    _add_rest_noise,
+    _add_rest,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -36,38 +36,26 @@ def get_input_fnames_head_pos(
     # that raw file *plus* the rest case... then remove the runs[0] key.
     # This should be refactored at some point...
     if run is None and task == "rest":
-        use_run = cfg.runs[0]
-    else:
-        use_run = run
-    in_files = _get_raw_paths(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        run=use_run,
-        task=task,
-        kind="orig",
-        add_bads=True,
-    )
-    if run == cfg.runs[0]:
-        _add_rest_noise(
+        in_files = dict()
+        _add_rest(
             cfg=cfg,
             in_files=in_files,
             subject=subject,
             session=session,
             kind="orig",
             add_bads=True,
-            include_mf_ref=False,
         )
-    # ... finally remove the shim to get the right rest path
-    remove_keys = list()
-    if run is None and task == "rest":
-        remove_keys.append(f"raw_run-{run}")
-    # ... and remove the raw_noise that might have been added
-    remove_keys.append("raw_noise")
-    for key in remove_keys:
-        if key in in_files:
-            in_files.pop(key)
-            in_files.pop(f"{key}-bads", None)
+        assert in_files
+    else:
+        in_files = _get_raw_paths(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=run,
+            task=task,
+            kind="orig",
+            add_bads=True,
+        )
     return in_files
 
 

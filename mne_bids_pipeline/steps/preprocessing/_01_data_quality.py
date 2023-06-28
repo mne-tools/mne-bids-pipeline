@@ -18,7 +18,9 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     _get_raw_paths,
-    _add_rest_noise,
+    _add_rest,
+    _add_noise,
+    _add_mf_ref,
     import_experimental_data,
     import_er_data,
     _bads_path,
@@ -52,15 +54,30 @@ def get_input_fnames_data_quality(
         add_bads=False,
     )
     if run == cfg.runs[0]:
-        _add_rest_noise(
+        _add_rest(
             cfg=cfg,
             subject=subject,
             session=session,
             in_files=in_files,
             kind="orig",
-            include_mf_ref=_do_mf_autobad(cfg=cfg),
             add_bads=False,
         )
+        _add_noise(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            kind="orig",
+        )
+        if "raw_noise" in in_files:
+            _add_mf_ref(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                in_files=in_files,
+                kind="orig",
+                add_bads=False,
+            )
     return in_files
 
 

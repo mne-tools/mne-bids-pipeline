@@ -11,7 +11,7 @@
 
 ### :medical_symbol: Code health
 
-- Refactor code to deduplicate keyword-passing (#746 by @larsoner)
+- Refactor code to deduplicate keyword-passing and improve internal logic (#746, #749 by @larsoner)
 
 ### :bug: Bug fixes
 

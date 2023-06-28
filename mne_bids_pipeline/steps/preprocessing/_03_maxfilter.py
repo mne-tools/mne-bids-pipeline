@@ -32,7 +32,9 @@ from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_raw_paths,
-    _add_rest_noise,
+    _add_rest,
+    _add_noise,
+    _add_mf_ref,
     _add_bads_file,
     _import_data_kwargs,
 )
@@ -61,7 +63,7 @@ def get_input_fnames_maxwell_filter(
         add_bads=True,
     )
     if run == cfg.runs[0]:
-        _add_rest_noise(
+        _add_rest(
             cfg=cfg,
             subject=subject,
             session=session,
@@ -69,6 +71,23 @@ def get_input_fnames_maxwell_filter(
             kind="orig",
             add_bads=True,
         )
+        _add_noise(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            kind="orig",
+            add_bads=True,
+        )
+        if "raw_noise" in in_files:
+            _add_mf_ref(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                in_files=in_files,
+                kind="orig",
+                add_bads=True,
+            )
     # head positions
     if cfg.mf_mc:
         in_files[f"raw_run-{run}-pos"] = (

@@ -584,15 +584,14 @@ def _get_raw_paths(
     return in_files
 
 
-def _add_rest_noise(
+def _add_rest(
     *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
     in_files: dict,
     kind: Literal["orig", "sss"],
-    add_bads: bool = True,
-    include_mf_ref: bool = True,
+    add_bads: bool,
 ):
     if cfg.process_rest and not cfg.task_is_rest:
         raw_fname = _get_bids_path_in(
@@ -610,6 +609,17 @@ def _add_rest_noise(
             key="raw_rest",
             add_bads=add_bads,
         )
+
+
+def _add_noise(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+    kind: Literal["orig", "sss"],
+    add_bads: bool,
+):
     if cfg.process_empty_room and cfg.datatype == "meg":
         if kind == "sss":
             raw_fname = _get_bids_path_in(
@@ -632,32 +642,42 @@ def _add_rest_noise(
                 kind=kind,
             )
             raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
-            if raw_fname is not None:
-                raw_fname = get_bids_path_from_fname(raw_fname)
-        if raw_fname is not None:
-            _add_if_exists(
-                cfg=cfg,
-                in_files=in_files,
-                bids_path_in=raw_fname,
-                key="raw_noise",
-                add_bads=add_bads,
-            )
-            if include_mf_ref:
-                raw_fname = _get_bids_path_in(
-                    cfg=cfg,
-                    subject=subject,
-                    session=session,
-                    run=cfg.mf_reference_run,
-                    task=None,
-                    kind=kind,
-                )
-                _add_if_exists(
-                    cfg=cfg,
-                    in_files=in_files,
-                    bids_path_in=raw_fname,
-                    key="raw_ref_run",
-                    add_bads=add_bads,
-                )
+            if raw_fname is None:
+                return
+            raw_fname = get_bids_path_from_fname(raw_fname)
+        _add_if_exists(
+            cfg=cfg,
+            in_files=in_files,
+            bids_path_in=raw_fname,
+            key="raw_noise",
+            add_bads=add_bads,
+        )
+
+
+def _add_mf_ref(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
+    kind: Literal["orig", "sss"],
+    add_bads: bool,
+):
+    raw_fname = _get_bids_path_in(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=cfg.mf_reference_run,
+        task=None,
+        kind=kind,
+    )
+    _add_if_exists(
+        cfg=cfg,
+        in_files=in_files,
+        bids_path_in=raw_fname,
+        key="raw_ref_run",
+        add_bads=add_bads,
+    )
 
 
 def _add_if_exists(

@@ -29,7 +29,8 @@ from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_raw_paths,
-    _add_rest_noise,
+    _add_rest,
+    _add_noise,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -58,13 +59,20 @@ def get_input_fnames_frequency_filter(
         add_bads=True,
     )
     if run == cfg.runs[0]:
-        _add_rest_noise(
+        _add_rest(
             cfg=cfg,
             subject=subject,
             session=session,
             in_files=in_files,
             kind=kind,
-            include_mf_ref=False,
+            add_bads=True,
+        )
+        _add_noise(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            kind=kind,
             add_bads=True,
         )
     return in_files

@@ -210,7 +210,10 @@ def run_maxwell_filter(
     )
     if filter_chpi:
         logger.info(**gen_log_kwargs(message="Filtering cHPI"))
-        mne.chpi.filter_chpi(raw_sss)
+        mne.chpi.filter_chpi(
+            raw_sss,
+            t_window=cfg.mf_mc_t_window,
+        )
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
     logger.info(**gen_log_kwargs(message=msg))
@@ -382,6 +385,7 @@ def get_config(
         mf_filter_chpi=config.mf_filter_chpi,
         mf_destination=config.mf_destination,
         mf_int_order=config.mf_int_order,
+        mf_mc_t_window=config.mf_mc_t_window,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

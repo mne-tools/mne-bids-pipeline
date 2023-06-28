@@ -106,11 +106,13 @@ def run_head_pos(
     chpi_amplitudes = mne.chpi.compute_chpi_amplitudes(
         raw,
         t_step_min=cfg.mf_mc_t_step_min,
+        t_window=cfg.mf_mc_t_window,
     )
     logger.info(**gen_log_kwargs(message="Estimating cHPI SNR"))
     snr_dict = mne.chpi.compute_chpi_snr(
         raw,
         t_step_min=cfg.mf_mc_t_step_min,
+        t_window=cfg.mf_mc_t_window,
     )
     logger.info(**gen_log_kwargs(message="Estimating cHPI locations"))
     chpi_locs = mne.chpi.compute_chpi_locs(raw.info, chpi_amplitudes)
@@ -168,6 +170,7 @@ def get_config(
         mf_mc_t_step_min=config.mf_mc_t_step_min,
         mf_mc_gof_limit=config.mf_mc_gof_limit,
         mf_mc_dist_limit=config.mf_mc_dist_limit,
+        mf_mc_t_window=config.mf_mc_t_window,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

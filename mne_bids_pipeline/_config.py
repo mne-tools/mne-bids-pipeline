@@ -683,6 +683,12 @@ mf_mc_t_step_min: float = 0.01
 Minimum time step to use during cHPI coil amplitude estimation.
 """
 
+mf_mc_t_window: Union[float, Literal["auto"]] = "auto"
+"""
+The window to use during cHPI coil amplitude estimation and in cHPI filtering.
+Can be "auto" to autodetect a reasonable value or a float (in seconds).
+"""
+
 mf_mc_gof_limit: float = 0.98
 """
 Minimum goodness of fit to accept for each cHPI coil.

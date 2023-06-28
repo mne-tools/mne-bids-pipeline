@@ -46,7 +46,7 @@ def get_input_fnames_maxwell_filter(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    run: str,
+    run: Optional[str],
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
     in_files = _get_raw_paths(
@@ -56,6 +56,29 @@ def get_input_fnames_maxwell_filter(
         run=run,
         kind="orig",
     )
+    # head positions
+    if cfg.mf_mc:
+        in_files[f"raw_run-{run}-pos"] = (
+            in_files[f"raw_run-{run}"]
+            .copy()
+            .update(
+                extension=".pos",
+                root=cfg.deriv_root,
+                check=False,
+            )
+        )
+        rest_key = "raw_rest"
+        if rest_key in in_files:
+            in_files["raw_rest-pos"] = (
+                in_files[rest_key]
+                .copy()
+                .update(
+                    extension=".pos",
+                    root=cfg.deriv_root,
+                    check=False,
+                )
+            )
+    # reference run (used for `destination` and also bad channels for noise)
     ref_bids_path = (
         list(in_files.values())[0]
         .copy()
@@ -71,6 +94,7 @@ def get_input_fnames_maxwell_filter(
         in_files=in_files,
         key=key,
     )
+    # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
     in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
     return in_files
@@ -85,7 +109,7 @@ def run_maxwell_filter(
     exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    run: str,
+    run: Optional[str],
     in_files: dict,
 ) -> dict:
     if cfg.proc and "sss" in cfg.proc and cfg.use_maxwell_filter:
@@ -94,6 +118,15 @@ def run_maxwell_filter(
             f"if data have already processed with Maxwell-filter."
             f" Got proc={cfg.proc}."
         )
+    if isinstance(cfg.mf_destination, str):
+        destination = cfg.mf_destination
+        assert destination == "reference_run"
+    else:
+        destination = np.array(cfg.mf_destination, float)
+        assert destination.shape == (4, 4)
+        destination = mne.transforms.Transform("meg", "head", destination)
+
+    filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
     in_key = f"raw_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
@@ -113,7 +146,7 @@ def run_maxwell_filter(
     # Load dev_head_t and digitization points from MaxFilter reference run.
     if cfg.mf_reference_run is not None:
         # Only log if we have more than just a single run
-        msg = f"Loading reference run: {cfg.mf_reference_run}."
+        msg = f"Loading reference run: {cfg.mf_reference_run or cfg.runs[0]}."
         logger.info(**gen_log_kwargs(message=msg))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
@@ -121,8 +154,11 @@ def run_maxwell_filter(
         bids_path=bids_path_ref_in, extra_params=cfg.reader_extra_params
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
-    dev_head_t = raw.info["dev_head_t"]
+    if isinstance(destination, str):
+        assert destination == "reference_run"
+        destination = raw.info["dev_head_t"]
     del raw
+    assert isinstance(destination, mne.transforms.Transform), destination
 
     raw = import_experimental_data(
         cfg=cfg,
@@ -132,12 +168,33 @@ def run_maxwell_filter(
     )
 
     # Maxwell-filter experimental data.
-    msg = "Applying Maxwell filter to experimental data: "
+    apply_msg = "Applying "
 
     if cfg.mf_st_duration:
-        msg += f"tSSS (st_duration: {cfg.mf_st_duration} sec)."
+        apply_msg += f"tSSS ({cfg.mf_st_duration} sec, corr={cfg.mf_st_correlation})"
     else:
-        msg += "SSS."
+        apply_msg += "SSS"
+    if cfg.mf_mc:
+        head_pos = mne.chpi.read_head_pos(in_files.pop(f"raw_run-{run}-pos"))
+        apply_msg += " with MC"
+    else:
+        head_pos = None
+    apply_msg += " to"
+    logger.info(**gen_log_kwargs(message=f"{apply_msg} experimental data"))
+
+    # Give some information about the transformation
+    fr = raw.info["dev_head_t"]["trans"]
+    to = destination["trans"]
+    dist = 1000 * np.linalg.norm(fr[:3, 3] - to[:3, 3])
+    angle = np.rad2deg(
+        mne.transforms._angle_between_quats(
+            *mne.transforms.rot_to_quat(np.array([to[:3, :3], fr[:3, :3]]))
+        )
+    )
+    msg = (
+        f"Destination head position is {dist:0.1f} mm and {angle:0.1f}° "
+        "from dev_head_t"
+    )
     logger.info(**gen_log_kwargs(message=msg))
 
     # Warn if no bad channels are set before Maxwell filter
@@ -152,16 +209,26 @@ def run_maxwell_filter(
     # Keyword arguments shared between Maxwell filtering of the
     # experimental and the empty-room data.
     common_mf_kws = dict(
-        # TODO: Add head_pos, st_correlation, eSSS
         calibration=in_files.pop("mf_cal_fname"),
         cross_talk=in_files.pop("mf_ctc_fname"),
         st_duration=cfg.mf_st_duration,
+        st_correlation=cfg.mf_st_correlation,
         origin=cfg.mf_head_origin,
         coord_frame="head",
-        destination=dev_head_t,
+        destination=destination,
     )
 
-    raw_sss = mne.preprocessing.maxwell_filter(raw, **common_mf_kws)
+    raw_sss = mne.preprocessing.maxwell_filter(
+        raw,
+        head_pos=head_pos,
+        **common_mf_kws,
+    )
+    if filter_chpi:
+        logger.info(**gen_log_kwargs(message="Filtering cHPI"))
+        mne.chpi.filter_chpi(
+            raw_sss,
+            t_window=cfg.mf_mc_t_window,
+        )
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
     logger.info(**gen_log_kwargs(message=msg))
@@ -184,11 +251,13 @@ def run_maxwell_filter(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
     ) as report:
         msg = "Adding Maxwell filtered raw data to report."
+        logger.info(**gen_log_kwargs(message=msg))
         _add_raw(
             cfg=cfg,
             report=report,
             bids_path_in=out_files["sss_raw"],
             title="Raw (maxwell filtered)",
+            tags=("sss",),
         )
     del bids_path_in
 
@@ -203,6 +272,7 @@ def run_maxwell_filter(
         logger.info(**gen_log_kwargs(message=msg, run=task))
         bids_path_noise = in_files.pop(in_key)
         bids_path_noise_bads = in_files.pop(f"{in_key}-bads", None)
+        use_head_pos = head_pos
         if task == "rest":
             raw_noise = import_experimental_data(
                 cfg=cfg,
@@ -210,6 +280,10 @@ def run_maxwell_filter(
                 bids_path_bads_in=bids_path_noise_bads,
                 data_is_rest=True,
             )
+            if cfg.mf_mc:
+                use_head_pos = mne.chpi.read_head_positions(
+                    in_files.pop("raw_rest-pos")
+                )
         else:
             raw_noise = import_er_data(
                 cfg=cfg,
@@ -225,9 +299,17 @@ def run_maxwell_filter(
             )
 
         # Maxwell-filter noise data.
-        msg = f"Applying Maxwell filter to {recording_type} recording"
+        msg = f"{apply_msg} {recording_type} data"
         logger.info(**gen_log_kwargs(message=msg, run=task))
-        raw_noise_sss = mne.preprocessing.maxwell_filter(raw_noise, **common_mf_kws)
+        raw_noise_sss = mne.preprocessing.maxwell_filter(
+            raw_noise,
+            head_pos=use_head_pos,
+            **common_mf_kws,
+        )
+        if filter_chpi:
+            logger.info(**gen_log_kwargs(message="Filtering cHPI", run=task))
+            # allow_line_only=True is really mostly for the "noise" run
+            mne.chpi.filter_chpi(raw_noise_sss, allow_line_only=True)
 
         # Perform a sanity check: empty-room rank should exactly match the
         # experimental data rank after Maxwell filtering; resting-state rank
@@ -312,7 +394,13 @@ def get_config(
             session=session,
         ),
         mf_st_duration=config.mf_st_duration,
+        mf_st_correlation=config.mf_st_correlation,
         mf_head_origin=config.mf_head_origin,
+        mf_mc=config.mf_mc,
+        mf_filter_chpi=config.mf_filter_chpi,
+        mf_destination=config.mf_destination,
+        mf_int_order=config.mf_int_order,
+        mf_mc_t_window=config.mf_mc_t_window,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

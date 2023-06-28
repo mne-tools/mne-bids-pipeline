@@ -576,6 +576,16 @@ buffer window will be lumped into the previous buffer.
     ```
 """
 
+mf_st_correlation: float = 0.98
+"""
+The correlation limit for spatio-temporal SSS (tSSS).
+
+???+ example "Example"
+    ```python
+    st_correlation = 0.98
+    ```
+"""
+
 mf_head_origin: Union[Literal["auto"], ArrayLike] = "auto"
 """
 `mf_head_origin` : array-like, shape (3,) | 'auto'
@@ -591,17 +601,42 @@ options or specifying the origin manually.
     ```
 """
 
-mf_reference_run: Optional[str] = None
+mf_destination: Union[Literal["reference_run"], ArrayLike] = "reference_run"
 """
 Despite all possible care to avoid movements in the MEG, the participant
 will likely slowly drift down from the Dewar or slightly shift the head
 around in the course of the recording session. Hence, to take this into
-account, we are realigning all data to a single position. For this, you need
-to define a reference run (typically the one in the middle of
-the recording session).
+account, we are realigning all data to a single position. For this, you can:
 
+1. Choose a reference run. Often one from the middle of the recording session
+   is a good choice. Set `mf_destination = "reference_run" and then set
+   [`config.mf_reference_run`](mne_bids_pipeline._config.mf_reference_run).
+   This will result in a device-to-head transformation that differs between
+   subjects.
+2. Choose a standard position in the MEG coordinate frame. For this, pass
+   a 4x4 transformation matrix for the device-to-head
+   transform. This will result in a device-to-head transformation that is
+   the same across all subjects.
+
+   ???+ example "A Standardized Position"
+   ```python
+   from mne.transforms import translation
+   mf_destination = translation(z=0.04)
+   ```
+"""
+
+mf_int_order: int = 8
+"""
+Internal order for the Maxwell basis. Can be set to something lower (e.g., 6
+or higher for datasets where lower or higher spatial complexity, respectively,
+is expected.
+"""
+
+mf_reference_run: Optional[str] = None
+"""
 Which run to take as the reference for adjusting the head position of all
-runs. If `None`, pick the first run.
+runs when [`mf_destination="reference_run"`](mne_bids_pipeline._config.mf_destination).
+If `None`, pick the first run.
 
 ???+ example "Example"
     ```python
@@ -637,6 +672,39 @@ location is used.
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
 """  # noqa : E501
+
+mf_mc: bool = False
+"""
+If True, perform movement compensation on the data.
+"""
+
+mf_mc_t_step_min: float = 0.01
+"""
+Minimum time step to use during cHPI coil amplitude estimation.
+"""
+
+mf_mc_t_window: Union[float, Literal["auto"]] = "auto"
+"""
+The window to use during cHPI coil amplitude estimation and in cHPI filtering.
+Can be "auto" to autodetect a reasonable value or a float (in seconds).
+"""
+
+mf_mc_gof_limit: float = 0.98
+"""
+Minimum goodness of fit to accept for each cHPI coil.
+"""
+
+mf_mc_dist_limit: float = 0.005
+"""
+Minimum distance (m) to accept for cHPI position fitting.
+"""
+
+mf_filter_chpi: Optional[bool] = None
+"""
+Use mne.chpi.filter_chpi after Maxwell filtering. Can be None to use
+the same value as [`mf_mc`][mne_bids_pipeline._config.mf_mc].
+Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter]
+"""  # noqa: E501
 
 ###############################################################################
 # STIMULATION ARTIFACT
@@ -1123,6 +1191,12 @@ otherwise, SSP won't be able to "see" these artifacts.
     ssp_reject_eog = {'grad': 15e-10}
     ssp_reject_eog = None
     ```
+"""
+
+ssp_ecg_channel: Optional[str] = None
+"""
+Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
+is not reliable.
 """
 
 # Rejection based on ICA

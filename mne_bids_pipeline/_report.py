@@ -1194,11 +1194,12 @@ def _add_raw(
     report: mne.report.Report,
     bids_path_in: BIDSPath,
     title: str,
+    tags: tuple = (),
 ):
     if bids_path_in.run is not None:
-        title += f", run {bids_path_in.run}"
+        title += f", run {repr(bids_path_in.run)}"
     elif bids_path_in.task in ("noise", "rest"):
-        title += f", run {bids_path_in.task}"
+        title += f", {bids_path_in.task}"
     plot_raw_psd = (
         cfg.plot_psd_for_runs == "all"
         or bids_path_in.run in cfg.plot_psd_for_runs
@@ -1210,7 +1211,7 @@ def _add_raw(
             title=title,
             butterfly=5,
             psd=plot_raw_psd,
-            tags=("raw", "filtered", f"run-{bids_path_in.run}"),
+            tags=("raw", f"run-{bids_path_in.run}") + tags,
             # caption=bids_path_in.basename,  # TODO upstream
             replace=True,
         )

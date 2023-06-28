@@ -48,7 +48,7 @@ jobs:
           name: Get Python running
           command: |
             pip install --upgrade --progress-bar off pip setuptools
-            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main"
+            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
             pip install PyQt6
       - run:
@@ -402,6 +402,7 @@ jobs:
 
   test_ds004107:
     <<: *imageconfig
+    resource_class: large  # memory
     steps:
       - attach_workspace:
           at: ~/
@@ -768,6 +769,7 @@ jobs:
 
   test_ds004229:
     <<: *imageconfig
+    resource_class: large  # head position estimation
     steps:
       - attach_workspace:
           at: ~/

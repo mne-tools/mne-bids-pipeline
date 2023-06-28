@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import Optional, List
 
 import matplotlib
+import numpy as np
 import mne
 from mne.utils import _check_option, _validate_type
 
@@ -342,6 +343,25 @@ def _check_config(config: SimpleNamespace) -> None:
         config.config_validation,
         ("raise", "warn", "ignore"),
     )
+
+    _validate_type(
+        config.mf_destination,
+        (str, list, tuple, np.ndarray),
+        "config.mf_destination",
+    )
+    if isinstance(config.mf_destination, str):
+        _check_option(
+            "config.mf_destination",
+            config.mf_destination,
+            ("reference_run",),
+        )
+    else:
+        destination = np.array(config.mf_destination, float)
+        if destination.shape != (4, 4):
+            raise ValueError(
+                "config.mf_destination, if array-like, must have shape (4, 4) "
+                f"but got shape {destination.shape}"
+            )
 
 
 _REMOVED_NAMES = {

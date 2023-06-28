@@ -75,7 +75,6 @@ def notch_filter(
     subject: str,
     session: Optional[str],
     run: str,
-    task: Optional[str],
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],

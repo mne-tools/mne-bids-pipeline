@@ -51,6 +51,7 @@ def get_input_fnames_maxwell_filter(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
+    print(f"Running {task=} {run=}")
     kwargs = dict(
         cfg=cfg,
         subject=subject,
@@ -82,6 +83,7 @@ def get_input_fnames_maxwell_filter(
             root=cfg.deriv_root,
             check=False,
         )
+
     # reference run (used for `destination` and also bad channels for noise)
     in_files.update(_get_reference_run_path(add_bads=True, **kwargs))
 
@@ -121,6 +123,7 @@ def run_maxwell_filter(
     filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
     is_rest_noise = run is None and task in ("noise", "rest")
     in_key = f"raw_{task}" if is_rest_noise else f"raw_run-{run}"
+    print(f"Running {in_key}")
     log_run = task if is_rest_noise else run
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
@@ -140,10 +143,8 @@ def run_maxwell_filter(
 
     out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
-    if cfg.mf_reference_run is not None:
-        # Only log if we have more than just a single run
-        msg = f"Loading reference run: {cfg.mf_reference_run or cfg.runs[0]}."
-        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+    msg = f"Loading reference run: {cfg.mf_reference_run}."
+    logger.info(**gen_log_kwargs(message=msg, run=log_run))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
     raw = read_raw_bids(

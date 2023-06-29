@@ -163,6 +163,12 @@ def get_runs_all_subjects(
     return subj_runs
 
 
+def get_intersect_run(config: SimpleNamespace) -> List[str]:
+    """Returns the intersection of all the runs of all subjects."""
+    subj_runs = get_runs_all_subjects(config)
+    return list(set.intersection(*map(set, subj_runs.values())))
+
+
 def get_runs(
     *,
     config: SimpleNamespace,
@@ -239,7 +245,7 @@ def get_runs_tasks(
     from ._import_data import _get_noise_path, _get_rest_path
 
     runs = get_runs(config=config, subject=subject)
-    tasks = [config.task] * len(runs)
+    tasks = [get_task(config=config)] * len(runs)
     kwargs = dict(
         cfg=config,
         subject=subject,
@@ -256,20 +262,29 @@ def get_runs_tasks(
     return tuple(zip(runs, tasks))
 
 
-def get_reference_run(config: SimpleNamespace, subject: str) -> str:
+def get_reference_run(config: SimpleNamespace) -> str:
     # Retrieve to run identifier (number, name) of the reference run
-    runs = get_runs(config=config, subject=subject)
-    if config.use_maxwell_filter and config.mf_reference_run is not None:
-        run = config.mf_reference_run
-        if run not in runs:
-            raise ValueError(
-                f"You set mf_reference_run={config.mf_reference_run}, but the "
-                f"dataset for subject={repr(subject)} only contains the "
-                f"following runs: {runs}"
-            )
+    if config.mf_reference_run is not None:
+        return config.mf_reference_run
+    # Use the first run
+    inter_runs = get_intersect_run(config)
+    mf_ref_error = (config.mf_reference_run is not None) and (
+        config.mf_reference_run not in inter_runs
+    )
+    if mf_ref_error:
+        msg = (
+            f"You set mf_reference_run={config.mf_reference_run}, but your "
+            f"dataset only contains the following runs: {inter_runs}"
+        )
+        raise ValueError(msg)
+    if inter_runs:
+        return inter_runs[0]
     else:
-        run = runs[0]
-    return run
+        raise ValueError(
+            f"The intersection of runs by subjects is empty. "
+            f"Check the list of runs: "
+            f"{get_runs_all_subjects(config)}"
+        )
 
 
 def get_task(config: SimpleNamespace) -> Optional[str]:

@@ -10,6 +10,7 @@ from ._config_utils import (
     get_reference_run,
     get_runs,
     get_datatype,
+    get_task,
     _bids_kwargs,
     _do_mf_autobad,
 )
@@ -621,13 +622,13 @@ def _get_noise_path(
         )
     else:
         # This must match the logic of _02_find_empty_room.py
-        run = get_reference_run(config=cfg, subject=subject)
+        run = get_reference_run(config=cfg)
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
             session=session,
             run=run,
-            task=None,
+            task=get_task(config=cfg),
             kind=kind,
         )
         raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
@@ -758,7 +759,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         task_is_rest=config.task_is_rest,
         # _get_raw_paths, _get_noise_path
         use_maxwell_filter=config.use_maxwell_filter,
-        mf_reference_run=get_reference_run(config=config, subject=subject),
+        mf_reference_run=get_reference_run(config=config),
         data_type=config.data_type,
         # automatic add_bads
         find_noisy_channels_meg=config.find_noisy_channels_meg,

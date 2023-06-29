@@ -123,7 +123,7 @@ def main(*, config) -> None:
     # in parallel.
     logs = list()
     for subject in get_subjects(config):
-        run = get_reference_run(config=config, subject=subject)
+        run = get_reference_run(config=config)
         logs.append(
             find_empty_room(
                 cfg=get_config(

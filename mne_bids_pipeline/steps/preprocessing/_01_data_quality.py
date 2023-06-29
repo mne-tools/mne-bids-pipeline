@@ -49,7 +49,13 @@ def get_input_fnames_data_quality(
         session=session,
         add_bads=False,
     )
-    in_files = _get_run_rest_noise_path(run=run, task=task, kind="orig", **kwargs)
+    in_files = _get_run_rest_noise_path(
+        run=run,
+        task=task,
+        kind="orig",
+        mf_reference_run=cfg.mf_reference_run,
+        **kwargs,
+    )
     if run is None and task == "noise":
         in_files.update(_get_reference_run_path(**kwargs))
     return in_files
@@ -319,7 +325,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
-                task=None,
+                task=task,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)

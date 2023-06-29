@@ -607,6 +607,7 @@ def _get_noise_path(
     subject: str,
     session: Optional[str],
     kind: Literal["orig", "sss"],
+    mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
@@ -622,12 +623,11 @@ def _get_noise_path(
         )
     else:
         # This must match the logic of _02_find_empty_room.py
-        run = get_reference_run(config=cfg)
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
             session=session,
-            run=run,
+            run=mf_reference_run,
             task=get_task(config=cfg),
             kind=kind,
         )
@@ -653,6 +653,7 @@ def _get_run_rest_noise_path(
     run: Optional[str],
     task: Optional[str],
     kind: Literal["orig", "sss"],
+    mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
     kwargs = dict(
@@ -664,7 +665,7 @@ def _get_run_rest_noise_path(
     )
     if run is None and task in ("noise", "rest"):
         if task == "noise":
-            return _get_noise_path(**kwargs)
+            return _get_noise_path(mf_reference_run=mf_reference_run, **kwargs)
         else:
             assert task == "rest"
             return _get_rest_path(**kwargs)

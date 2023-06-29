@@ -61,6 +61,7 @@ def get_input_fnames_maxwell_filter(
         run=run,
         task=task,
         kind="orig",
+        mf_reference_run=cfg.mf_reference_run,
         **kwargs,
     )
     # head positions

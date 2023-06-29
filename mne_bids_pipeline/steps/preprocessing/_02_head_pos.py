@@ -37,6 +37,7 @@ def get_input_fnames_head_pos(
         run=run,
         task=task,
         kind="orig",
+        mf_reference_run=cfg.mf_reference_run,
     )
 
 

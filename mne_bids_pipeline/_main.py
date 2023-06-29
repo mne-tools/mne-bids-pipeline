@@ -208,7 +208,7 @@ def main():
         if si == 0:
             logger.rule()
         msg = "Now running  👇"
-        logger.info(**gen_log_kwargs(message=msg, box="┌╴", emoji="", step=step))
+        logger.info(**gen_log_kwargs(message=msg, box="┌╴", emoji="🚀", step=step))
         step_module.main(config=config_imported)
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)

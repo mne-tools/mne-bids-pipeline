@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 
 from ._config_utils import (
-    get_mf_reference_run,
+    get_reference_run,
     get_runs,
     get_datatype,
     _bids_kwargs,
+    _do_mf_autobad,
 )
 from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
@@ -553,7 +554,7 @@ def _get_run_path(
     run: Optional[str],
     task: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
     key: Optional[str] = None,
     allow_missing: bool = False,
 ) -> dict:
@@ -582,7 +583,7 @@ def _get_rest_path(
     subject: str,
     session: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_rest and not cfg.task_is_rest):
         return dict()
@@ -605,7 +606,7 @@ def _get_noise_path(
     subject: str,
     session: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
@@ -620,7 +621,7 @@ def _get_noise_path(
         )
     else:
         # This must match the logic of _02_find_empty_room.py
-        run = cfg.mf_reference_run if cfg.use_maxwell_filter else cfg.runs[0]
+        run = get_reference_run(config=cfg, subject=subject)
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
@@ -651,7 +652,7 @@ def _get_run_rest_noise_path(
     run: Optional[str],
     task: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
 ) -> dict:
     kwargs = dict(
         cfg=cfg,
@@ -670,21 +671,41 @@ def _get_run_rest_noise_path(
         return _get_run_path(run=run, task=task, **kwargs)
 
 
+def _get_reference_run_path(
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    add_bads: bool,
+) -> dict:
+    return _get_run_path(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=cfg.mf_reference_run,
+        task=None,
+        kind="orig",
+        add_bads=add_bads,
+        key="raw_ref_run",
+    )
+
+
 def _path_dict(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
     key: str,
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
     kind: Literal["orig", "sss"],
     allow_missing: bool,
 ) -> dict:
+    if add_bads is None:
+        add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()
     in_files[key] = bids_path_in
     _update_for_splits(in_files, key, single=True, allow_missing=True)
     if allow_missing and not in_files[key].fpath.exists():
         return dict()
-    if kind == "orig" and add_bads:
+    if add_bads:
         bads_tsv_fname = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
         if bads_tsv_fname.fpath.is_file() or not allow_missing:
             in_files[f"{key}-bads"] = bads_tsv_fname
@@ -735,10 +756,13 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
-        # _get_raw_paths
+        # _get_raw_paths, _get_noise_path
         use_maxwell_filter=config.use_maxwell_filter,
-        mf_reference_run=get_mf_reference_run(config=config),
+        mf_reference_run=get_reference_run(config=config, subject=subject),
         data_type=config.data_type,
+        # automatic add_bads
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        find_flat_channels_meg=config.find_flat_channels_meg,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,

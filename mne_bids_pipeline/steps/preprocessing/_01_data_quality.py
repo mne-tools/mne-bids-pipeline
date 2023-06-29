@@ -15,9 +15,11 @@ from ..._config_utils import (
     get_subjects,
     get_sessions,
     get_runs_tasks,
+    _do_mf_autobad,
 )
 from ..._import_data import (
     _get_run_rest_noise_path,
+    _get_reference_run_path,
     import_experimental_data,
     import_er_data,
     _bads_path,
@@ -41,15 +43,16 @@ def get_input_fnames_data_quality(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by assess_data_quality function."""
-    return _get_run_rest_noise_path(
+    kwargs = dict(
         cfg=cfg,
         subject=subject,
         session=session,
-        run=run,
-        task=task,
-        kind="orig",
         add_bads=False,
     )
+    in_files = _get_run_rest_noise_path(run=run, task=task, kind="orig", **kwargs)
+    if run is None and task == "noise":
+        in_files.update(_get_reference_run_path(**kwargs))
+    return in_files
 
 
 @failsafe_run(
@@ -64,73 +67,73 @@ def assess_data_quality(
     run: Optional[str],
     task: Optional[str],
     in_files: dict,
-) -> None:
+) -> dict:
     """Assess data quality and find and mark bad channels."""
     import matplotlib.pyplot as plt
 
     out_files = dict()
-    orig_run = run
-    # raw_ref_run will be .pop()ed inside this loop, do not include it
-    raw_keys = list(key for key in in_files.keys() if key != "raw_ref_run")
-    for key in raw_keys:
-        bids_path_in = in_files.pop(key)
+    if "raw_rest" in in_files:
+        key = "raw_rest"
+        log_run = "rest"
+    elif "raw_noise" in in_files:
+        key = "raw_noise"
+        log_run = "noise"
+    else:
+        key = f"raw_run-{run}"
+        log_run = run
+    bids_path_in = in_files.pop(key)
+    if _do_mf_autobad(cfg=cfg):
         if key == "raw_noise":
-            run = "noise"
-        elif key == "raw_rest":
-            run = "rest"
-        else:  # raw_run-{run}
-            run = orig_run
-        if _do_mf_autobad(cfg=cfg):
-            if key == "raw_noise":
-                bids_path_ref_in = in_files.pop("raw_ref_run")
-            else:
-                bids_path_ref_in = None
-            auto_scores = _find_bads_maxwell(
-                cfg=cfg,
-                exec_params=exec_params,
-                bids_path_in=bids_path_in,
-                bids_path_ref_in=bids_path_ref_in,
-                key=key,
-                subject=subject,
-                session=session,
-                run=run,
-                out_files=out_files,
-            )
+            bids_path_ref_in = in_files.pop("raw_ref_run")
         else:
-            auto_scores = None
+            bids_path_ref_in = None
+        auto_scores = _find_bads_maxwell(
+            cfg=cfg,
+            exec_params=exec_params,
+            bids_path_in=bids_path_in,
+            bids_path_ref_in=bids_path_ref_in,
+            subject=subject,
+            session=session,
+            run=run,
+            task=task,
+            out_files=out_files,
+        )
+    else:
+        auto_scores = None
+    del key
 
-        # Report
-        with _open_report(
-            cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
-        ) as report:
-            # Original data
-            kind = "original" if not cfg.proc else cfg.proc
-            msg = f"Adding {kind} raw data to report"
+    # Report
+    with _open_report(
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+    ) as report:
+        # Original data
+        kind = "original" if not cfg.proc else cfg.proc
+        msg = f"Adding {kind} raw data to report"
+        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+        _add_raw(
+            cfg=cfg,
+            report=report,
+            bids_path_in=bids_path_in,
+            title=f"Raw ({kind})",
+            tags=("data-quality",),
+        )
+        if cfg.find_noisy_channels_meg:
+            assert auto_scores is not None
+            msg = "Adding noisy channel detection to report"
             logger.info(**gen_log_kwargs(message=msg))
-            _add_raw(
-                cfg=cfg,
-                report=report,
-                bids_path_in=bids_path_in,
-                title=f"Raw ({kind})",
-                tags=("data-quality",),
+            figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
+            captions = [f"Run {run}"] * len(figs)
+            tags = ("raw", "data-quality", f"run-{run}")
+            report.add_figure(
+                fig=figs,
+                caption=captions,
+                section="Data quality",
+                title=f"Bad channel detection: {run}",
+                tags=tags,
+                replace=True,
             )
-            if cfg.find_noisy_channels_meg:
-                assert auto_scores is not None
-                msg = "Adding noisy channel detection to report"
-                logger.info(**gen_log_kwargs(message=msg))
-                figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
-                captions = [f"Run {run}"] * len(figs)
-                tags = ("raw", "data-quality", f"run-{run}")
-                report.add_figure(
-                    fig=figs,
-                    caption=captions,
-                    section="Data quality",
-                    title=f"Bad channel detection: {run}",
-                    tags=tags,
-                    replace=True,
-                )
-                for fig in figs:
-                    plt.close(fig)
+            for fig in figs:
+                plt.close(fig)
 
     assert len(in_files) == 0, in_files.keys()
     return out_files
@@ -145,7 +148,7 @@ def _find_bads_maxwell(
     subject: str,
     session: Optional[str],
     run: Optional[str],
-    key: str,
+    task: Optional[str],
     out_files: dict,
 ):
     if cfg.find_flat_channels_meg and not cfg.find_noisy_channels_meg:
@@ -156,7 +159,7 @@ def _find_bads_maxwell(
         msg = "Finding flat channels and noisy channels using " "Maxwell filtering."
     logger.info(**gen_log_kwargs(message=msg))
 
-    if key == "raw_noise":
+    if run is None and task == "noise":
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
@@ -166,7 +169,7 @@ def _find_bads_maxwell(
             prepare_maxwell_filter=True,
         )
     else:
-        data_is_rest = key == "raw_rest"
+        data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             bids_path_in=bids_path_in,
             bids_path_bads_in=None,
@@ -293,8 +296,10 @@ def get_config(
         )
         extra_kwargs["mf_head_origin"] = config.mf_head_origin
     cfg = SimpleNamespace(
-        find_flat_channels_meg=config.find_flat_channels_meg,
-        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        # These are included in _import_data_kwargs for automatic add_bads
+        # detection
+        # find_flat_channels_meg=config.find_flat_channels_meg,
+        # find_noisy_channels_meg=config.find_noisy_channels_meg,
         **_import_data_kwargs(config=config, subject=subject),
         **extra_kwargs,
     )
@@ -326,7 +331,3 @@ def main(*, config: SimpleNamespace) -> None:
         )
 
     save_logs(config=config, logs=logs)
-
-
-def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
-    return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg

@@ -10,7 +10,7 @@ from ..._config_utils import (
     get_datatype,
     get_sessions,
     get_subjects,
-    get_runs,
+    get_reference_run,
     _bids_kwargs,
 )
 from ..._io import _empty_room_match_path, _write_json
@@ -123,10 +123,7 @@ def main(*, config) -> None:
     # in parallel.
     logs = list()
     for subject in get_subjects(config):
-        if config.use_maxwell_filter:
-            run = config.mf_reference_run
-        else:
-            run = get_runs(config=config, subject=subject)[0]
+        run = get_reference_run(config=config, subject=subject)
         logs.append(
             find_empty_room(
                 cfg=get_config(

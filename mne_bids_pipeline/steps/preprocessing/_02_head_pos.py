@@ -37,7 +37,6 @@ def get_input_fnames_head_pos(
         run=run,
         task=task,
         kind="orig",
-        add_bads=True,
     )
 
 

@@ -33,6 +33,7 @@ from ..._import_data import (
     import_er_data,
     _get_run_path,
     _get_run_rest_noise_path,
+    _get_reference_run_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -54,12 +55,11 @@ def get_input_fnames_maxwell_filter(
         cfg=cfg,
         subject=subject,
         session=session,
-        kind="orig",
     )
     in_files = _get_run_rest_noise_path(
         run=run,
         task=task,
-        add_bads=True,
+        kind="orig",
         **kwargs,
     )
     # head positions
@@ -73,6 +73,7 @@ def get_input_fnames_maxwell_filter(
                 run=use_run,
                 task=use_task,
                 add_bads=False,
+                kind="orig",
                 **kwargs,
             ).items()
         )[0]
@@ -82,18 +83,8 @@ def get_input_fnames_maxwell_filter(
             check=False,
         )
     # reference run (used for `destination` and also bad channels for noise)
-    in_files.update(
-        _get_run_path(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            run=cfg.mf_reference_run,
-            task=None,
-            kind="orig",
-            add_bads=True,
-            key="raw_ref_run",
-        )
-    )
+    in_files.update(_get_reference_run_path(add_bads=True, **kwargs))
+
     # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
     in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
@@ -134,6 +125,8 @@ def run_maxwell_filter(
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
     bids_path_out = bids_path_in.copy().update(
+        subject=subject,  # need these in the case of an empty room match
+        session=session,
         processing="sss",
         suffix="raw",
         extension=".fif",
@@ -325,7 +318,7 @@ def run_maxwell_filter(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=log_run
     ) as report:
         msg = "Adding Maxwell filtered raw data to report."
-        logger.info(**gen_log_kwargs(message=msg))
+        logger.info(**gen_log_kwargs(message=msg, run=log_run))
         _add_raw(
             cfg=cfg,
             report=report,

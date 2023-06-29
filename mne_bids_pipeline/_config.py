@@ -232,7 +232,7 @@ If `None`, we will assume that the data type matches the channel type.
 
     ```python
     ch_types = ['eeg']
-    data_type = 'eeg'
+    data_type = 'meg'
     ```
 
     The dataset contains simultaneous recordings of MEG and EEG, and we only

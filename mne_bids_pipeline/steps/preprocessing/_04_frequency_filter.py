@@ -63,6 +63,7 @@ def notch_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],
@@ -92,6 +93,7 @@ def bandpass_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     l_freq: Optional[float],
     h_freq: Optional[float],
     l_trans_bandwidth: Union[float, Literal["auto"]],
@@ -127,6 +129,7 @@ def resample(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     sfreq: float,
     run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
@@ -153,20 +156,18 @@ def filter_data(
 ) -> dict:
     """Filter data from a single subject."""
     out_files = dict()
-    in_key = f"raw_run-{run}"
+    in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
 
     if run is None and task in ("noise", "rest"):
-        log_run = task
         run_type = dict(rest="resting-state", noise="empty-room")[task]
     else:
-        log_run = run
         run_type = "experimental"
 
     if cfg.use_maxwell_filter:
         msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
-        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+        logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(bids_path_in)
     elif run is None and task == "noise":
         raw = import_er_data(
@@ -203,29 +204,32 @@ def filter_data(
         subject=subject,
         session=session,
         run=run,
+        task=task,
         freqs=cfg.notch_freq,
         trans_bandwidth=cfg.notch_trans_bandwidth,
         notch_widths=cfg.notch_widths,
-        run_type="experimental",
+        run_type=run_type,
     )
     bandpass_filter(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         h_freq=cfg.h_freq,
         l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        run_type="experimental",
+        run_type=run_type,
     )
     resample(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         sfreq=cfg.raw_resample_sfreq,
-        run_type="experimental",
+        run_type=run_type,
     )
 
     raw.save(
@@ -247,7 +251,7 @@ def filter_data(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
     ) as report:
         msg = "Adding filtered raw data to report"
-        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+        logger.info(**gen_log_kwargs(message=msg))
         for fname in out_files.values():
             _add_raw(
                 cfg=cfg,

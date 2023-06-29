@@ -556,8 +556,8 @@ def _get_run_path(
     task: Optional[str],
     kind: Literal["orig", "sss"],
     add_bads: Optional[bool] = None,
-    key: Optional[str] = None,
     allow_missing: bool = False,
+    key: Optional[str] = None,
 ) -> dict:
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
@@ -567,7 +567,6 @@ def _get_run_path(
         task=task,
         kind=kind,
     )
-    key = key or f"raw_run-{run}"
     return _path_dict(
         cfg=cfg,
         bids_path_in=bids_path_in,
@@ -596,7 +595,6 @@ def _get_rest_path(
         task="rest",
         kind=kind,
         add_bads=add_bads,
-        key="raw_rest",
         allow_missing=True,
     )
 
@@ -638,7 +636,6 @@ def _get_noise_path(
     return _path_dict(
         cfg=cfg,
         bids_path_in=raw_fname,
-        key="raw_noise",
         add_bads=add_bads,
         kind=kind,
         allow_missing=True,
@@ -695,14 +692,15 @@ def _path_dict(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
-    key: str,
     add_bads: Optional[bool] = None,
     kind: Literal["orig", "sss"],
     allow_missing: bool,
+    key: Optional[str] = None,
 ) -> dict:
     if add_bads is None:
         add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()
+    key = key or f"raw_task-{bids_path_in.task}_run-{bids_path_in.run}"
     in_files[key] = bids_path_in
     _update_for_splits(in_files, key, single=True, allow_missing=True)
     if allow_missing and not in_files[key].fpath.exists():

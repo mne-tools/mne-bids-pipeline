@@ -123,9 +123,7 @@ def run_maxwell_filter(
 
     filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
     is_rest_noise = run is None and task in ("noise", "rest")
-    in_key = f"raw_{task}" if is_rest_noise else f"raw_run-{run}"
-    print(f"Running {in_key}")
-    log_run = task if is_rest_noise else run
+    in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
     bids_path_out = bids_path_in.copy().update(
@@ -145,7 +143,7 @@ def run_maxwell_filter(
     out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
     msg = f"Loading reference run: {cfg.mf_reference_run}."
-    logger.info(**gen_log_kwargs(message=msg, run=log_run))
+    logger.info(**gen_log_kwargs(message=msg))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
     raw = read_raw_bids(
@@ -221,18 +219,12 @@ def run_maxwell_filter(
             head_pos=head_pos,
             **common_mf_kws,
         )
-        if filter_chpi:
-            logger.info(**gen_log_kwargs(message="Filtering cHPI"))
-            mne.chpi.filter_chpi(
-                raw_sss,
-                t_window=cfg.mf_mc_t_window,
-            )
     else:
         # Noise or rest data processing.
         nice_names = dict(rest="resting-state", noise="empty-room")
         recording_type = nice_names[task]
         msg = f"Processing {recording_type} recording …"
-        logger.info(**gen_log_kwargs(message=msg, run=task))
+        logger.info(**gen_log_kwargs(message=msg))
         if task == "rest":
             raw = import_experimental_data(
                 cfg=cfg,
@@ -256,18 +248,13 @@ def run_maxwell_filter(
 
         # Maxwell-filter noise data.
         msg = f"{apply_msg} {recording_type} data"
-        logger.info(**gen_log_kwargs(message=msg, run=task))
+        logger.info(**gen_log_kwargs(message=msg))
         raw_sss = mne.preprocessing.maxwell_filter(
             raw,
             head_pos=head_pos,
             **common_mf_kws,
         )
-        if filter_chpi:
-            logger.info(**gen_log_kwargs(message="Filtering cHPI", run=task))
-            # allow_line_only=True is really mostly for the "noise" run
-            mne.chpi.filter_chpi(raw_sss, allow_line_only=True)
 
-        """
         # Perform a sanity check: empty-room rank should exactly match the
         # experimental data rank after Maxwell filtering; resting-state rank
         # should be equal or be greater than experimental data rank.
@@ -276,9 +263,10 @@ def run_maxwell_filter(
         # copy the bad channel selection from the reference run over to
         # the resting-state recording.
 
-        raw_sss = mne.io.read_raw_fif(out_files["sss_raw"])
-        rank_exp = mne.compute_rank(raw_sss, rank="info")["meg"]
-        rank_noise = mne.compute_rank(raw_noise_sss, rank="info")["meg"]
+        raw_exp = mne.io.read_raw_fif(bids_path_ref_in)
+        rank_exp = mne.compute_rank(raw_exp, rank="info")["meg"]
+        rank_noise = mne.compute_rank(raw_sss, rank="info")["meg"]
+        del raw_sss, raw_exp
 
         if task == "rest":
             if rank_exp > rank_noise:
@@ -288,7 +276,7 @@ def run_maxwell_filter(
                     f"take care of this during epoching of the experimental "
                     f"data."
                 )
-                logger.warning(**gen_log_kwargs(message=msg, run=task))
+                logger.warning(**gen_log_kwargs(message=msg))
             else:
                 pass  # Should cause no problems!
         elif not np.isclose(rank_exp, rank_noise):
@@ -299,11 +287,17 @@ def run_maxwell_filter(
                 f"were processed  differently."
             )
             raise RuntimeError(msg)
-        """  # TODO: Add this back! Use the ref run (should be present)
+
+    if filter_chpi:
+        logger.info(**gen_log_kwargs(message="Filtering cHPI"))
+        mne.chpi.filter_chpi(
+            raw_sss,
+            t_window=cfg.mf_mc_t_window,
+        )
 
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
-    logger.info(**gen_log_kwargs(message=msg, run=log_run))
+    logger.info(**gen_log_kwargs(message=msg))
     raw_sss.save(
         out_files["sss_raw"],
         split_naming="bids",
@@ -317,10 +311,13 @@ def run_maxwell_filter(
 
     # Reporting
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=log_run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
     ) as report:
         msg = "Adding Maxwell filtered raw data to report."
-        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+        logger.info(**gen_log_kwargs(message=msg))
         _add_raw(
             cfg=cfg,
             report=report,

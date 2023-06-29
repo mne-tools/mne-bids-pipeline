@@ -56,10 +56,7 @@ def run_head_pos(
 ) -> dict:
     import matplotlib.pyplot as plt
 
-    if run is None and task == "rest":
-        in_key = "raw_rest"
-    else:
-        in_key = f"raw_run-{run}"
+    in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
     out_files = dict()

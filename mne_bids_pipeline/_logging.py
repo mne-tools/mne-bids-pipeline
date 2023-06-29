@@ -122,6 +122,10 @@ def gen_log_kwargs(
         session = up_locals.get("session", None)
     if run is None:
         run = up_locals.get("run", None)
+        if run is None:
+            task = up_locals.get("task", None)
+            if task in ("noise", "rest"):
+                run = task
     if step is None:
         step_path = _get_step_path(stack)
         if step_path:

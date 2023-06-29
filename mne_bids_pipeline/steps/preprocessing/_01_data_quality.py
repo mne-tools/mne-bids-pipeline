@@ -78,18 +78,10 @@ def assess_data_quality(
     import matplotlib.pyplot as plt
 
     out_files = dict()
-    if "raw_rest" in in_files:
-        key = "raw_rest"
-        log_run = "rest"
-    elif "raw_noise" in in_files:
-        key = "raw_noise"
-        log_run = "noise"
-    else:
-        key = f"raw_run-{run}"
-        log_run = run
+    key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(key)
     if _do_mf_autobad(cfg=cfg):
-        if key == "raw_noise":
+        if key == "raw_task-noise_run-None":
             bids_path_ref_in = in_files.pop("raw_ref_run")
         else:
             bids_path_ref_in = None
@@ -115,7 +107,7 @@ def assess_data_quality(
         # Original data
         kind = "original" if not cfg.proc else cfg.proc
         msg = f"Adding {kind} raw data to report"
-        logger.info(**gen_log_kwargs(message=msg, run=log_run))
+        logger.info(**gen_log_kwargs(message=msg))
         _add_raw(
             cfg=cfg,
             report=report,
@@ -166,6 +158,7 @@ def _find_bads_maxwell(
     logger.info(**gen_log_kwargs(message=msg))
 
     if run is None and task == "noise":
+        print("noise")
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
@@ -176,6 +169,7 @@ def _find_bads_maxwell(
         )
     else:
         data_is_rest = run is None and task == "rest"
+        print(f"exp {data_is_rest}")
         raw = import_experimental_data(
             bids_path_in=bids_path_in,
             bids_path_bads_in=None,

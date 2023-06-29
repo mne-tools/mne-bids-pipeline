@@ -12,8 +12,7 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     import_experimental_data,
-    _get_raw_paths,
-    _add_rest,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -31,32 +30,15 @@ def get_input_fnames_head_pos(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by run_head_pos function."""
-    # TODO: This is a an ugly hack -- we trick _get_raw_paths into
-    # thinking the run=None task="rest" case is really runs[0] so it adds
-    # that raw file *plus* the rest case... then remove the runs[0] key.
-    # This should be refactored at some point...
-    if run is None and task == "rest":
-        in_files = dict()
-        _add_rest(
-            cfg=cfg,
-            in_files=in_files,
-            subject=subject,
-            session=session,
-            kind="orig",
-            add_bads=True,
-        )
-        assert in_files
-    else:
-        in_files = _get_raw_paths(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            run=run,
-            task=task,
-            kind="orig",
-            add_bads=True,
-        )
-    return in_files
+    return _get_run_rest_noise_path(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
+        kind="orig",
+        add_bads=True,
+    )
 
 
 @failsafe_run(

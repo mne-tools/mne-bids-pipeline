@@ -14,13 +14,10 @@ from ..._config_utils import (
     get_mf_ctc_fname,
     get_subjects,
     get_sessions,
-    get_runs,
+    get_runs_tasks,
 )
 from ..._import_data import (
-    _get_raw_paths,
-    _add_rest,
-    _add_noise,
-    _add_mf_ref,
+    _get_run_rest_noise_path,
     import_experimental_data,
     import_er_data,
     _bads_path,
@@ -44,7 +41,7 @@ def get_input_fnames_data_quality(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by assess_data_quality function."""
-    in_files = _get_raw_paths(
+    return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
         session=session,
@@ -53,32 +50,6 @@ def get_input_fnames_data_quality(
         kind="orig",
         add_bads=False,
     )
-    if run == cfg.runs[0]:
-        _add_rest(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind="orig",
-            add_bads=False,
-        )
-        _add_noise(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind="orig",
-        )
-        if "raw_noise" in in_files:
-            _add_mf_ref(
-                cfg=cfg,
-                subject=subject,
-                session=session,
-                in_files=in_files,
-                kind="orig",
-                add_bads=False,
-            )
-    return in_files
 
 
 @failsafe_run(
@@ -347,7 +318,11 @@ def main(*, config: SimpleNamespace) -> None:
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)
-            for run in get_runs(config=config, subject=subject)
+            for run, task in get_runs_tasks(
+                config=config,
+                subject=subject,
+                session=session,
+            )
         )
 
     save_logs(config=config, logs=logs)

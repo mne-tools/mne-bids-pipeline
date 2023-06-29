@@ -22,15 +22,13 @@ import mne
 
 from ..._config_utils import (
     get_sessions,
-    get_runs,
+    get_runs_tasks,
     get_subjects,
 )
 from ..._import_data import (
     import_experimental_data,
     import_er_data,
-    _get_raw_paths,
-    _add_rest,
-    _add_noise,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -49,7 +47,7 @@ def get_input_fnames_frequency_filter(
 ) -> dict:
     """Get paths of files required by filter_data function."""
     kind = "sss" if cfg.use_maxwell_filter else "orig"
-    in_files = _get_raw_paths(
+    return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
         session=session,
@@ -58,24 +56,6 @@ def get_input_fnames_frequency_filter(
         kind=kind,
         add_bads=True,
     )
-    if run == cfg.runs[0]:
-        _add_rest(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind=kind,
-            add_bads=True,
-        )
-        _add_noise(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind=kind,
-            add_bads=True,
-        )
-    return in_files
 
 
 def notch_filter(
@@ -378,11 +358,15 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
-                task=None,
+                task=task,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)
-            for run in get_runs(config=config, subject=subject)
+            for run, task in get_runs_tasks(
+                config=config,
+                subject=subject,
+                session=session,
+            )
         )
 
     save_logs(config=config, logs=logs)

@@ -26,16 +26,13 @@ from ..._config_utils import (
     get_mf_ctc_fname,
     get_subjects,
     get_sessions,
-    get_runs,
+    get_runs_tasks,
 )
 from ..._import_data import (
     import_experimental_data,
     import_er_data,
-    _get_raw_paths,
-    _add_rest,
-    _add_noise,
-    _add_mf_ref,
-    _add_bads_file,
+    _get_run_path,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -53,78 +50,49 @@ def get_input_fnames_maxwell_filter(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
-    in_files = _get_raw_paths(
+    kwargs = dict(
         cfg=cfg,
         subject=subject,
         session=session,
+        kind="orig",
+    )
+    in_files = _get_run_rest_noise_path(
         run=run,
         task=task,
-        kind="orig",
         add_bads=True,
+        **kwargs,
     )
-    if run == cfg.runs[0]:
-        _add_rest(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind="orig",
-            add_bads=True,
-        )
-        _add_noise(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-            in_files=in_files,
-            kind="orig",
-            add_bads=True,
-        )
-        if "raw_noise" in in_files:
-            _add_mf_ref(
-                cfg=cfg,
-                subject=subject,
-                session=session,
-                in_files=in_files,
-                kind="orig",
-                add_bads=True,
-            )
     # head positions
     if cfg.mf_mc:
-        in_files[f"raw_run-{run}-pos"] = (
-            in_files[f"raw_run-{run}"]
-            .copy()
-            .update(
-                extension=".pos",
-                root=cfg.deriv_root,
-                check=False,
-            )
+        if run is None and task == "noise":
+            use_run, use_task = cfg.mf_reference_run, None
+        else:
+            use_run, use_task = run, task
+        key, path = list(
+            _get_run_path(
+                run=use_run,
+                task=use_task,
+                add_bads=False,
+                **kwargs,
+            ).items()
+        )[0]
+        in_files[f"{key}-pos"] = path.update(
+            extension=".pos",
+            root=cfg.deriv_root,
+            check=False,
         )
-        rest_key = "raw_rest"
-        if rest_key in in_files:
-            in_files["raw_rest-pos"] = (
-                in_files[rest_key]
-                .copy()
-                .update(
-                    extension=".pos",
-                    root=cfg.deriv_root,
-                    check=False,
-                )
-            )
     # reference run (used for `destination` and also bad channels for noise)
-    ref_bids_path = (
-        list(in_files.values())[0]
-        .copy()
-        .update(
+    in_files.update(
+        _get_run_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
             run=cfg.mf_reference_run,
-            check=True,
+            task=None,
+            kind="orig",
+            add_bads=True,
+            key="raw_ref_run",
         )
-    )
-    key = "raw_ref_run"
-    in_files[key] = ref_bids_path
-    _add_bads_file(
-        cfg=cfg,
-        in_files=in_files,
-        key=key,
     )
     # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
@@ -457,11 +425,15 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
-                task=None,
+                task=task,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)
-            for run in get_runs(config=config, subject=subject)
+            for run, task in get_runs_tasks(
+                config=config,
+                subject=subject,
+                session=session,
+            )
         )
 
     save_logs(config=config, logs=logs)

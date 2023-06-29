@@ -258,14 +258,14 @@ def get_runs_tasks(
         runs.append(None)
         tasks.append("rest")
     if include_noise:
-        mf_reference_run = get_reference_run(config=config)
+        mf_reference_run = get_mf_reference_run(config=config)
         if _get_noise_path(mf_reference_run=mf_reference_run, **kwargs):
             runs.append(None)
             tasks.append("noise")
     return tuple(zip(runs, tasks))
 
 
-def get_reference_run(config: SimpleNamespace) -> str:
+def get_mf_reference_run(config: SimpleNamespace) -> str:
     # Retrieve to run identifier (number, name) of the reference run
     if config.mf_reference_run is not None:
         return config.mf_reference_run

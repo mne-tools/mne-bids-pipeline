@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from ._config_utils import (
-    get_reference_run,
+    get_mf_reference_run,
     get_runs,
     get_datatype,
     get_task,
@@ -670,7 +670,7 @@ def _get_run_rest_noise_path(
         return _get_run_path(run=run, task=task, **kwargs)
 
 
-def _get_reference_run_path(
+def _get_mf_reference_run_path(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
@@ -758,7 +758,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         task_is_rest=config.task_is_rest,
         # _get_raw_paths, _get_noise_path
         use_maxwell_filter=config.use_maxwell_filter,
-        mf_reference_run=get_reference_run(config=config),
+        mf_reference_run=get_mf_reference_run(config=config),
         data_type=config.data_type,
         # automatic add_bads
         find_noisy_channels_meg=config.find_noisy_channels_meg,

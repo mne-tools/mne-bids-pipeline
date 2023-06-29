@@ -33,7 +33,7 @@ from ..._import_data import (
     import_er_data,
     _get_run_path,
     _get_run_rest_noise_path,
-    _get_reference_run_path,
+    _get_mf_reference_run_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -70,15 +70,14 @@ def get_input_fnames_maxwell_filter(
             use_run, use_task = cfg.mf_reference_run, None
         else:
             use_run, use_task = run, task
-        key, path = list(
-            _get_run_path(
-                run=use_run,
-                task=use_task,
-                add_bads=False,
-                kind="orig",
-                **kwargs,
-            ).items()
-        )[0]
+        key = f"raw_task-{use_task}_run-{use_run}"
+        path = _get_run_path(
+            run=use_run,
+            task=use_task,
+            add_bads=False,
+            kind="orig",
+            **kwargs,
+        )[key]
         in_files[f"{key}-pos"] = path.update(
             extension=".pos",
             root=cfg.deriv_root,
@@ -86,7 +85,7 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination` and also bad channels for noise)
-    in_files.update(_get_reference_run_path(add_bads=True, **kwargs))
+    in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
 
     # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
@@ -175,10 +174,7 @@ def run_maxwell_filter(
     else:
         apply_msg += "SSS"
     if cfg.mf_mc:
-        head_pos = mne.chpi.read_head_pos(in_files.pop(f"raw_run-{run}-pos"))
         apply_msg += " with MC"
-    else:
-        head_pos = None
     apply_msg += " to"
 
     if not is_rest_noise:
@@ -214,6 +210,11 @@ def run_maxwell_filter(
             )
             logger.warning(**gen_log_kwargs(message=msg))
 
+        if cfg.mf_mc:
+            head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
+        else:
+            head_pos = None
+
         raw_sss = mne.preprocessing.maxwell_filter(
             raw,
             head_pos=head_pos,
@@ -245,6 +246,12 @@ def run_maxwell_filter(
                 bids_path_ref_bads_in=bids_path_ref_bads_in,
                 prepare_maxwell_filter=True,
             )
+
+        if cfg.mf_mc:
+            pos_key = f"raw_task-None_run-{cfg.mf_reference_run}-pos"
+            head_pos = mne.chpi.read_head_pos(in_files.pop(pos_key))
+        else:
+            head_pos = None
 
         # Maxwell-filter noise data.
         msg = f"{apply_msg} {recording_type} data"

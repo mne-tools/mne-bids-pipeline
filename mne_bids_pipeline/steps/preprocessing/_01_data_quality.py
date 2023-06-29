@@ -19,7 +19,7 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     _get_run_rest_noise_path,
-    _get_reference_run_path,
+    _get_mf_reference_run_path,
     import_experimental_data,
     import_er_data,
     _bads_path,
@@ -56,8 +56,9 @@ def get_input_fnames_data_quality(
         mf_reference_run=cfg.mf_reference_run,
         **kwargs,
     )
-    if run is None and task == "noise":
-        in_files.update(_get_reference_run_path(**kwargs))
+    # When doing autobad for the noise run, we also need the reference run
+    if _do_mf_autobad(cfg=cfg) and run is None and task == "noise":
+        in_files.update(_get_mf_reference_run_path(**kwargs))
     return in_files
 
 

@@ -10,7 +10,7 @@ from ..._config_utils import (
     get_datatype,
     get_sessions,
     get_subjects,
-    get_reference_run,
+    get_mf_reference_run,
     _bids_kwargs,
 )
 from ..._io import _empty_room_match_path, _write_json
@@ -123,7 +123,7 @@ def main(*, config) -> None:
     # in parallel.
     logs = list()
     for subject in get_subjects(config):
-        run = get_reference_run(config=config)
+        run = get_mf_reference_run(config=config)
         logs.append(
             find_empty_room(
                 cfg=get_config(

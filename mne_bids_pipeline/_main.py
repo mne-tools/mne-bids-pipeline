@@ -202,11 +202,13 @@ def main():
         config_path=config_path,
         overrides=overrides,
     )
-    for step_module in step_modules:
+    for si, step_module in enumerate(step_modules):
         start = time.time()
         step = _short_step_path(pathlib.Path(step_module.__file__))
+        if si == 0:
+            logger.rule()
         msg = "Now running  👇"
-        logger.info(**gen_log_kwargs(message=msg, box="┌╴", emoji="🚀", step=step))
+        logger.info(**gen_log_kwargs(message=msg, box="┌╴", emoji="", step=step))
         step_module.main(config=config_imported)
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)
@@ -221,3 +223,4 @@ def main():
             elapsed = f"{hours}h {elapsed}"
         msg = f"Done running  👆 [{elapsed}]"
         logger.info(**gen_log_kwargs(message=msg, box="└╴", emoji="🎉", step=step))
+        logger.rule()

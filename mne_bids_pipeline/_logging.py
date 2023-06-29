@@ -44,6 +44,9 @@ class _MBPLogger:
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
+    def rule(self, title="", *, align="center"):
+        self.__console.rule(title=title, characters="─", style="rule.line", align=align)
+
     @property
     def level(self):
         return self._level

@@ -248,7 +248,12 @@ def filter_data(
     assert len(in_files) == 0, in_files.keys()
 
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
     ) as report:
         msg = "Adding filtered raw data to report"
         logger.info(**gen_log_kwargs(message=msg))

@@ -109,7 +109,12 @@ def run_head_pos(
     title = f"run {bids_path_in.run}"
 
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
     ) as report:
         msg = "Adding cHPI SNR and head positions to report."
         logger.info(**gen_log_kwargs(message=msg))

@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from typing import Dict, Optional, Iterable, Union, List, Literal
 
 import mne
+from mne.utils import _pl
 from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
@@ -398,7 +399,7 @@ def import_experimental_data(
 
     if bids_path_bads_in is not None:
         bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
-        msg = f"Marking {len(bads)} channels as bad."
+        msg = f"Marking {len(bads)} channel{_pl(bads)} as bad."
         logger.info(**gen_log_kwargs(message=msg))
         raw.info["bads"] = bads
         raw.info._check_consistency()

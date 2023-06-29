@@ -103,7 +103,12 @@ def assess_data_quality(
 
     # Report
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
     ) as report:
         # Original data
         kind = "original" if not cfg.proc else cfg.proc
@@ -159,7 +164,6 @@ def _find_bads_maxwell(
     logger.info(**gen_log_kwargs(message=msg))
 
     if run is None and task == "noise":
-        print("noise")
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
@@ -170,7 +174,6 @@ def _find_bads_maxwell(
         )
     else:
         data_is_rest = run is None and task == "rest"
-        print(f"exp {data_is_rest}")
         raw = import_experimental_data(
             bids_path_in=bids_path_in,
             bids_path_bads_in=None,

@@ -30,12 +30,13 @@ def _open_report(
     subject: str,
     session: Optional[str],
     run: Optional[str] = None,
+    task: Optional[str] = None,
 ):
     fname_report = BIDSPath(
         subject=subject,
         session=session,
         # Report is across all runs, but for logging purposes it's helpful
-        # to pass the run for gen_log_kwargs
+        # to pass the run and task for gen_log_kwargs
         run=None,
         task=cfg.task,
         acquisition=cfg.acq,

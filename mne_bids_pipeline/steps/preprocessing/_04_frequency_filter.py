@@ -245,8 +245,6 @@ def filter_data(
         raw.plot(n_channels=50, butterfly=True)
         raw.compute_psd(fmax=fmax).plot()
 
-    assert len(in_files) == 0, in_files.keys()
-
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
@@ -257,15 +255,16 @@ def filter_data(
     ) as report:
         msg = "Adding filtered raw data to report"
         logger.info(**gen_log_kwargs(message=msg))
-        for fname in out_files.values():
-            _add_raw(
-                cfg=cfg,
-                report=report,
-                bids_path_in=fname,
-                title="Raw (filtered)",
-                tags=("filtered",),
-            )
+        _add_raw(
+            cfg=cfg,
+            report=report,
+            bids_path_in=out_files[in_key],
+            title="Raw (filtered)",
+            tags=("filtered",),
+            raw=raw,
+        )
 
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 

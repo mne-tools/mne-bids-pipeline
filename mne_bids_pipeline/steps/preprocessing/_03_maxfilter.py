@@ -308,6 +308,7 @@ def run_maxwell_filter(
             bids_path_in=out_files["sss_raw"],
             title="Raw (maxwell filtered)",
             tags=("sss",),
+            raw=raw_sss,
         )
 
     assert len(in_files) == 0, in_files.keys()

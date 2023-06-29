@@ -13,6 +13,7 @@ import pandas as pd
 from scipy.io import loadmat
 
 import mne
+from mne.io import BaseRaw
 from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -1196,6 +1197,7 @@ def _add_raw(
     bids_path_in: BIDSPath,
     title: str,
     tags: tuple = (),
+    raw: Optional[BaseRaw] = None,
 ):
     if bids_path_in.run is not None:
         title += f", run {repr(bids_path_in.run)}"
@@ -1208,7 +1210,7 @@ def _add_raw(
     )
     with mne.use_log_level("error"):
         report.add_raw(
-            raw=bids_path_in,
+            raw=raw or bids_path_in,
             title=title,
             butterfly=5,
             psd=plot_raw_psd,

@@ -19,3 +19,4 @@
 - Fix bug with too many JSON files found during empty room matching (#743 by @allermat)
 - Fix bug with outdated info on ch_types config option (#745 by @allermat)
 - Fix bug where SSP projectors were not added to the report (#747 by @larsoner)
+- Fix bug with documentation issue on data_type config option (#750 by @allermat)

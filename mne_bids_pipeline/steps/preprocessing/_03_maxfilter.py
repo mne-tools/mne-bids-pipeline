@@ -128,7 +128,10 @@ def run_maxwell_filter(
         destination = mne.transforms.Transform("meg", "head", destination)
 
     filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
-    in_key = f"raw_run-{run}"
+    if run is None and task in ("noise", "rest"):
+        in_key = f"raw_{task}"
+    else:
+        in_key = f"raw_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
     bids_path_out = bids_path_in.copy().update(

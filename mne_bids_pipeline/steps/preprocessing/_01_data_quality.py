@@ -227,7 +227,7 @@ def _find_bads_maxwell(
         bads.extend(auto_noisy_chs)
 
     bads = sorted(set(bads))
-    msg = f"Found {len(bads)} channels as bad."
+    msg = f"Found {len(bads)} channel{_pl(bads)} as bad."
     raw.info["bads"] = bads
     del bads
     logger.info(**gen_log_kwargs(message=msg))

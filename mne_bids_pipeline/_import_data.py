@@ -223,7 +223,11 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     # - sets raw.annotations using the BIDS events.tsv
 
     subject = bids_path.subject
-    raw = read_raw_bids(bids_path=bids_path, extra_params=cfg.reader_extra_params)
+    raw = read_raw_bids(
+        bids_path=bids_path,
+        extra_params=cfg.reader_extra_params,
+        verbose=cfg.read_raw_bids_verbose,
+    )
 
     _crop_data(cfg, raw=raw, subject=subject)
 
@@ -767,6 +771,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,
+        read_raw_bids_verbose=config.read_raw_bids_verbose,
         # 2. _set_eeg_montage
         eeg_template_montage=config.eeg_template_montage,
         # 3. _create_bipolar_channels

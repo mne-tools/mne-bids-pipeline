@@ -110,6 +110,7 @@ def gen_log_kwargs(
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
+    task: Optional[str] = None,
     step: Optional[str] = None,
     emoji: str = "⏳️",
     box: str = "│ ",
@@ -126,7 +127,7 @@ def gen_log_kwargs(
     if run is None:
         run = up_locals.get("run", None)
         if run is None:
-            task = up_locals.get("task", None)
+            task = task or up_locals.get("task", None)
             if task in ("noise", "rest"):
                 run = task
     if step is None:

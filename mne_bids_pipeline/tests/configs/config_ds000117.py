@@ -10,8 +10,6 @@ task = "facerecognition"
 ch_types = ["meg"]
 runs = ["01", "02"]
 sessions = ["meg"]
-interactive = False
-acq = None
 subjects = ["01"]
 
 raw_resample_sfreq = 125.0

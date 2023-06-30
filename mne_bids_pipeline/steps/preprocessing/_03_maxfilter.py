@@ -14,6 +14,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
+import gc
 from typing import Optional
 from types import SimpleNamespace
 
@@ -234,6 +235,8 @@ def run_maxwell_filter(
         logger.warning(**gen_log_kwargs(message=msg))
 
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
+    del raw
+    gc.collect()
 
     if is_rest_noise:
         # Perform a sanity check: empty-room rank should exactly match the

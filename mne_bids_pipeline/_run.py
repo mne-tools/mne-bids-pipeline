@@ -69,18 +69,22 @@ def failsafe_run(
                 log_info["success"] = False
                 log_info["error_message"] = str(e)
 
+                # Find the limit / step where the error occurred
+                step_dir = pathlib.Path(__file__).parent / "steps"
+                tb = traceback.extract_tb(e.__traceback__)
+                for fi, frame in enumerate(inspect.stack()):
+                    is_step = pathlib.Path(frame.filename).parent.parent == step_dir
+                    del frame
+                    if is_step:
+                        # omit everything before the "step" dir, which will
+                        # generally be stuff from this file and joblib
+                        tb = tb[-fi:]
+                        break
+                tb = "".join(traceback.format_list(tb))
+
                 if on_error == "abort":
-                    message += (
-                        "\n\nAborting pipeline run. The full traceback " "is:\n\n"
-                    )
-                    if sys.version_info >= (3, 10):
-                        message += "".join(traceback.format_exception(e))
-                    else:
-                        message += "\n".join(
-                            traceback.format_exception(
-                                etype=type(e), value=e, tb=e.__traceback__
-                            )
-                        )
+                    message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
+
                     if os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true":
                         raise
                     logger.error(
@@ -93,7 +97,7 @@ def failsafe_run(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="🐛")
                     )
                     extype, value, tb = sys.exc_info()
-                    traceback.print_exc()
+                    print(tb)
                     pdb.post_mortem(tb)
                     sys.exit(1)
                 else:

@@ -456,7 +456,11 @@ def import_er_data(
         return raw_er
 
     # Load reference run plus its auto-bads
-    raw_ref = read_raw_bids(bids_path_ref_in, extra_params=cfg.reader_extra_params)
+    raw_ref = read_raw_bids(
+        bids_path_ref_in,
+        extra_params=cfg.reader_extra_params,
+        verbose=cfg.read_raw_bids_verbose,
+    )
     if bids_path_ref_bads_in is not None:
         bads = _read_bads_tsv(
             cfg=cfg,

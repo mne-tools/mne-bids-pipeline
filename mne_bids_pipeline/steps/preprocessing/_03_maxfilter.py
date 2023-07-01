@@ -154,7 +154,9 @@ def run_maxwell_filter(
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
     raw = read_raw_bids(
-        bids_path=bids_path_ref_in, extra_params=cfg.reader_extra_params
+        bids_path=bids_path_ref_in,
+        extra_params=cfg.reader_extra_params,
+        verbose=cfg.read_raw_bids_verbose,
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
     if isinstance(destination, str):

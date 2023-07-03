@@ -416,6 +416,14 @@ Parameters to be passed to `read_raw_bids()` calls when importing raw data.
     ```
 """
 
+read_raw_bids_verbose: Optional[Literal["error"]] = None
+"""
+Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
+If you know your dataset will contain files that are not perfectly BIDS
+compliant (e.g., "Did not find any meg.json..."), you can set this to
+`'error'` to suppress warnings emitted by read_raw_bids.
+"""
+
 ###############################################################################
 # BREAK DETECTION
 # ---------------

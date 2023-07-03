@@ -29,7 +29,8 @@ def failsafe_run(
 ) -> Callable:
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
-        def wrapper(*args, **kwargs):
+        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):
+            __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
             memory = ConditionalStepMemory(
@@ -68,18 +69,22 @@ def failsafe_run(
                 log_info["success"] = False
                 log_info["error_message"] = str(e)
 
+                # Find the limit / step where the error occurred
+                step_dir = pathlib.Path(__file__).parent / "steps"
+                tb = traceback.extract_tb(e.__traceback__)
+                for fi, frame in enumerate(inspect.stack()):
+                    is_step = pathlib.Path(frame.filename).parent.parent == step_dir
+                    del frame
+                    if is_step:
+                        # omit everything before the "step" dir, which will
+                        # generally be stuff from this file and joblib
+                        tb = tb[-fi:]
+                        break
+                tb = "".join(traceback.format_list(tb))
+
                 if on_error == "abort":
-                    message += (
-                        "\n\nAborting pipeline run. The full traceback " "is:\n\n"
-                    )
-                    if sys.version_info >= (3, 10):
-                        message += "\n".join(traceback.format_exception(e))
-                    else:
-                        message += "\n".join(
-                            traceback.format_exception(
-                                etype=type(e), value=e, tb=e.__traceback__
-                            )
-                        )
+                    message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
+
                     if os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true":
                         raise
                     logger.error(
@@ -92,7 +97,7 @@ def failsafe_run(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="🐛")
                     )
                     extype, value, tb = sys.exc_info()
-                    traceback.print_exc()
+                    print(tb)
                     pdb.post_mortem(tb)
                     sys.exit(1)
                 else:
@@ -103,7 +108,7 @@ def failsafe_run(
             log_info["time"] = round(time.time() - t0, ndigits=1)
             return log_info
 
-        return wrapper
+        return __mne_bids_pipeline_failsafe_wrapper__
 
     return failsafe_run_decorator
 
@@ -361,12 +366,17 @@ def _get_step_path(
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
+    paths = list()
     for frame in stack:
         fname = pathlib.Path(frame.filename)
         if "steps" in fname.parts:
             return fname
+        else:  # pragma: no cover
+            if frame.function == "__mne_bids_pipeline_failsafe_wrapper__":
+                return frame.frame.f_locals["__mne_bids_pipeline_step__"]
     else:  # pragma: no cover
-        raise RuntimeError("Could not find step path")
+        paths = "\n".join(paths)
+        raise RuntimeError(f"Could not find step path in call stack:\n{paths}")
 
 
 def _short_step_path(step_path: pathlib.Path) -> str:

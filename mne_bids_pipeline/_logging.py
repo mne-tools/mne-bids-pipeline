@@ -44,6 +44,9 @@ class _MBPLogger:
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
+    def rule(self, title="", *, align="center"):
+        self.__console.rule(title=title, characters="─", style="rule.line", align=align)
+
     @property
     def level(self):
         return self._level
@@ -107,6 +110,7 @@ def gen_log_kwargs(
     subject: Optional[Union[str, int]] = None,
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
+    task: Optional[str] = None,
     step: Optional[str] = None,
     emoji: str = "⏳️",
     box: str = "│ ",
@@ -122,6 +126,10 @@ def gen_log_kwargs(
         session = up_locals.get("session", None)
     if run is None:
         run = up_locals.get("run", None)
+        if run is None:
+            task = task or up_locals.get("task", None)
+            if task in ("noise", "rest"):
+                run = task
     if step is None:
         step_path = _get_step_path(stack)
         if step_path:

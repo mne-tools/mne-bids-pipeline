@@ -118,16 +118,6 @@ def get_sessions(config: SimpleNamespace) -> Union[List[None], List[str]]:
         return sessions
 
 
-@functools.lru_cache(maxsize=None)
-def _get_runs_all_subjects_cached(
-    **config_dict: Dict[str, Any],
-) -> Dict[str, Union[List[None], List[str]]]:
-    config = SimpleNamespace(**config_dict)
-    # Sometimes we check list equivalence for ch_types, so convert it back
-    config.ch_types = list(config.ch_types)
-    return get_runs_all_subjects(config)
-
-
 def get_runs_all_subjects(
     config: SimpleNamespace,
 ) -> Dict[str, Union[List[None], List[str]]]:
@@ -139,7 +129,26 @@ def get_runs_all_subjects(
     for each subject asked in the configuration file
     (and not for each subject present in the bids_path).
     """
-    # We cannot use get_subjects() because if there is just one subject
+    # Use caching under the hood for speed
+    return copy.deepcopy(
+        _get_runs_all_subjects_cached(
+            bids_root=config.bids_root,
+            data_type=config.data_type,
+            ch_types=tuple(config.ch_types),
+            subjects=tuple(config.subjects) if config.subjects != "all" else "all",
+            exclude_subjects=tuple(config.exclude_subjects),
+            exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
+        )
+    )
+
+
+@functools.lru_cache(maxsize=None)
+def _get_runs_all_subjects_cached(
+    **config_dict: Dict[str, Any],
+) -> Dict[str, Union[List[None], List[str]]]:
+    config = SimpleNamespace(**config_dict)
+    # Sometimes we check list equivalence for ch_types, so convert it back
+    config.ch_types = list(config.ch_types)
     subj_runs = dict()
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
@@ -193,15 +202,7 @@ def get_runs(
         return [None]
 
     runs = copy.deepcopy(config.runs)
-
-    subj_runs = _get_runs_all_subjects_cached(
-        bids_root=config.bids_root,
-        data_type=config.data_type,
-        ch_types=tuple(config.ch_types),
-        subjects=tuple(config.subjects) if config.subjects != "all" else "all",
-        exclude_subjects=tuple(config.exclude_subjects),
-        exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
-    )
+    subj_runs = get_runs_all_subjects(config=config)
     valid_runs = subj_runs[subject]
 
     if len(get_subjects(config)) > 1:
@@ -239,24 +240,28 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: Optional[str],
+    include_noise: bool = True,
 ) -> List[Tuple[str]]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
-    from ._import_data import _get_bids_path_in
+    from ._import_data import _get_noise_path, _get_rest_path
 
     runs = get_runs(config=config, subject=subject)
-    tasks = [config.task] * len(runs)
-    if config.process_rest and not config.task_is_rest:
-        run, task = None, "rest"
-        bids_path_in = _get_bids_path_in(
-            cfg=config,
-            subject=subject,
-            session=session,
-            run=run,
-            task=task,
-        )
-        if bids_path_in.fpath.exists():
+    tasks = [get_task(config=config)] * len(runs)
+    kwargs = dict(
+        cfg=config,
+        subject=subject,
+        session=session,
+        kind="orig",
+        add_bads=False,
+    )
+    if _get_rest_path(**kwargs):
+        runs.append(None)
+        tasks.append("rest")
+    if include_noise:
+        mf_reference_run = get_mf_reference_run(config=config)
+        if _get_noise_path(mf_reference_run=mf_reference_run, **kwargs):
             runs.append(None)
-            tasks.append("rest")
+            tasks.append("noise")
     return tuple(zip(runs, tasks))
 
 
@@ -600,3 +605,7 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict:
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
     )
+
+
+def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
+    return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg

@@ -12,7 +12,7 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     import_experimental_data,
-    _get_raw_paths,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -30,34 +30,15 @@ def get_input_fnames_head_pos(
     task: Optional[str],
 ) -> dict:
     """Get paths of files required by run_head_pos function."""
-    # TODO: This is a an ugly hack -- we trick _get_raw_paths into
-    # thinking the run=None task="rest" case is really runs[0] so it adds
-    # that raw file *plus* the rest case... then remove the runs[0] key.
-    # This should be refactored at some point...
-    if run is None and task == "rest":
-        use_run = cfg.runs[0]
-    else:
-        use_run = run
-    in_files = _get_raw_paths(
+    return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
         session=session,
-        run=use_run,
+        run=run,
+        task=task,
         kind="orig",
-        add_bads=True,
-        include_mf_ref=False,
+        mf_reference_run=cfg.mf_reference_run,
     )
-    # ... finally remove the shim to get the right rest path
-    remove_keys = list()
-    if run is None and task == "rest":
-        remove_keys.append(f"raw_run-{run}")
-    # ... and remove the raw_noise that might have been added
-    remove_keys.append("raw_noise")
-    for key in remove_keys:
-        if key in in_files:
-            in_files.pop(key)
-            in_files.pop(f"{key}-bads", None)
-    return in_files
 
 
 @failsafe_run(
@@ -75,10 +56,7 @@ def run_head_pos(
 ) -> dict:
     import matplotlib.pyplot as plt
 
-    if run is None and task == "rest":
-        in_key = "raw_rest"
-    else:
-        in_key = f"raw_run-{run}"
+    in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
     out_files = dict()
@@ -131,7 +109,12 @@ def run_head_pos(
     title = f"run {bids_path_in.run}"
 
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
     ) as report:
         msg = "Adding cHPI SNR and head positions to report."
         logger.info(**gen_log_kwargs(message=msg))
@@ -200,6 +183,7 @@ def main(*, config: SimpleNamespace) -> None:
                 config=config,
                 subject=subject,
                 session=session,
+                include_noise=False,
             )
         )
 

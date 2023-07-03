@@ -22,13 +22,13 @@ import mne
 
 from ..._config_utils import (
     get_sessions,
-    get_runs,
+    get_runs_tasks,
     get_subjects,
 )
 from ..._import_data import (
     import_experimental_data,
     import_er_data,
-    _get_raw_paths,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -43,16 +43,18 @@ def get_input_fnames_frequency_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
 ) -> dict:
     """Get paths of files required by filter_data function."""
     kind = "sss" if cfg.use_maxwell_filter else "orig"
-    return _get_raw_paths(
+    return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         kind=kind,
-        include_mf_ref=False,
+        mf_reference_run=cfg.mf_reference_run,
     )
 
 
@@ -61,6 +63,7 @@ def notch_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     freqs: Optional[Union[float, Iterable[float]]],
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],
@@ -90,6 +93,7 @@ def bandpass_filter(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     l_freq: Optional[float],
     h_freq: Optional[float],
     l_trans_bandwidth: Union[float, Literal["auto"]],
@@ -125,6 +129,7 @@ def resample(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     sfreq: float,
     run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
@@ -146,63 +151,85 @@ def filter_data(
     subject: str,
     session: Optional[str],
     run: str,
+    task: Optional[str],
     in_files: dict,
 ) -> dict:
     """Filter data from a single subject."""
     out_files = dict()
-    in_key = f"raw_run-{run}"
-    bids_path = in_files.pop(in_key)
+    in_key = f"raw_task-{task}_run-{run}"
+    bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
 
-    # Create paths for reading and writing the filtered data.
-    if cfg.use_maxwell_filter:
-        msg = f"Reading: {bids_path.basename}"
-        logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(bids_path)
+    if run is None and task in ("noise", "rest"):
+        run_type = dict(rest="resting-state", noise="empty-room")[task]
     else:
+        run_type = "experimental"
+
+    if cfg.use_maxwell_filter:
+        msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
+        logger.info(**gen_log_kwargs(message=msg))
+        raw = mne.io.read_raw_fif(bids_path_in)
+    elif run is None and task == "noise":
+        raw = import_er_data(
+            cfg=cfg,
+            bids_path_er_in=bids_path_in,
+            bids_path_ref_in=in_files.pop("raw_ref_run"),
+            bids_path_er_bads_in=bids_path_bads_in,
+            # take bads from this run (0)
+            bids_path_ref_bads_in=in_files.pop("raw_ref_run-bads", None),
+            prepare_maxwell_filter=False,
+        )
+    else:
+        data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
-            bids_path_in=bids_path,
+            bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads_in,
-            data_is_rest=False,
+            data_is_rest=data_is_rest,
         )
 
-    out_files[in_key] = bids_path.copy().update(
+    out_files[in_key] = bids_path_in.copy().update(
         root=cfg.deriv_root,
         processing="filt",
         extension=".fif",
         suffix="raw",
         split=None,
+        task=task,
+        run=run,
     )
+
     raw.load_data()
     notch_filter(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         freqs=cfg.notch_freq,
         trans_bandwidth=cfg.notch_trans_bandwidth,
         notch_widths=cfg.notch_widths,
-        run_type="experimental",
+        run_type=run_type,
     )
     bandpass_filter(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         h_freq=cfg.h_freq,
         l_freq=cfg.l_freq,
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
-        run_type="experimental",
+        run_type=run_type,
     )
     resample(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
+        task=task,
         sfreq=cfg.raw_resample_sfreq,
-        run_type="experimental",
+        run_type=run_type,
     )
 
     raw.save(
@@ -218,106 +245,26 @@ def filter_data(
         raw.plot(n_channels=50, butterfly=True)
         raw.compute_psd(fmax=fmax).plot()
 
-    del raw
-
-    nice_names = dict(rest="resting-state", noise="empty-room")
-    for task in ("rest", "noise"):
-        in_key = f"raw_{task}"
-        if in_key not in in_files:
-            continue
-        run_type = nice_names[task]
-        bids_path_noise = in_files.pop(in_key)
-        bids_path_noise_bads = in_files.pop(f"{in_key}-bads", None)
-        if cfg.use_maxwell_filter:
-            msg = f"Reading {run_type} recording: " f"{bids_path_noise.basename}"
-            logger.info(**gen_log_kwargs(message=msg, run=task))
-            raw_noise = mne.io.read_raw_fif(bids_path_noise)
-        elif run_type == "empty-room":
-            raw_noise = import_er_data(
-                cfg=cfg,
-                bids_path_er_in=bids_path_noise,
-                bids_path_ref_in=bids_path,
-                bids_path_er_bads_in=bids_path_noise_bads,
-                # take bads from this run (0)
-                bids_path_ref_bads_in=bids_path_bads_in,
-                prepare_maxwell_filter=False,
-            )
-        else:
-            raw_noise = import_experimental_data(
-                cfg=cfg,
-                bids_path_in=bids_path_noise,
-                bids_path_bads_in=bids_path_noise_bads,
-                data_is_rest=True,
-            )
-        out_files[in_key] = bids_path.copy().update(
-            root=cfg.deriv_root,
-            processing="filt",
-            extension=".fif",
-            suffix="raw",
-            split=None,
-            task=task,
-            run=None,
-        )
-
-        raw_noise.load_data()
-        notch_filter(
-            raw=raw_noise,
-            subject=subject,
-            session=session,
-            run=task,
-            freqs=cfg.notch_freq,
-            trans_bandwidth=cfg.notch_trans_bandwidth,
-            notch_widths=cfg.notch_widths,
-            run_type=run_type,
-        )
-        bandpass_filter(
-            raw=raw_noise,
-            subject=subject,
-            session=session,
-            run=task,
-            h_freq=cfg.h_freq,
-            l_freq=cfg.l_freq,
-            h_trans_bandwidth=cfg.h_trans_bandwidth,
-            l_trans_bandwidth=cfg.l_trans_bandwidth,
-            run_type=run_type,
-        )
-        resample(
-            raw=raw_noise,
-            subject=subject,
-            session=session,
-            run=task,
-            sfreq=cfg.raw_resample_sfreq,
-            run_type=run_type,
-        )
-
-        raw_noise.save(
-            out_files[in_key],
-            overwrite=True,
-            split_naming="bids",
-            split_size=cfg._raw_split_size,
-        )
-        _update_for_splits(out_files, in_key)
-        if exec_params.interactive:
-            # Plot raw data and power spectral density.
-            raw_noise.plot(n_channels=50, butterfly=True)
-            raw_noise.compute_psd(fmax=fmax).plot()
-
-    assert len(in_files) == 0, in_files.keys()
-
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, run=run
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
     ) as report:
         msg = "Adding filtered raw data to report"
         logger.info(**gen_log_kwargs(message=msg))
-        for fname in out_files.values():
-            _add_raw(
-                cfg=cfg,
-                report=report,
-                bids_path_in=fname,
-                title="Raw (filtered)",
-                tags=("filtered",),
-            )
+        _add_raw(
+            cfg=cfg,
+            report=report,
+            bids_path_in=out_files[in_key],
+            title="Raw (filtered)",
+            tags=("filtered",),
+            raw=raw,
+        )
 
+    assert len(in_files) == 0, in_files.keys()
     return out_files
 
 
@@ -355,10 +302,15 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 run=run,
+                task=task,
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)
-            for run in get_runs(config=config, subject=subject)
+            for run, task in get_runs_tasks(
+                config=config,
+                subject=subject,
+                session=session,
+            )
         )
 
     save_logs(config=config, logs=logs)

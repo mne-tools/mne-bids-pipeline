@@ -13,6 +13,7 @@ import pandas as pd
 from scipy.io import loadmat
 
 import mne
+from mne.io import BaseRaw
 from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -30,12 +31,13 @@ def _open_report(
     subject: str,
     session: Optional[str],
     run: Optional[str] = None,
+    task: Optional[str] = None,
 ):
     fname_report = BIDSPath(
         subject=subject,
         session=session,
         # Report is across all runs, but for logging purposes it's helpful
-        # to pass the run for gen_log_kwargs
+        # to pass the run and task for gen_log_kwargs
         run=None,
         task=cfg.task,
         acquisition=cfg.acq,
@@ -1195,6 +1197,7 @@ def _add_raw(
     bids_path_in: BIDSPath,
     title: str,
     tags: tuple = (),
+    raw: Optional[BaseRaw] = None,
 ):
     if bids_path_in.run is not None:
         title += f", run {repr(bids_path_in.run)}"
@@ -1207,7 +1210,7 @@ def _add_raw(
     )
     with mne.use_log_level("error"):
         report.add_raw(
-            raw=bids_path_in,
+            raw=raw or bids_path_in,
             title=title,
             butterfly=5,
             psd=plot_raw_psd,

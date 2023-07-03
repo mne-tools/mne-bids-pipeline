@@ -28,6 +28,7 @@
         - eeg_template_montage
         - drop_channels
         - reader_extra_params
+        - read_raw_bids_verbose
         - analyze_channels
         - plot_psd_for_runs
         - n_jobs

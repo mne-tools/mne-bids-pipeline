@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from typing import Dict, Optional, Iterable, Union, List, Literal
 
 import mne
+from mne.utils import _pl
 from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
@@ -10,7 +11,9 @@ from ._config_utils import (
     get_mf_reference_run,
     get_runs,
     get_datatype,
+    get_task,
     _bids_kwargs,
+    _do_mf_autobad,
 )
 from ._io import _read_json, _empty_room_match_path
 from ._logging import gen_log_kwargs, logger
@@ -220,7 +223,11 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     # - sets raw.annotations using the BIDS events.tsv
 
     subject = bids_path.subject
-    raw = read_raw_bids(bids_path=bids_path, extra_params=cfg.reader_extra_params)
+    raw = read_raw_bids(
+        bids_path=bids_path,
+        extra_params=cfg.reader_extra_params,
+        verbose=cfg.read_raw_bids_verbose,
+    )
 
     _crop_data(cfg, raw=raw, subject=subject)
 
@@ -396,7 +403,7 @@ def import_experimental_data(
 
     if bids_path_bads_in is not None:
         bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
-        msg = f"Marking {len(bads)} channels as bad."
+        msg = f"Marking {len(bads)} channel{_pl(bads)} as bad."
         logger.info(**gen_log_kwargs(message=msg))
         raw.info["bads"] = bads
         raw.info._check_consistency()
@@ -449,7 +456,11 @@ def import_er_data(
         return raw_er
 
     # Load reference run plus its auto-bads
-    raw_ref = read_raw_bids(bids_path_ref_in, extra_params=cfg.reader_extra_params)
+    raw_ref = read_raw_bids(
+        bids_path_ref_in,
+        extra_params=cfg.reader_extra_params,
+        verbose=cfg.read_raw_bids_verbose,
+    )
     if bids_path_ref_bads_in is not None:
         bads = _read_bads_tsv(
             cfg=cfg,
@@ -519,10 +530,6 @@ def _get_bids_path_in(
     kind: Literal["orig", "sss"] = "orig",
 ) -> BIDSPath:
     # b/c can be used before this is updated
-    if hasattr(cfg, "datatype"):
-        datatype = cfg.datatype
-    else:
-        datatype = get_datatype(config=cfg)
     path_kwargs = dict(
         subject=subject,
         run=run,
@@ -531,7 +538,7 @@ def _get_bids_path_in(
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
-        datatype=datatype,
+        datatype=get_datatype(config=cfg),
         check=False,
     )
     if kind == "sss":
@@ -549,106 +556,169 @@ def _get_bids_path_in(
     return bids_path_in
 
 
-def _get_raw_paths(
+def _get_run_path(
     *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
     kind: Literal["orig", "sss"],
-    add_bads: bool = True,
-    include_mf_ref: bool = True,
+    add_bads: Optional[bool] = None,
+    allow_missing: bool = False,
+    key: Optional[str] = None,
 ) -> dict:
-    # Construct the basenames of the files we wish to load, and of the empty-
-    # room recording we wish to save.
-    # The basenames of the empty-room recording output file does not contain
-    # the "run" entity.
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
         session=session,
         run=run,
-        task=None,
+        task=task,
         kind=kind,
     )
-    in_files = dict()
-    key = f"raw_run-{run}"
-    in_files[key] = bids_path_in
-    _update_for_splits(in_files, key, single=True)
-    if add_bads:
-        _add_bads_file(
-            cfg=cfg,
-            in_files=in_files,
-            key=key,
-        )
-    if run == cfg.runs[0]:
-        do = dict(
-            rest=cfg.process_rest and not cfg.task_is_rest,
-            noise=cfg.process_empty_room and cfg.datatype == "meg",
-        )
-        for task in ("rest", "noise"):
-            if not do[task]:
-                continue
-            key = f"raw_{task}"
-            if kind == "sss":
-                raw_fname = bids_path_in.copy().update(run=None, task=task)
-            else:
-                if task == "rest":
-                    raw_fname = bids_path_in.copy().update(run=None, task=task)
-                else:
-                    # This must match the logic of _02_find_empty_room.py
-                    update_kwargs = dict()
-                    if cfg.use_maxwell_filter:
-                        update_kwargs["run"] = cfg.mf_reference_run
-                    raw_fname = _read_json(
-                        _empty_room_match_path(
-                            bids_path_in.copy().update(**update_kwargs),
-                            cfg,
-                        )
-                    )
-                    raw_fname = raw_fname["fname"]
-                    if raw_fname is not None:
-                        raw_fname = get_bids_path_from_fname(raw_fname)
-            if raw_fname is None:
-                continue
-            in_files[key] = raw_fname
-            _update_for_splits(in_files, key, single=True, allow_missing=True)
-            if not in_files[key].fpath.exists():
-                in_files.pop(key)
-            elif add_bads:
-                _add_bads_file(
-                    cfg=cfg,
-                    in_files=in_files,
-                    key=key,
-                )
-            if include_mf_ref and task == "noise":
-                key = "raw_ref_run"
-                in_files[key] = bids_path_in.copy().update(run=cfg.mf_reference_run)
-                _update_for_splits(in_files, key, single=True, allow_missing=True)
-                if not in_files[key].fpath.exists():
-                    in_files.pop(key)
-                elif add_bads:
-                    _add_bads_file(
-                        cfg=cfg,
-                        in_files=in_files,
-                        key=key,
-                    )
-    return in_files
-
-
-def _add_bads_file(
-    *,
-    cfg: SimpleNamespace,
-    in_files: dict,
-    key: str,
-) -> None:
-    bids_path_in = in_files[key]
-    bads_tsv_fname = _bads_path(
+    return _path_dict(
         cfg=cfg,
         bids_path_in=bids_path_in,
+        key=key,
+        add_bads=add_bads,
+        kind=kind,
+        allow_missing=allow_missing,
     )
-    if bads_tsv_fname.fpath.is_file():
-        in_files[f"{key}-bads"] = bads_tsv_fname
+
+
+def _get_rest_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    kind: Literal["orig", "sss"],
+    add_bads: Optional[bool] = None,
+) -> dict:
+    if not (cfg.process_rest and not cfg.task_is_rest):
+        return dict()
+    return _get_run_path(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=None,
+        task="rest",
+        kind=kind,
+        add_bads=add_bads,
+        allow_missing=True,
+    )
+
+
+def _get_noise_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    kind: Literal["orig", "sss"],
+    mf_reference_run: Optional[str],
+    add_bads: Optional[bool] = None,
+) -> dict:
+    if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
+        return dict()
+    if kind == "sss":
+        raw_fname = _get_bids_path_in(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=None,
+            task="noise",
+            kind=kind,
+        )
+    else:
+        # This must match the logic of _02_find_empty_room.py
+        raw_fname = _get_bids_path_in(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=mf_reference_run,
+            task=get_task(config=cfg),
+            kind=kind,
+        )
+        raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
+        if raw_fname is None:
+            return dict()
+        raw_fname = get_bids_path_from_fname(raw_fname)
+    return _path_dict(
+        cfg=cfg,
+        bids_path_in=raw_fname,
+        add_bads=add_bads,
+        kind=kind,
+        allow_missing=True,
+    )
+
+
+def _get_run_rest_noise_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: Optional[str],
+    task: Optional[str],
+    kind: Literal["orig", "sss"],
+    mf_reference_run: Optional[str],
+    add_bads: Optional[bool] = None,
+) -> dict:
+    kwargs = dict(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        kind=kind,
+        add_bads=add_bads,
+    )
+    if run is None and task in ("noise", "rest"):
+        if task == "noise":
+            return _get_noise_path(mf_reference_run=mf_reference_run, **kwargs)
+        else:
+            assert task == "rest"
+            return _get_rest_path(**kwargs)
+    else:
+        return _get_run_path(run=run, task=task, **kwargs)
+
+
+def _get_mf_reference_run_path(
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    add_bads: bool,
+) -> dict:
+    return _get_run_path(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=cfg.mf_reference_run,
+        task=None,
+        kind="orig",
+        add_bads=add_bads,
+        key="raw_ref_run",
+    )
+
+
+def _path_dict(
+    *,
+    cfg: SimpleNamespace,
+    bids_path_in: BIDSPath,
+    add_bads: Optional[bool] = None,
+    kind: Literal["orig", "sss"],
+    allow_missing: bool,
+    key: Optional[str] = None,
+) -> dict:
+    if add_bads is None:
+        add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
+    in_files = dict()
+    key = key or f"raw_task-{bids_path_in.task}_run-{bids_path_in.run}"
+    in_files[key] = bids_path_in
+    _update_for_splits(in_files, key, single=True, allow_missing=True)
+    if allow_missing and not in_files[key].fpath.exists():
+        return dict()
+    if add_bads:
+        bads_tsv_fname = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
+        if bads_tsv_fname.fpath.is_file() or not allow_missing:
+            in_files[f"{key}-bads"] = bads_tsv_fname
+    return in_files
 
 
 def _auto_scores_path(
@@ -695,12 +765,17 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
-        # _get_raw_paths
+        # _get_raw_paths, _get_noise_path
         use_maxwell_filter=config.use_maxwell_filter,
         mf_reference_run=get_mf_reference_run(config=config),
+        data_type=config.data_type,
+        # automatic add_bads
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        find_flat_channels_meg=config.find_flat_channels_meg,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,
+        read_raw_bids_verbose=config.read_raw_bids_verbose,
         # 2. _set_eeg_montage
         eeg_template_montage=config.eeg_template_montage,
         # 3. _create_bipolar_channels

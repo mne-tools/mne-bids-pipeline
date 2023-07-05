@@ -6,6 +6,7 @@ site_description: The MNE-BIDS-Pipeline is a full-flegded processing pipeline fo
 site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
+strict: true
 use_directory_urls: false  # For easier navigation on CircleCI
 watch:  # Additional directories to watch for changes during `mkdocs serve`
     - ../mne_bids_pipeline

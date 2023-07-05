@@ -21,6 +21,10 @@ dependencies = [
     "importlib_metadata; python_version < '3.8'",
     "psutil",  # for joblib
     "packaging",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "nibabel",
     "joblib >= 0.14",
     "threadpoolctl",
     "dask[distributed]",

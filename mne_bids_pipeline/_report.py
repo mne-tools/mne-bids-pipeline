@@ -1198,6 +1198,7 @@ def _add_raw(
     title: str,
     tags: tuple = (),
     raw: Optional[BaseRaw] = None,
+    extra_html: Optional[str] = None,
 ):
     if bids_path_in.run is not None:
         title += f", run {repr(bids_path_in.run)}"
@@ -1208,13 +1209,22 @@ def _add_raw(
         or bids_path_in.run in cfg.plot_psd_for_runs
         or bids_path_in.task in cfg.plot_psd_for_runs
     )
+    tags = ("raw", f"run-{bids_path_in.run}") + tags
     with mne.use_log_level("error"):
         report.add_raw(
             raw=raw or bids_path_in,
             title=title,
             butterfly=5,
             psd=plot_raw_psd,
-            tags=("raw", f"run-{bids_path_in.run}") + tags,
+            tags=tags,
             # caption=bids_path_in.basename,  # TODO upstream
             replace=True,
         )
+        if extra_html is not None:
+            report.add_html(
+                extra_html,
+                title=title,
+                tags=tags,
+                section=title,
+                replace=True,
+            )

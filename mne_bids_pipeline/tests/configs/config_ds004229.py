@@ -27,6 +27,8 @@ mf_int_order = 6  # lower for smaller heads
 mf_mc_t_step_min = 0.5  # just for speed!
 mf_mc_t_window = 0.2  # cleaner cHPI filtering on this dataset
 mf_filter_chpi = False  # for speed, not needed as we low-pass anyway
+mf_mc_rotation_velocity_limit = 5.0  # deg/s for annotations
+mf_mc_translation_velocity_limit = 5e-3  # m/s
 ch_types = ["meg"]
 
 l_freq = None

@@ -17,7 +17,7 @@ from ..._config_utils import (
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, _prep_out_files
 
 
 def _get_bem_params(cfg: SimpleNamespace):
@@ -97,7 +97,7 @@ def make_bem_surfaces(
         verbose=cfg.freesurfer_verbose,
     )
     out_files = get_output_fnames_make_bem_surfaces(cfg=cfg, subject=subject)
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

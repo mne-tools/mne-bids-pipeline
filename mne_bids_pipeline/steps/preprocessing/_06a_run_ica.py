@@ -34,7 +34,7 @@ from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._reject import _get_reject
 from ..._report import _agg_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs
+from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
 
 
 def filter_for_ica(
@@ -527,7 +527,7 @@ def run_ica(
     )
 
     assert len(in_files) == 0, in_files.keys()
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

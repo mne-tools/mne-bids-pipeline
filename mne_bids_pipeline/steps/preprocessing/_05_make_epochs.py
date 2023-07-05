@@ -28,6 +28,7 @@ from ..._run import (
     save_logs,
     _update_for_splits,
     _sanitize_callable,
+    _prep_out_files,
 )
 from ..._parallel import parallel_func, get_parallel_backend
 
@@ -262,7 +263,7 @@ def run_epochs(
         epochs.plot()
         epochs.plot_image(combine="gfp", sigma=2.0, cmap="YlGnBu_r")
     assert len(in_files) == 0, in_files.keys()
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 # TODO: ideally we wouldn't need this anymore and could refactor the code above

@@ -17,7 +17,7 @@ from ..._config_utils import (
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run
+from ..._run import failsafe_run, _prep_out_files
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 
@@ -62,7 +62,7 @@ def make_coreg_surfaces(
         overwrite=True,
     )
     out_files = get_output_fnames_coreg_surfaces(cfg=cfg, subject=subject)
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(*, config, subject) -> SimpleNamespace:

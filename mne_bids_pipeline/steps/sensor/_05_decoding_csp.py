@@ -27,7 +27,7 @@ from ..._config_utils import (
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, _prep_out_files
 from ..._report import (
     _open_report,
     _sanitize_cond_tag,
@@ -504,7 +504,7 @@ def one_subject_decoding(
             )
 
     assert len(in_files) == 0, in_files.keys()
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

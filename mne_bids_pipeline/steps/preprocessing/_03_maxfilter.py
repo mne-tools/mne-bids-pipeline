@@ -40,7 +40,7 @@ from ..._import_data import (
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._report import _open_report, _add_raw
-from ..._run import failsafe_run, save_logs, _update_for_splits
+from ..._run import failsafe_run, save_logs, _update_for_splits, _prep_out_files
 
 
 def get_input_fnames_maxwell_filter(
@@ -317,7 +317,7 @@ def run_maxwell_filter(
         )
 
     assert len(in_files) == 0, in_files.keys()
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

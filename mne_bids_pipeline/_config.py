@@ -710,13 +710,13 @@ Minimum distance (m) to accept for cHPI position fitting.
 mf_mc_rotation_velocity_limit: Optional[float] = None
 """
 The rotation velocity limit (degrees/second) to use when annotating
-movement-compensated data. If None, no annotations will be added.
+movement-compensated data. If `None`, no annotations will be added.
 """
 
 mf_mc_translation_velocity_limit: Optional[float] = None
 """
 The translation velocity limit (meters/second) to use when annotating
-movement-compensated data. If None, no annotations will be added.
+movement-compensated data. If `None`, no annotations will be added.
 """
 
 mf_filter_chpi: Optional[bool] = None

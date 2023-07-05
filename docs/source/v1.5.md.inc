@@ -2,7 +2,7 @@
 
 ### :new: New features & enhancements
 
-- Added support for annotating bad segments based on for head movement velocity (#757 by @larsoner)
+- Added support for annotating bad segments based on head movement velocity (#757 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

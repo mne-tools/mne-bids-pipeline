@@ -618,7 +618,7 @@ account, we are realigning all data to a single position. For this, you can:
 
 1. Choose a reference run. Often one from the middle of the recording session
    is a good choice. Set `mf_destination = "reference_run" and then set
-   [`config.mf_reference_run`](mne_bids_pipeline._config.mf_reference_run).
+   [`config.mf_reference_run`][mne_bids_pipeline._config.mf_reference_run].
    This will result in a device-to-head transformation that differs between
    subjects.
 2. Choose a standard position in the MEG coordinate frame. For this, pass
@@ -643,7 +643,7 @@ is expected.
 mf_reference_run: Optional[str] = None
 """
 Which run to take as the reference for adjusting the head position of all
-runs when [`mf_destination="reference_run"`](mne_bids_pipeline._config.mf_destination).
+runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
 If `None`, pick the first run.
 
 ???+ example "Example"

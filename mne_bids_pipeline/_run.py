@@ -10,7 +10,7 @@ import pdb
 import sys
 import traceback
 import time
-from typing import Callable, Optional, Dict, List
+from typing import Callable, Optional, Dict, List, Literal, Union
 from types import SimpleNamespace
 
 from filelock import FileLock
@@ -163,20 +163,7 @@ class ConditionalStepMemory:
             # If this is ever true, we'll need to improve the logic below
             assert not (unknown_inputs and force_run)
 
-            def hash_(k, v):
-                if isinstance(v, BIDSPath):
-                    v = v.fpath
-                assert isinstance(
-                    v, pathlib.Path
-                ), f'Bad type {type(v)}: in_files["{k}"] = {v}'
-                assert v.exists(), f'missing in_files["{k}"] = {v}'
-                if self.memory_file_method == "mtime":
-                    this_hash = v.lstat().st_mtime
-                else:
-                    assert self.memory_file_method == "hash"  # guaranteed
-                    this_hash = hash_file_path(v)
-                return (str(v), this_hash)
-
+            hash_ = functools.partial(_path_to_str_hash, method=self.memory_file_method)
             hashes = []
             for k, v in in_files.items():
                 hashes.append(hash_(k, v))
@@ -211,9 +198,12 @@ class ConditionalStepMemory:
             memorized_func = self.memory.cache(func, ignore=self.ignore)
             msg = emoji = None
             short_circuit = False
-            subject = kwargs.get("subject", None)
-            session = kwargs.get("session", None)
-            run = kwargs.get("run", None)
+            # Used for logging automatically
+            subject = kwargs.get("subject", None)  # noqa
+            session = kwargs.get("session", None)  # noqa
+            run = kwargs.get("run", None)  # noqa
+            task = kwargs.get("task", None)  # noqa
+            bad_out_files = False
             try:
                 done = memorized_func.check_call_in_cache(*args, **kwargs)
             except Exception:
@@ -229,9 +219,25 @@ class ConditionalStepMemory:
                     msg = "Computation forced despite existing cached result …"
                     emoji = "🔂"
                 else:
-                    msg = "Computation unnecessary (cached) …"
-                    emoji = "cache"
-            # When out_files is not None, we should check if the output files
+                    # Check our output file hashes
+                    out_files_hashes = memorized_func(*args, **kwargs)
+                    for key, (fname, this_hash) in out_files_hashes.items():
+                        fname = pathlib.Path(fname)
+                        if not fname.exists():
+                            msg = "Output file missing, will recompute …"
+                            emoji = "🧩"
+                            bad_out_files = True
+                            break
+                        got_hash = hash_(key, fname, kind="out")[1]
+                        if this_hash != got_hash:
+                            msg = "Output file hash mismatch, will recompute …"
+                            emoji = "🚫"
+                            bad_out_files = True
+                            break
+                    else:
+                        msg = "Computation unnecessary (cached) …"
+                        emoji = "cache"
+            # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface
             # creation)
             elif out_files is not None:
@@ -246,41 +252,19 @@ class ConditionalStepMemory:
                     msg = "Computation unnecessary (output files exist) …"
                     emoji = "🔍"
                     short_circuit = True
+            del out_files
+
             if msg is not None:
                 step = _short_step_path(pathlib.Path(inspect.getfile(func)))
-                logger.info(
-                    **gen_log_kwargs(
-                        message=msg,
-                        subject=subject,
-                        session=session,
-                        run=run,
-                        emoji=emoji,
-                        step=step,
-                    )
-                )
+                logger.info(**gen_log_kwargs(message=msg, emoji=emoji, step=step))
             if short_circuit:
                 return
 
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
-            if force_run or unknown_inputs:
-                out_files, _ = memorized_func.call(*args, **kwargs)
+            if force_run or unknown_inputs or bad_out_files:
+                memorized_func.call(*args, **kwargs)
             else:
-                out_files = memorized_func(*args, **kwargs)
-            assert isinstance(out_files, dict), type(out_files)
-            out_files_missing_msg = "\n".join(
-                f"- {key}={fname}"
-                for key, fname in out_files.items()
-                if not pathlib.Path(fname).exists()
-            )
-            if out_files_missing_msg:
-                raise ValueError(
-                    "Missing at least one output file: \n"
-                    + out_files_missing_msg
-                    + "\n"
-                    + "This should not happen unless some files "
-                    "have been manually moved or deleted. You "
-                    "need to flush your cache to fix this."
-                )
+                memorized_func(*args, **kwargs)
 
         return wrapper
 
@@ -381,3 +365,37 @@ def _get_step_path(
 
 def _short_step_path(step_path: pathlib.Path) -> str:
     return f"{step_path.parent.name}/{step_path.stem}"
+
+
+def _prep_out_files(
+    *,
+    exec_params: SimpleNamespace,
+    out_files: Dict[str, BIDSPath],
+):
+    for key, fname in out_files.items():
+        out_files[key] = _path_to_str_hash(
+            key,
+            pathlib.Path(fname),
+            method=exec_params.memory_file_method,
+            kind="out",
+        )
+    return out_files
+
+
+def _path_to_str_hash(
+    k: str,
+    v: Union[BIDSPath, pathlib.Path],
+    *,
+    method: Literal["mtime", "hash"],
+    kind: str = "in",
+):
+    if isinstance(v, BIDSPath):
+        v = v.fpath
+    assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
+    assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
+    if method == "mtime":
+        this_hash = v.lstat().st_mtime
+    else:
+        assert method == "hash"  # guaranteed
+        this_hash = hash_file_path(v)
+    return (str(v), this_hash)

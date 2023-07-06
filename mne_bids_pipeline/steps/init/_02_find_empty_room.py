@@ -15,7 +15,7 @@ from ..._config_utils import (
 )
 from ..._io import _empty_room_match_path, _write_json
 from ..._logging import gen_log_kwargs, logger
-from ..._run import _update_for_splits, failsafe_run, save_logs
+from ..._run import _update_for_splits, failsafe_run, save_logs, _prep_out_files
 
 
 def get_input_fnames_find_empty_room(
@@ -96,7 +96,7 @@ def find_empty_room(
     out_files = dict()
     out_files["empty_room_match"] = _empty_room_match_path(raw_path, cfg)
     _write_json(out_files["empty_room_match"], dict(fname=fname))
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

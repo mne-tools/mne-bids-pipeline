@@ -16,7 +16,7 @@ from ..._config_utils import (
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, _prep_out_files
 
 
 def get_input_fnames_make_bem_solution(
@@ -69,7 +69,7 @@ def make_bem_solution(
     out_files = get_output_fnames_make_bem_solution(cfg=cfg, subject=subject)
     mne.write_bem_surfaces(out_files["model"], bem_model, overwrite=True)
     mne.write_bem_solution(out_files["sol"], bem_sol, overwrite=True)
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

@@ -27,7 +27,7 @@ from ..._config_utils import (
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
-from ..._run import failsafe_run, save_logs, _sanitize_callable
+from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
 
 
 def get_input_fnames_inverse(
@@ -152,7 +152,7 @@ def run_inverse(
                 )
 
     assert len(in_files) == 0, in_files
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

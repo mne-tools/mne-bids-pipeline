@@ -9,7 +9,7 @@ import mne
 
 from ..._config_utils import get_fs_subject, get_fs_subjects_dir, get_subjects
 from ..._logging import logger, gen_log_kwargs
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, _prep_out_files
 from ..._parallel import parallel_func, get_parallel_backend
 
 
@@ -55,7 +55,7 @@ def run_setup_source_space(
     in_files.clear()  # all used by setup_source_space
     out_files = get_output_fnames_setup_source_space(cfg=cfg, subject=subject)
     mne.write_source_spaces(out_files["src"], src, overwrite=True)
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

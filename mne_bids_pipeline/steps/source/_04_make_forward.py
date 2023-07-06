@@ -24,7 +24,7 @@ from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report
-from ..._run import failsafe_run, save_logs
+from ..._run import failsafe_run, save_logs, _prep_out_files
 
 
 def _prepare_trans_template(
@@ -233,7 +233,7 @@ def run_forward(
         )
 
     assert len(in_files) == 0, in_files
-    return out_files
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 def get_config(

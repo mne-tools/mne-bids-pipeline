@@ -976,6 +976,8 @@ jobs:
       - run:
           name: Build documentation
           command: |
+            set -eo pipefail
+            ls ~/mne_data/derivatives/mne-bids-pipeline/*/*/*/*.html
             make doc
       - store_artifacts:
           path: docs/site
@@ -1220,6 +1222,8 @@ workflows:
             - test_ds000248_base
             - test_ds000248_ica
             - test_ds000248_no_mri
+            - test_ds000248_T1_BEM
+            - test_ds000248_FLASH_BEM
             - test_ds001810
             - test_ds003104
             - test_ds003392

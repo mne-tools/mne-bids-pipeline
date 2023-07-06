@@ -22,4 +22,6 @@ tags:
         - mf_mc_t_window
         - mf_mc_gof_limit
         - mf_mc_dist_limit
+        - mf_mc_rotation_velocity_limit
+        - mf_mc_translation_velocity_limit
         - mf_filter_chpi

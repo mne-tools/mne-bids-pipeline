@@ -282,6 +282,42 @@ def run_maxwell_filter(
             t_window=cfg.mf_mc_t_window,
         )
 
+    if cfg.mf_mc and (
+        cfg.mf_mc_rotation_velocity_limit is not None
+        or cfg.mf_mc_translation_velocity_limit is not None
+    ):
+        movement_annot, _ = mne.preprocessing.annotate_movement(
+            raw_sss,
+            pos=head_pos,
+            rotation_velocity_limit=cfg.mf_mc_rotation_velocity_limit,
+            translation_velocity_limit=cfg.mf_mc_translation_velocity_limit,
+        )
+        perc_time = 100 / raw_sss.times[-1]
+        extra_html = list()
+        for kind, unit in (("translation", "m"), ("rotation", "°")):
+            limit = getattr(cfg, f"mf_mc_{kind}_velocity_limit")
+            if limit is None:
+                continue
+            desc = (f"BAD_mov_{kind[:5]}_vel",)
+            tot_time = np.sum(
+                movement_annot.duration[movement_annot.description == desc]
+            )
+            perc = perc_time * tot_time
+            logger_meth = logger.warning if perc > 20 else logger.info
+            msg = (
+                f"{kind.capitalize()} velocity exceeded {limit} {unit}/s "
+                f"limit for {tot_time:0.1f} s ({perc:0.1f}%)"
+            )
+            logger_meth(**gen_log_kwargs(message=msg))
+            extra_html.append(f"<li>{msg}</li>")
+        extra_html = (
+            "<p>The raw data were annotated with the following movement-related bad "
+            f"segment annotations:<ul>{''.join(extra_html)}</ul></p>"
+        )
+        raw_sss.set_annotations(raw_sss.annotations + movement_annot)
+    else:
+        movement_annot = extra_html = None
+
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
     logger.info(**gen_log_kwargs(message=msg))
@@ -307,6 +343,7 @@ def run_maxwell_filter(
     ) as report:
         msg = "Adding Maxwell filtered raw data to report."
         logger.info(**gen_log_kwargs(message=msg))
+
         _add_raw(
             cfg=cfg,
             report=report,
@@ -314,6 +351,7 @@ def run_maxwell_filter(
             title="Raw (maxwell filtered)",
             tags=("sss",),
             raw=raw_sss,
+            extra_html=extra_html,
         )
 
     assert len(in_files) == 0, in_files.keys()
@@ -345,6 +383,8 @@ def get_config(
         mf_destination=config.mf_destination,
         mf_int_order=config.mf_int_order,
         mf_mc_t_window=config.mf_mc_t_window,
+        mf_mc_rotation_velocity_limit=config.mf_mc_rotation_velocity_limit,
+        mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

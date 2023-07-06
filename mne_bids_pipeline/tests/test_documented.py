@@ -123,7 +123,7 @@ def test_datasets_in_doc():
         # jobs: test_*: steps: run test
         cp = re.compile(rf" command: \$RUN_TESTS {name}.*")
         n_found = len(cp.findall(circle_yaml_src))
-        assert n_found == this_count, f"{cp} ({n_found} != {this_count})"
+        assert n_found == count, f"{cp} ({n_found} != {count})"
 
     # 3. Read examples from docs (being careful about tags we can't read)
     class SafeLoaderIgnoreUnknown(yaml.SafeLoader):

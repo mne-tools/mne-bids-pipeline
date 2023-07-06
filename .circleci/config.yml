@@ -529,7 +529,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test BEM from FLASH
-          command: .circleci/copy_files.sh ds000248_FLASH_BEM
+          command: $RUN_TESTS ds000248_FLASH_BEM
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -582,7 +582,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test head surface creation for MNE coregistration
-          command: $RUN_TESTS ds000248_coreg_surfaces
+          command: $RUN_TESTS ds000248_coreg_surfaces ds000248_coreg_surfaces --no-copy
       - codecov/upload
       - store_test_results:
           path: ./test-results

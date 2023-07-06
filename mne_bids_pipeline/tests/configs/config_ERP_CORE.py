@@ -47,6 +47,8 @@ ch_types = ["eeg"]
 interactive = False
 
 raw_resample_sfreq = 128
+# Suppress "Data file name in EEG.data (sub-019_task-ERN_eeg.fdt) is incorrect..."
+read_raw_bids_verbose = "error"
 
 eeg_template_montage = mne.channels.make_standard_montage("standard_1005")
 eeg_bipolar_channels = {

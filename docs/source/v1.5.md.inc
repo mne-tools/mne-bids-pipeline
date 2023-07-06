@@ -1,8 +1,8 @@
 ## v1.5.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- Added support for annotating bad segments based on head movement velocity (#757 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

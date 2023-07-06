@@ -3,6 +3,7 @@
 ### :new: New features & enhancements
 
 - Added support for annotating bad segments based on head movement velocity (#757 by @larsoner)
+- Added examples of T1 and FLASH BEM to website (#758 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

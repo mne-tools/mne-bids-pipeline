@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._config_import import _import_config
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report
+from ..._report import _open_report, _render_bem
 from ..._run import failsafe_run, save_logs, _prep_out_files
 
 
@@ -200,17 +200,7 @@ def run_forward(
     ) as report:
         msg = "Adding forward information to report"
         logger.info(**gen_log_kwargs(message=msg))
-        msg = "Rendering MRI slices with BEM contours."
-        logger.info(**gen_log_kwargs(message=msg))
-        report.add_bem(
-            subject=cfg.fs_subject,
-            subjects_dir=cfg.fs_subjects_dir,
-            title="BEM",
-            width=256,
-            decim=8,
-            replace=True,
-            n_jobs=1,  # prevent automatic parallelization
-        )
+        _render_bem(report=report, cfg=cfg, subject=subject, session=session)
         msg = "Rendering sensor alignment (coregistration)"
         logger.info(**gen_log_kwargs(message=msg))
         report.add_trans(

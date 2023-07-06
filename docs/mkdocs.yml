@@ -107,8 +107,8 @@ nav:
         - examples/ds000247.md
         - examples/ds000248_base.md
         - examples/ds000248_ica.md
-        # - examples/ds000248_T1_BEM.md
-        # - examples/ds000248_FLASH_BEM.md
+        - examples/ds000248_T1_BEM.md
+        - examples/ds000248_FLASH_BEM.md
         - examples/ds000248_no_mri.md
         - examples/ds003104.md
         - examples/eeg_matchingpennies.md

@@ -922,7 +922,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N170
-          command: ERP_CORE_N170 ERP_CORE
+          command: $RUN_TESTS ERP_CORE_N170 ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results

@@ -582,7 +582,11 @@ jobs:
       - run:
           name: test BEM from FLASH
           command: |
-            $RUN_TESTS ds000248_FLASH_BEM
+            DS=ds000248_FLASH_BEM
+            $RUN_TESTS ${DS}
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
             ls -al test-results/*.xml
       - codecov/upload
       - store_test_results:
@@ -590,6 +594,13 @@ jobs:
       - store_artifacts:
           path: ./test-results
           destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_FLASH_BEM
+          destination: reports/ds000248_FLASH_BEM
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_FLASH_BEM/*/*/*.html
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -604,7 +615,11 @@ jobs:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
           command: |
-            $RUN_TESTS ds000248_T1_BEM
+            DS=ds000248_T1_BEM
+            $RUN_TESTS ${DS}
+            mkdir -p ~/reports/${DS}
+            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
             ls -al test-results/*.xml
       - codecov/upload
       - store_test_results:
@@ -612,6 +627,13 @@ jobs:
       - store_artifacts:
           path: ./test-results
           destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_T1_BEM
+          destination: reports/ds000248_T1_BEM
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_T1_BEM/*/*/*.html
 
   test_ds000248_coreg_surfaces:
     <<: *imageconfig
@@ -650,7 +672,7 @@ jobs:
             $RUN_TESTS ${DS}
             mkdir -p ~/reports/${DS}
             cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
+            cp ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
             ls -al test-results/*.xml
       - codecov/upload
       - store_test_results:

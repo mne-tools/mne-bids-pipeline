@@ -6,18 +6,22 @@ Generate the BEM surfaces from a T1 or FLASH MRI scan.
 import glob
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 
 from ..._config_utils import (
     get_fs_subject,
     get_subjects,
+    get_sessions,
     _get_bem_conductivity,
     get_fs_subjects_dir,
+    _bids_kwargs,
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._report import _open_report, _render_bem
 
 
 def _get_bem_params(cfg: SimpleNamespace):
@@ -38,6 +42,7 @@ def get_input_fnames_make_bem_surfaces(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: Optional[str],
 ) -> dict:
     in_files = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
@@ -54,6 +59,7 @@ def get_output_fnames_make_bem_surfaces(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: Optional[str],
 ) -> dict:
     out_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
@@ -73,6 +79,7 @@ def make_bem_surfaces(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
+    session: Optional[str],
     in_files: dict,
 ) -> dict:
     mri_images, _, _ = _get_bem_params(cfg)
@@ -96,7 +103,15 @@ def make_bem_surfaces(
         show=show,
         verbose=cfg.freesurfer_verbose,
     )
-    out_files = get_output_fnames_make_bem_surfaces(cfg=cfg, subject=subject)
+    with _open_report(
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+    ) as report:
+        _render_bem(report=report, cfg=cfg, subject=subject, session=session)
+    out_files = get_output_fnames_make_bem_surfaces(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+    )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
@@ -112,6 +127,7 @@ def get_config(
         freesurfer_verbose=config.freesurfer_verbose,
         use_template_mri=config.use_template_mri,
         ch_types=config.ch_types,
+        **_bids_kwargs(config=config),
     )
     return cfg
 
@@ -143,6 +159,7 @@ def main(*, config: SimpleNamespace) -> None:
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
+                session=get_sessions(config)[0],
                 force_run=config.recreate_bem,
             )
             for subject in get_subjects(config)

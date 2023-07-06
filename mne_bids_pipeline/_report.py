@@ -1228,3 +1228,22 @@ def _add_raw(
                 section=title,
                 replace=True,
             )
+
+
+def _render_bem(
+    *,
+    cfg: SimpleNamespace,
+    report: mne.report.Report,
+    subject: str,
+    session: Optional[str],
+):
+    logger.info(**gen_log_kwargs(message="Rendering MRI slices with BEM contours."))
+    report.add_bem(
+        subject=cfg.fs_subject,
+        subjects_dir=cfg.fs_subjects_dir,
+        title="BEM",
+        width=256,
+        decim=8,
+        replace=True,
+        n_jobs=1,  # prevent automatic parallelization
+    )

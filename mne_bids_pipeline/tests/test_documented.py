@@ -80,7 +80,7 @@ def test_datasets_in_doc():
     # make sure everything is consistent there (too much work), let's at least
     # check that we get the correct number using `.count`.
     counts = dict(ERP_CORE=7, ds000248=6)
-    counts_noartifact = dict(ds000248=3)  # 3 are actually tests, not for docs
+    counts_noartifact = dict(ds000248=1)  # 1 is actually a test, not for docs
     for name in sorted(caches):
         get = f"Get {name}"
         n_found = circle_yaml_src.count(get)
@@ -117,19 +117,13 @@ def test_datasets_in_doc():
         # jobs: test_*: steps: persist_to_workspace
         pw = re.compile(
             f"- mne_data/derivatives/mne-bids-pipeline/{name}[^\\.]+\\*.html"
-        )  # noqa: E501
+        )
         n_found = len(pw.findall(circle_yaml_src))
         assert n_found == this_count, f"{pw} ({n_found} != {this_count})"
         # jobs: test_*: steps: run test
-        cp = re.compile(
-            f"""\
-            DS={name}.*
-            \\$RUN_TESTS \\${{DS}}.*
-            mkdir -p ~/reports/\\${{DS}}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/\\${{DS}}/[^\\.]+.html"""
-        )  # noqa: E501
+        cp = re.compile(rf" command: \$RUN_TESTS {name}.*")
         n_found = len(cp.findall(circle_yaml_src))
-        assert n_found == this_count, f"{cp} ({n_found} != {this_count})"
+        assert n_found == count, f"{cp} ({n_found} != {count})"
 
     # 3. Read examples from docs (being careful about tags we can't read)
     class SafeLoaderIgnoreUnknown(yaml.SafeLoader):

@@ -60,6 +60,7 @@ tests = [
     "mkdocs-material-extensions",
     "mkdocs-macros-plugin",
     "mkdocs-include-markdown-plugin",
+    "mkdocs-exclude",
     "mkdocstrings-python",
     "mike",
     "jinja2",

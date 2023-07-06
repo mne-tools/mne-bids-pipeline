@@ -315,13 +315,7 @@ jobs:
             - data-cache-ds000117-2
       - run:
           name: test ds000117
-          command: |
-            DS=ds000117
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000117
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -347,13 +341,7 @@ jobs:
             - data-cache-ds003775-2
       - run:
           name: test ds003775
-          command: |
-            DS=ds003775
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds003775
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -379,13 +367,7 @@ jobs:
             - data-cache-ds001971-2
       - run:
           name: test ds001971
-          command: |
-            DS=ds001971
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds001971
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -412,13 +394,7 @@ jobs:
             - data-cache-ds004107-2
       - run:
           name: test ds004107
-          command: |
-            DS=ds004107
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds004107
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -445,14 +421,7 @@ jobs:
       - run:
           name: test ds000246
           no_output_timeout: 15m
-          command: |
-            DS=ds000246
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000246
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -479,13 +448,7 @@ jobs:
             - data-cache-ds000247-2
       - run:
           name: test ds000247
-          command: |
-            DS=ds000247
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000247
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -511,15 +474,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test ds000248_base
-          command: |
-            DS=ds000248_base
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_base
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -547,14 +502,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test ds000248_ica
-          command: |
-            DS=ds000248_ica
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_ica
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -581,15 +529,20 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test BEM from FLASH
-          command: |
-            $RUN_TESTS ds000248_FLASH_BEM
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_FLASH_BEM
       - codecov/upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
           path: ./test-results
           destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_FLASH_BEM
+          destination: reports/ds000248_FLASH_BEM
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_FLASH_BEM/*/*/*.html
 
   test_ds000248_T1_BEM:
     <<: *imageconfig
@@ -603,15 +556,20 @@ jobs:
       - run:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
-          command: |
-            $RUN_TESTS ds000248_T1_BEM
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_T1_BEM
       - codecov/upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
           path: ./test-results
           destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds000248_T1_BEM
+          destination: reports/ds000248_T1_BEM
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds000248_T1_BEM/*/*/*.html
 
   test_ds000248_coreg_surfaces:
     <<: *imageconfig
@@ -624,9 +582,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test head surface creation for MNE coregistration
-          command: |
-            $RUN_TESTS ds000248_coreg_surfaces
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_coreg_surfaces ds000248_coreg_surfaces --no-copy
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -645,13 +601,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test ds000248_no_mri
-          command: |
-            DS=ds000248_no_mri
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp  ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds000248_no_mri
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -678,13 +628,7 @@ jobs:
             - data-cache-ds001810-2
       - run:
           name: test ds001810
-          command: |
-            DS=ds001810
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds001810
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -710,13 +654,7 @@ jobs:
             - data-cache-ds003104-2
       - run:
           name: test ds003104
-          command: |
-            DS=ds003104
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds003104
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -742,15 +680,7 @@ jobs:
             - data-cache-ds003392-2
       - run:
           name: test ds003392
-          command: |
-            DS=ds003392
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds003392
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -779,15 +709,7 @@ jobs:
             - data-cache-ds004229-2
       - run:
           name: test ds004229
-          command: |
-            DS=ds004229
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.json ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/*/*.tsv ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ds004229
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -815,13 +737,7 @@ jobs:
             - data-cache-eeg_matchingpennies-1
       - run:
           name: test eeg_matchingpennies
-          command: |
-            DS=eeg_matchingpennies
-            $RUN_TESTS ${DS}
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS eeg_matchingpennies
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -856,13 +772,7 @@ jobs:
             google-chrome --version
       - run:
           name: test ERP CORE N400
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_N400
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N400*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N400*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_N400 ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -892,13 +802,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE ERN
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_ERN
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*ERN*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*ERN*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_ERN ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -928,13 +832,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE LRP
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_LRP
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*LRP*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*LRP*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_LRP ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -964,13 +862,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE MMN
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_MMN
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*MMN*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*MMN*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_MMN ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -1000,13 +892,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N2pc
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_N2pc
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N2pc*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N2pc*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_N2pc ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -1036,13 +922,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N170
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_N170
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*N170*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*N170*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_N170 ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -1072,13 +952,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE P3
-          command: |
-            DS=ERP_CORE
-            $RUN_TESTS ${DS}_P3
-            mkdir -p ~/reports/${DS}
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*P3*.html ~/reports/${DS}/
-            cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*P3*.xlsx ~/reports/${DS}/
-            ls -al test-results/*.xml
+          command: $RUN_TESTS ERP_CORE_P3 ERP_CORE
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -1102,6 +976,8 @@ jobs:
       - run:
           name: Build documentation
           command: |
+            set -eo pipefail
+            ls ~/mne_data/derivatives/mne-bids-pipeline/*/*/*/*.html
             make doc
       - store_artifacts:
           path: docs/site
@@ -1346,6 +1222,8 @@ workflows:
             - test_ds000248_base
             - test_ds000248_ica
             - test_ds000248_no_mri
+            - test_ds000248_T1_BEM
+            - test_ds000248_FLASH_BEM
             - test_ds001810
             - test_ds003104
             - test_ds003392

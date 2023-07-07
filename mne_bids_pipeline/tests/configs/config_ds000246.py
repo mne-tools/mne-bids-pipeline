@@ -11,6 +11,7 @@ deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000246"
 
 runs = ["01"]
 crop_runs = (0, 120)  # Reduce memory usage on CI system
+read_raw_bids_verbose = "error"  # No BIDS -> MNE mapping found for channel ...
 l_freq = 0.3
 h_freq = 100
 epochs_decim = 4

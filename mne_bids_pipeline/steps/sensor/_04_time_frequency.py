@@ -117,8 +117,8 @@ def run_time_frequency(
         logger.info(**gen_log_kwargs(message=msg))
         for condition in cfg.time_frequency_conditions:
             cond = sanitize_cond_name(condition)
-            fname_tfr_pow_cond = out_files[f"power-{cond}"]
-            fname_tfr_itc_cond = out_files[f"itc-{cond}"]
+            fname_tfr_pow_cond = out_files[f"power-{cond}"].fpath
+            fname_tfr_itc_cond = out_files[f"itc-{cond}"].fpath
             with mne.use_log_level("error"):  # filename convention
                 power = mne.time_frequency.read_tfrs(fname_tfr_pow_cond, condition=0)
                 power.apply_baseline(

@@ -106,8 +106,8 @@ def run_time_frequency(
         # conform to MNE filename checks. This is because BIDS has not
         # finalized how derivatives should be named. Once this is done, we
         # should update our names and/or MNE's checks.
-        power.save(out_files[power_key], overwrite=True, verbose="error")
-        itc.save(out_files[itc_key], overwrite=True, verbose="error")
+        power.save(out_files[power_key].fpath, overwrite=True, verbose="error")
+        itc.save(out_files[itc_key].fpath, overwrite=True, verbose="error")
 
     # Report
     with _open_report(

@@ -16,3 +16,4 @@
 ### :bug: Bug fixes
 
 - Fixed bug where cache would not invalidate properly based on output file changes and steps could be incorrectly skipped. All steps will automatically rerun to accommodate the new, safer caching scheme (#756 by @larsoner)
+- Fixed bug where incorrect measurement information was used when `mf_reference_run != runs[0]` (#761 by @larsoner)

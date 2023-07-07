@@ -183,7 +183,7 @@ def main(*, config: SimpleNamespace) -> None:
                 config=config,
                 subject=subject,
                 session=session,
-                include_noise=False,
+                which=("runs", "rest"),
             )
         )
 

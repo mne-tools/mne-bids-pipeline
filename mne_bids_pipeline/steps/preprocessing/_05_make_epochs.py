@@ -284,15 +284,21 @@ def _get_events(cfg, subject, session):
         check=False,
     )
 
+    ref_info = None
     for run in cfg.runs:
         this_raw_fname = raw_fname.copy().update(run=run)
         this_raw_fname = _update_for_splits(this_raw_fname, None, single=True)
         raw_filt = mne.io.read_raw_fif(this_raw_fname)
         raws_filt.append(raw_filt)
+        if run == cfg.mf_reference_run:
+            ref_info = raw_filt.info
         del this_raw_fname
+    assert ref_info is not None, ref_info
 
     # Concatenate the filtered raws and extract the events.
     raw_filt_concat = mne.concatenate_raws(raws_filt, on_mismatch="warn")
+    # We need to hack in the reference run info
+    raw_filt_concat.info = ref_info
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     return (events, event_id, raw_filt_concat.info["sfreq"], raw_filt_concat.first_samp)
 
@@ -322,6 +328,7 @@ def get_config(
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
         runs=get_runs(config=config, subject=subject),
+        mf_reference_run=config.mf_reference_run,
         **_bids_kwargs(config=config),
     )
     return cfg

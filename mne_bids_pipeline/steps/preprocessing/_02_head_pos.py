@@ -62,7 +62,8 @@ def run_head_pos(
     out_files = dict()
     key = f"raw_run-{run}-pos"
     out_files[key] = bids_path_in.copy().update(
-        extension=".pos",
+        suffix="headpos",
+        extension=".txt",
         root=cfg.deriv_root,
         check=False,
     )

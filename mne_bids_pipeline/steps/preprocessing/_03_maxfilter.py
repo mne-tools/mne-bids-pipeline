@@ -78,7 +78,8 @@ def get_input_fnames_maxwell_filter(
             **kwargs,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
         in_files[f"raw_task-{task}_run-{run}-pos"] = path.update(
-            extension=".pos",
+            suffix="headpos",
+            extension=".txt",
             root=cfg.deriv_root,
             check=False,
             task=pos_task,

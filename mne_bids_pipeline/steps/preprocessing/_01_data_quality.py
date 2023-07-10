@@ -311,7 +311,7 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
-    """Run maxwell_filter."""
+    """Run assess_data_quality."""
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
             assess_data_quality, exec_params=config.exec_params

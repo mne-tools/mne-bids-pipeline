@@ -240,13 +240,19 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    include_noise: bool = True,
+    which: Tuple[str] = ("runs", "noise", "rest"),
 ) -> List[Tuple[str]]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
     from ._import_data import _get_noise_path, _get_rest_path
 
-    runs = get_runs(config=config, subject=subject)
-    tasks = [get_task(config=config)] * len(runs)
+    assert isinstance(which, tuple)
+    assert all(isinstance(inc, str) for inc in which)
+    assert all(inc in ("runs", "noise", "rest") for inc in which)
+    runs = list()
+    tasks = list()
+    if "runs" in which:
+        runs.extend(get_runs(config=config, subject=subject))
+        tasks.extend([get_task(config=config)] * len(runs))
     kwargs = dict(
         cfg=config,
         subject=subject,
@@ -254,10 +260,10 @@ def get_runs_tasks(
         kind="orig",
         add_bads=False,
     )
-    if _get_rest_path(**kwargs):
+    if "rest" in which and _get_rest_path(**kwargs):
         runs.append(None)
         tasks.append("rest")
-    if include_noise:
+    if "noise" in which:
         mf_reference_run = get_mf_reference_run(config=config)
         if _get_noise_path(mf_reference_run=mf_reference_run, **kwargs):
             runs.append(None)

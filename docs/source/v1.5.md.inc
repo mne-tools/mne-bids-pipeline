@@ -16,3 +16,5 @@
 ### :bug: Bug fixes
 
 - Fixed bug where cache would not invalidate properly based on output file changes and steps could be incorrectly skipped. All steps will automatically rerun to accommodate the new, safer caching scheme (#756 by @larsoner)
+- Fixed bug with parallelization across runs for Maxwell filtering (#761 by @larsoner)
+- Fixed bug where head position files were not written with a proper suffix and extension (#761 by @larsoner)

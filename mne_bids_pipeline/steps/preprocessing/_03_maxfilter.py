@@ -78,7 +78,8 @@ def get_input_fnames_maxwell_filter(
             **kwargs,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
         in_files[f"raw_task-{task}_run-{run}-pos"] = path.update(
-            extension=".pos",
+            suffix="headpos",
+            extension=".txt",
             root=cfg.deriv_root,
             check=False,
             task=pos_task,
@@ -401,22 +402,27 @@ def main(*, config: SimpleNamespace) -> None:
         parallel, run_func = parallel_func(
             run_maxwell_filter, exec_params=config.exec_params
         )
-        logs = parallel(
-            run_func(
-                cfg=get_config(config=config, subject=subject, session=session),
-                exec_params=config.exec_params,
-                subject=subject,
-                session=session,
-                run=run,
-                task=task,
+        # We need to guarantee that the reference_run completes before the
+        # noise/rest runs are processed, so we split the loops.
+        logs = list()
+        for which in [("runs",), ("noise", "rest")]:
+            logs += parallel(
+                run_func(
+                    cfg=get_config(config=config, subject=subject, session=session),
+                    exec_params=config.exec_params,
+                    subject=subject,
+                    session=session,
+                    run=run,
+                    task=task,
+                )
+                for subject in get_subjects(config)
+                for session in get_sessions(config)
+                for run, task in get_runs_tasks(
+                    config=config,
+                    subject=subject,
+                    session=session,
+                    which=which,
+                )
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
-        )
 
     save_logs(config=config, logs=logs)

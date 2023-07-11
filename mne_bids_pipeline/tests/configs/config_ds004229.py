@@ -29,6 +29,8 @@ mf_mc_t_window = 0.2  # cleaner cHPI filtering on this dataset
 mf_filter_chpi = False  # for speed, not needed as we low-pass anyway
 mf_mc_rotation_velocity_limit = 30.0  # deg/s for annotations
 mf_mc_translation_velocity_limit = 20e-3  # m/s
+mf_esss = 8
+mf_esss_reject = {"grad": 10000e-13, "mag": 40000e-15}
 ch_types = ["meg"]
 
 l_freq = None

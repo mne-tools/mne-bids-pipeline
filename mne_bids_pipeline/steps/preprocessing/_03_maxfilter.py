@@ -327,13 +327,16 @@ def run_maxwell_filter(
         apply_msg += f"tSSS ({cfg.mf_st_duration} sec, corr={cfg.mf_st_correlation})"
     else:
         apply_msg += "SSS"
-    head_pos = extended_proj = None
     if cfg.mf_mc:
         extra.append("MC")
         head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
+    else:
+        head_pos = None
     if cfg.mf_esss:
         extra.append("eSSS")
         extended_proj = mne.read_proj(in_files.pop("esss_basis"))
+    else:
+        extended_proj = ()
     if extra:
         apply_msg += " with " + "/".join(extra)
     apply_msg += " to"

@@ -243,6 +243,22 @@ def get_input_fnames_maxwell_filter(
     # reference run (used for `destination` and also bad channels for noise)
     in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
 
+    is_rest_noise = run is None and task in ("noise", "rest")
+    if is_rest_noise:
+        key = "raw_ref_run_sss"
+        in_files[key] = (
+            in_files["raw_ref_run"]
+            .copy()
+            .update(
+                processing="sss",
+                suffix="raw",
+                extension=".fif",
+                root=cfg.deriv_root,
+                check=False,
+            )
+        )
+        _update_for_splits(in_files, key, single=True)
+
     # standard files
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
     in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
@@ -413,8 +429,7 @@ def run_maxwell_filter(
         # copy the bad channel selection from the reference run over to
         # the resting-state recording.
 
-        bids_path_ref_sss = bids_path_ref_in.copy().update(**bids_path_out_kwargs)
-        bids_path_ref_sss = _update_for_splits(bids_path_ref_sss, None, single=True)
+        bids_path_ref_sss = in_files.pop("raw_ref_run_sss")
         raw_exp = mne.io.read_raw_fif(bids_path_ref_sss)
         rank_exp = mne.compute_rank(raw_exp, rank="info")["meg"]
         rank_noise = mne.compute_rank(raw_sss, rank="info")["meg"]

@@ -414,6 +414,7 @@ def run_maxwell_filter(
         # the resting-state recording.
 
         bids_path_ref_sss = bids_path_ref_in.copy().update(**bids_path_out_kwargs)
+        bids_path_ref_sss = _update_for_splits(bids_path_ref_sss, None, single=True)
         raw_exp = mne.io.read_raw_fif(bids_path_ref_sss)
         rank_exp = mne.compute_rank(raw_exp, rank="info")["meg"]
         rank_noise = mne.compute_rank(raw_sss, rank="info")["meg"]

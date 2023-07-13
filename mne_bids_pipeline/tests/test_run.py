@@ -59,6 +59,7 @@ TEST_SUITE: Dict[str, _TestOptionsT] = {
     },
     "ds000248_base": {
         "steps": ("preprocessing", "sensor", "source"),
+        "requires": ("freesurfer",),
     },
     "ds000248_ica": {},
     "ds000248_T1_BEM": {

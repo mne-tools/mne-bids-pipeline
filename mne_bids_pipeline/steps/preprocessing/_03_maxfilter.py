@@ -313,11 +313,6 @@ def run_maxwell_filter(
     )
     bids_path_out = bids_path_in.copy().update(**bids_path_out_kwargs)
 
-    # Now take everything from the bids_path_in and overwrite the parameters
-    subject = bids_path_in.subject  # noqa: F841
-    session = bids_path_in.session  # noqa: F841
-    run = bids_path_in.run
-
     out_files = dict()
     # Load dev_head_t and digitization points from MaxFilter reference run.
     msg = f"Loading reference run: {cfg.mf_reference_run}."

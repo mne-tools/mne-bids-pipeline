@@ -147,9 +147,7 @@ def _update_with_user_config(
             val = getattr(overrides, name)
             if log:
                 msg = f"Overriding config.{name} = {repr(val)}"
-                logger.info(
-                    **gen_log_kwargs(message=msg, step="", emoji="override", box="╶╴")
-                )
+                logger.info(**gen_log_kwargs(message=msg, emoji="override"))
             setattr(config, name, val)
 
     # 4. Env vars and other triaging
@@ -168,7 +166,7 @@ def _update_with_user_config(
     config.deriv_root = pathlib.Path(config.deriv_root).expanduser().resolve()
 
     # 5. Consistency
-    log_kwargs = dict(emoji="override", box="  ", step="")
+    log_kwargs = dict(emoji="override")
     if config.interactive:
         if log and config.on_error != "debug":
             msg = 'Setting config.on_error="debug" because of interactive mode'
@@ -427,4 +425,4 @@ def _handle_config_error(
         raise ValueError(msg)
     elif config.config_validation == "warn":
         if log:
-            logger.warning(**gen_log_kwargs(message=msg, step="", emoji="🛟"))
+            logger.warning(**gen_log_kwargs(message=msg, emoji="🛟"))

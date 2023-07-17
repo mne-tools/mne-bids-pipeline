@@ -20,7 +20,7 @@ from mne_bids.stats import count_events
 
 from ._config_utils import sanitize_cond_name, get_subjects, _restrict_analyze_channels
 from ._decoding import _handle_csp_args
-from ._logging import logger, gen_log_kwargs
+from ._logging import logger, gen_log_kwargs, _linkfile
 
 
 @contextlib.contextmanager
@@ -83,7 +83,7 @@ def _open_report(
             except Exception as exc:
                 logger.warning(f"Failed: {exc}")
             fname_report_html = fname_report.with_suffix(".html")
-            msg = f"Saving report: {fname_report_html}"
+            msg = f"Saving report: {_linkfile(fname_report_html)}"
             logger.info(**gen_log_kwargs(message=msg))
             report.save(fname_report, overwrite=True)
             report.save(fname_report_html, overwrite=True, open_browser=False)

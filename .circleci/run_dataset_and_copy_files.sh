@@ -14,7 +14,16 @@ else
   COPY_FILES="true"
 fi
 
+SECONDS=0
 pytest mne_bids_pipeline --junit-xml=test-results/junit-results.xml -k ${DS_RUN}
+echo "Runtime: ${SECONDS} seconds"
+
+# rerun test!
+SECONDS=0
+pytest mne_bids_pipeline -k $DS_RUN
+RUN_TIME=$SECONDS
+echo "Runtime: ${RUN_TIME} seconds (should be < 10)"
+test $RUN_TIME -lt 10
 
 if [[ "$COPY_FILES" == "false" ]]; then
   exit 0

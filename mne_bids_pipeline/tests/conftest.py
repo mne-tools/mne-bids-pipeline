@@ -36,6 +36,9 @@ def pytest_configure(config):
     ignore:The \S+_cmap function was deprecated.*:DeprecationWarning
     # Dask distributed with jsonschema 4.18
     ignore:jsonschema\.RefResolver is deprecated.*:DeprecationWarning
+    # seaborn->pandas
+    ignore:is_categorical_dtype is deprecated.*:FutureWarning
+    ignore:use_inf_as_na option is deprecated.*:FutureWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

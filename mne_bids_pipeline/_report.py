@@ -1,7 +1,6 @@
 import contextlib
 from functools import lru_cache
 from io import StringIO
-import os.path as op
 from pathlib import Path
 from typing import Optional, List, Literal
 from types import SimpleNamespace
@@ -18,7 +17,7 @@ from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
-from ._config_utils import sanitize_cond_name, get_subjects, _restrict_analyze_channels
+from ._config_utils import sanitize_cond_name
 from ._decoding import _handle_csp_args
 from ._logging import logger, gen_log_kwargs
 
@@ -472,7 +471,8 @@ def add_event_counts(
     except ValueError:
         msg = "Could not read events."
         logger.warning(**gen_log_kwargs(message=msg))
-        df_events = None
+        return
+    logger.info(**gen_log_kwargs(message="Adding event counts to report …"))
 
     if df_events is not None:
         css_classes = ("table", "table-striped", "table-borderless", "table-hover")
@@ -553,105 +553,6 @@ def _all_conditions(*, cfg):
     return conditions
 
 
-def run_report_average_sensor(
-    *,
-    cfg: SimpleNamespace,
-    exec_params: SimpleNamespace,
-    subject: str,
-    session: Optional[str],
-) -> None:
-    msg = "Generating grand average report …"
-    logger.info(**gen_log_kwargs(message=msg))
-    assert matplotlib.get_backend() == "agg", matplotlib.get_backend()
-
-    evoked_fname = BIDSPath(
-        subject=subject,
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix="ave",
-        extension=".fif",
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False,
-    )
-
-    title = f"sub-{subject}"
-    if session is not None:
-        title += f", ses-{session}"
-    if cfg.task is not None:
-        title += f", task-{cfg.task}"
-
-    all_evokeds = mne.read_evokeds(evoked_fname)
-    for evoked in all_evokeds:
-        _restrict_analyze_channels(evoked, cfg)
-    conditions = _all_conditions(cfg=cfg)
-    assert len(conditions) == len(all_evokeds)
-    all_evokeds = {cond: evoked for cond, evoked in zip(conditions, all_evokeds)}
-
-    with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
-    ) as report:
-        #######################################################################
-        #
-        # Add event stats.
-        #
-        add_event_counts(
-            cfg=cfg,
-            report=report,
-            subject=subject,
-            session=session,
-        )
-
-        #######################################################################
-        #
-        # Visualize evoked responses.
-        #
-        if all_evokeds:
-            msg = (
-                f"Adding {len(all_evokeds)} evoked signals and contrasts to "
-                "the report."
-            )
-        else:
-            msg = "No evoked conditions or contrasts found."
-        logger.info(**gen_log_kwargs(message=msg))
-        for condition, evoked in all_evokeds.items():
-            tags = ("evoked", _sanitize_cond_tag(condition))
-            if condition in cfg.conditions:
-                title = f"Condition: {condition}"
-            else:  # It's a contrast of two conditions.
-                title = f"Contrast: {condition}"
-                tags = tags + ("contrast",)
-
-            report.add_evokeds(
-                evokeds=evoked,
-                titles=title,
-                projs=False,
-                tags=tags,
-                n_time_points=cfg.report_evoked_n_time_points,
-                # captions=evoked.comment,  # TODO upstream
-                replace=True,
-                n_jobs=1,  # don't auto parallelize
-            )
-
-        #######################################################################
-        #
-        # Visualize decoding results.
-        #
-        if cfg.decode and cfg.decoding_contrasts:
-            msg = "Adding decoding results."
-            logger.info(**gen_log_kwargs(message=msg))
-            add_decoding_grand_average(session=session, cfg=cfg, report=report)
-
-        if cfg.decode and cfg.decoding_csp:
-            # No need for a separate message here because these are very quick
-            # and the general message above is sufficient
-            add_csp_grand_average(session=session, cfg=cfg, report=report)
-
-
 def run_report_average_source(
     *,
     cfg: SimpleNamespace,
@@ -714,165 +615,8 @@ def run_report_average_source(
             )
 
 
-def add_decoding_grand_average(
-    *,
-    session: Optional[str],
-    cfg: SimpleNamespace,
-    report: mne.Report,
-):
-    """Add decoding results to the grand average report."""
-    import matplotlib.pyplot as plt  # nested import to help joblib
-
-    bids_path = BIDSPath(
-        subject="average",
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix="ave",
-        extension=".fif",
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False,
-    )
-
-    # Full-epochs decoding
-    all_decoding_scores = []
-    for contrast in cfg.decoding_contrasts:
-        cond_1, cond_2 = contrast
-        a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-        processing = f"{a_vs_b}+FullEpochs+{cfg.decoding_metric}"
-        processing = processing.replace("_", "-").replace("-", "")
-        fname_decoding = bids_path.copy().update(
-            processing=processing, suffix="decoding", extension=".mat"
-        )
-        decoding_data = loadmat(fname_decoding)
-        all_decoding_scores.append(np.atleast_1d(decoding_data["scores"].squeeze()))
-        del fname_decoding, processing, a_vs_b, decoding_data
-
-    fig, caption = _plot_full_epochs_decoding_scores(
-        contrast_names=_contrasts_to_names(cfg.decoding_contrasts),
-        scores=all_decoding_scores,
-        metric=cfg.decoding_metric,
-        kind="grand-average",
-    )
-    title = f"Full-epochs decoding: {cond_1} vs. {cond_2}"
-    report.add_figure(
-        fig=fig,
-        title=title,
-        section="Decoding: full-epochs",
-        caption=caption,
-        tags=(
-            "epochs",
-            "contrast",
-            "decoding",
-            *[
-                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
-                for cond_1, cond_2 in cfg.decoding_contrasts
-            ],
-        ),
-        replace=True,
-    )
-    # close figure to save memory
-    plt.close(fig)
-    del fig, caption, title
-
-    # Time-by-time decoding
-    for contrast in cfg.decoding_contrasts:
-        cond_1, cond_2 = contrast
-        a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-        section = "Decoding: time-by-time"
-        tags = (
-            "epochs",
-            "contrast",
-            "decoding",
-            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-        )
-        processing = f"{a_vs_b}+TimeByTime+{cfg.decoding_metric}"
-        processing = processing.replace("_", "-").replace("-", "")
-        fname_decoding = bids_path.copy().update(
-            processing=processing, suffix="decoding", extension=".mat"
-        )
-        decoding_data = loadmat(fname_decoding)
-        del fname_decoding, processing, a_vs_b
-
-        # Plot scores
-        fig = _plot_time_by_time_decoding_scores_gavg(
-            cfg=cfg,
-            decoding_data=decoding_data,
-        )
-        caption = (
-            f'Based on N={decoding_data["N"].squeeze()} '
-            f"subjects. Standard error and confidence interval "
-            f"of the mean were bootstrapped with {cfg.n_boot} "
-            f"resamples. CI must not be used for statistical inference here, "
-            f"as it is not corrected for multiple testing."
-        )
-        if len(get_subjects(cfg)) > 1:
-            caption += (
-                f" Time periods with decoding performance significantly above "
-                f"chance, if any, were derived with a one-tailed "
-                f"cluster-based permutation test "
-                f'({decoding_data["cluster_n_permutations"].squeeze()} '
-                f"permutations) and are highlighted in yellow."
-            )
-            title = f"Decoding over time: {cond_1} vs. {cond_2}"
-            report.add_figure(
-                fig=fig,
-                title=title,
-                caption=caption,
-                section=section,
-                tags=tags,
-                replace=True,
-            )
-            plt.close(fig)
-
-        # Plot t-values used to form clusters
-        if len(get_subjects(cfg)) > 1:
-            fig = plot_time_by_time_decoding_t_values(decoding_data=decoding_data)
-            t_threshold = np.round(decoding_data["cluster_t_threshold"], 3).item()
-            caption = (
-                f"Observed t-values. Time points with "
-                f"t-values > {t_threshold} were used to form clusters."
-            )
-            report.add_figure(
-                fig=fig,
-                title=f"t-values across time: {cond_1} vs. {cond_2}",
-                caption=caption,
-                section=section,
-                tags=tags,
-                replace=True,
-            )
-            plt.close(fig)
-
-        if cfg.decoding_time_generalization:
-            fig = _plot_decoding_time_generalization(
-                decoding_data=decoding_data,
-                metric=cfg.decoding_metric,
-                kind="grand-average",
-            )
-            caption = (
-                f"Time generalization (generalization across time, GAT): "
-                f"each classifier is trained on each time point, and tested "
-                f"on all other time points. The results were averaged across "
-                f'N={decoding_data["N"].item()} subjects.'
-            )
-            title = f"Time generalization: {cond_1} vs. {cond_2}"
-            report.add_figure(
-                fig=fig,
-                title=title,
-                caption=caption,
-                section=section,
-                tags=tags,
-                replace=True,
-            )
-            plt.close(fig)
-
-
 def _sanitize_cond_tag(cond):
-    return cond.lower().replace(" ", "-")
+    return str(cond).lower().replace(" ", "-")
 
 
 def _imshow_tf(
@@ -913,26 +657,17 @@ def _imshow_tf(
 
 def add_csp_grand_average(
     *,
-    session: str,
     cfg: SimpleNamespace,
+    subject: str,
+    session: str,
     report: mne.Report,
+    cond_1: str,
+    cond_2: str,
+    fname_csp_freq_results: BIDSPath,
+    fname_csp_cluster_results: pd.DataFrame,
 ):
     """Add CSP decoding results to the grand average report."""
     import matplotlib.pyplot as plt  # nested import to help joblib
-
-    bids_path = BIDSPath(
-        subject="average",
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix="decoding",
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False,
-    )
 
     # First, plot decoding scores across frequency bins (entire epochs).
     section = "Decoding: CSP"
@@ -941,241 +676,216 @@ def add_csp_grand_average(
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
     )
-    for contrast in cfg.decoding_contrasts:
-        cond_1, cond_2 = contrast
-        a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-        processing = f"{a_vs_b}+CSP+{cfg.decoding_metric}"
-        processing = processing.replace("_", "-").replace("-", "")
-        fname_csp_freq_results = bids_path.copy().update(
-            processing=processing,
-            extension=".xlsx",
-        )
-        csp_freq_results = pd.read_excel(
-            fname_csp_freq_results, sheet_name="CSP Frequency"
-        )
 
-        freq_bin_starts = list()
-        freq_bin_widths = list()
-        decoding_scores = list()
-        error_bars = list()
-        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
-            results = csp_freq_results.loc[
-                csp_freq_results["freq_range_name"] == freq_range_name, :
-            ]
-            results.reset_index(drop=True, inplace=True)
-            assert len(results) == len(freq_bins)
-            for bi, freq_bin in enumerate(freq_bins):
-                freq_bin_starts.append(freq_bin[0])
-                freq_bin_widths.append(np.diff(freq_bin)[0])
-                decoding_scores.append(results["mean"][bi])
-                cis_lower = results["mean_ci_lower"][bi]
-                cis_upper = results["mean_ci_upper"][bi]
-                error_bars_lower = decoding_scores[-1] - cis_lower
-                error_bars_upper = cis_upper - decoding_scores[-1]
-                error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
-                assert len(error_bars[-1]) == 2  # lower, upper
-                del cis_lower, cis_upper, error_bars_lower, error_bars_upper
-        error_bars = np.array(error_bars, float).T
+    freq_bin_starts = list()
+    freq_bin_widths = list()
+    decoding_scores = list()
+    error_bars = list()
+    csp_freq_results = pd.read_excel(fname_csp_freq_results, sheet_name="CSP Frequency")
+    for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+        results = csp_freq_results.loc[
+            csp_freq_results["freq_range_name"] == freq_range_name, :
+        ]
+        results.reset_index(drop=True, inplace=True)
+        assert len(results) == len(freq_bins)
+        for bi, freq_bin in enumerate(freq_bins):
+            freq_bin_starts.append(freq_bin[0])
+            freq_bin_widths.append(np.diff(freq_bin)[0])
+            decoding_scores.append(results["mean"][bi])
+            cis_lower = results["mean_ci_lower"][bi]
+            cis_upper = results["mean_ci_upper"][bi]
+            error_bars_lower = decoding_scores[-1] - cis_lower
+            error_bars_upper = cis_upper - decoding_scores[-1]
+            error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
+            assert len(error_bars[-1]) == 2  # lower, upper
+            del cis_lower, cis_upper, error_bars_lower, error_bars_upper
+    error_bars = np.array(error_bars, float).T
 
-        if cfg.decoding_metric == "roc_auc":
-            metric = "ROC AUC"
+    if cfg.decoding_metric == "roc_auc":
+        metric = "ROC AUC"
 
-        fig, ax = plt.subplots(constrained_layout=True)
-        ax.bar(
-            x=freq_bin_starts,
-            width=freq_bin_widths,
-            height=decoding_scores,
-            align="edge",
-            yerr=error_bars,
-            edgecolor="black",
+    fig, ax = plt.subplots(constrained_layout=True)
+    ax.bar(
+        x=freq_bin_starts,
+        width=freq_bin_widths,
+        height=decoding_scores,
+        align="edge",
+        yerr=error_bars,
+        edgecolor="black",
+    )
+    ax.set_ylim([0, 1.02])
+    offset = matplotlib.transforms.offset_copy(ax.transData, fig, 0, 5, units="points")
+    for freq_range_name, freq_bins in freq_name_to_bins_map.items():
+        start = freq_bins[0][0]
+        stop = freq_bins[-1][1]
+        width = stop - start
+        ax.text(
+            x=start + width / 2,
+            y=0.0,
+            transform=offset,
+            s=freq_range_name,
+            ha="center",
+            va="bottom",
         )
-        ax.set_ylim([0, 1.02])
-        offset = matplotlib.transforms.offset_copy(
-            ax.transData, fig, 0, 5, units="points"
-        )
-        for freq_range_name, freq_bins in freq_name_to_bins_map.items():
-            start = freq_bins[0][0]
-            stop = freq_bins[-1][1]
-            width = stop - start
-            ax.text(
-                x=start + width / 2,
-                y=0.0,
-                transform=offset,
-                s=freq_range_name,
-                ha="center",
-                va="bottom",
-            )
-        ax.axhline(0.5, color="black", linestyle="--", label="chance")
-        ax.legend()
-        ax.set_xlabel("Frequency (Hz)")
-        ax.set_ylabel(f"Mean decoding score ({metric})")
-        tags = (
-            "epochs",
-            "contrast",
-            "decoding",
-            "csp",
-            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-        )
-        title = f"CSP decoding: {cond_1} vs. {cond_2}"
-        report.add_figure(
-            fig=fig,
-            title=title,
-            section=section,
-            caption="Mean decoding scores. Error bars represent "
-            "bootstrapped 95% confidence intervals.",
-            tags=tags,
-            replace=True,
-        )
+    ax.axhline(0.5, color="black", linestyle="--", label="chance")
+    ax.legend()
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel(f"Mean decoding score ({metric})")
+    tags = (
+        "epochs",
+        "contrast",
+        "decoding",
+        "csp",
+        f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+    )
+    title = f"CSP decoding: {cond_1} vs. {cond_2}"
+    report.add_figure(
+        fig=fig,
+        title=title,
+        section=section,
+        caption="Mean decoding scores. Error bars represent "
+        "bootstrapped 95% confidence intervals.",
+        tags=tags,
+        replace=True,
+    )
 
     # Now, plot decoding scores across time-frequency bins.
-    for contrast in cfg.decoding_contrasts:
-        cond_1, cond_2 = contrast
-        a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-        processing = f"{a_vs_b}+CSP+{cfg.decoding_metric}"
-        processing = processing.replace("_", "-").replace("-", "")
-        fname_csp_cluster_results = bids_path.copy().update(
-            processing=processing,
-            extension=".mat",
+    csp_cluster_results = loadmat(fname_csp_cluster_results)
+    fig, ax = plt.subplots(
+        nrows=1, ncols=2, sharex=True, sharey=True, constrained_layout=True
+    )
+    n_clu = 0
+    cbar = None
+    lims = [np.inf, -np.inf, np.inf, -np.inf]
+    for freq_range_name, bins in freq_name_to_bins_map.items():
+        results = csp_cluster_results[freq_range_name][0][0]
+        mean_crossval_scores = results["mean_crossval_scores"].ravel()
+        # t_vals = results['t_vals']
+        clusters = results["clusters"]
+        cluster_p_vals = np.atleast_1d(results["cluster_p_vals"].squeeze())
+        tmin = results["time_bin_edges"].ravel()
+        tmin, tmax = tmin[:-1], tmin[1:]
+        fmin = results["freq_bin_edges"].ravel()
+        fmin, fmax = fmin[:-1], fmin[1:]
+        lims[0] = min(lims[0], tmin.min())
+        lims[1] = max(lims[1], tmax.max())
+        lims[2] = min(lims[2], fmin.min())
+        lims[3] = max(lims[3], fmax.max())
+        # replicate, matching time-frequency order during clustering
+        fmin, fmax = np.tile(fmin, len(tmin)), np.tile(fmax, len(tmax))
+        tmin, tmax = np.repeat(tmin, len(bins)), np.repeat(tmax, len(bins))
+        assert fmin.shape == fmax.shape == tmin.shape == tmax.shape
+        assert fmin.shape == mean_crossval_scores.shape
+        cluster_t_threshold = results["cluster_t_threshold"].ravel().item()
+
+        significant_cluster_idx = np.where(
+            cluster_p_vals < cfg.cluster_permutation_p_threshold
+        )[0]
+        significant_clusters = clusters[significant_cluster_idx]
+        n_clu += len(significant_cluster_idx)
+
+        # XXX Add support for more metrics
+        assert cfg.decoding_metric == "roc_auc"
+        metric = "ROC AUC"
+        vmax = (
+            max(
+                np.abs(mean_crossval_scores.min() - 0.5),
+                np.abs(mean_crossval_scores.max() - 0.5),
+            )
+            + 0.5
         )
-        csp_cluster_results = loadmat(fname_csp_cluster_results)
+        vmin = 0.5 - (vmax - 0.5)
+        # For diverging gray colormap, we need to combine two existing
+        # colormaps, as there is no diverging colormap with gray/black at
+        # both endpoints.
+        from matplotlib.cm import gray, gray_r
+        from matplotlib.colors import ListedColormap
 
-        fig, ax = plt.subplots(
-            nrows=1, ncols=2, sharex=True, sharey=True, constrained_layout=True
+        black_to_white = gray(np.linspace(start=0, stop=1, endpoint=False, num=128))
+        white_to_black = gray_r(np.linspace(start=0, stop=1, endpoint=False, num=128))
+        black_to_white_to_black = np.vstack((black_to_white, white_to_black))
+        diverging_gray_cmap = ListedColormap(
+            black_to_white_to_black, name="DivergingGray"
         )
-        n_clu = 0
-        cbar = None
-        lims = [np.inf, -np.inf, np.inf, -np.inf]
-        for freq_range_name, bins in freq_name_to_bins_map.items():
-            results = csp_cluster_results[freq_range_name][0][0]
-            mean_crossval_scores = results["mean_crossval_scores"].ravel()
-            # t_vals = results['t_vals']
-            clusters = results["clusters"]
-            cluster_p_vals = np.atleast_1d(results["cluster_p_vals"].squeeze())
-            tmin = results["time_bin_edges"].ravel()
-            tmin, tmax = tmin[:-1], tmin[1:]
-            fmin = results["freq_bin_edges"].ravel()
-            fmin, fmax = fmin[:-1], fmin[1:]
-            lims[0] = min(lims[0], tmin.min())
-            lims[1] = max(lims[1], tmax.max())
-            lims[2] = min(lims[2], fmin.min())
-            lims[3] = max(lims[3], fmax.max())
-            # replicate, matching time-frequency order during clustering
-            fmin, fmax = np.tile(fmin, len(tmin)), np.tile(fmax, len(tmax))
-            tmin, tmax = np.repeat(tmin, len(bins)), np.repeat(tmax, len(bins))
-            assert fmin.shape == fmax.shape == tmin.shape == tmax.shape
-            assert fmin.shape == mean_crossval_scores.shape
-            cluster_t_threshold = results["cluster_t_threshold"].ravel().item()
+        cmap_gray = diverging_gray_cmap
+        img = _imshow_tf(
+            mean_crossval_scores,
+            ax[0],
+            tmin=tmin,
+            tmax=tmax,
+            fmin=fmin,
+            fmax=fmax,
+            vmin=vmin,
+            vmax=vmax,
+        )
+        if cbar is None:
+            ax[0].set_xlabel("Time (s)")
+            ax[0].set_ylabel("Frequency (Hz)")
+            ax[1].set_xlabel("Time (s)")
+            cbar = fig.colorbar(
+                ax=ax[1], shrink=0.75, orientation="vertical", mappable=img
+            )
+            cbar.set_label(f"Mean decoding score ({metric})")
+        offset = matplotlib.transforms.offset_copy(
+            ax[0].transData, fig, 6, 0, units="points"
+        )
+        ax[0].text(
+            tmin.min(),
+            0.5 * fmin.min() + 0.5 * fmax.max(),
+            freq_range_name,
+            transform=offset,
+            ha="left",
+            va="center",
+            rotation=90,
+        )
 
-            significant_cluster_idx = np.where(
-                cluster_p_vals < cfg.cluster_permutation_p_threshold
-            )[0]
-            significant_clusters = clusters[significant_cluster_idx]
-            n_clu += len(significant_cluster_idx)
-
-            # XXX Add support for more metrics
-            assert cfg.decoding_metric == "roc_auc"
-            metric = "ROC AUC"
-            vmax = (
-                max(
-                    np.abs(mean_crossval_scores.min() - 0.5),
-                    np.abs(mean_crossval_scores.max() - 0.5),
-                )
-                + 0.5
-            )
-            vmin = 0.5 - (vmax - 0.5)
-            # For diverging gray colormap, we need to combine two existing
-            # colormaps, as there is no diverging colormap with gray/black at
-            # both endpoints.
-            from matplotlib.cm import gray, gray_r
-            from matplotlib.colors import ListedColormap
-
-            black_to_white = gray(np.linspace(start=0, stop=1, endpoint=False, num=128))
-            white_to_black = gray_r(
-                np.linspace(start=0, stop=1, endpoint=False, num=128)
-            )
-            black_to_white_to_black = np.vstack((black_to_white, white_to_black))
-            diverging_gray_cmap = ListedColormap(
-                black_to_white_to_black, name="DivergingGray"
-            )
-            cmap_gray = diverging_gray_cmap
-            img = _imshow_tf(
-                mean_crossval_scores,
-                ax[0],
-                tmin=tmin,
-                tmax=tmax,
-                fmin=fmin,
-                fmax=fmax,
-                vmin=vmin,
-                vmax=vmax,
-            )
-            if cbar is None:
-                ax[0].set_xlabel("Time (s)")
-                ax[0].set_ylabel("Frequency (Hz)")
-                ax[1].set_xlabel("Time (s)")
-                cbar = fig.colorbar(
-                    ax=ax[1], shrink=0.75, orientation="vertical", mappable=img
-                )
-                cbar.set_label(f"Mean decoding score ({metric})")
-            offset = matplotlib.transforms.offset_copy(
-                ax[0].transData, fig, 6, 0, units="points"
-            )
-            ax[0].text(
-                tmin.min(),
-                0.5 * fmin.min() + 0.5 * fmax.max(),
-                freq_range_name,
-                transform=offset,
-                ha="left",
-                va="center",
-                rotation=90,
-            )
-
-            if len(significant_clusters):
-                # Create a masked array that only shows the T-values for
-                # time-frequency bins that belong to significant clusters.
-                if len(significant_clusters) == 1:
-                    mask = ~significant_clusters[0].astype(bool)
-                else:
-                    mask = ~np.logical_or(*significant_clusters)
-                mask = mask.ravel()
+        if len(significant_clusters):
+            # Create a masked array that only shows the T-values for
+            # time-frequency bins that belong to significant clusters.
+            if len(significant_clusters) == 1:
+                mask = ~significant_clusters[0].astype(bool)
             else:
-                mask = np.ones(mean_crossval_scores.shape, dtype=bool)
-            _imshow_tf(
-                mean_crossval_scores,
-                ax[1],
-                tmin=tmin,
-                tmax=tmax,
-                fmin=fmin,
-                fmax=fmax,
-                vmin=vmin,
-                vmax=vmax,
-                mask=mask,
-                cmap_masked=cmap_gray,
-            )
+                mask = ~np.logical_or(*significant_clusters)
+            mask = mask.ravel()
+        else:
+            mask = np.ones(mean_crossval_scores.shape, dtype=bool)
+        _imshow_tf(
+            mean_crossval_scores,
+            ax[1],
+            tmin=tmin,
+            tmax=tmax,
+            fmin=fmin,
+            fmax=fmax,
+            vmin=vmin,
+            vmax=vmax,
+            mask=mask,
+            cmap_masked=cmap_gray,
+        )
 
-        ax[0].set_xlim(lims[:2])
-        ax[0].set_ylim(lims[2:])
-        ax[0].set_title("Scores")
-        ax[1].set_title("Masked")
-        tags = (
-            "epochs",
-            "contrast",
-            "decoding",
-            "csp",
-            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-        )
-        title = f"CSP TF decoding: {cond_1} vs. {cond_2}"
-        report.add_figure(
-            fig=fig,
-            title=title,
-            section=section,
-            caption=f"Found {n_clu} "
-            f"cluster{_pl(n_clu)} with "
-            f"p < {cfg.cluster_permutation_p_threshold} "
-            f"(clustering bins with absolute t-values > "
-            f"{round(cluster_t_threshold, 3)}).",
-            tags=tags,
-            replace=True,
-        )
+    ax[0].set_xlim(lims[:2])
+    ax[0].set_ylim(lims[2:])
+    ax[0].set_title("Scores")
+    ax[1].set_title("Masked")
+    tags = (
+        "epochs",
+        "contrast",
+        "decoding",
+        "csp",
+        f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+    )
+    title = f"CSP TF decoding: {cond_1} vs. {cond_2}"
+    report.add_figure(
+        fig=fig,
+        title=title,
+        section=section,
+        caption=f"Found {n_clu} "
+        f"cluster{_pl(n_clu)} with "
+        f"p < {cfg.cluster_permutation_p_threshold} "
+        f"(clustering bins with absolute t-values > "
+        f"{round(cluster_t_threshold, 3)}).",
+        tags=tags,
+        replace=True,
+    )
 
 
 @contextlib.contextmanager

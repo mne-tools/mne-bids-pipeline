@@ -788,9 +788,9 @@ def average_csp_decoding(
         ["subject", "freq_range_name", "t_min", "t_max"]
     )
 
-    for (subject, freq_range_name, t_min, t_max), df in g:
+    for (subject_, freq_range_name, t_min, t_max), df in g:
         scores = df["mean_crossval_score"]
-        sub_idx = subjects.index(subject)
+        sub_idx = subjects.index(subject_)
         time_bin_idx = time_bins.loc[
             (np.isclose(time_bins["t_min"], t_min))
             & (np.isclose(time_bins["t_max"], t_max)),
@@ -810,6 +810,7 @@ def average_csp_decoding(
         cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
 
     cluster_permutation_results = {}
+    # TODO: Do something better when there is 1 subject
     for freq_range_name, X in data_for_clustering.items():
         (
             t_vals,
@@ -841,6 +842,7 @@ def average_csp_decoding(
     out_files["cluster"] = out_files["freq"].copy().update(extension=".mat")
     savemat(file_name=out_files["cluster"], mdict=cluster_permutation_results)
 
+    assert subject == "average"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:

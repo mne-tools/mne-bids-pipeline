@@ -39,6 +39,9 @@ def pytest_configure(config):
     # seaborn->pandas
     ignore:is_categorical_dtype is deprecated.*:FutureWarning
     ignore:use_inf_as_na option is deprecated.*:FutureWarning
+    # TODO: Fix decoding clustering for n_subjects=1
+    ignore:Degrees of freedom <= 0 for slice:RuntimeWarning
+    ignore:invalid value encountered in divide:RuntimeWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

@@ -13,6 +13,16 @@ interactive = False
 ch_types = ["eeg"]
 reject = {"eeg": 150e-6}
 conditions = ["AdvanceTempo", "DelayTempo"]
+contrasts = [("AdvanceTempo", "DelayTempo")]
 
 subjects = ["001"]
 runs = ["01"]
+epochs_decim = 5  # to 100 Hz
+
+# This is mostly for testing purposes!
+decode = False
+decoding_csp = True
+decoding_csp_freqs = {
+    "beta": [13, 20, 30],
+}
+decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]

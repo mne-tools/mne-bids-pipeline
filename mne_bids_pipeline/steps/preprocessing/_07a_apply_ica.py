@@ -151,11 +151,13 @@ def apply_ica(
     assert len(in_files) == 0, in_files.keys()
 
     # Report
+    kwargs = dict()
     if ica.exclude:
         msg = "Adding ICA to report."
     else:
         msg = "Skipping ICA addition to report, no components marked as bad."
-    logger.info(**gen_log_kwargs(message=msg))
+        kwargs["emoji"] = "skip"
+    logger.info(**gen_log_kwargs(message=msg, **kwargs))
     if ica.exclude:
         with _open_report(
             cfg=cfg, exec_params=exec_params, subject=subject, session=session

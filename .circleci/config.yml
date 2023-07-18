@@ -529,7 +529,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test BEM from FLASH
-          command: $RUN_TESTS ds000248_FLASH_BEM
+          command: $RUN_TESTS ds000248_FLASH_BEM -r
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -556,7 +556,7 @@ jobs:
       - run:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
-          command: $RUN_TESTS ds000248_T1_BEM
+          command: $RUN_TESTS ds000248_T1_BEM -r
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -582,7 +582,7 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test head surface creation for MNE coregistration
-          command: $RUN_TESTS ds000248_coreg_surfaces ds000248_coreg_surfaces --no-copy
+          command: $RUN_TESTS ds000248_coreg_surfaces -c -r
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -772,7 +772,7 @@ jobs:
             google-chrome --version
       - run:
           name: test ERP CORE N400
-          command: $RUN_TESTS ERP_CORE_N400 ERP_CORE
+          command: $RUN_TESTS ERP_CORE_N400
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -802,7 +802,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE ERN
-          command: $RUN_TESTS ERP_CORE_ERN ERP_CORE
+          command: $RUN_TESTS ERP_CORE_ERN
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -832,7 +832,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE LRP
-          command: $RUN_TESTS ERP_CORE_LRP ERP_CORE
+          command: $RUN_TESTS ERP_CORE_LRP
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -862,7 +862,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE MMN
-          command: $RUN_TESTS ERP_CORE_MMN ERP_CORE
+          command: $RUN_TESTS ERP_CORE_MMN
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -892,7 +892,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N2pc
-          command: $RUN_TESTS ERP_CORE_N2pc ERP_CORE
+          command: $RUN_TESTS ERP_CORE_N2pc
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -922,7 +922,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE N170
-          command: $RUN_TESTS ERP_CORE_N170 ERP_CORE
+          command: $RUN_TESTS ERP_CORE_N170
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -952,7 +952,7 @@ jobs:
           command: mkdir -p /home/circleci/.local/share/pyvista
       - run:
           name: test ERP CORE P3
-          command: $RUN_TESTS ERP_CORE_P3 ERP_CORE
+          command: $RUN_TESTS ERP_CORE_P3
       - codecov/upload
       - store_test_results:
           path: ./test-results

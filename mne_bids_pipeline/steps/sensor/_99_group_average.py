@@ -24,6 +24,7 @@ from ..._config_utils import (
     get_decoding_contrasts,
     get_all_contrasts,
     _bids_kwargs,
+    _restrict_analyze_channels,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
@@ -127,6 +128,7 @@ def average_evokeds(
             evoked.plot()
 
     # Reporting
+    evokeds = [_restrict_analyze_channels(evoked, cfg) for evoked in evokeds]
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -984,7 +986,7 @@ def main(*, config: SimpleNamespace) -> None:
         ]
 
         # 2. Time decoding
-        if cfg.decode:
+        if cfg.decode and decoding_contrasts:
             # Full epochs (single report function plots across all contrasts
             # so it's a separate cached step)
             logs += [
@@ -1027,7 +1029,7 @@ def main(*, config: SimpleNamespace) -> None:
             )
 
         # 3. CSP
-        if cfg.decoding_csp:
+        if cfg.decoding_csp and decoding_contrasts:
             parallel, run_func = parallel_func(
                 average_csp_decoding, exec_params=exec_params
             )

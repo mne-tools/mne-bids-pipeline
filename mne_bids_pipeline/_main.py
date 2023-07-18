@@ -193,22 +193,19 @@ def main():
         # them twice.
         step_modules = [*STEP_MODULES["init"], *step_modules]
 
-    msg = "Welcome aboard the MNE BIDS Pipeline!"
-    logger.info(**gen_log_kwargs(message=msg, emoji="👋", box="╶╴", step=""))
+    logger.title("Welcome aboard MNE-BIDS-Pipeline! 👋")
     msg = f"Using configuration: {config}"
-    logger.info(**gen_log_kwargs(message=msg, emoji="🧾", box="╶╴", step=""))
+    logger.info(**gen_log_kwargs(message=msg, emoji="📝"))
+    logger.end()
 
     config_imported = _import_config(
         config_path=config_path,
         overrides=overrides,
     )
-    for si, step_module in enumerate(step_modules):
+    for step_module in step_modules:
         start = time.time()
         step = _short_step_path(pathlib.Path(step_module.__file__))
-        if si == 0:
-            logger.rule()
-        msg = "Now running  👇"
-        logger.info(**gen_log_kwargs(message=msg, box="┌╴", emoji="🚀", step=step))
+        logger.title(title=f"{step}")
         step_module.main(config=config_imported)
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)
@@ -221,6 +218,4 @@ def main():
             elapsed = f"{minutes}m {elapsed}"
         if hours:
             elapsed = f"{hours}h {elapsed}"
-        msg = f"Done running  👆 [{elapsed}]"
-        logger.info(**gen_log_kwargs(message=msg, box="└╴", emoji="🎉", step=step))
-        logger.rule()
+        logger.end(f"done ({elapsed})")

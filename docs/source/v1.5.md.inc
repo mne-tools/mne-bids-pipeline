@@ -4,6 +4,7 @@
 
 - Added support for annotating bad segments based on head movement velocity (#757 by @larsoner)
 - Added examples of T1 and FLASH BEM to website (#758 by @larsoner)
+- Output logging spacing improved (#764 by @larsoner)
 - Added caching of sensor and source average steps (#765 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)

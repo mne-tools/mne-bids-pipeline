@@ -31,21 +31,28 @@ class _MBPLogger:
         kwargs["theme"] = rich.theme.Theme(
             dict(
                 default="white",
+                # Rule
+                title="bold green",
                 # Prefixes
                 asctime="green",
-                step="bold cyan",
+                prefix="bold cyan",
                 # Messages
                 debug="dim",
-                info="bold",
-                warning="bold magenta",
-                error="bold red",
+                info="",
+                warning="magenta",
+                error="red",
             )
         )
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
-    def rule(self, title="", *, align="center"):
-        self.__console.rule(title=title, characters="─", style="rule.line", align=align)
+    def title(self, title):
+        # Align left with ASCTIME offset
+        title = f"[title]┌────────┬ {title}[/]"
+        self._console.rule(title=title, characters="─", style="title", align="left")
+
+    def end(self, msg=""):
+        self._console.print(f"[title]└────────┴ {msg}[/]")
 
     @property
     def level(self):
@@ -75,29 +82,18 @@ class _MBPLogger:
         subject: Optional[Union[str, int]] = None,
         session: Optional[Union[str, int]] = None,
         run: Optional[Union[str, int]] = None,
-        step: Optional[str] = None,
         emoji: str = "",
-        box: str = "",
     ):
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
-        if not subject:
-            subject = ""
-        if not session:
-            session = ""
-        if not run:
-            run = ""
-        if not step:
-            step = ""
-        if step and emoji:
-            step = f"{emoji} {step}"
-        asctime = datetime.datetime.now().strftime("[%H:%M:%S]")
-        msg = (
-            f"[asctime]{asctime}[/asctime] "
-            f"[step]{box}{step}{subject}{session}{run}[/step]"
-            f"[{kind}]{msg}[/{kind}]"
-        )
+        # Construct str
+        essr = [x for x in [emoji, subject, session, run] if x]
+        essr = " ".join(essr)
+        if essr:
+            essr += " "
+        asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
+        msg = f"[asctime]{asctime} [/][prefix]{essr}[/][{kind}]{msg}[/]"
         self._console.print(msg)
 
 
@@ -111,12 +107,8 @@ def gen_log_kwargs(
     session: Optional[Union[str, int]] = None,
     run: Optional[Union[str, int]] = None,
     task: Optional[str] = None,
-    step: Optional[str] = None,
     emoji: str = "⏳️",
-    box: str = "│ ",
 ) -> LogKwargsT:
-    from ._run import _get_step_path, _short_step_path
-
     # Try to figure these out
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
@@ -130,23 +122,14 @@ def gen_log_kwargs(
             task = task or up_locals.get("task", None)
             if task in ("noise", "rest"):
                 run = task
-    if step is None:
-        step_path = _get_step_path(stack)
-        if step_path:
-            step = _short_step_path(_get_step_path())
-        else:
-            step = ""
 
     # Do some nice formatting
     if subject is not None:
-        subject = f" sub-{subject}"
+        subject = f"sub-{subject}"
     if session is not None:
-        session = f" ses-{session}"
+        session = f"ses-{session}"
     if run is not None:
-        run = f" run-{run}"
-    if step != "":
-        # need an extra space
-        message = f" {message}"
+        run = f"run-{run}"
 
     # Choose some to be our standards
     emoji = dict(
@@ -154,10 +137,7 @@ def gen_log_kwargs(
         skip="⏩",
         override="❌",
     ).get(emoji, emoji)
-    extra = {
-        "step": f"{emoji} {step}",
-        "box": box,
-    }
+    extra = {"emoji": emoji}
     if subject:
         extra["subject"] = subject
     if session:
@@ -170,3 +150,7 @@ def gen_log_kwargs(
         "extra": extra,
     }
     return kwargs
+
+
+def _linkfile(uri):
+    return f"[link=file://{uri}]{uri}[/link]"

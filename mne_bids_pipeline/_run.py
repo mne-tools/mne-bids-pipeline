@@ -257,8 +257,7 @@ class ConditionalStepMemory:
             del out_files
 
             if msg is not None:
-                step = _short_step_path(pathlib.Path(inspect.getfile(func)))
-                logger.info(**gen_log_kwargs(message=msg, emoji=emoji, step=step))
+                logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
             if short_circuit:
                 return
 

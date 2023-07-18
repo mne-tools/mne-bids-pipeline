@@ -18,9 +18,10 @@ def init_dataset(cfg) -> None:
     """Prepare the pipeline directory in /derivatives."""
     fname_json = cfg.deriv_root / "dataset_description.json"
     if fname_json.is_file():
-        return  # already exists
-    msg = "Initializing output directories."
-    logger.info(**gen_log_kwargs(message=msg))
+        msg = "Output directories already exist …"
+        logger.info(**gen_log_kwargs(message=msg, emoji="✅"))
+        return
+    logger.info(**gen_log_kwargs(message="Initializing output directories."))
 
     cfg.deriv_root.mkdir(exist_ok=True, parents=True)
 

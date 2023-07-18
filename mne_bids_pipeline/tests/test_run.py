@@ -105,10 +105,6 @@ _n_jobs = {
     "sensor/_05_decoding_csp": 1,
     "sensor/_99_group_average": 1,
 }
-_parallel_backend = {
-    "sensor/_05_decoding_csp": "loky",
-    "sensor/_99_group_average": "loky",
-}
 """,
     },
     "ERP_CORE_LRP": {

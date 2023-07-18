@@ -196,7 +196,7 @@ def _decoding_cluster_permutation_test(
         out_type="mask",
         tail=1,  # one-sided: significantly above chance level
         seed=random_seed,
-        verbose=True,
+        verbose="error",  # ignore No clusters found
     )
     n_permutations = H0.size - 1
 
@@ -280,7 +280,7 @@ def _get_input_fnames_decoding(
 ) -> dict:
     in_files = _get_epochs_in_files(cfg=cfg, subject=subject, session=session)
     for this_subject in cfg.subjects:
-        in_files[f"scores-{subject}"] = _decoding_out_fname(
+        in_files[f"scores-{this_subject}"] = _decoding_out_fname(
             cfg=cfg,
             subject=this_subject,
             session=session,
@@ -347,6 +347,7 @@ def average_time_by_time_decoding(
     mean_scores = np.empty((n_subjects, *time_points_shape))
 
     # Remaining in_files are all decoding data
+    assert len(in_files) == n_subjects, list(in_files.keys())
     for sub_idx, key in enumerate(list(in_files)):
         decoding_data = loadmat(in_files.pop(key))
         mean_scores[sub_idx, :] = decoding_data["scores"].mean(axis=0)
@@ -901,7 +902,8 @@ def _average_csp_time_freq(
         bootstrapped_means = scores_resampled.mean(axis=1)
 
         # SD of the bootstrapped distribution == SE of the metric.
-        se = bootstrapped_means.std(ddof=1)
+        with np.errstate(over="raise"):
+            se = bootstrapped_means.std(ddof=1)
         ci_lower = np.quantile(bootstrapped_means, q=0.025)
         ci_upper = np.quantile(bootstrapped_means, q=0.975)
 

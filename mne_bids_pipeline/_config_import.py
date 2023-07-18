@@ -40,7 +40,7 @@ def _import_config(
     extra_config = os.getenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", "")
     if extra_config:
         msg = f"With testing config: {extra_config}"
-        logger.info(**gen_log_kwargs(message=msg, emoji="🧪"))
+        logger.info(**gen_log_kwargs(message=msg, emoji="override"))
         _update_config_from_path(
             config=config,
             config_path=extra_config,

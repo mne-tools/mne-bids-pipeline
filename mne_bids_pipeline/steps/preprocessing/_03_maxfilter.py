@@ -21,7 +21,6 @@ from types import SimpleNamespace
 
 import numpy as np
 import mne
-from mne.utils import _pl
 from mne_bids import read_raw_bids
 
 from ..._config_utils import (
@@ -30,6 +29,7 @@ from ..._config_utils import (
     get_subjects,
     get_sessions,
     get_runs_tasks,
+    _pl,
 )
 from ..._import_data import (
     import_experimental_data,
@@ -149,7 +149,7 @@ def compute_esss_proj(
         )
         # TODO: plot_projs_topomap doesn't handle meg="combined" well:
         # https://github.com/mne-tools/mne-python/pull/11792
-        for ii, (kind, picks) in enumerate(kinds_picks):
+        for ax_row, (kind, picks) in zip(axes, kinds_picks):
             info = mne.pick_info(raw_noise.info, picks)
             ch_names = info["ch_names"]
             these_projs = deepcopy(projs)
@@ -160,9 +160,9 @@ def compute_esss_proj(
             mne.viz.plot_projs_topomap(
                 these_projs,
                 info=info,
-                axes=axes[ii],
+                axes=ax_row,
             )
-            for ai, ax in enumerate(axes[ii]):
+            for ai, ax in enumerate(ax_row):
                 ax.set_title(f"{kind} {ai + 1}")
         report.add_figure(
             fig,

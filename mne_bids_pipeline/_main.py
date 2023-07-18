@@ -193,7 +193,7 @@ def main():
         # them twice.
         step_modules = [*STEP_MODULES["init"], *step_modules]
 
-    logger.title("Welcome aboard the MNE BIDS Pipeline! 👋")
+    logger.title("Welcome aboard MNE-BIDS-Pipeline! 👋")
     msg = f"Using configuration: {config}"
     logger.info(**gen_log_kwargs(message=msg, emoji="🧾"))
     logger.end()

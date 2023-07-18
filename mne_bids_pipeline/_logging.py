@@ -46,12 +46,10 @@ class _MBPLogger:
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
-    def rule(self):
-        # Align left with ASCTIME offset
-        self._console.rule("", characters="─", style="title", align="left")
-
     def title(self, title):
-        self.info(msg=f"[title]{title}[/]")
+        # Align left with ASCTIME offset
+        title = f"[title]┌────────┐ {title}[/]"
+        self._console.rule(title=title, characters="─", style="title", align="left")
 
     def end(self, msg=""):
         self._console.print(f"[title]└────────┘[/] {msg}")

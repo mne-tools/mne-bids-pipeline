@@ -220,7 +220,9 @@ class ConditionalStepMemory:
                     emoji = "🔂"
                 else:
                     # Check our output file hashes
-                    out_files_hashes = memorized_func(*args, **kwargs)
+                    # Need to make a copy of kwargs["in_files"] in particular
+                    use_kwargs = copy.deepcopy(kwargs)
+                    out_files_hashes = memorized_func(*args, **use_kwargs)
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
@@ -302,8 +304,8 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
 
 def _update_for_splits(
-    files_dict: Dict[str, BIDSPath],
-    key: str,
+    files_dict: Union[Dict[str, BIDSPath], BIDSPath],
+    key: Optional[str],
     *,
     single: bool = False,
     allow_missing: bool = False,

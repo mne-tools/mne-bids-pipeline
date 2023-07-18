@@ -6,7 +6,6 @@ from typing import Optional
 import pandas as pd
 
 import mne
-from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
@@ -16,6 +15,7 @@ from ..._config_utils import (
     get_sessions,
     get_runs_tasks,
     _do_mf_autobad,
+    _pl,
 )
 from ..._import_data import (
     _get_run_rest_noise_path,

@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 from typing import Dict, Optional
 
-from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
@@ -12,6 +11,7 @@ from ..._config_utils import (
     get_subjects,
     get_mf_reference_run,
     _bids_kwargs,
+    _pl,
 )
 from ..._io import _empty_room_match_path, _write_json
 from ..._logging import gen_log_kwargs, logger

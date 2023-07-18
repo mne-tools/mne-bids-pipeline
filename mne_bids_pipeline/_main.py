@@ -193,18 +193,19 @@ def main():
         # them twice.
         step_modules = [*STEP_MODULES["init"], *step_modules]
 
+    logger.rule()
     logger.title("👋 Welcome aboard the MNE BIDS Pipeline! 👋")
     msg = f"Using configuration: {config}"
     logger.info(**gen_log_kwargs(message=msg, emoji="🧾"))
-    logger.end()
 
     config_imported = _import_config(
         config_path=config_path,
         overrides=overrides,
     )
-    for step_module in step_modules:
+    for si, step_module in enumerate(step_modules):
         start = time.time()
         step = _short_step_path(pathlib.Path(step_module.__file__))
+        logger.rule()
         logger.title(title=f"🚀 {step}")
         step_module.main(config=config_imported)
         elapsed = time.time() - start
@@ -218,4 +219,4 @@ def main():
             elapsed = f"{minutes}m {elapsed}"
         if hours:
             elapsed = f"{hours}h {elapsed}"
-        logger.end(f"[prefix]🎉 done[/] {elapsed}")
+        logger.info(f"[prefix]🎉 done[/] {elapsed}")

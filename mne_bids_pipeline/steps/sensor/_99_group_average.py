@@ -838,7 +838,7 @@ def average_csp_decoding(
             "freq_bin_edges": cfg.decoding_csp_freqs[freq_range_name],
         }
 
-    out_files["cluster"] = out_files["cluster"].copy().update(extension=".mat")
+    out_files["cluster"] = out_files["freq"].copy().update(extension=".mat")
     savemat(file_name=out_files["cluster"], mdict=cluster_permutation_results)
 
     with _open_report(
@@ -1036,6 +1036,7 @@ def main(*, config: SimpleNamespace) -> None:
             logs += parallel(
                 run_func(
                     cfg=cfg,
+                    exec_params=exec_params,
                     subject=subject,
                     session=session,
                     cond_1=contrast[0],

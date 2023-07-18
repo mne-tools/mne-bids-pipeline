@@ -20,7 +20,9 @@ runs = ["01"]
 epochs_decim = 5  # to 100 Hz
 
 # This is mostly for testing purposes!
-decode = False
+decode = True
+decoding_time_generalization = True
+decoding_time_generalization_decim = 2
 decoding_csp = True
 decoding_csp_freqs = {
     "beta": [13, 20, 30],

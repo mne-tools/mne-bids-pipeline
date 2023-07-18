@@ -810,22 +810,25 @@ def average_csp_decoding(
         cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
 
     cluster_permutation_results = {}
-    # TODO: Do something better when there is 1 subject
     for freq_range_name, X in data_for_clustering.items():
-        (
-            t_vals,
-            all_clusters,
-            cluster_p_vals,
-            H0,
-        ) = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
-            X=X - 0.5,  # One-sample test against zero.
-            threshold=cluster_forming_t_threshold,
-            n_permutations=cfg.cluster_n_permutations,
-            adjacency=None,  # each time & freq bin connected to its neighbors
-            out_type="mask",
-            tail=1,  # one-sided: significantly above chance level
-            seed=cfg.random_state,
-        )
+        if len(X) < 2:
+            t_vals = np.full(X.shape[1:], np.nan)
+            H0 = all_clusters = cluster_p_vals = np.array([])
+        else:
+            (
+                t_vals,
+                all_clusters,
+                cluster_p_vals,
+                H0,
+            ) = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
+                X=X - 0.5,  # One-sample test against zero.
+                threshold=cluster_forming_t_threshold,
+                n_permutations=cfg.cluster_n_permutations,
+                adjacency=None,  # each time & freq bin connected to its neighbors
+                out_type="mask",
+                tail=1,  # one-sided: significantly above chance level
+                seed=cfg.random_state,
+            )
         n_permutations = H0.size - 1
         all_clusters = np.array(all_clusters)  # preserve "empty" 0th dimension
         cluster_permutation_results[freq_range_name] = {

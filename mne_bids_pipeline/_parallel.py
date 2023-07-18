@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import joblib
 
-from ._logging import logger
+from ._logging import logger, gen_log_kwargs, _is_testing
 
 
 def get_n_jobs(*, exec_params: SimpleNamespace) -> int:
@@ -14,6 +14,12 @@ def get_n_jobs(*, exec_params: SimpleNamespace) -> int:
         n_cores = joblib.cpu_count()
         n_jobs = min(n_cores + n_jobs + 1, n_cores)
 
+    # Shim to allow overriding n_jobs for specific steps
+    if _is_testing() and hasattr(exec_params, "_n_jobs"):
+        from ._run import _get_step_path, _short_step_path
+
+        step_path = _short_step_path(_get_step_path())
+        n_jobs = exec_params._n_jobs.get(step_path, n_jobs)
     return n_jobs
 
 
@@ -82,16 +88,29 @@ def get_parallel_backend_name(
         exec_params.parallel_backend == "loky"
         or get_n_jobs(exec_params=exec_params) == 1
     ):
-        return "loky"
+        backend = "loky"
     elif exec_params.parallel_backend == "dask":
         # Disable interactive plotting backend
         import matplotlib
 
         matplotlib.use("Agg")
-        return "dask"
+        backend = "dask"
     else:
         # TODO: Move to value validation step
         raise ValueError(f"Unknown parallel backend: {exec_params.parallel_backend}")
+
+    # Shim to allow changing the backend on a per-step basis for testing
+    if _is_testing() and hasattr(exec_params, "_parallel_backend"):
+        from ._run import _get_step_path, _short_step_path
+
+        step_path = _short_step_path(_get_step_path())
+        old_backend = backend
+        backend = exec_params._parallel_backend.get(step_path, backend)
+        msg = f"Overriding parallel backend {old_backend}→{backend}"
+        logger.info(**gen_log_kwargs(message=msg))
+        raise RuntimeError(backend)
+
+    return backend
 
 
 def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backend:

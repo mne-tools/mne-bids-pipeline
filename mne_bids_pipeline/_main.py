@@ -196,12 +196,12 @@ def main():
     logger.title("Welcome aboard MNE-BIDS-Pipeline! 👋")
     msg = f"Using configuration: {config}"
     logger.info(**gen_log_kwargs(message=msg, emoji="📝"))
-    logger.end()
-
     config_imported = _import_config(
         config_path=config_path,
         overrides=overrides,
     )
+    logger.end()
+
     for step_module in step_modules:
         start = time.time()
         step = _short_step_path(pathlib.Path(step_module.__file__))

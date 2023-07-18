@@ -21,8 +21,6 @@ mf_reference_run = "01"
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
-_raw_split_size = "60MB"  # hits both task-noise and task-audiovisual
-_epochs_split_size = "30MB"
 
 
 def noise_cov(bp):
@@ -44,8 +42,7 @@ epochs_decim = 4
 bem_mri_images = "FLASH"
 recreate_bem = True
 
-# use n_jobs=1 here to ensure that we get coverage for metadata_query, etc.
-n_jobs = 1
+n_jobs = 2
 
 
 def mri_t1_path_generator(bids_path):

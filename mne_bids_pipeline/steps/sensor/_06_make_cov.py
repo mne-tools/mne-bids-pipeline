@@ -16,7 +16,7 @@ from ..._config_utils import (
     _bids_kwargs,
 )
 from ..._config_import import _import_config
-from ..._config_utils import _restrict_analyze_channels, get_all_contrasts
+from ..._config_utils import _restrict_analyze_channels
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
@@ -258,10 +258,8 @@ def run_covariance(
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
                 tags = ("evoked", "covariance", _sanitize_cond_tag(condition))
-                if condition in cfg.conditions:
-                    title = f"Whitening: {condition}"
-                else:  # It's a contrast of two conditions.
-                    title = f"Whitening: {condition}"
+                title = f"Whitening: {condition}"
+                if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
                 fig = evoked.plot_white(cov, verbose="error")
                 report.add_figure(
@@ -287,7 +285,7 @@ def get_config(
         run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
         conditions=config.conditions,
-        all_contrasts=get_all_contrasts(config),
+        contrasts=config.contrasts,
         analyze_channels=config.analyze_channels,
         **_bids_kwargs(config=config),
     )

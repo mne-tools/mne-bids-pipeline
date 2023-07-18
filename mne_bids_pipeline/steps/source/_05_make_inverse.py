@@ -3,7 +3,6 @@
 Compute and apply an inverse solution for each evoked data set.
 """
 
-import pathlib
 from types import SimpleNamespace
 from typing import Optional
 
@@ -26,7 +25,7 @@ from ..._config_utils import (
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report, _sanitize_cond_tag
+from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
 from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
 
 
@@ -97,22 +96,18 @@ def run_inverse(
     # Apply inverse
     snr = 3.0
     lambda2 = 1.0 / snr**2
-
-    if isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
-    else:
-        conditions = cfg.conditions
-
+    conditions = _all_conditions(cfg=cfg)
     method = cfg.inverse_method
     if "evoked" in in_files:
         fname_ave = in_files.pop("evoked")
         evokeds = mne.read_evokeds(fname_ave)
 
         for condition, evoked in zip(conditions, evokeds):
-            pick_ori = None
-            cond_str = sanitize_cond_name(condition)
-            key = f"{cond_str}+{method}+hemi"
-            out_files[key] = fname_ave.copy().update(suffix=key, extension=None)
+            suffix = f"{sanitize_cond_name(condition)}+{method}+hemi"
+            out_files[condition] = fname_ave.copy().update(
+                suffix=suffix,
+                extension=".h5",
+            )
 
             if "eeg" in cfg.ch_types:
                 evoked.set_eeg_reference("average", projection=True)
@@ -122,10 +117,9 @@ def run_inverse(
                 inverse_operator=inverse_operator,
                 lambda2=lambda2,
                 method=method,
-                pick_ori=pick_ori,
+                pick_ori=None,
             )
-            stc.save(out_files[key], overwrite=True)
-            out_files[key] = pathlib.Path(str(out_files[key]) + "-lh.stc")
+            stc.save(out_files[condition], ftype="h5", overwrite=True)
 
         with _open_report(
             cfg=cfg, exec_params=exec_params, subject=subject, session=session
@@ -139,10 +133,11 @@ def run_inverse(
                     continue
                 msg = f"Rendering inverse solution for {condition}"
                 logger.info(**gen_log_kwargs(message=msg))
-                fname_stc = out_files[key]
                 tags = ("source-estimate", _sanitize_cond_tag(condition))
+                if condition not in cfg.conditions:
+                    tags = tags + ("contrast",)
                 report.add_stc(
-                    stc=fname_stc,
+                    stc=out_files[condition],
                     title=f"Source: {condition}",
                     subject=cfg.fs_subject,
                     subjects_dir=cfg.fs_subjects_dir,
@@ -165,6 +160,7 @@ def get_config(
         inverse_targets=config.inverse_targets,
         ch_types=config.ch_types,
         conditions=config.conditions,
+        contrasts=config.contrasts,
         loose=config.loose,
         depth=config.depth,
         inverse_method=config.inverse_method,

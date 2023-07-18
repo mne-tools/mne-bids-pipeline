@@ -4,7 +4,7 @@ Source estimates are morphed to the ``fsaverage`` brain.
 """
 
 from types import SimpleNamespace
-from typing import Optional, List
+from typing import Optional
 
 import numpy as np
 
@@ -17,17 +17,28 @@ from ..._config_utils import (
     sanitize_cond_name,
     get_fs_subject,
     get_sessions,
-    get_all_contrasts,
     _bids_kwargs,
 )
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import run_report_average_source
-from ..._run import failsafe_run, save_logs
+from ..._report import _all_conditions, _open_report
+from ..._run import failsafe_run, save_logs, _prep_out_files
 
 
-def morph_stc(cfg, subject, fs_subject, session=None):
-    bids_path = BIDSPath(
+def _stc_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    condition: str,
+    morphed: bool,
+) -> BIDSPath:
+    cond_str = sanitize_cond_name(condition)
+    suffix = [cond_str, cfg.inverse_method, "hemi"]
+    if morphed:
+        suffix.insert(2, "morph2fsaverage")
+    suffix = "+".join(suffix)
+    return BIDSPath(
         subject=subject,
         session=session,
         task=cfg.task,
@@ -37,35 +48,47 @@ def morph_stc(cfg, subject, fs_subject, session=None):
         space=cfg.space,
         datatype=cfg.datatype,
         root=cfg.deriv_root,
+        suffix=suffix,
+        extension=".h5",
         check=False,
     )
 
-    morphed_stcs = []
 
-    if cfg.task_is_rest:
-        conditions = [cfg.task.lower()]
-    else:
-        if isinstance(cfg.conditions, dict):
-            conditions = list(cfg.conditions.keys())
-        else:
-            conditions = cfg.conditions
-
-    for condition in conditions:
-        method = cfg.inverse_method
-        cond_str = sanitize_cond_name(condition)
-        inverse_str = method
-        hemi_str = "hemi"  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = "morph2fsaverage"
-
-        fname_stc = bids_path.copy().update(
-            suffix=f"{cond_str}+{inverse_str}+{hemi_str}"
+def get_input_fnames_morph_stc(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    fs_subject: str,
+    session: Optional[str],
+) -> dict:
+    in_files = dict()
+    for condition in _all_conditions(cfg=cfg):
+        in_files[f"original-{condition}"] = _stc_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            condition=condition,
+            morphed=False,
         )
-        fname_stc_fsaverage = bids_path.copy().update(
-            suffix=f"{cond_str}+{inverse_str}+{morph_str}+{hemi_str}"
-        )
+    return in_files
 
+
+@failsafe_run(
+    get_input_fnames=get_input_fnames_morph_stc,
+)
+def morph_stc(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    fs_subject: str,
+    session: Optional[str],
+    in_files: dict,
+) -> dict:
+    out_files = dict()
+    for condition in _all_conditions(cfg=cfg):
+        fname_stc = in_files.pop(f"original-{condition}")
         stc = mne.read_source_estimate(fname_stc)
-
         morph = mne.compute_source_morph(
             stc,
             subject_from=fs_subject,
@@ -73,51 +96,98 @@ def morph_stc(cfg, subject, fs_subject, session=None):
             subjects_dir=cfg.fs_subjects_dir,
         )
         stc_fsaverage = morph.apply(stc)
-        stc_fsaverage.save(fname_stc_fsaverage, overwrite=True)
-        morphed_stcs.append(stc_fsaverage)
+        key = f"morphed-{condition}"
+        out_files[key] = _stc_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            condition=condition,
+            morphed=True,
+        )
+        stc_fsaverage.save(out_files[key], ftype="h5", overwrite=True)
 
-        del fname_stc, fname_stc_fsaverage
+    assert len(in_files) == 0, in_files
+    return _prep_out_files(out_files=out_files, exec_params=exec_params)
 
-    return morphed_stcs
 
-
-def run_average(
+def get_input_fnames_run_average(
     *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    mean_morphed_stcs: List[mne.SourceEstimate],
+) -> dict:
+    in_files = dict()
+    assert subject == "average"
+    for condition in _all_conditions(cfg=cfg):
+        for this_subject in cfg.subjects:
+            in_files[f"{this_subject}-{condition}"] = _stc_path(
+                cfg=cfg,
+                subject=this_subject,
+                session=session,
+                condition=condition,
+                morphed=True,
+            )
+    return in_files
+
+
+@failsafe_run(
+    get_input_fnames=get_input_fnames_run_average,
+)
+def run_average(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    in_files: dict,
 ):
-    bids_path = BIDSPath(
-        subject=subject,
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        processing=cfg.proc,
-        recording=cfg.rec,
-        space=cfg.space,
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False,
-    )
-
-    if isinstance(cfg.conditions, dict):
-        conditions = list(cfg.conditions.keys())
-    else:
-        conditions = cfg.conditions
-
-    for condition, stc in zip(conditions, mean_morphed_stcs):
-        method = cfg.inverse_method
-        cond_str = sanitize_cond_name(condition)
-        inverse_str = method
-        hemi_str = "hemi"  # MNE will auto-append '-lh' and '-rh'.
-        morph_str = "morph2fsaverage"
-
-        fname_stc_avg = bids_path.copy().update(
-            suffix=f"{cond_str}+{inverse_str}+{morph_str}+{hemi_str}"
+    assert subject == "average"
+    out_files = dict()
+    conditions = _all_conditions(cfg=cfg)
+    for condition in conditions:
+        stc = np.array(
+            [
+                mne.read_source_estimate(in_files.pop(f"{this_subject}-{condition}"))
+                for this_subject in cfg.subjects
+            ]
+        ).mean(axis=0)
+        out_files[condition] = _stc_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            condition=condition,
+            morphed=True,
         )
-        stc.save(fname_stc_avg, overwrite=True)
+        stc.save(out_files[condition], ftype="h5", overwrite=True)
+
+    #######################################################################
+    #
+    # Visualize forward solution, inverse operator, and inverse solutions.
+    #
+    with _open_report(
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+    ) as report:
+        for condition in conditions:
+            msg = f"Rendering inverse solution for {condition}"
+            logger.info(**gen_log_kwargs(message=msg))
+            cond_str = sanitize_cond_name(condition)
+            tags = ("source-estimate", cond_str)
+            if condition in cfg.conditions:
+                title = f"Average: {condition}"
+            else:  # It's a contrast of two conditions.
+                title = f"Average contrast: {condition}"
+                tags = tags + ("contrast",)
+            report.add_stc(
+                stc=out_files[condition],
+                title=title,
+                subject="fsaverage",
+                subjects_dir=cfg.fs_subjects_dir,
+                n_time_points=cfg.report_stc_n_time_points,
+                tags=tags,
+                replace=True,
+            )
+    assert len(in_files) == 0, in_files
+    return _prep_out_files(out_files=out_files, exec_params=exec_params)
 
 
 def get_config(
@@ -131,11 +201,11 @@ def get_config(
         fs_subjects_dir=get_fs_subjects_dir(config),
         subjects_dir=get_fs_subjects_dir(config),
         ch_types=config.ch_types,
-        subjects=config.subjects,
+        subjects=get_subjects(config=config),
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
         use_template_mri=config.use_template_mri,
-        all_contrasts=get_all_contrasts(config),
+        contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
         # TODO: needed because get_datatype gets called again...
         data_type=config.data_type,
@@ -144,64 +214,39 @@ def get_config(
     return cfg
 
 
-# pass 'average' subject for logging
-@failsafe_run()
-def run_group_average_source(
-    *,
-    cfg: SimpleNamespace,
-    exec_params: SimpleNamespace,
-    subject: str,
-) -> None:
-    """Run group average in source space"""
-
-    mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(cfg))
-
-    with get_parallel_backend(exec_params):
-        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
-        all_morphed_stcs = parallel(
-            run_func(
-                cfg=cfg,
-                subject=subject,
-                fs_subject=get_fs_subject(config=cfg, subject=subject),
-                session=session,
-            )
-            for subject in get_subjects(cfg)
-            for session in get_sessions(cfg)
-        )
-        mean_morphed_stcs = np.array(all_morphed_stcs).mean(axis=0)
-
-        # XXX to fix
-        sessions = get_sessions(cfg)
-        if sessions:
-            session = sessions[0]
-        else:
-            session = None
-
-        run_average(
-            cfg=cfg,
-            session=session,
-            subject=subject,
-            mean_morphed_stcs=mean_morphed_stcs,
-        )
-        run_report_average_source(
-            cfg=cfg,
-            exec_params=exec_params,
-            subject=subject,
-            session=session,
-        )
-
-
 def main(*, config: SimpleNamespace) -> None:
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
-    log = run_group_average_source(
-        cfg=get_config(
-            config=config,
-        ),
-        exec_params=config.exec_params,
-        subject="average",
-    )
-    save_logs(config=config, logs=[log])
+    mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(config))
+    cfg = get_config(config=config)
+    exec_params = config.exec_params
+    subjects = get_subjects(config)
+    sessions = get_sessions(config)
+
+    logs = list()
+    with get_parallel_backend(exec_params):
+        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
+        logs += parallel(
+            run_func(
+                cfg=cfg,
+                exec_params=exec_params,
+                subject=subject,
+                fs_subject=get_fs_subject(config=cfg, subject=subject),
+                session=session,
+            )
+            for subject in subjects
+            for session in sessions
+        )
+    logs += [
+        run_average(
+            cfg=cfg,
+            exec_params=exec_params,
+            session=session,
+            subject="average",
+        )
+        for session in sessions
+    ]
+    save_logs(config=config, logs=logs)

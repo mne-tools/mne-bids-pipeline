@@ -1,7 +1,6 @@
 import contextlib
 from functools import lru_cache
 from io import StringIO
-from pathlib import Path
 from typing import Optional, List, Literal
 from types import SimpleNamespace
 
@@ -17,7 +16,7 @@ from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 
-from ._config_utils import sanitize_cond_name
+from ._config_utils import get_all_contrasts
 from ._decoding import _handle_csp_args
 from ._logging import logger, gen_log_kwargs, _linkfile
 
@@ -549,70 +548,9 @@ def _all_conditions(*, cfg):
         conditions = list(cfg.conditions.keys())
     else:
         conditions = cfg.conditions.copy()
-    conditions.extend([contrast["name"] for contrast in cfg.all_contrasts])
+    all_contrasts = get_all_contrasts(cfg)
+    conditions.extend([contrast["name"] for contrast in all_contrasts])
     return conditions
-
-
-def run_report_average_source(
-    *,
-    cfg: SimpleNamespace,
-    exec_params: SimpleNamespace,
-    subject: str,
-    session: Optional[str],
-) -> None:
-    #######################################################################
-    #
-    # Visualize forward solution, inverse operator, and inverse solutions.
-    #
-    evoked_fname = BIDSPath(
-        subject=subject,
-        session=session,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        run=None,
-        recording=cfg.rec,
-        space=cfg.space,
-        suffix="ave",
-        extension=".fif",
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        check=False,
-    )
-    evokeds = mne.read_evokeds(evoked_fname)
-    method = cfg.inverse_method
-    inverse_str = method
-    hemi_str = "hemi"  # MNE will auto-append '-lh' and '-rh'.
-    morph_str = "morph2fsaverage"
-    conditions = _all_conditions(cfg=cfg)
-    with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
-    ) as report:
-        for condition, evoked in zip(conditions, evokeds):
-            tags = (
-                "source-estimate",
-                _sanitize_cond_tag(condition),
-            )
-            if condition in cfg.conditions:
-                title = f"Average: {condition}"
-            else:  # It's a contrast of two conditions.
-                title = f"Average contrast: {condition}"
-                tags = tags + ("contrast",)
-            cond_str = sanitize_cond_name(condition)
-            fname_stc_avg = evoked_fname.copy().update(
-                suffix=f"{cond_str}+{inverse_str}+{morph_str}+{hemi_str}",
-                extension=None,
-            )
-            if not Path(f"{fname_stc_avg.fpath}-lh.stc").exists():
-                continue
-            report.add_stc(
-                stc=fname_stc_avg,
-                title=title,
-                subject="fsaverage",
-                subjects_dir=cfg.fs_subjects_dir,
-                n_time_points=cfg.report_stc_n_time_points,
-                tags=tags,
-                replace=True,
-            )
 
 
 def _sanitize_cond_tag(cond):

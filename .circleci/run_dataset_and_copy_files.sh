@@ -36,7 +36,7 @@ if [[ "$RERUN_TEST" == "false" ]]; then
   echo "Skipping rerun test"
   RUN_TIME=0
 else
-  pytest mne_bids_pipeline -k $DS_RUN
+  pytest mne_bids_pipeline --cov-append -k $DS_RUN
   RUN_TIME=$SECONDS
   echo "Runtime: ${RUN_TIME} seconds (should be < 20)"
 fi

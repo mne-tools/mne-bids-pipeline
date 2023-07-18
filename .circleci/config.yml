@@ -486,7 +486,8 @@ jobs:
             - data-cache-ds000248-4
       - run:
           name: test ds000248_base
-          command: $RUN_TESTS ds000248_base
+          # Forces rerunning (cov and FLASH BEM) so don't check
+          command: $RUN_TESTS -r ds000248_base
       - codecov/upload
       - store_test_results:
           path: ./test-results

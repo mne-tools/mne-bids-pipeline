@@ -681,6 +681,16 @@ location is used.
     ```
 """  # noqa : E501
 
+mf_esss: int = 0
+"""
+Number of extended SSS (eSSS) basis projectors to use from empty-room data.
+"""
+
+mf_esss_reject: Optional[Dict[str, float]] = None
+"""
+Rejection parameters to use when computing the extended SSS (eSSS) basis.
+"""
+
 mf_mc: bool = False
 """
 If True, perform movement compensation on the data.

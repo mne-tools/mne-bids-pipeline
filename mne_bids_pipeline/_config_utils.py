@@ -615,3 +615,10 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict:
 
 def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
     return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg
+
+
+# Adapted from MNE-Python
+def _pl(x, *, non_pl="", pl="s"):
+    """Determine if plural should be used."""
+    len_x = x if isinstance(x, (int, np.generic)) else len(x)
+    return non_pl if len_x == 1 else pl

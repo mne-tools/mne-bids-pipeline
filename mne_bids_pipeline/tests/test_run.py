@@ -3,6 +3,7 @@ import sys
 import shutil
 from pathlib import Path
 from typing import Collection, Dict, Optional, TypedDict
+import os
 
 import pytest
 
@@ -23,18 +24,20 @@ class _TestOptionsT(TypedDict, total=False):
     steps: Collection[str]
     task: Optional[str]
     env: Dict[str, str]
+    requires: Collection[str]
 
 
 # If not supplied below, the defaults are:
 # key: {
-#     'dataset': key.split('_')[0],
-#     'config': f'config_{key}.py',
-#     'steps': ('preprocessing', 'sensor'),
-#     'env': {},
-#     'task': None,
+#     "dataset": key.split("_")[0],
+#     "config": f"config_{key}.py",
+#     "steps": ("preprocessing", "sensor"),
+#     "env": {},
+#     "task": None,
+#     "requires": (),
 #     "extra_config": "",
 # }
-#
+
 TEST_SUITE: Dict[str, _TestOptionsT] = {
     "ds003392": {},
     "ds004229": {},
@@ -57,6 +60,7 @@ TEST_SUITE: Dict[str, _TestOptionsT] = {
     },
     "ds000248_base": {
         "steps": ("preprocessing", "sensor", "source"),
+        "requires": ("freesurfer",),
         "extra_config": """
 _raw_split_size = "60MB"  # hits both task-noise and task-audiovisual
 _epochs_split_size = "30MB"
@@ -67,12 +71,15 @@ _n_jobs = {"preprocessing/_05_make_epochs": 1}
     "ds000248_ica": {},
     "ds000248_T1_BEM": {
         "steps": ("source/make_bem_surfaces",),
+        "requires": ("freesurfer",),
     },
     "ds000248_FLASH_BEM": {
         "steps": ("source/make_bem_surfaces",),
+        "requires": ("freesurfer",),
     },
     "ds000248_coreg_surfaces": {
         "steps": ("freesurfer/coreg_surfaces",),
+        "requires": ("freesurfer",),
     },
     "ds000248_no_mri": {
         "steps": ("preprocessing", "sensor", "source"),
@@ -138,6 +145,9 @@ def dataset_test(request):
     capsys = request.getfixturevalue("capsys")
     dataset = request.getfixturevalue("dataset")
     test_options = TEST_SUITE[dataset]
+    if "freesurfer" in test_options.get("requires", ()):
+        if "FREESURFER_HOME" not in os.environ:
+            pytest.skip("FREESURFER_HOME required but not found")
     dataset_name = test_options.get("dataset", dataset.split("_")[0])
     with capsys.disabled():
         if request.config.getoption("--download", False):  # download requested

@@ -303,8 +303,8 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
 
 def _update_for_splits(
-    files_dict: Dict[str, BIDSPath],
-    key: str,
+    files_dict: Union[Dict[str, BIDSPath], BIDSPath],
+    key: Optional[str],
     *,
     single: bool = False,
     allow_missing: bool = False,

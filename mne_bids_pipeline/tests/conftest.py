@@ -34,6 +34,9 @@ def pytest_configure(config):
     # seaborn calling tight layout, etc.
     ignore:The figure layout has changed to tight:UserWarning
     ignore:The \S+_cmap function was deprecated.*:DeprecationWarning
+    # seaborn->pandas
+    ignore:is_categorical_dtype is deprecated.*:FutureWarning
+    ignore:use_inf_as_na option is deprecated.*:FutureWarning
     # Dask distributed with jsonschema 4.18
     ignore:jsonschema\.RefResolver is deprecated.*:DeprecationWarning
     # seaborn->pandas

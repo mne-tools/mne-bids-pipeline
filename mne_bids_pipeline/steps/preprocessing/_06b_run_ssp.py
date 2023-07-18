@@ -10,13 +10,13 @@ import mne
 from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 from mne import compute_proj_evoked, compute_proj_epochs
 from mne_bids import BIDSPath
-from mne.utils import _pl
 
 from ..._config_utils import (
     get_runs,
     get_sessions,
     get_subjects,
     _bids_kwargs,
+    _pl,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend

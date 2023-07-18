@@ -44,6 +44,7 @@ epochs_decim = 4
 bem_mri_images = "FLASH"
 recreate_bem = True
 
+# use n_jobs=1 here to ensure that we get coverage for metadata_query, etc.
 n_jobs = 1
 
 

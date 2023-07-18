@@ -121,7 +121,7 @@ def test_datasets_in_doc():
         n_found = len(pw.findall(circle_yaml_src))
         assert n_found == this_count, f"{pw} ({n_found} != {this_count})"
         # jobs: test_*: steps: run test
-        cp = re.compile(rf" command: \$RUN_TESTS {name}.*")
+        cp = re.compile(rf" command: \$RUN_TESTS[ -rc]*{name}.*")
         n_found = len(cp.findall(circle_yaml_src))
         assert n_found == count, f"{cp} ({n_found} != {count})"
 

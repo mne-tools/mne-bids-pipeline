@@ -48,11 +48,11 @@ class _MBPLogger:
 
     def title(self, title):
         # Align left with ASCTIME offset
-        title = f"[title]┌────────┐ {title}[/]"
+        title = f"[title]┌────────┬ {title}[/]"
         self._console.rule(title=title, characters="─", style="title", align="left")
 
     def end(self, msg=""):
-        self._console.print(f"[title]└────────┘[/] {msg}")
+        self._console.print(f"[title]└────────┴ {msg}[/]")
 
     @property
     def level(self):

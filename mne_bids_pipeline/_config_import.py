@@ -36,6 +36,17 @@ def _import_config(
         log=log,
     )
 
+    extra_exec_params_keys = ()
+    extra_config = os.getenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", "")
+    if extra_config:
+        msg = f"With testing config: {extra_config}"
+        logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+        _update_config_from_path(
+            config=config,
+            config_path=extra_config,
+        )
+        extra_exec_params_keys = ("_n_jobs",)
+
     # Check it
     if check:
         _check_config(config)
@@ -69,7 +80,7 @@ def _import_config(
         # Misc
         "deriv_root",
         "config_path",
-    )
+    ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
     for k in keys:
@@ -102,6 +113,32 @@ def _get_default_config():
     return config
 
 
+def _update_config_from_path(
+    *,
+    config: SimpleNamespace,
+    config_path: PathLike,
+):
+    user_names = list()
+    config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
+    # Import configuration from an arbitrary path without having to fiddle
+    # with `sys.path`.
+    spec = importlib.util.spec_from_file_location(
+        name="custom_config", location=config_path
+    )
+    custom_cfg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(custom_cfg)
+    for key in dir(custom_cfg):
+        if not key.startswith("__"):
+            # don't validate private vars, but do add to config
+            # (e.g., so that our hidden _raw_split_size is included)
+            if not key.startswith("_"):
+                user_names.append(key)
+            val = getattr(custom_cfg, key)
+            logger.debug("Overwriting: %s -> %s" % (key, val))
+            setattr(config, key, val)
+    return user_names
+
+
 def _update_with_user_config(
     *,
     config: SimpleNamespace,  # modified in-place
@@ -121,23 +158,12 @@ def _update_with_user_config(
     # 2. User config
     user_names = list()
     if config_path is not None:
-        config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
-        # Import configuration from an arbitrary path without having to fiddle
-        # with `sys.path`.
-        spec = importlib.util.spec_from_file_location(
-            name="custom_config", location=config_path
+        user_names.extend(
+            _update_config_from_path(
+                config=config,
+                config_path=config_path,
+            )
         )
-        custom_cfg = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(custom_cfg)
-        for key in dir(custom_cfg):
-            if not key.startswith("__"):
-                # don't validate private vars, but do add to config
-                # (e.g., so that our hidden _raw_split_size is included)
-                if not key.startswith("_"):
-                    user_names.append(key)
-                val = getattr(custom_cfg, key)
-                logger.debug("Overwriting: %s -> %s" % (key, val))
-                setattr(config, key, val)
     config.config_path = config_path
 
     # 3. Overrides via command-line switches

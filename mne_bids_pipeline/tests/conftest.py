@@ -39,6 +39,10 @@ def pytest_configure(config):
     ignore:use_inf_as_na option is deprecated.*:FutureWarning
     # Dask distributed with jsonschema 4.18
     ignore:jsonschema\.RefResolver is deprecated.*:DeprecationWarning
+    # seaborn->pandas
+    ignore:is_categorical_dtype is deprecated.*:FutureWarning
+    ignore:use_inf_as_na option is deprecated.*:FutureWarning
+    ignore:All-NaN axis encountered.*:RuntimeWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

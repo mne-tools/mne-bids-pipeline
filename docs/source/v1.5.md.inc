@@ -6,6 +6,7 @@
 - Added examples of T1 and FLASH BEM to website (#758 by @larsoner)
 - Added support for extended SSS (eSSS) in Maxwell filtering (#762 by @larsoner)
 - Output logging spacing improved (#764 by @larsoner)
+- Added caching of sensor and source average steps (#765 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

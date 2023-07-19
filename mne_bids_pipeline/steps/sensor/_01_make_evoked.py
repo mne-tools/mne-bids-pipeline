@@ -12,10 +12,11 @@ from ..._config_utils import (
     get_all_contrasts,
     _bids_kwargs,
     _restrict_analyze_channels,
+    _pl,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _sanitize_cond_tag
+from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
 from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
 
 
@@ -98,10 +99,17 @@ def run_evoked(
 
     # Report
     if evokeds:
-        msg = f"Adding {len(evokeds)} evoked signals and contrasts to the " f"report."
+        n_contrasts = len(cfg.contrasts)
+        n_signals = len(evokeds) - n_contrasts
+        msg = (
+            f"Adding {n_signals} evoked response{_pl(n_signals)} and "
+            f"{n_contrasts} contrast{_pl(n_contrasts)} to the report."
+        )
     else:
         msg = "No evoked conditions or contrasts found."
     logger.info(**gen_log_kwargs(message=msg))
+    all_conditions = _all_conditions(cfg=cfg)
+    assert list(all_conditions) == list(all_evoked)  # otherwise we have a bug
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:

@@ -154,3 +154,7 @@ def gen_log_kwargs(
 
 def _linkfile(uri):
     return f"[link=file://{uri}]{uri}[/link]"
+
+
+def _is_testing() -> bool:
+    return os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true"

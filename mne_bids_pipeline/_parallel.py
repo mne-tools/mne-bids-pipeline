@@ -5,15 +5,25 @@ from types import SimpleNamespace
 
 import joblib
 
-from ._logging import logger
+from ._logging import logger, gen_log_kwargs, _is_testing
 
 
-def get_n_jobs(*, exec_params: SimpleNamespace) -> int:
+def get_n_jobs(*, exec_params: SimpleNamespace, log_override: bool = False) -> int:
     n_jobs = exec_params.n_jobs
     if n_jobs < 0:
         n_cores = joblib.cpu_count()
         n_jobs = min(n_cores + n_jobs + 1, n_cores)
 
+    # Shim to allow overriding n_jobs for specific steps
+    if _is_testing() and hasattr(exec_params, "_n_jobs"):
+        from ._run import _get_step_path, _short_step_path
+
+        step_path = _short_step_path(_get_step_path())
+        orig_n_jobs = n_jobs
+        n_jobs = exec_params._n_jobs.get(step_path, n_jobs)
+        if log_override and n_jobs != orig_n_jobs:
+            msg = f"Overriding n_jobs: {orig_n_jobs}→{n_jobs}"
+            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
     return n_jobs
 
 
@@ -30,14 +40,16 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
         return
 
     n_workers = get_n_jobs(exec_params=exec_params)
-    logger.info(f"👾 Initializing Dask client with {n_workers} workers …")
+    msg = f"Dask initializing with {n_workers} workers …"
+    logger.info(**gen_log_kwargs(message=msg, emoji="👾"))
 
     if exec_params.dask_temp_dir is None:
         this_dask_temp_dir = exec_params.deriv_root / ".dask-worker-space"
     else:
         this_dask_temp_dir = exec_params.dask_temp_dir
 
-    logger.info(f"📂 Temporary directory is: {this_dask_temp_dir}")
+    msg = f"Dask temporary directory: {this_dask_temp_dir}"
+    logger.info(**gen_log_kwargs(message=msg, emoji="📂"))
     dask.config.set(
         {
             "temporary-directory": this_dask_temp_dir,
@@ -61,10 +73,8 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
     client.auto_restart = False  # don't restart killed workers
 
     dashboard_url = client.dashboard_link
-    logger.info(
-        f"⏱  The Dask client is ready. Open {dashboard_url} "
-        f"to monitor the workers.\n"
-    )
+    msg = "Dask client dashboard: " f"[link={dashboard_url}]{dashboard_url}[/link]"
+    logger.info(**gen_log_kwargs(message=msg, emoji="🌎"))
 
     if exec_params.dask_open_dashboard:
         import webbrowser
@@ -76,29 +86,37 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
 
 
 def get_parallel_backend_name(
-    *, exec_params: SimpleNamespace
+    *,
+    exec_params: SimpleNamespace,
 ) -> Literal["dask", "loky"]:
     if (
         exec_params.parallel_backend == "loky"
         or get_n_jobs(exec_params=exec_params) == 1
     ):
-        return "loky"
+        backend = "loky"
     elif exec_params.parallel_backend == "dask":
         # Disable interactive plotting backend
         import matplotlib
 
         matplotlib.use("Agg")
-        return "dask"
+        backend = "dask"
     else:
         # TODO: Move to value validation step
         raise ValueError(f"Unknown parallel backend: {exec_params.parallel_backend}")
+
+    return backend
 
 
 def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backend:
     import joblib
 
     backend = get_parallel_backend_name(exec_params=exec_params)
-    kwargs = {"n_jobs": get_n_jobs(exec_params=exec_params)}
+    kwargs = {
+        "n_jobs": get_n_jobs(
+            exec_params=exec_params,
+            log_override=True,
+        )
+    }
 
     if backend == "loky":
         kwargs["inner_max_num_threads"] = 1

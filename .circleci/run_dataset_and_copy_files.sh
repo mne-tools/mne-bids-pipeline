@@ -2,21 +2,48 @@
 
 set -eo pipefail
 
+COPY_FILES="true"
+RERUN_TEST="true"
+while getopts "cr" option; do
+   echo $option
+   case $option in
+      c)
+        COPY_FILES="false";;
+      r)
+        RERUN_TEST="false";;
+   esac
+done
+shift "$(($OPTIND -1))"
+
 DS_RUN=$1
-if [[ "$2" == "" ]]; then
-  DS="$DS_RUN"
-else
-  DS="$2"
+if [[ -z $1 ]]; then
+  echo "Missing dataset argument"
+  exit 1
 fi
-if [[ "$3" == "--no-copy" ]]; then
-  COPY_FILES="false"
+if [[ "$DS_RUN" == "ERP_CORE_"* ]]; then
+  DS="ERP_CORE"
 else
-  COPY_FILES="true"
+  DS="$1"
 fi
 
+SECONDS=0
 pytest mne_bids_pipeline --junit-xml=test-results/junit-results.xml -k ${DS_RUN}
+echo "Runtime: ${SECONDS} seconds"
+
+# rerun test (check caching)!
+SECONDS=0
+if [[ "$RERUN_TEST" == "false" ]]; then
+  echo "Skipping rerun test"
+  RUN_TIME=0
+else
+  pytest mne_bids_pipeline --cov-append -k $DS_RUN
+  RUN_TIME=$SECONDS
+  echo "Runtime: ${RUN_TIME} seconds (should be < 20)"
+fi
+test $RUN_TIME -lt 20
 
 if [[ "$COPY_FILES" == "false" ]]; then
+  echo "Not copying files"
   exit 0
 fi
 mkdir -p ~/reports/${DS}

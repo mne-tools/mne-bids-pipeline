@@ -11,6 +11,7 @@ from ._config_utils import _get_step_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
 from ._logging import logger, gen_log_kwargs
+from ._parallel import get_parallel_backend
 from ._run import _short_step_path
 
 
@@ -195,13 +196,18 @@ def main():
 
     logger.title("Welcome aboard MNE-BIDS-Pipeline! 👋")
     msg = f"Using configuration: {config}"
+    __mne_bids_pipeline_step__ = pathlib.Path(__file__)  # used for logging
     logger.info(**gen_log_kwargs(message=msg, emoji="📝"))
-    logger.end()
-
     config_imported = _import_config(
         config_path=config_path,
         overrides=overrides,
     )
+    # Initialize dask now
+    with get_parallel_backend(config_imported.exec_params):
+        pass
+    del __mne_bids_pipeline_step__
+    logger.end()
+
     for step_module in step_modules:
         start = time.time()
         step = _short_step_path(pathlib.Path(step_module.__file__))

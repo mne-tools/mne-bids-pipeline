@@ -4,7 +4,6 @@ import copy
 import functools
 import hashlib
 import inspect
-import os
 import pathlib
 import pdb
 import sys
@@ -20,7 +19,7 @@ import pandas as pd
 from mne_bids import BIDSPath
 
 from ._config_utils import get_task
-from ._logging import logger, gen_log_kwargs
+from ._logging import logger, gen_log_kwargs, _is_testing
 
 
 def failsafe_run(
@@ -85,7 +84,7 @@ def failsafe_run(
                 if on_error == "abort":
                     message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
 
-                    if os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true":
+                    if _is_testing():
                         raise
                     logger.error(
                         **gen_log_kwargs(message=message, **kwargs_copy, emoji="❌")
@@ -357,8 +356,10 @@ def _get_step_path(
         if "steps" in fname.parts:
             return fname
         else:  # pragma: no cover
-            if frame.function == "__mne_bids_pipeline_failsafe_wrapper__":
+            try:
                 return frame.frame.f_locals["__mne_bids_pipeline_step__"]
+            except KeyError:
+                pass
     else:  # pragma: no cover
         paths = "\n".join(paths)
         raise RuntimeError(f"Could not find step path in call stack:\n{paths}")

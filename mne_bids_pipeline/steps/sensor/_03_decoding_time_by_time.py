@@ -314,12 +314,12 @@ def main(*, config: SimpleNamespace) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:
         msg = "No contrasts specified; not performing decoding."
-        logger.info(**gen_log_kwargs(message=msg))
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     if not config.decode:
         msg = "No decoding requested by user."
-        logger.info(**gen_log_kwargs(message=msg))
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`

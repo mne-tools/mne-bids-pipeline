@@ -1572,7 +1572,7 @@ If `None`, uses
 
 time_frequency_subtract_evoked: bool = False
 """
-Whether to subtract the evoked signal (averaged across all epochs) from the
+Whether to subtract the evoked response (averaged across all epochs) from the
 epochs before passing them to time-frequency analysis. Set this to `True` to
 highlight induced activity.
 

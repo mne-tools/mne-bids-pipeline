@@ -69,11 +69,12 @@ def run_time_frequency(
 ) -> dict:
     import matplotlib.pyplot as plt
 
-    msg = f'Input: {in_files["epochs"].basename}'
+    epochs_path = in_files.pop("epochs")
+    msg = f"Reading {epochs_path.basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    bids_path = in_files["epochs"].copy().update(processing=None)
-
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(epochs_path)
+    bids_path = epochs_path.copy().update(processing=None)
+    del epochs_path
     _restrict_analyze_channels(epochs, cfg)
 
     if cfg.time_frequency_subtract_evoked:
@@ -87,6 +88,7 @@ def run_time_frequency(
 
     out_files = dict()
     for condition in cfg.time_frequency_conditions:
+        logger.info(**gen_log_kwargs(message=f"Computing TFR for {condition}"))
         this_epochs = epochs[condition]
         power, itc = mne.time_frequency.tfr_morlet(
             this_epochs, freqs=freqs, return_itc=True, n_cycles=time_frequency_cycles
@@ -182,7 +184,7 @@ def main(*, config: SimpleNamespace) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:
         msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg))
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
     parallel, run_func = parallel_func(

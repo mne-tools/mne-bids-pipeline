@@ -173,9 +173,9 @@ def run_average(
             cond_str = sanitize_cond_name(condition)
             tags = ("source-estimate", cond_str)
             if condition in cfg.conditions:
-                title = f"Average: {condition}"
+                title = f"Average (source): {condition}"
             else:  # It's a contrast of two conditions.
-                title = f"Average contrast: {condition}"
+                title = f"Average (source) contrast: {condition}"
                 tags = tags + ("contrast",)
             report.add_stc(
                 stc=out_files[condition],

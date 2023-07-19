@@ -5,7 +5,6 @@ The M/EEG-channel data are averaged for group averages.
 
 import os
 import os.path as op
-from collections import defaultdict
 from functools import partial
 from typing import Optional, TypedDict, List, Tuple
 from types import SimpleNamespace
@@ -24,6 +23,7 @@ from ..._config_utils import (
     get_decoding_contrasts,
     _bids_kwargs,
     _restrict_analyze_channels,
+    _pl,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
@@ -39,6 +39,7 @@ from ..._report import (
     plot_time_by_time_decoding_t_values,
     _plot_decoding_time_generalization,
     _contrasts_to_names,
+    _all_conditions,
 )
 
 
@@ -80,23 +81,24 @@ def average_evokeds(
 ) -> dict:
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
-    all_evokeds = defaultdict(list)
+    conditions = _all_conditions(cfg=cfg)
+    evokeds = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
     for key in keys:
         if not key.startswith("evoked-"):
             continue
         fname_in = in_files.pop(key)
-        evokeds = mne.read_evokeds(fname_in)
-        for idx, evoked in enumerate(evokeds):
-            all_evokeds[idx].append(evoked)  # Insert into the container
+        these_evokeds = mne.read_evokeds(fname_in)
+        for idx, evoked in enumerate(these_evokeds):
+            evokeds[idx].append(evoked)  # Insert into the container
 
-    for idx, evokeds in all_evokeds.items():
-        all_evokeds[idx] = mne.grand_average(
-            evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
+    for idx, these_evokeds in enumerate(evokeds):
+        evokeds[idx] = mne.grand_average(
+            these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
         )  # Combine subjects
         # Keep condition in comment
-        all_evokeds[idx].comment = "Grand average: " + evokeds[0].comment
+        evokeds[idx].comment = "Grand average: " + these_evokeds[0].comment
 
     out_files = dict()
     fname_out = out_files["evokeds"] = BIDSPath(
@@ -120,7 +122,6 @@ def average_evokeds(
 
     msg = f"Saving grand-averaged evoked sensor data: {fname_out.basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    evokeds = list(all_evokeds.values())
     mne.write_evokeds(fname_out, evokeds, overwrite=True)
     if exec_params.interactive:
         for evoked in evokeds:
@@ -140,20 +141,22 @@ def average_evokeds(
         )
 
         # Evoked responses
-        if all_evokeds:
+        if evokeds:
+            n_contrasts = len(cfg.contrasts)
+            n_signals = len(evokeds) - n_contrasts
             msg = (
-                f"Adding {len(all_evokeds)} evoked signals and contrasts to "
-                "the report."
+                f"Adding {n_signals} evoked response{_pl(n_signals)} and "
+                f"{n_contrasts} contrast{_pl(n_contrasts)} to the report."
             )
         else:
             msg = "No evoked conditions or contrasts found."
         logger.info(**gen_log_kwargs(message=msg))
-        for condition, evoked in all_evokeds.items():
+        for condition, evoked in zip(conditions, evokeds):
             tags = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f"Condition: {condition}"
+                title = f"Average (sensor): {condition}"
             else:  # It's a contrast of two conditions.
-                title = f"Contrast: {condition}"
+                title = f"Average (sensor) contrast: {condition}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(

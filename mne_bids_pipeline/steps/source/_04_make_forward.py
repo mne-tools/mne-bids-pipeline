@@ -6,6 +6,8 @@ Calculate forward solution for M/EEG channels.
 from types import SimpleNamespace
 from typing import Optional
 
+import numpy as np
+
 import mne
 from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
@@ -30,6 +32,8 @@ from ..._run import failsafe_run, save_logs, _prep_out_files
 def _prepare_trans_template(
     *,
     cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
     info: mne.Info,
 ) -> mne.transforms.Transform:
     assert isinstance(cfg.use_template_mri, str)
@@ -47,25 +51,30 @@ def _prepare_trans_template(
         )
     else:
         fiducials = "estimated"  # get fiducials from fsaverage
+        logger.info(**gen_log_kwargs("Matching template MRI using fiducials"))
         coreg = Coregistration(
             info, cfg.fs_subject, cfg.fs_subjects_dir, fiducials=fiducials
         )
-        coreg.fit_fiducials(verbose=True)
+        # Adapted from MNE-Python
+        coreg.fit_fiducials(verbose=False)
+        dist = np.median(coreg.compute_dig_mri_distances() * 1000)
+        logger.info(**gen_log_kwargs(f"Median dig ↔ MRI distance: {dist:6.2f} mm"))
         trans = coreg.trans
 
     return trans
 
 
-def _prepare_trans(
+def _prepare_trans_subject(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
     bids_path: BIDSPath,
 ) -> mne.transforms.Transform:
     # Generate a head ↔ MRI transformation matrix from the
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
-    subject, session = bids_path.subject, bids_path.session
 
     # TODO: This breaks our encapsulation
     config = _import_config(
@@ -90,7 +99,7 @@ def _prepare_trans(
             BIDSPath(subject=subject, session=session)
         )
 
-    msg = "Estimating head ↔ MRI transform"
+    msg = "Computing head ↔ MRI transform from matched fiducials"
     logger.info(**gen_log_kwargs(message=msg))
 
     trans = get_head_mri_trans(
@@ -174,11 +183,15 @@ def run_forward(
     if cfg.use_template_mri is not None:
         trans = _prepare_trans_template(
             cfg=cfg,
+            subject=subject,
+            session=session,
             info=info,
         )
     else:
-        trans = _prepare_trans(
+        trans = _prepare_trans_subject(
             cfg=cfg,
+            subject=subject,
+            session=session,
             exec_params=exec_params,
             bids_path=bids_path,
         )

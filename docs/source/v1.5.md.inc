@@ -15,6 +15,7 @@
 ### :medical_symbol: Code health
 
 - Fixed doc build errors and dependency specifications (#755 by @larsoner)
+- Ensure `memory_file_method = "hash"` is tested (#768 by @larsoner)
 
 ### :bug: Bug fixes
 

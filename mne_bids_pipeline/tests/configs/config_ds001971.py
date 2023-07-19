@@ -28,3 +28,6 @@ decoding_csp_freqs = {
     "beta": [13, 20, 30],
 }
 decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]
+
+# Just to test that MD5 works
+memory_file_method = "hash"

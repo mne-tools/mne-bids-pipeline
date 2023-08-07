@@ -18,25 +18,16 @@ DATA_DIR = Path("~/mne_data").expanduser()
 
 
 # Once PEP655 lands in 3.11 we can use NotRequired instead of total=False
+# Effective defaults are listed in comments
 class _TestOptionsT(TypedDict, total=False):
-    dataset: str
-    config: str
-    steps: Collection[str]
-    task: Optional[str]
-    env: Dict[str, str]
-    requires: Collection[str]
+    dataset: str  # key.split("_")[0]
+    config: str  # f"config_{key}.py"
+    steps: Collection[str]  # ("preprocessing", "sensor")
+    task: Optional[str]  # None
+    env: Dict[str, str]  # {}
+    requires: Collection[str]  # ()
+    extra_config: str  # ""
 
-
-# If not supplied below, the defaults are:
-# key: {
-#     "dataset": key.split("_")[0],
-#     "config": f"config_{key}.py",
-#     "steps": ("preprocessing", "sensor"),
-#     "env": {},
-#     "task": None,
-#     "requires": (),
-#     "extra_config": "",
-# }
 
 TEST_SUITE: Dict[str, _TestOptionsT] = {
     "ds003392": {},

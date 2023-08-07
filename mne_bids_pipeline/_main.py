@@ -67,7 +67,7 @@ def main():
             """\
         The root of the derivatives directory
         in which the pipeline will store the processing results.
-        If None, this will be derivatives/mne-bids-pipeline
+        If unspecified, this will be derivatives/mne-bids-pipeline
         inside the BIDS root."""
         ),
     ),

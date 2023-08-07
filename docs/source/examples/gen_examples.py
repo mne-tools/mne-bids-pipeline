@@ -142,7 +142,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         logger.warning(f"Dataset {dataset_name} has no HTML report.")
         continue
 
-    options = DATASET_OPTIONS[dataset_options_key]
+    options = DATASET_OPTIONS[dataset_options_key].copy()  # we modify locally
 
     report_str = "\n## Generated output\n\n"
     example_target_dir = this_dir / dataset_name
@@ -198,11 +198,11 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n"
         )
 
-    if options["openneuro"]:
+    if options.get("openneuro", ""):
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
-    elif options["git"]:
+    elif options.get("git", ""):
         url = options["git"]
-    elif options["web"]:
+    elif options.get("web", ""):
         url = options["web"]
     else:
         url = ""
@@ -211,7 +211,9 @@ for test_dataset_name, test_dataset_options in ds_iter:
         f"## Dataset source\n\nThis dataset was acquired from " f"[{url}]({url})\n"
     )
 
-    if options["openneuro"]:
+    if options.get("openneuro", ""):
+        for key in ("include", "exclude"):
+            options[key] = options.get(key, [])
         download_str = (
             f'\n??? example "How to download this dataset"\n'
             f"    Run in your terminal:\n"

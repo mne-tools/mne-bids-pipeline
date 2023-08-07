@@ -200,7 +200,7 @@ is required if you wish to use the resting-state recording to estimate noise
 covariance (via `noise_cov='rest'`).
 """
 
-ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]] = []
+ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]] = ["eeg"]
 """
 The channel types to consider.
 
@@ -217,7 +217,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[Literal["meg", "eeg"]] = None
+data_type: Optional[Literal["meg", "eeg"]] = "eeg"
 """
 The BIDS data type.
 

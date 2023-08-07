@@ -198,13 +198,15 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n"
         )
 
-    if options.get("openneuro", ""):
+    assert sum(key in options for key in ("openneuro", "git", "web", "datalad")) == 1
+    if "openneuro" in options:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
-    elif options.get("git", ""):
+    elif "git" in options:
         url = options["git"]
-    elif options.get("web", ""):
+    elif "web" in options:
         url = options["web"]
     else:
+        assert "datalad" in options  # guaranteed above
         url = ""
 
     source_str = (

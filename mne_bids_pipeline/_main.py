@@ -60,6 +60,18 @@ def main():
         help="BIDS root directory of the data to process.",
     )
     parser.add_argument(
+        "--deriv_root",
+        dest="deriv_root",
+        default=None,
+        help=dedent(
+            """\
+        The root of the derivatives directory
+        in which the pipeline will store the processing results.
+        If unspecified, this will be derivatives/mne-bids-pipeline
+        inside the BIDS root."""
+        ),
+    ),
+    parser.add_argument(
         "--subject", dest="subject", default=None, help="The subject to process."
     )
     parser.add_argument(
@@ -115,6 +127,7 @@ def main():
         )
     steps = options.steps
     root_dir = options.root_dir
+    deriv_root = options.deriv_root
     subject, session = options.subject, options.session
     task, run = options.task, options.run
     n_jobs = options.n_jobs
@@ -148,6 +161,10 @@ def main():
     overrides = SimpleNamespace()
     if root_dir:
         overrides.bids_root = pathlib.Path(root_dir).expanduser().resolve(strict=True)
+    if deriv_root:
+        overrides.deriv_root = (
+            pathlib.Path(deriv_root).expanduser().resolve(strict=False)
+        )
     if subject:
         overrides.subjects = [subject]
     if session:

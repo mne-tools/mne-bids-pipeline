@@ -213,7 +213,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         f"## Dataset source\n\nThis dataset was acquired from " f"[{url}]({url})\n"
     )
 
-    if options.get("openneuro", ""):
+    if "openneuro" in options:
         for key in ("include", "exclude"):
             options[key] = options.get(key, [])
         download_str = (

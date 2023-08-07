@@ -18,6 +18,7 @@
 
 - Fixed doc build errors and dependency specifications (#755 by @larsoner)
 - Ensure `memory_file_method = "hash"` is tested (#768 by @larsoner)
+- Enable [pre-commit.ci](https://pre-commit.ci) (#774 by @larsoner)
 
 ### :bug: Bug fixes
 

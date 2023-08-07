@@ -13,7 +13,10 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
     import datalad.api as dl
 
     print('datalad installing "{}"'.format(ds_name))
-    git_url = DATASET_OPTIONS[ds_name]["git"]
+    options = DATASET_OPTIONS[ds_name]
+    git_url = options["git"]
+    assert "exclude" not in options
+    assert "hash" not in options
     dataset = dl.install(path=ds_path, source=git_url)
 
     # XXX: git-annex bug:
@@ -24,7 +27,7 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
     else:
         n_jobs = 1
 
-    for to_get in DATASET_OPTIONS[ds_name]["include"]:
+    for to_get in DATASET_OPTIONS[ds_name].get("include", []):
         print('datalad get data "{}" for "{}"'.format(to_get, ds_name))
         dataset.get(to_get, jobs=n_jobs)
 
@@ -32,23 +35,27 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
 def _download_via_openneuro(*, ds_name: str, ds_path: Path):
     import openneuro
 
+    options = DATASET_OPTIONS[ds_name]
+    assert "hash" not in options
+
     openneuro.download(
-        dataset=DATASET_OPTIONS[ds_name]["openneuro"],
+        dataset=options["openneuro"],
         target_dir=ds_path,
-        include=DATASET_OPTIONS[ds_name]["include"],
-        exclude=DATASET_OPTIONS[ds_name]["exclude"],
+        include=options.get("include", []),
+        exclude=options.get("exclude", []),
         verify_size=False,
     )
 
 
 def _download_from_web(*, ds_name: str, ds_path: Path):
     """Retrieve Zip archives from a web URL."""
-    import cgi
-    import zipfile
-    import httpx
-    from tqdm import tqdm
+    import pooch
 
-    url = DATASET_OPTIONS[ds_name]["web"]
+    options = DATASET_OPTIONS[ds_name]
+    url = options["web"]
+    known_hash = options["hash"]
+    assert "exclude" not in options
+    assert "include" not in options
     if ds_path.exists():
         print(
             "Dataset directory already exists; remove it if you wish to "
@@ -57,65 +64,26 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
         return
 
     ds_path.mkdir(parents=True, exist_ok=True)
-
-    with httpx.Client(follow_redirects=True) as client:
-        with client.stream("GET", url=url) as response:
-            if not response.is_error:
-                pass  # All good!
-            else:
-                raise RuntimeError(
-                    f"Error {response.status_code} when trying " f"to download {url}"
-                )
-
-            header = response.headers["content-disposition"]
-            _, params = cgi.parse_header(header)
-            # where to store the archive
-            outfile = ds_path / params["filename"]
-            remote_file_size = int(response.headers["content-length"])
-
-            with open(outfile, mode="wb") as f:
-                with tqdm(
-                    desc=params["filename"],
-                    initial=0,
-                    total=remote_file_size,
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    leave=False,
-                ) as progress:
-                    num_bytes_downloaded = response.num_bytes_downloaded
-
-                    for chunk in response.iter_bytes():
-                        f.write(chunk)
-                        progress.update(
-                            response.num_bytes_downloaded - num_bytes_downloaded
-                        )
-                        num_bytes_downloaded = response.num_bytes_downloaded
-
-        assert outfile.suffix == ".zip"
-
-        with zipfile.ZipFile(outfile) as zip:
-            for zip_info in zip.infolist():
-                path_in_zip = Path(zip_info.filename)
-                # omit top-level directory from Zip archive
-                target_path = str(Path(*path_in_zip.parts[1:]))
-                if str(target_path) in (".", ".."):
-                    continue
-                if zip_info.filename.endswith("/"):
-                    (ds_path / target_path).mkdir(parents=True, exist_ok=True)
-                    continue
-                zip_info.filename = target_path
-                print(f"Extracting: {target_path}")
-                zip.extract(zip_info, ds_path)
-
-        outfile.unlink()
+    path = ds_path.parent.resolve(strict=True)
+    fname = f"{ds_name}.zip"
+    pooch.retrieve(
+        url=url,
+        path=path,
+        fname=fname,
+        processor=pooch.Unzip(extract_dir="."),  # relative to path
+        progressbar=True,
+        known_hash=known_hash,
+    )
+    (path / f"{ds_name}.zip").unlink()
 
 
 def _download(*, ds_name: str, ds_path: Path):
-    openneuro_name = DATASET_OPTIONS[ds_name]["openneuro"]
-    git_url = DATASET_OPTIONS[ds_name]["git"]
-    osf_node = DATASET_OPTIONS[ds_name]["osf"]
-    web_url = DATASET_OPTIONS[ds_name]["web"]
+    options = DATASET_OPTIONS[ds_name]
+    openneuro_name = options.get("openneuro", "")
+    git_url = options.get("git", "")
+    osf_node = options.get("osf", "")
+    web_url = options.get("web", "")
+    assert sum(bool(x) for x in (openneuro_name, git_url, osf_node, web_url)) == 1
 
     if openneuro_name:
         download_func = _download_via_openneuro
@@ -123,10 +91,9 @@ def _download(*, ds_name: str, ds_path: Path):
         download_func = _download_via_datalad
     elif osf_node:
         raise RuntimeError("OSF downloads are currently not supported.")
-    elif web_url:
-        download_func = _download_from_web
     else:
-        raise ValueError("No download location was specified.")
+        assert web_url
+        download_func = _download_from_web
 
     download_func(ds_name=ds_name, ds_path=ds_path)
 

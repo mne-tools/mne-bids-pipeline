@@ -52,6 +52,7 @@ dynamic = ["version"]
 tests = [
     "pytest",
     "pytest-cov",
+    "pooch",
     "psutil",
     "datalad",
     "ruff",

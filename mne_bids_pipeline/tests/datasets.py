@@ -3,23 +3,22 @@
 from typing import Dict, List, TypedDict
 
 
-class DATASET_OPTIONS_T(TypedDict):
-    git: str
-    openneuro: str
-    osf: str
-    web: str
-    include: List[str]
-    exclude: List[str]
+# If not supplied below, the effective defaults are listed in comments
+class DATASET_OPTIONS_T(TypedDict, total=False):
+    git: str  # ""
+    openneuro: str  # ""
+    osf: str  # ""
+    web: str  # ""
+    include: List[str]  # []
+    exclude: List[str]  # []
+    hash: str  # ""
 
 
 DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
-        "git": "",
-        "openneuro": "",
-        "osf": "",  # original dataset: '9f5w7'
+        # original dataset: "osf": "9f5w7"
         "web": "https://osf.io/3zk6n/download?version=2",
-        "include": [],
-        "exclude": [],
+        "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
     },
     "eeg_matchingpennies": {
         # This dataset started out on osf.io as dataset https://osf.io/cj2dr
@@ -31,18 +30,12 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         #   "include": ["sub-05"],
         #
         # So now we mirror this datalad-fetched git repo back on osf.io!
-        "git": "",
-        "openneuro": "",
-        "osf": "",  # original dataset: 'cj2dr'
+        # original dataset: "osf": "cj2dr"
         "web": "https://osf.io/download/8rbfk?version=1",
-        "include": [],
-        "exclude": [],
+        "hash": "sha256:06bfbe52c50b9343b6b8d2a5de3dd33e66ad9303f7f6bfbe6868c3c7c375fafd",  # noqa: E501
     },
     "ds003104": {  # Anonymized "somato" dataset.
-        "git": "",
         "openneuro": "ds003104",
-        "osf": "",
-        "web": "",
         "include": ["sub-01", "derivatives/freesurfer/subjects"],
         "exclude": [
             "derivatives/freesurfer/subjects/01/mri/aparc+aseg.mgz",
@@ -51,30 +44,19 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         ],
     },
     "ds000246": {
-        "git": "",
         "openneuro": "ds000246",
-        "osf": "",
-        "web": "",
         "include": [
             "sub-0001/meg/sub-0001_task-AEF_run-01_meg.ds",
             "sub-0001/meg/sub-0001_task-AEF_run-01_meg.json",
             "sub-0001/meg/sub-0001_task-AEF_run-01_channels.tsv",
         ],
-        "exclude": [],
     },
     "ds000247": {
-        "git": "",
         "openneuro": "ds000247",
-        "osf": "",
-        "web": "",
         "include": ["sub-0002/ses-01/meg"],
-        "exclude": [],
     },
     "ds000248": {
-        "git": "",
         "openneuro": "ds000248",
-        "osf": "",
-        "web": "",
         "include": ["sub-01", "sub-emptyroom", "derivatives/freesurfer/subjects"],
         "exclude": [
             "derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2005s+aseg.mgz",  # noqa: E501
@@ -88,10 +70,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         ],
     },
     "ds000117": {
-        "git": "",
         "openneuro": "ds000117",
-        "osf": "",
-        "web": "",
         "include": [
             "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*",  # noqa: E501
             "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*",  # noqa: E501
@@ -102,29 +81,17 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             "derivatives/meg_derivatives/ct_sparse.fif",
             "derivatives/meg_derivatives/sss_cal.dat",
         ],
-        "exclude": [],
     },
     "ds003775": {
-        "git": "",
         "openneuro": "ds003775",
-        "osf": "",
-        "web": "",
         "include": ["sub-010"],
-        "exclude": [],
     },
     "ds001810": {
-        "git": "",
         "openneuro": "ds001810",
-        "osf": "",
-        "web": "",
         "include": ["sub-01"],
-        "exclude": [],
     },
     "ds001971": {
-        "git": "",
         "openneuro": "ds001971",
-        "osf": "",
-        "web": "",
         "include": [
             "sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_events.tsv",
             "sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_eeg.set",
@@ -134,38 +101,25 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             "sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_coordsystem.json",  # noqa: E501
             "sub-001/eeg/sub-001_task-AudioCueWalkingStudy_run-01_channels.tsv",  # noqa: E501
         ],
-        "exclude": [],
     },
     "ds003392": {
-        "git": "",
         "openneuro": "ds003392",
-        "osf": "",
-        "web": "",
         "include": ["sub-01", "sub-emptyroom/ses-19111211"],
-        "exclude": [],
     },
     "ds004107": {
-        "git": "",
         "openneuro": "ds004107",
-        "osf": "",
-        "web": "",
         "include": [
             "sub-mind002/ses-01/meg/*coordsystem*",
             "sub-mind002/ses-01/meg/*auditory*",
         ],
-        "exclude": [],
     },
     "ds004229": {
-        "git": "",
         "openneuro": "ds004229",
-        "osf": "",
-        "web": "",
         "include": [
             "sub-102",
             "sub-emptyroom/ses-20000101",
             "derivatives/meg_derivatives/ct_sparse.fif",
             "derivatives/meg_derivatives/sss_cal.dat",
         ],
-        "exclude": [],
     },
 }

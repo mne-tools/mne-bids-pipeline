@@ -162,9 +162,7 @@ def main():
     if root_dir:
         overrides.bids_root = pathlib.Path(root_dir).expanduser().resolve(strict=True)
     if deriv_root:
-        overrides.deriv_root = (
-            pathlib.Path(deriv_root).expanduser().resolve(strict=False)
-        )
+        overrides.deriv_root = pathlib.Path(deriv_root).expanduser().resolve(strict=False)
     if subject:
         overrides.subjects = [subject]
     if session:

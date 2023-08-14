@@ -2100,7 +2100,14 @@ memory_location: Optional[Union[PathLike, bool]] = True
 """
 If not None (or False), caching will be enabled and the cache files will be
 stored in the given directory. The default (True) will use a
-`'joblib'` subdirectory in the BIDS derivative root of the dataset.
+`"_cache"` subdirectory (name configurable via the
+[`memory_subdir`][mne_bids_pipeline._config.memory_subdir]
+variable) in the BIDS derivative root of the dataset.
+"""
+
+memory_subdir: str = "_cache"
+"""
+The caching directory name to use if `memory_location` is `True`.
 """
 
 memory_file_method: Literal["mtime", "hash"] = "mtime"

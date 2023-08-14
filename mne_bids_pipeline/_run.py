@@ -123,7 +123,7 @@ class ConditionalStepMemory:
     def __init__(self, *, exec_params, get_input_fnames, get_output_fnames):
         memory_location = exec_params.memory_location
         if memory_location is True:
-            use_location = exec_params.deriv_root / "joblib"
+            use_location = exec_params.deriv_root / exec_params.memory_subdir
         elif not memory_location:
             use_location = None
         else:

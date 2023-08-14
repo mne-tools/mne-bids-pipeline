@@ -12,6 +12,8 @@
 
 [//]: # (### :warning: Behavior changes)
 
+- The default cache directory is now `_cache` within the derivatives folder when using `memory_location=True`, set [`memory_subdir="joblib"`][mne_bids_pipeline._config.memory_subdir] to get the behavior from v1.4 (#778 by @larsoner)
+
 [//]: # (- Whatever (#000 by @whoever))
 
 ### :medical_symbol: Code health

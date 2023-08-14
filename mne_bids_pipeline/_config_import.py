@@ -1,6 +1,8 @@
 import ast
 import copy
+from dataclasses import field
 import difflib
+from functools import partial
 import importlib
 import os
 import pathlib
@@ -10,7 +12,9 @@ from typing import Optional, List
 import matplotlib
 import numpy as np
 import mne
-from mne.utils import _check_option, _validate_type
+
+from pydantic import ValidationError
+from pydantic.dataclasses import dataclass
 
 from ._logging import logger, gen_log_kwargs
 from .typing import PathLike
@@ -49,7 +53,7 @@ def _import_config(
 
     # Check it
     if check:
-        _check_config(config)
+        _check_config(config, config_path)
         _check_misspellings_removals(
             config,
             valid_names=valid_names,
@@ -215,10 +219,11 @@ def _update_with_user_config(
     return user_names
 
 
-def _check_config(config: SimpleNamespace) -> None:
-    # TODO: Use pydantic to do these validations
-    # https://github.com/mne-tools/mne-bids-pipeline/issues/646
-    _check_option("config.parallel_backend", config.parallel_backend, ("dask", "loky"))
+def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> None:
+    _pydantic_validate(config=config, config_path=config_path)
+
+    # Eventually all of these could be pydantic-validated, but for now we'll
+    # just change the ones that are easy
 
     config.bids_root.resolve(strict=True)
 
@@ -231,12 +236,6 @@ def _check_config(config: SimpleNamespace) -> None:
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":
-        _check_option(
-            "config.ica_algorithm",
-            config.ica_algorithm,
-            ("picard", "fastica", "extended_infomax"),
-        )
-
         if config.ica_l_freq < 1:
             raise ValueError(
                 "You requested to high-pass filter the data before ICA with "
@@ -281,19 +280,6 @@ def _check_config(config: SimpleNamespace) -> None:
             f"{_VALID_TYPES}"
         )
 
-    _check_option("config.on_error", config.on_error, ("continue", "abort", "debug"))
-    _check_option(
-        "config.memory_file_method", config.memory_file_method, ("mtime", "hash")
-    )
-
-    if isinstance(config.noise_cov, str):
-        _check_option(
-            "config.noise_cov",
-            config.noise_cov,
-            ("emptyroom", "ad-hoc", "rest"),
-            extra="when a string",
-        )
-
     if config.noise_cov == "emptyroom" and "eeg" in config.ch_types:
         raise ValueError(
             "You requested to process data that contains EEG channels. In "
@@ -309,10 +295,6 @@ def _check_config(config: SimpleNamespace) -> None:
             "enable empty-room data processing. "
             "Please set process_empty_room = True"
         )
-
-    _check_option(
-        "config.bem_mri_images", config.bem_mri_images, ("FLASH", "T1", "auto")
-    )
 
     bl = config.baseline
     if bl is not None:
@@ -354,38 +336,78 @@ def _check_config(config: SimpleNamespace) -> None:
             "This is only allowed for resting-state analysis."
         )
 
-    _check_option(
-        "config.on_rename_missing_events",
-        config.on_rename_missing_events,
-        ("raise", "warn", "ignore"),
-    )
-
-    _validate_type(config.n_jobs, int, "n_jobs")
-
-    _check_option(
-        "config.config_validation",
-        config.config_validation,
-        ("raise", "warn", "ignore"),
-    )
-
-    _validate_type(
-        config.mf_destination,
-        (str, list, tuple, np.ndarray),
-        "config.mf_destination",
-    )
-    if isinstance(config.mf_destination, str):
-        _check_option(
-            "config.mf_destination",
-            config.mf_destination,
-            ("reference_run",),
-        )
-    else:
+    if not isinstance(config.mf_destination, str):
         destination = np.array(config.mf_destination, float)
         if destination.shape != (4, 4):
             raise ValueError(
                 "config.mf_destination, if array-like, must have shape (4, 4) "
                 f"but got shape {destination.shape}"
             )
+
+
+def _default_factory(key, val):
+    # convert a default to a default factory if needed, having an explicit
+    # allowlist of non-empty ones
+    allowlist = [
+        {"n_mag": 1, "n_grad": 1, "n_eeg": 1},  # n_proj_*
+        {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
+        {"suffix": "ave"},  # source_info_path_update
+        ["evoked"],  # inverse_targets
+    ]
+    for typ in (dict, list):
+        if isinstance(val, typ):
+            try:
+                idx = allowlist.index(val)
+            except ValueError:
+                assert val == typ(), (key, val)
+                default_factory = typ
+            else:
+                if typ is dict:
+                    default_factory = partial(typ, **allowlist[idx])
+                else:
+                    assert typ is list
+                    default_factory = partial(typ, allowlist[idx])
+            return field(default_factory=default_factory)
+    return val
+
+
+def _pydantic_validate(
+    config: SimpleNamespace,
+    config_path: Optional[PathLike],
+):
+    """Create dataclass from config type hints and validate with pydantic."""
+    # https://docs.pydantic.dev/latest/usage/dataclasses/
+    from . import _config as root_config
+
+    annotations = copy.deepcopy(root_config.__annotations__)  # just be safe
+    attrs = {
+        key: _default_factory(key, val)
+        for key, val in root_config.__dict__.items()
+        if key in annotations
+    }
+    # everything should be type annotated, make sure they are
+    asym = set(attrs).symmetric_difference(set(annotations))
+    assert asym == set(), asym
+    name = "user configuration"
+    if config_path is not None:
+        name += f" from {config_path}"
+    UserConfig = type(
+        name,
+        (object,),
+        {"__annotations__": annotations, **attrs},
+    )
+    dataclass_config = dict(
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+        strict=True,  # do not allow float for int for example
+    )
+    UserConfig = dataclass(config=dataclass_config)(UserConfig)
+    # Now use pydantic to automagically validate
+    user_vals = {key: val for key, val in config.__dict__.items() if key in annotations}
+    try:
+        UserConfig(**user_vals)
+    except ValidationError as err:
+        raise ValueError(str(err)) from None
 
 
 _REMOVED_NAMES = {

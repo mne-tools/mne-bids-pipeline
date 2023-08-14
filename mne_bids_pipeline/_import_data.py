@@ -225,7 +225,7 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     subject = bids_path.subject
     raw = read_raw_bids(
         bids_path=bids_path,
-        extra_params=cfg.reader_extra_params,
+        extra_params=cfg.reader_extra_params or {},
         verbose=cfg.read_raw_bids_verbose,
     )
 
@@ -458,7 +458,7 @@ def import_er_data(
     # Load reference run plus its auto-bads
     raw_ref = read_raw_bids(
         bids_path_ref_in,
-        extra_params=cfg.reader_extra_params,
+        extra_params=cfg.reader_extra_params or {},
         verbose=cfg.read_raw_bids_verbose,
     )
     if bids_path_ref_bads_in is not None:

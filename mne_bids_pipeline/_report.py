@@ -613,6 +613,10 @@ def add_csp_grand_average(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
+        epochs_tmin=cfg.epochs_tmin,
+        epochs_tmax=cfg.epochs_tmax,
+        time_frequency_freq_min=cfg.time_frequency_freq_min,
+        time_frequency_freq_max=cfg.time_frequency_freq_max,
     )
 
     freq_bin_starts = list()

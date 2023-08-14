@@ -13,8 +13,21 @@ class LogReg(LogisticRegression):
             return super().fit(*args, **kwargs)
 
 
-def _handle_csp_args(decoding_csp_times, decoding_csp_freqs, decoding_metric):
-    _validate_type(decoding_csp_times, (list, tuple, np.ndarray), "decoding_csp_times")
+def _handle_csp_args(
+    decoding_csp_times,
+    decoding_csp_freqs,
+    decoding_metric,
+    *,
+    epochs_tmin,
+    epochs_tmax,
+    time_frequency_freq_min,
+    time_frequency_freq_max,
+):
+    _validate_type(
+        decoding_csp_times, (None, list, tuple, np.ndarray), "decoding_csp_times"
+    )
+    if decoding_csp_times is None:
+        decoding_csp_times = np.linspace(max(0, epochs_tmin), epochs_tmax, num=6)
     if len(decoding_csp_times) < 2:
         raise ValueError("decoding_csp_times should contain at least 2 values.")
     if not np.array_equal(decoding_csp_times, np.sort(decoding_csp_times)):
@@ -25,7 +38,15 @@ def _handle_csp_args(decoding_csp_times, decoding_csp_freqs, decoding_metric):
             f"decoding metric, but received "
             f'decoding_metric="{decoding_metric}"'
         )
-    _validate_type(decoding_csp_freqs, dict, "config.decoding_csp_freqs")
+    _validate_type(decoding_csp_freqs, (None, dict), "config.decoding_csp_freqs")
+    if decoding_csp_freqs is None:
+        decoding_csp_freqs = {
+            "custom": (
+                time_frequency_freq_min,
+                (time_frequency_freq_max + time_frequency_freq_min) / 2,  # noqa: E501
+                time_frequency_freq_max,
+            ),
+        }
     freq_name_to_bins_map = dict()
     for freq_range_name, edges in decoding_csp_freqs.items():
         _validate_type(freq_range_name, str, "config.decoding_csp_freqs key")

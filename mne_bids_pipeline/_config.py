@@ -2,13 +2,14 @@
 
 from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal
 
-from numpy.typing import ArrayLike
-
-import mne
+from mne import Covariance
 from mne_bids import BIDSPath
-import numpy as np
 
-from mne_bids_pipeline.typing import PathLike, ArbitraryContrast
+from mne_bids_pipeline.typing import (
+    PathLike,
+    ArbitraryContrast,
+    FloatArrayLike,
+)
 
 
 ###############################################################################
@@ -594,7 +595,7 @@ The correlation limit for spatio-temporal SSS (tSSS).
     ```
 """
 
-mf_head_origin: Union[Literal["auto"], ArrayLike] = "auto"
+mf_head_origin: Union[Literal["auto"], FloatArrayLike] = "auto"
 """
 `mf_head_origin` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
@@ -609,7 +610,7 @@ options or specifying the origin manually.
     ```
 """
 
-mf_destination: Union[Literal["reference_run"], ArrayLike] = "reference_run"
+mf_destination: Union[Literal["reference_run"], FloatArrayLike] = "reference_run"
 """
 Despite all possible care to avoid movements in the MEG, the participant
 will likely slowly drift down from the Dewar or slightly shift the head
@@ -1561,7 +1562,7 @@ Maximum frequency for the time frequency analysis, in Hz.
     ```
 """
 
-time_frequency_cycles: Optional[Union[float, ArrayLike]] = None
+time_frequency_cycles: Optional[Union[float, FloatArrayLike]] = None
 """
 The number of cycles to use in the Morlet wavelet. This can be a single number
 or one per frequency, where frequencies are calculated via
@@ -1592,9 +1593,7 @@ time and frequency ranges. This allows to obtain decoding scores defined over
 time and frequency.
 """
 
-decoding_csp_times: Optional[ArrayLike] = np.linspace(
-    max(0, epochs_tmin), epochs_tmax, num=6
-)
+decoding_csp_times: Optional[FloatArrayLike] = None
 """
 The edges of the time bins to use for CSP decoding.
 Must contain at least two elements. By default, 5 equally-spaced bins are
@@ -1614,13 +1613,7 @@ If `None`, do not perform **time-frequency** analysis, and only run CSP on
     ```
 """
 
-decoding_csp_freqs: Dict[str, ArrayLike] = {
-    "custom": [
-        time_frequency_freq_min,
-        (time_frequency_freq_max + time_frequency_freq_min) / 2,  # noqa: E501
-        time_frequency_freq_max,
-    ]
-}
+decoding_csp_freqs: Optional[Dict[str, FloatArrayLike]] = None
 """
 The edges of the frequency bins to use for CSP decoding.
 
@@ -1897,7 +1890,7 @@ solution.
 noise_cov: Union[
     Tuple[Optional[float], Optional[float]],
     Literal["emptyroom", "rest", "ad-hoc"],
-    Callable[[BIDSPath], mne.Covariance],
+    Callable[[BIDSPath], Covariance],
 ] = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in

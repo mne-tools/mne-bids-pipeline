@@ -75,6 +75,7 @@ def _import_config(
         "interactive",
         # Caching
         "memory_location",
+        "memory_subdir",
         "memory_verbose",
         "memory_file_method",
         # Misc

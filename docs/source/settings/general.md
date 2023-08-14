@@ -39,6 +39,7 @@
         - random_state
         - shortest_event
         - memory_location
+        - memory_subdir
         - memory_file_method
         - memory_verbose
         - config_validation

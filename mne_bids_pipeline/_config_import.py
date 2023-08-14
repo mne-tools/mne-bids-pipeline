@@ -398,7 +398,7 @@ def _pydantic_validate(
         {"__annotations__": annotations, **attrs},
     )
     dataclass_config = dict(
-        arbitrary_types_allowed=True,
+        arbitrary_types_allowed=False,
         validate_assignment=True,
         strict=True,  # do not allow float for int for example
     )

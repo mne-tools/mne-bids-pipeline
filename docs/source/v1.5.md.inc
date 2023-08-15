@@ -9,6 +9,7 @@
 - Output logging spacing improved (#764 by @larsoner)
 - Added caching of sensor and source average steps (#765 by @larsoner)
 - Improved logging of coregistration distances (#769 by @larsoner)
+- Input validation has been improved by leveraging [pydantic](https://docs.pydantic.dev) (#779 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -28,3 +29,4 @@
 - Fixed bug where cache would not invalidate properly based on output file changes and steps could be incorrectly skipped. All steps will automatically rerun to accommodate the new, safer caching scheme (#756 by @larsoner)
 - Fixed bug with parallelization across runs for Maxwell filtering (#761 by @larsoner)
 - Fixed bug where head position files were not written with a proper suffix and extension (#761 by @larsoner)
+- Fixed bug where default values for `decoding_csp_times` and `decoding_csp_freqs` were not set dynamically based on the config parameters (#779 by @larsoner)

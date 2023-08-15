@@ -199,7 +199,13 @@ def one_subject_decoding(
 
     # Loop over frequencies (all time points lumped together)
     freq_name_to_bins_map = _handle_csp_args(
-        cfg.decoding_csp_times, cfg.decoding_csp_freqs, cfg.decoding_metric
+        cfg.decoding_csp_times,
+        cfg.decoding_csp_freqs,
+        cfg.decoding_metric,
+        epochs_tmin=cfg.epochs_tmin,
+        epochs_tmax=cfg.epochs_tmax,
+        time_frequency_freq_min=cfg.time_frequency_freq_min,
+        time_frequency_freq_max=cfg.time_frequency_freq_max,
     )
     freq_decoding_table_rows = []
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
@@ -365,6 +371,10 @@ def one_subject_decoding(
             cfg.decoding_csp_times,
             cfg.decoding_csp_freqs,
             cfg.decoding_metric,
+            epochs_tmin=cfg.epochs_tmin,
+            epochs_tmax=cfg.epochs_tmax,
+            time_frequency_freq_min=cfg.time_frequency_freq_min,
+            time_frequency_freq_max=cfg.time_frequency_freq_max,
         )
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
@@ -517,6 +527,10 @@ def get_config(
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
         # Processing parameters
+        epochs_tmin=config.epochs_tmin,
+        epochs_tmax=config.epochs_tmax,
+        time_frequency_freq_min=config.time_frequency_freq_min,
+        time_frequency_freq_max=config.time_frequency_freq_max,
         time_frequency_subtract_evoked=config.time_frequency_subtract_evoked,
         decoding_metric=config.decoding_metric,
         decoding_csp_freqs=config.decoding_csp_freqs,

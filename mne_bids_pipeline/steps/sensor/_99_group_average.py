@@ -6,8 +6,9 @@ The M/EEG-channel data are averaged for group averages.
 import os
 import os.path as op
 from functools import partial
-from typing import Optional, TypedDict, List, Tuple
+from typing import Optional, List, Tuple
 from types import SimpleNamespace
+from ...typing import TypedDict
 
 import numpy as np
 import pandas as pd
@@ -773,7 +774,13 @@ def average_csp_decoding(
         time_bins = np.array(list(zip(time_bins[:-1], time_bins[1:])))
     time_bins = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
     freq_name_to_bins_map = _handle_csp_args(
-        cfg.decoding_csp_times, cfg.decoding_csp_freqs, cfg.decoding_metric
+        cfg.decoding_csp_times,
+        cfg.decoding_csp_freqs,
+        cfg.decoding_metric,
+        epochs_tmin=cfg.epochs_tmin,
+        epochs_tmax=cfg.epochs_tmax,
+        time_frequency_freq_min=cfg.time_frequency_freq_min,
+        time_frequency_freq_max=cfg.time_frequency_freq_max,
     )
     data_for_clustering = {}
     for freq_range_name in freq_name_to_bins_map:
@@ -937,6 +944,10 @@ def get_config(
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         contrasts=config.contrasts,
+        epochs_tmin=config.epochs_tmin,
+        epochs_tmax=config.epochs_tmax,
+        time_frequency_freq_min=config.time_frequency_freq_min,
+        time_frequency_freq_max=config.time_frequency_freq_max,
         decode=config.decode,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,

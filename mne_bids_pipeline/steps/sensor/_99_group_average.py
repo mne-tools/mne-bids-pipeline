@@ -779,6 +779,8 @@ def average_csp_decoding(
         cfg.decoding_metric,
         epochs_tmin=cfg.epochs_tmin,
         epochs_tmax=cfg.epochs_tmax,
+        time_frequency_freq_min=cfg.time_frequency_freq_min,
+        time_frequency_freq_max=cfg.time_frequency_freq_max,
     )
     data_for_clustering = {}
     for freq_range_name in freq_name_to_bins_map:

@@ -45,3 +45,14 @@ FloatArrayLike = Annotated[
     # PlainValidator will skip internal validation attempts for ArrayLike
     PlainValidator(assert_float_array_like),
 ]
+
+
+def assert_dig_montage(val):
+    assert isinstance(val, mne.channels.DigMontage)
+    return val
+
+
+DigMontageType = Annotated[
+    mne.channels.DigMontage,
+    PlainValidator(assert_dig_montage),
+]

@@ -9,6 +9,7 @@ from mne_bids_pipeline.typing import (
     PathLike,
     ArbitraryContrast,
     FloatArrayLike,
+    DigMontageType,
 )
 
 
@@ -343,7 +344,7 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```
 """
 
-eeg_template_montage: Optional[str] = None
+eeg_template_montage: Optional[Union[str, DigMontageType]] = None
 """
 In situations where you wish to process EEG data and no individual
 digitization points (measured channel locations) are available, you can apply

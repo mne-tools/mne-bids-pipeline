@@ -64,7 +64,14 @@ def drop_ptp(
     in_files: dict,
 ) -> dict:
     out_files = dict()
-    out_files["epochs"] = in_files["epochs"].copy().update(processing="clean")
+    out_files["epochs"] = (
+        in_files["epochs"]
+        .copy()
+        .update(
+            processing="clean",
+            split=None,
+        )
+    )
     msg = f'Input:  {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["epochs"].basename}'

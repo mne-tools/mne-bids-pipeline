@@ -127,10 +127,6 @@ def run_inverse(
             msg = "Adding inverse information to report"
             logger.info(**gen_log_kwargs(message=msg))
             for condition in conditions:
-                cond_str = sanitize_cond_name(condition)
-                key = f"{cond_str}+{method}+hemi"
-                if key not in out_files:
-                    continue
                 msg = f"Rendering inverse solution for {condition}"
                 logger.info(**gen_log_kwargs(message=msg))
                 tags = ("source-estimate", _sanitize_cond_tag(condition))

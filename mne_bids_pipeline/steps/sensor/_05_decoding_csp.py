@@ -158,7 +158,7 @@ def one_subject_decoding(
     msg = f"Contrasting conditions: {condition1} – {condition2}"
     logger.info(**gen_log_kwargs(msg))
 
-    bids_path = in_files["epochs"].copy().update(processing=None)
+    bids_path = in_files["epochs"].copy().update(processing=None, split=None)
     epochs = mne.read_epochs(in_files.pop("epochs"))
     _restrict_analyze_channels(epochs, cfg)
 

@@ -74,7 +74,7 @@ def run_time_frequency(
     msg = f"Reading {epochs_path.basename}"
     logger.info(**gen_log_kwargs(message=msg))
     epochs = mne.read_epochs(epochs_path)
-    bids_path = epochs_path.copy().update(processing=None)
+    bids_path = epochs_path.copy().update(processing=None, split=None)
     del epochs_path
     _restrict_analyze_channels(epochs, cfg)
 

@@ -66,7 +66,14 @@ def run_evoked(
 ) -> dict:
     out_files = dict()
     out_files["evoked"] = (
-        in_files["epochs"].copy().update(suffix="ave", processing=None, check=False)
+        in_files["epochs"]
+        .copy()
+        .update(
+            suffix="ave",
+            processing=None,
+            check=False,
+            split=None,
+        )
     )
 
     msg = f'Input: {in_files["epochs"].basename}'

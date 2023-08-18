@@ -90,7 +90,7 @@ def run_epochs_decoding(
     msg = f"Contrasting conditions: {condition1} – {condition2}"
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
-    bids_path = in_files["epochs"].copy()
+    bids_path = in_files["epochs"].copy().update(split=None)
 
     epochs = mne.read_epochs(in_files.pop("epochs"))
     _restrict_analyze_channels(epochs, cfg)

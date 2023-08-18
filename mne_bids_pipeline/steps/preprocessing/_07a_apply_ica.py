@@ -56,6 +56,7 @@ def get_input_fnames_apply_ica(
         processing="ica", suffix="components", extension=".tsv"
     )
     in_files["epochs"] = bids_basename.copy().update(suffix="epo", extension=".fif")
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 

@@ -27,7 +27,7 @@ from ..._config_utils import (
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._report import (
     _open_report,
     _sanitize_cond_tag,
@@ -132,6 +132,7 @@ def get_input_fnames_csp(
     )
     in_files = dict()
     in_files["epochs"] = fname_epochs
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 

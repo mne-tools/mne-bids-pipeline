@@ -48,6 +48,7 @@ def get_input_fnames_drop_ptp(
     )
     in_files = dict()
     in_files["epochs"] = bids_path.copy().update(processing=cfg.spatial_filter)
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 

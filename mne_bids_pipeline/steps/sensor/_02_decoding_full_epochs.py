@@ -35,7 +35,7 @@ from ..._config_utils import (
 from ..._logging import gen_log_kwargs, logger
 from ..._decoding import LogReg
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._report import (
     _open_report,
     _contrasts_to_names,
@@ -68,6 +68,7 @@ def get_input_fnames_epochs_decoding(
     )
     in_files = dict()
     in_files["epochs"] = fname_epochs
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 

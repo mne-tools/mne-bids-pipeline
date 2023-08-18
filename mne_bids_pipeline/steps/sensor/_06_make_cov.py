@@ -20,7 +20,13 @@ from ..._config_utils import _restrict_analyze_channels
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
-from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
+from ..._run import (
+    failsafe_run,
+    save_logs,
+    _sanitize_callable,
+    _prep_out_files,
+    _update_for_splits,
+)
 
 
 def get_input_fnames_cov(
@@ -47,9 +53,8 @@ def get_input_fnames_cov(
         root=cfg.deriv_root,
         check=False,
     )
-    in_files["report_info"] = fname_epochs.copy().update(
-        processing="clean", suffix="epo"
-    )
+    in_files["report_info"] = fname_epochs.copy().update(processing="clean")
+    _update_for_splits(in_files, "report_info", single=True)
     fname_evoked = fname_epochs.copy().update(
         suffix="ave", processing=None, check=False
     )
@@ -83,6 +88,7 @@ def get_input_fnames_cov(
     else:
         assert cov_type == "epochs", cov_type
         in_files["epochs"] = fname_epochs
+        _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 

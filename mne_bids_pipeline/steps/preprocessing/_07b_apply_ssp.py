@@ -41,6 +41,7 @@ def get_input_fnames_apply_ssp(
     )
     in_files = dict()
     in_files["epochs"] = bids_basename.copy().update(suffix="epo", check=False)
+    _update_for_splits(in_files, "epochs", single=True)
     in_files["proj"] = bids_basename.copy().update(suffix="proj", check=False)
     return in_files
 
@@ -60,7 +61,7 @@ def apply_ssp(
     # compute SSP on first run of raw
     out_files = dict()
     out_files["epochs"] = (
-        in_files["epochs"].copy().update(processing="ssp", check=False)
+        in_files["epochs"].copy().update(processing="ssp", split=None, check=False)
     )
     msg = f"Input epochs: {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))

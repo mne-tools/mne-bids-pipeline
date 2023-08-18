@@ -22,7 +22,7 @@ from ..._config_utils import (
     _restrict_analyze_channels,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
 
@@ -53,6 +53,7 @@ def get_input_fnames_time_frequency(
     )
     in_files = dict()
     in_files["epochs"] = fname_epochs
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 
@@ -73,7 +74,7 @@ def run_time_frequency(
     msg = f"Reading {epochs_path.basename}"
     logger.info(**gen_log_kwargs(message=msg))
     epochs = mne.read_epochs(epochs_path)
-    bids_path = epochs_path.copy().update(processing=None)
+    bids_path = epochs_path.copy().update(processing=None, split=None)
     del epochs_path
     _restrict_analyze_channels(epochs, cfg)
 

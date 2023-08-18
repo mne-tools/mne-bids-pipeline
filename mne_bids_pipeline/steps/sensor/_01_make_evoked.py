@@ -17,7 +17,13 @@ from ..._config_utils import (
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
 from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
-from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
+from ..._run import (
+    failsafe_run,
+    save_logs,
+    _sanitize_callable,
+    _prep_out_files,
+    _update_for_splits,
+)
 
 
 def get_input_fnames_evoked(
@@ -43,6 +49,7 @@ def get_input_fnames_evoked(
     )
     in_files = dict()
     in_files["epochs"] = fname_epochs
+    _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 
@@ -59,7 +66,14 @@ def run_evoked(
 ) -> dict:
     out_files = dict()
     out_files["evoked"] = (
-        in_files["epochs"].copy().update(suffix="ave", processing=None, check=False)
+        in_files["epochs"]
+        .copy()
+        .update(
+            suffix="ave",
+            processing=None,
+            check=False,
+            split=None,
+        )
     )
 
     msg = f'Input: {in_files["epochs"].basename}'

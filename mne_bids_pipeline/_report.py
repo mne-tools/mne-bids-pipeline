@@ -359,8 +359,8 @@ def plot_time_by_time_decoding_t_values(decoding_data):
     # We squeeze() to make Matplotlib happy.
     all_times = decoding_data["cluster_all_times"].squeeze()
     all_t_values = decoding_data["cluster_all_t_values"].squeeze()
-    t_threshold = decoding_data["cluster_t_threshold"]
-    decim = decoding_data["decim"]
+    t_threshold = decoding_data["cluster_t_threshold"].item()
+    decim = decoding_data["decim"].item()
 
     fig, ax = plt.subplots(constrained_layout=True)
     ax.plot(all_times, all_t_values, ls="-", color="black", label="observed $t$-values")

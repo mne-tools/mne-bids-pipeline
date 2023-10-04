@@ -75,7 +75,7 @@ def main(*, config):
     """Initialize the output directories."""
     init_dataset(cfg=get_config(config=config))
     # Don't bother with parallelization here as I/O operations are generally
-    # not well paralellized (and this should be very fast anyway)
+    # not well parallelized (and this should be very fast anyway)
     for subject in get_subjects(config):
         for session in get_sessions(config):
             init_subject_dirs(

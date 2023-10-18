@@ -102,7 +102,7 @@ td p {
   margin-top: 1rem !important;
 }
 
-/* Ensure the link in the "You're not viewing the latest stable version" is
+/* Ensure the link in the "You're not viewing the latest stable version" banner is
   readable in both dark and light theme. */
 :root {
   --md-typeset-a-color: var(--md-default-fg-color);

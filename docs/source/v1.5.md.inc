@@ -1,6 +1,6 @@
 ## v1.5.0 (unreleased)
 
-This release contains a number of very important bug fixes that address problems related to decoding, time-frequency analysis, and even inverse modeling.
+This release contains a number of very important bug fixes that address problems related to decoding, time-frequency analysis, and inverse modeling.
 All users are encouraged to update.
 
 ### :new: New features & enhancements

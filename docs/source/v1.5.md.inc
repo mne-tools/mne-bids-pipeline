@@ -24,6 +24,7 @@
 - Ensure `memory_file_method = "hash"` is tested (#768 by @larsoner)
 - Enable [pre-commit.ci](https://pre-commit.ci) (#774 by @larsoner)
 - Use `pooch` for web downloads (#775 by @larsoner)
+- Ensure compatibility with MNE-Python 1.6 (#800 by @hoechenberger)
 
 ### :bug: Bug fixes
 

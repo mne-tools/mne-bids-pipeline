@@ -81,15 +81,12 @@ def prepare_epochs_and_y(
     *, epochs: mne.BaseEpochs, contrast: Tuple[str, str], cfg, fmin: float, fmax: float
 ) -> Tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
-    epochs_filt = epochs.copy().pick_types(
-        meg=True,
-        eeg=True,
-    )
+    epochs_filt = epochs.copy().pick(["meg", "eeg"])
 
     # We only take mag to speed up computation
     # because the information is redundant between grad and mag
     if cfg.datatype == "meg" and cfg.use_maxwell_filter:
-        epochs_filt.pick_types(meg="mag")
+        epochs_filt.pick("mag")
 
     # filtering out the conditions we are not interested in, to ensure here we
     # have a valid partition between the condition of the contrast.

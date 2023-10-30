@@ -22,4 +22,4 @@ subjects = ["01"]
 sessions = "all"
 
 interpolate_bads_grand_average = False
-n_jobs = 4
+n_jobs = 1

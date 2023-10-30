@@ -95,7 +95,6 @@ def run_epochs_decoding(
 
     epochs = mne.read_epochs(in_files.pop("epochs"))
     _restrict_analyze_channels(epochs, cfg)
-    epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
 
     # We define the epochs and the labels
     if isinstance(cfg.conditions, dict):
@@ -111,6 +110,9 @@ def run_epochs_decoding(
     epochs = mne.concatenate_epochs(
         [epochs[epochs_conds[0]], epochs[epochs_conds[1]]], verbose="error"
     )
+
+    # Crop to the desired analysis interval.
+    epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
 
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])

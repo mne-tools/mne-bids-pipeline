@@ -70,6 +70,9 @@ def fit_ica(
 
     if algorithm == "picard":
         fit_params = dict(fastica_it=5)
+    elif algorithm == "picard-extended_infomax":
+        algorithm = "picard"
+        fit_params = dict(ortho=False, extended=True)
     elif algorithm == "extended_infomax":
         algorithm = "infomax"
         fit_params = dict(extended=True)

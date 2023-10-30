@@ -11,6 +11,7 @@
 - Improved logging of coregistration distances (#769 by @larsoner)
 - Input validation has been improved by leveraging [pydantic](https://docs.pydantic.dev) (#779 by @larsoner)
 - Reduced logging when reports are created and saved (#799 by @hoechenberger)
+- Added [`"picard-extended_infomax"`][mne_bids_pipeline._config.ica_algorithm] ICA algorithm to perform "extended Infomax"-like ICA decomposition using Picard (#801 by @hoechenberger)
 
 [//]: # (### :warning: Behavior changes)
 

@@ -15,6 +15,7 @@ baseline = (None, 0)
 conditions = ["61450", "61511"]
 contrasts = [("61450", "61511")]
 decode = True
+decoding_n_splits = 3  # only for testing, use 5 otherwise
 
 l_freq = 0.3
 
@@ -22,4 +23,4 @@ subjects = ["01"]
 sessions = "all"
 
 interpolate_bads_grand_average = False
-n_jobs = 1
+n_jobs = 4

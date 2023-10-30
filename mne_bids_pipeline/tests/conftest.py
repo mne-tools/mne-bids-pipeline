@@ -43,6 +43,8 @@ def pytest_configure(config):
     ignore:is_categorical_dtype is deprecated.*:FutureWarning
     ignore:use_inf_as_na option is deprecated.*:FutureWarning
     ignore:All-NaN axis encountered.*:RuntimeWarning
+    # sklearn class not enough samples for cv=5
+    always:The least populated class in y has only.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

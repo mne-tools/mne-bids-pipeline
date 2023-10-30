@@ -1,5 +1,8 @@
 ## v1.5.0 (unreleased)
 
+This release contains a number of very important bug fixes that address problems related to decoding, time-frequency analysis, and inverse modeling.
+All users are encouraged to update.
+
 ### :new: New features & enhancements
 
 - Added `deriv_root` argument to CLI (#773 by @vferat)
@@ -33,3 +36,4 @@
 - Fixed bug with parallelization across runs for Maxwell filtering (#761 by @larsoner)
 - Fixed bug where head position files were not written with a proper suffix and extension (#761 by @larsoner)
 - Fixed bug where default values for `decoding_csp_times` and `decoding_csp_freqs` were not set dynamically based on the config parameters (#779 by @larsoner)
+- A number of processing steps erroneously **always** operated on un-cleaned epochs (`sensor/decoding_full_epochs`, `sensor/decoding_time_by_time`, `sensor/decoding_csp`); or operated on un-cleaned epochs (without PTP rejection) if no ICA or SSP was requested (`sensor/ime_frequency`, `sensor/make_cov`) The bug in `sensor/make_cov` could propagate to the source level, as the covariance matrix is used for inverse modeling. (#796 by @hoechenberger)

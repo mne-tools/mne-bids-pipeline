@@ -37,7 +37,6 @@ def get_input_fnames_cov(
 ) -> dict:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
-    processing = "clean" if cfg.spatial_filter is not None else None
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -48,7 +47,7 @@ def get_input_fnames_cov(
         space=cfg.space,
         extension=".fif",
         suffix="epo",
-        processing=processing,
+        processing="clean",
         datatype=cfg.datatype,
         root=cfg.deriv_root,
         check=False,

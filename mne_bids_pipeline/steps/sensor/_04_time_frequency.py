@@ -33,9 +33,6 @@ def get_input_fnames_time_frequency(
     subject: str,
     session: Optional[str],
 ) -> dict:
-    processing = None
-    if cfg.spatial_filter is not None:
-        processing = "clean"
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -46,7 +43,7 @@ def get_input_fnames_time_frequency(
         space=cfg.space,
         datatype=cfg.datatype,
         root=cfg.deriv_root,
-        processing=processing,
+        processing="clean",
         suffix="epo",
         extension=".fif",
         check=False,

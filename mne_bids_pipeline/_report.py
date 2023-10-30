@@ -454,7 +454,7 @@ def _gen_empty_report(
     if cfg.task is not None:
         title += f", task-{cfg.task}"
 
-    report = mne.Report(title=title, raw_psd=True)
+    report = mne.Report(title=title, raw_psd=True, verbose=False)
     return report
 
 

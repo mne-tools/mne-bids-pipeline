@@ -13,6 +13,7 @@ All users are encouraged to update.
 - Added caching of sensor and source average steps (#765 by @larsoner)
 - Improved logging of coregistration distances (#769 by @larsoner)
 - Input validation has been improved by leveraging [pydantic](https://docs.pydantic.dev) (#779 by @larsoner)
+- Reduced logging when reports are created and saved (#799 by @hoechenberger)
 
 [//]: # (### :warning: Behavior changes)
 

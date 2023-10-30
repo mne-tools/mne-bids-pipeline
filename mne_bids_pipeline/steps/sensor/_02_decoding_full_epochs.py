@@ -111,7 +111,8 @@ def run_epochs_decoding(
         [epochs[epochs_conds[0]], epochs[epochs_conds[1]]], verbose="error"
     )
 
-    # Crop to the desired analysis interval.
+    # Crop to the desired analysis interval. Do it only after the concatenation to work
+    # around https://github.com/mne-tools/mne-python/issues/12153
     epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
 
     n_cond1 = len(epochs[epochs_conds[0]])

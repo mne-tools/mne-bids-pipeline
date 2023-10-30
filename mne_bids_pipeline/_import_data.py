@@ -449,7 +449,7 @@ def import_er_data(
             cfg=cfg,
             bids_path_bads=bids_path_er_bads_in,
         )
-    raw_er.pick_types(meg=True, exclude=[])
+    raw_er.pick("meg", exclude=[])
 
     # Don't deal with ref for now (initial data quality / auto bad step)
     if bids_path_ref_in is None:

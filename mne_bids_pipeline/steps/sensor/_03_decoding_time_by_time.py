@@ -65,6 +65,7 @@ def get_input_fnames_time_decoding(
         run=None,
         recording=cfg.rec,
         space=cfg.space,
+        processing="clean",
         suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,

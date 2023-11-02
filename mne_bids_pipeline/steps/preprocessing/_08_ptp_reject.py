@@ -204,6 +204,7 @@ def get_config(
         ica_reject=config.ica_reject,
         reject=config.reject,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
+        random_state=config.random_state,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
         **_bids_kwargs(config=config),

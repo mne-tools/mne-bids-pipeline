@@ -71,7 +71,7 @@ min_break_duration = 10
 t_break_annot_start_after_previous_event = 3.0
 t_break_annot_stop_before_next_event = 1.5
 
-if task == "N400":
+if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]

@@ -1396,7 +1396,9 @@ channels in each epoch.
 reject_tmin: Optional[float] = None
 """
 Start of the time window used to reject epochs. If `None`, the window will
-start with the first time point.
+start with the first time point. Has no effect if
+[`reject`][mne_bids_pipeline._config.reject] has been set to `"autoreject_local"`.
+
 ???+ example "Example"
     ```python
     reject_tmin = -0.1  # 100 ms before event onset.
@@ -1406,7 +1408,9 @@ start with the first time point.
 reject_tmax: Optional[float] = None
 """
 End of the time window used to reject epochs. If `None`, the window will end
-with the last time point.
+with the last time point.Has no effect if
+[`reject`][mne_bids_pipeline._config.reject] has been set to `"autoreject_local"`.
+
 ???+ example "Example"
     ```python
     reject_tmax = 0.3  # 300 ms after event onset.

@@ -17,3 +17,4 @@ tags:
         - reject
         - reject_tmin
         - reject_tmax
+        - autoreject_n_interpolate

@@ -1418,7 +1418,7 @@ with the last time point. Has no effect if
     ```
 """
 
-autoreject_n_interpolate: FloatArrayLike = [1, 4, 8, 16]
+autoreject_n_interpolate: FloatArrayLike = [4, 8, 16]
 """
 The maximum number of bad channels in an epoch that `autoreject` local will try to
 interpolate. The optimal number among this list will be estimated using a

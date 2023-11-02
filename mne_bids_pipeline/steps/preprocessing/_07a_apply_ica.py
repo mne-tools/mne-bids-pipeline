@@ -28,7 +28,6 @@ from ..._config_utils import (
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import parallel_func, get_parallel_backend
-from ..._reject import _get_reject
 from ..._report import _open_report, _agg_backend
 from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
 

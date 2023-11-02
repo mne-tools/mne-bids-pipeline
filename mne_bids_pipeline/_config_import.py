@@ -354,6 +354,7 @@ def _default_factory(key, val):
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         {"suffix": "ave"},  # source_info_path_update
         ["evoked"],  # inverse_targets
+        [1, 4, 8, 16],  # autoreject_n_interpolate
     ]
     for typ in (dict, list):
         if isinstance(val, typ):

@@ -1382,7 +1382,7 @@ channel type.
 
 If `"autoreject_local"`, use "local" `autoreject` to detect (and potentially repair) bad
 channels in each epoch. Use [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]
-to control how many sensors are allowed to be bad before an epoch gets dropped.
+to control how many channels are allowed to be bad before an epoch gets dropped.
 
 ???+ example "Example"
     ```python

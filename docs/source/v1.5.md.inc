@@ -20,7 +20,7 @@ All users are encouraged to update.
 
 - The default cache directory is now `_cache` within the derivatives folder when using `memory_location=True`, set [`memory_subdir="joblib"`][mne_bids_pipeline._config.memory_subdir] to get the behavior from v1.4 (#778 by @larsoner)
 - Before cleaning epochs via ICA, we used to reject any epochs execeeding the [`ica_reject`][mne_bids_pipeline._config.ica_reject]
-  criteria. However, this may lead to the unncessary exclusion of epochs that could have been salvaged through ICA cleaning. Now,
+  criteria. However, this may lead to the unnecessary exclusion of epochs that could have been salvaged through ICA cleaning. Now,
   we only apply `ica_reject` to the epochs used for ICA fitting. After the experimental epochs have been cleaned with ICA
   (`preprocessing/apply_ica` step), any remaining large-amplitude artifacts can be removed via
   [`reject`][mne_bids_pipeline._config.reject], which is used in the last preprocessing step, `preprocessing/ptp_reject`. (#806 by @hoechenberger)

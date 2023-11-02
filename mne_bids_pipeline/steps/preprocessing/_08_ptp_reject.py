@@ -92,9 +92,8 @@ def drop_ptp(
             random_state=cfg.random_state,
             n_jobs=exec_params.n_jobs,
         )
-        ar.fit(epochs)
         n_epochs_before_reject = len(epochs)
-        epochs, reject_log = ar.transform(epochs, return_log=True)
+        epochs, reject_log = ar.fit_transform(epochs, return_log=True)
         n_epochs_after_reject = len(epochs)
     else:
         reject = _get_reject(

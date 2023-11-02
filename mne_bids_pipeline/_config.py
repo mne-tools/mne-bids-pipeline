@@ -1235,12 +1235,19 @@ is not reliable.
 # ~~~~~~~~~~~~~~~~~~~~~~
 ica_reject: Optional[Dict[str, float]] = None
 """
-Peak-to-peak amplitude limits to exclude epochs from ICA fitting.
-
-This allows you to remove strong transient artifacts, which could negatively
-affect ICA performance.
+Peak-to-peak amplitude limits to exclude epochs from ICA fitting. Epochs exceeding these
+limits will be excluded from ICA fitting. This allows you to remove strong transient
+artifacts, which could negatively affect ICA performance.
 
 This will also be applied to ECG and EOG epochs created during preprocessing.
+
+???+ info 
+    This setting is applied only to the epochs that are used for **fitting** ICA. The
+    goal is to make it easier for ICA to produce a good decomposition. After fitting,
+    ICA is applied to the epochs to be analyzed, usually with one or more components
+    removed (as to remove artifacts). But even after ICA cleaning, some epochs may still
+    contain large-amplitude artifacts. Those epochs can then be rejected by using
+    the [`reject`][mne_bids_pipeline._config.reject] parameter.
 
 The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
 your data, and remove them. For this to work properly, it is recommended

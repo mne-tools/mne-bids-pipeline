@@ -93,21 +93,13 @@ def apply_ica(
     tsv_data = pd.read_csv(in_files.pop("components"), sep="\t")
     ica.exclude = tsv_data.loc[tsv_data["status"] == "bad", "component"].to_list()
 
-    # Load epochs to reject ICA components.
+    # Load epochs.
     msg = f'Input: {in_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["epochs"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
-    ica_reject = _get_reject(
-        subject=subject,
-        session=session,
-        reject=cfg.ica_reject,
-        ch_types=cfg.ch_types,
-        param="ica_reject",
-    )
-    epochs.drop_bad(ica_reject)
 
     # Now actually reject the components.
     msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'

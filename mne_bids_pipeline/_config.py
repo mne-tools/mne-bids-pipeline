@@ -1408,7 +1408,7 @@ start with the first time point. Has no effect if
 reject_tmax: Optional[float] = None
 """
 End of the time window used to reject epochs. If `None`, the window will end
-with the last time point.Has no effect if
+with the last time point. Has no effect if
 [`reject`][mne_bids_pipeline._config.reject] has been set to `"autoreject_local"`.
 
 ???+ example "Example"

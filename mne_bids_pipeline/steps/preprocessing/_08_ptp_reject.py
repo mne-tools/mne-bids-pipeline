@@ -79,46 +79,65 @@ def drop_ptp(
 
     # Get rejection parameters and drop bad epochs
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
-    reject = _get_reject(
-        subject=subject,
-        session=session,
-        reject=cfg.reject,
-        ch_types=cfg.ch_types,
-        param="reject",
-        epochs=epochs,
-    )
-    if cfg.spatial_filter == "ica":
-        ica_reject = _get_reject(
+
+    if cfg.reject == "autoreject_local":
+        import numpy as np
+        import autoreject
+
+        msg = "Using autoreject to remove bad epochs"
+        logger.info(**gen_log_kwargs(message=msg))
+
+        ar = autoreject.AutoReject(
+            n_interpolate=cfg.autoreject_n_interpolate,
+            random_state=cfg.random_state,
+            n_jobs=exec_params.n_jobs,
+        )
+        ar.fit(epochs)
+        n_epochs_before_reject = len(epochs)
+        epochs, reject_log = ar.transform(epochs, return_log=True)
+        n_epochs_after_reject = len(epochs)
+    else:
+        reject = _get_reject(
             subject=subject,
             session=session,
-            reject=cfg.ica_reject,
+            reject=cfg.reject,
             ch_types=cfg.ch_types,
-            param="ica_reject",
+            param="reject",
+            epochs=epochs,
         )
-    else:
-        ica_reject = None
 
-    if ica_reject is not None:
-        for ch_type, threshold in ica_reject.items():
-            if ch_type in reject and threshold < reject[ch_type]:
-                # This can only ever happen in case of
-                # reject = 'autoreject_global'
-                msg = (
-                    f"Adjusting PTP rejection threshold proposed by "
-                    f"autoreject, as it is greater than ica_reject: "
-                    f"{ch_type}: {reject[ch_type]} -> {threshold}"
-                )
-                logger.info(**gen_log_kwargs(message=msg))
-                reject[ch_type] = threshold
+        if cfg.spatial_filter == "ica":
+            ica_reject = _get_reject(
+                subject=subject,
+                session=session,
+                reject=cfg.ica_reject,
+                ch_types=cfg.ch_types,
+                param="ica_reject",
+            )
+        else:
+            ica_reject = None
 
-    msg = f"Using PTP rejection thresholds: {reject}"
-    logger.info(**gen_log_kwargs(message=msg))
+        if ica_reject is not None:
+            for ch_type, threshold in ica_reject.items():
+                if ch_type in reject and threshold < reject[ch_type]:
+                    # This can only ever happen in case of
+                    # reject = 'autoreject_global'
+                    msg = (
+                        f"Adjusting PTP rejection threshold proposed by "
+                        f"autoreject, as it is greater than ica_reject: "
+                        f"{ch_type}: {reject[ch_type]} -> {threshold}"
+                    )
+                    logger.info(**gen_log_kwargs(message=msg))
+                    reject[ch_type] = threshold
 
-    n_epochs_before_reject = len(epochs)
-    epochs.reject_tmin = cfg.reject_tmin
-    epochs.reject_tmax = cfg.reject_tmax
-    epochs.drop_bad(reject=reject)
-    n_epochs_after_reject = len(epochs)
+        msg = f"Using PTP rejection thresholds: {reject}"
+        logger.info(**gen_log_kwargs(message=msg))
+
+        n_epochs_before_reject = len(epochs)
+        epochs.reject_tmin = cfg.reject_tmin
+        epochs.reject_tmax = cfg.reject_tmax
+        epochs.drop_bad(reject=reject)
+        n_epochs_after_reject = len(epochs)
 
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = (
@@ -155,6 +174,15 @@ def drop_ptp(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
+        if cfg.reject == "autoreject_local":
+            report.add_figure(
+                fig=reject_log.plot(orientation="horizontal", show=False),
+                title="Epochs: Autoreject cleaning",
+                caption="Autoreject was run to produce cleaner epochs",
+                tags=("epochs", "autoreject"),
+                replace=True,
+            )
+
         report.add_epochs(
             epochs=epochs,
             title="Epochs: after cleaning",
@@ -176,6 +204,7 @@ def get_config(
         spatial_filter=config.spatial_filter,
         ica_reject=config.ica_reject,
         reject=config.reject,
+        autoreject_n_interpolate=config.autoreject_n_interpolate,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
         **_bids_kwargs(config=config),

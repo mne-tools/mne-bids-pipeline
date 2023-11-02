@@ -88,7 +88,7 @@ def drop_ptp(
         logger.info(**gen_log_kwargs(message=msg))
 
         ar = autoreject.AutoReject(
-            n_interpolate=cfg.autoreject_n_interpolate,
+            n_interpolate=np.array(cfg.autoreject_n_interpolate),
             random_state=cfg.random_state,
             n_jobs=exec_params.n_jobs,
         )

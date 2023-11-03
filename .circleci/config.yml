@@ -265,7 +265,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004229-2
+            - data-cache-ds004229-103
       - bash_env
       - run:
           name: Get ds004229
@@ -273,7 +273,7 @@ jobs:
             $DOWNLOAD_DATA ds004229
       - codecov/upload
       - save_cache:
-          key: data-cache-ds004229-2
+          key: data-cache-ds004229-103
           paths:
             - ~/mne_data/ds004229
 
@@ -719,7 +719,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds004229-2
+            - data-cache-ds004229-103
       - run:
           name: test ds004229
           command: $RUN_TESTS ds004229

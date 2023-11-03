@@ -118,8 +118,6 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
         "include": [
             "sub-102",
             "sub-emptyroom/ses-20000101",
-            "derivatives/meg_derivatives/ct_sparse.fif",
-            "derivatives/meg_derivatives/sss_cal.dat",
         ],
     },
 }

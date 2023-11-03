@@ -19,6 +19,7 @@ All users are encouraged to update.
   per-epochs basis; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject] to `"autoreject_local"`.
   The behavior can further be controlled via the new setting
   [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]. (#807 by @hoechenberger)
+- Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -38,6 +39,7 @@ All users are encouraged to update.
 - Enable [pre-commit.ci](https://pre-commit.ci) (#774 by @larsoner)
 - Use `pooch` for web downloads (#775 by @larsoner)
 - Ensure compatibility with MNE-Python 1.6 (#800 by @hoechenberger)
+- Updated testing dataset for ds004229 v1.0.3 (#808 by @larsoner)
 
 ### :bug: Bug fixes
 

@@ -84,7 +84,7 @@ def drop_ptp(
         import numpy as np
         import autoreject
 
-        msg = "Using autoreject to remove bad epochs"
+        msg = "Using autoreject to find and repair bad epochs"
         logger.info(**gen_log_kwargs(message=msg))
 
         ar = autoreject.AutoReject(
@@ -189,10 +189,12 @@ def drop_ptp(
                 f"Autoreject was run to produce cleaner epochs. "
                 f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
                 f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
-                f"limit; excluding globally bad channels, shown in white)."
+                f"limit; excluding globally bad and non-data channels, shown in white)."
             )
             report.add_figure(
-                fig=reject_log.plot(orientation="horizontal", show=False),
+                fig=reject_log.plot(
+                    orientation="horizontal", aspect="auto", show=False
+                ),
                 title="Epochs: Autoreject cleaning",
                 caption=caption,
                 tags=("epochs", "autoreject"),

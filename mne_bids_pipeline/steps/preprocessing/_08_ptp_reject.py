@@ -11,6 +11,9 @@ corrected by the ICA or the SSP processing.
 from types import SimpleNamespace
 from typing import Optional
 
+import numpy as np
+import autoreject
+
 import mne
 from mne_bids import BIDSPath
 
@@ -81,9 +84,6 @@ def drop_ptp(
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     if cfg.reject == "autoreject_local":
-        import numpy as np
-        import autoreject
-
         msg = "Using autoreject to find and repair bad epochs"
         logger.info(**gen_log_kwargs(message=msg))
 

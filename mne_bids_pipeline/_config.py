@@ -1429,6 +1429,10 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 !!! info
     This setting only takes effect if [`reject`][mne_bids_pipeline._config.reject] has
     been set to `"autoreject_local"`.
+
+!!! info
+    Channels marked as globally bad in the BIDS dataset (in `*_channels.tsv)`) will not
+    be considered.
 """
 
 ###############################################################################

@@ -95,6 +95,16 @@ def drop_ptp(
         n_epochs_before_reject = len(epochs)
         epochs, reject_log = ar.fit_transform(epochs, return_log=True)
         n_epochs_after_reject = len(epochs)
+        assert (
+            n_epochs_before_reject - n_epochs_after_reject
+            == reject_log.bad_epochs.sum()
+        )
+
+        msg = (
+            f"autoreject marked {reject_log.bad_epochs.sum()} epochs as bad "
+            f"(cross-validated n_interpolate limit: {ar.n_interpolate_})"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
     else:
         reject = _get_reject(
             subject=subject,
@@ -174,13 +184,20 @@ def drop_ptp(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
         if cfg.reject == "autoreject_local":
+            caption = (
+                f"Autoreject was run to produce cleaner epochs. "
+                f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
+                f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
+                f"limit; excluding globally bad channels, shown in white)."
+            )
             report.add_figure(
                 fig=reject_log.plot(orientation="horizontal", show=False),
                 title="Epochs: Autoreject cleaning",
-                caption="Autoreject was run to produce cleaner epochs",
+                caption=caption,
                 tags=("epochs", "autoreject"),
                 replace=True,
             )
+            del caption
 
         report.add_epochs(
             epochs=epochs,

@@ -1432,7 +1432,7 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 
 !!! info
     Channels marked as globally bad in the BIDS dataset (in `*_channels.tsv)`) will not
-    be considered.
+    be considered (i.e., will remain marked as bad and not analyzed by autoreject).
 """
 
 ###############################################################################

@@ -45,9 +45,6 @@ def pytest_configure(config):
     ignore:All-NaN axis encountered.*:RuntimeWarning
     # sklearn class not enough samples for cv=5
     always:The least populated class in y has only.*:UserWarning
-    # autoreject warning about channels marked as bad in info["bads"]
-    # https://github.com/autoreject/autoreject/issues/320
-    ignore:.*channels are marked as bad. These will be ignored.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

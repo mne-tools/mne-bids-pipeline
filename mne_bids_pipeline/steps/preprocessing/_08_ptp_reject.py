@@ -91,6 +91,7 @@ def drop_ptp(
             n_interpolate=np.array(cfg.autoreject_n_interpolate),
             random_state=cfg.random_state,
             n_jobs=exec_params.n_jobs,
+            verbose=False,
         )
         n_epochs_before_reject = len(epochs)
         epochs, reject_log = ar.fit_transform(epochs, return_log=True)

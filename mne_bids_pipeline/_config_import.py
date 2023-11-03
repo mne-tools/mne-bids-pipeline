@@ -259,7 +259,7 @@ def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> N
         if (
             ica_reject is not None
             and reject is not None
-            and reject != "autoreject_global"
+            and reject not in ["autoreject_global", "autoreject_local"]
         ):
             for ch_type in reject:
                 if ch_type in ica_reject and reject[ch_type] > ica_reject[ch_type]:
@@ -354,6 +354,7 @@ def _default_factory(key, val):
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         {"suffix": "ave"},  # source_info_path_update
         ["evoked"],  # inverse_targets
+        [4, 8, 16],  # autoreject_n_interpolate
     ]
     for typ in (dict, list):
         if isinstance(val, typ):

@@ -1355,54 +1355,51 @@ false-alarm rate increases dramatically.
 # Rejection based on peak-to-peak amplitude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-reject: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
+reject: Optional[
+    Union[Dict[str, float], Literal["autoreject_global", "autoreject_local"]]
+] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
-
-If `None` (default), do not apply artifact rejection. If a dictionary,
-manually specify rejection thresholds (see examples).  If
-`'autoreject_global'`, use [`autoreject`](https://autoreject.github.io) to find
-suitable "global" rejection thresholds for each channel type, i.e. `autoreject`
-will generate a dictionary with (hopefully!) optimal thresholds for each
-channel type.
-
-The thresholds provided here must be at least as stringent as those in
-[`ica_reject`][mne_bids_pipeline._config.ica_reject] if using ICA. In case of
-`'autoreject_global'`, thresholds for any channel that do not meet this
-requirement will be automatically replaced with those used in `ica_reject`.
 
 !!! info
       The rejection is performed **after** SSP or ICA, if any of those methods
       is used. To reject epochs **before** fitting ICA, see the
       [`ica_reject`][mne_bids_pipeline._config.ica_reject] setting.
 
-If `None` (default), do not apply automated rejection. If a dictionary,
-manually specify rejection thresholds (see examples).  If `'auto'`, use
-[`autoreject`](https://autoreject.github.io) to find suitable "global"
-rejection thresholds for each channel type, i.e. `autoreject` will generate
-a dictionary with (hopefully!) optimal thresholds for each channel type. Note
-that using `autoreject` can be a time-consuming process.
+If `None` (default), do not apply artifact rejection.
 
-!!! info
-      `autoreject` basically offers two modes of operation: "global" and
-      "local". In "global" mode, it will try to estimate one rejection
-      threshold **per channel type.** In "local" mode, it will generate
-      thresholds **for each individual channel.** Currently, the BIDS Pipeline
-      only supports the "global" mode.
+If a dictionary, manually specify rejection thresholds (see examples). 
+The thresholds provided here must be at least as stringent as those in
+[`ica_reject`][mne_bids_pipeline._config.ica_reject] if using ICA. In case of
+`'autoreject_global'`, thresholds for any channel that do not meet this
+requirement will be automatically replaced with those used in `ica_reject`.
+
+If `"autoreject_global"`, use [`autoreject`](https://autoreject.github.io) to find
+suitable "global" rejection thresholds for each channel type, i.e., `autoreject`
+will generate a dictionary with (hopefully!) optimal thresholds for each
+channel type.
+
+If `"autoreject_local"`, use "local" `autoreject` to detect (and potentially repair) bad
+channels in each epoch. Use [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]
+to control how many channels are allowed to be bad before an epoch gets dropped.
 
 ???+ example "Example"
     ```python
-    reject = {'grad': 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
-    reject = {'eeg': 100e-6, 'eog': 250e-6}
+    reject = {"grad": 4000e-13, 'mag': 4e-12, 'eog': 150e-6}
+    reject = {"eeg": 100e-6, "eog": 250e-6}
     reject = None  # no rejection based on PTP amplitude
+    reject = "autoreject_global"  # find global (per channel type) PTP thresholds
+    reject = "autoreject_local"  # find local (per channel) thresholds and repair epochs
     ```
 """
 
 reject_tmin: Optional[float] = None
 """
 Start of the time window used to reject epochs. If `None`, the window will
-start with the first time point.
+start with the first time point. Has no effect if
+[`reject`][mne_bids_pipeline._config.reject] has been set to `"autoreject_local"`.
+
 ???+ example "Example"
     ```python
     reject_tmin = -0.1  # 100 ms before event onset.
@@ -1412,11 +1409,30 @@ start with the first time point.
 reject_tmax: Optional[float] = None
 """
 End of the time window used to reject epochs. If `None`, the window will end
-with the last time point.
+with the last time point. Has no effect if
+[`reject`][mne_bids_pipeline._config.reject] has been set to `"autoreject_local"`.
+
 ???+ example "Example"
     ```python
     reject_tmax = 0.3  # 300 ms after event onset.
     ```
+"""
+
+autoreject_n_interpolate: FloatArrayLike = [4, 8, 16]
+"""
+The maximum number of bad channels in an epoch that `autoreject` local will try to
+interpolate. The optimal number among this list will be estimated using a
+cross-validation procedure; this means that the more elements are provided here, the
+longer the `autoreject` run will take. If the number of bad channels in an epoch
+exceeds this value, the channels won't be interpolated and the epoch will be dropped.
+
+!!! info
+    This setting only takes effect if [`reject`][mne_bids_pipeline._config.reject] has
+    been set to `"autoreject_local"`.
+
+!!! info
+    Channels marked as globally bad in the BIDS dataset (in `*_channels.tsv)`) will not
+    be considered (i.e., will remain marked as bad and not analyzed by autoreject).
 """
 
 ###############################################################################

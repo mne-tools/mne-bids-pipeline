@@ -71,13 +71,18 @@ min_break_duration = 10
 t_break_annot_start_after_previous_event = 3.0
 t_break_annot_stop_before_next_event = 1.5
 
-ica_reject = dict(eeg=350e-6, eog=500e-6)
-reject = "autoreject_global"
+if task == "N400":  # test autoreject local without ICA
+    spatial_filter = None
+    reject = "autoreject_local"
+    autoreject_n_interpolate = [2, 4]
+else:
+    ica_reject = dict(eeg=350e-6, eog=500e-6)
+    reject = "autoreject_global"
 
-spatial_filter = "ica"
-ica_max_iterations = 1000
-ica_eog_threshold = 2
-ica_decim = 2  # speed up ICA fitting
+    spatial_filter = "ica"
+    ica_max_iterations = 1000
+    ica_eog_threshold = 2
+    ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
 
@@ -104,7 +109,6 @@ if task == "N400":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.2
     epochs_tmax = 0.8
     epochs_metadata_tmin = 0

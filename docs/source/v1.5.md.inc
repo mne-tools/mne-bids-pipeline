@@ -15,7 +15,7 @@ All users are encouraged to update.
 - Input validation has been improved by leveraging [pydantic](https://docs.pydantic.dev) (#779 by @larsoner)
 - Reduced logging when reports are created and saved (#799 by @hoechenberger)
 - Added [`"picard-extended_infomax"`][mne_bids_pipeline._config.ica_algorithm] ICA algorithm to perform "extended Infomax"-like ICA decomposition using Picard (#801 by @hoechenberger)
-- Added support for using "local" [`autoreject`](https://autoreject.github.io) to find (and repoair) bad channels on a
+- Added support for using "local" [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a
   per-epochs basis; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject] to `"autoreject_local"`.
   The behavior can further be controlled via the new setting
   [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]. (#807 by @hoechenberger)

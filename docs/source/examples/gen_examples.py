@@ -261,6 +261,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
     demonstrated_funcs = _gen_demonstrated_funcs(config_path)
     all_demonstrated[dataset_name] = demonstrated_funcs
     del config, config_options
+    # Add the subsection and table header
     funcs = [
         "## Demonstrated features\n",
         "Feature | This example",
@@ -279,7 +280,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         f.write(config_str)
         f.write(report_str)
 
-# Finally, write our examples.html file
+# Finally, write our examples.html file with a table of examples
 
 _example_header = """\
 # Examples

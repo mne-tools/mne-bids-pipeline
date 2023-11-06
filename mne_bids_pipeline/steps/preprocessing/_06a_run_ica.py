@@ -16,6 +16,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
+import autoreject
 
 import mne
 from mne.report import Report
@@ -398,8 +399,6 @@ def run_ica(
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     if cfg.ica_reject == "autoreject_local":
-        import autoreject
-
         msg = "Using autoreject to find and repair bad epochs"
         logger.info(**gen_log_kwargs(message=msg))
 

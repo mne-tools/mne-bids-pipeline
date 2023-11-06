@@ -75,7 +75,7 @@ if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]
-elif task == "ERN":  # test autoreject local with ICA (before and after ICA cleaning)
+elif task == "P3":  # test autoreject local with ICA (before and after ICA cleaning)
     spatial_filter = "ica"
     ica_reject = "autoreject_local"
     reject = "autoreject_local"

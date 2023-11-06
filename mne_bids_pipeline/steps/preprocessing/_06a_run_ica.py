@@ -406,6 +406,7 @@ def run_ica(
             n_interpolate=cfg.autoreject_n_interpolate,
             random_state=cfg.random_state,
             n_jobs=exec_params.n_jobs,
+            verbose=False,
         )
         ar.fit(epochs)
         epochs, reject_log = ar.transform(epochs, return_log=True)

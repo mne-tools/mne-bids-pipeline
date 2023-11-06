@@ -116,8 +116,7 @@ def drop_ptp(
             epochs=epochs,
         )
 
-    if cfg.spatial_filter is not None and cfg.ica_reject != "autoreject_local":
-        if cfg.spatial_filter == "ica":
+        if cfg.spatial_filter == "ica" and cfg.ica_reject != "autoreject_local":
             ica_reject = _get_reject(
                 subject=subject,
                 session=session,

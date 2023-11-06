@@ -116,6 +116,7 @@ def drop_ptp(
             epochs=epochs,
         )
 
+    if cfg.spatial_filter is not None and cfg.ica_reject != "autoreject_local":
         if cfg.spatial_filter == "ica":
             ica_reject = _get_reject(
                 subject=subject,
@@ -156,9 +157,13 @@ def drop_ptp(
         )
         logger.warning(**gen_log_kwargs(message=msg))
     elif n_epochs_after_reject == 0:
+        rejection_type = (
+            cfg.reject
+            if cfg.reject in ["autoreject_global", "autoreject_local"]
+            else "PTP-based"
+        )
         raise RuntimeError(
-            "No epochs remaining after peak-to-peak-based "
-            "rejection. Cannot continue."
+            f"No epochs remaining after {rejection_type} rejection. Cannot continue."
         )
 
     msg = "Saving cleaned, baseline-corrected epochs …"

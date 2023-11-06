@@ -75,17 +75,22 @@ if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]
+elif task == "ERN":  # test autoreject local with ICA (before and after ICA cleaning)
+    spatial_filter = "ica"
+    ica_reject = "autoreject_local"
+    reject = "autoreject_local"
+    autoreject_n_interpolate = [2, 4]
 else:
+    spatial_filter = "ica"
     ica_reject = dict(eeg=350e-6, eog=500e-6)
     reject = "autoreject_global"
 
-    spatial_filter = "ica"
-    ica_max_iterations = 1000
-    ica_eog_threshold = 2
-    ica_decim = 2  # speed up ICA fitting
+# These settings are only used for the cases where spatial_filter is not None
+ica_max_iterations = 1000
+ica_eog_threshold = 2
+ica_decim = 2  # speed up ICA fitting
 
 run_source_estimation = False
-
 on_rename_missing_events = "ignore"
 
 parallel_backend = "dask"

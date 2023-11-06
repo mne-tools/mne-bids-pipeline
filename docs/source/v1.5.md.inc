@@ -16,9 +16,12 @@ All users are encouraged to update.
 - Reduced logging when reports are created and saved (#799 by @hoechenberger)
 - Added [`"picard-extended_infomax"`][mne_bids_pipeline._config.ica_algorithm] ICA algorithm to perform "extended Infomax"-like ICA decomposition using Picard (#801 by @hoechenberger)
 - Added support for using "local" [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a
-  per-epochs basis; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject] to `"autoreject_local"`.
-  The behavior can further be controlled via the new setting
+  per-epochs basis as the last preprocessing step; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject]
+  to `"autoreject_local"`. The behavior can further be controlled via the new setting
   [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]. (#807 by @hoechenberger)
+- Added support for "local" and "global"  [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a per-epochs
+  and global basis before submitting them to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
+  to `"autoreject_local"` or `"autoreject_global"`, respectively. (#810 by @hoechenberger)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)

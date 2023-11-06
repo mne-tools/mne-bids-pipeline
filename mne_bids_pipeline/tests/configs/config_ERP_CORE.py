@@ -79,7 +79,7 @@ elif task == "ERN":  # test autoreject local with ICA (before and after ICA clea
     spatial_filter = "ica"
     ica_reject = "autoreject_local"
     reject = "autoreject_local"
-    autoreject_n_interpolate = [2, 4]
+    autoreject_n_interpolate = [4]  # Only for testing!
 else:
     spatial_filter = "ica"
     ica_reject = dict(eeg=350e-6, eog=500e-6)

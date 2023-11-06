@@ -596,6 +596,7 @@ def get_config(
         ica_reject=config.ica_reject,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
+        autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,

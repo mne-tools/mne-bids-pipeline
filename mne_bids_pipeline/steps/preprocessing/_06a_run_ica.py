@@ -581,7 +581,7 @@ def run_ica(
 def get_config(
     *,
     config: SimpleNamespace,
-    subject: Optional[str] = None,
+    subject: str,
     session: Optional[str] = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(

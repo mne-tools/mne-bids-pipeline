@@ -399,7 +399,7 @@ def run_ica(
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     if cfg.ica_reject == "autoreject_local":
-        msg = "Using autoreject to find and repair bad epochs"
+        msg = "Using autoreject to find and repair bad epochs before fitting ICA"
         logger.info(**gen_log_kwargs(message=msg))
 
         ar = autoreject.AutoReject(
@@ -517,15 +517,6 @@ def run_ica(
 
     with _agg_backend():
         if cfg.ica_reject == "autoreject_local":
-            report.add_figure(
-                fig=reject_log.plot(orientation="horizontal", show=False),
-                title="Autoreject before ICA",
-                caption="Autoreject was run to produce a cleaner set of epochs before "
-                "passing them to ICA.",
-                tags=("ica", "autoreject"),
-            )
-
-        if cfg.ica_reject == "autoreject_local":
             caption = (
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
                 f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
@@ -538,7 +529,7 @@ def run_ica(
                 ),
                 title="Epochs: Autoreject cleaning",
                 caption=caption,
-                tags=("epochs", "autoreject"),
+                tags=("ica", "epochs", "autoreject"),
                 replace=True,
             )
             del caption

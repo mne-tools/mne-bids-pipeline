@@ -1233,19 +1233,23 @@ is not reliable.
 
 # Rejection based on ICA
 # ~~~~~~~~~~~~~~~~~~~~~~
-ica_reject: Optional[
-    Union[Dict[str, float], Literal["autoreject_global", "autoreject_local"]]
-] = None
+ica_reject: Optional[Union[Dict[str, float], Literal["autoreject_local"]]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
 remove strong transient artifacts from the epochs used for fitting ICA, which could
 negatively affect ICA performance. 
 
-The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject].
+The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject],
+but `"autoreject_global"` is not supported.
 
-If not using `"autoreject_local"` or `"autoreject_global"`, the rejection limits
-will also be applied to the ECG and EOG epochs created to find heart beats and ocular
-artifacts.
+???+ info
+    We don't support `"autoreject_gloabal"` here (as opposed to
+    [`reject`][mne_bids_pipeline._config.reject]) because in the past, we found that
+    rejection thresholds were too strict before running ICA, i.e., too many epochs
+    got rejected. `"autoreject_local"`, however, usually performed nicely.
+
+If passing a dictionary, the rejection limits will also be applied to the ECG and EOG
+epochs created to find heart beats and ocular artifacts.
 
 ???+ info
     MNE-BIDS-Pipeline will automatically try to detect EOG and ECG artifacts in

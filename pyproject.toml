@@ -44,7 +44,7 @@ dependencies = [
     "autoreject",
     "mne[hdf5] >=1.2",
     "mne-bids[full]",
-    "mna-icalabel",
+    "mne-icalabel",
     "filelock",
     "setuptools >=65",
 ]

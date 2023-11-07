@@ -16,6 +16,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
+import autoreject
 
 import mne
 from mne.report import Report
@@ -191,7 +192,7 @@ def detect_bad_components(
     ica: mne.preprocessing.ICA,
     ch_names: Optional[List[str]],
     subject: str,
-    session: str,
+    session: Optional[str],
 ) -> Tuple[List[int], np.ndarray]:
     artifact = which.upper()
     msg = f"Performing automated {artifact} artifact detection …"
@@ -390,33 +391,51 @@ def run_ica(
     epochs_ecg = ecg_epochs_all_runs
     epochs_eog = eog_epochs_all_runs
 
-    del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs
+    del epochs_all_runs, eog_epochs_all_runs, ecg_epochs_all_runs, run
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    # Reject epochs based on peak-to-peak rejection thresholds
-    ica_reject = _get_reject(
-        subject=subject,
-        session=session,
-        reject=cfg.ica_reject,
-        ch_types=cfg.ch_types,
-        param="ica_reject",
-    )
+    if cfg.ica_reject == "autoreject_local":
+        msg = "Using autoreject to find and repair bad epochs before fitting ICA"
+        logger.info(**gen_log_kwargs(message=msg))
 
-    msg = f"Using PTP rejection thresholds: {ica_reject}"
-    logger.info(**gen_log_kwargs(message=msg))
+        ar = autoreject.AutoReject(
+            n_interpolate=cfg.autoreject_n_interpolate,
+            random_state=cfg.random_state,
+            n_jobs=exec_params.n_jobs,
+            verbose=False,
+        )
+        ar.fit(epochs)
+        epochs, reject_log = ar.transform(epochs, return_log=True)
+        msg = (
+            f"autoreject marked {reject_log.bad_epochs.sum()} epochs as bad "
+            f"(cross-validated n_interpolate limit: {ar.n_interpolate_})"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
+    else:
+        # Reject epochs based on peak-to-peak rejection thresholds
+        ica_reject = _get_reject(
+            subject=subject,
+            session=session,
+            reject=cfg.ica_reject,
+            ch_types=cfg.ch_types,
+            param="ica_reject",
+        )
 
-    epochs.drop_bad(reject=ica_reject)
-    if epochs_eog is not None:
-        epochs_eog.drop_bad(reject=ica_reject)
-    if epochs_ecg is not None:
-        epochs_ecg.drop_bad(reject=ica_reject)
+        msg = f"Using PTP rejection thresholds: {ica_reject}"
+        logger.info(**gen_log_kwargs(message=msg))
+
+        epochs.drop_bad(reject=ica_reject)
+        if epochs_eog is not None:
+            epochs_eog.drop_bad(reject=ica_reject)
+        if epochs_ecg is not None:
+            epochs_ecg.drop_bad(reject=ica_reject)
 
     # Now actually perform ICA.
-    msg = "Calculating ICA solution."
+    msg = f"Calculating ICA solution using method: {cfg.ica_algorithm}."
     logger.info(**gen_log_kwargs(message=msg))
     ica = fit_ica(cfg=cfg, epochs=epochs, subject=subject, session=session)
 
@@ -497,6 +516,24 @@ def run_ica(
     eog_scores = None if len(eog_scores) == 0 else eog_scores
 
     with _agg_backend():
+        if cfg.ica_reject == "autoreject_local":
+            caption = (
+                f"Autoreject was run to produce cleaner epochs before fitting ICA. "
+                f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
+                f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
+                f"limit; excluding globally bad and non-data channels, shown in white)."
+            )
+            report.add_figure(
+                fig=reject_log.plot(
+                    orientation="horizontal", aspect="auto", show=False
+                ),
+                title="Epochs: Autoreject cleaning",
+                caption=caption,
+                tags=("ica", "epochs", "autoreject"),
+                replace=True,
+            )
+            del caption
+
         report.add_epochs(
             epochs=epochs,
             title="Epochs used for ICA fitting",
@@ -536,7 +573,7 @@ def run_ica(
 def get_config(
     *,
     config: SimpleNamespace,
-    subject: Optional[str] = None,
+    subject: str,
     session: Optional[str] = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
@@ -551,6 +588,7 @@ def get_config(
         ica_reject=config.ica_reject,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
+        autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,

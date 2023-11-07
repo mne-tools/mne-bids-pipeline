@@ -1233,13 +1233,34 @@ is not reliable.
 
 # Rejection based on ICA
 # ~~~~~~~~~~~~~~~~~~~~~~
-ica_reject: Optional[Dict[str, float]] = None
+ica_reject: Optional[Union[Dict[str, float], Literal["autoreject_local"]]] = None
 """
-Peak-to-peak amplitude limits to exclude epochs from ICA fitting. Epochs exceeding these
-limits will be excluded from ICA fitting. This allows you to remove strong transient
-artifacts, which could negatively affect ICA performance.
+Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
+remove strong transient artifacts from the epochs used for fitting ICA, which could
+negatively affect ICA performance. 
 
-This will also be applied to ECG and EOG epochs created during preprocessing.
+The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject],
+but `"autoreject_global"` is not supported.
+
+???+ info
+    We don't support `"autoreject_global"` here (as opposed to
+    [`reject`][mne_bids_pipeline._config.reject]) because in the past, we found that
+    rejection thresholds were too strict before running ICA, i.e., too many epochs
+    got rejected. `"autoreject_local"`, however, usually performed nicely.
+    The `autoreject` documentation
+    [recommends][https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html]
+    running local `autoreject` before and after ICA, which can be achieved by setting
+    both, `ica_reject` and [`reject`][mne_bids_pipeline._config.reject], to
+    `"autoreject_local"`.
+
+If passing a dictionary, the rejection limits will also be applied to the ECG and EOG
+epochs created to find heart beats and ocular artifacts.
+
+???+ info
+    MNE-BIDS-Pipeline will automatically try to detect EOG and ECG artifacts in
+    your data, and remove them. For this to work properly, it is recommended
+    to **not** specify rejection thresholds for EOG and ECG channels here –
+    otherwise, ICA won't be able to "see" these artifacts.
 
 ???+ info 
     This setting is applied only to the epochs that are used for **fitting** ICA. The
@@ -1249,19 +1270,13 @@ This will also be applied to ECG and EOG epochs created during preprocessing.
     contain large-amplitude artifacts. Those epochs can then be rejected by using
     the [`reject`][mne_bids_pipeline._config.reject] parameter.
 
-The BIDS Pipeline will automatically try to detect EOG and ECG artifacts in
-your data, and remove them. For this to work properly, it is recommended
-to **not** specify rejection thresholds for EOG and ECG channels here –
-otherwise, ICA won't be able to "see" these artifacts.
-
-If `None` (default), do not apply artifact rejection. If a dictionary,
-manually specify peak-to-peak rejection thresholds (see examples).
-
 ???+ example "Example"
     ```python
     ica_reject = {'grad': 10e-10, 'mag': 20e-12, 'eeg': 400e-6}
     ica_reject = {'grad': 15e-10}
-    ica_reject = None  # no rejection
+    ica_reject = None  # no rejection before fitting ICA
+    ica_reject = "autoreject_global"  # find global (per channel type) PTP thresholds before fitting ICA
+    ica_reject = "autoreject_local"  # find local (per channel) thresholds and repair epochs before fitting ICA
     ```
 """
 

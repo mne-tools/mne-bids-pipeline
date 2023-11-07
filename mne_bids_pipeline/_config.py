@@ -1367,6 +1367,12 @@ that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
 
+ica_use_icalabel = False
+"""
+Whether to use MNE-ICALabel to automatically label ICA components. Only available for
+EEG data.
+"""
+
 # Rejection based on peak-to-peak amplitude
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

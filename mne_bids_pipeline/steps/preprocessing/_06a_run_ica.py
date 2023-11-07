@@ -17,6 +17,7 @@ from types import SimpleNamespace
 import pandas as pd
 import numpy as np
 import autoreject
+from mne_icalabel import label_components
 
 import mne
 from mne.report import Report
@@ -184,7 +185,7 @@ def make_eog_epochs(
     return eog_epochs
 
 
-def detect_bad_components(
+def detect_bad_components_mne(
     *,
     cfg,
     which: Literal["eog", "ecg"],
@@ -195,7 +196,7 @@ def detect_bad_components(
     session: Optional[str],
 ) -> Tuple[List[int], np.ndarray]:
     artifact = which.upper()
-    msg = f"Performing automated {artifact} artifact detection …"
+    msg = f"Performing automated {artifact} artifact detection (MNE) …"
     logger.info(**gen_log_kwargs(message=msg))
 
     if which == "eog":
@@ -395,7 +396,18 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
+        if cfg.ica_use_icalabel:
+            assert cfg.eeg_reference == "average"
+            projection = False  # Avg. ref. needs to be applied for MNE-ICALabel
+        elif cfg.eeg_reference == "average":
+            projection = True
+        else:
+            projection = False
+
+        if not projection:
+            msg = "Applying average reference to EEG epochs used for ICA fitting."
+            logger.info(**gen_log_kwargs(message=msg))
+
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     if cfg.ica_reject == "autoreject_local":
@@ -448,7 +460,7 @@ def run_ica(
 
     # ECG and EOG component detection
     if epochs_ecg:
-        ecg_ics, ecg_scores = detect_bad_components(
+        ecg_ics, ecg_scores = detect_bad_components_mne(
             cfg=cfg,
             which="ecg",
             epochs=epochs_ecg,
@@ -461,7 +473,7 @@ def run_ica(
         ecg_ics = ecg_scores = []
 
     if epochs_eog:
-        eog_ics, eog_scores = detect_bad_components(
+        eog_ics, eog_scores = detect_bad_components_mne(
             cfg=cfg,
             which="eog",
             epochs=epochs_eog,
@@ -473,11 +485,30 @@ def run_ica(
     else:
         eog_ics = eog_scores = []
 
+    # Run MNE-ICALabel if requested.
+    if cfg.ica_use_icalabel:
+        msg = "Performing automated artifact detection (MNE-ICALabel) …"
+        logger.info(**gen_log_kwargs(message=msg))
+
+        label_results = label_components(inst=epochs, ica=ica, method="iclabel")
+        icalabel_ics = []
+        icalabel_labels = []
+        for idx, label in enumerate(label_results["labels"]):
+            if label not in ["brain", "other"]:
+                icalabel_ics.append(idx)
+                icalabel_labels.append(label)
+
+        msg = f"Detected {len(icalabel_ics)} artifact-related ICs in {len(epochs)} epochs."
+        logger.info(**gen_log_kwargs(message=msg))
+
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
     msg = "Saving ICA solution and detected artifacts to disk."
     logger.info(**gen_log_kwargs(message=msg))
-    ica.exclude = sorted(set(ecg_ics + eog_ics))
+    if cfg.ica_use_icalabel:
+        ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
+    else:
+        ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(out_files["ica"], overwrite=True)
     _update_for_splits(out_files, "ica")
 
@@ -495,12 +526,20 @@ def run_ica(
     for component in ecg_ics:
         row_idx = tsv_data["component"] == component
         tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected ECG artifact"
+        tsv_data.loc[row_idx, "status_description"] = "Auto-detected ECG artifact (MNE)"
 
     for component in eog_ics:
         row_idx = tsv_data["component"] == component
         tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected EOG artifact"
+        tsv_data.loc[row_idx, "status_description"] = "Auto-detected EOG artifact (MNE)"
+
+    if cfg.ica_use_icalabel:
+        for component, label in zip(icalabel_ics, icalabel_labels):
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = f"Auto-detected {label} (MNE-ICALabel)"
 
     tsv_data.to_csv(out_files["components"], sep="\t", index=False)
 
@@ -588,6 +627,7 @@ def get_config(
         ica_reject=config.ica_reject,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
+        ica_use_icalabel=config.ica_use_icalabel,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

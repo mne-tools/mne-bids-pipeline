@@ -79,6 +79,10 @@ def fit_ica(
         algorithm = "infomax"
         fit_params = dict(extended=True)
 
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions
+        assert algorithm in ["picard-extended_infomax", "extended_infomax"]
+
     ica = ICA(
         method=algorithm,
         random_state=cfg.random_state,

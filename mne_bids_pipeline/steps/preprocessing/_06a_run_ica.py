@@ -458,33 +458,6 @@ def run_ica(
     if cfg.task is not None:
         title += f", task-{cfg.task}"
 
-    # ECG and EOG component detection
-    if epochs_ecg:
-        ecg_ics, ecg_scores = detect_bad_components_mne(
-            cfg=cfg,
-            which="ecg",
-            epochs=epochs_ecg,
-            ica=ica,
-            ch_names=None,  # we currently don't allow for custom channels
-            subject=subject,
-            session=session,
-        )
-    else:
-        ecg_ics = ecg_scores = []
-
-    if epochs_eog:
-        eog_ics, eog_scores = detect_bad_components_mne(
-            cfg=cfg,
-            which="eog",
-            epochs=epochs_eog,
-            ica=ica,
-            ch_names=cfg.eog_channels,
-            subject=subject,
-            session=session,
-        )
-    else:
-        eog_ics = eog_scores = []
-
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
@@ -500,15 +473,41 @@ def run_ica(
 
         msg = f"Detected {len(icalabel_ics)} artifact-related ICs in {len(epochs)} epochs."
         logger.info(**gen_log_kwargs(message=msg))
+        ica.exclude = sorted(icalabel_ics)
+    else:
+        # Run MNE's built-in ECG and EOG component detection
+        if epochs_ecg:
+            ecg_ics, ecg_scores = detect_bad_components_mne(
+                cfg=cfg,
+                which="ecg",
+                epochs=epochs_ecg,
+                ica=ica,
+                ch_names=None,  # we currently don't allow for custom channels
+                subject=subject,
+                session=session,
+            )
+        else:
+            ecg_ics = ecg_scores = []
+
+        if epochs_eog:
+            eog_ics, eog_scores = detect_bad_components_mne(
+                cfg=cfg,
+                which="eog",
+                epochs=epochs_eog,
+                ica=ica,
+                ch_names=cfg.eog_channels,
+                subject=subject,
+                session=session,
+            )
+        else:
+            eog_ics = eog_scores = []
+
+        ica.exclude = sorted(set(ecg_ics + eog_ics))
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
     msg = "Saving ICA solution and detected artifacts to disk."
     logger.info(**gen_log_kwargs(message=msg))
-    if cfg.ica_use_icalabel:
-        ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
-    else:
-        ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(out_files["ica"], overwrite=True)
     _update_for_splits(out_files, "ica")
 
@@ -523,16 +522,6 @@ def run_ica(
         )
     )
 
-    for component in ecg_ics:
-        row_idx = tsv_data["component"] == component
-        tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected ECG artifact (MNE)"
-
-    for component in eog_ics:
-        row_idx = tsv_data["component"] == component
-        tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected EOG artifact (MNE)"
-
     if cfg.ica_use_icalabel:
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
@@ -540,6 +529,20 @@ def run_ica(
             tsv_data.loc[
                 row_idx, "status_description"
             ] = f"Auto-detected {label} (MNE-ICALabel)"
+    else:
+        for component in ecg_ics:
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = "Auto-detected ECG artifact (MNE)"
+
+        for component in eog_ics:
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = "Auto-detected EOG artifact (MNE)"
 
     tsv_data.to_csv(out_files["components"], sep="\t", index=False)
 
@@ -549,10 +552,16 @@ def run_ica(
     logger.info(**gen_log_kwargs(message=msg))
 
     report = Report(info_fname=epochs, title=title, verbose=False)
+
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
     eog_evoked = None if epochs_eog is None else epochs_eog.average()
-    ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
-    eog_scores = None if len(eog_scores) == 0 else eog_scores
+
+    if cfg.ica_use_icalabel:
+        # We didn't run MNE's scoring
+        ecg_scores = eog_scores = None
+    else:
+        ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
+        eog_scores = None if len(eog_scores) == 0 else eog_scores
 
     with _agg_backend():
         if cfg.ica_reject == "autoreject_local":

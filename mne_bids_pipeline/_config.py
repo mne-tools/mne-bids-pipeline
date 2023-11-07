@@ -1243,10 +1243,15 @@ The parameter values are the same as for [`reject`][mne_bids_pipeline._config.re
 but `"autoreject_global"` is not supported.
 
 ???+ info
-    We don't support `"autoreject_gloabal"` here (as opposed to
+    We don't support `"autoreject_global"` here (as opposed to
     [`reject`][mne_bids_pipeline._config.reject]) because in the past, we found that
     rejection thresholds were too strict before running ICA, i.e., too many epochs
     got rejected. `"autoreject_local"`, however, usually performed nicely.
+    The `autoreject` documentation
+    [recommends][https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html]
+    running local `autoreject` before and after ICA, which can be achieved by setting
+    both, `ica_reject` and [`reject`][mne_bids_pipeline._config.reject], to
+    `"autoreject_local"`.
 
 If passing a dictionary, the rejection limits will also be applied to the ECG and EOG
 epochs created to find heart beats and ocular artifacts.

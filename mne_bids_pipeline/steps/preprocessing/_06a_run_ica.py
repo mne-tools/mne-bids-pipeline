@@ -136,7 +136,7 @@ def make_ecg_epochs(
         del raw  # Free memory
 
         if len(ecg_epochs) == 0:
-            msg = "No ECG events could be found. Not running ECG artifact " "detection."
+            msg = "No ECG events could be found. Not running ECG artifact detection."
             logger.info(**gen_log_kwargs(message=msg))
             ecg_epochs = None
     else:
@@ -174,7 +174,7 @@ def make_eog_epochs(
         eog_epochs = create_eog_epochs(raw, ch_name=ch_names, baseline=(None, -0.2))
 
         if len(eog_epochs) == 0:
-            msg = "No EOG events could be found. Not running EOG artifact " "detection."
+            msg = "No EOG events could be found. Not running EOG artifact detection."
             logger.warning(**gen_log_kwargs(message=msg))
             eog_epochs = None
     else:
@@ -466,14 +466,42 @@ def run_ica(
     if cfg.task is not None:
         title += f", task-{cfg.task}"
 
+    # Run MNE's built-in ECG and EOG component detection
+    if epochs_ecg:
+        ecg_ics, ecg_scores = detect_bad_components_mne(
+            cfg=cfg,
+            which="ecg",
+            epochs=epochs_ecg,
+            ica=ica,
+            ch_names=None,  # we currently don't allow for custom channels
+            subject=subject,
+            session=session,
+        )
+    else:
+        ecg_ics = ecg_scores = []
+
+    if epochs_eog:
+        eog_ics, eog_scores = detect_bad_components_mne(
+            cfg=cfg,
+            which="eog",
+            epochs=epochs_eog,
+            ica=ica,
+            ch_names=cfg.eog_channels,
+            subject=subject,
+            session=session,
+        )
+    else:
+        eog_ics = eog_scores = []
+
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
+        icalabel_ics = []
+        icalabel_labels = []
+
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
         label_results = label_components(inst=epochs, ica=ica, method="iclabel")
-        icalabel_ics = []
-        icalabel_labels = []
         for idx, label in enumerate(label_results["labels"]):
             if label not in ["brain", "other"]:
                 icalabel_ics.append(idx)
@@ -484,36 +512,10 @@ def run_ica(
             f"in {len(epochs)} epochs."
         )
         logger.info(**gen_log_kwargs(message=msg))
-        ica.exclude = sorted(icalabel_ics)
     else:
-        # Run MNE's built-in ECG and EOG component detection
-        if epochs_ecg:
-            ecg_ics, ecg_scores = detect_bad_components_mne(
-                cfg=cfg,
-                which="ecg",
-                epochs=epochs_ecg,
-                ica=ica,
-                ch_names=None,  # we currently don't allow for custom channels
-                subject=subject,
-                session=session,
-            )
-        else:
-            ecg_ics = ecg_scores = []
+        icalabel_ics = []
 
-        if epochs_eog:
-            eog_ics, eog_scores = detect_bad_components_mne(
-                cfg=cfg,
-                which="eog",
-                epochs=epochs_eog,
-                ica=ica,
-                ch_names=cfg.eog_channels,
-                subject=subject,
-                session=session,
-            )
-        else:
-            eog_ics = eog_scores = []
-
-        ica.exclude = sorted(set(ecg_ics + eog_ics))
+    ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
     # Save ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -534,6 +536,7 @@ def run_ica(
     )
 
     if cfg.ica_use_icalabel:
+        assert len(icalabel_ics) == (icalabel_labels)
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"

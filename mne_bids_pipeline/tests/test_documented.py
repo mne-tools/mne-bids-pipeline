@@ -18,15 +18,19 @@ def test_options_documented():
     with open(root_path / "_config.py", "r") as fid:
         contents = fid.read()
     contents = ast.parse(contents)
-    in_config = [
+    unannotated = [
+        item.targets[0].id for item in contents.body if isinstance(item, ast.Assign)
+    ]
+    assert unannotated == []
+    _config_py = [
         item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
     ]
-    assert len(set(in_config)) == len(in_config)
-    in_config = set(in_config)
+    assert len(set(_config_py)) == len(_config_py)
+    _config_py = set(_config_py)
     # ensure we clean our namespace correctly
     config = _get_default_config()
-    config_names = set(d for d in dir(config) if not d.startswith("_"))
-    assert in_config == config_names
+    _get_default_config_names = set(d for d in dir(config) if not d.startswith("_"))
+    assert _config_py == _get_default_config_names
     settings_path = root_path.parent / "docs" / "source" / "settings"
     assert settings_path.is_dir()
     in_doc = set()
@@ -51,8 +55,8 @@ def test_options_documented():
                         assert val not in in_doc, "Duplicate documentation"
                     in_doc.add(val)
     what = "docs/source/settings doc"
-    assert in_doc.difference(in_config) == set(), f"Extra values in {what}"
-    assert in_config.difference(in_doc) == set(), f"Values missing from {what}"
+    assert in_doc.difference(_config_py) == set(), f"Extra values in {what}"
+    assert _config_py.difference(in_doc) == set(), f"Values missing from {what}"
 
 
 def test_datasets_in_doc():

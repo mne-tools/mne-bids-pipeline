@@ -1237,7 +1237,7 @@ ica_reject: Optional[Union[Dict[str, float], Literal["autoreject_local"]]] = Non
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
 remove strong transient artifacts from the epochs used for fitting ICA, which could
-negatively affect ICA performance. 
+negatively affect ICA performance.
 
 The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject],
 but `"autoreject_global"` is not supported.
@@ -1262,7 +1262,7 @@ epochs created to find heart beats and ocular artifacts.
     to **not** specify rejection thresholds for EOG and ECG channels here –
     otherwise, ICA won't be able to "see" these artifacts.
 
-???+ info 
+???+ info
     This setting is applied only to the epochs that are used for **fitting** ICA. The
     goal is to make it easier for ICA to produce a good decomposition. After fitting,
     ICA is applied to the epochs to be analyzed, usually with one or more components
@@ -1367,7 +1367,7 @@ that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
 
-ica_use_icalabel = False
+ica_use_icalabel: bool = False
 """
 Whether to use MNE-ICALabel to automatically label ICA components. Only available for
 EEG data.
@@ -1398,7 +1398,7 @@ epochs with strong transient artifacts.
 
 If `None` (default), do not apply artifact rejection.
 
-If a dictionary, manually specify rejection thresholds (see examples). 
+If a dictionary, manually specify rejection thresholds (see examples).
 The thresholds provided here must be at least as stringent as those in
 [`ica_reject`][mne_bids_pipeline._config.ica_reject] if using ICA. In case of
 `'autoreject_global'`, thresholds for any channel that do not meet this

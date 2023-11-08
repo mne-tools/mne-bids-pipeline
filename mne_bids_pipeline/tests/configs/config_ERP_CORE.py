@@ -71,12 +71,17 @@ min_break_duration = 10
 t_break_annot_start_after_previous_event = 3.0
 t_break_annot_stop_before_next_event = 1.5
 
+# Settings for autoreject and ICA
 if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]
-elif task == "N170":  # test autoreject local before ICA
+elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     spatial_filter = "ica"
+    ica_algorithm = "picard-extended_infomax"
+    ica_use_icalabel = True
+    ica_l_freq = 1
+    h_freq = 100
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
     autoreject_n_interpolate = [2, 4]

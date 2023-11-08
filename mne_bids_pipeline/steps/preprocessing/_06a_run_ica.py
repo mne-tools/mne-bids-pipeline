@@ -275,7 +275,7 @@ def run_ica(
     if cfg.ica_use_icalabel:
         # The ICALabel network was trained on extended-Infomax ICA decompositions fit
         # on data flltered between 1 and 100 Hz.
-        assert cfg.algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
         assert cfg.ica_l_freq == 1.0
         assert cfg.h_freq == 100.0
         assert cfg.eeg_reference == "average"

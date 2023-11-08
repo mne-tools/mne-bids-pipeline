@@ -536,7 +536,7 @@ def run_ica(
     )
 
     if cfg.ica_use_icalabel:
-        assert len(icalabel_ics) == (icalabel_labels)
+        assert len(icalabel_ics) == len(icalabel_labels)
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"

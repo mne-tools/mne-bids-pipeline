@@ -649,6 +649,7 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,
+        h_freq=config.h_freq,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,

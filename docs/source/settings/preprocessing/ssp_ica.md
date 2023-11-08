@@ -24,6 +24,7 @@ tags:
         - ssp_ecg_channel
         - ica_reject
         - ica_algorithm
+        - ica_use_icalabel
         - ica_l_freq
         - ica_max_iterations
         - ica_n_components

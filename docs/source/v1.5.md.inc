@@ -3,6 +3,10 @@
 This release contains a number of very important bug fixes that address problems related to decoding, time-frequency analysis, and inverse modeling.
 All users are encouraged to update.
 
+We also improved logging during parallel processing, added support for finding and repairing bad epochs via
+[`autoreject`](https://autoreject.github.io), and included support for automatic labeling of ICA artifacts
+via [MNE-ICALabel][https://mne.tools/mne-icalabel].
+
 ### :new: New features & enhancements
 
 - Added `deriv_root` argument to CLI (#773 by @vferat)
@@ -22,6 +26,7 @@ All users are encouraged to update.
 - Added support for "local" [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a per-epoch
   basis before submitting them to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
   to `"autoreject_local"`. (#810 by @hoechenberger)
+- Added support for automated labeling of ICA components via [MNE-ICALabel][https://mne.tools/mne-icalabel] (#812 by @hoechenberger)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)

@@ -45,6 +45,7 @@ dependencies = [
     "mne[hdf5] >=1.2",
     "mne-bids[full]",
     "mne-icalabel",
+    "onnxruntime",  # for mne-icalabel
     "filelock",
     "setuptools >=65",
 ]

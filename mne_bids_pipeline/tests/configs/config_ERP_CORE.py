@@ -84,7 +84,7 @@ elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     h_freq = 100
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
-    autoreject_n_interpolate = [5, 10]  # Only for testing!
+    autoreject_n_interpolate = [12]  # Only for testing!
 else:
     spatial_filter = "ica"
     ica_reject = dict(eeg=350e-6, eog=500e-6)
@@ -254,7 +254,7 @@ elif task == "N170":
     baseline = (None, 0)
     conditions = ["stimulus/face/normal", "stimulus/car/normal"]
     contrasts = [("stimulus/face/normal", "stimulus/car/normal")]
-    cluster_forming_t_threshold = 1.5  # Only for testing!
+    cluster_forming_t_threshold = 1.25  # Only for testing!
 elif task == "P3":
     rename_events = {
         "response/201": "response/correct",

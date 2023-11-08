@@ -79,10 +79,6 @@ def fit_ica(
         algorithm = "infomax"
         fit_params = dict(extended=True)
 
-    if cfg.ica_use_icalabel:
-        # The ICALabel network was trained on extended-Infomax ICA decompositions
-        assert algorithm in ["picard-extended_infomax", "extended_infomax"]
-
     ica = ICA(
         method=algorithm,
         random_state=cfg.random_state,
@@ -276,6 +272,14 @@ def run_ica(
     in_files: dict,
 ) -> dict:
     """Run ICA."""
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
+        # on data flltered between 1 and 100 Hz.
+        assert cfg.algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_l_freq == 1.0
+        assert cfg.h_freq == 100.0
+        assert cfg.eeg_reference == "average"
+
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
     out_files = dict()

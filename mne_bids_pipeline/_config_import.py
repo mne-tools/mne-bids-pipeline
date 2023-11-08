@@ -345,6 +345,20 @@ def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> N
                 f"but got shape {destination.shape}"
             )
 
+    # MNE-ICALabel
+    if config.ica_use_icalabel:
+        if config.ica_l_freq != 1.0 or config.h_freq != 100.0:
+            raise ValueError(
+                f"When using MNE-ICALabel, you must set ica_l_freq=1 and h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and h_freq={config.h_freq}"
+            )
+
+        if config.eeg_reference != "average":
+            raise ValueError(
+                f'When using MNE-ICALabel, you must set eeg_reference="average", but '
+                f"got: eeg_reference={config.eeg_reference}"
+            )
+
 
 def _default_factory(key, val):
     # convert a default to a default factory if needed, having an explicit

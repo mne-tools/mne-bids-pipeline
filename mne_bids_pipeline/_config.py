@@ -1371,6 +1371,14 @@ ica_use_icalabel = False
 """
 Whether to use MNE-ICALabel to automatically label ICA components. Only available for
 EEG data.
+
+!!! info
+    Using MNE-ICALabel mandates that you also set:
+    ```python
+    eeg_reference = "average"
+    ica_l_freq = 1
+    h_freq = 100
+    ```
 """
 
 # Rejection based on peak-to-peak amplitude

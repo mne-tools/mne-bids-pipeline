@@ -4,6 +4,7 @@ from typing import Literal, Callable
 from types import SimpleNamespace
 
 import joblib
+from mne.utils import use_log_level, logger as mne_logger
 
 from ._logging import logger, gen_log_kwargs, _is_testing
 
@@ -127,19 +128,21 @@ def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backen
 
 
 def parallel_func(func: Callable, *, exec_params: SimpleNamespace):
-    if get_parallel_backend_name(exec_params=exec_params) == "loky":
-        if get_n_jobs(exec_params=exec_params) == 1:
-            my_func = func
-            parallel = list
-        else:
-            from joblib import Parallel, delayed
-
-            parallel = Parallel()
-            my_func = delayed(func)
-    else:  # Dask
+    if (
+        get_parallel_backend_name(exec_params=exec_params) == "loky"
+        and get_n_jobs(exec_params=exec_params) == 1
+    ):
+        my_func = func
+        parallel = list
+    else:  # Dask or n_jobs > 1
         from joblib import Parallel, delayed
 
         parallel = Parallel()
-        my_func = delayed(func)
+
+        def run_verbose(*args, verbose=mne_logger.level, **kwargs):
+            with use_log_level(verbose=verbose):
+                return func(*args, **kwargs)
+
+        my_func = delayed(run_verbose)
 
     return parallel, my_func

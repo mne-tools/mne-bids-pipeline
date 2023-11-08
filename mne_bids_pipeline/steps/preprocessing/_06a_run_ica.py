@@ -225,7 +225,7 @@ def detect_bad_components_mne(
         logger.warning(**gen_log_kwargs(message=warn))
     else:
         msg = (
-            f"Detected {len(inds)} {artifact}-related ICs in "
+            f"Detected {len(inds)} {artifact}-related independent component(s) in "
             f"{len(epochs)} {artifact} epochs."
         )
         logger.info(**gen_log_kwargs(message=msg))
@@ -479,7 +479,10 @@ def run_ica(
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
 
-        msg = f"Detected {len(icalabel_ics)} artifact-related ICs in {len(epochs)} epochs."
+        msg = (
+            f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
+            f"in {len(epochs)} epochs."
+        )
         logger.info(**gen_log_kwargs(message=msg))
         ica.exclude = sorted(icalabel_ics)
     else:

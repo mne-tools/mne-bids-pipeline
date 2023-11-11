@@ -11,7 +11,7 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-from typing import List, Optional, Iterable, Tuple, Literal
+from typing import List, Optional, Iterable, Tuple, Literal, Dict
 from types import SimpleNamespace
 
 import pandas as pd
@@ -232,6 +232,48 @@ def detect_bad_components(
     return inds, scores
 
 
+def drop_bads_virtual_eog_aware(
+    epochs: mne.BaseEpochs,
+    eog_channels: List[str],
+    reject: Dict[str, float],
+    used_for: str,
+) -> None:
+    """Drop bad channels, but correctly handle virtual EOG channels.
+
+    Operates in-place.
+    """
+    if not eog_channels:
+        epochs.drop_bad(reject=reject)
+        return
+
+    # Find out which of the specified EOG channels are "virtual" (non-genuine) EOG
+    # channels
+    ch_types = epochs.get_channel_types(picks=eog_channels)
+    virtual_channels = []
+    virtual_channel_types_orig = []
+    for ch_name, ch_type in zip(eog_channels, ch_types):
+        if ch_type != "eog":
+            virtual_channels.append(ch_name)
+            virtual_channel_types_orig.append(ch_type)
+
+    if not virtual_channels:
+        epochs.drop_bad(reject=reject)
+        return
+
+    # Now finally apply the rejection thresholds, treating virtual EOG channels as "eog".
+    # When done, restore original channel types.
+    msg = (
+        f"Temporarily treating channels as EOG while applying rejection "
+        f"thresholds for {used_for}: {', '.join(virtual_channels)}"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+    epochs.set_channel_types(
+        dict(zip(virtual_channels, ["eog"] * len(virtual_channels)))
+    )
+    epochs.drop_bad(reject=reject)
+    epochs.set_channel_types(dict(zip(virtual_channels, virtual_channel_types_orig)))
+
+
 def get_input_fnames_run_ica(
     *,
     cfg: SimpleNamespace,
@@ -428,9 +470,19 @@ def run_ica(
         msg = f"Using PTP rejection thresholds: {ica_reject}"
         logger.info(**gen_log_kwargs(message=msg))
 
-        epochs.drop_bad(reject=ica_reject)
+        drop_bads_virtual_eog_aware(
+            epochs=epochs,
+            eog_channels=cfg.eog_channels,
+            reject=ica_reject,
+            used_for="ICA epochs",
+        )
         if epochs_eog is not None:
-            epochs_eog.drop_bad(reject=ica_reject)
+            drop_bads_virtual_eog_aware(
+                epochs=epochs_eog,
+                eog_channels=cfg.eog_channels,
+                reject=ica_reject,
+                used_for="EOG epochs",
+            )
         if epochs_ecg is not None:
             epochs_ecg.drop_bad(reject=ica_reject)
 

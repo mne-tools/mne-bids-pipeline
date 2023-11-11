@@ -238,7 +238,7 @@ def drop_bads_virtual_eog_aware(
     reject: Dict[str, float],
     used_for: str,
 ) -> None:
-    """Drop bad channels, but correctly handle virtual EOG channels.
+    """Drop bad epochs, but correctly handle virtual EOG channels.
 
     Operates in-place.
     """

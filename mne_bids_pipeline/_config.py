@@ -1240,7 +1240,9 @@ remove strong transient artifacts from the epochs used for fitting ICA, which co
 negatively affect ICA performance. 
 
 The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject],
-but `"autoreject_global"` is not supported.
+but `"autoreject_global"` is not supported. `"autoreject_local"` here behaves
+differently, too: it is only used to exclude bad epochs from ICA fitting; we do not
+perform any interpolation.
 
 ???+ info
     We don't support `"autoreject_global"` here (as opposed to

@@ -19,9 +19,9 @@ All users are encouraged to update.
   per-epoch basis as the last preprocessing step; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject]
   to `"autoreject_local"`. The behavior can further be controlled via the new setting
   [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]. (#807 by @hoechenberger)
-- Added support for "local" [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a per-epoch
-  basis before submitting them to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
-  to `"autoreject_local"`. (#810 by @hoechenberger)
+- Added support for "local" [`autoreject`](https://autoreject.github.io) to remove bad epochs
+  before submitting the data to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
+  to `"autoreject_local"`. (#810, #816 by @hoechenberger)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)

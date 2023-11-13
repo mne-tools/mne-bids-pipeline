@@ -35,6 +35,7 @@ from ..._config_utils import (
     get_decoding_contrasts,
     _bids_kwargs,
     _restrict_analyze_channels,
+    _get_decoding_proc,
 )
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
@@ -56,7 +57,7 @@ def get_input_fnames_time_decoding(
     condition1: str,
     condition2: str,
 ) -> dict:
-    # TODO: Shouldn't this at least use the PTP-rejected epochs if available?
+    proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -65,7 +66,7 @@ def get_input_fnames_time_decoding(
         run=None,
         recording=cfg.rec,
         space=cfg.space,
-        processing="clean",
+        processing=proc,
         suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,
@@ -299,6 +300,7 @@ def get_config(
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
+        decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,

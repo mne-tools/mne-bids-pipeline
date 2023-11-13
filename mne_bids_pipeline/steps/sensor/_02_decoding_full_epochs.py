@@ -31,6 +31,7 @@ from ..._config_utils import (
     get_decoding_contrasts,
     _bids_kwargs,
     _restrict_analyze_channels,
+    _get_decoding_proc,
 )
 from ..._logging import gen_log_kwargs, logger
 from ..._decoding import LogReg
@@ -52,6 +53,7 @@ def get_input_fnames_epochs_decoding(
     condition1: str,
     condition2: str,
 ) -> dict:
+    proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -60,7 +62,7 @@ def get_input_fnames_epochs_decoding(
         run=None,
         recording=cfg.rec,
         space=cfg.space,
-        processing="clean",
+        processing=proc,
         suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,
@@ -225,6 +227,7 @@ def get_config(
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
         decode=config.decode,
+        decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_epochs_tmin=config.decoding_epochs_tmin,
         decoding_epochs_tmax=config.decoding_epochs_tmax,

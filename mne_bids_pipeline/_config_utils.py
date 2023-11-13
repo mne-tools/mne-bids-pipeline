@@ -538,6 +538,19 @@ def get_decoding_contrasts(config: SimpleNamespace) -> Iterable[Tuple[str, str]]
     return normalized_contrasts
 
 
+# Map _config.decoding_which_epochs to a BIDS proc- entity
+_EPOCHS_DESCRIPTION_TO_PROC_MAP = {
+    "uncleaned": None,
+    "after_ica": "ica",
+    "after_ssp": "ssp",
+    "cleaned": "clean",
+}
+
+
+def _get_decoding_proc(config: SimpleNamespace) -> Optional[str]:
+    return _EPOCHS_DESCRIPTION_TO_PROC_MAP[config.decoding_which_epochs]
+
+
 def get_eeg_reference(
     config: SimpleNamespace,
 ) -> Union[Literal["average"], Iterable[str]]:

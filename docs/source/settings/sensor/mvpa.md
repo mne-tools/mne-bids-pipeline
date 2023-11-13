@@ -4,12 +4,14 @@ tags:
   - evoked
   - contrast
   - decoding
+  - mvpa
 ---
 
 ::: mne_bids_pipeline._config
     options:
       members:
         - decode
+        - decoding_which_epochs
         - decoding_epochs_tmin
         - decoding_epochs_tmax
         - decoding_metric

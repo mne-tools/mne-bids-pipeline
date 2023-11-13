@@ -23,6 +23,7 @@ from ..._config_utils import (
     get_decoding_contrasts,
     _bids_kwargs,
     _restrict_analyze_channels,
+    _get_decoding_proc,
 )
 from ..._decoding import LogReg, _handle_csp_args
 from ..._logging import logger, gen_log_kwargs
@@ -113,6 +114,7 @@ def get_input_fnames_csp(
     session: Optional[str],
     contrast: Tuple[str],
 ) -> dict:
+    proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -121,7 +123,7 @@ def get_input_fnames_csp(
         run=None,
         recording=cfg.rec,
         space=cfg.space,
-        processing="clean",
+        processing=proc,
         suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,
@@ -531,6 +533,7 @@ def get_config(
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         time_frequency_subtract_evoked=config.time_frequency_subtract_evoked,
+        decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,

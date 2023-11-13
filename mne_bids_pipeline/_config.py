@@ -1463,10 +1463,41 @@ on entire epochs ("full-epochs decoding"), and separately on each time point
 conditions.
 """
 
+decoding_which_epochs: Literal[
+    "uncleaned", "after_ica", "after_ssp", "cleaned"
+] = "cleaned"
+"""
+This setting controls which epochs will be fed into the decoding algorithms.
+
+!!! info
+    Decoding is a very powerful tool that often can deal with noisy data surprisingly
+    well. Depending on the specific type of data, artifacts, and analysis performed,
+    decoding performance may even improve with less "pre-processed" the data, as
+    processing steps such as ICA or SSP often remove parts of the signal, too, in
+    addition to noise. By default, MNE-BIDS-Pipeline uses cleaned epochs for decoding,
+    but you may choose to use entirely uncleaned epochs, or epochs before the final
+    PTP-based rejection step.
+
+!!! info
+    No other sensor- and source-level processing steps will be affected by this setting
+    and use cleaned epochs only.
+
+If `"uncleaned"`, use the "raw" epochs before any ICA / SSP, PTP-based, or Autoreject
+cleaning (epochs with the filename `*_epo.fif`, without a `proc-` part).
+
+If `"after_ica"` or `"after_ssp"`, use the epochs that were cleaned via ICA or SSP, but
+before a followup cleaning through PTP-based rejection or Autorejct (epochs with the
+filename `*proc-ica_epo.fif` or `*proc-ssp_epo.fif`).
+
+If `"cleaned"`, use the epochs after ICA / SSP and the following cleaning through
+PTP-based rejection or Autoreject (epochs with the filename `*proc-clean_epo.fif`).
+"""
+
 decoding_epochs_tmin: Optional[float] = 0.0
 """
 The first time sample to use for full epochs decoding. By default it starts
-at 0. If `None`,, it starts at the beginning of the epoch.
+at 0. If `None`,, it starts at the beginning of the epoch. Does not affect time-by-time
+decoding.
 """
 
 decoding_epochs_tmax: Optional[float] = None
@@ -1486,7 +1517,7 @@ you don't need to be worried about **exactly** balancing class sizes.
 
 decoding_n_splits: int = 5
 """
-The number of folds (also called "splits") to use in the cross-validation
+The number of folds (also called "splits") to use in the K-fold cross-validation
 scheme.
 """
 

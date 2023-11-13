@@ -399,7 +399,10 @@ def run_ica(
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     if cfg.ica_reject == "autoreject_local":
-        msg = "Using autoreject to find and repair bad epochs before fitting ICA"
+        msg = (
+            "Using autoreject to find bad epochs before fitting ICA "
+            "(no interpolation will be performend)"
+        )
         logger.info(**gen_log_kwargs(message=msg))
 
         ar = autoreject.AutoReject(
@@ -409,7 +412,8 @@ def run_ica(
             verbose=False,
         )
         ar.fit(epochs)
-        epochs, reject_log = ar.transform(epochs, return_log=True)
+        reject_log = ar.get_reject_log(epochs)
+        epochs = epochs[~reject_log.bad_epochs]
         msg = (
             f"autoreject marked {reject_log.bad_epochs.sum()} epochs as bad "
             f"(cross-validated n_interpolate limit: {ar.n_interpolate_})"
@@ -521,7 +525,11 @@ def run_ica(
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
                 f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
                 f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
-                f"limit; excluding globally bad and non-data channels, shown in white)."
+                f"limit; excluding globally bad and non-data channels, shown in "
+                f"white). Note that none of the blue segments were actually "
+                f"interpolated before submitting the data to ICA. This is following "
+                f"the recommended approach for ICA described in the the Autoreject "
+                f"documentation."
             )
             report.add_figure(
                 fig=reject_log.plot(

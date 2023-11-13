@@ -52,3 +52,5 @@ All users are encouraged to update.
 - Fixed bug where default values for `decoding_csp_times` and `decoding_csp_freqs` were not set dynamically based on the config parameters (#779 by @larsoner)
 - Fixed bug where the MNE logger verbosity was not respected inside parallel jobs (#813 by @larsoner)
 - A number of processing steps erroneously **always** operated on un-cleaned epochs (`sensor/decoding_full_epochs`, `sensor/decoding_time_by_time`, `sensor/decoding_csp`); or operated on un-cleaned epochs (without PTP rejection) if no ICA or SSP was requested (`sensor/ime_frequency`, `sensor/make_cov`) The bug in `sensor/make_cov` could propagate to the source level, as the covariance matrix is used for inverse modeling. (#796 by @hoechenberger)
+- Bad channels may have been submitted to MVPA (full epochs decoding, time-by-time decoding, CSP-based decoding) when not using Maxwell filtering
+  (i.e., usually only EEG data was affected). This has now been fixed and data from bad channels is omitted from decoding. (#817 by @hoechenberger)

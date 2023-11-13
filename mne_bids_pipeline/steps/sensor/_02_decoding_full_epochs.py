@@ -118,7 +118,7 @@ def run_epochs_decoding(
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
 
-    X = epochs.get_data()
+    X = epochs.get_data(picks="data")  # omit bad channels
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
     classification_pipeline = make_pipeline(

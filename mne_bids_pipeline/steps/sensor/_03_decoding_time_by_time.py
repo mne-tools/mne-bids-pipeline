@@ -129,7 +129,7 @@ def run_time_decoding(
     if cfg.decoding_time_generalization and decim > 1:
         epochs.decimate(decim, verbose="error")
 
-    X = epochs.get_data()
+    X = epochs.get_data(picks="data")  # omit bad channels
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
     # ProgressBar does not work on dask, so only enable it if not using dask
     verbose = get_parallel_backend_name(exec_params=exec_params) != "dask"

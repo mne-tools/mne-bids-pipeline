@@ -6,14 +6,14 @@ files: ^(.*\.(py|yaml))$
 exclude: ^(\.[^/]*cache/.*|.*/freesurfer/contrib/.*)$
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.10.1
+    rev: 23.11.0
     hooks:
       - id: black
         args:
           - --safe
           - --quiet
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.4
+    rev: v0.1.6
     hooks:
       - id: ruff
   - repo: https://github.com/codespell-project/codespell
@@ -23,7 +23,7 @@ repos:
         additional_dependencies:
           - tomli
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.32.0
+    rev: v1.33.0
     hooks:
       - id: yamllint
         args: [--strict]

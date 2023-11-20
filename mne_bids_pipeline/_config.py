@@ -1478,7 +1478,7 @@ This setting controls which epochs will be fed into the decoding algorithms.
     processing steps such as ICA or SSP often remove parts of the signal, too, in
     addition to noise. By default, MNE-BIDS-Pipeline uses cleaned epochs for decoding,
     but you may choose to use entirely uncleaned epochs, or epochs before the final
-    PTP-based rejection step.
+    PTP-based rejection or Autoreject step.
 
 !!! info
     No other sensor- and source-level processing steps will be affected by this setting

@@ -1474,7 +1474,7 @@ This setting controls which epochs will be fed into the decoding algorithms.
 !!! info
     Decoding is a very powerful tool that often can deal with noisy data surprisingly
     well. Depending on the specific type of data, artifacts, and analysis performed,
-    decoding performance may even improve with less "pre-processed" the data, as
+    decoding performance may even improve with less pre-processed data, as
     processing steps such as ICA or SSP often remove parts of the signal, too, in
     addition to noise. By default, MNE-BIDS-Pipeline uses cleaned epochs for decoding,
     but you may choose to use entirely uncleaned epochs, or epochs before the final

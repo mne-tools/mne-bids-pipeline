@@ -22,7 +22,7 @@ All users are encouraged to update.
 - Added support for "local" [`autoreject`](https://autoreject.github.io) to remove bad epochs
   before submitting the data to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
   to `"autoreject_local"`. (#810, #816 by @hoechenberger)
-- The new setting [`decoding_which_epochs`][mne_bids_pipeline._config.decoding_which_epochs] controls which epochs (e.g., uncleaned, after ICA/SSP, cleaned) shall be used for decoding. (#xxx by @hoechenber)
+- The new setting [`decoding_which_epochs`][mne_bids_pipeline._config.decoding_which_epochs] controls which epochs (e.g., uncleaned, after ICA/SSP, cleaned) shall be used for decoding. (#819 by @hoechenber)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)

@@ -256,7 +256,7 @@ def one_subject_decoding(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
         # Get the data for all time points
-        X = epochs_filt.get_data()
+        X = epochs_filt.get_data(picks="data")  # omit bad channels
 
         # We apply PCA before running CSP:
         # - much faster CSP processing
@@ -329,7 +329,7 @@ def one_subject_decoding(
         if tmax is not None:  # avoid warnings about outside the interval
             tmax = min(tmax, epochs_filt.times[-1])
         epochs_filt.crop(tmin, tmax)
-        X = epochs_filt.get_data()
+        X = epochs_filt.get_data(picks="data")  # omit bad channels
         X_pca = pca.transform(X)
         del X
 

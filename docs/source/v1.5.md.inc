@@ -19,9 +19,9 @@ All users are encouraged to update.
   per-epoch basis as the last preprocessing step; this can be enabled by setting [`reject`][mne_bids_pipeline._config.reject]
   to `"autoreject_local"`. The behavior can further be controlled via the new setting
   [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]. (#807 by @hoechenberger)
-- Added support for "local" [`autoreject`](https://autoreject.github.io) to find (and repair) bad channels on a per-epoch
-  basis before submitting them to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
-  to `"autoreject_local"`. (#810 by @hoechenberger)
+- Added support for "local" [`autoreject`](https://autoreject.github.io) to remove bad epochs
+  before submitting the data to ICA fitting. This can be enabled by setting [`ica_reject`][mne_bids_pipeline._config.ica_reject]
+  to `"autoreject_local"`. (#810, #816 by @hoechenberger)
 - The new setting [`decoding_which_epochs`][mne_bids_pipeline._config.decoding_which_epochs] controls which epochs (e.g., uncleaned, after ICA/SSP, cleaned) shall be used for decoding. (#xxx by @hoechenber)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
@@ -54,3 +54,5 @@ All users are encouraged to update.
 - Fixed bug where default values for `decoding_csp_times` and `decoding_csp_freqs` were not set dynamically based on the config parameters (#779 by @larsoner)
 - Fixed bug where the MNE logger verbosity was not respected inside parallel jobs (#813 by @larsoner)
 - A number of processing steps erroneously **always** operated on un-cleaned epochs (`sensor/decoding_full_epochs`, `sensor/decoding_time_by_time`, `sensor/decoding_csp`); or operated on un-cleaned epochs (without PTP rejection) if no ICA or SSP was requested (`sensor/ime_frequency`, `sensor/make_cov`) The bug in `sensor/make_cov` could propagate to the source level, as the covariance matrix is used for inverse modeling. (#796 by @hoechenberger)
+- Bad channels may have been submitted to MVPA (full epochs decoding, time-by-time decoding, CSP-based decoding) when not using Maxwell filtering
+  (i.e., usually only EEG data was affected). This has now been fixed and data from bad channels is omitted from decoding. (#817 by @hoechenberger)

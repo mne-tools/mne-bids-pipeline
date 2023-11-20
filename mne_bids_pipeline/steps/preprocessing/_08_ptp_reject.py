@@ -84,7 +84,10 @@ def drop_ptp(
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     if cfg.reject == "autoreject_local":
-        msg = "Using autoreject to find and repair bad epochs"
+        msg = (
+            "Using autoreject to find and repair bad epochs (interpolating bad "
+            "segments)"
+        )
         logger.info(**gen_log_kwargs(message=msg))
 
         ar = autoreject.AutoReject(

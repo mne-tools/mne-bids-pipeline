@@ -1,4 +1,4 @@
-## v1.5.0 (unreleased)
+## v1.5.0 (2023-11-30)
 
 This release contains a number of very important bug fixes that address problems related to decoding, time-frequency analysis, and inverse modeling.
 All users are encouraged to update.

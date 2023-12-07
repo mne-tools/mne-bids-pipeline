@@ -25,7 +25,7 @@ All users are encouraged to update.
 - The new setting [`decoding_which_epochs`][mne_bids_pipeline._config.decoding_which_epochs] controls which epochs (e.g., uncleaned, after ICA/SSP, cleaned) shall be used for decoding. (#819 by @hoechenber)
 - Website documentation tables can now be sorted (e.g., to find examples that use a specific feature) (#808 by @larsoner)
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 
 - The default cache directory is now `_cache` within the derivatives folder when using `memory_location=True`, set [`memory_subdir="joblib"`][mne_bids_pipeline._config.memory_subdir] to get the behavior from v1.4 (#778 by @larsoner)
 - Before cleaning epochs via ICA, we used to reject any epochs execeeding the [`ica_reject`][mne_bids_pipeline._config.ica_reject]

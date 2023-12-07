@@ -45,6 +45,16 @@ def pytest_configure(config):
     ignore:All-NaN axis encountered.*:RuntimeWarning
     # sklearn class not enough samples for cv=5
     always:The least populated class in y has only.*:UserWarning
+    # constrained layout fails on ds003392
+    # mne_bids_pipeline/steps/preprocessing/_06a_run_ica.py:551: in run_ica
+    #    report.add_ica(
+    #../python_env/lib/python3.10/site-packages/mne/report/report.py:1974: in add_ica
+    #    self._add_ica(
+    #../python_env/lib/python3.10/site-packages/mne/report/report.py:1872: in _add_ica
+    #    self._add_ica_artifact_sources(
+    #../python_env/lib/python3.10/site-packages/mne/report/report.py:1713: in _add_ica_artifact_sources
+    #    self._add_figure(
+    always:constrained_layout not applied.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

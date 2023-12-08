@@ -1,9 +1,13 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
 [project]
 name = "mne-bids-pipeline"
 # Keep in sync with README.md:
 description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE.txt"}
 keywords = ["science", "neuroscience", "psychology"]
 authors = [
@@ -17,8 +21,6 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-    "typing_extensions; python_version < '3.8'",
-    "importlib_metadata; python_version < '3.8'",
     "psutil",  # for joblib
     "packaging",
     "numpy",
@@ -45,7 +47,6 @@ dependencies = [
     "mne[hdf5] >=1.2",
     "mne-bids[full]",
     "filelock",
-    "setuptools >=65",
 ]
 dynamic = ["version"]
 
@@ -83,19 +84,21 @@ homepage = "https://mne.tools/mne-bids-pipeline"
 repository = "https://github.com/mne-tools/mne-bids-pipeline"
 changelog = "http://mne.tools/mne-bids-pipeline/changes.html"
 
-[build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.hatch.version]
+source = "vcs"
+raw-options = { version_scheme = "release-branch-semver" }
 
-[tool.setuptools_scm]
-tag_regex = "^(?P<prefix>v)?(?P<version>[0-9.]+)(?P<suffix>.*)?$"
-version_scheme = "release-branch-semver"
-
-[tool.setuptools.packages.find]
-exclude = ["false"]  # on CircleCI this folder appears during pip install -ve. for an unknown reason
-
-[tool.setuptools.package-data]
-"mne_bids_pipeline.steps.freesurfer.contrib" = ["version"]
+[tool.hatch.build]
+exclude = [
+    "/.*",
+    "/codecov.yml",
+    "**/tests",
+    "/docs",
+    "/Makefile",
+    "/BUILDING.md",
+    "/CONTRIBUTING.md",
+    "ignore_words.txt",
+]
 
 [tool.codespell]
 skip = "docs/site/*,*.html,steps/freesurfer/contrib/*"

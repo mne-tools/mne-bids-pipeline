@@ -1,78 +1,79 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
 [project]
 name = "mne-bids-pipeline"
 # Keep in sync with README.md:
 description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
-requires-python = ">=3.8"
-license = {file = "LICENSE.txt"}
+requires-python = ">=3.9"
+license = { file = "LICENSE.txt" }
 keywords = ["science", "neuroscience", "psychology"]
 authors = [
-  {name = "Eric Larson"},
-  {name = "Alexandre Gramfort"},
-  {name = "Mainak Jas"},
-  {name = "Richard Höchenberger", email = "richard.hoechenberger@gmail.com"},
+  { name = "Eric Larson" },
+  { name = "Alexandre Gramfort" },
+  { name = "Mainak Jas" },
+  { name = "Richard Höchenberger", email = "richard.hoechenberger@gmail.com" },
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
-  "Programming Language :: Python"
+  "Programming Language :: Python",
 ]
 dependencies = [
-    "typing_extensions; python_version < '3.8'",
-    "importlib_metadata; python_version < '3.8'",
-    "psutil",  # for joblib
-    "packaging",
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "nibabel",
-    "joblib >= 0.14",
-    "threadpoolctl",
-    "dask[distributed]",
-    "bokeh < 3",  # for distributed dashboard
-    "jupyter-server-proxy",  # to have dask and jupyter working together
-    "scikit-learn",
-    "pandas",
-    "seaborn",
-    "json_tricks",
-    "pydantic >= 2.0.0",
-    "rich",
-    "python-picard",
-    "qtpy",
-    "pyvista",
-    "pyvistaqt",
-    "openpyxl",
-    "autoreject",
-    "mne[hdf5] >=1.2",
-    "mne-bids[full]",
-    "filelock",
-    "setuptools >=65",
+  "psutil",               # for joblib
+  "packaging",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "nibabel",
+  "joblib >= 0.14",
+  "threadpoolctl",
+  "dask[distributed]",
+  "bokeh < 3",            # for distributed dashboard
+  "jupyter-server-proxy", # to have dask and jupyter working together
+  "scikit-learn",
+  "pandas",
+  "seaborn",
+  "json_tricks",
+  "pydantic >= 2.0.0",
+  "rich",
+  "python-picard",
+  "qtpy",
+  "pyvista",
+  "pyvistaqt",
+  "openpyxl",
+  "autoreject",
+  "mne[hdf5] >=1.2",
+  "mne-bids[full]",
+  "filelock",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 tests = [
-    "pytest",
-    "pytest-cov",
-    "pooch",
-    "psutil",
-    "datalad",
-    "ruff",
-    "mkdocs",
-    "mkdocs-material >= 9.0.4",
-    "mkdocs-material-extensions",
-    "mkdocs-macros-plugin",
-    "mkdocs-include-markdown-plugin",
-    "mkdocs-exclude",
-    "mkdocstrings-python",
-    "mike",
-    "jinja2",
-    "black",  # function signature formatting
-    "livereload",
-    "openneuro-py >= 2022.2.0",
-    "httpx >= 0.20",
-    "tqdm",
-    "Pygments",
-    "pyyaml",
+  "pytest",
+  "pytest-cov",
+  "pooch",
+  "psutil",
+  "datalad",
+  "ruff",
+  "mkdocs",
+  "mkdocs-material >= 9.0.4",
+  "mkdocs-material-extensions",
+  "mkdocs-macros-plugin",
+  "mkdocs-include-markdown-plugin",
+  "mkdocs-exclude",
+  "mkdocstrings-python",
+  "mike",
+  "jinja2",
+  "black",                          # function signature formatting
+  "livereload",
+  "openneuro-py >= 2022.2.0",
+  "httpx >= 0.20",
+  "tqdm",
+  "Pygments",
+  "pyyaml",
 ]
 
 [project.scripts]
@@ -83,19 +84,22 @@ homepage = "https://mne.tools/mne-bids-pipeline"
 repository = "https://github.com/mne-tools/mne-bids-pipeline"
 changelog = "http://mne.tools/mne-bids-pipeline/changes.html"
 
-[build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.hatch.version]
+source = "vcs"
+raw-options = { version_scheme = "release-branch-semver" }
 
-[tool.setuptools_scm]
-tag_regex = "^(?P<prefix>v)?(?P<version>[0-9.]+)(?P<suffix>.*)?$"
-version_scheme = "release-branch-semver"
-
-[tool.setuptools.packages.find]
-exclude = ["false"]  # on CircleCI this folder appears during pip install -ve. for an unknown reason
-
-[tool.setuptools.package-data]
-"mne_bids_pipeline.steps.freesurfer.contrib" = ["version"]
+[tool.hatch.build]
+exclude = [
+  "/.*",
+  "/codecov.yml",
+  "**/tests",
+  "/docs",
+  "/docs/source/examples/gen_examples.py", # specify explicitly because its exclusion is negated in .gitignore
+  "/Makefile",
+  "/BUILDING.md",
+  "/CONTRIBUTING.md",
+  "ignore_words.txt",
+]
 
 [tool.codespell]
 skip = "docs/site/*,*.html,steps/freesurfer/contrib/*"
@@ -108,13 +112,11 @@ count = ""
 
 [tool.pytest.ini_options]
 addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=junit-results.xml --durations=10"
-testpaths = [
-    "mne_bids_pipeline",
-]
+testpaths = ["mne_bids_pipeline"]
 junit_family = "xunit2"
 
 [tool.ruff]
-exclude = ["**/freesurfer/contrib", "dist/" , "build/"]
+exclude = ["**/freesurfer/contrib", "dist/", "build/"]
 
 [tool.black]
 exclude = "(.*/freesurfer/contrib/.*)|(dist/)|(build/)"

@@ -10,14 +10,14 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :package: Requirements)
+### :package: Requirements
 
-[//]: # (- Whatever (#000 by @whoever))
+- MNE-BIDS-Pipeline now requires Python 3.9 or newer. (#825 by @hoechenberger)
 
 [//]: # (### :bug: Bug fixes)
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :medical_symbol: Code health)
+### :medical_symbol: Code health
 
-[//]: # (- Whatever (#000 by @whoever))
+- The package build backend has been switched from `setuptools` to `hatchling`. (#825 by @hoechenberger)

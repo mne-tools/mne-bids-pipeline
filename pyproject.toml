@@ -32,6 +32,7 @@ dependencies = [
     "jupyter-server-proxy",  # to have dask and jupyter working together
     "scikit-learn",
     "pandas",
+    "pyarrow",  # from pandas
     "seaborn",
     "json_tricks",
     "pydantic >= 2.0.0",

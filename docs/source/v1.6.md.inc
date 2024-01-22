@@ -14,9 +14,9 @@
 
 - MNE-BIDS-Pipeline now requires Python 3.9 or newer. (#825 by @hoechenberger)
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Fix minor issues with path handling for cross-talk and calibration files (#834 by @larsoner)
 
 ### :medical_symbol: Code health
 

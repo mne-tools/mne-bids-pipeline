@@ -30,15 +30,13 @@ def main():
         metavar="FILE",
         help="The path of the pipeline configuration file to use.",
     )
-    (
-        parser.add_argument(
-            "--create-config",
-            dest="create_config",
-            default=None,
-            metavar="FILE",
-            help="Create a template configuration file with the specified name. "
-            "If specified, all other parameters will be ignored.",
-        ),
+    parser.add_argument(
+        "--create-config",
+        dest="create_config",
+        default=None,
+        metavar="FILE",
+        help="Create a template configuration file with the specified name. "
+        "If specified, all other parameters will be ignored.",
     )
     parser.add_argument(
         "--steps",

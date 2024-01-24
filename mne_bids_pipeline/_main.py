@@ -59,18 +59,17 @@ def main():
         default=None,
         help="BIDS root directory of the data to process.",
     )
-    (
-        parser.add_argument(
-            "--deriv_root",
-            dest="deriv_root",
-            default=None,
-            help=dedent(
-                """\
-        The root of the derivatives directory
-        in which the pipeline will store the processing results.
-        If unspecified, this will be derivatives/mne-bids-pipeline
-        inside the BIDS root."""
-            ),
+    parser.add_argument(
+        "--deriv_root",
+        dest="deriv_root",
+        default=None,
+        help=dedent(
+            """
+            The root of the derivatives directory
+            in which the pipeline will store the processing results.
+            If unspecified, this will be derivatives/mne-bids-pipeline
+            inside the BIDS root.
+            """
         ),
     )
     parser.add_argument(

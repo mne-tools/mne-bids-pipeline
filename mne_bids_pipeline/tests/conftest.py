@@ -56,6 +56,7 @@ def pytest_configure(config):
     #    self._add_figure(
     always:constrained_layout not applied.*:UserWarning
     ignore:datetime\.datetime\.utcfromtimestamp.*:DeprecationWarning
+    ignore:datetime\.datetime\.utcnow.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

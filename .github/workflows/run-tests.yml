@@ -23,7 +23,7 @@ jobs:
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
-    name: 'caching on ${{ matrix.os }}'
+    name: 'Caching on ${{ matrix.os }}'
     timeout-minutes: 30
     continue-on-error: true
     runs-on: ${{ matrix.os }}

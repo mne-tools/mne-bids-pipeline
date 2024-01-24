@@ -85,6 +85,8 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
     "ds003775": {
         "openneuro": "ds003775",
         "include": ["sub-010"],
+        # See https://github.com/OpenNeuroOrg/openneuro/issues/2976
+        "exclude": ["sub-010/ses-t1/sub-010_ses-t1_scans.tsv"],
     },
     "ds001810": {
         "openneuro": "ds001810",

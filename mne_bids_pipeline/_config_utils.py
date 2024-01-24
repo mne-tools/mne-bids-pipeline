@@ -353,15 +353,19 @@ def get_mf_cal_fname(
     *, config: SimpleNamespace, subject: str, session: str
 ) -> pathlib.Path:
     if config.mf_cal_fname is None:
-        mf_cal_fpath = BIDSPath(
+        bids_path = BIDSPath(
             subject=subject,
             session=session,
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).meg_calibration_fpath
+        ).match()[0]
+        mf_cal_fpath = bids_path.meg_calibration_fpath
         if mf_cal_fpath is None:
-            raise ValueError("Could not find Maxwell Filter Calibration file.")
+            raise ValueError(
+                "Could not determine Maxwell Filter Calibration file from BIDS "
+                f"definition for file {bids_path}."
+            )
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():

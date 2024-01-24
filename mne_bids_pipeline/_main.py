@@ -37,7 +37,7 @@ def main():
         metavar="FILE",
         help="Create a template configuration file with the specified name. "
         "If specified, all other parameters will be ignored.",
-    ),
+    )
     parser.add_argument(
         "--steps",
         dest="steps",
@@ -70,7 +70,7 @@ def main():
         If unspecified, this will be derivatives/mne-bids-pipeline
         inside the BIDS root."""
         ),
-    ),
+    )
     parser.add_argument(
         "--subject", dest="subject", default=None, help="The subject to process."
     )

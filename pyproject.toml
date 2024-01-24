@@ -68,7 +68,6 @@ tests = [
   "mkdocstrings-python",
   "mike",
   "jinja2",
-  "black",                          # function signature formatting
   "livereload",
   "openneuro-py >= 2022.2.0",
   "httpx >= 0.20",

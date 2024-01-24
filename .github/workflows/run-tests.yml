@@ -36,6 +36,8 @@ jobs:
           - os: ubuntu-latest
           - os: macos-latest
           - os: windows-latest
+    env:
+      MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: pyvista/setup-headless-display-action@main

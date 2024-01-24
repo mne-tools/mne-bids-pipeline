@@ -1,4 +1,4 @@
-"""Apply SSP projections and obtain the cleaned epochs.
+"""Apply SSP projections and obtain the cleaned epochs and raw data.
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP
 projections components are removed from the data.
@@ -57,8 +57,6 @@ def apply_ssp(
     session: Optional[str],
     in_files: dict,
 ) -> dict:
-    # load epochs to reject ICA components
-    # compute SSP on first run of raw
     out_files = dict()
     out_files["epochs"] = (
         in_files["epochs"].copy().update(processing="ssp", split=None, check=False)

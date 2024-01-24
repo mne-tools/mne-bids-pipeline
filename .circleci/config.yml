@@ -48,7 +48,7 @@ jobs:
           name: Get Python running
           command: |
             pip install --upgrade --progress-bar off pip
-            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
+            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/larsoner/mne-python@regress" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
             pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1"
       - run:
@@ -296,6 +296,26 @@ jobs:
           key: data-cache-eeg_matchingpennies-1
           paths:
             - ~/mne_data/eeg_matchingpennies
+
+  cache_MNE-phantom-KIT-data:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-MNE-phantom-KIT-data-1
+      - bash_env
+      - gitconfig  # email address is needed for datalad
+      - run:
+          name: Get MNE-phantom-KIT-data
+          command: |
+            $DOWNLOAD_DATA MNE-phantom-KIT-data
+      - codecov/upload
+      - save_cache:
+          key: data-cache-MNE-phantom-KIT-data-1
+          paths:
+            - ~/mne_data/MNE-phantom-KIT-data
 
   cache_ERP_CORE:
     <<: *imageconfig
@@ -765,6 +785,32 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
+  test_MNE-phantom-KIT-data:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - bash_env
+      - restore_cache:
+          keys:
+            - data-cache-MNE-phantom-KIT-data-1
+      - run:
+          name: test MNE-phantom-KIT-data
+          command: $RUN_TESTS MNE-phantom-KIT-data
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/MNE-phantom-KIT-data
+          destination: reports/MNE-phantom-KIT-data
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/MNE-phantom-KIT-data/*/*/*.html
+
   test_ERP_CORE_N400:
     <<: *imageconfig
     resource_class: large
@@ -1191,6 +1237,15 @@ workflows:
             - cache_eeg_matchingpennies
           <<: *filter_tags
 
+      - cache_MNE-phantom-KIT-data:
+          requires:
+            - setup_env
+          <<: *filter_tags
+      - test_MNE-phantom-KIT-data:
+          requires:
+            - cache_MNE-phantom-KIT-data
+          <<: *filter_tags
+
       - cache_ERP_CORE:
           requires:
             - setup_env
@@ -1242,6 +1297,7 @@ workflows:
             - test_ds003392
             - test_ds004229
             - test_eeg_matchingpennies
+            - test_MNE-phantom-KIT-data
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN
             - test_ERP_CORE_LRP

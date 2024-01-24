@@ -2,9 +2,9 @@
 
 ## vX.Y.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+:new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- Added [`regress_artifact`][mne_bids_pipeline._config.regress_artifact] to allow artifact regression (e.g., of MEG reference sensors in KIT systems) (#837 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

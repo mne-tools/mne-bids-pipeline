@@ -253,7 +253,7 @@ def get_input_fnames_run_ica(
     for run in cfg.runs:
         key = f"raw_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing="filt", suffix="raw"
+            run=run, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -614,6 +614,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
+        processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

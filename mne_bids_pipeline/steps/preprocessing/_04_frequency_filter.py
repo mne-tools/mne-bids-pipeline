@@ -19,6 +19,8 @@ from types import SimpleNamespace
 from typing import Optional, Union, Literal, Iterable
 
 import mne
+from mne.io.pick import _picks_to_idx
+from mne.preprocessing import EOGRegression
 
 from ..._config_utils import (
     get_sessions,
@@ -29,6 +31,7 @@ from ..._import_data import (
     import_experimental_data,
     import_er_data,
     _get_run_rest_noise_path,
+    _get_run_type,
     _import_data_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
@@ -68,6 +71,7 @@ def notch_filter(
     trans_bandwidth: Union[float, Literal["auto"]],
     notch_widths: Optional[Union[float, Iterable[float]]],
     run_type: Literal["experimental", "empty-room", "resting-state"],
+    picks: Optional[np.ndarray],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if freqs is None:
@@ -85,6 +89,7 @@ def notch_filter(
         trans_bandwidth=trans_bandwidth,
         notch_widths=notch_widths,
         n_jobs=1,
+        picks=picks,
     )
 
 
@@ -99,6 +104,7 @@ def bandpass_filter(
     l_trans_bandwidth: Union[float, Literal["auto"]],
     h_trans_bandwidth: Union[float, Literal["auto"]],
     run_type: Literal["experimental", "empty-room", "resting-state"],
+    picks: Optional[np.ndarray],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -121,6 +127,7 @@ def bandpass_filter(
         l_trans_bandwidth=l_trans_bandwidth,
         h_trans_bandwidth=h_trans_bandwidth,
         n_jobs=1,
+        picks=picks,
     )
 
 
@@ -160,14 +167,10 @@ def filter_data(
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
 
-    if run is None and task in ("noise", "rest"):
-        run_type = dict(rest="resting-state", noise="empty-room")[task]
-    else:
-        run_type = "experimental"
-
+    run_type = _get_run_type(run=run, task=task)
+    msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
+    logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter:
-        msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
-        logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(bids_path_in)
     elif run is None and task == "noise":
         raw = import_er_data(
@@ -190,6 +193,8 @@ def filter_data(
 
     out_files[in_key] = bids_path_in.copy().update(
         root=cfg.deriv_root,
+        subject=subject,  # save under subject's directory so all files are there
+        session=session,
         processing="filt",
         extension=".fif",
         suffix="raw",
@@ -198,6 +203,18 @@ def filter_data(
         run=run,
         check=False,
     )
+
+    if cfg.regress_artifact is None:
+        picks = None
+    else:
+        # Need to figure out the correct picks to use
+        model = EOGRegression(**cfg.regress_artifact)
+        picks_regress = _picks_to_idx(
+            raw.info, model.picks, none="data", exclude=model.exclude
+        )
+        picks_artifact = _picks_to_idx(raw.info, model.picks_artifact)
+        picks_data = _picks_to_idx(raw.info, "data", exclude=())  # raw.filter default
+        picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
     notch_filter(
@@ -210,6 +227,7 @@ def filter_data(
         trans_bandwidth=cfg.notch_trans_bandwidth,
         notch_widths=cfg.notch_widths,
         run_type=run_type,
+        picks=picks,
     )
     bandpass_filter(
         raw=raw,
@@ -222,6 +240,7 @@ def filter_data(
         h_trans_bandwidth=cfg.h_trans_bandwidth,
         l_trans_bandwidth=cfg.l_trans_bandwidth,
         run_type=run_type,
+        picks=picks,
     )
     resample(
         raw=raw,
@@ -236,6 +255,11 @@ def filter_data(
     # For example, might need to create
     # derivatives/mne-bids-pipeline/sub-emptyroom/ses-20230412/meg
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
+    logger.info(
+        **gen_log_kwargs(
+            message=f"Writing filtered data to: {out_files[in_key].basename}"
+        )
+    )
     raw.save(
         out_files[in_key],
         overwrite=True,
@@ -286,6 +310,7 @@ def get_config(
         notch_trans_bandwidth=config.notch_trans_bandwidth,
         notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
+        regress_artifact=config.regress_artifact,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

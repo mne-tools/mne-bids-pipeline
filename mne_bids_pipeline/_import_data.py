@@ -449,7 +449,6 @@ def import_er_data(
             cfg=cfg,
             bids_path_bads=bids_path_er_bads_in,
         )
-    raw_er.pick("meg", exclude=[])
 
     # Don't deal with ref for now (initial data quality / auto bad step)
     if bids_path_ref_in is None:
@@ -527,7 +526,7 @@ def _get_bids_path_in(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"] = "orig",
+    kind: Literal["orig", "sss", "filt"] = "orig",
 ) -> BIDSPath:
     # b/c can be used before this is updated
     path_kwargs = dict(
@@ -541,13 +540,13 @@ def _get_bids_path_in(
         datatype=get_datatype(config=cfg),
         check=False,
     )
-    if kind == "sss":
+    if kind != "orig":
+        assert kind in ("sss", "filt"), kind
         path_kwargs["root"] = cfg.deriv_root
         path_kwargs["suffix"] = "raw"
         path_kwargs["extension"] = ".fif"
-        path_kwargs["processing"] = "sss"
+        path_kwargs["processing"] = kind
     else:
-        assert kind == "orig", kind
         path_kwargs["root"] = cfg.bids_root
         path_kwargs["suffix"] = None
         path_kwargs["extension"] = None
@@ -563,7 +562,7 @@ def _get_run_path(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     add_bads: Optional[bool] = None,
     allow_missing: bool = False,
     key: Optional[str] = None,
@@ -591,7 +590,7 @@ def _get_rest_path(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_rest and not cfg.task_is_rest):
@@ -613,13 +612,14 @@ def _get_noise_path(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
-    if kind == "sss":
+    if kind != "orig":
+        assert kind in ("sss", "filt")
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
@@ -658,7 +658,7 @@ def _get_run_rest_noise_path(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
@@ -702,7 +702,7 @@ def _path_dict(
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
     add_bads: Optional[bool] = None,
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     allow_missing: bool,
     key: Optional[str] = None,
 ) -> dict:
@@ -802,3 +802,14 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         runs=get_runs(config=config, subject=subject),  # XXX needs to accept session!
         **_bids_kwargs(config=config),
     )
+
+
+def _get_run_type(
+    run: Optional[str],
+    task: Optional[str],
+) -> str:
+    if run is None and task in ("noise", "rest"):
+        run_type = dict(rest="resting-state", noise="empty-room")[task]
+    else:
+        run_type = "experimental"
+    return run_type

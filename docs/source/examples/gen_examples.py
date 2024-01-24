@@ -61,6 +61,8 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
         key = "Maxwell filter"
         funcs[key] = funcs[key] or config.use_maxwell_filter
         funcs["Frequency filter"] = config.l_freq or config.h_freq
+        key = "Artifact regression"
+        funcs[key] = funcs[key] or (config.regress_artifact is not None)
         key = "SSP"
         funcs[key] = funcs[key] or (config.spatial_filter == "ssp")
         key = "ICA"

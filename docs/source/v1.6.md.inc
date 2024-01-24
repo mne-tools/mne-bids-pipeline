@@ -21,3 +21,4 @@
 ### :medical_symbol: Code health
 
 - The package build backend has been switched from `setuptools` to `hatchling`. (#825 by @hoechenberger)
+- Code formatting now uses `ruff format` instead of `black` (#834 by @larsoner)

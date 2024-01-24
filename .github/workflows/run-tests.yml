@@ -44,7 +44,7 @@ jobs:
           pyvista: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"  # no "multidict" wheels on 3.12 yet
       - run: pip install -ve .[tests]
       - uses: actions/cache@v4
         with:

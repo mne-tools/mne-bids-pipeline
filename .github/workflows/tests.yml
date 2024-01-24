@@ -1,0 +1,56 @@
+name: 'Tests'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  caching:
+    name: 'caching on ${{ matrix.os }}'
+    timeout-minutes: 30
+    continue-on-error: true
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@main
+        with:
+          qt: true
+          pyvista: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -ve .[tests]
+      - uses: actions/cache@v4
+        with:
+          key: ds001971
+          path: ~/mne_data/ds001971
+      - run: pytest mne_bids_pipeline --download -k ds001971
+      - run: pytest mne_bids_pipeline --cov-append -k ds001971  # uses "hash" method
+        timeout-minutes: 1
+      - uses: actions/cache@v4
+        with:
+          key: ds003392
+          path: ~/mne_data/ds003392
+      - run: pytest --cov-append --download -k ds003392 mne_bids_pipeline/
+      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
+        timeout-minutes: 1
+      - uses: codecov/codecov-action@v3
+        if: success()

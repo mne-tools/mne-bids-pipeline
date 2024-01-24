@@ -21,3 +21,4 @@
 ### :medical_symbol: Code health
 
 - The package build backend has been switched from `setuptools` to `hatchling`. (#825 by @hoechenberger)
+- Code caching is now tested using GitHub Actions (#836 by @larsoner)

@@ -64,7 +64,7 @@ jobs:
           key: ds003392
           path: ~/mne_data/ds003392
         id: ds003392-cache
-      - run: python -m mne_bids_pipeline._download ds001971
+      - run: python -m mne_bids_pipeline._download ds003392
         if: steps.ds003392-cache.outputs.cache-hit != 'true'
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method

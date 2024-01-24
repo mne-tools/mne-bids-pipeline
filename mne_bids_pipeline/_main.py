@@ -64,12 +64,11 @@ def main():
         dest="deriv_root",
         default=None,
         help=dedent(
-            """
-            The root of the derivatives directory
-            in which the pipeline will store the processing results.
-            If unspecified, this will be derivatives/mne-bids-pipeline
-            inside the BIDS root.
-            """
+            """\
+        The root of the derivatives directory
+        in which the pipeline will store the processing results.
+        If unspecified, this will be derivatives/mne-bids-pipeline
+        inside the BIDS root."""
         ),
     )
     parser.add_argument(

@@ -169,6 +169,11 @@ def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
             src=fix_path / "ds001971_participants.tsv",
             dst=DATA_DIR / "ds001971" / "participants.tsv",
         )
+    elif dataset == "ds003775":
+        shutil.copy(
+            src=fix_path / "sub-010_ses-t1_scans.tsv",
+            dst=DATA_DIR / "ds003775" / "sub-010" / "ses-t1" / "sub-010_ses-t1_scans.tsv",
+        )
 
     # Run the tests.
     steps = test_options.get("steps", ("preprocessing", "sensor"))

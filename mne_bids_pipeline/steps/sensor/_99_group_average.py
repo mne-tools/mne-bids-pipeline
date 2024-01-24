@@ -814,7 +814,8 @@ def average_csp_decoding(
         import scipy.stats
 
         cluster_forming_t_threshold = scipy.stats.t.ppf(
-            1 - 0.05, len(cfg.subjects) - 1  # one-sided test
+            1 - 0.05,
+            len(cfg.subjects) - 1,  # one-sided test
         )
     else:
         cluster_forming_t_threshold = cfg.cluster_forming_t_threshold

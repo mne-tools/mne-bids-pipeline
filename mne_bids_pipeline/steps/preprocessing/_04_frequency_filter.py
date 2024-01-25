@@ -173,7 +173,7 @@ def filter_data(
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
-            bids_path_ref_in=in_files.pop("raw_ref_run"),
+            bids_path_ref_in=in_files.pop("raw_ref_run", None),
             bids_path_er_bads_in=bids_path_bads_in,
             # take bads from this run (0)
             bids_path_ref_bads_in=in_files.pop("raw_ref_run-bads", None),
@@ -196,6 +196,7 @@ def filter_data(
         split=None,
         task=task,
         run=run,
+        check=False,
     )
 
     raw.load_data()
@@ -232,6 +233,9 @@ def filter_data(
         run_type=run_type,
     )
 
+    # For example, might need to create
+    # derivatives/mne-bids-pipeline/sub-emptyroom/ses-20230412/meg
+    out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
     raw.save(
         out_files[in_key],
         overwrite=True,

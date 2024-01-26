@@ -1,5 +1,4 @@
-"""
-Single-subject infant dataset for testing maxwell_filter with movecomp.
+"""Single-subject infant dataset for testing maxwell_filter with movecomp.
 
 https://openneuro.org/datasets/ds004229
 """

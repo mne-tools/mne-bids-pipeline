@@ -1,8 +1,7 @@
 import numpy as np
-from sklearn.linear_model import LogisticRegression
 from joblib import parallel_backend
-
 from mne.utils import _validate_type
+from sklearn.linear_model import LogisticRegression
 
 
 class LogReg(LogisticRegression):

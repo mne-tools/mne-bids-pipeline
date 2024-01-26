@@ -2,7 +2,9 @@
 
 import importlib
 import sys
+
 import pytest
+
 from mne_bids_pipeline._main import main
 
 

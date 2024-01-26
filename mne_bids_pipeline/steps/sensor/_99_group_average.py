@@ -6,42 +6,41 @@ The M/EEG-channel data are averaged for group averages.
 import os
 import os.path as op
 from functools import partial
-from typing import Optional, List, Tuple
 from types import SimpleNamespace
-from ...typing import TypedDict
-
-import numpy as np
-import pandas as pd
-from scipy.io import loadmat, savemat
+from typing import Optional
 
 import mne
+import numpy as np
+import pandas as pd
 from mne_bids import BIDSPath
+from scipy.io import loadmat, savemat
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _pl,
+    _restrict_analyze_channels,
+    get_decoding_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
-    get_eeg_reference,
-    get_decoding_contrasts,
-    _bids_kwargs,
-    _restrict_analyze_channels,
-    _pl,
 )
 from ..._decoding import _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._report import (
+    _all_conditions,
+    _contrasts_to_names,
     _open_report,
-    _sanitize_cond_tag,
-    add_event_counts,
-    add_csp_grand_average,
+    _plot_decoding_time_generalization,
     _plot_full_epochs_decoding_scores,
     _plot_time_by_time_decoding_scores_gavg,
+    _sanitize_cond_tag,
+    add_csp_grand_average,
+    add_event_counts,
     plot_time_by_time_decoding_t_values,
-    _plot_decoding_time_generalization,
-    _contrasts_to_names,
-    _all_conditions,
 )
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from ...typing import TypedDict
 
 
 def get_input_fnames_average_evokeds(
@@ -186,7 +185,7 @@ def _decoding_cluster_permutation_test(
     cluster_forming_t_threshold: Optional[float],
     n_permutations: int,
     random_seed: int,
-) -> Tuple[np.ndarray, List[ClusterAcrossTime], int]:
+) -> tuple[np.ndarray, list[ClusterAcrossTime], int]:
     """Perform a cluster permutation test on decoding scores.
 
     The clusters are formed across time points.
@@ -625,7 +624,7 @@ def get_input_files_average_full_epochs_report(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    decoding_contrasts: List[List[str]],
+    decoding_contrasts: list[list[str]],
 ) -> dict:
     in_files = dict()
     for contrast in decoding_contrasts:
@@ -649,7 +648,7 @@ def average_full_epochs_report(
     exec_params: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    decoding_contrasts: List[List[str]],
+    decoding_contrasts: list[list[str]],
     in_files: dict,
 ) -> dict:
     """Add decoding results to the grand average report."""

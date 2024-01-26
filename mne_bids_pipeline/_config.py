@@ -1,17 +1,17 @@
 # Default settings for data processing and analysis.
 
-from typing import Optional, Union, Iterable, List, Tuple, Dict, Callable, Literal
+from collections.abc import Iterable
+from typing import Callable, Literal, Optional, Union
 
 from mne import Covariance
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline.typing import (
-    PathLike,
     ArbitraryContrast,
-    FloatArrayLike,
     DigMontageType,
+    FloatArrayLike,
+    PathLike,
 )
-
 
 ###############################################################################
 # Config parameters
@@ -84,7 +84,7 @@ window.
     Enabling interactive mode deactivates parallel processing.
 """
 
-sessions: Union[List, Literal["all"]] = "all"
+sessions: Union[list, Literal["all"]] = "all"
 """
 The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
@@ -101,7 +101,7 @@ The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
 """
 
-exclude_runs: Optional[Dict[str, List[str]]] = None
+exclude_runs: Optional[dict[str, list[str]]] = None
 """
 Specify runs to exclude from analysis, for each participant individually.
 
@@ -117,7 +117,7 @@ Specify runs to exclude from analysis, for each participant individually.
     did not understand the instructions, etc.).
 """
 
-crop_runs: Optional[Tuple[float, float]] = None
+crop_runs: Optional[tuple[float, float]] = None
 """
 Crop the raw data of each run to the specified time interval `[tmin, tmax]`,
 in seconds. The runs will be cropped before Maxwell or frequency filtering is
@@ -288,7 +288,7 @@ a subset of them here, only this subset will be used during processing.
     ```
 """
 
-eeg_bipolar_channels: Optional[Dict[str, Tuple[str, str]]] = None
+eeg_bipolar_channels: Optional[dict[str, tuple[str, str]]] = None
 """
 Combine two channels into a bipolar channel, whose signal is the **difference**
 between the two combined channels, and add it to the data.
@@ -688,7 +688,7 @@ mf_esss: int = 0
 Number of extended SSS (eSSS) basis projectors to use from empty-room data.
 """
 
-mf_esss_reject: Optional[Dict[str, float]] = None
+mf_esss_reject: Optional[dict[str, float]] = None
 """
 Rejection parameters to use when computing the extended SSS (eSSS) basis.
 """
@@ -980,7 +980,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """  # noqa: E501
 
-conditions: Optional[Union[Iterable[str], Dict[str, str]]] = None
+conditions: Optional[Union[Iterable[str], dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1048,7 +1048,7 @@ Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
-baseline: Optional[Tuple[Optional[float], Optional[float]]] = (None, 0)
+baseline: Optional[tuple[Optional[float], Optional[float]]] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
 if `None`, no baseline correction is applied.
@@ -1059,7 +1059,7 @@ if `None`, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[Union[Tuple[str, str], ArbitraryContrast]] = []
+contrasts: Iterable[Union[tuple[str, str], ArbitraryContrast]] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
@@ -1156,12 +1156,12 @@ Minimal number of EOG epochs needed to compute SSP or ICA rejection.
 
 # Rejection based on SSP
 # ~~~~~~~~~~~~~~~~~~~~~~
-n_proj_eog: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
+n_proj_eog: dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors to create for EOG artifacts for each channel type.
 """
 
-n_proj_ecg: Dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
+n_proj_ecg: dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors to create for ECG artifacts for each channel type.
 """
@@ -1189,7 +1189,7 @@ estimate projectors from all MEG sensors simultaneously. The default is
 `'separate'` otherwise.
 """
 
-ssp_reject_ecg: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
+ssp_reject_ecg: Optional[Union[dict[str, float], Literal["autoreject_global"]]] = None
 """
 Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1207,7 +1207,7 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Optional[Union[Dict[str, float], Literal["autoreject_global"]]] = None
+ssp_reject_eog: Optional[Union[dict[str, float], Literal["autoreject_global"]]] = None
 """
 Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1233,11 +1233,11 @@ is not reliable.
 
 # Rejection based on ICA
 # ~~~~~~~~~~~~~~~~~~~~~~
-ica_reject: Optional[Union[Dict[str, float], Literal["autoreject_local"]]] = None
+ica_reject: Optional[Union[dict[str, float], Literal["autoreject_local"]]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
 remove strong transient artifacts from the epochs used for fitting ICA, which could
-negatively affect ICA performance. 
+negatively affect ICA performance.
 
 The parameter values are the same as for [`reject`][mne_bids_pipeline._config.reject],
 but `"autoreject_global"` is not supported. `"autoreject_local"` here behaves
@@ -1264,7 +1264,7 @@ epochs created to find heart beats and ocular artifacts.
     to **not** specify rejection thresholds for EOG and ECG channels here –
     otherwise, ICA won't be able to "see" these artifacts.
 
-???+ info 
+???+ info
     This setting is applied only to the epochs that are used for **fitting** ICA. The
     goal is to make it easier for ICA to produce a good decomposition. After fitting,
     ICA is applied to the epochs to be analyzed, usually with one or more components
@@ -1280,7 +1280,7 @@ epochs created to find heart beats and ocular artifacts.
     ica_reject = "autoreject_global"  # find global (per channel type) PTP thresholds before fitting ICA
     ica_reject = "autoreject_local"  # find local (per channel) thresholds and repair epochs before fitting ICA
     ```
-"""
+"""  # noqa: E501
 
 ica_algorithm: Literal[
     "picard", "fastica", "extended_infomax", "picard-extended_infomax"
@@ -1373,7 +1373,7 @@ false-alarm rate increases dramatically.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 reject: Optional[
-    Union[Dict[str, float], Literal["autoreject_global", "autoreject_local"]]
+    Union[dict[str, float], Literal["autoreject_global", "autoreject_local"]]
 ] = None
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
@@ -1386,7 +1386,7 @@ epochs with strong transient artifacts.
 
 If `None` (default), do not apply artifact rejection.
 
-If a dictionary, manually specify rejection thresholds (see examples). 
+If a dictionary, manually specify rejection thresholds (see examples).
 The thresholds provided here must be at least as stringent as those in
 [`ica_reject`][mne_bids_pipeline._config.ica_reject] if using ICA. In case of
 `'autoreject_global'`, thresholds for any channel that do not meet this
@@ -1409,7 +1409,7 @@ to control how many channels are allowed to be bad before an epoch gets dropped.
     reject = "autoreject_global"  # find global (per channel type) PTP thresholds
     reject = "autoreject_local"  # find local (per channel) thresholds and repair epochs
     ```
-"""
+"""  # noqa: E501
 
 reject_tmin: Optional[float] = None
 """
@@ -1689,7 +1689,7 @@ If `None`, do not perform **time-frequency** analysis, and only run CSP on
     ```
 """
 
-decoding_csp_freqs: Optional[Dict[str, FloatArrayLike]] = None
+decoding_csp_freqs: Optional[dict[str, FloatArrayLike]] = None
 """
 The edges of the frequency bins to use for CSP decoding.
 
@@ -1733,7 +1733,7 @@ and the other from that midpoint to `time_frequency_freq_max`.
     }
 """
 
-time_frequency_baseline: Optional[Tuple[float, float]] = None
+time_frequency_baseline: Optional[tuple[float, float]] = None
 """
 Baseline period to use for the time-frequency analysis. If `None`, no baseline.
 ???+ example "Example"
@@ -1964,7 +1964,7 @@ solution.
 """
 
 noise_cov: Union[
-    Tuple[Optional[float], Optional[float]],
+    tuple[Optional[float], Optional[float]],
     Literal["emptyroom", "rest", "ad-hoc"],
     Callable[[BIDSPath], Covariance],
 ] = (None, 0)
@@ -2031,7 +2031,7 @@ the generated evoked data.
     ```
 """
 
-source_info_path_update: Optional[Dict[str, str]] = dict(suffix="ave")
+source_info_path_update: Optional[dict[str, str]] = dict(suffix="ave")
 """
 When computing the forward and inverse solutions, by default the pipeline
 retrieves the `mne.Info` object from the cleaned evoked data. However, in
@@ -2049,7 +2049,7 @@ This parameter allows you to explicitly specify from which file to retrieve the
     ```
 """
 
-inverse_targets: List[Literal["evoked"]] = ["evoked"]
+inverse_targets: list[Literal["evoked"]] = ["evoked"]
 """
 
 On which data to apply the inverse operator. Currently, the only supported

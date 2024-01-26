@@ -7,19 +7,19 @@ import inspect
 import pathlib
 import pdb
 import sys
-import traceback
 import time
-from typing import Callable, Optional, Dict, List, Literal, Union
+import traceback
 from types import SimpleNamespace
+from typing import Callable, Literal, Optional, Union
 
-from filelock import FileLock
-from joblib import Memory
 import json_tricks
 import pandas as pd
+from filelock import FileLock
+from joblib import Memory
 from mne_bids import BIDSPath
 
 from ._config_utils import get_task
-from ._logging import logger, gen_log_kwargs, _is_testing
+from ._logging import _is_testing, gen_log_kwargs, logger
 
 
 def failsafe_run(
@@ -303,7 +303,7 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
 
 def _update_for_splits(
-    files_dict: Union[Dict[str, BIDSPath], BIDSPath],
+    files_dict: Union[dict[str, BIDSPath], BIDSPath],
     key: Optional[str],
     *,
     single: bool = False,
@@ -346,7 +346,7 @@ def _sanitize_callable(val):
 
 
 def _get_step_path(
-    stack: Optional[List[inspect.FrameInfo]] = None,
+    stack: Optional[list[inspect.FrameInfo]] = None,
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
@@ -372,7 +372,7 @@ def _short_step_path(step_path: pathlib.Path) -> str:
 def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
-    out_files: Dict[str, BIDSPath],
+    out_files: dict[str, BIDSPath],
 ):
     for key, fname in out_files.items():
         out_files[key] = _path_to_str_hash(

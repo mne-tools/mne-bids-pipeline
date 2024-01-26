@@ -1,22 +1,21 @@
 import ast
 import copy
-from dataclasses import field
 import difflib
-from functools import partial
 import importlib
 import os
 import pathlib
+from dataclasses import field
+from functools import partial
 from types import SimpleNamespace
-from typing import Optional, List
+from typing import Optional
 
 import matplotlib
-import numpy as np
 import mne
-
+import numpy as np
 from pydantic import ValidationError
 from pydantic.dataclasses import dataclass
 
-from ._logging import logger, gen_log_kwargs
+from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
 
@@ -150,7 +149,7 @@ def _update_with_user_config(
     config_path: Optional[PathLike],
     overrides: Optional[SimpleNamespace],
     log: bool = False,
-) -> List[str]:
+) -> list[str]:
     # 1. Basics and hidden vars
     from . import __version__
 
@@ -433,8 +432,8 @@ _REMOVED_NAMES = {
 def _check_misspellings_removals(
     config: SimpleNamespace,
     *,
-    valid_names: List[str],
-    user_names: List[str],
+    valid_names: list[str],
+    user_names: list[str],
     log: bool,
 ) -> None:
     # for each name in the user names, check if it's in the valid names but

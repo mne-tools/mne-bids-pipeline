@@ -14,27 +14,28 @@ To save space, the raw data can be resampled.
 If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
-import numpy as np
+from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Optional, Union, Literal, Iterable
+from typing import Literal, Optional, Union
 
 import mne
+import numpy as np
 
 from ..._config_utils import (
-    get_sessions,
     get_runs_tasks,
+    get_sessions,
     get_subjects,
 )
 from ..._import_data import (
-    import_experimental_data,
-    import_er_data,
     _get_run_rest_noise_path,
     _import_data_kwargs,
+    import_er_data,
+    import_experimental_data,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _add_raw
-from ..._run import failsafe_run, save_logs, _update_for_splits, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _add_raw, _open_report
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_frequency_filter(

@@ -14,23 +14,23 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_runs,
-    get_subjects,
-    get_eeg_reference,
-    get_sessions,
     _bids_kwargs,
+    get_eeg_reference,
+    get_runs,
+    get_sessions,
+    get_subjects,
 )
-from ..._import_data import make_epochs, annotations_to_events
+from ..._import_data import annotations_to_events, make_epochs
 from ..._logging import gen_log_kwargs, logger
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report
 from ..._run import (
+    _prep_out_files,
+    _sanitize_callable,
+    _update_for_splits,
     failsafe_run,
     save_logs,
-    _update_for_splits,
-    _sanitize_callable,
-    _prep_out_files,
 )
-from ..._parallel import parallel_func, get_parallel_backend
 
 
 def get_input_fnames_epochs(

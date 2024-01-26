@@ -1,15 +1,13 @@
-"""
-Decoding based on common spatial patterns (CSP).
-"""
+"""Decoding based on common spatial patterns (CSP)."""
 
 import os.path as op
 from types import SimpleNamespace
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
+import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
-import matplotlib.transforms
 from mne.decoding import CSP, UnsupervisedSpatialFilter
 from mne_bids import BIDSPath
 from sklearn.decomposition import PCA
@@ -17,35 +15,35 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _get_decoding_proc,
+    _restrict_analyze_channels,
+    get_decoding_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
-    get_eeg_reference,
-    get_decoding_contrasts,
-    _bids_kwargs,
-    _restrict_analyze_channels,
-    _get_decoding_proc,
 )
 from ..._decoding import LogReg, _handle_csp_args
-from ..._logging import logger, gen_log_kwargs
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import (
-    _open_report,
-    _sanitize_cond_tag,
-    _plot_full_epochs_decoding_scores,
     _imshow_tf,
+    _open_report,
+    _plot_full_epochs_decoding_scores,
+    _sanitize_cond_tag,
 )
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
-def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: Tuple[str, str]) -> np.ndarray:
+def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.ndarray:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
     we project the different events contained in one condition into
     just one label.
 
-    Returns:
-    --------
+    Returns
+    -------
     A boolean numpy array containing the labels.
     """
     epochs_cond_0 = epochs[contrast[0]]
@@ -79,8 +77,8 @@ def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: Tuple[str, str]) -> np.
 
 
 def prepare_epochs_and_y(
-    *, epochs: mne.BaseEpochs, contrast: Tuple[str, str], cfg, fmin: float, fmax: float
-) -> Tuple[mne.BaseEpochs, np.ndarray]:
+    *, epochs: mne.BaseEpochs, contrast: tuple[str, str], cfg, fmin: float, fmax: float
+) -> tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
     epochs_filt = epochs.copy().pick(["meg", "eeg"])
 
@@ -112,7 +110,7 @@ def get_input_fnames_csp(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    contrast: Tuple[str],
+    contrast: tuple[str],
 ) -> dict:
     proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
@@ -143,8 +141,8 @@ def one_subject_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str,
-    contrast: Tuple[str, str],
-    in_files: Dict[str, BIDSPath],
+    contrast: tuple[str, str],
+    in_files: dict[str, BIDSPath],
 ) -> dict:
     """Run one subject.
 

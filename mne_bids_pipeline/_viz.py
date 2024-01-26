@@ -1,10 +1,9 @@
-from typing import List
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 
 
-def plot_auto_scores(auto_scores, *, ch_types) -> List[Figure]:
+def plot_auto_scores(auto_scores, *, ch_types) -> list[Figure]:
     # Plot scores of automated bad channel detection.
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -15,7 +14,7 @@ def plot_auto_scores(auto_scores, *, ch_types) -> List[Figure]:
         ch_types_[idx] = "grad"
         ch_types_.insert(idx + 1, "mag")
 
-    figs: List[Figure] = []
+    figs: list[Figure] = []
     for ch_type in ch_types_:
         # Only select the data for mag or grad channels.
         ch_subset = auto_scores["ch_types"] == ch_type

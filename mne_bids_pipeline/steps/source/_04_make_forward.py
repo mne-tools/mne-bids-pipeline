@@ -6,27 +6,26 @@ Calculate forward solution for M/EEG channels.
 from types import SimpleNamespace
 from typing import Optional
 
-import numpy as np
-
 import mne
+import numpy as np
 from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
 
+from ..._config_import import _import_config
 from ..._config_utils import (
-    get_fs_subject,
-    get_subjects,
+    _bids_kwargs,
     _get_bem_conductivity,
+    _meg_in_ch_types,
+    get_fs_subject,
     get_fs_subjects_dir,
     get_runs,
-    _meg_in_ch_types,
     get_sessions,
-    _bids_kwargs,
+    get_subjects,
 )
-from ..._config_import import _import_config
-from ..._logging import logger, gen_log_kwargs
+from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _render_bem
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import _prep_out_files, failsafe_run, save_logs
 
 
 def _prepare_trans_template(

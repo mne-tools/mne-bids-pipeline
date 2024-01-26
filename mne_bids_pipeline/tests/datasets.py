@@ -1,6 +1,6 @@
 """Definition of the testing datasets."""
 
-from typing import Dict, List, TypedDict
+from typing import TypedDict
 
 
 # If not supplied below, the effective defaults are listed in comments
@@ -10,12 +10,12 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     osf: str  # ""
     web: str  # ""
     mne: str  # ""
-    include: List[str]  # []
-    exclude: List[str]  # []
+    include: list[str]  # []
+    exclude: list[str]  # []
     hash: str  # ""
 
 
-DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
+DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
         # original dataset: "osf": "9f5w7"
         "web": "https://osf.io/3zk6n/download?version=2",

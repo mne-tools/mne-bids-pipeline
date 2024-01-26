@@ -1,21 +1,20 @@
 import ast
 import copy
-from dataclasses import field
 import difflib
-from functools import partial
 import importlib
 import os
 import pathlib
+from dataclasses import field
+from functools import partial
 from types import SimpleNamespace
 from typing import Optional
 
 import matplotlib
-import numpy as np
 import mne
+import numpy as np
+from pydantic import BaseModel, ConfigDict, ValidationError
 
-from pydantic import ValidationError, ConfigDict, BaseModel
-
-from ._logging import logger, gen_log_kwargs
+from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
 

@@ -12,13 +12,13 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
     get_sessions,
     get_subjects,
-    _bids_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_apply_ssp(

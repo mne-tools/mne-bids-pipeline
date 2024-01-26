@@ -15,38 +15,35 @@ import os.path as op
 from types import SimpleNamespace
 from typing import Optional
 
+import mne
 import numpy as np
 import pandas as pd
-from scipy.io import savemat, loadmat
-
-import mne
 from mne.decoding import GeneralizingEstimator, SlidingEstimator, cross_val_multiscore
-
 from mne_bids import BIDSPath
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
+from scipy.io import loadmat, savemat
 from sklearn.model_selection import StratifiedKFold
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _get_decoding_proc,
+    _restrict_analyze_channels,
+    get_decoding_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
-    get_eeg_reference,
-    get_decoding_contrasts,
-    _bids_kwargs,
-    _restrict_analyze_channels,
-    _get_decoding_proc,
 )
 from ..._decoding import LogReg
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._parallel import get_parallel_backend, get_parallel_backend_name
 from ..._report import (
     _open_report,
     _plot_decoding_time_generalization,
-    _sanitize_cond_tag,
     _plot_time_by_time_decoding_scores,
+    _sanitize_cond_tag,
 )
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_time_decoding(

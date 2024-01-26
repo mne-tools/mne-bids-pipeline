@@ -8,9 +8,9 @@ from types import SimpleNamespace
 import mne
 
 from ..._config_utils import get_fs_subject, get_fs_subjects_dir, get_subjects
-from ..._logging import logger, gen_log_kwargs
-from ..._run import failsafe_run, save_logs, _prep_out_files
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._run import _prep_out_files, failsafe_run, save_logs
 
 
 def get_input_fnames_setup_source_space(*, cfg, subject):

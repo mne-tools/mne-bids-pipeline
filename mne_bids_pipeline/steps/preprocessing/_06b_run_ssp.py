@@ -3,26 +3,26 @@
 These are often also referred to as PCA vectors.
 """
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
-from mne.preprocessing import create_eog_epochs, create_ecg_epochs
-from mne import compute_proj_evoked, compute_proj_epochs
+from mne import compute_proj_epochs, compute_proj_evoked
+from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _pl,
     get_runs,
     get_sessions,
     get_subjects,
-    _bids_kwargs,
-    _pl,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_run_ssp(

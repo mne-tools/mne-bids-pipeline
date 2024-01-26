@@ -1,6 +1,4 @@
-"""
-Faces dataset
-"""
+"""Faces dataset."""
 
 study_name = "ds000117"
 bids_root = "~/mne_data/ds000117"

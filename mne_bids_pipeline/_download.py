@@ -12,7 +12,7 @@ DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
 def _download_via_datalad(*, ds_name: str, ds_path: Path):
     import datalad.api as dl
 
-    print('datalad installing "{}"'.format(ds_name))
+    print(f'datalad installing "{ds_name}"')
     options = DATASET_OPTIONS[ds_name]
     git_url = options["git"]
     assert "exclude" not in options
@@ -28,7 +28,7 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
         n_jobs = 1
 
     for to_get in DATASET_OPTIONS[ds_name].get("include", []):
-        print('datalad get data "{}" for "{}"'.format(to_get, ds_name))
+        print(f'datalad get data "{to_get}" for "{ds_name}"')
         dataset.get(to_get, jobs=n_jobs)
 
 

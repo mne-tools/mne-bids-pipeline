@@ -3,23 +3,23 @@
 These are often also referred to as PCA vectors.
 """
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
 from ..._config_utils import (
+    get_runs_tasks,
     get_sessions,
     get_subjects,
 )
-from ..._config_utils import get_runs_tasks
-from ..._import_data import _get_run_rest_noise_path, _import_data_kwargs, _get_run_type
+from ..._import_data import _get_run_rest_noise_path, _get_run_type, _import_data_kwargs
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _add_raw
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _add_raw, _open_report
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_regress_artifact(

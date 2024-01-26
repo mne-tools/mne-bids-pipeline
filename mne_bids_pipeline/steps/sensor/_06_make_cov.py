@@ -3,29 +3,29 @@
 Covariance matrices are computed and saved.
 """
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
 
+from ..._config_import import _import_config
 from ..._config_utils import (
+    _bids_kwargs,
+    _restrict_analyze_channels,
+    get_noise_cov_bids_path,
     get_sessions,
     get_subjects,
-    get_noise_cov_bids_path,
-    _bids_kwargs,
 )
-from ..._config_import import _import_config
-from ..._config_utils import _restrict_analyze_channels
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
+from ..._report import _all_conditions, _open_report, _sanitize_cond_tag
 from ..._run import (
+    _prep_out_files,
+    _sanitize_callable,
+    _update_for_splits,
     failsafe_run,
     save_logs,
-    _sanitize_callable,
-    _prep_out_files,
-    _update_for_splits,
 )
 
 

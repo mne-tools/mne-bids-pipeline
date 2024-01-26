@@ -12,37 +12,34 @@ import os.path as op
 from types import SimpleNamespace
 from typing import Optional
 
+import mne
 import numpy as np
 import pandas as pd
-from scipy.io import savemat, loadmat
-
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import StratifiedKFold
-
-import mne
 from mne.decoding import Scaler, Vectorizer
 from mne_bids import BIDSPath
+from scipy.io import loadmat, savemat
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import make_pipeline
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _get_decoding_proc,
+    _restrict_analyze_channels,
+    get_decoding_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
-    get_eeg_reference,
-    get_decoding_contrasts,
-    _bids_kwargs,
-    _restrict_analyze_channels,
-    _get_decoding_proc,
 )
-from ..._logging import gen_log_kwargs, logger
 from ..._decoding import LogReg
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
+from ..._logging import gen_log_kwargs, logger
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import (
-    _open_report,
     _contrasts_to_names,
+    _open_report,
     _plot_full_epochs_decoding_scores,
     _sanitize_cond_tag,
 )
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_epochs_decoding(

@@ -7,22 +7,22 @@ import mne
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _pl,
+    _restrict_analyze_channels,
+    get_all_contrasts,
     get_sessions,
     get_subjects,
-    get_all_contrasts,
-    _bids_kwargs,
-    _restrict_analyze_channels,
-    _pl,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _all_conditions, _open_report, _sanitize_cond_tag
 from ..._run import (
+    _prep_out_files,
+    _sanitize_callable,
+    _update_for_splits,
     failsafe_run,
     save_logs,
-    _sanitize_callable,
-    _prep_out_files,
-    _update_for_splits,
 )
 
 

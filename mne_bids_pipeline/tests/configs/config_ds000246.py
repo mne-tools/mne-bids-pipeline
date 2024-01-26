@@ -1,5 +1,4 @@
-"""
-Brainstorm - Auditory Dataset.
+"""Brainstorm - Auditory Dataset.
 
 See https://openneuro.org/datasets/ds000246/versions/1.0.0 for more
 information.

@@ -3,34 +3,33 @@
 from types import SimpleNamespace
 from typing import Optional
 
-import pandas as pd
-
 import mne
+import pandas as pd
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
-    get_subjects,
-    get_sessions,
-    get_runs_tasks,
     _do_mf_autobad,
     _pl,
+    get_mf_cal_fname,
+    get_mf_ctc_fname,
+    get_runs_tasks,
+    get_sessions,
+    get_subjects,
 )
 from ..._import_data import (
-    _get_run_rest_noise_path,
-    _get_mf_reference_run_path,
-    import_experimental_data,
-    import_er_data,
-    _bads_path,
     _auto_scores_path,
+    _bads_path,
+    _get_mf_reference_run_path,
+    _get_run_rest_noise_path,
     _import_data_kwargs,
+    import_er_data,
+    import_experimental_data,
 )
 from ..._io import _write_json
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _add_raw
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _add_raw, _open_report
+from ..._run import _prep_out_files, failsafe_run, save_logs
 from ..._viz import plot_auto_scores
 
 

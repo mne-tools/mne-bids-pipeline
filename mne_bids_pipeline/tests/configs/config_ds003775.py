@@ -1,6 +1,4 @@
-"""
-SRM Resting-state EEG
-"""
+"""SRM Resting-state EEG."""
 
 study_name = "ds003775"
 bids_root = "~/mne_data/ds003775"

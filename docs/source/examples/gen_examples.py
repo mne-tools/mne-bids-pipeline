@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
-from collections import defaultdict
 import contextlib
 import logging
 import shutil
-from pathlib import Path
 import sys
-from typing import Union, Iterable
+from collections import defaultdict
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Union
+
+from tqdm import tqdm
 
 import mne_bids_pipeline
-from mne_bids_pipeline._config_import import _import_config
 import mne_bids_pipeline.tests.datasets
-from mne_bids_pipeline.tests.test_run import TEST_SUITE
+from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
-from tqdm import tqdm
+from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
 this_dir = Path(__file__).parent
 root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)

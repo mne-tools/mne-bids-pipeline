@@ -1,5 +1,4 @@
-"""
-ERP CORE
+"""ERP CORE.
 
 This example demonstrate how to process 5 participants from the
 [ERP CORE](https://erpinfo.org/erp-core) dataset. It shows how to obtain 7 ERP
@@ -24,8 +23,9 @@ components from a total of 6 experimental tasks:
                 [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
 import argparse
-import mne
 import sys
+
+import mne
 
 study_name = "ERP-CORE"
 bids_root = "~/mne_data/ERP_CORE"

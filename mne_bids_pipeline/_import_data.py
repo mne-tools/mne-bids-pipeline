@@ -1,21 +1,22 @@
+from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Dict, Optional, Iterable, Union, List, Literal
+from typing import Literal, Optional, Union
 
 import mne
-from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
+from mne_bids import BIDSPath, get_bids_path_from_fname, read_raw_bids
 
 from ._config_utils import (
-    get_mf_reference_run,
-    get_runs,
-    get_datatype,
-    get_task,
     _bids_kwargs,
     _do_mf_autobad,
     _pl,
+    get_datatype,
+    get_mf_reference_run,
+    get_runs,
+    get_task,
 )
-from ._io import _read_json, _empty_room_match_path
+from ._io import _empty_room_match_path, _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
 from .typing import PathLike
@@ -27,8 +28,8 @@ def make_epochs(
     subject: str,
     session: Optional[str],
     raw: mne.io.BaseRaw,
-    event_id: Optional[Union[Dict[str, int], Literal["auto"]]],
-    conditions: Union[Iterable[str], Dict[str, str]],
+    event_id: Optional[Union[dict[str, int], Literal["auto"]]],
+    conditions: Union[Iterable[str], dict[str, str]],
     tmin: float,
     tmax: float,
     metadata_tmin: Optional[float],
@@ -147,12 +148,12 @@ def make_epochs(
     return epochs
 
 
-def annotations_to_events(*, raw_paths: List[PathLike]) -> Dict[str, int]:
+def annotations_to_events(*, raw_paths: list[PathLike]) -> dict[str, int]:
     """Generate a unique event name -> event code mapping.
 
     The mapping can that can be used across all passed raws.
     """
-    event_names: List[str] = []
+    event_names: list[str] = []
     for raw_fname in raw_paths:
         raw = mne.io.read_raw_fif(raw_fname)
         _, event_id = mne.events_from_annotations(raw=raw)
@@ -434,6 +435,8 @@ def import_er_data(
         The BIDS path to the empty room bad channels file.
     bids_path_ref_bads_in
         The BIDS path to the reference data bad channels file.
+    prepare_maxwell_filter
+        Whether to prepare the empty-room data for Maxwell filtering.
 
     Returns
     -------
@@ -753,7 +756,7 @@ def _read_bads_tsv(
     *,
     cfg: SimpleNamespace,
     bids_path_bads: BIDSPath,
-) -> List[str]:
+) -> list[str]:
     bads_tsv = pd.read_csv(bids_path_bads.fpath, sep="\t", header=0)
     return bads_tsv[bads_tsv.columns[0]].tolist()
 

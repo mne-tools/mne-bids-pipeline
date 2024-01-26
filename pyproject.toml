@@ -116,7 +116,17 @@ testpaths = ["mne_bids_pipeline"]
 junit_family = "xunit2"
 
 [tool.ruff]
+select = ["A", "B006", "D", "E", "F", "I", "W", "UP"]
 exclude = ["**/freesurfer/contrib", "dist/", "build/"]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D103",  # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D413", # Missing blank line after last section
+    "UP031", # Use format specifiers instead of percent format
+    "UP035", # Import Iterable from collections.abc
+]
 
-[tool.black]
-exclude = "(.*/freesurfer/contrib/.*)|(dist/)|(build/)"
+[tool.ruff.pydocstyle]
+convention = "numpy"

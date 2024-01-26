@@ -14,22 +14,21 @@ order might differ).
 from types import SimpleNamespace
 from typing import Optional
 
-import pandas as pd
 import mne
+import pandas as pd
 from mne.preprocessing import read_ica
 from mne.report import Report
-
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_subjects,
-    get_sessions,
     _bids_kwargs,
+    get_sessions,
+    get_subjects,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _agg_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _agg_backend, _open_report
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_apply_ica(

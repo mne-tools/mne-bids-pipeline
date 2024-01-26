@@ -1,5 +1,4 @@
-"""
-MIND DATA
+"""MIND DATA.
 
 M.P. Weisend, F.M. Hanlon, R. Montaño, S.P. Ahlfors, A.C. Leuthold,
 D. Pantazis, J.C. Mosher, A.P. Georgopoulos, M.S. Hämäläinen, C.J.

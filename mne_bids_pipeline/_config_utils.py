@@ -3,15 +3,16 @@
 import copy
 import functools
 import pathlib
-from typing import List, Optional, Union, Iterable, Tuple, Dict, TypeVar, Literal, Any
-from types import SimpleNamespace, ModuleType
+from collections.abc import Iterable
+from types import ModuleType, SimpleNamespace
+from typing import Any, Literal, Optional, TypeVar, Union
 
-import numpy as np
 import mne
 import mne_bids
+import numpy as np
 from mne_bids import BIDSPath
 
-from ._logging import logger, gen_log_kwargs
+from ._logging import gen_log_kwargs, logger
 from .typing import ArbitraryContrast
 
 try:
@@ -47,8 +48,8 @@ def get_fs_subject(config: SimpleNamespace, subject: str) -> str:
         return f"sub-{subject}"
 
 
-@functools.lru_cache(maxsize=None)
-def _get_entity_vals_cached(*args, **kwargs) -> List[str]:
+@functools.cache
+def _get_entity_vals_cached(*args, **kwargs) -> list[str]:
     return mne_bids.get_entity_vals(*args, **kwargs)
 
 
@@ -73,18 +74,18 @@ def get_datatype(config: SimpleNamespace) -> Literal["meg", "eeg"]:
         )
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _get_datatypes_cached(root):
     return mne_bids.get_datatypes(root=root)
 
 
-def _get_ignore_datatypes(config: SimpleNamespace) -> Tuple[str]:
-    _all_datatypes: List[str] = _get_datatypes_cached(root=config.bids_root)
+def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str]:
+    _all_datatypes: list[str] = _get_datatypes_cached(root=config.bids_root)
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 
 
-def get_subjects(config: SimpleNamespace) -> List[str]:
+def get_subjects(config: SimpleNamespace) -> list[str]:
     _valid_subjects = _get_entity_vals_cached(
         root=config.bids_root,
         entity_key="subject",
@@ -102,7 +103,7 @@ def get_subjects(config: SimpleNamespace) -> List[str]:
     return sorted(subjects)
 
 
-def get_sessions(config: SimpleNamespace) -> Union[List[None], List[str]]:
+def get_sessions(config: SimpleNamespace) -> Union[list[None], list[str]]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=config.bids_root,
@@ -120,8 +121,8 @@ def get_sessions(config: SimpleNamespace) -> Union[List[None], List[str]]:
 
 def get_runs_all_subjects(
     config: SimpleNamespace,
-) -> Dict[str, Union[List[None], List[str]]]:
-    """Gives the mapping between subjects and their runs.
+) -> dict[str, Union[list[None], list[str]]]:
+    """Give the mapping between subjects and their runs.
 
     Returns
     -------
@@ -142,10 +143,10 @@ def get_runs_all_subjects(
     )
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _get_runs_all_subjects_cached(
-    **config_dict: Dict[str, Any],
-) -> Dict[str, Union[List[None], List[str]]]:
+    **config_dict: dict[str, Any],
+) -> dict[str, Union[list[None], list[str]]]:
     config = SimpleNamespace(**config_dict)
     # Sometimes we check list equivalence for ch_types, so convert it back
     config.ch_types = list(config.ch_types)
@@ -172,8 +173,8 @@ def _get_runs_all_subjects_cached(
     return subj_runs
 
 
-def get_intersect_run(config: SimpleNamespace) -> List[str]:
-    """Returns the intersection of all the runs of all subjects."""
+def get_intersect_run(config: SimpleNamespace) -> list[str]:
+    """Return the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects(config)
     return list(set.intersection(*map(set, subj_runs.values())))
 
@@ -183,8 +184,8 @@ def get_runs(
     config: SimpleNamespace,
     subject: str,
     verbose: bool = False,
-) -> Union[List[str], List[None]]:
-    """Returns a list of runs in the BIDS input data.
+) -> Union[list[str], list[None]]:
+    """Return a list of runs in the BIDS input data.
 
     Parameters
     ----------
@@ -240,8 +241,8 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    which: Tuple[str] = ("runs", "noise", "rest"),
-) -> List[Tuple[str]]:
+    which: tuple[str] = ("runs", "noise", "rest"),
+) -> list[tuple[str]]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
     from ._import_data import _get_noise_path, _get_rest_path
 
@@ -311,7 +312,7 @@ def get_task(config: SimpleNamespace) -> Optional[str]:
         return _valid_tasks[0]
 
 
-def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> List[str]:
+def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
     # `exclude=[]`: keep "bad" channels, too.
@@ -428,7 +429,7 @@ def _restrict_analyze_channels(
     return inst
 
 
-def _get_scalp_in_files(cfg: SimpleNamespace) -> Dict[str, pathlib.Path]:
+def _get_scalp_in_files(cfg: SimpleNamespace) -> dict[str, pathlib.Path]:
     subject_path = pathlib.Path(cfg.subjects_dir) / cfg.fs_subject
     seghead = subject_path / "surf" / "lh.seghead"
     in_files = dict()
@@ -439,7 +440,7 @@ def _get_scalp_in_files(cfg: SimpleNamespace) -> Dict[str, pathlib.Path]:
     return in_files
 
 
-def _get_bem_conductivity(cfg: SimpleNamespace) -> Tuple[Tuple[float], str]:
+def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float], str]:
     if cfg.fs_subject in ("fsaverage", cfg.use_template_mri):
         conductivity = None  # should never be used
         tag = "5120-5120-5120"
@@ -522,7 +523,7 @@ def get_all_contrasts(config: SimpleNamespace) -> Iterable[ArbitraryContrast]:
     return normalized_contrasts
 
 
-def get_decoding_contrasts(config: SimpleNamespace) -> Iterable[Tuple[str, str]]:
+def get_decoding_contrasts(config: SimpleNamespace) -> Iterable[tuple[str, str]]:
     _validate_contrasts(config.contrasts)
     normalized_contrasts = []
     for contrast in config.contrasts:
@@ -583,12 +584,8 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
             raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
-def _get_step_modules() -> Dict[str, Tuple[ModuleType]]:
-    from .steps import init
-    from .steps import preprocessing
-    from .steps import sensor
-    from .steps import source
-    from .steps import freesurfer
+def _get_step_modules() -> dict[str, tuple[ModuleType]]:
+    from .steps import freesurfer, init, preprocessing, sensor, source
 
     INIT_STEPS = init._STEPS
     PREPROCESSING_STEPS = preprocessing._STEPS

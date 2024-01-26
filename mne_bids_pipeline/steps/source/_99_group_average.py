@@ -6,23 +6,22 @@ Source estimates are morphed to the ``fsaverage`` brain.
 from types import SimpleNamespace
 from typing import Optional
 
-import numpy as np
-
 import mne
+import numpy as np
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    get_fs_subject,
     get_fs_subjects_dir,
+    get_sessions,
     get_subjects,
     sanitize_cond_name,
-    get_fs_subject,
-    get_sessions,
-    _bids_kwargs,
 )
-from ..._logging import logger, gen_log_kwargs
+from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _all_conditions, _open_report
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import _prep_out_files, failsafe_run, save_logs
 
 
 def _stc_path(

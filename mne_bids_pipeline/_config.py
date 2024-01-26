@@ -1,7 +1,6 @@
 # Default settings for data processing and analysis.
 
-from collections.abc import Iterable
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, Iterable, Literal, Optional, Union
 
 from mne import Covariance
 from mne_bids import BIDSPath

@@ -125,6 +125,7 @@ ignore = [
     "D104", # Missing docstring in public package
     "D413", # Missing blank line after last section
     "UP031", # Use format specifiers instead of percent format
+    "UP035", # Import Iterable from collections.abc
 ]
 
 [tool.ruff.pydocstyle]

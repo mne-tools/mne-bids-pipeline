@@ -123,7 +123,7 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             "sub-emptyroom/ses-20000101",
         ],
     },
-    "MNE-phantom-KIT-data": {
+    "MNE_phantom_KIT_data": {
         "mne": "phantom_kit",
     },
 }

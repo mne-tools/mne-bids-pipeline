@@ -144,6 +144,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         logger.warning(f"Dataset {dataset_name} has no HTML report.")
         continue
 
+    assert dataset_options_key in DATASET_OPTIONS, dataset_options_key
     options = DATASET_OPTIONS[dataset_options_key].copy()  # we modify locally
 
     report_str = "\n## Generated output\n\n"
@@ -200,13 +201,18 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n"
         )
 
-    assert sum(key in options for key in ("openneuro", "git", "web", "datalad")) == 1
+    assert (
+        sum(key in options for key in ("openneuro", "git", "web", "datalad", "mne"))
+        == 1
+    )
     if "openneuro" in options:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
     elif "git" in options:
         url = options["git"]
     elif "web" in options:
         url = options["web"]
+    elif "mne" in options:
+        url = f"https://mne.tools/dev/generated/mne.datasets.{options['mne']}.data_path.html"  # noqa: E501
     else:
         assert "datalad" in options  # guaranteed above
         url = ""

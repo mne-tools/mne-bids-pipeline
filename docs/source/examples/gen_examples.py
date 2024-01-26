@@ -27,6 +27,11 @@ def _bool_to_icon(x: Union[bool, Iterable]) -> str:
         return "❌"
 
 
+def _sanitize(fname):
+    """Sanitize a filename."""
+    return fname.replace("-", "_")
+
+
 @contextlib.contextmanager
 def _task_context(task):
     old_argv = sys.argv
@@ -252,7 +257,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
 
     # TODO: For things like ERP_CORE_ERN, decoding_csp are not populated
     # properly by the root config
-    config_path = root / "tests" / "configs" / f"config_{dataset_name}.py"
+    config_path = root / "tests" / "configs" / f"config_{_sanitize(dataset_name)}.py"
     config = config_path.read_text(encoding="utf-8-sig").strip()
     descr_end_idx = config[2:].find('"""')
     config_descr = "# " + config[: descr_end_idx + 1].replace('"""', "").strip()
@@ -313,7 +318,7 @@ with out_path.open("w", encoding="utf-8") as f:
             f.write("--------|" + "|".join([":---:"] * len(funcs)) + "\n")
             header_written = True
         f.write(
-            f"[{dataset_name}]({dataset_name}.md) | "
+            f"[{dataset_name}]({_sanitize(dataset_name)}.md) | "
             + " | ".join(_bool_to_icon(v) for v in funcs.values())
             + "\n"
         )

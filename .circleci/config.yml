@@ -297,23 +297,23 @@ jobs:
           paths:
             - ~/mne_data/eeg_matchingpennies
 
-  cache_MNE_phantom_KIT_data:
+  cache_MNE-phantom-KIT-data:
     <<: *imageconfig
     steps:
       - attach_workspace:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-MNE_phantom_KIT_data-1
+            - data-cache-MNE-phantom-KIT-data-1
       - bash_env
       - gitconfig  # email address is needed for datalad
       - run:
-          name: Get MNE_phantom_KIT_data
+          name: Get MNE-phantom-KIT-data
           command: |
-            $DOWNLOAD_DATA MNE_phantom_KIT_data
+            $DOWNLOAD_DATA MNE-phantom-KIT-data
       - codecov/upload
       - save_cache:
-          key: data-cache-MNE_phantom_KIT_data-1
+          key: data-cache-MNE-phantom-KIT-data-1
           paths:
             - ~/mne_data/MNE-phantom-KIT-data
 
@@ -785,7 +785,7 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
-  test_MNE_phantom_KIT_data:
+  test_MNE-phantom-KIT-data:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -793,10 +793,10 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-MNE_phantom_KIT_data-1
+            - data-cache-MNE-phantom-KIT-data-1
       - run:
-          name: test MNE_phantom_KIT_data
-          command: $RUN_TESTS MNE_phantom_KIT_data
+          name: test MNE-phantom-KIT-data
+          command: $RUN_TESTS MNE-phantom-KIT-data
       - codecov/upload
       - store_test_results:
           path: ./test-results
@@ -804,12 +804,12 @@ jobs:
           path: ./test-results
           destination: test-results
       - store_artifacts:
-          path: /home/circleci/reports/MNE_phantom_KIT_data
-          destination: reports/MNE_phantom_KIT_data
+          path: /home/circleci/reports/MNE-phantom-KIT-data
+          destination: reports/MNE-phantom-KIT-data
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/derivatives/mne-bids-pipeline/MNE_phantom_KIT_data/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/MNE-phantom-KIT-data/*/*/*.html
 
   test_ERP_CORE_N400:
     <<: *imageconfig
@@ -1237,13 +1237,13 @@ workflows:
             - cache_eeg_matchingpennies
           <<: *filter_tags
 
-      - cache_MNE_phantom_KIT_data:
+      - cache_MNE-phantom-KIT-data:
           requires:
             - setup_env
           <<: *filter_tags
-      - test_MNE_phantom_KIT_data:
+      - test_MNE-phantom-KIT-data:
           requires:
-            - cache_MNE_phantom_KIT_data
+            - cache_MNE-phantom-KIT-data
           <<: *filter_tags
 
       - cache_ERP_CORE:
@@ -1297,7 +1297,7 @@ workflows:
             - test_ds003392
             - test_ds004229
             - test_eeg_matchingpennies
-            - test_MNE_phantom_KIT_data
+            - test_MNE-phantom-KIT-data
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN
             - test_ERP_CORE_LRP

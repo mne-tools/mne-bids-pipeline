@@ -123,9 +123,7 @@ _n_jobs = {
         "config": "config_ERP_CORE.py",
         "task": "P3",
     },
-    "MNE_phantom_KIT_data": {
-        "dataset": "MNE_phantom_KIT_data",
-    },
+    "MNE-phantom-KIT-data": {},
 }
 
 
@@ -150,7 +148,7 @@ def dataset_test(request):
 def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
     """Test running a dataset."""
     test_options = TEST_SUITE[dataset]
-    config = test_options.get("config", f"config_{dataset}.py")
+    config = test_options.get("config", f"config_{dataset}.py").replace("-", "_")
     config_path = BIDS_PIPELINE_DIR / "tests" / "configs" / config
     extra_config = TEST_SUITE[dataset].get("extra_config", "")
     if extra_config:

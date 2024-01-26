@@ -140,8 +140,6 @@ def test_datasets_in_doc():
     examples = [ex for ex in examples["Examples"] if isinstance(ex, str)]
     examples = [ex.split("/")[-1].split(".")[0] for ex in examples]
     assert len(examples) == len(set(examples))
-    for key in ("MNE-phantom-KIT-data",):
-        examples[examples.index(key.replace("-", "_"))] = key
     examples = set(examples)
 
     # 4. DATASET_OPTIONS

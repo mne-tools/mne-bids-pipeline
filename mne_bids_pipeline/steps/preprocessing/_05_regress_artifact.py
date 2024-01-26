@@ -57,7 +57,6 @@ def run_regress_artifact(
     task: Optional[str],
     in_files: dict,
 ) -> dict:
-    # Eventually we could do something with all the EOGRegression instances
     model = EOGRegression(proj=False, **cfg.regress_artifact)
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"

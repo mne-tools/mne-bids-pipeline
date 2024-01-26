@@ -256,11 +256,6 @@ def filter_data(
     # For example, might need to create
     # derivatives/mne-bids-pipeline/sub-emptyroom/ses-20230412/meg
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
-    logger.info(
-        **gen_log_kwargs(
-            message=f"Writing filtered data to: {out_files[in_key].basename}"
-        )
-    )
     raw.save(
         out_files[in_key],
         overwrite=True,

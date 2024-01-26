@@ -149,7 +149,7 @@ def dataset_test(request):
 def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
     """Test running a dataset."""
     test_options = TEST_SUITE[dataset]
-    config = test_options.get("config", f"config_{dataset}.py").replace("-", "_")
+    config = test_options.get("config", f"config_{dataset.replace('-', '_')}.py")
     config_path = BIDS_PIPELINE_DIR / "tests" / "configs" / config
     extra_config = TEST_SUITE[dataset].get("extra_config", "")
     if extra_config:

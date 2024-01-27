@@ -124,6 +124,9 @@ _n_jobs = {
         "config": "config_ERP_CORE.py",
         "task": "P3",
     },
+    "MNE-phantom-KIT-data": {
+        "config": "config_MNE_phantom_KIT_data.py",
+    },
 }
 
 

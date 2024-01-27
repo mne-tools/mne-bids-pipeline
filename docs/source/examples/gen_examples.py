@@ -63,6 +63,8 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
         key = "Maxwell filter"
         funcs[key] = funcs[key] or config.use_maxwell_filter
         funcs["Frequency filter"] = config.l_freq or config.h_freq
+        key = "Artifact regression"
+        funcs[key] = funcs[key] or (config.regress_artifact is not None)
         key = "SSP"
         funcs[key] = funcs[key] or (config.spatial_filter == "ssp")
         key = "ICA"
@@ -144,6 +146,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         logger.warning(f"Dataset {dataset_name} has no HTML report.")
         continue
 
+    assert dataset_options_key in DATASET_OPTIONS, dataset_options_key
     options = DATASET_OPTIONS[dataset_options_key].copy()  # we modify locally
 
     report_str = "\n## Generated output\n\n"
@@ -200,13 +203,18 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"{fname.name} :fontawesome-solid-square-poll-vertical:</a>\n\n"
         )
 
-    assert sum(key in options for key in ("openneuro", "git", "web", "datalad")) == 1
+    assert (
+        sum(key in options for key in ("openneuro", "git", "web", "datalad", "mne"))
+        == 1
+    )
     if "openneuro" in options:
         url = f'https://openneuro.org/datasets/{options["openneuro"]}'
     elif "git" in options:
         url = options["git"]
     elif "web" in options:
         url = options["web"]
+    elif "mne" in options:
+        url = f"https://mne.tools/dev/generated/mne.datasets.{options['mne']}.data_path.html"  # noqa: E501
     else:
         assert "datalad" in options  # guaranteed above
         url = ""
@@ -246,7 +254,9 @@ for test_dataset_name, test_dataset_options in ds_iter:
 
     # TODO: For things like ERP_CORE_ERN, decoding_csp are not populated
     # properly by the root config
-    config_path = root / "tests" / "configs" / f"config_{dataset_name}.py"
+    config_path = (
+        root / "tests" / "configs" / f"config_{dataset_name.replace('-', '_')}.py"
+    )
     config = config_path.read_text(encoding="utf-8-sig").strip()
     descr_end_idx = config[2:].find('"""')
     config_descr = "# " + config[: descr_end_idx + 1].replace('"""', "").strip()

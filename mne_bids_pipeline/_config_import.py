@@ -12,8 +12,7 @@ from typing import Optional
 import matplotlib
 import mne
 import numpy as np
-from pydantic import ValidationError
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
@@ -269,17 +268,6 @@ def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> N
                         f'ica_reject["{ch_type}"] ({ica_reject[ch_type]})'
                     )
 
-    if not config.ch_types:
-        raise ValueError("Please specify ch_types in your configuration.")
-
-    _VALID_TYPES = ("meg", "mag", "grad", "eeg")
-    if any(ch_type not in _VALID_TYPES for ch_type in config.ch_types):
-        raise ValueError(
-            "Invalid channel type passed. Please adjust `ch_types` in your "
-            f"configuration, got {config.ch_types} but supported types are "
-            f"{_VALID_TYPES}"
-        )
-
     if config.noise_cov == "emptyroom" and "eeg" in config.ch_types:
         raise ValueError(
             "You requested to process data that contains EEG channels. In "
@@ -312,16 +300,7 @@ def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> N
                 f"but you set baseline={bl}"
             )
 
-    # check decoding parameters
-    if config.decoding_n_splits < 2:
-        raise ValueError("decoding_n_splits should be at least 2.")
-
     # check cluster permutation parameters
-    if not 0 < config.cluster_permutation_p_threshold < 1:
-        raise ValueError(
-            "cluster_permutation_p_threshold should be in the (0, 1) interval."
-        )
-
     if config.cluster_n_permutations < 10 / config.cluster_permutation_p_threshold:
         raise ValueError(
             "cluster_n_permutations is not big enough to calculate "
@@ -380,33 +359,30 @@ def _pydantic_validate(
     # https://docs.pydantic.dev/latest/usage/dataclasses/
     from . import _config as root_config
 
-    annotations = copy.deepcopy(root_config.__annotations__)  # just be safe
-    attrs = {
-        key: _default_factory(key, val)
-        for key, val in root_config.__dict__.items()
-        if key in annotations
-    }
-    # everything should be type annotated, make sure they are
-    asym = set(attrs).symmetric_difference(set(annotations))
-    assert asym == set(), asym
+    # Modify annotations to add nested strict parsing
+    annotations = dict()
+    attrs = dict()
+    for key, annot in root_config.__annotations__.items():
+        annotations[key] = annot
+        attrs[key] = _default_factory(key, root_config.__dict__[key])
     name = "user configuration"
     if config_path is not None:
         name += f" from {config_path}"
-    UserConfig = type(
-        name,
-        (object,),
-        {"__annotations__": annotations, **attrs},
-    )
-    dataclass_config = dict(
+    model_config = ConfigDict(
         arbitrary_types_allowed=False,
         validate_assignment=True,
         strict=True,  # do not allow float for int for example
+        extra="forbid",
     )
-    UserConfig = dataclass(config=dataclass_config)(UserConfig)
+    UserConfig = type(
+        name,
+        (BaseModel,),
+        {"__annotations__": annotations, "model_config": model_config, **attrs},
+    )
     # Now use pydantic to automagically validate
     user_vals = {key: val for key, val in config.__dict__.items() if key in annotations}
     try:
-        UserConfig(**user_vals)
+        UserConfig.model_validate(user_vals)
     except ValidationError as err:
         raise ValueError(str(err)) from None
 

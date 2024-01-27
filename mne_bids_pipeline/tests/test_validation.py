@@ -14,7 +14,7 @@ def test_validation(tmp_path, capsys):
     bad_text += f"bids_root = '{tmp_path}'\n"
     # no ch_types
     config_path.write_text(bad_text)
-    with pytest.raises(ValueError, match="Please specify ch_types"):
+    with pytest.raises(ValueError, match="Value should have at least 1 item"):
         _import_config(config_path=config_path)
     bad_text += "ch_types = ['eeg']\n"
     # conditions

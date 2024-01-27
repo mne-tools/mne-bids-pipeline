@@ -1,4 +1,4 @@
-"""Apply ICA and obtain the cleaned epochs.
+"""Apply ICA and obtain the cleaned epochs and raw data.
 
 Blinks and ECG artifacts are automatically detected and the corresponding ICA
 components are removed from the data.

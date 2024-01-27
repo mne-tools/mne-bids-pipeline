@@ -5,12 +5,13 @@ from . import (
     _02_head_pos,
     _03_maxfilter,
     _04_frequency_filter,
-    _05_make_epochs,
+    _05_regress_artifact,
     _06a_run_ica,
     _06b_run_ssp,
-    _07a_apply_ica,
-    _07b_apply_ssp,
-    _08_ptp_reject,
+    _07_make_epochs,
+    _08a_apply_ica,
+    _08b_apply_ssp,
+    _09_ptp_reject,
 )
 
 _STEPS = (
@@ -18,10 +19,11 @@ _STEPS = (
     _02_head_pos,
     _03_maxfilter,
     _04_frequency_filter,
-    _05_make_epochs,
+    _05_regress_artifact,
     _06a_run_ica,
     _06b_run_ssp,
-    _07a_apply_ica,
-    _07b_apply_ssp,
-    _08_ptp_reject,
+    _07_make_epochs,
+    _08a_apply_ica,
+    _08b_apply_ssp,
+    _09_ptp_reject,
 )

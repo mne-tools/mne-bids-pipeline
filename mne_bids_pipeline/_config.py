@@ -1,7 +1,8 @@
 # Default settings for data processing and analysis.
 
-from typing import Callable, Iterable, Literal, Optional, Union
+from typing import Annotated, Any, Callable, Literal, Optional, Sequence, Union
 
+from annotated_types import Ge, Interval, Len
 from mne import Covariance
 from mne_bids import BIDSPath
 
@@ -94,7 +95,7 @@ task: str = ""
 The task to process.
 """
 
-runs: Union[Iterable, Literal["all"]] = "all"
+runs: Union[Sequence, Literal["all"]] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
@@ -143,7 +144,7 @@ space: Optional[str] = None
 The BIDS `space` entity.
 """
 
-plot_psd_for_runs: Union[Literal["all"], Iterable[str]] = "all"
+plot_psd_for_runs: Union[Literal["all"], Sequence[str]] = "all"
 """
 For which runs to add a power spectral density (PSD) plot to the generated
 report. This can take a considerable amount of time if you have many long
@@ -151,7 +152,7 @@ runs. In this case, specify the runs, or pass an empty list to disable raw PSD
 plotting.
 """
 
-subjects: Union[Iterable[str], Literal["all"]] = "all"
+subjects: Union[Sequence[str], Literal["all"]] = "all"
 """
 Subjects to analyze. If `'all'`, include all subjects. To only
 include a subset of subjects, pass a list of their identifiers. Even
@@ -171,7 +172,7 @@ section).
     ```
 """
 
-exclude_subjects: Iterable[str] = []
+exclude_subjects: Sequence[str] = []
 """
 Specify subjects to exclude from analysis. The MEG empty-room mock-subject
 is automatically excluded from regular analysis.
@@ -201,7 +202,7 @@ is required if you wish to use the resting-state recording to estimate noise
 covariance (via `noise_cov='rest'`).
 """
 
-ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]] = []
+ch_types: Annotated[Sequence[Literal["meg", "mag", "grad", "eeg"]], Len(1, 4)] = []
 """
 The channel types to consider.
 
@@ -252,7 +253,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Optional[Iterable[str]] = None
+eog_channels: Optional[Sequence[str]] = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -320,7 +321,7 @@ Can also be `None` if you do not want to create bipolar channels.
     ```
 """
 
-eeg_reference: Union[Literal["average"], str, Iterable["str"]] = "average"
+eeg_reference: Union[Literal["average"], str, Sequence["str"]] = "average"
 """
 The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
@@ -371,7 +372,7 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
     ```
 """
 
-drop_channels: Iterable[str] = []
+drop_channels: Sequence[str] = []
 """
 Names of channels to remove from the data. This can be useful, for example,
 if you have added a new bipolar channel via `eeg_bipolar_channels` and now wish
@@ -385,7 +386,7 @@ to remove the anode, cathode, or both.
 """
 
 analyze_channels: Union[
-    Literal["all"], Literal["ch_types"], Iterable["str"]
+    Literal["all"], Literal["ch_types"], Sequence["str"]
 ] = "ch_types"
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
@@ -789,7 +790,7 @@ The high-frequency cut-off in the lowpass filtering step.
 Keep it `None` if no lowpass filtering should be applied.
 """
 
-notch_freq: Optional[Union[float, Iterable[float]]] = None
+notch_freq: Optional[Union[float, Sequence[float]]] = None
 """
 Notch filter frequency. More than one frequency can be supplied, e.g. to remove
 harmonics. Keep it `None` if no notch filter should be applied.
@@ -827,7 +828,7 @@ notch_trans_bandwidth: float = 1.0
 Specifies the transition bandwidth of the notch filter. The default is `1.`.
 """
 
-notch_widths: Optional[Union[float, Iterable[float]]] = None
+notch_widths: Optional[Union[float, Sequence[float]]] = None
 """
 Specifies the width of each stop band. `None` uses the MNE default.
 """
@@ -931,7 +932,7 @@ Same as `epochs_metadata_tmin`, but specifying the **end** of the time
 window for metadata generation.
 """
 
-epochs_metadata_keep_first: Optional[Iterable[str]] = None
+epochs_metadata_keep_first: Optional[Sequence[str]] = None
 """
 Event groupings using hierarchical event descriptors (HEDs) for which to store
 the time of the **first** occurrence of any event of this group in a new column
@@ -959,7 +960,7 @@ aggregation will take place and no new columns will be created.
     and `first_stimulus`.
 """
 
-epochs_metadata_keep_last: Optional[Iterable[str]] = None
+epochs_metadata_keep_last: Optional[Sequence[str]] = None
 """
 Same as `epochs_metadata_keep_first`, but for keeping the **last**
 occurrence of matching event types. The columns indicating the event types
@@ -979,7 +980,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """  # noqa: E501
 
-conditions: Optional[Union[Iterable[str], dict[str, str]]] = None
+conditions: Optional[Union[Sequence[str], dict[str, str]]] = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1058,7 +1059,7 @@ if `None`, no baseline correction is applied.
     ```
 """
 
-contrasts: Iterable[Union[tuple[str, str], ArbitraryContrast]] = []
+contrasts: Sequence[Union[tuple[str, str], ArbitraryContrast]] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
@@ -1124,6 +1125,24 @@ epoched, and therefore the conditions should either match or be subsets of
 # if you choose SSP, run steps 5b and 6b
 #
 # Currently you cannot use both.
+
+regress_artifact: Optional[dict[str, Any]] = None
+"""
+Keyword arguments to pass to the `mne.preprocessing.EOGRegression` model used
+in `mne.preprocessing.regress_artifact`. If `None`, no time-domain regression will
+be applied. Note that any channels picked in `regress_artifact["picks_artifact"]` will
+have the same time-domain filters applied to them as the experimental data.
+
+Artifact regression is applied before SSP or ICA.
+
+???+ example "Example"
+    For example, if you have MEG reference channel data recorded in three
+    miscellaneous channels, you could do:
+
+    ```python
+    regress_artifact = {"picks": "meg", "picks_artifact": ["MISC 001", "MISC 002", "MISC 003"]}
+    ```
+"""  # noqa: E501
 
 spatial_filter: Optional[Literal["ssp", "ica"]] = None
 """
@@ -1516,7 +1535,7 @@ With ROC AUC, chance level is the same regardless of class balance, that is,
 you don't need to be worried about **exactly** balancing class sizes.
 """
 
-decoding_n_splits: int = 5
+decoding_n_splits: Annotated[int, Ge(2)] = 5
 """
 The number of folds (also called "splits") to use in the K-fold cross-validation
 scheme.
@@ -1577,7 +1596,7 @@ The maximum number of permutations to perform in a cluster-based permutation
 test to determine the significance of the decoding scores across participants.
 """
 
-cluster_permutation_p_threshold: float = 0.05
+cluster_permutation_p_threshold: Annotated[float, Interval(gt=0, lt=1)] = 0.05
 """
 The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
 that the clusters show no significant difference between conditions. This is
@@ -1609,7 +1628,7 @@ locations set.
 # TIME-FREQUENCY
 # --------------
 
-time_frequency_conditions: Iterable[str] = []
+time_frequency_conditions: Sequence[str] = []
 """
 The conditions to compute time-frequency decomposition on.
 

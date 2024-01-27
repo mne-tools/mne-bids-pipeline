@@ -47,7 +47,7 @@ def get_input_fnames_run_ssp(
     for run in cfg.runs:
         key = f"raw_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing="filt", suffix="raw"
+            run=run, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -66,7 +66,7 @@ def run_ssp(
 ) -> dict:
     import matplotlib.pyplot as plt
 
-    # compute SSP on first run of raw
+    # compute SSP on all runs of raw
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
 
     # when saving proj, use run=None
@@ -229,6 +229,7 @@ def get_config(
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
         runs=get_runs(config=config, subject=subject),
+        processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

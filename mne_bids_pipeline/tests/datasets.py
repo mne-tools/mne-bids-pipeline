@@ -9,6 +9,7 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     openneuro: str  # ""
     osf: str  # ""
     web: str  # ""
+    mne: str  # ""
     include: list[str]  # []
     exclude: list[str]  # []
     hash: str  # ""
@@ -121,5 +122,8 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
             "sub-102",
             "sub-emptyroom/ses-20000101",
         ],
+    },
+    "MNE-phantom-KIT-data": {
+        "mne": "phantom_kit",
     },
 }

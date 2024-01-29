@@ -76,7 +76,6 @@ def run_regress_artifact(
     out_files["regress"] = bids_path_in.copy().update(
         processing=None,
         split=None,
-        run=None,
         suffix="regress",
         extension=".h5",
     )

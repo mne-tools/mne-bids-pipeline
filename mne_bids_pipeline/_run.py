@@ -385,7 +385,7 @@ def _prep_out_files(
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
         fname = pathlib.Path(fname)
-        if check_relative and not fname.is_relative_to(exec_params.deriv_root):
+        if not fname.is_relative_to(check_relative):
             raise RuntimeError(
                 f"Output BIDSPath not relative to expected root {check_relative}:"
                 f"\n{fname}"

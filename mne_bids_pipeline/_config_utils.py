@@ -484,7 +484,7 @@ def get_noise_cov_bids_path(
         task=cfg.task,
         acquisition=cfg.acq,
         run=None,
-        processing=cfg.proc,
+        processing="clean",
         recording=cfg.rec,
         space=cfg.space,
         suffix="cov",
@@ -638,3 +638,24 @@ def _pl(x, *, non_pl="", pl="s"):
     """Determine if plural should be used."""
     len_x = x if isinstance(x, (int, np.generic)) else len(x)
     return non_pl if len_x == 1 else pl
+
+
+def _proj_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> BIDSPath:
+    return BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        extension=".fif",
+        suffix="proj",
+        check=False,
+    )

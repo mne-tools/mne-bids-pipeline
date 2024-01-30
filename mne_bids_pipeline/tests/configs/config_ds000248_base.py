@@ -23,7 +23,7 @@ use_maxwell_filter = True
 
 def noise_cov(bp):
     # Use pre-stimulus period as noise source
-    bp = bp.copy().update(processing="clean", suffix="epo")
+    bp = bp.copy().update(suffix="epo")
     if not bp.fpath.exists():
         bp.update(split="01")
     epo = mne.read_epochs(bp)

@@ -107,7 +107,7 @@ def average_evokeds(
         task=cfg.task,
         acquisition=cfg.acq,
         run=None,
-        processing=cfg.proc,
+        processing="clean",
         recording=cfg.rec,
         space=cfg.space,
         suffix="ave",

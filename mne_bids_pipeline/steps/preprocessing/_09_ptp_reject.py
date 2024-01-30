@@ -187,7 +187,7 @@ def drop_ptp(
         psd = True
     else:
         psd = 30
-    tags = ("epochs", "reject")
+    tags = ("epochs", "clean")
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
     title = "Epochs: after cleaning"
     with _open_report(

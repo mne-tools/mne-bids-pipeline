@@ -82,7 +82,7 @@ def run_regress_artifact(
     model.apply(raw, copy=False)
     if projs:
         raw.add_proj(projs)
-    raw.save(out_files[in_key], overwrite=True)
+    raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
     model.save(out_files["regress"], overwrite=True)
     assert len(in_files) == 0, in_files.keys()

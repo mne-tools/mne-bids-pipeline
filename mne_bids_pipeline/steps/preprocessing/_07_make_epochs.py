@@ -54,7 +54,7 @@ def get_input_fnames_epochs(
         extension=".fif",
         datatype=cfg.datatype,
         root=cfg.deriv_root,
-        processing="filt",
+        processing=cfg.processing,
     ).update(suffix="raw", check=False)
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
@@ -276,7 +276,7 @@ def _get_events(cfg, subject, session):
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
-        processing="filt",
+        processing=cfg.processing,
         suffix="raw",
         extension=".fif",
         datatype=cfg.datatype,
@@ -322,6 +322,7 @@ def get_config(
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
         runs=get_runs(config=config, subject=subject),
+        processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

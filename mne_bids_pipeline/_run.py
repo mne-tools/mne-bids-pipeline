@@ -378,16 +378,16 @@ def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
     out_files: dict[str, BIDSPath],
+    check_relative: Optional[pathlib.Path] = None,
 ):
-    # Don't look at just deriv_root as this ends with <path>/mne-bids-pipeline and
-    # sometimes we write stuff to <path>/freesurfer
-    rel_root = exec_params.deriv_root.parent
+    if check_relative is None:
+        check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
         fname = pathlib.Path(fname)
-        if not fname.is_relative_to(rel_root):
+        if check_relative and not fname.is_relative_to(exec_params.deriv_root):
             raise RuntimeError(
-                f"Output BIDSPath not relative to deriv_root parent {rel_root}:"
+                f"Output BIDSPath not relative to expected root {check_relative}:"
                 f"\n{fname}"
             )
         out_files[key] = _path_to_str_hash(

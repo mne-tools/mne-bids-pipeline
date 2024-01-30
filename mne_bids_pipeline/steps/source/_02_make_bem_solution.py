@@ -69,7 +69,9 @@ def make_bem_solution(
     out_files = get_output_fnames_make_bem_solution(cfg=cfg, subject=subject)
     mne.write_bem_surfaces(out_files["model"], bem_model, overwrite=True)
     mne.write_bem_solution(out_files["sol"], bem_sol, overwrite=True)
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+    )
 
 
 def get_config(

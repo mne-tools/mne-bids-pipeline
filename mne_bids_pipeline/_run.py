@@ -237,7 +237,6 @@ class ConditionalStepMemory:
                                 f"Output file hash mismatch for {str(fname)}, "
                                 "will recompute …"
                             )
-                            raise RuntimeError("bar")
                             emoji = "🚫"
                             bad_out_files = True
                             break
@@ -382,14 +381,15 @@ def _prep_out_files(
 ):
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
-        if not fname.fpath.is_relative_to(exec_params.deriv_root):
+        fname = pathlib.Path(fname)
+        if not fname.is_relative_to(exec_params.deriv_root):
             raise RuntimeError(
                 f"Output BIDSPath not relative to deriv_root {exec_params.deriv_root}:"
-                f"\n{fname}\n{fname.fpath}"
+                f"\n{fname}"
             )
         out_files[key] = _path_to_str_hash(
             key,
-            pathlib.Path(fname),
+            fname,
             method=exec_params.memory_file_method,
             kind="out",
         )

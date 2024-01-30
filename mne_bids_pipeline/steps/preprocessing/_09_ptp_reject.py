@@ -188,8 +188,9 @@ def drop_ptp(
     else:
         psd = 30
     tags = ("epochs", "reject")
-    kind = cfg.reject if isinstance(cfg.reject, str) else "reject"
+    kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
     title = "Epochs: after cleaning"
+    kwargs = dict(section=title, tags=tags, replace=True)
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -204,21 +205,16 @@ def drop_ptp(
                 fig=reject_log.plot(
                     orientation="horizontal", aspect="auto", show=False
                 ),
-                title=f"Epochs: {kind} cleaning",
+                title=f"{kind} cleaning",
                 caption=caption,
-                tags=tags,
-                section=title,
-                replace=True,
+                **kwargs,
             )
             del caption
         else:
-            html = f"<p>Rejection thresholds: <code>{reject}</code></p>"
             report.add_html(
-                html=html,
-                title=f"Epochs: {kind} thresholds",
-                section=title,
-                replace=True,
-                tags=tags,
+                html=f"<code>{reject}</code>",
+                title=f"{kind} thresholds",
+                **kwargs,
             )
 
         report.add_epochs(
@@ -226,8 +222,7 @@ def drop_ptp(
             title=title,
             psd=psd,
             drop_log_ignore=(),
-            tags=tags,
-            replace=True,
+            **kwargs,
         )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 

@@ -10,7 +10,6 @@ from types import SimpleNamespace
 import mne.bem
 
 from ..._config_utils import (
-    _get_scalp_in_files,
     get_fs_subject,
     get_fs_subjects_dir,
     get_subjects,
@@ -20,6 +19,17 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._run import _prep_out_files, failsafe_run
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
+
+
+def _get_scalp_in_files(cfg: SimpleNamespace) -> dict[str, Path]:
+    subject_path = Path(cfg.fs_subjects_dir) / cfg.fs_subject
+    seghead = subject_path / "surf" / "lh.seghead"
+    in_files = dict()
+    if seghead.is_file():
+        in_files["seghead"] = seghead
+    else:
+        in_files["t1"] = subject_path / "mri" / "T1.mgz"
+    return in_files
 
 
 def get_input_fnames_coreg_surfaces(
@@ -32,7 +42,7 @@ def get_input_fnames_coreg_surfaces(
 
 def get_output_fnames_coreg_surfaces(*, cfg: SimpleNamespace, subject: str) -> dict:
     out_files = dict()
-    subject_path = Path(cfg.subjects_dir) / cfg.fs_subject
+    subject_path = Path(cfg.fs_subjects_dir) / cfg.fs_subject
     out_files["seghead"] = subject_path / "surf" / "lh.seghead"
     for key in ("dense", "medium", "sparse"):
         out_files[f"head-{key}"] = (
@@ -57,19 +67,21 @@ def make_coreg_surfaces(
     in_files.pop("t1" if "t1" in in_files else "seghead")
     mne.bem.make_scalp_surfaces(
         subject=cfg.fs_subject,
-        subjects_dir=cfg.subjects_dir,
+        subjects_dir=cfg.fs_subjects_dir,
         force=True,
         overwrite=True,
     )
     out_files = get_output_fnames_coreg_surfaces(cfg=cfg, subject=subject)
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+    )
 
 
 def get_config(*, config, subject) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subject=subject,
         fs_subject=get_fs_subject(config, subject),
-        subjects_dir=get_fs_subjects_dir(config),
+        fs_subjects_dir=get_fs_subjects_dir(config),
     )
     return cfg
 

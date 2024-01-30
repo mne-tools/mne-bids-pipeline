@@ -141,7 +141,6 @@ def main():
         steps = (steps,)
 
     on_error = "debug" if debug else None
-    cache = "1" if cache else "0"
 
     processing_stages = []
     processing_steps = []

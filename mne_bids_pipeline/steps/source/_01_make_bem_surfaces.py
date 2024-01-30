@@ -112,7 +112,9 @@ def make_bem_surfaces(
         subject=subject,
         session=session,
     )
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+    )
 
 
 def get_config(

@@ -369,7 +369,7 @@ def _pydantic_validate(
     if config_path is not None:
         name += f" from {config_path}"
     model_config = ConfigDict(
-        arbitrary_types_allowed=False,
+        arbitrary_types_allowed=True,  # needed in 2.6.0 to allow DigMontage for example
         validate_assignment=True,
         strict=True,  # do not allow float for int for example
         extra="forbid",

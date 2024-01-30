@@ -55,7 +55,9 @@ def run_setup_source_space(
     in_files.clear()  # all used by setup_source_space
     out_files = get_output_fnames_setup_source_space(cfg=cfg, subject=subject)
     mne.write_source_spaces(out_files["src"], src, overwrite=True)
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+    )
 
 
 def get_config(

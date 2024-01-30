@@ -378,11 +378,21 @@ def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
     out_files: dict[str, BIDSPath],
+    check_relative: Optional[pathlib.Path] = None,
 ):
+    if check_relative is None:
+        check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
+        # Sanity check that we only ever write to the derivatives directory
+        fname = pathlib.Path(fname)
+        if not fname.is_relative_to(check_relative):
+            raise RuntimeError(
+                f"Output BIDSPath not relative to expected root {check_relative}:"
+                f"\n{fname}"
+            )
         out_files[key] = _path_to_str_hash(
             key,
-            pathlib.Path(fname),
+            fname,
             method=exec_params.memory_file_method,
             kind="out",
         )
@@ -401,7 +411,7 @@ def _path_to_str_hash(
     assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
     assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
     if method == "mtime":
-        this_hash = v.lstat().st_mtime
+        this_hash = v.stat().st_mtime
     else:
         assert method == "hash"  # guaranteed
         this_hash = hash_file_path(v)

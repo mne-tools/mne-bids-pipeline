@@ -45,11 +45,11 @@ def _get_reject(
 
     # Only keep thresholds for channel types of interest
     reject = reject.copy()
-    if ch_types == ["eeg"]:
-        ch_types_to_remove = ("mag", "grad")
-    else:
-        ch_types_to_remove = ("eeg",)
-
+    ch_types_to_remove = list()
+    if "meg" not in ch_types:
+        ch_types_to_remove.extend(("mag", "grad"))
+    if "eeg" not in ch_types:
+        ch_types_to_remove.append("eeg")
     for ch_type in ch_types_to_remove:
         try:
             del reject[ch_type]

@@ -380,6 +380,12 @@ def _prep_out_files(
     out_files: dict[str, BIDSPath],
 ):
     for key, fname in out_files.items():
+        # Sanity check that we only ever write to the derivatives directory
+        if not fname.fpath.is_relative_to(exec_params.deriv_root):
+            raise RuntimeError(
+                f"Output BIDSPath not relative to deriv_root {exec_params.deriv_root}:"
+                f"\n{fname}\n{fname.fpath}"
+            )
         out_files[key] = _path_to_str_hash(
             key,
             pathlib.Path(fname),

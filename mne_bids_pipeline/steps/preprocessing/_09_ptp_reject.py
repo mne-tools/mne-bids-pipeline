@@ -207,6 +207,14 @@ def drop_ptp(
                 replace=True,
             )
             del caption
+        else:
+            html = f"<p>Rejection thresholds: <code>{reject}</code></p>"
+            report.add_html(
+                html=html,
+                title="Epochs: reject setup",
+                replace=True,
+                tags=("epochs", "reject"),
+            )
 
         report.add_epochs(
             epochs=epochs,

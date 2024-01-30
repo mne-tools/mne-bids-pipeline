@@ -237,6 +237,7 @@ class ConditionalStepMemory:
                                 f"Output file hash mismatch for {str(fname)}, "
                                 "will recompute …"
                             )
+                            raise RuntimeError("bar")
                             emoji = "🚫"
                             bad_out_files = True
                             break
@@ -407,7 +408,7 @@ def _path_to_str_hash(
     assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
     assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
     if method == "mtime":
-        this_hash = v.lstat().st_mtime
+        this_hash = v.stat().st_mtime
     else:
         assert method == "hash"  # guaranteed
         this_hash = hash_file_path(v)

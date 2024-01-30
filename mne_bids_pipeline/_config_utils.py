@@ -16,9 +16,9 @@ from ._logging import gen_log_kwargs, logger
 from .typing import ArbitraryContrast
 
 try:
-    _keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
+    _set_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
 except Exception:
-    _keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
+    _set_keys_arbitrary_contrast = set(ArbitraryContrast.__annotations__.keys())
 
 
 def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
@@ -96,11 +96,14 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
     else:
         s = config.subjects
 
-    subjects = set(s) - set(config.exclude_subjects)
-    # Drop empty-room subject.
-    subjects = subjects - set(["emptyroom"])
+    # Preserve order and remove excluded subjects
+    subjects = [
+        subject
+        for subject in s
+        if subject not in config.exclude_subjects and subject != "emptyroom"
+    ]
 
-    return sorted(subjects)
+    return subjects
 
 
 def get_sessions(config: SimpleNamespace) -> Union[list[None], list[str]]:
@@ -176,7 +179,17 @@ def _get_runs_all_subjects_cached(
 def get_intersect_run(config: SimpleNamespace) -> list[str]:
     """Return the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects(config)
-    return list(set.intersection(*map(set, subj_runs.values())))
+    # Do not use something like:
+    # list(set.intersection(*map(set, subj_runs.values())))
+    # as it will not preserve order. Instead just be explicit and preserve order.
+    # We could use "sorted", but it's probably better to use the order provided by
+    # the user (if they want to put `runs=["02", "01"]` etc. it's better to use "02")
+    all_runs = list()
+    for runs in subj_runs.values():
+        for run in runs:
+            if run not in all_runs:
+                all_runs.append(run)
+    return all_runs
 
 
 def get_runs(
@@ -573,7 +586,7 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
             if len(contrast) != 2:
                 raise ValueError("Contrasts' tuples MUST be two conditions")
         elif isinstance(contrast, dict):
-            if not _keys_arbitrary_contrast.issubset(set(contrast.keys())):
+            if not _set_keys_arbitrary_contrast.issubset(set(contrast.keys())):
                 raise ValueError(f"Missing key(s) in contrast {contrast}")
             if len(contrast["conditions"]) != len(contrast["weights"]):
                 raise ValueError(

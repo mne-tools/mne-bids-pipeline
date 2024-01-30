@@ -442,17 +442,6 @@ def _restrict_analyze_channels(
     return inst
 
 
-def _get_scalp_in_files(cfg: SimpleNamespace) -> dict[str, pathlib.Path]:
-    subject_path = pathlib.Path(cfg.subjects_dir) / cfg.fs_subject
-    seghead = subject_path / "surf" / "lh.seghead"
-    in_files = dict()
-    if seghead.is_file():
-        in_files["seghead"] = seghead
-    else:
-        in_files["t1"] = subject_path / "mri" / "T1.mgz"
-    return in_files
-
-
 def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float], str]:
     if cfg.fs_subject in ("fsaverage", cfg.use_template_mri):
         conductivity = None  # should never be used

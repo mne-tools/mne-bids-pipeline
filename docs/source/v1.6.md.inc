@@ -20,6 +20,7 @@
 - Fix minor issues with path handling for cross-talk and calibration files (#834 by @larsoner)
 - Fix bug where EEG `reject` params were not used for `ch_types = ["meg", "eeg"]` (#839 by @larsoner)
 - Fix bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
+- Fix bug where `--no-cache` had no effect (#839 by @larsoner)
 
 ### :medical_symbol: Code health
 

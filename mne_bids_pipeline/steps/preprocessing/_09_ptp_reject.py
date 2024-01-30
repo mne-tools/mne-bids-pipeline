@@ -190,7 +190,6 @@ def drop_ptp(
     tags = ("epochs", "reject")
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
     title = "Epochs: after cleaning"
-    kwargs = dict(section=title, tags=tags, replace=True)
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -207,14 +206,18 @@ def drop_ptp(
                 ),
                 title=f"{kind} cleaning",
                 caption=caption,
-                **kwargs,
+                section=title,
+                tags=tags,
+                replace=True,
             )
             del caption
         else:
             report.add_html(
                 html=f"<code>{reject}</code>",
                 title=f"{kind} thresholds",
-                **kwargs,
+                section=title,
+                replace=True,
+                tags=tags,
             )
 
         report.add_epochs(
@@ -222,7 +225,8 @@ def drop_ptp(
             title=title,
             psd=psd,
             drop_log_ignore=(),
-            **kwargs,
+            tags=tags,
+            replace=True,
         )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 

@@ -24,7 +24,6 @@
 - Fix bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
 - Fix bug where `--no-cache` had no effect (#839 by @larsoner)
 - Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
-- Fix bug where
 
 ### :medical_symbol: Code health
 

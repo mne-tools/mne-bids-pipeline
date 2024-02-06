@@ -6,6 +6,8 @@
 
 - Added [`regress_artifact`][mne_bids_pipeline._config.regress_artifact] to allow artifact regression (e.g., of MEG reference sensors in KIT systems) (#837 by @larsoner)
 - Chosen `reject` parameters are now saved in the generated HTML reports (#839 by @larsoner)
+- Added saving of clean raw data in addition to epochs (#840 by @larsoner)
+- Added saving of detected blink and cardiac events used to calculate SSP projectors (#840 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -21,6 +23,7 @@
 - Fix bug where EEG `reject` params were not used for `ch_types = ["meg", "eeg"]` (#839 by @larsoner)
 - Fix bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
 - Fix bug where `--no-cache` had no effect (#839 by @larsoner)
+- Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
 
 ### :medical_symbol: Code health
 

@@ -1161,14 +1161,14 @@ order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
 """
 
-min_ecg_epochs: int = 5
+min_ecg_epochs: Annotated[int, Ge(1)] = 5
 """
-Minimal number of ECG epochs needed to compute SSP or ICA rejection.
+Minimal number of ECG epochs needed to compute SSP projectors.
 """
 
-min_eog_epochs: int = 5
+min_eog_epochs: Annotated[int, Ge(1)] = 5
 """
-Minimal number of EOG epochs needed to compute SSP or ICA rejection.
+Minimal number of EOG epochs needed to compute SSP projectors.
 """
 
 

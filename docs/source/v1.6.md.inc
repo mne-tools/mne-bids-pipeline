@@ -23,6 +23,7 @@
 - Fix bug where EEG `reject` params were not used for `ch_types = ["meg", "eeg"]` (#839 by @larsoner)
 - Fix bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
 - Fix bug where `--no-cache` had no effect (#839 by @larsoner)
+- Fix bug where the Maxwell filtering step would fail if [`find_noisy_channels_meg = False`][mne_bids_pipeline._config.find_noisy_channels_meg]` was used (#847 by @larsoner)
 - Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
 
 ### :medical_symbol: Code health

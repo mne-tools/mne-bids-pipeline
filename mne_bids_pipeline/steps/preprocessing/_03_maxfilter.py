@@ -64,7 +64,7 @@ def get_input_fnames_esss(
         mf_reference_run=cfg.mf_reference_run,
         **kwargs,
     )
-    in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
+    in_files.update(_get_mf_reference_run_path(**kwargs))
     return in_files
 
 
@@ -241,7 +241,8 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination` and also bad channels for noise)
-    in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
+    # use add_bads=None here to mean "add if autobad is turned on"
+    in_files.update(_get_mf_reference_run_path(**kwargs))
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:

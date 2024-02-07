@@ -6,8 +6,9 @@ deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
 subjects = ["01"]
 
 task = "localizer"
-find_flat_channels_meg = True
-find_noisy_channels_meg = True
+# usually a good idea to use True, but we know no bads are detected for this dataset
+find_flat_channels_meg = False
+find_noisy_channels_meg = False
 use_maxwell_filter = True
 ch_types = ["meg"]
 

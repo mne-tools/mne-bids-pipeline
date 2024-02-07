@@ -683,10 +683,11 @@ def _get_run_rest_noise_path(
 
 
 def _get_mf_reference_run_path(
+    *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
 ) -> dict:
     return _get_run_path(
         cfg=cfg,

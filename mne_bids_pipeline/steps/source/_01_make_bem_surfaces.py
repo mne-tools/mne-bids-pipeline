@@ -11,17 +11,17 @@ from typing import Optional
 import mne
 
 from ..._config_utils import (
-    get_fs_subject,
-    get_subjects,
-    get_sessions,
-    _get_bem_conductivity,
-    get_fs_subjects_dir,
     _bids_kwargs,
+    _get_bem_conductivity,
+    get_fs_subject,
+    get_fs_subjects_dir,
+    get_sessions,
+    get_subjects,
 )
-from ..._logging import logger, gen_log_kwargs
+from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import failsafe_run, save_logs, _prep_out_files
 from ..._report import _open_report, _render_bem
+from ..._run import _prep_out_files, failsafe_run, save_logs
 
 
 def _get_bem_params(cfg: SimpleNamespace):
@@ -112,7 +112,9 @@ def make_bem_surfaces(
         subject=subject,
         session=session,
     )
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+    )
 
 
 def get_config(

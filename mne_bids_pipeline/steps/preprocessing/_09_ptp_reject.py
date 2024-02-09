@@ -11,22 +11,21 @@ corrected by the ICA or the SSP processing.
 from types import SimpleNamespace
 from typing import Optional
 
-import numpy as np
 import autoreject
-
 import mne
+import numpy as np
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
     get_sessions,
     get_subjects,
-    _bids_kwargs,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_drop_ptp(
@@ -188,6 +187,9 @@ def drop_ptp(
         psd = True
     else:
         psd = 30
+    tags = ("epochs", "clean")
+    kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
+    title = "Epochs: after cleaning"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -202,18 +204,28 @@ def drop_ptp(
                 fig=reject_log.plot(
                     orientation="horizontal", aspect="auto", show=False
                 ),
-                title="Epochs: Autoreject cleaning",
+                title=f"{kind} cleaning",
                 caption=caption,
-                tags=("epochs", "autoreject"),
+                section=title,
+                tags=tags,
                 replace=True,
             )
             del caption
+        else:
+            report.add_html(
+                html=f"<code>{reject}</code>",
+                title=f"{kind} thresholds",
+                section=title,
+                replace=True,
+                tags=tags,
+            )
 
         report.add_epochs(
             epochs=epochs,
-            title="Epochs: after cleaning",
+            title=title,
             psd=psd,
             drop_log_ignore=(),
+            tags=tags,
             replace=True,
         )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

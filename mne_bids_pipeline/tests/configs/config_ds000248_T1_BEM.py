@@ -1,6 +1,4 @@
-"""
-MNE Sample Data: BEM from T1 images
-"""
+"""MNE Sample Data: BEM from T1 images."""
 
 study_name = "ds000248"
 bids_root = "~/mne_data/ds000248"

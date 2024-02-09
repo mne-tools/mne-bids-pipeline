@@ -3,26 +3,33 @@
 These are often also referred to as PCA vectors.
 """
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
-from mne.preprocessing import create_eog_epochs, create_ecg_epochs
-from mne import compute_proj_evoked, compute_proj_epochs
+import numpy as np
+from mne import compute_proj_epochs, compute_proj_evoked
+from mne.preprocessing import find_ecg_events, find_eog_events
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    _pl,
+    _proj_path,
     get_runs,
     get_sessions,
     get_subjects,
-    _bids_kwargs,
-    _pl,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+
+
+def _find_ecg_events(raw: mne.io.Raw, ch_name: Optional[str]) -> np.ndarray:
+    """Wrap find_ecg_events to use the same defaults as create_ecg_events."""
+    return find_ecg_events(raw, ch_name=ch_name, l_freq=8, h_freq=16)[0]
 
 
 def get_input_fnames_run_ssp(
@@ -47,7 +54,7 @@ def get_input_fnames_run_ssp(
     for run in cfg.runs:
         key = f"raw_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing="filt", suffix="raw"
+            run=run, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -66,17 +73,10 @@ def run_ssp(
 ) -> dict:
     import matplotlib.pyplot as plt
 
-    # compute SSP on first run of raw
+    # compute SSP on all runs of raw
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
 
-    # when saving proj, use run=None
-    out_files = dict()
-    out_files["proj"] = (
-        raw_fnames[0]
-        .copy()
-        .update(run=None, suffix="proj", split=None, processing=None, check=False)
-    )
-
+    out_files = dict(proj=_proj_path(cfg=cfg, subject=subject, session=session))
     msg = (
         f"Input{_pl(raw_fnames)} ({len(raw_fnames)}): "
         f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}'
@@ -93,7 +93,7 @@ def run_ssp(
     projs = dict()
     proj_kinds = ("ecg", "eog")
     rate_names = dict(ecg="heart", eog="blink")
-    epochs_fun = dict(ecg=create_ecg_epochs, eog=create_eog_epochs)
+    events_fun = dict(ecg=_find_ecg_events, eog=find_eog_events)
     minimums = dict(ecg=cfg.min_ecg_epochs, eog=cfg.min_eog_epochs)
     rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
@@ -111,17 +111,38 @@ def run_ssp(
         projs[kind] = []
         if not any(n_projs[kind].values()):
             continue
-        proj_epochs = epochs_fun[kind](
-            raw,
-            ch_name=ch_name[kind],
-            decim=cfg.epochs_decim,
-        )
-        n_orig = len(proj_epochs.selection)
+        events = events_fun[kind](raw=raw, ch_name=ch_name[kind])
+        n_orig = len(events)
         rate = n_orig / raw.times[-1] * 60
         bpm_msg = f"{rate:5.1f} bpm"
         msg = f"Detected {rate_names[kind]} rate: {bpm_msg}"
         logger.info(**gen_log_kwargs(message=msg))
-        # Enough to start
+        # Enough to create epochs
+        if len(events) < minimums[kind]:
+            msg = (
+                f"No {kind.upper()} projectors computed: got "
+                f"{len(events)} original events < {minimums[kind]} {bpm_msg}"
+            )
+            logger.warning(**gen_log_kwargs(message=msg))
+            continue
+        out_files[f"events_{kind}"] = (
+            out_files["proj"]
+            .copy()
+            .update(suffix=f"{kind}-eve", split=None, check=False, extension=".txt")
+        )
+        mne.write_events(out_files[f"events_{kind}"], events, overwrite=True)
+        proj_epochs = mne.Epochs(
+            raw,
+            events=events,
+            event_id=events[0, 2],
+            tmin=-0.5,
+            tmax=0.5,
+            proj=False,
+            baseline=(None, None),
+            reject_by_annotation=True,
+            preload=True,
+            decim=cfg.epochs_decim,
+        )
         if len(proj_epochs) >= minimums[kind]:
             reject_ = _get_reject(
                 subject=subject,
@@ -134,7 +155,6 @@ def run_ssp(
             proj_epochs.drop_bad(reject=reject_)
         # Still enough after rejection
         if len(proj_epochs) >= minimums[kind]:
-            proj_epochs.apply_baseline((None, None))
             use = proj_epochs.average() if avg[kind] else proj_epochs
             fun = compute_proj_evoked if avg[kind] else compute_proj_epochs
             desc_prefix = (
@@ -229,6 +249,7 @@ def get_config(
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
         runs=get_runs(config=config, subject=subject),
+        processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

@@ -7,24 +7,22 @@ The average power and inter-trial coherence are computed and saved to disk.
 from types import SimpleNamespace
 from typing import Optional
 
-import numpy as np
-
 import mne
-
+import numpy as np
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_sessions,
-    get_subjects,
-    get_eeg_reference,
-    sanitize_cond_name,
     _bids_kwargs,
     _restrict_analyze_channels,
+    get_eeg_reference,
+    get_sessions,
+    get_subjects,
+    sanitize_cond_name,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run, save_logs, _prep_out_files, _update_for_splits
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _sanitize_cond_tag
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_time_frequency(

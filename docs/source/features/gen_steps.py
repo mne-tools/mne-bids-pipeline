@@ -3,6 +3,7 @@
 
 import importlib
 from pathlib import Path
+
 from mne_bids_pipeline._config_utils import _get_step_modules
 
 pre = """\

@@ -2,31 +2,30 @@
 
 import pathlib
 import sys
-from typing import Union, List, Dict
-from typing_extensions import Annotated
+from typing import Annotated, Union
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
 else:
     from typing import TypedDict
 
+import mne
 import numpy as np
 from numpy.typing import ArrayLike
 from pydantic import PlainValidator
-import mne
 
 PathLike = Union[str, pathlib.Path]
 
 
 class ArbitraryContrast(TypedDict):
     name: str
-    conditions: List[str]
-    weights: List[float]
+    conditions: list[str]
+    weights: list[float]
 
 
 class LogKwargsT(TypedDict):
     msg: str
-    extra: Dict[str, str]
+    extra: dict[str, str]
 
 
 class ReferenceRunParams(TypedDict):

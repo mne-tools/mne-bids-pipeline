@@ -14,7 +14,7 @@ def _write_json(fname: PathLike, data: dict) -> None:
 
 
 def _read_json(fname: PathLike) -> dict:
-    with open(fname, "r", encoding="utf-8") as f:
+    with open(fname, encoding="utf-8") as f:
         return json_tricks.load(f)
 
 

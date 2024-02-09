@@ -14,35 +14,35 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
-from copy import deepcopy
 import gc
-from typing import Optional
+from copy import deepcopy
 from types import SimpleNamespace
+from typing import Optional
 
-import numpy as np
 import mne
+import numpy as np
 from mne_bids import read_raw_bids
 
 from ..._config_utils import (
+    _pl,
     get_mf_cal_fname,
     get_mf_ctc_fname,
-    get_subjects,
-    get_sessions,
     get_runs_tasks,
-    _pl,
+    get_sessions,
+    get_subjects,
 )
 from ..._import_data import (
-    import_experimental_data,
-    import_er_data,
+    _get_mf_reference_run_path,
     _get_run_path,
     _get_run_rest_noise_path,
-    _get_mf_reference_run_path,
     _import_data_kwargs,
+    import_er_data,
+    import_experimental_data,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _add_raw
-from ..._run import failsafe_run, save_logs, _update_for_splits, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _add_raw, _open_report
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 # %% eSSS
@@ -64,7 +64,7 @@ def get_input_fnames_esss(
         mf_reference_run=cfg.mf_reference_run,
         **kwargs,
     )
-    in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
+    in_files.update(_get_mf_reference_run_path(**kwargs))
     return in_files
 
 
@@ -241,7 +241,8 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination` and also bad channels for noise)
-    in_files.update(_get_mf_reference_run_path(add_bads=True, **kwargs))
+    # use add_bads=None here to mean "add if autobad is turned on"
+    in_files.update(_get_mf_reference_run_path(**kwargs))
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:

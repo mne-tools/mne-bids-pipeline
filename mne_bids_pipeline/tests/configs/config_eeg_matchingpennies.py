@@ -1,6 +1,4 @@
-"""
-Matchingpennies EEG experiment
-"""
+"""Matchingpennies EEG experiment."""
 
 study_name = "eeg_matchingpennies"
 bids_root = "~/mne_data/eeg_matchingpennies"

@@ -1,13 +1,14 @@
 """Test that all config values are documented."""
 import ast
-from pathlib import Path
 import os
 import re
+from pathlib import Path
+
 import yaml
 
+from mne_bids_pipeline._config_import import _get_default_config
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
-from mne_bids_pipeline._config_import import _get_default_config
 
 root_path = Path(__file__).parent.parent
 
@@ -15,7 +16,7 @@ root_path = Path(__file__).parent.parent
 def test_options_documented():
     """Test that all options are suitably documented."""
     # use ast to parse _config.py for assignments
-    with open(root_path / "_config.py", "r") as fid:
+    with open(root_path / "_config.py") as fid:
         contents = fid.read()
     contents = ast.parse(contents)
     in_config = [
@@ -41,7 +42,7 @@ def test_options_documented():
             if not fname.endswith(".md"):
                 continue
             # This is a .md file
-            with open(Path(dirpath) / fname, "r") as fid:
+            with open(Path(dirpath) / fname) as fid:
                 for line in fid:
                     if not line.startswith(key):
                         continue
@@ -67,7 +68,7 @@ def test_datasets_in_doc():
     # So let's make sure they stay in sync.
 
     # 1. Read cache, test, etc. entries from CircleCI
-    with open(root_path.parent / ".circleci" / "config.yml", "r") as fid:
+    with open(root_path.parent / ".circleci" / "config.yml") as fid:
         circle_yaml_src = fid.read()
     circle_yaml = yaml.safe_load(circle_yaml_src)
     caches = [job[6:] for job in circle_yaml["jobs"] if job.startswith("cache_")]
@@ -134,7 +135,7 @@ def test_datasets_in_doc():
         None, SafeLoaderIgnoreUnknown.ignore_unknown
     )
 
-    with open(root_path.parent / "docs" / "mkdocs.yml", "r") as fid:
+    with open(root_path.parent / "docs" / "mkdocs.yml") as fid:
         examples = yaml.load(fid.read(), Loader=SafeLoaderIgnoreUnknown)
     examples = [n for n in examples["nav"] if list(n)[0] == "Examples"][0]
     examples = [ex for ex in examples["Examples"] if isinstance(ex, str)]

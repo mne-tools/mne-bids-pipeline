@@ -3,13 +3,13 @@
 Initialize the derivatives directory.
 """
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
-from ..._config_utils import get_subjects, get_sessions, _bids_kwargs
+from ..._config_utils import _bids_kwargs, get_sessions, get_subjects
 from ..._logging import gen_log_kwargs, logger
 from ..._run import failsafe_run
 

@@ -1,14 +1,15 @@
 """Download test data and run a test suite."""
-import sys
-import shutil
-from pathlib import Path
-from typing import Collection, Dict, Optional, TypedDict
 import os
+import shutil
+import sys
+from collections.abc import Collection
+from pathlib import Path
+from typing import Optional, TypedDict
 
 import pytest
 
-from mne_bids_pipeline._main import main
 from mne_bids_pipeline._download import main as download_main
+from mne_bids_pipeline._main import main
 
 BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
 
@@ -24,12 +25,12 @@ class _TestOptionsT(TypedDict, total=False):
     config: str  # f"config_{key}.py"
     steps: Collection[str]  # ("preprocessing", "sensor")
     task: Optional[str]  # None
-    env: Dict[str, str]  # {}
+    env: dict[str, str]  # {}
     requires: Collection[str]  # ()
     extra_config: str  # ""
 
 
-TEST_SUITE: Dict[str, _TestOptionsT] = {
+TEST_SUITE: dict[str, _TestOptionsT] = {
     "ds003392": {},
     "ds004229": {},
     "ds001971": {},
@@ -123,6 +124,9 @@ _n_jobs = {
         "config": "config_ERP_CORE.py",
         "task": "P3",
     },
+    "MNE-phantom-KIT-data": {
+        "config": "config_MNE_phantom_KIT_data.py",
+    },
 }
 
 
@@ -168,6 +172,15 @@ def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
         shutil.copy(
             src=fix_path / "ds001971_participants.tsv",
             dst=DATA_DIR / "ds001971" / "participants.tsv",
+        )
+    elif dataset == "ds003775":
+        shutil.copy(
+            src=fix_path / "sub-010_ses-t1_scans.tsv",
+            dst=DATA_DIR
+            / "ds003775"
+            / "sub-010"
+            / "ses-t1"
+            / "sub-010_ses-t1_scans.tsv",
         )
 
     # Run the tests.

@@ -1,12 +1,13 @@
 """Parallelization."""
 
-from typing import Literal, Callable
 from types import SimpleNamespace
+from typing import Callable, Literal
 
 import joblib
-from mne.utils import use_log_level, logger as mne_logger
+from mne.utils import logger as mne_logger
+from mne.utils import use_log_level
 
-from ._logging import logger, gen_log_kwargs, _is_testing
+from ._logging import _is_testing, gen_log_kwargs, logger
 
 
 def get_n_jobs(*, exec_params: SimpleNamespace, log_override: bool = False) -> int:

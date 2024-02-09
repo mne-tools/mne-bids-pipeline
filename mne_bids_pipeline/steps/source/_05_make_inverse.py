@@ -8,25 +8,25 @@ from typing import Optional
 
 import mne
 from mne.minimum_norm import (
-    make_inverse_operator,
     apply_inverse,
+    make_inverse_operator,
     write_inverse_operator,
 )
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    get_fs_subject,
+    get_fs_subjects_dir,
     get_noise_cov_bids_path,
+    get_sessions,
     get_subjects,
     sanitize_cond_name,
-    get_sessions,
-    get_fs_subjects_dir,
-    get_fs_subject,
-    _bids_kwargs,
 )
-from ..._logging import logger, gen_log_kwargs
+from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report, _sanitize_cond_tag, _all_conditions
-from ..._run import failsafe_run, save_logs, _sanitize_callable, _prep_out_files
+from ..._report import _all_conditions, _open_report, _sanitize_cond_tag
+from ..._run import _prep_out_files, _sanitize_callable, failsafe_run, save_logs
 
 
 def get_input_fnames_inverse(

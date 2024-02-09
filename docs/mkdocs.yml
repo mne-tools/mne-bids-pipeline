@@ -90,7 +90,7 @@ nav:
             - Epoching: settings/preprocessing/epochs.md
             - Artifact removal:
                 - Stimulation artifact: settings/preprocessing/stim_artifact.md
-                - SSP & ICA: settings/preprocessing/ssp_ica.md
+                - SSP, ICA, and artifact regression: settings/preprocessing/ssp_ica.md
                 - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
         - Sensor-level analysis:
             - Condition contrasts: settings/sensor/contrasts.md
@@ -116,6 +116,7 @@ nav:
         - examples/ds000248_no_mri.md
         - examples/ds003104.md
         - examples/eeg_matchingpennies.md
+        - examples/MNE-phantom-KIT-data.md
         - examples/ds001810.md
         - examples/ds000117.md
         - examples/ds003775.md

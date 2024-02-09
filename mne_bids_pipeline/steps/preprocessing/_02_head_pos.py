@@ -1,24 +1,24 @@
 """Estimate head positions."""
 
-from typing import Optional
 from types import SimpleNamespace
+from typing import Optional
 
 import mne
 
 from ..._config_utils import (
-    get_subjects,
-    get_sessions,
     get_runs_tasks,
+    get_sessions,
+    get_subjects,
 )
 from ..._import_data import (
-    import_experimental_data,
     _get_run_rest_noise_path,
     _import_data_kwargs,
+    import_experimental_data,
 )
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report
-from ..._run import failsafe_run, save_logs, _prep_out_files
+from ..._run import _prep_out_files, failsafe_run, save_logs
 
 
 def get_input_fnames_head_pos(

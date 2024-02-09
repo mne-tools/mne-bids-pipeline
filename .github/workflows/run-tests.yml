@@ -6,22 +6,8 @@ concurrency:
 on: [push, pull_request]
 
 jobs:
-  check-style:
-    name: Style
-    runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-    - name: Install ruff and codespell
-      run: pip install ruff codespell tomli
-    - run: make ruff
-    - run: make codespell-error
-    - uses: psf/black@stable
   check-doc:
-    name: Doc consistency
+    name: Doc consistency and codespell
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,9 +15,61 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
     - run: pip install --upgrade pip
-    - run: pip install -ve .[tests]
+    - run: pip install -ve .[tests] codespell tomli
+    - run: make codespell-error
     - run: pytest mne_bids_pipeline -m "not dataset_test"
     - uses: codecov/codecov-action@v3
       if: success()
       name: 'Upload coverage to CodeCov'
+  caching:
+    name: 'Caching on ${{ matrix.os }}'
+    timeout-minutes: 30
+    continue-on-error: true
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    env:
+      MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
+      PYTHONIOENCODING: 'utf8'  # for Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@main
+        with:
+          qt: true
+          pyvista: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"  # no "multidict" wheels on 3.12 yet
+      - run: pip install -ve .[tests]
+      - uses: actions/cache@v4
+        with:
+          key: ds001971
+          path: ~/mne_data/ds001971
+        id: ds001971-cache
+      - run: python -m mne_bids_pipeline._download ds001971
+        if: steps.ds001971-cache.outputs.cache-hit != 'true'
+      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/
+      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/  # uses "hash" method
+        timeout-minutes: 1
+      - uses: actions/cache@v4
+        with:
+          key: ds003392
+          path: ~/mne_data/ds003392
+        id: ds003392-cache
+      - run: python -m mne_bids_pipeline._download ds003392
+        if: steps.ds003392-cache.outputs.cache-hit != 'true'
+      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
+      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
+        timeout-minutes: 1
+      - uses: codecov/codecov-action@v3
+        if: success()

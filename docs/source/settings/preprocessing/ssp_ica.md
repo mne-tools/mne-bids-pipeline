@@ -11,6 +11,7 @@ tags:
 ::: mne_bids_pipeline._config
     options:
       members:
+        - regress_artifact
         - spatial_filter
         - min_ecg_epochs
         - min_eog_epochs

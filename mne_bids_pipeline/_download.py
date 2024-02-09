@@ -12,7 +12,7 @@ DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
 def _download_via_datalad(*, ds_name: str, ds_path: Path):
     import datalad.api as dl
 
-    print('datalad installing "{}"'.format(ds_name))
+    print(f'datalad installing "{ds_name}"')
     options = DATASET_OPTIONS[ds_name]
     git_url = options["git"]
     assert "exclude" not in options
@@ -28,7 +28,7 @@ def _download_via_datalad(*, ds_name: str, ds_path: Path):
         n_jobs = 1
 
     for to_get in DATASET_OPTIONS[ds_name].get("include", []):
-        print('datalad get data "{}" for "{}"'.format(to_get, ds_name))
+        print(f'datalad get data "{to_get}" for "{ds_name}"')
         dataset.get(to_get, jobs=n_jobs)
 
 
@@ -77,13 +77,24 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
     (path / f"{ds_name}.zip").unlink()
 
 
+def _download_via_mne(*, ds_name: str, ds_path: Path):
+    assert ds_path.stem == ds_name, ds_path
+    getattr(mne.datasets, DATASET_OPTIONS[ds_name]["mne"]).data_path(
+        ds_path.parent,
+        verbose=True,
+    )
+
+
 def _download(*, ds_name: str, ds_path: Path):
     options = DATASET_OPTIONS[ds_name]
     openneuro_name = options.get("openneuro", "")
     git_url = options.get("git", "")
     osf_node = options.get("osf", "")
     web_url = options.get("web", "")
-    assert sum(bool(x) for x in (openneuro_name, git_url, osf_node, web_url)) == 1
+    mne_mod = options.get("mne", "")
+    assert (
+        sum(bool(x) for x in (openneuro_name, git_url, osf_node, web_url, mne_mod)) == 1
+    )
 
     if openneuro_name:
         download_func = _download_via_openneuro
@@ -91,6 +102,8 @@ def _download(*, ds_name: str, ds_path: Path):
         download_func = _download_via_datalad
     elif osf_node:
         raise RuntimeError("OSF downloads are currently not supported.")
+    elif mne_mod:
+        download_func = _download_via_mne
     else:
         assert web_url
         download_func = _download_from_web

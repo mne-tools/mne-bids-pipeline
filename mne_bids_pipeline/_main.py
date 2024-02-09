@@ -1,16 +1,15 @@
 import argparse
 import pathlib
-from textwrap import dedent
 import time
-from typing import List
+from textwrap import dedent
 from types import ModuleType, SimpleNamespace
 
 import numpy as np
 
-from ._config_utils import _get_step_modules
 from ._config_import import _import_config
 from ._config_template import create_template_config
-from ._logging import logger, gen_log_kwargs
+from ._config_utils import _get_step_modules
+from ._logging import gen_log_kwargs, logger
 from ._parallel import get_parallel_backend
 from ._run import _short_step_path
 
@@ -37,7 +36,7 @@ def main():
         metavar="FILE",
         help="Create a template configuration file with the specified name. "
         "If specified, all other parameters will be ignored.",
-    ),
+    )
     parser.add_argument(
         "--steps",
         dest="steps",
@@ -70,7 +69,7 @@ def main():
         If unspecified, this will be derivatives/mne-bids-pipeline
         inside the BIDS root."""
         ),
-    ),
+    )
     parser.add_argument(
         "--subject", dest="subject", default=None, help="The subject to process."
     )
@@ -142,7 +141,6 @@ def main():
         steps = (steps,)
 
     on_error = "debug" if debug else None
-    cache = "1" if cache else "0"
 
     processing_stages = []
     processing_steps = []
@@ -182,7 +180,7 @@ def main():
     if not cache:
         overrides.memory_location = False
 
-    step_modules: List[ModuleType] = []
+    step_modules: list[ModuleType] = []
     STEP_MODULES = _get_step_modules()
     for stage, step in zip(processing_stages, processing_steps):
         if stage not in STEP_MODULES.keys():

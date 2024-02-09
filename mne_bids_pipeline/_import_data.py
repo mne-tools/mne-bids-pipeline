@@ -1,21 +1,22 @@
+from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Dict, Optional, Iterable, Union, List, Literal
+from typing import Literal, Optional, Union
 
 import mne
-from mne_bids import BIDSPath, read_raw_bids, get_bids_path_from_fname
 import numpy as np
 import pandas as pd
+from mne_bids import BIDSPath, get_bids_path_from_fname, read_raw_bids
 
 from ._config_utils import (
-    get_mf_reference_run,
-    get_runs,
-    get_datatype,
-    get_task,
     _bids_kwargs,
     _do_mf_autobad,
     _pl,
+    get_datatype,
+    get_mf_reference_run,
+    get_runs,
+    get_task,
 )
-from ._io import _read_json, _empty_room_match_path
+from ._io import _empty_room_match_path, _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
 from .typing import PathLike
@@ -27,8 +28,8 @@ def make_epochs(
     subject: str,
     session: Optional[str],
     raw: mne.io.BaseRaw,
-    event_id: Optional[Union[Dict[str, int], Literal["auto"]]],
-    conditions: Union[Iterable[str], Dict[str, str]],
+    event_id: Optional[Union[dict[str, int], Literal["auto"]]],
+    conditions: Union[Iterable[str], dict[str, str]],
     tmin: float,
     tmax: float,
     metadata_tmin: Optional[float],
@@ -147,12 +148,12 @@ def make_epochs(
     return epochs
 
 
-def annotations_to_events(*, raw_paths: List[PathLike]) -> Dict[str, int]:
+def annotations_to_events(*, raw_paths: list[PathLike]) -> dict[str, int]:
     """Generate a unique event name -> event code mapping.
 
     The mapping can that can be used across all passed raws.
     """
-    event_names: List[str] = []
+    event_names: list[str] = []
     for raw_fname in raw_paths:
         raw = mne.io.read_raw_fif(raw_fname)
         _, event_id = mne.events_from_annotations(raw=raw)
@@ -434,6 +435,8 @@ def import_er_data(
         The BIDS path to the empty room bad channels file.
     bids_path_ref_bads_in
         The BIDS path to the reference data bad channels file.
+    prepare_maxwell_filter
+        Whether to prepare the empty-room data for Maxwell filtering.
 
     Returns
     -------
@@ -449,7 +452,6 @@ def import_er_data(
             cfg=cfg,
             bids_path_bads=bids_path_er_bads_in,
         )
-    raw_er.pick("meg", exclude=[])
 
     # Don't deal with ref for now (initial data quality / auto bad step)
     if bids_path_ref_in is None:
@@ -527,7 +529,7 @@ def _get_bids_path_in(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"] = "orig",
+    kind: Literal["orig", "sss", "filt"] = "orig",
 ) -> BIDSPath:
     # b/c can be used before this is updated
     path_kwargs = dict(
@@ -541,13 +543,13 @@ def _get_bids_path_in(
         datatype=get_datatype(config=cfg),
         check=False,
     )
-    if kind == "sss":
+    if kind != "orig":
+        assert kind in ("sss", "filt"), kind
         path_kwargs["root"] = cfg.deriv_root
         path_kwargs["suffix"] = "raw"
         path_kwargs["extension"] = ".fif"
-        path_kwargs["processing"] = "sss"
+        path_kwargs["processing"] = kind
     else:
-        assert kind == "orig", kind
         path_kwargs["root"] = cfg.bids_root
         path_kwargs["suffix"] = None
         path_kwargs["extension"] = None
@@ -563,7 +565,7 @@ def _get_run_path(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     add_bads: Optional[bool] = None,
     allow_missing: bool = False,
     key: Optional[str] = None,
@@ -591,7 +593,7 @@ def _get_rest_path(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_rest and not cfg.task_is_rest):
@@ -613,13 +615,14 @@ def _get_noise_path(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
-    if kind == "sss":
+    if kind != "orig":
+        assert kind in ("sss", "filt")
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
@@ -658,7 +661,7 @@ def _get_run_rest_noise_path(
     session: Optional[str],
     run: Optional[str],
     task: Optional[str],
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     mf_reference_run: Optional[str],
     add_bads: Optional[bool] = None,
 ) -> dict:
@@ -680,10 +683,11 @@ def _get_run_rest_noise_path(
 
 
 def _get_mf_reference_run_path(
+    *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    add_bads: bool,
+    add_bads: Optional[bool] = None,
 ) -> dict:
     return _get_run_path(
         cfg=cfg,
@@ -702,7 +706,7 @@ def _path_dict(
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
     add_bads: Optional[bool] = None,
-    kind: Literal["orig", "sss"],
+    kind: Literal["orig", "sss", "filt"],
     allow_missing: bool,
     key: Optional[str] = None,
 ) -> dict:
@@ -753,7 +757,7 @@ def _read_bads_tsv(
     *,
     cfg: SimpleNamespace,
     bids_path_bads: BIDSPath,
-) -> List[str]:
+) -> list[str]:
     bads_tsv = pd.read_csv(bids_path_bads.fpath, sep="\t", header=0)
     return bads_tsv[bads_tsv.columns[0]].tolist()
 
@@ -802,3 +806,14 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
         runs=get_runs(config=config, subject=subject),  # XXX needs to accept session!
         **_bids_kwargs(config=config),
     )
+
+
+def _get_run_type(
+    run: Optional[str],
+    task: Optional[str],
+) -> str:
+    if run is None and task in ("noise", "rest"):
+        run_type = dict(rest="resting-state", noise="empty-room")[task]
+    else:
+        run_type = "experimental"
+    return run_type

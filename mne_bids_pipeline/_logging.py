@@ -27,7 +27,14 @@ class _MBPLogger:
         force_terminal = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)
         if force_terminal is not None:
             force_terminal = force_terminal.lower() in ("true", "1")
-        kwargs = dict(soft_wrap=True, force_terminal=force_terminal)
+        legacy_windows = os.getenv("MNE_BIDS_PIPELINE_LEGACY_WINDOWS", None)
+        if legacy_windows is not None:
+            legacy_windows = legacy_windows.lower() in ("true", "1")
+        kwargs = dict(
+            soft_wrap=True,
+            force_terminal=force_terminal,
+            legacy_windows=legacy_windows,
+        )
         kwargs["theme"] = rich.theme.Theme(
             dict(
                 default="white",

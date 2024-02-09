@@ -1,4 +1,4 @@
-"""Apply ICA and obtain the cleaned epochs.
+"""Apply ICA and obtain the cleaned epochs and raw data.
 
 Blinks and ECG artifacts are automatically detected and the corresponding ICA
 components are removed from the data.
@@ -14,30 +14,30 @@ order might differ).
 from types import SimpleNamespace
 from typing import Optional
 
-import pandas as pd
 import mne
+import pandas as pd
 from mne.preprocessing import read_ica
 from mne.report import Report
-
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
-    get_subjects,
+    get_runs_tasks,
     get_sessions,
-    _bids_kwargs,
+    get_subjects,
 )
+from ..._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
-from ..._report import _open_report, _agg_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._parallel import get_parallel_backend, parallel_func
+from ..._report import _add_raw, _agg_backend, _open_report
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
-def get_input_fnames_apply_ica(
+def _ica_paths(
     *,
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-) -> dict:
+):
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -54,15 +54,56 @@ def get_input_fnames_apply_ica(
     in_files["components"] = bids_basename.copy().update(
         processing="ica", suffix="components", extension=".tsv"
     )
-    in_files["epochs"] = bids_basename.copy().update(suffix="epo", extension=".fif")
+    return in_files
+
+
+def _read_ica_and_exclude(
+    in_files: dict,
+) -> None:
+    ica = read_ica(fname=in_files.pop("ica"))
+    tsv_data = pd.read_csv(in_files.pop("components"), sep="\t")
+    ica.exclude = tsv_data.loc[tsv_data["status"] == "bad", "component"].to_list()
+    return ica
+
+
+def get_input_fnames_apply_ica_epochs(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+) -> dict:
+    in_files = _ica_paths(cfg=cfg, subject=subject, session=session)
+    in_files["epochs"] = in_files["ica"].copy().update(suffix="epo", extension=".fif")
     _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
 
+def get_input_fnames_apply_ica_raw(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: str,
+    task: Optional[str],
+) -> dict:
+    in_files = _get_run_rest_noise_path(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
+        kind="filt",
+        mf_reference_run=cfg.mf_reference_run,
+    )
+    assert len(in_files)
+    in_files.update(_ica_paths(cfg=cfg, subject=subject, session=session))
+    return in_files
+
+
 @failsafe_run(
-    get_input_fnames=get_input_fnames_apply_ica,
+    get_input_fnames=get_input_fnames_apply_ica_epochs,
 )
-def apply_ica(
+def apply_ica_epochs(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -86,11 +127,7 @@ def apply_ica(
     # Load ICA.
     msg = f"Reading ICA: {in_files['ica']}"
     logger.debug(**gen_log_kwargs(message=msg))
-    ica = read_ica(fname=in_files.pop("ica"))
-
-    # Select ICs to remove.
-    tsv_data = pd.read_csv(in_files.pop("components"), sep="\t")
-    ica.exclude = tsv_data.loc[tsv_data["status"] == "bad", "component"].to_list()
+    ica = _read_ica_and_exclude(in_files)
 
     # Load epochs.
     msg = f'Input: {in_files["epochs"].basename}'
@@ -169,16 +206,65 @@ def apply_ica(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
+@failsafe_run(
+    get_input_fnames=get_input_fnames_apply_ica_raw,
+)
+def apply_ica_raw(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: Optional[str],
+    run: str,
+    task: Optional[str],
+    in_files: dict,
+) -> dict:
+    ica = _read_ica_and_exclude(in_files)
+    in_key = list(in_files)[0]
+    assert in_key.startswith("raw"), in_key
+    raw_fname = in_files.pop(in_key)
+    assert len(in_files) == 0, in_files
+    out_files = dict()
+    out_files[in_key] = raw_fname.copy().update(processing="clean")
+    msg = f"Writing {out_files[in_key].basename} …"
+    logger.info(**gen_log_kwargs(message=msg))
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    ica.apply(raw)
+    raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
+    _update_for_splits(out_files, in_key)
+    # Report
+    with _open_report(
+        cfg=cfg,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
+    ) as report:
+        msg = "Adding cleaned raw data to report"
+        logger.info(**gen_log_kwargs(message=msg))
+        _add_raw(
+            cfg=cfg,
+            report=report,
+            bids_path_in=out_files[in_key],
+            title="Raw (clean)",
+            tags=("clean",),
+            raw=raw,
+        )
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
 def get_config(
     *,
     config: SimpleNamespace,
+    subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
-        ch_types=config.ch_types,
+        processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
-        **_bids_kwargs(config=config),
+        **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg
 
@@ -191,11 +277,15 @@ def main(*, config: SimpleNamespace) -> None:
         return
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(apply_ica, exec_params=config.exec_params)
+        # Epochs
+        parallel, run_func = parallel_func(
+            apply_ica_epochs, exec_params=config.exec_params
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
+                    subject=subject,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
@@ -203,5 +293,29 @@ def main(*, config: SimpleNamespace) -> None:
             )
             for subject in get_subjects(config)
             for session in get_sessions(config)
+        )
+        # Raw
+        parallel, run_func = parallel_func(
+            apply_ica_raw, exec_params=config.exec_params
+        )
+        logs += parallel(
+            run_func(
+                cfg=get_config(
+                    config=config,
+                    subject=subject,
+                ),
+                exec_params=config.exec_params,
+                subject=subject,
+                session=session,
+                run=run,
+                task=task,
+            )
+            for subject in get_subjects(config)
+            for session in get_sessions(config)
+            for run, task in get_runs_tasks(
+                config=config,
+                subject=subject,
+                session=session,
+            )
         )
     save_logs(config=config, logs=logs)

@@ -1,6 +1,4 @@
-"""
-hMT+ Localizer
-"""
+"""hMT+ Localizer."""
 study_name = "localizer"
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
@@ -8,8 +6,9 @@ deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
 subjects = ["01"]
 
 task = "localizer"
-find_flat_channels_meg = True
-find_noisy_channels_meg = True
+# usually a good idea to use True, but we know no bads are detected for this dataset
+find_flat_channels_meg = False
+find_noisy_channels_meg = False
 use_maxwell_filter = True
 ch_types = ["meg"]
 
@@ -21,7 +20,7 @@ crop_runs = (0, 180)
 # Artifact correction.
 spatial_filter = "ica"
 ica_algorithm = "picard-extended_infomax"
-ica_max_iterations = 500
+ica_max_iterations = 1000
 ica_l_freq = 1.0
 ica_n_components = 0.99
 ica_reject_components = "auto"

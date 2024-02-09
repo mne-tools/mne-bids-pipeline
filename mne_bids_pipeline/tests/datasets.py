@@ -1,6 +1,6 @@
 """Definition of the testing datasets."""
 
-from typing import Dict, List, TypedDict
+from typing import TypedDict
 
 
 # If not supplied below, the effective defaults are listed in comments
@@ -9,12 +9,13 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     openneuro: str  # ""
     osf: str  # ""
     web: str  # ""
-    include: List[str]  # []
-    exclude: List[str]  # []
+    mne: str  # ""
+    include: list[str]  # []
+    exclude: list[str]  # []
     hash: str  # ""
 
 
-DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
+DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
         # original dataset: "osf": "9f5w7"
         "web": "https://osf.io/3zk6n/download?version=2",
@@ -85,6 +86,8 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
     "ds003775": {
         "openneuro": "ds003775",
         "include": ["sub-010"],
+        # See https://github.com/OpenNeuroOrg/openneuro/issues/2976
+        "exclude": ["sub-010/ses-t1/sub-010_ses-t1_scans.tsv"],
     },
     "ds001810": {
         "openneuro": "ds001810",
@@ -119,5 +122,8 @@ DATASET_OPTIONS: Dict[str, DATASET_OPTIONS_T] = {
             "sub-102",
             "sub-emptyroom/ses-20000101",
         ],
+    },
+    "MNE-phantom-KIT-data": {
+        "mne": "phantom_kit",
     },
 }

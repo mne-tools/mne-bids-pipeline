@@ -1,21 +1,22 @@
 """Rejection."""
 
-from typing import Optional, Union, Iterable, Dict, Literal
+from collections.abc import Iterable
+from typing import Literal, Optional, Union
 
 import mne
 
-from ._logging import logger, gen_log_kwargs
+from ._logging import gen_log_kwargs, logger
 
 
 def _get_reject(
     *,
     subject: str,
     session: Optional[str],
-    reject: Union[Dict[str, float], Literal["autoreject_global"]],
+    reject: Union[dict[str, float], Literal["autoreject_global"]],
     ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]],
     param: str,
     epochs: Optional[mne.BaseEpochs] = None,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     if reject is None:
         return dict()
 
@@ -44,11 +45,11 @@ def _get_reject(
 
     # Only keep thresholds for channel types of interest
     reject = reject.copy()
-    if ch_types == ["eeg"]:
-        ch_types_to_remove = ("mag", "grad")
-    else:
-        ch_types_to_remove = ("eeg",)
-
+    ch_types_to_remove = list()
+    if "meg" not in ch_types:
+        ch_types_to_remove.extend(("mag", "grad"))
+    if "eeg" not in ch_types:
+        ch_types_to_remove.append("eeg")
     for ch_type in ch_types_to_remove:
         try:
             del reject[ch_type]

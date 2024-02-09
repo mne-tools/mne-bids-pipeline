@@ -1,6 +1,4 @@
-"""
-tDCS EEG
-"""
+"""tDCS EEG."""
 
 study_name = "ds001810"
 bids_root = "~/mne_data/ds001810"

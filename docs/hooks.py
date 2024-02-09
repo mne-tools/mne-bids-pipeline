@@ -1,9 +1,9 @@
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.structure.pages import Page
 from mkdocs.structure.files import Files
+from mkdocs.structure.pages import Page
 
 logger = logging.getLogger("mkdocs")
 
@@ -13,7 +13,7 @@ config_updated = False
 # Ideally there would be a better hook, but it's unclear if context can
 # be obtained any earlier
 def on_template_context(
-    context: Dict[str, Any],
+    context: dict[str, Any],
     template_name: str,
     config: MkDocsConfig,
 ) -> None:

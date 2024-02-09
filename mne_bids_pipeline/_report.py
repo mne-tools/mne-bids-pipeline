@@ -1,24 +1,23 @@
 import contextlib
 from functools import lru_cache
 from io import StringIO
-from typing import Optional, List, Literal
 from types import SimpleNamespace
+from typing import Literal, Optional
 
-from filelock import FileLock
 import matplotlib.transforms
+import mne
 import numpy as np
 import pandas as pd
-from scipy.io import loadmat
-
-import mne
+from filelock import FileLock
 from mne.io import BaseRaw
 from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
+from scipy.io import loadmat
 
 from ._config_utils import get_all_contrasts
 from ._decoding import _handle_csp_args
-from ._logging import logger, gen_log_kwargs, _linkfile
+from ._logging import _linkfile, gen_log_kwargs, logger
 
 
 @contextlib.contextmanager
@@ -69,14 +68,13 @@ def _open_report(
             yield report
         finally:
             try:
-                msg = "Adding config and sys info to report"
-                logger.info(**gen_log_kwargs(message=msg))
                 _finalize(
                     report=report,
                     exec_params=exec_params,
                     subject=subject,
                     session=session,
                     run=run,
+                    task=task,
                 )
             except Exception as exc:
                 logger.warning(f"Failed: {exc}")
@@ -123,8 +121,8 @@ def _open_report(
 
 
 def _plot_full_epochs_decoding_scores(
-    contrast_names: List[str],
-    scores: List[np.ndarray],
+    contrast_names: list[str],
+    scores: list[np.ndarray],
     metric: str,
     kind: Literal["single-subject", "grand-average"] = "single-subject",
 ):
@@ -458,7 +456,7 @@ def _gen_empty_report(
     return report
 
 
-def _contrasts_to_names(contrasts: List[List[str]]) -> List[str]:
+def _contrasts_to_names(contrasts: list[list[str]]) -> list[str]:
     return [f"{c[0]} vs.\n{c[1]}" for c in contrasts]
 
 
@@ -507,12 +505,17 @@ def _finalize(
     subject: str,
     session: Optional[str],
     run: Optional[str],
+    task: Optional[str],
 ) -> None:
     """Add system information and the pipeline configuration to the report."""
     # ensure they are always appended
     titles = ["Configuration file", "System information"]
     for title in titles:
         report.remove(title=title, remove_all=True)
+    # Print this exactly once
+    if _cached_sys_info.cache_info()[-1] == 0:  # never run
+        msg = "Adding config and sys info to report"
+        logger.info(**gen_log_kwargs(message=msg))
     # No longer need replace=True in these
     report.add_code(
         code=exec_params.config_path,

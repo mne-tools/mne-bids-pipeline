@@ -11,31 +11,31 @@ To actually remove designated ICA components from your data, you will have to
 run 05a-apply_ica.py.
 """
 
-from typing import List, Optional, Iterable, Tuple, Literal
+from collections.abc import Iterable
 from types import SimpleNamespace
+from typing import Literal, Optional
 
-import pandas as pd
-import numpy as np
 import autoreject
-
 import mne
-from mne.report import Report
+import numpy as np
+import pandas as pd
 from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
+from mne.report import Report
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _bids_kwargs,
+    get_eeg_reference,
     get_runs,
     get_sessions,
     get_subjects,
-    get_eeg_reference,
-    _bids_kwargs,
 )
-from ..._import_data import make_epochs, annotations_to_events
+from ..._import_data import annotations_to_events, make_epochs
 from ..._logging import gen_log_kwargs, logger
-from ..._parallel import parallel_func, get_parallel_backend
+from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _agg_backend
-from ..._run import failsafe_run, _update_for_splits, save_logs, _prep_out_files
+from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def filter_for_ica(
@@ -190,10 +190,10 @@ def detect_bad_components(
     which: Literal["eog", "ecg"],
     epochs: mne.BaseEpochs,
     ica: mne.preprocessing.ICA,
-    ch_names: Optional[List[str]],
+    ch_names: Optional[list[str]],
     subject: str,
     session: Optional[str],
-) -> Tuple[List[int], np.ndarray]:
+) -> tuple[list[int], np.ndarray]:
     artifact = which.upper()
     msg = f"Performing automated {artifact} artifact detection …"
     logger.info(**gen_log_kwargs(message=msg))
@@ -253,7 +253,7 @@ def get_input_fnames_run_ica(
     for run in cfg.runs:
         key = f"raw_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing="filt", suffix="raw"
+            run=run, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -614,6 +614,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
+        processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

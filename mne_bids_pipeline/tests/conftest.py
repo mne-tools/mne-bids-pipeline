@@ -52,9 +52,12 @@ def pytest_configure(config):
     #    self._add_ica(
     #../python_env/lib/python3.10/site-packages/mne/report/report.py:1872: in _add_ica
     #    self._add_ica_artifact_sources(
-    #../python_env/lib/python3.10/site-packages/mne/report/report.py:1713: in _add_ica_artifact_sources
+    #../python_env/lib/python3.10/site-packages/mne/report/report.py:1713:
+    #  in _add_ica_artifact_sources
     #    self._add_figure(
     always:constrained_layout not applied.*:UserWarning
+    ignore:datetime\.datetime\.utcfromtimestamp.*:DeprecationWarning
+    ignore:datetime\.datetime\.utcnow.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

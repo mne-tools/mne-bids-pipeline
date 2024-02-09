@@ -1,6 +1,4 @@
-"""
-MNE Sample Data: Using the `fsaverage` template MRI
-"""
+"""MNE Sample Data: Using the `fsaverage` template MRI."""
 
 study_name = "ds000248"
 bids_root = "~/mne_data/ds000248"

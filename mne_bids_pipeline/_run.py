@@ -7,19 +7,19 @@ import inspect
 import pathlib
 import pdb
 import sys
-import traceback
 import time
-from typing import Callable, Optional, Dict, List, Literal, Union
+import traceback
 from types import SimpleNamespace
+from typing import Callable, Literal, Optional, Union
 
-from filelock import FileLock
-from joblib import Memory
 import json_tricks
 import pandas as pd
+from filelock import FileLock
+from joblib import Memory
 from mne_bids import BIDSPath
 
 from ._config_utils import get_task
-from ._logging import logger, gen_log_kwargs, _is_testing
+from ._logging import _is_testing, gen_log_kwargs, logger
 
 
 def failsafe_run(
@@ -225,13 +225,18 @@ class ConditionalStepMemory:
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
-                            msg = "Output file missing, will recompute …"
+                            msg = (
+                                f"Output file missing {str(fname)}, " "will recompute …"
+                            )
                             emoji = "🧩"
                             bad_out_files = True
                             break
                         got_hash = hash_(key, fname, kind="out")[1]
                         if this_hash != got_hash:
-                            msg = "Output file hash mismatch, will recompute …"
+                            msg = (
+                                f"Output file hash mismatch for {str(fname)}, "
+                                "will recompute …"
+                            )
                             emoji = "🚫"
                             bad_out_files = True
                             break
@@ -303,7 +308,7 @@ def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
 
 
 def _update_for_splits(
-    files_dict: Union[Dict[str, BIDSPath], BIDSPath],
+    files_dict: Union[dict[str, BIDSPath], BIDSPath],
     key: Optional[str],
     *,
     single: bool = False,
@@ -346,7 +351,7 @@ def _sanitize_callable(val):
 
 
 def _get_step_path(
-    stack: Optional[List[inspect.FrameInfo]] = None,
+    stack: Optional[list[inspect.FrameInfo]] = None,
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
@@ -372,12 +377,22 @@ def _short_step_path(step_path: pathlib.Path) -> str:
 def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
-    out_files: Dict[str, BIDSPath],
+    out_files: dict[str, BIDSPath],
+    check_relative: Optional[pathlib.Path] = None,
 ):
+    if check_relative is None:
+        check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
+        # Sanity check that we only ever write to the derivatives directory
+        fname = pathlib.Path(fname)
+        if not fname.is_relative_to(check_relative):
+            raise RuntimeError(
+                f"Output BIDSPath not relative to expected root {check_relative}:"
+                f"\n{fname}"
+            )
         out_files[key] = _path_to_str_hash(
             key,
-            pathlib.Path(fname),
+            fname,
             method=exec_params.memory_file_method,
             kind="out",
         )
@@ -396,7 +411,7 @@ def _path_to_str_hash(
     assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
     assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
     if method == "mtime":
-        this_hash = v.lstat().st_mtime
+        this_hash = v.stat().st_mtime
     else:
         assert method == "hash"  # guaranteed
         this_hash = hash_file_path(v)

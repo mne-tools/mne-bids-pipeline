@@ -47,7 +47,7 @@ dependencies = [
   "autoreject",
   "mne[hdf5] >=1.2",
   "mne-bids[full]",
-  "git+https://github.com/alexrockhill/mne-bids@int",
+  "mne-bids@git+https://github.com/alexrockhill/mne-bids#egg=int",
   "filelock",
 ]
 dynamic = ["version"]

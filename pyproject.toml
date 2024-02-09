@@ -46,7 +46,7 @@ dependencies = [
   "openpyxl",
   "autoreject",
   "mne[hdf5] >=1.2",
-  "mne-bids@git+https://github.com/alexrockhill/mne-bids@int",
+  "mne-bids[full]@git+https://github.com/alexrockhill/mne-bids@int",
   "filelock",
 ]
 dynamic = ["version"]
@@ -130,3 +130,6 @@ ignore = [
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.hatch.metadata]
+allow-direct-references = true

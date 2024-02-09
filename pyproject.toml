@@ -46,7 +46,6 @@ dependencies = [
   "openpyxl",
   "autoreject",
   "mne[hdf5] >=1.2",
-  "mne-bids[full]",
   "mne-bids@git+https://github.com/alexrockhill/mne-bids#egg=int",
   "filelock",
 ]

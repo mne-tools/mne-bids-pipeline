@@ -127,7 +127,7 @@ def run_time_decoding(
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
-    epochs.pick("data", exclude="bads")  # omit bad channels
+    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
     # We can't use the full rank here because the number of samples can just be the
     # number of epochs (which can be fewer than the number of channels)
     pre_steps = _decoding_preproc_steps(

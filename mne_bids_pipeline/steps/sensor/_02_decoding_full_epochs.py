@@ -113,7 +113,8 @@ def run_epochs_decoding(
     # Crop to the desired analysis interval. Do it only after the concatenation to work
     # around https://github.com/mne-tools/mne-python/issues/12153
     epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
-    epochs.pick("data", exclude="bads")  # omit bad channels
+    # omit bad channels and reference MEG sensors
+    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
     pre_steps = _decoding_preproc_steps(
         subject=subject,
         session=session,

@@ -158,7 +158,7 @@ def one_subject_decoding(
     bids_path = in_files["epochs"].copy().update(processing=None, split=None)
     epochs = mne.read_epochs(in_files.pop("epochs"))
     _restrict_analyze_channels(epochs, cfg)
-    epochs.pick("data", exclude="bads")  # omit bad channels
+    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
 
     if cfg.time_frequency_subtract_evoked:
         epochs.subtract_evoked()

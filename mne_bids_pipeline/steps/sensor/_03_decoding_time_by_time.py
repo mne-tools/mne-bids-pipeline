@@ -259,7 +259,7 @@ def run_time_decoding(
             del fname_decoding, processing, a_vs_b
 
             fig = _plot_time_by_time_decoding_scores(
-                times=decoding_data["times"].to_numpy().ravel(),
+                times=decoding_data["times"].ravel(),
                 cross_val_scores=decoding_data["scores"],
                 metric=cfg.decoding_metric,
                 time_generalization=cfg.decoding_time_generalization,

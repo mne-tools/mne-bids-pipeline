@@ -26,7 +26,6 @@ from mne.decoding import (
 )
 from mne_bids import BIDSPath
 from scipy.io import loadmat, savemat
-from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
 
@@ -136,11 +135,13 @@ def run_time_decoding(
         epochs=epochs,
         pca=False,
     )
-    pre_steps.append(
-        mne.decoding.UnsupervisedSpatialFilter(
-            PCA(n_components=0.999, whiten=True),
-        )
-    )
+    # At some point we might want to enable this, but it's really slow and arguably
+    # unnecessary so let's omit it for now:
+    # pre_steps.append(
+    #     mne.decoding.UnsupervisedSpatialFilter(
+    #         PCA(n_components=0.999, whiten=True),
+    #     )
+    # )
 
     decim = cfg.decoding_time_generalization_decim
     if cfg.decoding_time_generalization and decim > 1:

@@ -145,7 +145,13 @@ def run_epochs_decoding(
         n_splits=cfg.decoding_n_splits,
     )
     scores = cross_val_score(
-        estimator=clf, X=X, y=y, cv=cv, scoring="roc_auc", n_jobs=1
+        estimator=clf,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring="roc_auc",
+        n_jobs=1,
+        error_score="raise",
     )
 
     # Save the scores

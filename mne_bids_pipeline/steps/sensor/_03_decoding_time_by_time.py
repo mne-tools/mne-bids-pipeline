@@ -18,12 +18,17 @@ from typing import Optional
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import GeneralizingEstimator, SlidingEstimator, cross_val_multiscore
+from mne.decoding import (
+    GeneralizingEstimator,
+    SlidingEstimator,
+    Vectorizer,
+    cross_val_multiscore,
+)
 from mne_bids import BIDSPath
 from scipy.io import loadmat, savemat
+from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 
 from ..._config_utils import (
     _bids_kwargs,
@@ -34,7 +39,7 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._decoding import LogReg
+from ..._decoding import LogReg, _decoding_preproc_steps
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, get_parallel_backend_name
 from ..._report import (
@@ -122,18 +127,33 @@ def run_time_decoding(
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
+    epochs.pick("data", exclude="bads")  # omit bad channels
+    # We can't use the full rank here because the number of samples can just be the
+    # number of epochs (which can be fewer than the number of channels)
+    pre_steps = _decoding_preproc_steps(
+        subject=subject,
+        session=session,
+        epochs=epochs,
+        pca=False,
+    )
+    pre_steps.append(
+        mne.decoding.UnsupervisedSpatialFilter(
+            PCA(n_components=0.999, whiten=True),
+        )
+    )
 
     decim = cfg.decoding_time_generalization_decim
     if cfg.decoding_time_generalization and decim > 1:
         epochs.decimate(decim, verbose="error")
 
-    X = epochs.get_data(picks="data")  # omit bad channels
+    X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
     # ProgressBar does not work on dask, so only enable it if not using dask
     verbose = get_parallel_backend_name(exec_params=exec_params) != "dask"
     with get_parallel_backend(exec_params):
         clf = make_pipeline(
-            StandardScaler(),
+            *pre_steps,
+            Vectorizer(),
             LogReg(
                 solver="liblinear",  # much faster than the default
                 random_state=cfg.random_state,
@@ -239,7 +259,7 @@ def run_time_decoding(
             del fname_decoding, processing, a_vs_b
 
             fig = _plot_time_by_time_decoding_scores(
-                times=decoding_data["times"].ravel(),
+                times=decoding_data["times"].to_numpy().ravel(),
                 cross_val_scores=decoding_data["scores"],
                 metric=cfg.decoding_metric,
                 time_generalization=cfg.decoding_time_generalization,

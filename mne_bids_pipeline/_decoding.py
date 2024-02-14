@@ -1,7 +1,14 @@
+from typing import Optional
+
+import mne
 import numpy as np
 from joblib import parallel_backend
 from mne.utils import _validate_type
+from sklearn.base import BaseEstimator
+from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
+
+from ._logging import gen_log_kwargs, logger
 
 
 class LogReg(LogisticRegression):
@@ -70,3 +77,25 @@ def _handle_csp_args(
         freq_bins = list(zip(edges[:-1], edges[1:]))
         freq_name_to_bins_map[freq_range_name] = freq_bins
     return freq_name_to_bins_map
+
+
+def _decoding_preproc_steps(
+    subject: str,
+    session: Optional[str],
+    epochs: mne.Epochs,
+    pca: bool = True,
+) -> list[BaseEstimator]:
+    scaler = mne.decoding.Scaler(epochs.info)
+    steps = [scaler]
+    if pca:
+        ranks = mne.compute_rank(inst=epochs, rank="info")
+        rank = sum(ranks.values())
+        msg = f"Reducing data dimension via PCA; new rank: {rank} (from {ranks})."
+        logger.info(**gen_log_kwargs(message=msg))
+        steps.append(
+            mne.decoding.UnsupervisedSpatialFilter(
+                PCA(rank, whiten=True),
+                average=False,
+            )
+        )
+    return steps

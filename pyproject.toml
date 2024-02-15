@@ -115,7 +115,7 @@ addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=
 testpaths = ["mne_bids_pipeline"]
 junit_family = "xunit2"
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["A", "B006", "D", "E", "F", "I", "W", "UP"]
 exclude = ["**/freesurfer/contrib", "dist/", "build/"]
 ignore = [
@@ -128,5 +128,5 @@ ignore = [
     "UP035", # Import Iterable from collections.abc
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"

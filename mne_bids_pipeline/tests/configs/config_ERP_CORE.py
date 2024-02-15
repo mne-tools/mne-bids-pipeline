@@ -147,7 +147,6 @@ elif task == "ERN":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.6
     epochs_tmax = 0.4
     baseline = (-0.4, -0.2)
@@ -180,7 +179,6 @@ elif task == "LRP":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.8
     epochs_tmax = 0.2
     baseline = (None, -0.6)
@@ -193,7 +191,6 @@ elif task == "MMN":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.2
     epochs_tmax = 0.8
     baseline = (None, 0)
@@ -214,7 +211,6 @@ elif task == "N2pc":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.2
     epochs_tmax = 0.8
     baseline = (None, 0)
@@ -281,7 +277,6 @@ elif task == "P3":
     }
 
     eeg_reference = ["P9", "P10"]
-    ica_n_components = 30 - len(eeg_reference)
     epochs_tmin = -0.2
     epochs_tmax = 0.8
     baseline = (None, 0)

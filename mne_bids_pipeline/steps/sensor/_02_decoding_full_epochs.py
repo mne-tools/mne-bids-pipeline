@@ -15,7 +15,7 @@ from typing import Optional
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import Scaler, Vectorizer
+from mne.decoding import Vectorizer
 from mne_bids import BIDSPath
 from scipy.io import loadmat, savemat
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -30,7 +30,7 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._decoding import LogReg
+from ..._decoding import LogReg, _decoding_preproc_steps
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import (
@@ -113,16 +113,23 @@ def run_epochs_decoding(
     # Crop to the desired analysis interval. Do it only after the concatenation to work
     # around https://github.com/mne-tools/mne-python/issues/12153
     epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
+    # omit bad channels and reference MEG sensors
+    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
+    pre_steps = _decoding_preproc_steps(
+        subject=subject,
+        session=session,
+        epochs=epochs,
+    )
 
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
 
-    X = epochs.get_data(picks="data")  # omit bad channels
+    X = epochs.get_data()
     y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
 
-    classification_pipeline = make_pipeline(
-        Scaler(scalings="mean"),
-        Vectorizer(),  # So we can pass the data to scikit-learn
+    clf = make_pipeline(
+        *pre_steps,
+        Vectorizer(),
         LogReg(
             solver="liblinear",  # much faster than the default
             random_state=cfg.random_state,
@@ -138,7 +145,13 @@ def run_epochs_decoding(
         n_splits=cfg.decoding_n_splits,
     )
     scores = cross_val_score(
-        estimator=classification_pipeline, X=X, y=y, cv=cv, scoring="roc_auc", n_jobs=1
+        estimator=clf,
+        X=X,
+        y=y,
+        cv=cv,
+        scoring="roc_auc",
+        n_jobs=1,
+        error_score="raise",
     )
 
     # Save the scores

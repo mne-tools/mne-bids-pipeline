@@ -8,9 +8,8 @@ import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import CSP, UnsupervisedSpatialFilter
+from mne.decoding import CSP
 from mne_bids import BIDSPath
-from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 
@@ -23,7 +22,7 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._decoding import LogReg, _handle_csp_args
+from ..._decoding import LogReg, _decoding_preproc_steps, _handle_csp_args
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import (
@@ -159,30 +158,24 @@ def one_subject_decoding(
     bids_path = in_files["epochs"].copy().update(processing=None, split=None)
     epochs = mne.read_epochs(in_files.pop("epochs"))
     _restrict_analyze_channels(epochs, cfg)
+    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
 
     if cfg.time_frequency_subtract_evoked:
         epochs.subtract_evoked()
 
-    # Perform rank reduction via PCA.
-    #
-    # Select the channel type with the smallest rank.
-    # Limit it to a maximum of 100.
-    ranks = mne.compute_rank(inst=epochs, rank="info")
-    ch_type_smallest_rank = min(ranks, key=ranks.get)
-    rank = min(ranks[ch_type_smallest_rank], 100)
-    del ch_type_smallest_rank, ranks
-
-    msg = f"Reducing data dimension via PCA; new rank: {rank}."
-    logger.info(**gen_log_kwargs(msg))
-    pca = UnsupervisedSpatialFilter(PCA(rank), average=False)
+    preproc_steps = _decoding_preproc_steps(
+        subject=subject,
+        session=session,
+        epochs=epochs,
+    )
 
     # Classifier
     csp = CSP(
         n_components=4,  # XXX revisit
         reg=0.1,  # XXX revisit
-        rank="info",
     )
     clf = make_pipeline(
+        *preproc_steps,
         csp,
         LogReg(
             solver="liblinear",  # much faster than the default
@@ -254,17 +247,11 @@ def one_subject_decoding(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
         # Get the data for all time points
-        X = epochs_filt.get_data(picks="data")  # omit bad channels
-
-        # We apply PCA before running CSP:
-        # - much faster CSP processing
-        # - reduced risk of numerical instabilities.
-        X_pca = pca.fit_transform(X)
-        del X
+        X = epochs_filt.get_data()
 
         cv_scores = cross_val_score(
             estimator=clf,
-            X=X_pca,
+            X=X,
             y=y,
             scoring=cfg.decoding_metric,
             cv=cv,
@@ -326,14 +313,11 @@ def one_subject_decoding(
         # Crop data to the time window of interest
         if tmax is not None:  # avoid warnings about outside the interval
             tmax = min(tmax, epochs_filt.times[-1])
-        epochs_filt.crop(tmin, tmax)
-        X = epochs_filt.get_data(picks="data")  # omit bad channels
-        X_pca = pca.transform(X)
-        del X
-
+        X = epochs_filt.crop(tmin, tmax).get_data()
+        del epochs_filt
         cv_scores = cross_val_score(
             estimator=clf,
-            X=X_pca,
+            X=X,
             y=y,
             scoring=cfg.decoding_metric,
             cv=cv,
@@ -454,11 +438,13 @@ def one_subject_decoding(
             results = all_csp_tf_results[contrast]
             mean_crossval_scores = list()
             tmin, tmax, fmin, fmax = list(), list(), list(), list()
-            mean_crossval_scores.extend(results["mean_crossval_score"].ravel())
-            tmin.extend(results["t_min"].ravel())
-            tmax.extend(results["t_max"].ravel())
-            fmin.extend(results["f_min"].ravel())
-            fmax.extend(results["f_max"].ravel())
+            mean_crossval_scores.extend(
+                results["mean_crossval_score"].to_numpy().ravel()
+            )
+            tmin.extend(results["t_min"].to_numpy().ravel())
+            tmax.extend(results["t_max"].to_numpy().ravel())
+            fmin.extend(results["f_min"].to_numpy().ravel())
+            fmax.extend(results["f_max"].to_numpy().ravel())
             mean_crossval_scores = np.array(mean_crossval_scores, float)
             fig, ax = plt.subplots(constrained_layout=True)
             # XXX Add support for more metrics

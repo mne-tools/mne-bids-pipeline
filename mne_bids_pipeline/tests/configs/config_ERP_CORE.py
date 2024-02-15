@@ -223,6 +223,7 @@ elif task == "N170":
     }
 
     eeg_reference = "average"
+    ica_n_components = 30 - 1
     for i in range(1, 180 + 1):
         orig_name = f"stimulus/{i}"
 

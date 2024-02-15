@@ -22,6 +22,7 @@ spatial_filter = "ica"
 ica_algorithm = "picard-extended_infomax"
 ica_max_iterations = 1000
 ica_l_freq = 1.0
+ica_n_components = 0.99
 
 # Epochs
 epochs_tmin = -0.2

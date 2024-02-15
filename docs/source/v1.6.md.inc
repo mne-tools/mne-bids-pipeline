@@ -26,6 +26,7 @@
 - Fix bug where the Maxwell filtering step would fail if [`find_noisy_channels_meg = False`][mne_bids_pipeline._config.find_noisy_channels_meg]` was used (#847 by @larsoner)
 - Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
 - Fix bug where multiple channel types (e.g., MEG and EEG) were not handled correctly in decoding (#853 by @larsoner)
+- Fix bug where the previous default for [`ica_n_components`][mne_bids_pipeline._config.ica_n_components] of `0.8` was too conservative, changed the default to `None` to match MNE-Python (#853 by @larsoner)
 
 ### :medical_symbol: Code health
 

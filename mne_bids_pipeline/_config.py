@@ -1343,7 +1343,7 @@ it converges quicker than the other algorithms; but e.g. for FastICA, this
 limit may be too low to achieve convergence.
 """
 
-ica_n_components: Optional[Union[float, int]] = 0.8
+ica_n_components: Optional[Union[float, int]] = None
 """
 MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
@@ -1362,7 +1362,8 @@ If float between 0 and 1, all principal components with cumulative
 explained variance less than the value specified here will be passed to
 ICA.
 
-If `None`, **all** principal components will be used.
+If `None` (default), `0.999999` will be used to avoid issues when working with
+rank-deficient data.
 
 This setting may drastically alter the time required to compute ICA.
 """

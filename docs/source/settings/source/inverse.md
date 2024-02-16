@@ -10,5 +10,6 @@ tags:
         - depth
         - inverse_method
         - noise_cov
+        - noise_cov_method
         - source_info_path_update
         - inverse_targets

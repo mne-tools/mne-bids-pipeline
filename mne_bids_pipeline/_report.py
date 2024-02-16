@@ -1,4 +1,5 @@
 import contextlib
+import re
 from functools import lru_cache
 from io import StringIO
 from types import SimpleNamespace
@@ -472,30 +473,13 @@ def add_event_counts(
     logger.info(**gen_log_kwargs(message="Adding event counts to report …"))
 
     if df_events is not None:
-        css_classes = ("table", "table-striped", "table-borderless", "table-hover")
+        df_events.reset_index(drop=False, inplace=True, col_level=1)
         report.add_html(
-            f'<div class="event-counts">\n'
-            f"{df_events.to_html(classes=css_classes, border=0)}\n"
-            f"</div>",
+            _df_bootstrap_table(df=df_events, data_id="events"),
             title="Event counts",
             tags=("events",),
             replace=True,
         )
-        css = (
-            ".event-counts {\n"
-            "  display: -webkit-box;\n"
-            "  display: -ms-flexbox;\n"
-            "  display: -webkit-flex;\n"
-            "  display: flex;\n"
-            "  justify-content: center;\n"
-            "  text-align: center;\n"
-            "}\n\n"
-            "th, td {\n"
-            "  text-align: center;\n"
-            "}\n"
-        )
-        if css not in report.include:
-            report.add_custom_css(css=css)
 
 
 def _finalize(
@@ -906,3 +890,65 @@ def _render_bem(
         replace=True,
         n_jobs=1,  # prevent automatic parallelization
     )
+
+
+# Copied from mne/report/report.py
+
+try:
+    from mne.report.report import _df_bootstrap_table
+except ImportError:  # MNE < 1.7
+
+    def _df_bootstrap_table(*, df, data_id):
+        html = df.to_html(
+            border=0,
+            index=False,
+            show_dimensions=True,
+            justify="unset",
+            float_format=lambda x: f"{x:.3f}",
+            classes="table table-hover table-striped table-sm table-responsive small",
+            na_rep="",
+        )
+        htmls = html.split("\n")
+        header_pattern = "<th>(.*)</th>"
+
+        for idx, html in enumerate(htmls):
+            if "<table" in html:
+                htmls[idx] = html.replace(
+                    "<table",
+                    "<table "
+                    'id="mytable" '
+                    'data-toggle="table" '
+                    f'data-unique-id="{data_id}" '
+                    'data-search="true" '  # search / filter
+                    'data-search-highlight="true" '
+                    'data-show-columns="true" '  # show/hide columns
+                    'data-show-toggle="true" '  # allow card view
+                    'data-show-columns-toggle-all="true" '
+                    'data-click-to-select="true" '
+                    'data-show-copy-rows="true" '
+                    'data-show-export="true" '  # export to a file
+                    'data-export-types="[csv]" '
+                    'data-export-options=\'{"fileName": "metadata"}\' '
+                    'data-icon-size="sm" '
+                    'data-height="400"',
+                )
+                continue
+            elif "<tr" in html:
+                # Add checkbox for row selection
+                htmls[idx] = (
+                    f"{html}\n" f'<th data-field="state" data-checkbox="true"></th>'
+                )
+                continue
+
+            col_headers = re.findall(pattern=header_pattern, string=html)
+            if col_headers:
+                # Make columns sortable
+                assert len(col_headers) == 1
+                col_header = col_headers[0]
+                htmls[idx] = html.replace(
+                    "<th>",
+                    f'<th data-field="{col_header.lower()}" ' f'data-sortable="true">',
+                )
+
+        html = "\n".join(htmls)
+        return html

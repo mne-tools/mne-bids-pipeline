@@ -8,6 +8,7 @@
 - Chosen `reject` parameters are now saved in the generated HTML reports (#839 by @larsoner)
 - Added saving of clean raw data in addition to epochs (#840 by @larsoner)
 - Added saving of detected blink and cardiac events used to calculate SSP projectors (#840 by @larsoner)
+- Improved event table formatting in the HTML reports (#853 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

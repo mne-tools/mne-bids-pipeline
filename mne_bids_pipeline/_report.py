@@ -475,7 +475,7 @@ def add_event_counts(
         css_classes = ("table", "table-striped", "table-borderless", "table-hover")
         report.add_html(
             f'<div class="event-counts">\n'
-            f"{df_events.to_html(classes=css_classes, border=0)}\n"
+            f"{df_events.to_html(classes=css_classes, border=0, na_rep='')}\n"
             f"</div>",
             title="Event counts",
             tags=("events",),

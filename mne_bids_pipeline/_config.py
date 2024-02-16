@@ -2050,6 +2050,22 @@ the generated evoked data.
     ```
 """
 
+noise_cov_method: Literal[
+    "shrunk",
+    "empirical",
+    "diagonal_fixed",
+    "oas",
+    "ledoit_wolf",
+    "factor_analysis",
+    "shrinkage",
+    "pca",
+    "auto",
+] = "shrunk"
+"""
+The noise covariance estimation method to use. See the MNE-Python documentation
+of `mne.compute_covariance` for details.
+"""
+
 source_info_path_update: Optional[dict[str, str]] = dict(suffix="ave")
 """
 When computing the forward and inverse solutions, by default the pipeline

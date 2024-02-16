@@ -8,7 +8,7 @@
 - Chosen `reject` parameters are now saved in the generated HTML reports (#839 by @larsoner)
 - Added saving of clean raw data in addition to epochs (#840 by @larsoner)
 - Added saving of detected blink and cardiac events used to calculate SSP projectors (#840 by @larsoner)
-- Improved event table formatting in the HTML reports (#853 by @larsoner)
+- Added [`noise_cov_method`][mne_bids_pipeline._config.noise_cov_method] to allow for the use of methods other than `"shrunk"` for noise covariance estimation (#854 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -28,6 +28,7 @@
 - Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
 - Fix bug where multiple channel types (e.g., MEG and EEG) were not handled correctly in decoding (#853 by @larsoner)
 - Fix bug where the previous default for [`ica_n_components`][mne_bids_pipeline._config.ica_n_components] of `0.8` was too conservative, changed the default to `None` to match MNE-Python (#853 by @larsoner)
+- Fix bug where the events table for the average subject could overflow in reports (#854 by @larsoner)
 
 ### :medical_symbol: Code health
 

@@ -116,7 +116,7 @@ def compute_cov_from_epochs(
         epochs,
         tmin=tmin,
         tmax=tmax,
-        method="shrunk",
+        method=cfg.noise_cov_method,
         rank="info",
         verbose="error",  # TODO: not baseline corrected, maybe problematic?
     )
@@ -292,6 +292,7 @@ def get_config(
         conditions=config.conditions,
         contrasts=config.contrasts,
         analyze_channels=config.analyze_channels,
+        noise_cov_method=config.noise_cov_method,
         **_bids_kwargs(config=config),
     )
     return cfg

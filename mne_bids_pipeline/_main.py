@@ -94,7 +94,11 @@ def main():
         help="Enable interactive mode.",
     )
     parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Enable debugging on error."
+        "--debug",
+        "--pdb",
+        dest="debug",
+        action="store_true",
+        help="Enable debugging on error.",
     )
     parser.add_argument(
         "--no-cache",

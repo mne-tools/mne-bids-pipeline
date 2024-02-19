@@ -113,7 +113,7 @@ def apply_ica_epochs(
 ) -> dict:
     bids_basename = in_files["ica"].copy().update(processing=None)
     out_files = dict()
-    out_files["epochs"] = in_files["epochs"].copy().update(processing="ica")
+    out_files["epochs"] = in_files["epochs"].copy().update(processing="ica", split=None)
     out_files["report"] = bids_basename.copy().update(
         processing="ica", suffix="report", extension=".html"
     )

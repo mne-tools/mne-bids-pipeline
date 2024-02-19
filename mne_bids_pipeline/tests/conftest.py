@@ -58,6 +58,8 @@ def pytest_configure(config):
     always:constrained_layout not applied.*:UserWarning
     ignore:datetime\.datetime\.utcfromtimestamp.*:DeprecationWarning
     ignore:datetime\.datetime\.utcnow.*:DeprecationWarning
+    # pandas with no good workaround
+    ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

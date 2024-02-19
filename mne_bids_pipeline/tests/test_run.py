@@ -60,7 +60,13 @@ _epochs_split_size = "30MB"
 _n_jobs = {"preprocessing/_05_make_epochs": 1}
 """,
     },
-    "ds000248_ica": {},
+    "ds000248_ica": {
+        "extra_config": """
+_raw_split_size = "60MB"
+_epochs_split_size = "30MB"
+_n_jobs = {}
+"""
+    },
     "ds000248_T1_BEM": {
         "steps": ("source/make_bem_surfaces",),
         "requires": ("freesurfer",),

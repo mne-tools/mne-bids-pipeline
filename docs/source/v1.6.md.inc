@@ -20,15 +20,16 @@
 
 ### :bug: Bug fixes
 
-- Fix minor issues with path handling for cross-talk and calibration files (#834 by @larsoner)
-- Fix bug where EEG `reject` params were not used for `ch_types = ["meg", "eeg"]` (#839 by @larsoner)
-- Fix bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
-- Fix bug where `--no-cache` had no effect (#839 by @larsoner)
-- Fix bug where the Maxwell filtering step would fail if [`find_noisy_channels_meg = False`][mne_bids_pipeline._config.find_noisy_channels_meg]` was used (#847 by @larsoner)
-- Fix bug where raw, empty-room, and custom noise covariances were errantly calculated on data without ICA or SSP applied (#840 by @larsoner)
-- Fix bug where multiple channel types (e.g., MEG and EEG) were not handled correctly in decoding (#853 by @larsoner)
-- Fix bug where the previous default for [`ica_n_components`][mne_bids_pipeline._config.ica_n_components] of `0.8` was too conservative, changed the default to `None` to match MNE-Python (#853 by @larsoner)
-- Fix bug where the events table for the average subject could overflow in reports (#854 by @larsoner)
+- Fixed minor issues with path handling for cross-talk and calibration files (#834 by @larsoner)
+- Fixed EEG `reject` use for `ch_types = ["meg", "eeg"]` in epoch cleaning (#839 by @larsoner)
+- Fixed bug where implicit `mf_reference_run` could change across invocations of `mne_bids_pipeline`, breaking caching (#839 by @larsoner)
+- Fixed `--no-cache` behavior having no effect (#839 by @larsoner)
+- Fixed Maxwell filtering failures when [`find_noisy_channels_meg = False`][mne_bids_pipeline._config.find_noisy_channels_meg]` is used (#847 by @larsoner)
+- Fixed raw, empty-room, and custom noise covariances calculation, previously they could errantly be calculated on data without ICA or SSP applied (#840 by @larsoner)
+- Fixed multiple channel type handling (e.g., MEG and EEG) in decoding (#853 by @larsoner)
+- Changed the default for [`ica_n_components`][mne_bids_pipeline._config.ica_n_components] from `0.8` (too conservative) to `None` to match MNE-Python's default (#853 by @larsoner)
+- Prevent events table for the average subject overflowing in reports (#854 by @larsoner)
+- Fixed split file behavior for Epochs when using ICA (#855 by @larsoner)
 
 ### :medical_symbol: Code health
 

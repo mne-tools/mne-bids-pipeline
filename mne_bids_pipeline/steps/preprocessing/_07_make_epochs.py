@@ -256,6 +256,7 @@ def run_epochs(
             psd=psd,
             drop_log_ignore=(),
             replace=True,
+            image_kwargs=cfg.report_add_epochs_kwargs['image_kwargs']
         )
 
     # Interactive
@@ -315,6 +316,7 @@ def get_config(
         epochs_metadata_query=config.epochs_metadata_query,
         event_repeated=config.event_repeated,
         epochs_decim=config.epochs_decim,
+        report_add_epochs_kwargs=config.report_add_epochs_kwargs,
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=get_eeg_reference(config),

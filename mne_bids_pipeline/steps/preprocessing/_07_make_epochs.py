@@ -256,7 +256,7 @@ def run_epochs(
             psd=psd,
             drop_log_ignore=(),
             replace=True,
-            image_kwargs=cfg.report_add_epochs_image_kwargs['image_kwargs']
+            image_kwargs=cfg.report_add_epochs_image_kwargs["image_kwargs"],
         )
 
     # Interactive

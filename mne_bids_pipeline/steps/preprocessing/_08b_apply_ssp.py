@@ -1,8 +1,7 @@
-"""Apply SSP projections and obtain the cleaned epochs and raw data.
+"""Apply SSP.
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP
 projections components are removed from the data.
-
 """
 
 from types import SimpleNamespace

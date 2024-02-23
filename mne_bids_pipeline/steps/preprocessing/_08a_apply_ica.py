@@ -1,4 +1,4 @@
-"""Apply ICA and obtain the cleaned epochs and raw data.
+"""Apply ICA.
 
 Blinks and ECG artifacts are automatically detected and the corresponding ICA
 components are removed from the data.
@@ -8,7 +8,6 @@ This relies on the ICAs computed in 04-run_ica.py
 make sure you did not re-run the ICA in the meantime. Otherwise (especially if
 the random state was not set, or you used a different machine, the component
 order might differ).
-
 """
 
 from types import SimpleNamespace

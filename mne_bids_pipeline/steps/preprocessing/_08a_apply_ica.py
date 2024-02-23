@@ -224,7 +224,7 @@ def apply_ica_raw(
     raw_fname = in_files.pop(in_key)
     assert len(in_files) == 0, in_files
     out_files = dict()
-    out_files[in_key] = raw_fname.copy().update(processing="clean")
+    out_files[in_key] = raw_fname.copy().update(processing="clean", split=None)
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)

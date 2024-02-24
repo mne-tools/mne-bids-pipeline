@@ -384,6 +384,8 @@ def _prep_out_files(
         check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
+        assert isinstance(fname, BIDSPath), type(fname)  # only write BIDSPath
+        assert fname.split is None, fname.split  # we should always set this
         fname = pathlib.Path(fname)
         if not fname.is_relative_to(check_relative):
             raise RuntimeError(

@@ -311,7 +311,6 @@ def run_maxwell_filter(
         extension=".fif",
         root=cfg.deriv_root,
         check=False,
-        split=None,
     )
     bids_path_out = bids_path_in.copy().update(**bids_path_out_kwargs)
 

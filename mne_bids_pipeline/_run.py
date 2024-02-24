@@ -387,10 +387,10 @@ def _prep_out_files(
         # Sanity check that we only ever write to the derivatives directory
         if bids_only:
             assert isinstance(fname, BIDSPath), (type(fname), fname)
-        if isinstance(fname, BIDSPath):
-            if fname.suffix not in ("raw", "epochs"):
-                # raw and epochs can split on write, and .save should check for us
-                assert fname.split is None, fname.split
+        # raw and epochs can split on write, and .save should check for us now, so
+        # we only need to check *other* types (these should never split)
+        if isinstance(fname, BIDSPath) and fname.suffix not in ("raw", "epo"):
+            assert fname.split is None, fname
         fname = pathlib.Path(fname)
         if not fname.is_relative_to(check_relative):
             raise RuntimeError(

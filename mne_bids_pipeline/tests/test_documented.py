@@ -2,6 +2,7 @@
 import ast
 import os
 import re
+import sys
 from pathlib import Path
 
 import yaml
@@ -29,14 +30,15 @@ def test_options_documented():
     config_names = set(d for d in dir(config) if not d.startswith("_"))
     assert in_config == config_names
     settings_path = root_path.parent / "docs" / "source" / "settings"
+    sys.path.append(str(settings_path))
+    try:
+        from gen_settings import main
+    finally:
+        sys.path.pop()
+    main()
     assert settings_path.is_dir()
     in_doc = set()
     key = "        - "
-    allowed_duplicates = set(
-        [
-            "source_info_path_update",
-        ]
-    )
     for dirpath, _, fnames in os.walk(settings_path):
         for fname in fnames:
             if not fname.endswith(".md"):
@@ -48,8 +50,7 @@ def test_options_documented():
                         continue
                     # The line starts with our magic key
                     val = line[len(key) :].strip()
-                    if val not in allowed_duplicates:
-                        assert val not in in_doc, "Duplicate documentation"
+                    assert val not in in_doc, "Duplicate documentation"
                     in_doc.add(val)
     what = "docs/source/settings doc"
     assert in_doc.difference(in_config) == set(), f"Extra values in {what}"

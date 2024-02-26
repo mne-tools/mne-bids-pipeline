@@ -17,11 +17,11 @@ tags:
         - min_eog_epochs
         - n_proj_eog
         - n_proj_ecg
-        - ssp_meg
         - ecg_proj_from_average
         - eog_proj_from_average
-        - ssp_reject_eog
+        - ssp_meg
         - ssp_reject_ecg
+        - ssp_reject_eog
         - ssp_ecg_channel
         - ica_reject
         - ica_algorithm

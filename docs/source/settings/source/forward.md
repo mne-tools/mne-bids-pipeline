@@ -11,4 +11,3 @@ tags:
         - mri_landmarks_kind
         - spacing
         - mindist
-        - source_info_path_update

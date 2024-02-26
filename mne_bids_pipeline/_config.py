@@ -1,4 +1,4 @@
-"""Default settings for data processing and analysis."""
+# Default settings for data processing and analysis.
 
 from typing import Annotated, Any, Callable, Literal, Optional, Sequence, Union
 

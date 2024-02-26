@@ -73,7 +73,10 @@ def make_coreg_surfaces(
     )
     out_files = get_output_fnames_coreg_surfaces(cfg=cfg, subject=subject)
     return _prep_out_files(
-        exec_params=exec_params, out_files=out_files, check_relative=cfg.fs_subjects_dir
+        exec_params=exec_params,
+        out_files=out_files,
+        check_relative=cfg.fs_subjects_dir,
+        bids_only=False,
     )
 
 

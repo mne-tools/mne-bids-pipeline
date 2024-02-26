@@ -1,7 +1,4 @@
-"""Run Signal Subspace Projections (SSP) for artifact correction.
-
-These are often also referred to as PCA vectors.
-"""
+"""Temporal regression for artifact removal."""
 
 from types import SimpleNamespace
 from typing import Optional

@@ -379,11 +379,18 @@ def _prep_out_files(
     exec_params: SimpleNamespace,
     out_files: dict[str, BIDSPath],
     check_relative: Optional[pathlib.Path] = None,
+    bids_only: bool = True,
 ):
     if check_relative is None:
         check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
+        if bids_only:
+            assert isinstance(fname, BIDSPath), (type(fname), fname)
+        # raw and epochs can split on write, and .save should check for us now, so
+        # we only need to check *other* types (these should never split)
+        if isinstance(fname, BIDSPath) and fname.suffix not in ("raw", "epo"):
+            assert fname.split is None, fname
         fname = pathlib.Path(fname)
         if not fname.is_relative_to(check_relative):
             raise RuntimeError(

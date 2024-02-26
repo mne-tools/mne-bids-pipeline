@@ -1,4 +1,4 @@
-"""Apply ICA and obtain the cleaned epochs and raw data.
+"""Apply ICA.
 
 Blinks and ECG artifacts are automatically detected and the corresponding ICA
 components are removed from the data.
@@ -8,7 +8,6 @@ This relies on the ICAs computed in 04-run_ica.py
 make sure you did not re-run the ICA in the meantime. Otherwise (especially if
 the random state was not set, or you used a different machine, the component
 order might differ).
-
 """
 
 from types import SimpleNamespace
@@ -225,7 +224,7 @@ def apply_ica_raw(
     raw_fname = in_files.pop(in_key)
     assert len(in_files) == 0, in_files
     out_files = dict()
-    out_files[in_key] = raw_fname.copy().update(processing="clean")
+    out_files[in_key] = raw_fname.copy().update(processing="clean", split=None)
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)

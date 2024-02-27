@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 import mne_bids_pipeline._config
 
-root_file = Path(mne_bids_pipeline._config.__file__)
+config_path = Path(mne_bids_pipeline._config.__file__)
 settings_dir = Path(__file__).parent
 
 # Mapping between first two lower-case words in the section name and the desired
@@ -104,11 +104,11 @@ assign_re = re.compile(
 
 
 def main():
-    print(f"Parsing {root_file} to generate settings .md files.")
+    print(f"Parsing {config_path} to generate settings .md files.")
     # max file-level depth is 2 even though we have 3 subsection levels
     levels = [None, None]
     current_path, current_lines = None, list()
-    text = root_file.read_text("utf-8")
+    text = config_path.read_text("utf-8")
     lines = text.splitlines()
     lines += ["# #"]  # add a dummy line to trigger the last write
     in_header = False

@@ -448,14 +448,6 @@ duration is less than this, an exception will be raised.
 # # Preprocessing
 
 # ## Break detection
-#
-# ---
-# tags:
-#   - preprocessing
-#   - artifact-removal
-#   - raw
-#   - events
-# ---
 
 find_breaks: bool = False
 """
@@ -557,13 +549,6 @@ pre-stimulus period as bad.
 # %%
 # ## Bad channel detection
 #
-# ---
-# tags:
-#   - preprocessing
-#   - raw
-#   - bad-channels
-# ---
-#
 # !!! warning
 #     This functionality will soon be removed from the pipeline, and
 #     will be integrated into MNE-BIDS.
@@ -592,13 +577,6 @@ Auto-detect "noisy" channels and mark them as bad.
 
 # %%
 # ## Maxwell filter
-#
-# ---
-# tags:
-#   - preprocessing
-#   - maxwell-filter
-#   - raw
-# ---
 
 use_maxwell_filter: bool = False
 """
@@ -799,13 +777,6 @@ Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell
 
 # ### Filtering
 #
-# ---
-# tags:
-#   - preprocessing
-#   - frequency-filter
-#   - raw
-# ---
-#
 # It is typically better to set your filtering properties on the raw data so
 # as to avoid what we call border (or edge) effects.
 #
@@ -883,15 +854,6 @@ Specifies the width of each stop band. `None` uses the MNE default.
 
 # ### Resampling
 #
-# ---
-# tags:
-#   - preprocessing
-#   - resampling
-#   - decimation
-#   - raw
-#   - epochs
-# ---
-#
 # If you have acquired data with a very high sampling frequency (e.g. 2 kHz)
 # you will likely want to downsample to lighten up the size of the files you
 # are working with (pragmatics)
@@ -930,16 +892,6 @@ can be used for resampling raw data. `1` means no decimation.
 
 
 # ## Epoching
-#
-# ---
-# tags:
-#   - preprocessing
-#   - epochs
-#   - events
-#   - metadata
-#   - resting-state
-# ---
-
 
 rename_events: dict = dict()
 """
@@ -1120,14 +1072,6 @@ if `None`, no baseline correction is applied.
 
 # ### Stimulation artifact
 #
-# ---
-# tags:
-#   - preprocessing
-#   - artifact-removal
-#   - raw
-#   - epochs
-# ---
-#
 # When using electric stimulation systems, e.g. for median nerve or index
 # stimulation, it is frequent to have a stimulation artifact. This option
 # allows to fix it by linear interpolation early in the pipeline on the raw
@@ -1164,16 +1108,6 @@ End time of the interpolation window in seconds.
 """
 
 # ### SSP, ICA, and artifact regression
-#
-# ---
-# tags:
-#   - preprocessing
-#   - artifact-removal
-#   - raw
-#   - epochs
-#   - ssp
-#   - ica
-# ---
 
 regress_artifact: Optional[dict[str, Any]] = None
 """
@@ -1433,13 +1367,6 @@ false-alarm rate increases dramatically.
 """
 
 # ### Amplitude-based artifact rejection
-#
-# ---
-# tags:
-#   - preprocessing
-#   - artifact-removal
-#   - epochs
-# ---
 #
 # ???+ info "Good Practice / Advice"
 #     Have a look at your raw data and train yourself to detect a blink, a heart

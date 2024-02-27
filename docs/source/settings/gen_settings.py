@@ -47,6 +47,35 @@ section_to_file = {  # .md will be added to the files
     # root file
     "execution": "execution",
 }
+# TODO: Make sure these are consistent, autogenerate some based on section names,
+# and/or autogenerate based on inputs/outputs of actual functions.
+section_tags = {
+    "general settings": (),
+    "preprocessing": (),
+    "filtering &": (),
+    "artifact removal": (),
+    "break detection": ("preprocessing", "artifact-removal", "raw", "events"),
+    "bad channel": ("preprocessing", "raw", "bad-channels"),
+    "maxwell filter": ("preprocessing", "maxwell-filter", "raw"),
+    "filtering": ("preprocessing", "frequency-filter", "raw"),
+    "resampling": ("preprocessing", "resampling", "decimation", "raw", "epochs"),
+    "epoching": ("preprocessing", "epochs", "events", "metadata", "resting-state"),
+    "stimulation artifact": ("preprocessing", "artifact-removal", "raw", "epochs"),
+    "ssp, ica,": ("preprocessing", "artifact-removal", "raw", "epochs", "ssp", "ica"),
+    "amplitude-based artifact": ("preprocessing", "artifact-removal", "epochs"),
+    "sensor-level analysis": (),
+    "condition contrasts": (),
+    "decoding /": (),
+    "time-frequency analysis": (),
+    "group-level analysis": (),
+    "source-level analysis": (),
+    "bem surface": (),
+    "source space": (),
+    "inverse solution": (),
+    "reports": (),
+    "report generation": (),
+    "execution": (),
+}
 
 option_header = """\
 ::: mne_bids_pipeline._config
@@ -83,6 +112,7 @@ def main():
     lines = text.splitlines()
     lines += ["# #"]  # add a dummy line to trigger the last write
     in_header = False
+    have_params = False
     for li, line in enumerate(tqdm(lines)):
         line = line.rstrip()
         if line.startswith("# #"):  # a new (sub)section / file
@@ -98,11 +128,12 @@ def main():
             this_def = this_def[this_level + 2 :]
             levels[this_level] = this_def
             # Write current lines and reset
-            if len(current_lines) > 1:  # more than just the header
+            if have_params:  # more than just the header
                 assert current_path is not None, levels
                 if current_lines[0] == "":  # this happens with tags
                     current_lines = current_lines[1:]
                 current_path.write_text("\n".join(current_lines + [""]), "utf-8")
+            have_params = False
             if this_level == 0:
                 this_root = settings_dir
             else:
@@ -117,8 +148,11 @@ def main():
                 current_path = None
             else:
                 current_path = this_root / f"{fname}.md"
-            current_lines = []
             in_header = True
+            if len(section_tags[key]):
+                current_lines = ["---", "tags:"]
+                current_lines += [f"  - {tag}" for tag in section_tags[key]]
+                current_lines += ["---"]
             continue
 
         if in_header:
@@ -135,6 +169,7 @@ def main():
         # Could be an option
         match = assign_re.match(line)
         if match is not None:
+            have_params = True
             name, typ, desc = match.groups()
             current_lines.append(f"{prefix}{name}")
             continue

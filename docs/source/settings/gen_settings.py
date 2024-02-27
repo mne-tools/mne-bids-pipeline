@@ -149,8 +149,9 @@ def main():
             else:
                 current_path = this_root / f"{fname}.md"
             in_header = True
+            current_lines = list()
             if len(section_tags[key]):
-                current_lines = ["---", "tags:"]
+                current_lines += ["---", "tags:"]
                 current_lines += [f"  - {tag}" for tag in section_tags[key]]
                 current_lines += ["---"]
             continue

@@ -1458,13 +1458,6 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 # # Sensor-level analysis
 
 # ## Condition contrasts
-#
-# ---
-# tags:
-#   - epochs
-#   - evoked
-#   - contrast
-# ---
 
 contrasts: Sequence[Union[tuple[str, str], ArbitraryContrast]] = []
 """
@@ -1522,15 +1515,6 @@ epoched, and therefore the conditions should either match or be subsets of
 """
 
 # ## Decoding / MVPA
-#
-# ---
-# tags:
-#   - epochs
-#   - evoked
-#   - contrast
-#   - decoding
-#   - mvpa
-# ---
 
 decode: bool = True
 """
@@ -1738,13 +1722,6 @@ used in the permutation test which takes place after forming the clusters.
 """
 
 # ## Time-frequency analysis
-#
-# ---
-# tags:
-#   - epochs
-#   - evoked
-#   - time-frequency
-# ---
 
 time_frequency_conditions: Sequence[str] = []
 """
@@ -1824,13 +1801,6 @@ If `None`, no cropping.
 """
 
 # ## Group-level analysis
-#
-# ---
-# tags:
-#   - evoked
-#   - group-level
-# ---
-
 
 interpolate_bads_grand_average: bool = True
 """
@@ -1848,12 +1818,7 @@ locations set.
 # %%
 # # Source-level analysis
 
-# ## General settings
-#
-# ---
-# tags:
-#   - inverse-solution
-# ---
+# ## General source analysis settings
 
 run_source_estimation: bool = True
 """
@@ -1861,13 +1826,6 @@ Whether to run source estimation processing steps if not explicitly requested.
 """
 
 # ## BEM surface
-#
-# ---
-# tags:
-#   - inverse-solution
-#   - bem
-#   - freesurfer
-# ---
 
 use_template_mri: Optional[str] = None
 """
@@ -1942,12 +1900,6 @@ Whether to print the complete output of FreeSurfer commands. Note that if
 `False`, no FreeSurfer output might be displayed at all!"""
 
 # ## Source space & forward solution
-#
-# ---
-# tags:
-#   - inverse-solution
-#   - forward-model
-# ---
 
 mri_t1_path_generator: Optional[Callable[[BIDSPath], BIDSPath]] = None
 """
@@ -2042,12 +1994,6 @@ Exclude points closer than this distance (mm) to the bounding surface.
 """
 
 # ## Inverse solution
-#
-# ---
-# tags:
-#   - inverse-solution
-# ---
-
 
 loose: Union[float, Literal["auto"]] = 0.2
 """
@@ -2200,12 +2146,6 @@ empty list, `[]`.
 # # Reports
 
 # ## Report generation
-#
-# ---
-# tags:
-#   - report
-# ---
-
 
 report_evoked_n_time_points: Optional[int] = None
 """

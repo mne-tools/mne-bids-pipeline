@@ -1,1 +1,4 @@
 features/steps.md
+features/overview.md
+settings/**/
+settings/*.md

@@ -1,14 +1,13 @@
-"""Run Independent Component Analysis (ICA) for artifact correction.
+"""Fit ICA.
 
-This fits ICA on epoched data filtered with 1 Hz highpass,
-for this purpose only using fastICA. Separate ICAs are fitted and stored for
-MEG and EEG data.
+This fits Independent Component Analysis (ICA) on raw data filtered with 1 Hz highpass,
+temporarily creating task-related epochs.
 
 Before performing ICA, we reject epochs based on peak-to-peak amplitude above
 the 'ica_reject' to filter massive non-biological artifacts.
 
 To actually remove designated ICA components from your data, you will have to
-run 05a-apply_ica.py.
+run the apply_ica step.
 """
 
 from collections.abc import Iterable

@@ -8,13 +8,13 @@ but also epochs containing biological artifacts not sufficiently
 corrected by the ICA or the SSP processing.
 """
 
+import inspect
 from types import SimpleNamespace
 from typing import Optional
 
 import autoreject
 import mne
 import numpy as np
-import inspect
 from mne_bids import BIDSPath
 
 from ..._config_utils import (

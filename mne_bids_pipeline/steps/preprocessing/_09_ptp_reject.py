@@ -227,7 +227,7 @@ def drop_ptp(
             drop_log_ignore=(),
             tags=tags,
             replace=True,
-            image_kwargs=cfg.report_add_epochs_image_kwargs['image_kwargs']
+            image_kwargs=cfg.report_add_epochs_image_kwargs,
         )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
@@ -247,7 +247,7 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
-        image_kwargs=cfg.report_add_epochs_image_kwargs['image_kwargs']
+        image_kwargs=cfg.report_add_epochs_image_kwargs
         **_bids_kwargs(config=config),
     )
     return cfg

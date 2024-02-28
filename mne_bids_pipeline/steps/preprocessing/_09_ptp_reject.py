@@ -247,8 +247,8 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
-        image_kwargs=cfg.report_add_epochs_image_kwargs['image_kwargs']
-        **_bids_kwargs(config=config),
+        image_kwargs=cfg.report_add_epochs_image_kwargs["image_kwargs"]
+        ** _bids_kwargs(config=config),
     )
     return cfg
 

@@ -14,6 +14,7 @@ from typing import Optional
 import autoreject
 import mne
 import numpy as np
+import inspect
 from mne_bids import BIDSPath
 
 from ..._config_utils import (

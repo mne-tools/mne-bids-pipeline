@@ -7,9 +7,9 @@ Finally the epochs are saved to disk. For the moment, no rejection is applied.
 To save space, the epoch data can be decimated.
 """
 
+import inspect
 from types import SimpleNamespace
 from typing import Optional
-import inspect
 
 import mne
 from mne_bids import BIDSPath
@@ -255,7 +255,7 @@ def run_epochs(
         else:
             psd = 30
         arg_spec = inspect.getfullargspec(report.add_epochs)
-        if  'image_kwargs' in arg_spec:
+        if "image_kwargs" in arg_spec:
             report.add_epochs(
                 epochs=epochs,
                 title="Epochs: before cleaning",
@@ -271,7 +271,7 @@ def run_epochs(
                 psd=psd,
                 drop_log_ignore=(),
                 replace=True,
-                )
+            )
 
     # Interactive
     if exec_params.interactive:

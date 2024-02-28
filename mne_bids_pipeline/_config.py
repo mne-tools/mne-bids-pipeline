@@ -2171,18 +2171,19 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
-report_add_epochs_image_kwargs: Optional[dict] = dict()
+report_add_epochs_image_kwargs: Optional[dict] = None
 """
 Specifies the limits for the color scales of the epochs_image in the report.
 If `None`, it defaults to the current default in MNE-Python.
 
 ???+ example "Example"
-    Set vmin and vmax to the epochs rejection thresholds:
+    Set vmin and vmax to the epochs rejection thresholds (with unit conversion):
+
     ```python
-    report_add_epochs_kwargs = {
-    "grad": {"vmin": -reject["grad"], "vmax": reject["grad"]},
-    "mag": {"vmin": -reject["mag"], "vmax": reject["mag"]},
-}
+    report_add_epochs_image_kwargs = {
+        "grad": {"vmin": 0, "vmax": 1e13 * reject["grad"]},  # fT/cm
+        "mag": {"vmin": 0, "vmax": 1e15 * reject["mag"]},  # fT
+    }
     ```
 """
 

@@ -8,7 +8,6 @@ but also epochs containing biological artifacts not sufficiently
 corrected by the ICA or the SSP processing.
 """
 
-import inspect
 from types import SimpleNamespace
 from typing import Optional
 
@@ -27,6 +26,7 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from ._07_make_epochs import _add_epochs_image_kwargs
 
 
 def get_input_fnames_drop_ptp(
@@ -221,26 +221,15 @@ def drop_ptp(
                 tags=tags,
             )
 
-        arg_spec = inspect.getfullargspec(report.add_epochs)
-        if "image_kwargs" in arg_spec:
-            report.add_epochs(
-                epochs=epochs,
-                title=title,
-                psd=psd,
-                drop_log_ignore=(),
-                tags=tags,
-                replace=True,
-                image_kwargs=cfg.report_add_epochs_image_kwargs,
-            )
-        else:
-            report.add_epochs(
-                epochs=epochs,
-                title=title,
-                psd=psd,
-                drop_log_ignore=(),
-                tags=tags,
-                replace=True,
-            )
+        report.add_epochs(
+            epochs=epochs,
+            title=title,
+            psd=psd,
+            drop_log_ignore=(),
+            tags=tags,
+            replace=True,
+            **_add_epochs_image_kwargs(cfg=cfg),
+        )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
@@ -259,8 +248,8 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
-        image_kwargs=config.report_add_epochs_image_kwargs
-        ** _bids_kwargs(config=config),
+        image_kwargs=config.report_add_epochs_image_kwargs,
+        **_bids_kwargs(config=config),
     )
     return cfg
 

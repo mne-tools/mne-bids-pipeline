@@ -45,6 +45,10 @@ epochs_tmin = -0.2
 epochs_tmax = 1
 epochs_decim = 6  # 1200->200 Hz
 baseline = (None, 0)
+report_add_epochs_image_kwargs = {
+    "grad": {"vmin": 0, "vmax": 1e13 * reject["grad"]},  # fT/cm
+    "mag": {"vmin": 0, "vmax": 1e15 * reject["mag"]},  # fT
+}
 
 # Conditions / events to consider when epoching
 conditions = ["auditory"]

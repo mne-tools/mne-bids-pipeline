@@ -254,24 +254,14 @@ def run_epochs(
             psd = True
         else:
             psd = 30
-        arg_spec = inspect.getfullargspec(report.add_epochs)
-        if "image_kwargs" in arg_spec:
-            report.add_epochs(
-                epochs=epochs,
-                title="Epochs: before cleaning",
-                psd=psd,
-                drop_log_ignore=(),
-                replace=True,
-                image_kwargs=cfg.report_add_epochs_image_kwargs,
-            )
-        else:
-            report.add_epochs(
-                epochs=epochs,
-                title="Epochs: before cleaning",
-                psd=psd,
-                drop_log_ignore=(),
-                replace=True,
-            )
+        report.add_epochs(
+            epochs=epochs,
+            title="Epochs: before cleaning",
+            psd=psd,
+            drop_log_ignore=(),
+            replace=True,
+            **_add_epochs_image_kwargs(cfg),
+        )
 
     # Interactive
     if exec_params.interactive:
@@ -279,6 +269,14 @@ def run_epochs(
         epochs.plot_image(combine="gfp", sigma=2.0, cmap="YlGnBu_r")
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
+def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict:
+    arg_spec = inspect.getfullargspec(mne.Report.add_epochs)
+    kwargs = dict()
+    if cfg.report_add_epochs_image_kwargs and "image_kwargs" in arg_spec.kwonlyargs:
+        kwargs["image_kwargs"] = cfg.report_add_epochs_image_kwargs
+    return kwargs
 
 
 # TODO: ideally we wouldn't need this anymore and could refactor the code above

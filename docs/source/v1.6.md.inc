@@ -11,6 +11,7 @@
 - Added [`noise_cov_method`][mne_bids_pipeline._config.noise_cov_method] to allow for the use of methods other than `"shrunk"` for noise covariance estimation (#854 by @larsoner)
 - Added option to pass [`image_kwargs`] to [`mne.Report.add_epochs`] to allow adjusting e.g. `"vmin"` and `"vmax"` of the epochs image in the report.
 (#848 by @SophieHerbst)
+
 [//]: # (### :warning: Behavior changes)
 
 [//]: # (- Whatever (#000 by @whoever))

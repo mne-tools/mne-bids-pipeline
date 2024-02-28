@@ -9,6 +9,7 @@ To save space, the epoch data can be decimated.
 
 from types import SimpleNamespace
 from typing import Optional
+import inspect
 
 import mne
 from mne_bids import BIDSPath
@@ -250,14 +251,24 @@ def run_epochs(
             psd = True
         else:
             psd = 30
-        report.add_epochs(
-            epochs=epochs,
-            title="Epochs: before cleaning",
-            psd=psd,
-            drop_log_ignore=(),
-            replace=True,
-            image_kwargs=cfg.report_add_epochs_image_kwargs,
-        )
+        arg_spec = inspect.getfullargspec(report.add_epochs)
+        if  'image_kwargs' in arg_spec:
+            report.add_epochs(
+                epochs=epochs,
+                title="Epochs: before cleaning",
+                psd=psd,
+                drop_log_ignore=(),
+                replace=True,
+                image_kwargs=cfg.report_add_epochs_image_kwargs,
+            )
+        else:
+            report.add_epochs(
+                epochs=epochs,
+                title="Epochs: before cleaning",
+                psd=psd,
+                drop_log_ignore=(),
+                replace=True,
+                )
 
     # Interactive
     if exec_params.interactive:

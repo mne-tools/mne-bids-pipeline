@@ -13,9 +13,8 @@ from mne_bids_pipeline.typing import (
     PathLike,
 )
 
-###############################################################################
-# Config parameters
-# -----------------
+# %%
+# # General settings
 
 study_name: str = ""
 """
@@ -95,6 +94,11 @@ task: str = ""
 The task to process.
 """
 
+task_is_rest: bool = False
+"""
+Whether the task should be treated as resting-state data.
+"""
+
 runs: Union[Sequence, Literal["all"]] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
@@ -142,14 +146,6 @@ The BIDS `recording` entity.
 space: Optional[str] = None
 """
 The BIDS `space` entity.
-"""
-
-plot_psd_for_runs: Union[Literal["all"], Sequence[str]] = "all"
-"""
-For which runs to add a power spectral density (PSD) plot to the generated
-report. This can take a considerable amount of time if you have many long
-runs. In this case, specify the runs, or pass an empty list to disable raw PSD
-plotting.
 """
 
 subjects: Union[Sequence[str], Literal["all"]] = "all"
@@ -426,9 +422,32 @@ compliant (e.g., "Did not find any meg.json..."), you can set this to
 `'error'` to suppress warnings emitted by read_raw_bids.
 """
 
-###############################################################################
-# BREAK DETECTION
-# ---------------
+plot_psd_for_runs: Union[Literal["all"], Sequence[str]] = "all"
+"""
+For which runs to add a power spectral density (PSD) plot to the generated
+report. This can take a considerable amount of time if you have many long
+runs. In this case, specify the runs, or pass an empty list to disable raw PSD
+plotting.
+"""
+
+random_state: Optional[int] = 42
+"""
+You can specify the seed of the random number generator (RNG).
+This setting is passed to the ICA algorithm and to the decoding function,
+ensuring reproducible results. Set to `None` to avoid setting the RNG
+to a defined state.
+"""
+
+shortest_event: int = 1
+"""
+Minimum number of samples an event must last. If the
+duration is less than this, an exception will be raised.
+"""
+
+# %%
+# # Preprocessing
+
+# ## Break detection
 
 find_breaks: bool = False
 """
@@ -527,10 +546,23 @@ pre-stimulus period as bad.
     ```
 """
 
-###############################################################################
-# MAXWELL FILTER PARAMETERS
-# -------------------------
-# done in 01-import_and_maxfilter.py
+# %%
+# ## Bad channel detection
+#
+# !!! warning
+#     This functionality will soon be removed from the pipeline, and
+#     will be integrated into MNE-BIDS.
+#
+# "Bad", i.e. flat and overly noisy channels, can be automatically detected
+# using a procedure inspired by the commercial MaxFilter by Elekta. First,
+# a copy of the data is low-pass filtered at 40 Hz. Then, channels with
+# unusually low variability are flagged as "flat", while channels with
+# excessively high variability are flagged as "noisy". Flat and noisy channels
+# are marked as "bad" and excluded from subsequent analysis. See
+# :func:`mne.preprocssessing.find_bad_channels_maxwell` for more information
+# on this procedure. The list of bad channels detected through this procedure
+# will be merged with the list of bad channels already present in the dataset,
+# if any.
 
 find_flat_channels_meg: bool = False
 """
@@ -542,6 +574,9 @@ find_noisy_channels_meg: bool = False
 """
 Auto-detect "noisy" channels and mark them as bad.
 """
+
+# %%
+# ## Maxwell filter
 
 use_maxwell_filter: bool = False
 """
@@ -738,45 +773,29 @@ the same value as [`mf_mc`][mne_bids_pipeline._config.mf_mc].
 Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter]
 """  # noqa: E501
 
-###############################################################################
-# STIMULATION ARTIFACT
-# --------------------
-# used in 01-import_and_maxfilter.py
+# ## Filtering & resampling
 
-fix_stim_artifact: bool = False
-"""
-Apply interpolation to fix stimulation artifact.
-
-???+ example "Example"
-    ```python
-    fix_stim_artifact = False
-    ```
-"""
-
-stim_artifact_tmin: float = 0.0
-"""
-Start time of the interpolation window in seconds.
-
-???+ example "Example"
-    ```python
-    stim_artifact_tmin = 0.  # on stim onset
-    ```
-"""
-
-stim_artifact_tmax: float = 0.01
-"""
-End time of the interpolation window in seconds.
-
-???+ example "Example"
-    ```python
-    stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
-    ```
-"""
-
-###############################################################################
-# FREQUENCY FILTERING & RESAMPLING
-# --------------------------------
-# done in 02-frequency_filter.py
+# ### Filtering
+#
+# It is typically better to set your filtering properties on the raw data so
+# as to avoid what we call border (or edge) effects.
+#
+# If you use this pipeline for evoked responses, you could consider
+# a low-pass filter cut-off of h_freq = 40 Hz
+# and possibly a high-pass filter cut-off of l_freq = 1 Hz
+# so you would preserve only the power in the 1Hz to 40 Hz band.
+# Note that highpass filtering is not necessarily recommended as it can
+# distort waveforms of evoked components, or simply wash out any low
+# frequency that can may contain brain signal. It can also act as
+# a replacement for baseline correction in Epochs. See below.
+#
+# If you use this pipeline for time-frequency analysis, a default filtering
+# could be a high-pass filter cut-off of l_freq = 1 Hz
+# a low-pass filter cut-off of h_freq = 120 Hz
+# so you would preserve only the power in the 1Hz to 120 Hz band.
+#
+# If you need more fancy analysis, you are already likely past this kind
+# of tips! 😇
 
 l_freq: Optional[float] = None
 """
@@ -788,6 +807,20 @@ h_freq: Optional[float] = 40.0
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it `None` if no lowpass filtering should be applied.
+"""
+
+l_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
+"""
+Specifies the transition bandwidth of the
+highpass filter. By default it's `'auto'` and uses default MNE
+parameters.
+"""
+
+h_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
+"""
+Specifies the transition bandwidth of the
+lowpass filter. By default it's `'auto'` and uses default MNE
+parameters.
 """
 
 notch_freq: Optional[Union[float, Sequence[float]]] = None
@@ -809,20 +842,6 @@ harmonics. Keep it `None` if no notch filter should be applied.
     ```
 """
 
-l_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
-"""
-Specifies the transition bandwidth of the
-highpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
-
-h_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
-"""
-Specifies the transition bandwidth of the
-lowpass filter. By default it's `'auto'` and uses default MNE
-parameters.
-"""
-
 notch_trans_bandwidth: float = 1.0
 """
 Specifies the transition bandwidth of the notch filter. The default is `1.`.
@@ -832,6 +851,15 @@ notch_widths: Optional[Union[float, Sequence[float]]] = None
 """
 Specifies the width of each stop band. `None` uses the MNE default.
 """
+
+# ### Resampling
+#
+# If you have acquired data with a very high sampling frequency (e.g. 2 kHz)
+# you will likely want to downsample to lighten up the size of the files you
+# are working with (pragmatics)
+# If you are interested in typical analysis (up to 120 Hz) you can typically
+# resample your data down to 500 Hz without preventing reliable time-frequency
+# exploration of your data.
 
 raw_resample_sfreq: Optional[float] = None
 """
@@ -844,10 +872,6 @@ If `None`, then no resampling will be done.
     raw_resample_sfreq = 500  # resample to 500Hz
     ```
 """
-
-###############################################################################
-# DECIMATION
-# ----------
 
 epochs_decim: int = 1
 """
@@ -867,9 +891,7 @@ can be used for resampling raw data. `1` means no decimation.
 """
 
 
-###############################################################################
-# RENAME EXPERIMENTAL EVENTS
-# --------------------------
+# ## Epoching
 
 rename_events: dict = dict()
 """
@@ -895,10 +917,6 @@ however, if you're sure what you're doing, you may change this to `'warn'`
 to only get a warning instead, or `'ignore'` to ignore it completely.
 """
 
-###############################################################################
-# HANDLING OF REPEATED EVENTS
-# ---------------------------
-
 event_repeated: Literal["error", "drop", "merge"] = "error"
 """
 How to handle repeated events. We call events "repeated" if more than one event
@@ -913,10 +931,6 @@ this to `'merge'`.
     The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
     April 1st, 2021.
 """
-
-###############################################################################
-# EPOCHING
-# --------
 
 epochs_metadata_tmin: Optional[float] = None
 """
@@ -1032,11 +1046,6 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-task_is_rest: bool = False
-"""
-Whether the task should be treated as resting-state data.
-"""
-
 rest_epochs_duration: Optional[float] = None
 """
 Duration of epochs in seconds.
@@ -1059,72 +1068,46 @@ if `None`, no baseline correction is applied.
     ```
 """
 
-contrasts: Sequence[Union[tuple[str, str], ArbitraryContrast]] = []
+# ## Artifact removal
+
+# ### Stimulation artifact
+#
+# When using electric stimulation systems, e.g. for median nerve or index
+# stimulation, it is frequent to have a stimulation artifact. This option
+# allows to fix it by linear interpolation early in the pipeline on the raw
+# data.
+
+fix_stim_artifact: bool = False
 """
-The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
-can either be tuples or dictionaries (or a mix of both). Each element in the
-list corresponds to a single contrast.
-
-A tuple specifies a one-vs-one contrast, where the second condition is
-subtracted from the first.
-
-If a dictionary, must contain the following keys:
-
-- `name`: a custom name of the contrast
-- `conditions`: the conditions to contrast
-- `weights`: the weights associated with each condition.
-
-Pass an empty list to avoid calculation of any contrasts.
-
-For the contrasts to be computed, the appropriate conditions must have been
-epoched, and therefore the conditions should either match or be subsets of
-`conditions` above.
+Apply interpolation to fix stimulation artifact.
 
 ???+ example "Example"
-    Contrast the "left" and the "right" conditions by calculating
-    `left - right` at every time point of the evoked responses:
     ```python
-    contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
-    ```
-
-    Contrast the "left" and the "right" conditions within the "auditory" and
-    the "visual" modality, and "auditory" vs "visual" regardless of side:
-    ```python
-    contrasts = [('auditory/left', 'auditory/right'),
-                 ('visual/left', 'visual/right'),
-                 ('auditory', 'visual')]
-    ```
-
-    Contrast the "left" and the "right" regardless of side, and compute an
-    arbitrary contrast with a gradient of weights:
-    ```python
-    contrasts = [
-        ('auditory/left', 'auditory/right'),
-        {
-            'name': 'gradedContrast',
-            'conditions': [
-                'auditory/left',
-                'auditory/right',
-                'visual/left',
-                'visual/right'
-            ],
-            'weights': [-1.5, -.5, .5, 1.5]
-        }
-    ]
+    fix_stim_artifact = False
     ```
 """
 
-###############################################################################
-# ARTIFACT REMOVAL
-# ----------------
-#
-# You can choose between ICA and SSP to remove eye and heart artifacts.
-# SSP: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ssp.html?highlight=ssp # noqa
-# ICA: https://mne-tools.github.io/stable/auto_tutorials/plot_artifacts_correction_ica.html?highlight=ica # noqa
-# if you choose ICA, run steps 5a and 6a
-# if you choose SSP, run steps 5b and 6b
-#
-# Currently you cannot use both.
+stim_artifact_tmin: float = 0.0
+"""
+Start time of the interpolation window in seconds.
+
+???+ example "Example"
+    ```python
+    stim_artifact_tmin = 0.  # on stim onset
+    ```
+"""
+
+stim_artifact_tmax: float = 0.01
+"""
+End time of the interpolation window in seconds.
+
+???+ example "Example"
+    ```python
+    stim_artifact_tmax = 0.01  # up to 10ms post-stimulation
+    ```
+"""
+
+# ### SSP, ICA, and artifact regression
 
 regress_artifact: Optional[dict[str, Any]] = None
 """
@@ -1171,9 +1154,6 @@ min_eog_epochs: Annotated[int, Ge(1)] = 5
 Minimal number of EOG epochs needed to compute SSP projectors.
 """
 
-
-# Rejection based on SSP
-# ~~~~~~~~~~~~~~~~~~~~~~
 n_proj_eog: dict[str, float] = dict(n_mag=1, n_grad=1, n_eeg=1)
 """
 Number of SSP vectors to create for EOG artifacts for each channel type.
@@ -1249,8 +1229,6 @@ Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
 is not reliable.
 """
 
-# Rejection based on ICA
-# ~~~~~~~~~~~~~~~~~~~~~~
 ica_reject: Optional[Union[dict[str, float], Literal["autoreject_local"]]] = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
@@ -1388,8 +1366,13 @@ that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
 
-# Rejection based on peak-to-peak amplitude
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ### Amplitude-based artifact rejection
+#
+# ???+ info "Good Practice / Advice"
+#     Have a look at your raw data and train yourself to detect a blink, a heart
+#     beat and an eye movement.
+#     You can do a quick average of blink data and check what the amplitude looks
+#     like.
 
 reject: Optional[
     Union[dict[str, float], Literal["autoreject_global", "autoreject_local"]]
@@ -1471,9 +1454,67 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
     be considered (i.e., will remain marked as bad and not analyzed by autoreject).
 """
 
-###############################################################################
-# DECODING
-# --------
+# %%
+# # Sensor-level analysis
+
+# ## Condition contrasts
+
+contrasts: Sequence[Union[tuple[str, str], ArbitraryContrast]] = []
+"""
+The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
+can either be tuples or dictionaries (or a mix of both). Each element in the
+list corresponds to a single contrast.
+
+A tuple specifies a one-vs-one contrast, where the second condition is
+subtracted from the first.
+
+If a dictionary, must contain the following keys:
+
+- `name`: a custom name of the contrast
+- `conditions`: the conditions to contrast
+- `weights`: the weights associated with each condition.
+
+Pass an empty list to avoid calculation of any contrasts.
+
+For the contrasts to be computed, the appropriate conditions must have been
+epoched, and therefore the conditions should either match or be subsets of
+`conditions` above.
+
+???+ example "Example"
+    Contrast the "left" and the "right" conditions by calculating
+    `left - right` at every time point of the evoked responses:
+    ```python
+    contrasts = [('left', 'right')]  # Note we pass a tuple inside the list!
+    ```
+
+    Contrast the "left" and the "right" conditions within the "auditory" and
+    the "visual" modality, and "auditory" vs "visual" regardless of side:
+    ```python
+    contrasts = [('auditory/left', 'auditory/right'),
+                 ('visual/left', 'visual/right'),
+                 ('auditory', 'visual')]
+    ```
+
+    Contrast the "left" and the "right" regardless of side, and compute an
+    arbitrary contrast with a gradient of weights:
+    ```python
+    contrasts = [
+        ('auditory/left', 'auditory/right'),
+        {
+            'name': 'gradedContrast',
+            'conditions': [
+                'auditory/left',
+                'auditory/right',
+                'visual/left',
+                'visual/right'
+            ],
+            'weights': [-1.5, -.5, .5, 1.5]
+        }
+    ]
+    ```
+"""
+
+# ## Decoding / MVPA
 
 decode: bool = True
 """
@@ -1572,114 +1613,6 @@ used to greatly speed up time generalization at the cost of lower time
 resolution in the resulting matrix.
 """
 
-n_boot: int = 5000
-"""
-The number of bootstrap resamples when estimating the standard error and
-confidence interval of the mean decoding scores.
-"""
-
-cluster_forming_t_threshold: Optional[float] = None
-"""
-The t-value threshold to use for forming clusters in the cluster-based
-permutation test run on the the time-by-time decoding scores.
-Data points with absolute t-values greater than this value
-will be used to form clusters. If `None`, the threshold will be automatically
-determined to correspond to a p-value of 0.05 for the given number of
-participants in a one-tailed test.
-
-!!! info
-    Only points with the same sign will be clustered together.
-"""
-
-cluster_n_permutations: int = 10_000
-"""
-The maximum number of permutations to perform in a cluster-based permutation
-test to determine the significance of the decoding scores across participants.
-"""
-
-cluster_permutation_p_threshold: Annotated[float, Interval(gt=0, lt=1)] = 0.05
-"""
-The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
-that the clusters show no significant difference between conditions. This is
-used in the permutation test which takes place after forming the clusters.
-
-!!! info
-    To control how clusters are formed, see
-    [`cluster_forming_t_threshold`][mne_bids_pipeline._config.cluster_forming_t_threshold].
-"""
-
-###############################################################################
-# GROUP AVERAGE SENSORS
-# ---------------------
-
-interpolate_bads_grand_average: bool = True
-"""
-Interpolate bad sensors in each dataset before calculating the grand
-average. This parameter is passed to the `mne.grand_average` function via
-the keyword argument `interpolate_bads`. It requires to have channel
-locations set.
-
-???+ example "Example"
-    ```python
-    interpolate_bads_grand_average = True
-    ```
-"""
-
-###############################################################################
-# TIME-FREQUENCY
-# --------------
-
-time_frequency_conditions: Sequence[str] = []
-"""
-The conditions to compute time-frequency decomposition on.
-
-???+ example "Example"
-    ```python
-    time_frequency_conditions = ['left', 'right']
-    ```
-"""
-
-time_frequency_freq_min: Optional[float] = 8
-"""
-Minimum frequency for the time frequency analysis, in Hz.
-???+ example "Example"
-    ```python
-    time_frequency_freq_min = 0.3  # 0.3 Hz
-    ```
-"""
-
-time_frequency_freq_max: Optional[float] = 40
-"""
-Maximum frequency for the time frequency analysis, in Hz.
-???+ example "Example"
-    ```python
-    time_frequency_freq_max = 22.3  # 22.3 Hz
-    ```
-"""
-
-time_frequency_cycles: Optional[Union[float, FloatArrayLike]] = None
-"""
-The number of cycles to use in the Morlet wavelet. This can be a single number
-or one per frequency, where frequencies are calculated via
-`np.arange(time_frequency_freq_min, time_frequency_freq_max)`.
-If `None`, uses
-`np.arange(time_frequency_freq_min, time_frequency_freq_max) / 3`.
-"""
-
-time_frequency_subtract_evoked: bool = False
-"""
-Whether to subtract the evoked response (averaged across all epochs) from the
-epochs before passing them to time-frequency analysis. Set this to `True` to
-highlight induced activity.
-
-!!! info
-     This also applies to CSP analysis.
-"""
-
-###############################################################################
-# TIME-FREQUENCY CSP
-# ------------------
-
 decoding_csp: bool = False
 """
 Whether to run decoding via Common Spatial Patterns (CSP) analysis on the
@@ -1752,6 +1685,91 @@ and the other from that midpoint to `time_frequency_freq_max`.
     }
 """
 
+n_boot: int = 5000
+"""
+The number of bootstrap resamples when estimating the standard error and
+confidence interval of the mean decoding scores.
+"""
+
+cluster_forming_t_threshold: Optional[float] = None
+"""
+The t-value threshold to use for forming clusters in the cluster-based
+permutation test run on the the time-by-time decoding scores.
+Data points with absolute t-values greater than this value
+will be used to form clusters. If `None`, the threshold will be automatically
+determined to correspond to a p-value of 0.05 for the given number of
+participants in a one-tailed test.
+
+!!! info
+    Only points with the same sign will be clustered together.
+"""
+
+cluster_n_permutations: int = 10_000
+"""
+The maximum number of permutations to perform in a cluster-based permutation
+test to determine the significance of the decoding scores across participants.
+"""
+
+cluster_permutation_p_threshold: Annotated[float, Interval(gt=0, lt=1)] = 0.05
+"""
+The alpha level (p-value, p threshold) to use for rejecting the null hypothesis
+that the clusters show no significant difference between conditions. This is
+used in the permutation test which takes place after forming the clusters.
+
+!!! info
+    To control how clusters are formed, see
+    [`cluster_forming_t_threshold`][mne_bids_pipeline._config.cluster_forming_t_threshold].
+"""
+
+# ## Time-frequency analysis
+
+time_frequency_conditions: Sequence[str] = []
+"""
+The conditions to compute time-frequency decomposition on.
+
+???+ example "Example"
+    ```python
+    time_frequency_conditions = ['left', 'right']
+    ```
+"""
+
+time_frequency_freq_min: Optional[float] = 8
+"""
+Minimum frequency for the time frequency analysis, in Hz.
+???+ example "Example"
+    ```python
+    time_frequency_freq_min = 0.3  # 0.3 Hz
+    ```
+"""
+
+time_frequency_freq_max: Optional[float] = 40
+"""
+Maximum frequency for the time frequency analysis, in Hz.
+???+ example "Example"
+    ```python
+    time_frequency_freq_max = 22.3  # 22.3 Hz
+    ```
+"""
+
+time_frequency_cycles: Optional[Union[float, FloatArrayLike]] = None
+"""
+The number of cycles to use in the Morlet wavelet. This can be a single number
+or one per frequency, where frequencies are calculated via
+`np.arange(time_frequency_freq_min, time_frequency_freq_max)`.
+If `None`, uses
+`np.arange(time_frequency_freq_min, time_frequency_freq_max) / 3`.
+"""
+
+time_frequency_subtract_evoked: bool = False
+"""
+Whether to subtract the evoked response (averaged across all epochs) from the
+epochs before passing them to time-frequency analysis. Set this to `True` to
+highlight induced activity.
+
+!!! info
+     This also applies to CSP analysis.
+"""
+
 time_frequency_baseline: Optional[tuple[float, float]] = None
 """
 Baseline period to use for the time-frequency analysis. If `None`, no baseline.
@@ -1782,15 +1800,32 @@ If `None`, no cropping.
     ```
 """
 
-###############################################################################
-# SOURCE ESTIMATION PARAMETERS
-# ----------------------------
-#
+# ## Group-level analysis
+
+interpolate_bads_grand_average: bool = True
+"""
+Interpolate bad sensors in each dataset before calculating the grand
+average. This parameter is passed to the `mne.grand_average` function via
+the keyword argument `interpolate_bads`. It requires to have channel
+locations set.
+
+???+ example "Example"
+    ```python
+    interpolate_bads_grand_average = True
+    ```
+"""
+
+# %%
+# # Source-level analysis
+
+# ## General source analysis settings
 
 run_source_estimation: bool = True
 """
 Whether to run source estimation processing steps if not explicitly requested.
 """
+
+# ## BEM surface
 
 use_template_mri: Optional[str] = None
 """
@@ -1863,6 +1898,8 @@ freesurfer_verbose: bool = False
 """
 Whether to print the complete output of FreeSurfer commands. Note that if
 `False`, no FreeSurfer output might be displayed at all!"""
+
+# ## Source space & forward solution
 
 mri_t1_path_generator: Optional[Callable[[BIDSPath], BIDSPath]] = None
 """
@@ -1955,6 +1992,8 @@ mindist: float = 5
 """
 Exclude points closer than this distance (mm) to the bounding surface.
 """
+
+# ## Inverse solution
 
 loose: Union[float, Literal["auto"]] = 0.2
 """
@@ -2103,9 +2142,10 @@ empty list, `[]`.
     ```
 """
 
-###############################################################################
-# Report generation
-# -----------------
+# %%
+# # Reports
+
+# ## Report generation
 
 report_evoked_n_time_points: Optional[int] = None
 """
@@ -2131,9 +2171,11 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
-###############################################################################
-# Execution
-# ---------
+# %%
+# # Execution
+#
+# These options control how the pipeline is executed but should not affect
+# what outputs get produced.
 
 n_jobs: int = 1
 """
@@ -2171,20 +2213,6 @@ If `None`, will use `.dask-worker-space` inside of
 dask_worker_memory_limit: str = "10G"
 """
 The maximum amount of RAM per Dask worker.
-"""
-
-random_state: Optional[int] = 42
-"""
-You can specify the seed of the random number generator (RNG).
-This setting is passed to the ICA algorithm and to the decoding function,
-ensuring reproducible results. Set to `None` to avoid setting the RNG
-to a defined state.
-"""
-
-shortest_event: int = 1
-"""
-Minimum number of samples an event must last. If the
-duration is less than this, an exception will be raised.
 """
 
 log_level: Literal["info", "error"] = "info"

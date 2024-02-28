@@ -77,7 +77,7 @@ nav:
         - Preparations for source-level analyses: getting_started/freesurfer.md
     - Processing steps:
         - Overview: features/overview.md
-        - Detailed list of processing steps: features/steps.md
+        - List of processing steps: features/steps.md
     - Configuration options:
         - General settings: settings/general.md
         - Preprocessing:

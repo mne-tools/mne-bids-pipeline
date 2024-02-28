@@ -30,27 +30,32 @@ def _open_report(
     session: Optional[str],
     run: Optional[str] = None,
     task: Optional[str] = None,
+    fname_report: Optional[BIDSPath] = None,
+    name: str = "report",
 ):
-    fname_report = BIDSPath(
-        subject=subject,
-        session=session,
-        # Report is across all runs, but for logging purposes it's helpful
-        # to pass the run and task for gen_log_kwargs
-        run=None,
-        task=cfg.task,
-        acquisition=cfg.acq,
-        recording=cfg.rec,
-        space=cfg.space,
-        extension=".h5",
-        datatype=cfg.datatype,
-        root=cfg.deriv_root,
-        suffix="report",
-        check=False,
-    ).fpath
+    if fname_report is None:
+        fname_report = BIDSPath(
+            subject=subject,
+            session=session,
+            # Report is across all runs, but for logging purposes it's helpful
+            # to pass the run and task for gen_log_kwargs
+            run=None,
+            task=cfg.task,
+            acquisition=cfg.acq,
+            recording=cfg.rec,
+            space=cfg.space,
+            extension=".h5",
+            datatype=cfg.datatype,
+            root=cfg.deriv_root,
+            suffix="report",
+            check=False,
+        )
+    fname_report = fname_report.fpath
+    assert fname_report.suffix == ".h5", fname_report.suffix
     # prevent parallel file access
     with FileLock(f"{fname_report}.lock"), _agg_backend():
         if not fname_report.is_file():
-            msg = "Initializing report HDF5 file"
+            msg = f"Initializing {name} HDF5 file"
             logger.info(**gen_log_kwargs(message=msg))
             report = _gen_empty_report(
                 cfg=cfg,
@@ -62,7 +67,7 @@ def _open_report(
             report = mne.open_report(fname_report)
         except Exception as exc:
             raise exc.__class__(
-                f"Could not open report HDF5 file:\n{fname_report}\n"
+                f"Could not open {name} HDF5 file:\n{fname_report}\n"
                 f"Got error:\n{exc}\nPerhaps you need to delete it?"
             ) from None
         try:
@@ -80,7 +85,7 @@ def _open_report(
             except Exception as exc:
                 logger.warning(f"Failed: {exc}")
             fname_report_html = fname_report.with_suffix(".html")
-            msg = f"Saving report: {_linkfile(fname_report_html)}"
+            msg = f"Saving {name}: {_linkfile(fname_report_html)}"
             logger.info(**gen_log_kwargs(message=msg))
             report.save(fname_report, overwrite=True)
             report.save(fname_report_html, overwrite=True, open_browser=False)

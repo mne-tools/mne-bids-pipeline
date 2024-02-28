@@ -2139,9 +2139,10 @@ If `None`, it defaults to the current default in MNE-Python.
 ???+ example "Example"
     Set vmin and vmax to the epochs rejection thresholds:
     ```python
-    report_add_epochs_kwargs = dict(image_kwargs=dict(
-        grad = dict(vmin=-reject['grad'], vmax=reject['grad']), 
-        mag=dict(vmin=-reject['mag'],vmax=reject['mag'])))
+    report_add_epochs_kwargs = {
+    "grad": {"vmin": -reject["grad"], "vmax": reject["grad"]},
+    "mag": {"vmin": -reject["mag"], "vmax": reject["mag"]},
+}
     ```
 """
 

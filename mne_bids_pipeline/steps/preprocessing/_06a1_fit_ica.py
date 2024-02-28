@@ -161,6 +161,7 @@ def run_ica(
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
+    ar_n_bad_epochs = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
         msg = (
             "Using autoreject to find bad epochs for ICA "
@@ -176,11 +177,14 @@ def run_ica(
         ar.fit(epochs)
         reject_log = ar.get_reject_log(epochs)
         epochs = epochs[~reject_log.bad_epochs]
+        ar_n_bad_epochs = reject_log.bad_epochs.sum()
+        ar_n_interpolate_ = ar.n_interpolate_
         msg = (
-            f"autoreject marked {reject_log.bad_epochs.sum()} epochs as bad "
-            f"(cross-validated n_interpolate limit: {ar.n_interpolate_})"
+            f"autoreject marked {ar_n_bad_epochs} epochs as bad "
+            f"(cross-validated n_interpolate limit: {ar_n_interpolate_})"
         )
         logger.info(**gen_log_kwargs(message=msg))
+        del ar
     else:
         # Reject epochs based on peak-to-peak rejection thresholds
         ica_reject = _get_reject(
@@ -253,11 +257,11 @@ def run_ica(
     ) as report:
         report.title = f"ICA – {report.title}"
         if cfg.ica_reject == "autoreject_local":
-            reject_log = ar.to_data_frame()
+            reject_log = reject_log = ar.get_reject_log(epochs)
             caption = (
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
-                f"{reject_log.bad_epochs.sum()} epochs were rejected because more than "
-                f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
+                f"{ar_n_bad_epochs} epochs were rejected because more than "
+                f"{ar_n_interpolate_} channels were bad (cross-validated n_interpolate "
                 f"limit; excluding globally bad and non-data channels, shown in "
                 f"white). Note that none of the blue segments were actually "
                 f"interpolated before submitting the data to ICA. This is following "

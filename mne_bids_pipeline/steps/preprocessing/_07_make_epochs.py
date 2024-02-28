@@ -214,7 +214,10 @@ def run_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files["epochs"] = bids_path_in.copy().update(
-        suffix="epo", processing=None, check=False
+        suffix="epo",
+        processing=None,
+        check=False,
+        split=None,
     )
     epochs.save(
         out_files["epochs"],

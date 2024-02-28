@@ -1,5 +1,6 @@
-"""Run Signal Subspace Projections (SSP) for artifact correction.
+"""Compute SSP.
 
+Signal subspace projections (SSP) vectors are computed from EOG and ECG signals.
 These are often also referred to as PCA vectors.
 """
 

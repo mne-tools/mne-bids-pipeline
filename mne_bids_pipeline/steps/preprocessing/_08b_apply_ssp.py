@@ -1,8 +1,7 @@
-"""Apply SSP projections and obtain the cleaned epochs and raw data.
+"""Apply SSP.
 
 Blinks and ECG artifacts are automatically detected and the corresponding SSP
 projections components are removed from the data.
-
 """
 
 from types import SimpleNamespace
@@ -114,7 +113,7 @@ def apply_ssp_raw(
     raw = mne.io.read_raw_fif(raw_fname)
     raw.add_proj(projs)
     out_files = dict()
-    out_files[in_key] = raw_fname.copy().update(processing="clean")
+    out_files[in_key] = raw_fname.copy().update(processing="clean", split=None)
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)

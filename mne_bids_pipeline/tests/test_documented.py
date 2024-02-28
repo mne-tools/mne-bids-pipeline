@@ -2,6 +2,7 @@
 import ast
 import os
 import re
+import sys
 from pathlib import Path
 
 import yaml
@@ -29,31 +30,40 @@ def test_options_documented():
     config_names = set(d for d in dir(config) if not d.startswith("_"))
     assert in_config == config_names
     settings_path = root_path.parent / "docs" / "source" / "settings"
+    sys.path.append(str(settings_path))
+    try:
+        from gen_settings import main
+    finally:
+        sys.path.pop()
+    main()
     assert settings_path.is_dir()
-    in_doc = set()
+    in_doc = dict()
     key = "        - "
-    allowed_duplicates = set(
-        [
-            "source_info_path_update",
-        ]
-    )
     for dirpath, _, fnames in os.walk(settings_path):
         for fname in fnames:
             if not fname.endswith(".md"):
                 continue
             # This is a .md file
-            with open(Path(dirpath) / fname) as fid:
+            # convert to relative path
+            fname = os.path.join(os.path.relpath(dirpath, settings_path), fname)
+            assert fname not in in_doc
+            in_doc[fname] = set()
+            with open(settings_path / fname) as fid:
                 for line in fid:
                     if not line.startswith(key):
                         continue
                     # The line starts with our magic key
                     val = line[len(key) :].strip()
-                    if val not in allowed_duplicates:
-                        assert val not in in_doc, "Duplicate documentation"
-                    in_doc.add(val)
+                    for other in in_doc:
+                        why = f"Duplicate docs in {fname} and {other} for {val}"
+                        assert val not in in_doc[other], why
+                    in_doc[fname].add(val)
     what = "docs/source/settings doc"
-    assert in_doc.difference(in_config) == set(), f"Extra values in {what}"
-    assert in_config.difference(in_doc) == set(), f"Values missing from {what}"
+    in_doc_all = set()
+    for vals in in_doc.values():
+        in_doc_all.update(vals)
+    assert in_doc_all.difference(in_config) == set(), f"Extra values in {what}"
+    assert in_config.difference(in_doc_all) == set(), f"Values missing from {what}"
 
 
 def test_datasets_in_doc():

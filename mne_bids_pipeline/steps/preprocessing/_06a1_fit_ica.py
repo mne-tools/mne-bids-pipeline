@@ -71,6 +71,8 @@ def run_ica(
     in_files: dict,
 ) -> dict:
     """Run ICA."""
+    import matplotlib.pyplot as plt
+
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
@@ -161,7 +163,7 @@ def run_ica(
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    ar_n_bad_epochs = ar_n_interpolate_ = None
+    ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
         msg = (
             "Using autoreject to find bad epochs for ICA "
@@ -175,12 +177,11 @@ def run_ica(
             verbose=False,
         )
         ar.fit(epochs)
-        reject_log = ar.get_reject_log(epochs)
-        epochs = epochs[~reject_log.bad_epochs]
-        ar_n_bad_epochs = reject_log.bad_epochs.sum()
+        ar_reject_log = ar.get_reject_log(epochs)
+        epochs = epochs[~ar_reject_log.bad_epochs]
         ar_n_interpolate_ = ar.n_interpolate_
         msg = (
-            f"autoreject marked {ar_n_bad_epochs} epochs as bad "
+            f"autoreject marked {ar_reject_log.bad_epochs.sum()} epochs as bad "
             f"(cross-validated n_interpolate limit: {ar_n_interpolate_})"
         )
         logger.info(**gen_log_kwargs(message=msg))
@@ -257,26 +258,27 @@ def run_ica(
     ) as report:
         report.title = f"ICA – {report.title}"
         if cfg.ica_reject == "autoreject_local":
-            reject_log = reject_log = ar.get_reject_log(epochs)
             caption = (
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
-                f"{ar_n_bad_epochs} epochs were rejected because more than "
-                f"{ar_n_interpolate_} channels were bad (cross-validated n_interpolate "
-                f"limit; excluding globally bad and non-data channels, shown in "
-                f"white). Note that none of the blue segments were actually "
+                f"{ar_reject_log.bad_epochs.sum()} epochs were rejected because more "
+                f"than {ar_n_interpolate_} channels were bad (cross-validated "
+                f"n_interpolate limit; excluding globally bad and non-data channels, "
+                f"shown in white). Note that none of the blue segments were actually "
                 f"interpolated before submitting the data to ICA. This is following "
                 f"the recommended approach for ICA described in the the Autoreject "
                 f"documentation."
             )
+            fig = ar_reject_log.plot(
+                orientation="horizontal", aspect="auto", show=False
+            )
             report.add_figure(
-                fig=reject_log.plot(
-                    orientation="horizontal", aspect="auto", show=False
-                ),
+                fig=fig,
                 title="Epochs: Autoreject cleaning",
                 caption=caption,
                 tags=("ica", "epochs", "autoreject"),
                 replace=True,
             )
+            plt.close(fig)
             del caption
         report.add_epochs(
             epochs=epochs,

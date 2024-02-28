@@ -4,11 +4,13 @@ import copy
 import functools
 import hashlib
 import inspect
+import json
 import pathlib
 import pdb
 import sys
 import time
 import traceback
+import zlib
 from types import SimpleNamespace
 from typing import Callable, Literal, Optional, Union
 
@@ -277,14 +279,27 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
+def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
     fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
 
     # Get the script from which the function is called for logging
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
-    df = pd.DataFrame(logs)
+    # We need to make the logs more compact to be able to write Excel format
+    # (32767 char limit)
+    compact_logs = list()
+    for log in logs:
+        log = log.copy()
+        # 1. Remove indentation (e.g., 220814 chars to 54416)
+        cfg_json = json.dumps(json.loads(log["cfg"]), separators=(",", ":"))
+        # 2. Compress because there's a lot of redundancy (e.g., 54416 chars to 8704)
+        #    level1=10028 level6 (default)=8704 level9=8351)
+        log["cfg_zip"] = zlib.compress(cfg_json.encode("utf-8"), level=1)
+        del log["cfg"]
+        compact_logs.append(log)
+    df = pd.DataFrame(compact_logs)
+    del logs, compact_logs
 
     columns = df.columns
     if "cfg" in columns:

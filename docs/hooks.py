@@ -1,4 +1,5 @@
 import ast
+import inspect
 import logging
 from collections import defaultdict
 from pathlib import Path
@@ -9,7 +10,7 @@ from mkdocs.structure.files import Files
 from mkdocs.structure.pages import Page
 from tqdm import tqdm
 
-from mne_bids_pipeline._config_utils import _get_step_modules
+from mne_bids_pipeline import _config_utils
 
 logger = logging.getLogger("mkdocs")
 
@@ -37,16 +38,8 @@ class _ParseConfigSteps:
             "get_runs",
             "get_subjects",
             "get_sessions",
-            # TODO: Fix these
-            "get_eeg_reference",
-            "get_all_contrasts",
-            "get_decoding_contrasts",
-            "get_fs_subject",
-            "get_fs_subjects_dir",
         }
         manual_kws = {
-            "get_mf_cal_fname": ("mf_cal_fname",),
-            "get_mf_ctc_fname": ("mf_ctc_fname",),
             "source/_04_make_forward:get_config:t1_bids_path": (
                 "mri_t1_path_generator",
             ),
@@ -62,9 +55,27 @@ class _ParseConfigSteps:
             ),
         }
         # Add a few helper functions
+        for func in (
+            _config_utils.get_eeg_reference,
+            _config_utils.get_all_contrasts,
+            _config_utils.get_decoding_contrasts,
+            _config_utils.get_fs_subject,
+            _config_utils.get_fs_subjects_dir,
+            _config_utils.get_mf_cal_fname,
+            _config_utils.get_mf_ctc_fname,
+        ):
+            key = func.__name__
+            manual_kws[key] = []
+            for attr in ast.walk(ast.parse(inspect.getsource(func))):
+                if not isinstance(attr, ast.Attribute):
+                    continue
+                if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
+                    continue
+                manual_kws[key].append(attr.attr)
+            manual_kws[key] = tuple(manual_kws[key])
 
         for module in tqdm(
-            sum(_get_step_modules().values(), tuple()),
+            sum(_config_utils._get_step_modules().values(), tuple()),
             desc="Generating option->step mapping",
         ):
             step = "/".join(module.__name__.split(".")[-2:])
@@ -88,6 +99,22 @@ class _ParseConfigSteps:
                             if keyword.value.attr in ("exec_params",):
                                 continue
                             self._add_step_option(step, keyword.value.attr)
+                    # Also look for root-level conditionals like use_maxwell_filter
+                    # or spatial_filter
+                    for cond in ast.iter_child_nodes(func):
+                        # is a conditional
+                        if not isinstance(cond, ast.If):
+                            continue
+                        # has a return statement
+                        if not any(isinstance(c, ast.Return) for c in ast.walk(cond)):
+                            continue
+                        # look at all attributes in the conditional
+                        for attr in ast.walk(cond.test):
+                            if not isinstance(attr, ast.Attribute):
+                                continue
+                            if attr.value.id != "config":
+                                continue
+                            self._add_step_option(step, attr.attr)
                 # Now look at get_config* functions
                 if not func.name.startswith("get_config"):
                     continue

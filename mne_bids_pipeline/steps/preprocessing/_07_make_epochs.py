@@ -7,6 +7,7 @@ Finally the epochs are saved to disk. For the moment, no rejection is applied.
 To save space, the epoch data can be decimated.
 """
 
+import inspect
 from types import SimpleNamespace
 from typing import Optional
 
@@ -259,6 +260,7 @@ def run_epochs(
             psd=psd,
             drop_log_ignore=(),
             replace=True,
+            **_add_epochs_image_kwargs(cfg),
         )
 
     # Interactive
@@ -267,6 +269,14 @@ def run_epochs(
         epochs.plot_image(combine="gfp", sigma=2.0, cmap="YlGnBu_r")
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
+def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict:
+    arg_spec = inspect.getfullargspec(mne.Report.add_epochs)
+    kwargs = dict()
+    if cfg.report_add_epochs_image_kwargs and "image_kwargs" in arg_spec.kwonlyargs:
+        kwargs["image_kwargs"] = cfg.report_add_epochs_image_kwargs
+    return kwargs
 
 
 # TODO: ideally we wouldn't need this anymore and could refactor the code above
@@ -318,6 +328,7 @@ def get_config(
         epochs_metadata_query=config.epochs_metadata_query,
         event_repeated=config.event_repeated,
         epochs_decim=config.epochs_decim,
+        report_add_epochs_image_kwargs=config.report_add_epochs_image_kwargs,
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=get_eeg_reference(config),

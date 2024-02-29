@@ -247,6 +247,8 @@ class _ParseConfigSteps:
 _parse_config_steps = _ParseConfigSteps()
 
 
+# This hack can be cleaned up once this is resolved:
+# https://github.com/mkdocstrings/mkdocstrings/issues/615#issuecomment-1971568301
 def on_pre_build(config: MkDocsConfig) -> None:
     """Monkey patch mkdocstrings-python jinja template to have global vars."""
     import mkdocstrings_handlers.python.handler

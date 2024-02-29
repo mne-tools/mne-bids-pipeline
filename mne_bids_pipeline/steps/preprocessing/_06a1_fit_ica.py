@@ -1,10 +1,12 @@
 """Fit ICA.
 
-This fits Independent Component Analysis (ICA) on raw data filtered with 1 Hz highpass,
-temporarily creating task-related epochs.
+This fits Independent Component Analysis (ICA) on high-pass filtered raw data,
+temporarily creating task-related epochs. The epochs created here are used for
+the purpose of fitting ICA only, and will not enter any other processing steps.
 
 Before performing ICA, we reject epochs based on peak-to-peak amplitude above
-the 'ica_reject' to filter massive non-biological artifacts.
+the 'ica_reject' limits to remove high-amplitude non-biological artifacts
+(e.g., voltage or flux spikes).
 """
 
 from types import SimpleNamespace

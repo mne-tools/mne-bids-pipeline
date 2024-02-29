@@ -287,8 +287,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
 
     # We need to make the logs more compact to be able to write Excel format
     # (32767 char limit per cell), in particular the "cfg" column has very large
-    # cells, so replace the "cfg" column with a "cfg_zip" column (parentheticals
-    # contain real-world example numbers used to illustrate the compression):
+    # cells, so replace the "cfg" column with separated cfg.* columns (still truncated
+    # to the 32767 char limit)
     compact_logs = list()
     for log in logs:
         log = log.copy()
@@ -303,7 +303,7 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
                 val = val["__pathlib__"]
             val = json.dumps(val, separators=(",", ":"))
             if len(val) > 32767:
-                val = val[-2] + " …"
+                val = val[:32765] + " …"
             log[f"cfg.{key}"] = val
         compact_logs.append(log)
     df = pd.DataFrame(compact_logs)

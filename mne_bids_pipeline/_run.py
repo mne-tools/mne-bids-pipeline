@@ -287,7 +287,9 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
     # We need to make the logs more compact to be able to write Excel format
-    # (32767 char limit)
+    # (32767 char limit per cell), in particular the "cfg" column has very large
+    # cells, so replace the "cfg" column with a "cfg_zip" column (parentheticals
+    # contain real-world example numbers used to illustrate the compression):
     compact_logs = list()
     for log in logs:
         log = log.copy()
@@ -296,7 +298,7 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
         # 2. Compress because there's a lot of redundancy (e.g., 54416 chars to 8704)
         #    level1=10028 level6 (default)=8704 level9=8351)
         log["cfg_zip"] = zlib.compress(cfg_json.encode("utf-8"), level=1)
-        del log["cfg"]
+        del log["cfg"]  # remove problematic column
         compact_logs.append(log)
     df = pd.DataFrame(compact_logs)
     del logs, compact_logs

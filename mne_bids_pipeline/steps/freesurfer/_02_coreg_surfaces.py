@@ -82,7 +82,6 @@ def make_coreg_surfaces(
 
 def get_config(*, config, subject) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        subject=subject,
         fs_subject=get_fs_subject(config, subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
     )

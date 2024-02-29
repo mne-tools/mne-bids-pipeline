@@ -79,6 +79,16 @@ section_tags = {
     "execution": (),
 }
 
+extra_headers = {
+    "general settings": """\
+!!! info
+    Many settings in this section control the pipeline behavior very early in the
+    pipeline. Therefore, for most of them (e.g., `bids_root`) we do not list the
+    steps that directly depend on the setting. The options with drop-down step
+    lists (e.g., `random_state`) have more localized effects.
+"""
+}
+
 option_header = """\
 ::: mne_bids_pipeline._config
     options:
@@ -156,6 +166,8 @@ def main():
                 current_lines += ["---", "tags:"]
                 current_lines += [f"  - {tag}" for tag in section_tags[key]]
                 current_lines += ["---"]
+            if key in extra_headers:
+                current_lines.extend(["", extra_headers[key]])
             continue
 
         if in_header:

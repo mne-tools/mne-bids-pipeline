@@ -11,7 +11,6 @@ import numpy as np
 from mne.coreg import Coregistration
 from mne_bids import BIDSPath, get_head_mri_trans
 
-from ..._config_import import _import_config
 from ..._config_utils import (
     _bids_kwargs,
     _get_bem_conductivity,
@@ -75,38 +74,15 @@ def _prepare_trans_subject(
     # electrophysiological and MRI sidecar files, and save it to an MNE
     # "trans" file in the derivatives folder.
 
-    # TODO: This breaks our encapsulation
-    config = _import_config(
-        config_path=exec_params.config_path,
-        check=False,
-        log=False,
-    )
-    if config.mri_t1_path_generator is None:
-        t1_bids_path = None
-    else:
-        t1_bids_path = BIDSPath(subject=subject, session=session, root=cfg.bids_root)
-        t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
-        if t1_bids_path.suffix is None:
-            t1_bids_path.update(suffix="T1w")
-        if t1_bids_path.datatype is None:
-            t1_bids_path.update(datatype="anat")
-
-    if config.mri_landmarks_kind is None:
-        landmarks_kind = None
-    else:
-        landmarks_kind = config.mri_landmarks_kind(
-            BIDSPath(subject=subject, session=session)
-        )
-
     msg = "Computing head ↔ MRI transform from matched fiducials"
     logger.info(**gen_log_kwargs(message=msg))
 
     trans = get_head_mri_trans(
         bids_path.copy().update(run=cfg.runs[0], root=cfg.bids_root, extension=None),
-        t1_bids_path=t1_bids_path,
+        t1_bids_path=cfg.t1_bids_path,
         fs_subject=cfg.fs_subject,
         fs_subjects_dir=cfg.fs_subjects_dir,
-        kind=landmarks_kind,
+        kind=cfg.landmarks_kind,
     )
 
     return trans
@@ -242,7 +218,24 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: Optional[str],
 ) -> SimpleNamespace:
+    if config.mri_t1_path_generator is None:
+        t1_bids_path = None
+    else:
+        t1_bids_path = BIDSPath(subject=subject, session=session, root=config.bids_root)
+        t1_bids_path = config.mri_t1_path_generator(t1_bids_path.copy())
+        if t1_bids_path.suffix is None:
+            t1_bids_path.update(suffix="T1w")
+        if t1_bids_path.datatype is None:
+            t1_bids_path.update(datatype="anat")
+    if config.mri_landmarks_kind is None:
+        landmarks_kind = None
+    else:
+        landmarks_kind = config.mri_landmarks_kind(
+            BIDSPath(subject=subject, session=session)
+        )
+
     cfg = SimpleNamespace(
         runs=get_runs(config=config, subject=subject),
         mindist=config.mindist,
@@ -253,6 +246,8 @@ def get_config(
         ch_types=config.ch_types,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),
+        t1_bids_path=t1_bids_path,
+        landmarks_kind=landmarks_kind,
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -269,7 +264,7 @@ def main(*, config: SimpleNamespace) -> None:
         parallel, run_func = parallel_func(run_forward, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,

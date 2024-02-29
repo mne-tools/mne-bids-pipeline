@@ -10,7 +10,6 @@ import pdb
 import sys
 import time
 import traceback
-import zlib
 from types import SimpleNamespace
 from typing import Callable, Literal, Optional, Union
 
@@ -294,23 +293,21 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
     for log in logs:
         log = log.copy()
         # 1. Remove indentation (e.g., 220814 chars to 54416)
-        cfg_json = json.dumps(json.loads(log["cfg"]), separators=(",", ":"))
-        # 2. Compress because there's a lot of redundancy (e.g., 54416 chars to 8704)
-        #    level1=10028 level6 (default)=8704 level9=8351)
-        log["cfg_zip"] = zlib.compress(cfg_json.encode("utf-8"), level=1)
-        del log["cfg"]  # remove problematic column
+        cfg = json.loads(log["cfg"])
+        del log["cfg"]
+        assert cfg["__instance_type__"] == ["types", "SimpleNamespace"], cfg[
+            "__instance_type__"
+        ]
+        for key, val in cfg["attributes"].items():
+            if isinstance(val, dict) and list(val.keys()) == ["__pathlib__"]:
+                val = val["__pathlib__"]
+            val = json.dumps(val, separators=(",", ":"))
+            if len(val) > 32767:
+                val = val[-2] + " …"
+            log[f"cfg.{key}"] = val
         compact_logs.append(log)
     df = pd.DataFrame(compact_logs)
     del logs, compact_logs
-
-    columns = df.columns
-    if "cfg" in columns:
-        columns = list(columns)
-        idx = columns.index("cfg")
-        del columns[idx]
-        columns.insert(-3, "cfg")  # put it before time, success & err cols
-
-    df = df[columns]
 
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):
         append = fname.exists()

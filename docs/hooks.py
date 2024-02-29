@@ -64,15 +64,15 @@ class _ParseConfigSteps:
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
         ):
-            key = func.__name__
-            manual_kws[key] = []
+            this_list = []
             for attr in ast.walk(ast.parse(inspect.getsource(func))):
                 if not isinstance(attr, ast.Attribute):
                     continue
                 if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
                     continue
-                manual_kws[key].append(attr.attr)
-            manual_kws[key] = tuple(manual_kws[key])
+                if attr.attr not in this_list:
+                    this_list.append(attr.attr)
+            manual_kws[func.__name__] = tuple(this_list)
 
         for module in tqdm(
             sum(_config_utils._get_step_modules().values(), tuple()),

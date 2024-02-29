@@ -26,6 +26,7 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from ._07_make_epochs import _add_epochs_image_kwargs
 
 
 def get_input_fnames_drop_ptp(
@@ -227,6 +228,7 @@ def drop_ptp(
             drop_log_ignore=(),
             tags=tags,
             replace=True,
+            **_add_epochs_image_kwargs(cfg=cfg),
         )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
@@ -246,6 +248,7 @@ def get_config(
         random_state=config.random_state,
         ch_types=config.ch_types,
         _epochs_split_size=config._epochs_split_size,
+        report_add_epochs_image_kwargs=config.report_add_epochs_image_kwargs,
         **_bids_kwargs(config=config),
     )
     return cfg

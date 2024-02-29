@@ -22,16 +22,6 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
     },
     "eeg_matchingpennies": {
-        # This dataset started out on osf.io as dataset https://osf.io/cj2dr
-        # then moved to g-node.org. As of 2023/02/28 when we download it via
-        # datalad it's too (~200 kB/sec!) and times out at the end:
-        #
-        #   "git": "https://gin.g-node.org/sappelhoff/eeg_matchingpennies",
-        #   "web": "",
-        #   "include": ["sub-05"],
-        #
-        # So now we mirror this datalad-fetched git repo back on osf.io!
-        # original dataset: "osf": "cj2dr"
         "web": "https://osf.io/download/8rbfk?version=1",
         "hash": "sha256:06bfbe52c50b9343b6b8d2a5de3dd33e66ad9303f7f6bfbe6868c3c7c375fafd",  # noqa: E501
     },

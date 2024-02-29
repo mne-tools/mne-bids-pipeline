@@ -23,8 +23,6 @@ doc:
 
 check:
 	which python
-	git-annex version
-	datalad --version
 	openneuro-py --version
 	mri_convert --version
 	mne_bids --version

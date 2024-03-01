@@ -286,7 +286,6 @@ jobs:
           keys:
             - data-cache-eeg_matchingpennies-1
       - bash_env
-      - gitconfig  # email address is needed for datalad
       - run:
           name: Get eeg_matchingpennies
           command: |
@@ -306,7 +305,6 @@ jobs:
           keys:
             - data-cache-MNE-phantom-KIT-data-1
       - bash_env
-      - gitconfig  # email address is needed for datalad
       - run:
           name: Get MNE-phantom-KIT-data
           command: |

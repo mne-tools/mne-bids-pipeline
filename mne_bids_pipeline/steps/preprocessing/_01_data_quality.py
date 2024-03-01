@@ -287,6 +287,7 @@ def get_config(
 ) -> SimpleNamespace:
     extra_kwargs = dict()
     if config.find_noisy_channels_meg or config.find_flat_channels_meg:
+        # If these change, need to update hooks.py in doc build
         extra_kwargs["mf_cal_fname"] = get_mf_cal_fname(
             config=config,
             subject=subject,

@@ -42,3 +42,4 @@
 - Code caching is now tested using GitHub Actions (#836 by @larsoner)
 - Steps in the documentation are now automatically parsed into flowcharts (#859 by @larsoner)
 - New configuration options are now automatically added to the docs (#863 by @larsoner)
+- Configuration options now have relevant steps listed in the docs (#866 by @larsoner)

@@ -938,7 +938,6 @@ def get_config(
     *,
     config,
 ) -> SimpleNamespace:
-    dtg_decim = config.decoding_time_generalization_decim
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
         task_is_rest=config.task_is_rest,
@@ -952,7 +951,7 @@ def get_config(
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
-        decoding_time_generalization_decim=dtg_decim,
+        decoding_time_generalization_decim=config.decoding_time_generalization_decim,
         decoding_csp=config.decoding_csp,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,

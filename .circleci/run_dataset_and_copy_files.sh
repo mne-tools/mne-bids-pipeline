@@ -32,15 +32,16 @@ echo "Runtime: ${SECONDS} seconds"
 
 # rerun test (check caching)!
 SECONDS=0
+RERUN_LIMIT=10
 if [[ "$RERUN_TEST" == "false" ]]; then
   echo "Skipping rerun test"
   RUN_TIME=0
 else
   pytest mne_bids_pipeline --cov-append -k $DS_RUN
   RUN_TIME=$SECONDS
-  echo "Runtime: ${RUN_TIME} seconds (should be < 20)"
+  echo "Runtime: ${RUN_TIME} seconds (should be <= $RERUN_LIMIT)"
 fi
-test $RUN_TIME -lt 20
+test $RUN_TIME -le $RERUN_LIMIT
 
 if [[ "$COPY_FILES" == "false" ]]; then
   echo "Not copying files"

@@ -294,6 +294,14 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
         assert isinstance(config, SimpleNamespace), type(config)
         cf_df = dict()
         for key, val in config.__dict__.items():
+            # We need to be careful about functions, json_tricks does not work with them
+            if inspect.isfunction(val):
+                new_val = ""
+                if func_file := inspect.getfile(val):
+                    new_val += f"{func_file}:"
+                if getattr(val, "__qualname__", None):
+                    new_val += val.__qualname__
+                val = "custom callable" if not new_val else new_val
             val = json_tricks.dumps(val, indent=4, sort_keys=False)
             # 32767 char limit per cell (could split over lines but if something is
             # this long, you'll probably get the gist from the first 32k chars)

@@ -4,7 +4,6 @@ import copy
 import functools
 import hashlib
 import inspect
-import json
 import pathlib
 import pdb
 import sys
@@ -38,14 +37,10 @@ def failsafe_run(
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
             )
-            kwargs_copy = copy.deepcopy(kwargs)
             t0 = time.time()
-            kwargs_copy["cfg"] = json_tricks.dumps(
-                kwargs_copy["cfg"], sort_keys=False, indent=4
-            )
             log_info = pd.concat(
                 [
-                    pd.Series(kwargs_copy, dtype=object),
+                    pd.Series(kwargs, dtype=object),
                     pd.Series(index=["time", "success", "error_message"], dtype=object),
                 ]
             )
@@ -58,10 +53,10 @@ def failsafe_run(
                 log_info["error_message"] = ""
             except Exception as e:
                 # Only keep what gen_log_kwargs() can handle
-                kwargs_copy = {
-                    k: v
-                    for k, v in kwargs_copy.items()
-                    if k in ("subject", "session", "task", "run")
+                kwargs_log = {
+                    k: kwargs[k]
+                    for k in ("subject", "session", "task", "run")
+                    if k in kwargs
                 }
                 message = (
                     f"A critical error occurred. " f"The error message was: {str(e)}"
@@ -88,13 +83,13 @@ def failsafe_run(
                     if _is_testing():
                         raise
                     logger.error(
-                        **gen_log_kwargs(message=message, **kwargs_copy, emoji="❌")
+                        **gen_log_kwargs(message=message, **kwargs_log, emoji="❌")
                     )
                     sys.exit(1)
                 elif on_error == "debug":
                     message += "\n\nStarting post-mortem debugger."
                     logger.error(
-                        **gen_log_kwargs(message=message, **kwargs_copy, emoji="🐛")
+                        **gen_log_kwargs(message=message, **kwargs_log, emoji="🐛")
                     )
                     extype, value, tb = sys.exc_info()
                     print(tb)
@@ -103,7 +98,7 @@ def failsafe_run(
                 else:
                     message += "\n\nContinuing pipeline run."
                     logger.error(
-                        **gen_log_kwargs(message=message, **kwargs_copy, emoji="🔂")
+                        **gen_log_kwargs(message=message, **kwargs_log, emoji="🔂")
                     )
             log_info["time"] = round(time.time() - t0, ndigits=1)
             return log_info
@@ -285,29 +280,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
-    # We need to make the logs more compact to be able to write Excel format
-    # (32767 char limit per cell), in particular the "cfg" column has very large
-    # cells, so replace the "cfg" column with separated cfg.* columns (still truncated
-    # to the 32767 char limit)
-    compact_logs = list()
-    for log in logs:
-        log = log.copy()
-        # 1. Remove indentation (e.g., 220814 chars to 54416)
-        cfg = json.loads(log["cfg"])
-        del log["cfg"]
-        assert cfg["__instance_type__"] == ["types", "SimpleNamespace"], cfg[
-            "__instance_type__"
-        ]
-        for key, val in cfg["attributes"].items():
-            if isinstance(val, dict) and list(val.keys()) == ["__pathlib__"]:
-                val = val["__pathlib__"]
-            val = json.dumps(val, separators=(",", ":"))
-            if len(val) > 32767:
-                val = val[:32765] + " …"
-            log[f"cfg.{key}"] = val
-        compact_logs.append(log)
-    df = pd.DataFrame(compact_logs)
-    del logs, compact_logs
+    df = pd.DataFrame(logs)
+    del logs
 
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):
         append = fname.exists()
@@ -317,7 +291,19 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
             mode="a" if append else "w",
             if_sheet_exists="replace" if append else None,
         )
+        assert isinstance(config, SimpleNamespace), type(config)
+        cf_df = dict()
+        for key, val in config.__dict__.items():
+            val = json_tricks.dumps(val, indent=4, sort_keys=False)
+            # 32767 char limit per cell (could split over lines but if something is
+            # this long, you'll probably get the gist from the first 32k chars)
+            if len(val) > 32767:
+                val = val[:32765] + " …"
+            cf_df[key] = val
+        cf_df = pd.DataFrame([cf_df], dtype=object)
         with writer:
+            # Config first then the data
+            cf_df.to_excel(writer, sheet_name="config", index=False)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 

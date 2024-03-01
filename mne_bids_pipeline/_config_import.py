@@ -28,7 +28,18 @@ def _import_config(
     """Import the default config and the user's config."""
     # Get the default
     config = _get_default_config()
+    # Public names users generally will have in their config
     valid_names = [d for d in dir(config) if not d.startswith("_")]
+    # Names that we will reduce the SimpleConfig to before returning
+    # (see _update_with_user_config)
+    keep_names = [d for d in dir(config) if not d.startswith("__")] + [
+        "config_path",
+        "PIPELINE_NAME",
+        "VERSION",
+        "CODE_URL",
+        "_raw_split_size",
+        "_epochs_split_size",
+    ]
 
     # Update with user config
     user_names = _update_with_user_config(
@@ -53,11 +64,16 @@ def _import_config(
     if check:
         _check_config(config, config_path)
         _check_misspellings_removals(
-            config,
             valid_names=valid_names,
             user_names=user_names,
             log=log,
+            config_validation=config.config_validation,
         )
+
+    # Finally, reduce to our actual supported params
+    config = SimpleNamespace(
+        **{k: getattr(config, k) for k in keep_names if hasattr(config, k)}
+    )
 
     # Take some standard actions
     mne.set_log_level(verbose=config.mne_log_level.upper())
@@ -406,11 +422,11 @@ _REMOVED_NAMES = {
 
 
 def _check_misspellings_removals(
-    config: SimpleNamespace,
     *,
     valid_names: list[str],
     user_names: list[str],
     log: bool,
+    config_validation: str,
 ) -> None:
     # for each name in the user names, check if it's in the valid names but
     # the correct one is not defined
@@ -427,7 +443,7 @@ def _check_misspellings_removals(
                     "the variable to reduce ambiguity and avoid this message, "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
-                _handle_config_error(this_msg, log, config)
+                _handle_config_error(this_msg, log, config_validation)
             if user_name in _REMOVED_NAMES:
                 new = _REMOVED_NAMES[user_name]["new_name"]
                 if new not in user_names:
@@ -438,16 +454,16 @@ def _check_misspellings_removals(
                         f"{msg} this variable has been removed as a valid "
                         f"config option, {instead}."
                     )
-                    _handle_config_error(this_msg, log, config)
+                    _handle_config_error(this_msg, log, config_validation)
 
 
 def _handle_config_error(
     msg: str,
     log: bool,
-    config: SimpleNamespace,
+    config_validation: str,
 ) -> None:
-    if config.config_validation == "raise":
+    if config_validation == "raise":
         raise ValueError(msg)
-    elif config.config_validation == "warn":
+    elif config_validation == "warn":
         if log:
             logger.warning(**gen_log_kwargs(message=msg, emoji="🛟"))

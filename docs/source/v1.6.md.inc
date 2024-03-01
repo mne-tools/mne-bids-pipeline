@@ -9,8 +9,9 @@
 - Added saving of clean raw data in addition to epochs (#840 by @larsoner)
 - Added saving of detected blink and cardiac events used to calculate SSP projectors (#840 by @larsoner)
 - Added [`noise_cov_method`][mne_bids_pipeline._config.noise_cov_method] to allow for the use of methods other than `"shrunk"` for noise covariance estimation (#854 by @larsoner)
-- Added option to pass `image_kwargs` to [`mne.Report.add_epochs`] to allow adjusting e.g. `"vmin"` and `"vmax"` of the epochs image in the report via [`report_add_epochs_image_kwargs`][mne_bids_pipeline._config.report_add_epochs_image_kwargs] (#848 by @SophieHerbst)
+- Added option to pass `image_kwargs` to [`mne.Report.add_epochs`] to allow adjusting e.g. `"vmin"` and `"vmax"` of the epochs image in the report via [`report_add_epochs_image_kwargs`][mne_bids_pipeline._config.report_add_epochs_image_kwargs]. This feature requires MNE-Python 1.7 or newer. (#848 by @SophieHerbst)
 - Split ICA fitting and artifact detection into separate steps. This means that now, ICA is split into a total of three consecutive steps: fitting, artifact detection, and the actual data cleaning step ("applying ICA"). This makes it easier to experiment with different settings for artifact detection without needing to re-fit ICA. (#865 by @larsoner)
+- The configuration used for the pipeline is now saved in a separate spreadsheet in the `.xlsx` log file (#869 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 

@@ -10,6 +10,7 @@
 - Added saving of detected blink and cardiac events used to calculate SSP projectors (#840 by @larsoner)
 - Added [`noise_cov_method`][mne_bids_pipeline._config.noise_cov_method] to allow for the use of methods other than `"shrunk"` for noise covariance estimation (#854 by @larsoner)
 - Added option to pass `image_kwargs` to [`mne.Report.add_epochs`] to allow adjusting e.g. `"vmin"` and `"vmax"` of the epochs image in the report via [`report_add_epochs_image_kwargs`][mne_bids_pipeline._config.report_add_epochs_image_kwargs] (#848 by @SophieHerbst)
+- Split ICA fitting and artifact detection into separate steps. This means that now, ICA is split into a total of three consecutive steps: fitting, artifact detection, and the actual data cleaning step ("applying ICA"). This makes it easier to experiment with different settings for artifact detection without needing to re-fit ICA. (#865 by @larsoner)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -31,6 +32,7 @@
 - Changed the default for [`ica_n_components`][mne_bids_pipeline._config.ica_n_components] from `0.8` (too conservative) to `None` to match MNE-Python's default (#853 by @larsoner)
 - Prevent events table for the average subject overflowing in reports (#854 by @larsoner)
 - Fixed split file behavior for Epochs when using ICA (#855 by @larsoner)
+- Fixed a bug where users could not set `_components.tsv` as it would be detected as a cache miss and overwritten on next pipeline run (#865 by @larsoner)
 
 ### :medical_symbol: Code health
 

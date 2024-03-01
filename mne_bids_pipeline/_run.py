@@ -4,6 +4,7 @@ import copy
 import functools
 import hashlib
 import inspect
+import json
 import pathlib
 import pdb
 import sys
@@ -277,23 +278,36 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def save_logs(*, config: SimpleNamespace, logs) -> None:  # TODO add type
+def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
     fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
 
     # Get the script from which the function is called for logging
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
-    df = pd.DataFrame(logs)
-
-    columns = df.columns
-    if "cfg" in columns:
-        columns = list(columns)
-        idx = columns.index("cfg")
-        del columns[idx]
-        columns.insert(-3, "cfg")  # put it before time, success & err cols
-
-    df = df[columns]
+    # We need to make the logs more compact to be able to write Excel format
+    # (32767 char limit per cell), in particular the "cfg" column has very large
+    # cells, so replace the "cfg" column with separated cfg.* columns (still truncated
+    # to the 32767 char limit)
+    compact_logs = list()
+    for log in logs:
+        log = log.copy()
+        # 1. Remove indentation (e.g., 220814 chars to 54416)
+        cfg = json.loads(log["cfg"])
+        del log["cfg"]
+        assert cfg["__instance_type__"] == ["types", "SimpleNamespace"], cfg[
+            "__instance_type__"
+        ]
+        for key, val in cfg["attributes"].items():
+            if isinstance(val, dict) and list(val.keys()) == ["__pathlib__"]:
+                val = val["__pathlib__"]
+            val = json.dumps(val, separators=(",", ":"))
+            if len(val) > 32767:
+                val = val[:32765] + " …"
+            log[f"cfg.{key}"] = val
+        compact_logs.append(log)
+    df = pd.DataFrame(compact_logs)
+    del logs, compact_logs
 
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):
         append = fname.exists()

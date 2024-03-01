@@ -1,13 +1,8 @@
 """Apply ICA.
 
-Blinks and ECG artifacts are automatically detected and the corresponding ICA
-components are removed from the data.
-This relies on the ICAs computed in 04-run_ica.py
-
-!! If you manually add components to remove (config.rejcomps_man),
-make sure you did not re-run the ICA in the meantime. Otherwise (especially if
-the random state was not set, or you used a different machine, the component
-order might differ).
+!! If you manually add components to remove, make sure you did not re-run the ICA in
+the meantime. Otherwise (especially if the random state was not set, or you used a
+different machine) the component order might differ.
 """
 
 from types import SimpleNamespace
@@ -49,7 +44,11 @@ def _ica_paths(
         check=False,
     )
     in_files = dict()
-    in_files["ica"] = bids_basename.copy().update(suffix="ica", extension=".fif")
+    in_files["ica"] = bids_basename.copy().update(
+        processing="ica",
+        suffix="ica",
+        extension=".fif",
+    )
     in_files["components"] = bids_basename.copy().update(
         processing="ica", suffix="components", extension=".tsv"
     )
@@ -72,7 +71,15 @@ def get_input_fnames_apply_ica_epochs(
     session: Optional[str],
 ) -> dict:
     in_files = _ica_paths(cfg=cfg, subject=subject, session=session)
-    in_files["epochs"] = in_files["ica"].copy().update(suffix="epo", extension=".fif")
+    in_files["epochs"] = (
+        in_files["ica"]
+        .copy()
+        .update(
+            suffix="epo",
+            extension=".fif",
+            processing=None,
+        )
+    )
     _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
@@ -188,7 +195,11 @@ def apply_ica_epochs(
     logger.info(**gen_log_kwargs(message=msg, **kwargs))
     if ica.exclude:
         with _open_report(
-            cfg=cfg, exec_params=exec_params, subject=subject, session=session
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session,
+            name="ICA.apply report",
         ) as report:
             report.add_ica(
                 ica=ica,

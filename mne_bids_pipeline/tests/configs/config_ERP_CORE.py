@@ -94,7 +94,7 @@ run_source_estimation = False
 on_rename_missing_events = "ignore"
 
 parallel_backend = "dask"
-dask_worker_memory_limit = "2G"
+dask_worker_memory_limit = "2.5G"
 n_jobs = 4
 
 if task == "N400":

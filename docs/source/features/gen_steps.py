@@ -13,30 +13,49 @@ autogen_header = f"""\
 steps_pre = f"""\
 {autogen_header}
 
-# Detailed list of processing steps
+# List of processing steps
 
 The following table provides a concise summary of each processing step. The
 step names can be used to run individual steps or entire groups of steps by
-passing their name(s) to `mne_bids_pipeline` via the `steps=...` argument.
+passing their name(s) to `mne_bids_pipeline` via the `steps=...` argument. However,
+we recommend using `mne_bids_pipeline config.py` to run the entire pipeline
+instead to ensure that all steps affected by a given change are re-run.
 """  # noqa: E501
 
 overview_pre = f"""\
 {autogen_header}
 
+# MNE-BIDS-Pipeline overview
+
 MNE-BIDS-Pipeline processes your data in a sequential manner, i.e., one step
 at a time. The next step is only run after the previous steps have been
 successfully completed. There are, of course, exceptions; for example, if you
-chose not to apply ICA, the respective steps will simply be omitted and we'll
-directly move to the subsequent steps. The following flow chart aims to give
-you a brief overview of which steps are included in the pipeline, in which
-order they are run, and how we group them together.
+chose not to apply ICA or SSP, the spatial filtering steps will simply be omitted and
+we'll directly move to the subsequent steps. See [the flowchart below](#flowchart) for
+a visualization of the steps, or check out the
+[list of processing steps](steps.md) for more information.
 
-!!! info
-    All intermediate results are saved to disk for later
-    inspection, and an **extensive report** is generated.
+All intermediate results are saved to disk for later inspection, and an
+**extensive report** is generated. Analyses are conducted on individual (per-subject)
+as well as group level.
 
-!!! info
-    Analyses are conducted on individual (per-subject) as well as group level.
+## Caching
+
+MNE-BIDS-Pipeline offers automated caching of intermediate results. This means that
+running `mne_bids_pipeline config.py` once will generate all outputs, and running it
+again will only re-run the steps that need rerunning based on:
+
+1. Changes to files on disk (e.g., updates to `bids_root` files), and
+2. Changes to `config.py`
+
+This is particularly useful when you are developing your pipeline, as you can quickly
+iterate over changes to your pipeline without having to re-run the entire pipeline
+every time -- only the steps that need to be re-run will be executed.
+
+## Flowchart
+
+For more detailed information on each step, please refer to the [detailed list
+of processing steps](steps.md).
 """
 
 icon_map = {
@@ -61,25 +80,26 @@ manual_order = {
         ("02", "03"),
         ("03", "04"),
         ("04", "05"),
-        ("05", "06a"),
+        ("05", "06a1"),
+        ("06a1", "06a2"),
         ("05", "06b"),
         ("05", "07"),
         # technically we could have the raw data flow here, but it doesn't really help
         # ("05", "08a"),
         # ("05", "08b"),
-        ("06a", "08a"),
-        ("07", "08a"),
+        ("06a2", "08a"),
         # Force the artifact-fitting and epoching steps on the same level, in this order
         """\
     subgraph Z[" "]
     direction LR
-      B06a
+      B06a1
       B07
       B06b
     end
     style Z fill:#0000,stroke-width:0px
 """,
         ("06b", "08b"),
+        ("07", "08a"),
         ("07", "08b"),
         ("08a", "09"),
         ("08b", "09"),
@@ -120,7 +140,10 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
     # Overview
     overview_lines.append(
         f"""\
-## {module_header}
+### {module_header}
+
+<details>
+<summary>Click to expand</summary>
 
 ```mermaid
 flowchart TD"""
@@ -161,7 +184,7 @@ flowchart TD"""
             assert isinstance(a_b, tuple), type(a_b)
             a_b = list(a_b)  # allow modification
             for ii, idx in enumerate(a_b):
-                assert idx in title_map, (dir_header, sorted(title_map))
+                assert idx in title_map, (dir_header, idx, sorted(title_map))
                 if idx not in mapped:
                     mapped.add(idx)
                     a_b[ii] = f'{idx}["{title_map[idx]}"]'
@@ -173,7 +196,7 @@ flowchart TD"""
             )
         )
         assert mapped == all_steps, all_steps.symmetric_difference(mapped)
-    overview_lines.append("```\n")
+    overview_lines.append("```\n\n</details>\n")
 
 (out_dir / "steps.md").write_text("\n".join(lines), encoding="utf8")
 (out_dir / "overview.md").write_text("\n".join(overview_lines), encoding="utf8")

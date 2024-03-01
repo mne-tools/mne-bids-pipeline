@@ -59,6 +59,7 @@ def _import_config(
             config_path=extra_config,
         )
         extra_exec_params_keys = ("_n_jobs",)
+    keep_names.extend(extra_exec_params_keys)
 
     # Check it
     if check:
@@ -70,10 +71,8 @@ def _import_config(
             config_validation=config.config_validation,
         )
 
-    # Finally, reduce to our actual supported params
-    config = SimpleNamespace(
-        **{k: getattr(config, k) for k in keep_names if hasattr(config, k)}
-    )
+    # Finally, reduce to our actual supported params (all keep_names should be present)
+    config = SimpleNamespace(**{k: getattr(config, k) for k in keep_names})
 
     # Take some standard actions
     mne.set_log_level(verbose=config.mne_log_level.upper())

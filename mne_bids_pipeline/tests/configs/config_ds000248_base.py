@@ -23,6 +23,7 @@ use_maxwell_filter = True
 
 
 def noise_cov(bp):
+    """Estimate the noise covariance."""
     # Use pre-stimulus period as noise source
     bp = bp.copy().update(suffix="epo")
     if not bp.fpath.exists():
@@ -47,5 +48,6 @@ n_jobs = 2
 
 
 def mri_t1_path_generator(bids_path):
+    """Return the path to a T1 image."""
     # don't really do any modifications – just for testing!
     return bids_path

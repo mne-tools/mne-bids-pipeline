@@ -7,7 +7,7 @@ import os
 import os.path as op
 from functools import partial
 from types import SimpleNamespace
-from typing import Optional
+from typing import Optional, TypedDict
 
 import mne
 import numpy as np
@@ -40,7 +40,6 @@ from ..._report import (
     plot_time_by_time_decoding_t_values,
 )
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
-from ...typing import TypedDict
 
 
 def get_input_fnames_average_evokeds(

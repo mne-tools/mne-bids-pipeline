@@ -13,7 +13,7 @@ import numpy as np
 from mne_bids import BIDSPath
 
 from ._logging import gen_log_kwargs, logger
-from .typing import ArbitraryContrast
+from ._types import ArbitraryContrast
 
 try:
     _set_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)

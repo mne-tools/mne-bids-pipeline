@@ -381,9 +381,7 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[
-    Literal["all"], Literal["ch_types"], Sequence["str"]
-] = "ch_types"
+analyze_channels: Union[Literal["all", "ch_types"], Sequence["str"]] = "ch_types"
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain
@@ -1525,9 +1523,9 @@ on entire epochs ("full-epochs decoding"), and separately on each time point
 conditions.
 """
 
-decoding_which_epochs: Literal[
-    "uncleaned", "after_ica", "after_ssp", "cleaned"
-] = "cleaned"
+decoding_which_epochs: Literal["uncleaned", "after_ica", "after_ssp", "cleaned"] = (
+    "cleaned"
+)
 """
 This setting controls which epochs will be fed into the decoding algorithms.
 

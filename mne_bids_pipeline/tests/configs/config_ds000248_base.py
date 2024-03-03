@@ -1,4 +1,5 @@
 """MNE Sample Data: M/EEG combined processing."""
+
 import mne
 
 study_name = "ds000248"

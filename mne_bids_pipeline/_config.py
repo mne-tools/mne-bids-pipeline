@@ -1,6 +1,7 @@
 # Default settings for data processing and analysis.
 
-from typing import Annotated, Any, Callable, Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Annotated, Any, Callable, Literal, Optional, Union
 
 from annotated_types import Ge, Interval, Len
 from mne import Covariance

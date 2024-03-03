@@ -118,8 +118,7 @@ junit_family = "xunit2"
 select = ["A", "B006", "D", "E", "F", "I", "W", "UP"]
 exclude = ["**/freesurfer/contrib", "dist/", "build/"]
 ignore = [
-  "D104",  # Missing docstring in public package
-  "UP035", # Import Iterable from collections.abc
+  "D104", # Missing docstring in public package
 ]
 
 [tool.ruff.lint.pydocstyle]

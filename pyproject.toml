@@ -118,7 +118,6 @@ junit_family = "xunit2"
 select = ["A", "B006", "D", "E", "F", "I", "W", "UP"]
 exclude = ["**/freesurfer/contrib", "dist/", "build/"]
 ignore = [
-  "D101",  # Missing docstring in public class
   "D103",  # Missing docstring in public function
   "D104",  # Missing docstring in public package
   "D413",  # Missing blank line after last section

@@ -1,4 +1,4 @@
-"""Typing."""
+"""Custom data types for MNE-BIDS-Pipeline."""
 
 import pathlib
 import sys
@@ -18,22 +18,22 @@ PathLike = Union[str, pathlib.Path]
 
 
 class ArbitraryContrast(TypedDict):
+    """Statistical contrast with arbitrary weights."""
+
     name: str
     conditions: list[str]
     weights: list[float]
 
 
 class LogKwargsT(TypedDict):
+    """Container for logger keyword arguments."""
+
     msg: str
     extra: dict[str, str]
 
 
-class ReferenceRunParams(TypedDict):
-    montage: mne.channels.DigMontage
-    dev_head_t: mne.Transform
-
-
 def assert_float_array_like(val):
+    """Convert the input into a NumPy float array."""
     # https://docs.pydantic.dev/latest/errors/errors/#custom-errors
     # Should raise ValueError or AssertionError... NumPy should do this for us
     return np.array(val, dtype="float")
@@ -47,6 +47,7 @@ FloatArrayLike = Annotated[
 
 
 def assert_dig_montage(val):
+    """Assert that the input is a DigMontage."""
     assert isinstance(val, mne.channels.DigMontage)
     return val
 

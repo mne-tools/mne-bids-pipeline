@@ -152,7 +152,7 @@ def _update_config_from_path(
             if not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
-            logger.debug("Overwriting: %s -> %s" % (key, val))
+            logger.debug(f"Overwriting: {key} -> {val}")
             setattr(config, key, val)
     return user_names
 

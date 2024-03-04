@@ -9,6 +9,7 @@ from mne_bids_pipeline._main import main
 
 
 def test_config_generation(tmp_path, monkeypatch):
+    """Test the generation of a default config file."""
     cmd = ["mne_bids_pipeline", "--create-config"]
     monkeypatch.setattr(sys, "argv", cmd)
     with pytest.raises(SystemExit, match="2"):

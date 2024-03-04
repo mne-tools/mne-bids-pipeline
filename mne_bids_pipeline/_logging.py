@@ -1,4 +1,5 @@
 """Logging."""
+
 import datetime
 import inspect
 import logging

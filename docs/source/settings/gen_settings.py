@@ -116,6 +116,7 @@ assign_re = re.compile(
 
 
 def main():
+    """Parse the configuration and generate the markdown documentation."""
     print(f"Parsing {config_path} to generate settings .md files.")
     # max file-level depth is 2 even though we have 3 subsection levels
     levels = [None, None]

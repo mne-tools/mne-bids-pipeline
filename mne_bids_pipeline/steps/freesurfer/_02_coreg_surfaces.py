@@ -4,6 +4,7 @@
 Use FreeSurfer's ``mkheadsurf`` and related utilities to make head surfaces
 suitable for coregistration.
 """
+
 from pathlib import Path
 from types import SimpleNamespace
 

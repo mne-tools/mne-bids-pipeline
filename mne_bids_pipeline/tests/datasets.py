@@ -5,6 +5,8 @@ from typing import TypedDict
 
 # If not supplied below, the effective defaults are listed in comments
 class DATASET_OPTIONS_T(TypedDict, total=False):
+    """A container for sources, hash, include and excludes of a dataset."""
+
     git: str  # ""
     openneuro: str  # ""
     osf: str  # ""

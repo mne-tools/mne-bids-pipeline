@@ -19,7 +19,7 @@ from ._config_utils import (
 from ._io import _empty_room_match_path, _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from ._types import PathLike
+from .typing import PathLike
 
 
 def make_epochs(

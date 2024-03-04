@@ -15,7 +15,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from ._logging import gen_log_kwargs, logger
-from ._types import PathLike
+from .typing import PathLike
 
 
 def _import_config(

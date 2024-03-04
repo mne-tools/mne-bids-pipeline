@@ -9,7 +9,7 @@ from typing import Optional, Union
 import rich.console
 import rich.theme
 
-from ._types import LogKwargsT
+from .typing import LogKwargsT
 
 
 class _MBPLogger:

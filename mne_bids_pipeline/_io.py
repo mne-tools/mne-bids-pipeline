@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import json_tricks
 from mne_bids import BIDSPath
 
-from ._types import PathLike
+from .typing import PathLike
 
 
 def _write_json(fname: PathLike, data: dict) -> None:

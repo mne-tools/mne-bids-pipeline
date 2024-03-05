@@ -161,6 +161,7 @@ def run_ica(
     del run
 
     # Set an EEG reference
+    assert isinstance(epochs, mne.Epochs)  # help type checker
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
@@ -201,8 +202,10 @@ def run_ica(
         logger.info(**gen_log_kwargs(message=msg))
         epochs.drop_bad(reject=ica_reject)
         ar = None
+
     msg = "Saving ICA epochs to disk."
     logger.info(**gen_log_kwargs(message=msg))
+    assert isinstance(epochs, mne.Epochs)  # help type checker
     epochs.save(
         out_files["epochs"],
         overwrite=True,

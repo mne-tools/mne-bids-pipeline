@@ -1,14 +1,22 @@
 """Logging."""
+
 import datetime
 import inspect
 import logging
 import os
-from typing import Optional, Union
+from typing import Any, Optional, TypedDict, Union
 
 import rich.console
 import rich.theme
 
 from .typing import LogKwargsT
+
+
+class ConsoleKwargs(TypedDict):
+    soft_wrap: bool
+    force_terminal: Union[bool, None]
+    legacy_windows: Union[bool, None]
+    theme: rich.theme.Theme
 
 
 class _MBPLogger:
@@ -30,12 +38,8 @@ class _MBPLogger:
         legacy_windows = os.getenv("MNE_BIDS_PIPELINE_LEGACY_WINDOWS", None)
         if legacy_windows is not None:
             legacy_windows = legacy_windows.lower() in ("true", "1")
-        kwargs = dict(
-            soft_wrap=True,
-            force_terminal=force_terminal,
-            legacy_windows=legacy_windows,
-        )
-        kwargs["theme"] = rich.theme.Theme(
+
+        theme = rich.theme.Theme(
             dict(
                 default="white",
                 # Rule
@@ -50,6 +54,13 @@ class _MBPLogger:
                 error="red",
             )
         )
+
+        kwargs: ConsoleKwargs = {
+            "soft_wrap": True,
+            "force_terminal": force_terminal,
+            "legacy_windows": legacy_windows,
+            "theme": theme,
+        }
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
@@ -70,16 +81,22 @@ class _MBPLogger:
         level = int(level)
         self._level = level
 
-    def debug(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+    def debug(self, msg: str, *, extra: Optional[dict[Any, Any]] = None) -> None:
         self._log_message(kind="debug", msg=msg, **(extra or {}))
 
-    def info(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+    def info(
+        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
+    ) -> None:
         self._log_message(kind="info", msg=msg, **(extra or {}))
 
-    def warning(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+    def warning(
+        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
+    ) -> None:
         self._log_message(kind="warning", msg=msg, **(extra or {}))
 
-    def error(self, msg: str, *, extra: Optional[LogKwargsT] = None) -> None:
+    def error(
+        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
+    ) -> None:
         self._log_message(kind="error", msg=msg, **(extra or {}))
 
     def _log_message(

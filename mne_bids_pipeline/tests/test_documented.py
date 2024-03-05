@@ -1,4 +1,5 @@
 """Test that all config values are documented."""
+
 import ast
 import os
 import re

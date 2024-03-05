@@ -1,3 +1,5 @@
+"""Custom hooks for MkDocs-Material."""
+
 import ast
 import inspect
 import logging
@@ -298,6 +300,7 @@ def on_page_markdown(
     config: MkDocsConfig,
     files: Files,
 ) -> str:
+    """Replace emojis."""
     if page.file.name == "index" and page.title == "Home":
         for rd, md in _EMOJI_MAP.items():
             markdown = markdown.replace(rd, md)

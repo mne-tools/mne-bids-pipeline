@@ -1,4 +1,5 @@
 """OMEGA Resting State Sample Data."""
+
 import numpy as np
 
 study_name = "ds000247"

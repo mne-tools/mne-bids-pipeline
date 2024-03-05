@@ -1,4 +1,5 @@
 """Download test data and run a test suite."""
+
 import os
 import shutil
 import sys
@@ -138,6 +139,7 @@ _n_jobs = {
 
 @pytest.fixture()
 def dataset_test(request):
+    """Provide a defined context for our dataset tests."""
     # There is probably a cleaner way to get this param, but this works for now
     capsys = request.getfixturevalue("capsys")
     dataset = request.getfixturevalue("dataset")

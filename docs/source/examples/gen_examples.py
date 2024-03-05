@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Generate documentation pages for our examples gallery."""
+
 import contextlib
 import logging
 import shutil

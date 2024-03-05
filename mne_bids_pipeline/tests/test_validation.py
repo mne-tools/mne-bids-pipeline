@@ -1,3 +1,5 @@
+"""Test the pipeline configuration import validator."""
+
 import pytest
 
 from mne_bids_pipeline._config_import import _import_config

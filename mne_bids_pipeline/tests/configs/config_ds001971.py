@@ -3,7 +3,6 @@
 See ds001971 on OpenNeuro: https://github.com/OpenNeuroDatasets/ds001971
 """
 
-
 study_name = "ds001971"
 bids_root = "~/mne_data/ds001971"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds001971"

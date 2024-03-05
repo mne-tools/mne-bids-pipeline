@@ -2,6 +2,7 @@
 
 
 def pytest_addoption(parser):
+    """Add pytest command line options."""
     parser.addoption(
         "--download",
         action="store_true",
@@ -10,6 +11,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """Add pytest configuration settings."""
     # register an additional marker
     config.addinivalue_line("markers", "dataset_test: mark that a test runs a dataset")
     warning_lines = r"""

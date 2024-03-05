@@ -57,7 +57,7 @@ def _ica_paths(
 
 def _read_ica_and_exclude(
     in_files: dict,
-) -> None:
+) -> mne.preprocessing.ICA:
     ica = read_ica(fname=in_files.pop("ica"))
     tsv_data = pd.read_csv(in_files.pop("components"), sep="\t")
     ica.exclude = tsv_data.loc[tsv_data["status"] == "bad", "component"].to_list()

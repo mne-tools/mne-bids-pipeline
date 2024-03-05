@@ -1,9 +1,10 @@
 import ast
 import copy
 import difflib
-import importlib
+import importlib.util
 import os
 import pathlib
+from collections.abc import Collection
 from dataclasses import field
 from functools import partial
 from types import SimpleNamespace
@@ -143,6 +144,11 @@ def _update_config_from_path(
     spec = importlib.util.spec_from_file_location(
         name="custom_config", location=config_path
     )
+
+    # help type checker
+    assert spec is not None
+    assert spec.loader is not None
+
     custom_cfg = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(custom_cfg)
     for key in dir(custom_cfg):
@@ -422,7 +428,7 @@ _REMOVED_NAMES = {
 
 def _check_misspellings_removals(
     *,
-    valid_names: list[str],
+    valid_names: Collection[str],
     user_names: list[str],
     log: bool,
     config_validation: str,

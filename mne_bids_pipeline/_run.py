@@ -257,6 +257,7 @@ class ConditionalStepMemory:
             del out_files
 
             if msg is not None:
+                assert emoji is not None  # help type checker
                 logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
             if short_circuit:
                 return

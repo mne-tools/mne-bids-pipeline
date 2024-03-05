@@ -304,7 +304,7 @@ def find_ica_artifacts(
         subject=subject,
         session=session,
         task=cfg.task,
-        fname_report=out_files["report"],
+        bp_report=out_files["report"],
         name="ICA report",
     ) as report:
         report.add_ica(

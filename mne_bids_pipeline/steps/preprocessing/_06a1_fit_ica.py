@@ -258,7 +258,7 @@ def run_ica(
         subject=subject,
         session=session,
         task=cfg.task,
-        fname_report=out_files["report"],
+        bp_report=out_files["report"],
         name="ICA.fit report",
     ) as report:
         report.title = f"ICA – {report.title}"

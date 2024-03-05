@@ -931,15 +931,29 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
-epochs_metadata_tmin: Optional[float] = None
+epochs_metadata_tmin: Optional[Union[float, str, list[str]]] = None
 """
-The beginning of the time window for metadata generation, in seconds,
-relative to the time-locked event of the respective epoch. This may be less
-than or larger than the epoch's first time point. If `None`, use the first
-time point of the epoch.
+The beginning of the time window used for epochs metadata generation. This setting
+controls the `tmin` value passed to
+[`mne.epochs.make_metadata`](https://mne.tools/stable/generated/mne.epochs.make_metadata.html).
+
+If a float, the time in seconds relative to the time-locked event of the respective
+epoch. Negative indicate times before, positive values indicate times after the
+time-locked event.
+
+If a string or a list of strings, the name(s) of events marking the start of time
+window.
+
+If `None`, use the first time point of the epoch.
+
+???+ info
+     Note that `None` here behaves differently than `tmin=None` in
+     `mne.epochs.make_metadata`. To achieve the same behavior, pass the name(s) of the
+     time-locked events instead.
+
 """
 
-epochs_metadata_tmax: Optional[float] = None
+epochs_metadata_tmax: Optional[Union[float, str, list[str]]] = None
 """
 Same as `epochs_metadata_tmin`, but specifying the **end** of the time
 window for metadata generation.

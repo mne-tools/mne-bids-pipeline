@@ -95,7 +95,6 @@ exclude = [
   "/docs",
   "/docs/source/examples/gen_examples.py", # specify explicitly because its exclusion is negated in .gitignore
   "/Makefile",
-  "/BUILDING.md",
   "/CONTRIBUTING.md",
   "ignore_words.txt",
 ]

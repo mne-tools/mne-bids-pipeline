@@ -3,7 +3,7 @@
 ### :new: New features & enhancements
 
 - Improved logging message during cache invalidation: We now print the selected
-  [`memory_file_method`][mne_bids_pipeline._config.memory_file_method] method ("hash" or "mtime").
+  [`memory_file_method`][mne_bids_pipeline._config.memory_file_method] ("hash" or "mtime").
   Previously, we'd always print "hash". (#876 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))

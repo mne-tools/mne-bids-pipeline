@@ -230,8 +230,8 @@ class ConditionalStepMemory:
                         got_hash = hash_(key, fname, kind="out")[1]
                         if this_hash != got_hash:
                             msg = (
-                                f"Output file hash mismatch for {str(fname)}, "
-                                "will recompute …"
+                                f"Output file {self.memory_file_method} mismatch for "
+                                f"{str(fname)}, will recompute …"
                             )
                             emoji = "🚫"
                             bad_out_files = True

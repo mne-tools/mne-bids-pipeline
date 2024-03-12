@@ -212,6 +212,41 @@ elif task == "N2pc":
     }
 
     eeg_reference = ["P9", "P10"]
+    # Analyze all EEG channels -- we only specify the channels here for the purpose of
+    # demonstration
+    analyze_channels = [
+        "FP1",
+        "F3",
+        "F7",
+        "FC3",
+        "C3",
+        "C5",
+        "P3",
+        "P7",
+        "P9",
+        "PO7",
+        "PO3",
+        "O1",
+        "Oz",
+        "Pz",
+        "CPz",
+        "FP2",
+        "Fz",
+        "F4",
+        "F8",
+        "FC4",
+        "FCz",
+        "Cz",
+        "C4",
+        "C6",
+        "P4",
+        "P8",
+        "P10",
+        "PO8",
+        "PO4",
+        "O2",
+    ]
+
     epochs_tmin = -0.2
     epochs_tmax = 0.8
     baseline = (None, 0)
@@ -224,6 +259,41 @@ elif task == "N170":
     }
 
     eeg_reference = "average"
+    # Analyze all EEG channels -- we only specify the channels here for the purpose of
+    # demonstration
+    analyze_channels = [
+        "FP1",
+        "F3",
+        "F7",
+        "FC3",
+        "C3",
+        "C5",
+        "P3",
+        "P7",
+        "P9",
+        "PO7",
+        "PO3",
+        "O1",
+        "Oz",
+        "Pz",
+        "CPz",
+        "FP2",
+        "Fz",
+        "F4",
+        "F8",
+        "FC4",
+        "FCz",
+        "Cz",
+        "C4",
+        "C6",
+        "P4",
+        "P8",
+        "P10",
+        "PO8",
+        "PO4",
+        "O2",
+    ]
+
     ica_n_components = 30 - 1
     for i in range(1, 180 + 1):
         orig_name = f"stimulus/{i}"

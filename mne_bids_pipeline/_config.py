@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from typing import Annotated, Any, Callable, Literal, Optional, Union
 
-from annotated_types import Ge, Interval, Len
+from annotated_types import Ge, Interval, Len, MinLen
 from mne import Covariance
 from mne_bids import BIDSPath
 
@@ -382,7 +382,9 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[Literal["all", "ch_types"], Sequence["str"]] = "ch_types"
+analyze_channels: Union[
+    Literal["all", "ch_types"], Annotated[Sequence["str"], MinLen(1)]
+] = "ch_types"
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain

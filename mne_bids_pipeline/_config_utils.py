@@ -423,22 +423,21 @@ RawEpochsEvokedT = TypeVar(
 def _restrict_analyze_channels(
     inst: RawEpochsEvokedT, cfg: SimpleNamespace
 ) -> RawEpochsEvokedT:
-    if cfg.analyze_channels:
-        analyze_channels = cfg.analyze_channels
-        if cfg.analyze_channels == "ch_types":
-            analyze_channels = cfg.ch_types
-            inst.apply_proj()
-        # We special-case the average reference here to work around a situation
-        # where e.g. `analyze_channels` might contain only a single channel:
-        # `concatenate_epochs` below will then fail when trying to create /
-        # apply the projection. We can avoid this by removing an existing
-        # average reference projection here, and applying the average reference
-        # directly – without going through a projector.
-        elif "eeg" in cfg.ch_types and cfg.eeg_reference == "average":
-            inst.set_eeg_reference("average")
-        else:
-            inst.apply_proj()
-        inst.pick(analyze_channels)
+    analyze_channels = cfg.analyze_channels
+    if cfg.analyze_channels == "ch_types":
+        analyze_channels = cfg.ch_types
+        inst.apply_proj()
+    # We special-case the average reference here to work around a situation
+    # where e.g. `analyze_channels` might contain only a single channel:
+    # `concatenate_epochs` below will then fail when trying to create /
+    # apply the projection. We can avoid this by removing an existing
+    # average reference projection here, and applying the average reference
+    # directly – without going through a projector.
+    elif "eeg" in cfg.ch_types and cfg.eeg_reference == "average":
+        inst.set_eeg_reference("average")
+    else:
+        inst.apply_proj()
+    inst.pick(analyze_channels)
     return inst
 
 

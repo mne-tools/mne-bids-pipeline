@@ -11,6 +11,7 @@ from ..._config_utils import (
     _pl,
     _restrict_analyze_channels,
     get_all_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
 )
@@ -172,6 +173,7 @@ def get_config(
         contrasts=get_all_contrasts(config),
         noise_cov=_sanitize_callable(config.noise_cov),
         analyze_channels=config.analyze_channels,
+        eeg_reference=get_eeg_reference(config),
         ch_types=config.ch_types,
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         **_bids_kwargs(config=config),

@@ -13,6 +13,7 @@ from ..._config_import import _import_config
 from ..._config_utils import (
     _bids_kwargs,
     _restrict_analyze_channels,
+    get_eeg_reference,
     get_noise_cov_bids_path,
     get_sessions,
     get_subjects,
@@ -292,6 +293,7 @@ def get_config(
         conditions=config.conditions,
         contrasts=config.contrasts,
         analyze_channels=config.analyze_channels,
+        eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
         **_bids_kwargs(config=config),
     )

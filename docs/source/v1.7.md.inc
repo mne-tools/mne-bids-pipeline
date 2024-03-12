@@ -16,7 +16,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
+
+- Fixed an error when using [`analyze_channels`][mne_bids_pipeline._config.analyze_channels] with EEG data, where e.g. ERP creation didn't work. (#883 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))
 

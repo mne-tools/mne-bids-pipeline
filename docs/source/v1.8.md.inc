@@ -18,6 +18,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :medical_symbol: Code health)
+### :medical_symbol: Code health
+
+- We removed the unused setting `shortest_event`. It was a relic of early days of the pipeline
+  and hasn't been in use for a long time. (#888 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))

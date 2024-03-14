@@ -38,6 +38,7 @@ dependencies = [
   "seaborn",
   "json_tricks",
   "pydantic >= 2.0.0",
+  "annotated-types",
   "rich",
   "python-picard",
   "qtpy",

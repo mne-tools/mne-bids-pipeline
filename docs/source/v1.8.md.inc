@@ -8,7 +8,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :package: Requirements)
+### :package: Requirements
+
+- MNE-BIDS-Pipeline now explicitly depends on `annotated-types` (#886 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))
 

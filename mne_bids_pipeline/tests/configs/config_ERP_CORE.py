@@ -28,7 +28,6 @@ import sys
 
 import mne
 
-study_name = "ERP-CORE"
 bids_root = "~/mne_data/ERP_CORE"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ERP_CORE"
 

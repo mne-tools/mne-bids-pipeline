@@ -6,7 +6,6 @@ https://openneuro.org/datasets/ds004229
 import mne
 import numpy as np
 
-study_name = "amnoise"
 bids_root = "~/mne_data/ds004229"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds004229"
 

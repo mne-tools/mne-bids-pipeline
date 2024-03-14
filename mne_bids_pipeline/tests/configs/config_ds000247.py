@@ -2,9 +2,8 @@
 
 import numpy as np
 
-study_name = "ds000247"
-bids_root = f"~/mne_data/{study_name}"
-deriv_root = f"~/mne_data/derivatives/mne-bids-pipeline/{study_name}"
+bids_root = "~/mne_data/ds000247"
+deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000247"
 
 subjects = ["0002"]
 sessions = ["01"]

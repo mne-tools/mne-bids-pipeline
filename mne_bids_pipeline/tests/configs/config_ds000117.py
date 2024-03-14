@@ -15,6 +15,7 @@ crop_runs = (0, 300)  # Reduce memory usage on CI system
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True
+process_empty_room = True
 
 mf_reference_run = "02"
 mf_cal_fname = bids_root + "/derivatives/meg_derivatives/sss_cal.dat"

@@ -586,6 +586,8 @@ def _get_run_path(
         add_bads=add_bads,
         kind=kind,
         allow_missing=allow_missing,
+        subject=subject,
+        session=session,
     )
 
 
@@ -652,6 +654,8 @@ def _get_noise_path(
         add_bads=add_bads,
         kind=kind,
         allow_missing=True,
+        subject=subject,
+        session=session,
     )
 
 
@@ -716,6 +720,8 @@ def _path_dict(
     kind: Literal["orig", "sss", "filt"],
     allow_missing: bool,
     key: Optional[str] = None,
+    subject: str,
+    session: Optional[str],
 ) -> dict:
     if add_bads is None:
         add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
@@ -726,7 +732,12 @@ def _path_dict(
     if allow_missing and not in_files[key].fpath.exists():
         return dict()
     if add_bads:
-        bads_tsv_fname = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
+        bads_tsv_fname = _bads_path(
+            cfg=cfg,
+            bids_path_in=bids_path_in,
+            subject=subject,
+            session=session,
+        )
         if bads_tsv_fname.fpath.is_file() or not allow_missing:
             in_files[f"{key}-bads"] = bads_tsv_fname
     return in_files
@@ -736,11 +747,15 @@ def _bads_path(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
+    subject: str,
+    session: Optional[str],
 ) -> BIDSPath:
     return bids_path_in.copy().update(
         suffix="bads",
         extension=".tsv",
         root=cfg.deriv_root,
+        subject=subject,
+        session=session,
         split=None,
         check=False,
     )

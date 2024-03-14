@@ -237,15 +237,17 @@ def _find_bads_maxwell(
             root=cfg.deriv_root,
             split=None,
             check=False,
+            session=session,
+            subject=subject,
         )
-        if not out_files["auto_scores"].fpath.parent.exists():
-            out_files["auto_scores"].fpath.parent.mkdir(parents=True)
         _write_json(out_files["auto_scores"], auto_scores)
 
     # Write the bad channels to disk.
     out_files["bads_tsv"] = _bads_path(
         cfg=cfg,
         bids_path_in=bids_path_in,
+        subject=subject,
+        session=session,
     )
     bads_for_tsv = []
     reasons = []

@@ -212,13 +212,12 @@ class _ParseConfigSteps:
                             funcs = [getattr(_config_utils, key)]
                         for func_name in _EXTRA_FUNCS.get(key, ()):
                             funcs.append(getattr(_config_utils, func_name))
-                        for func in funcs:
+                        for fi, func in enumerate(funcs):
                             source = inspect.getsource(func)
                             assert "config: SimpleNamespace" in source, key
-                            if key == "_import_data_kwargs":
-                                # This is true of both _import_data_kwargs and
-                                # get_mf_reference_run:
-                                assert "get_mf_reference_run(" in source, key
+                            if fi == 0:
+                                for func_name in _EXTRA_FUNCS.get(key, ()):
+                                    assert f"{func_name}(" in source, (key, func_name)
                             attrs = _CONFIG_RE.findall(source)
                             assert len(attrs), f"No config.* found in source of {key}"
                             for attr in attrs:

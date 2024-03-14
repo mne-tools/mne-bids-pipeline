@@ -1,4 +1,4 @@
-## v1.7.0 (unreleased)
+## v1.7.0 (2024-03-13)
 
 ### :new: New features & enhancements
 

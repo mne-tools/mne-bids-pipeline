@@ -62,6 +62,8 @@ def pytest_configure(config):
     ignore:datetime\.datetime\.utcnow.*:DeprecationWarning
     # pandas with no good workaround
     ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
+    # joblib on Windows sometimes
+    ignore:Persisting input arguments took.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

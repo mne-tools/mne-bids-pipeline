@@ -16,7 +16,7 @@ from ._config_utils import (
     get_runs,
     get_task,
 )
-from ._io import _empty_room_match_path, _read_json
+from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
 from .typing import PathLike
@@ -403,6 +403,7 @@ def import_experimental_data(
         _fix_stim_artifact_func(cfg=cfg, raw=raw)
 
     if bids_path_bads_in is not None:
+        run = "rest" if data_is_rest else run  # improve logging
         bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
         msg = f"Marking {len(bads)} channel{_pl(bads)} as bad."
         logger.info(**gen_log_kwargs(message=msg))
@@ -701,6 +702,12 @@ def _get_mf_reference_run_path(
     )
 
 
+def _empty_room_match_path(run_path: BIDSPath, cfg: SimpleNamespace) -> BIDSPath:
+    return run_path.copy().update(
+        extension=".json", suffix="emptyroommatch", root=cfg.deriv_root
+    )
+
+
 def _path_dict(
     *,
     cfg: SimpleNamespace,
@@ -723,20 +730,6 @@ def _path_dict(
         if bads_tsv_fname.fpath.is_file() or not allow_missing:
             in_files[f"{key}-bads"] = bads_tsv_fname
     return in_files
-
-
-def _auto_scores_path(
-    *,
-    cfg: SimpleNamespace,
-    bids_path_in: BIDSPath,
-) -> BIDSPath:
-    return bids_path_in.copy().update(
-        suffix="scores",
-        extension=".json",
-        root=cfg.deriv_root,
-        split=None,
-        check=False,
-    )
 
 
 def _bads_path(

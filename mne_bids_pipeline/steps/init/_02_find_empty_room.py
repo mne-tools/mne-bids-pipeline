@@ -13,7 +13,8 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._io import _empty_room_match_path, _write_json
+from ..._import_data import _empty_room_match_path
+from ..._io import _write_json
 from ..._logging import gen_log_kwargs, logger
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 

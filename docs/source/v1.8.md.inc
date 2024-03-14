@@ -14,9 +14,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Fix bug where Maxwell filtered data was not handled properly in CSP (#890 by @larsoner)
 
 ### :medical_symbol: Code health
 

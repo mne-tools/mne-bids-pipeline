@@ -434,7 +434,7 @@ def _check_misspellings_removals(
         if user_name not in valid_names:
             # find the closest match
             closest_match = difflib.get_close_matches(user_name, valid_names, n=1)
-            msg = f"Found a variable named {repr(user_name)} in your custom " "config,"
+            msg = f"Found a variable named {repr(user_name)} in your custom config,"
             if closest_match and closest_match[0] not in user_names:
                 this_msg = (
                     f"{msg} did you mean {repr(closest_match[0])}? "

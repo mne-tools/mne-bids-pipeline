@@ -184,7 +184,7 @@ def retrieve_custom_cov(
         check=False,
     )
 
-    msg = "Retrieving noise covariance matrix from custom user-supplied " "function"
+    msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["cov"].basename}'
     logger.info(**gen_log_kwargs(message=msg))

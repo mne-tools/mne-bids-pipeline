@@ -79,21 +79,15 @@ def prepare_epochs_and_y(
     *, epochs: mne.BaseEpochs, contrast: tuple[str, str], cfg, fmin: float, fmax: float
 ) -> tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
-    epochs_filt = epochs.copy().pick(["meg", "eeg"])
-
-    # We only take mag to speed up computation
-    # because the information is redundant between grad and mag
-    if cfg.datatype == "meg" and cfg.use_maxwell_filter:
-        epochs_filt.pick("mag")
-
     # filtering out the conditions we are not interested in, to ensure here we
     # have a valid partition between the condition of the contrast.
-    #
+
     # XXX Hack for handling epochs selection via metadata
+    # This also makes a copy
     if contrast[0].startswith("event_name.isin"):
-        epochs_filt = epochs_filt[f"{contrast[0]} or {contrast[1]}"]
+        epochs_filt = epochs[f"{contrast[0]} or {contrast[1]}"]
     else:
-        epochs_filt = epochs_filt[contrast]
+        epochs_filt = epochs[contrast]
 
     # Filtering is costly, so do it last, after the selection of the channels
     # and epochs. We know that often the filter will be longer than the signal,
@@ -497,6 +491,8 @@ def one_subject_decoding(
                 tags=tags,
                 replace=True,
             )
+            plt.close(fig)
+            del fig, title
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

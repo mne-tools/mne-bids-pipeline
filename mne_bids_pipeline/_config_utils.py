@@ -403,7 +403,7 @@ def get_mf_ctc_fname(
             root=config.bids_root,
         ).meg_crosstalk_fpath
         if mf_ctc_fpath is None:
-            raise ValueError("Could not find Maxwell Filter cross-talk " "file.")
+            raise ValueError("Could not find Maxwell Filter cross-talk file.")
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():

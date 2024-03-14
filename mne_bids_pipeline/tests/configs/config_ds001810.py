@@ -1,6 +1,5 @@
 """tDCS EEG."""
 
-study_name = "ds001810"
 bids_root = "~/mne_data/ds001810"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds001810"
 

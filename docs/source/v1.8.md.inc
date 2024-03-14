@@ -18,7 +18,7 @@
 
 ### :medical_symbol: Code health
 
-- We removed the unused setting `shortest_event`. It was a relic of early days of the pipeline
-  and hasn't been in use for a long time. (#888 by @hoechenberger)
+- We removed the unused settings `shortest_event` and `study_name`. They were relics of early days of the pipeline
+  and haven't been in use for a long time. (#888, #889 by @hoechenberger and @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))

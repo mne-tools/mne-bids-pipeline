@@ -1,6 +1,5 @@
 """MNE Sample Data: ICA."""
 
-study_name = 'MNE "sample" dataset'
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_ica"
 

@@ -17,17 +17,6 @@ from mne_bids_pipeline.typing import (
 # %%
 # # General settings
 
-study_name: str = ""
-"""
-Specify the name of your study. It will be used to populate filenames for
-saving the analysis results.
-
-???+ example "Example"
-    ```python
-    study_name = 'my-study'
-    ```
-"""
-
 bids_root: Optional[PathLike] = None
 """
 Specify the BIDS root directory. Pass an empty string or ```None` to use

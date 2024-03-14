@@ -439,12 +439,6 @@ ensuring reproducible results. Set to `None` to avoid setting the RNG
 to a defined state.
 """
 
-shortest_event: int = 1
-"""
-Minimum number of samples an event must last. If the
-duration is less than this, an exception will be raised.
-"""
-
 # %%
 # # Preprocessing
 

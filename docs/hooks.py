@@ -214,7 +214,6 @@ class _ParseConfigSteps:
             "reader_extra_params",
             "read_raw_bids_verbose",
             "plot_psd_for_runs",
-            "shortest_event",
             "find_breaks",
             "min_break_duration",
             "t_break_annot_start_after_previous_event",

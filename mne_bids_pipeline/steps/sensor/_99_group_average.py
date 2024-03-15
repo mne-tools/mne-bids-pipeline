@@ -736,8 +736,8 @@ def average_csp_decoding(
                 dtype={"subject": str},  # don't drop trailing zeros
             )
         except ValueError as exc:
-            # Reraise if we don't get the expected error, which should contain
-            # the missing sheet name
+            # The expected error for a missing sheet should have the sheet name,
+            # so reraise if we don't see it in the error message
             if "CSP Time-Frequency" not in str(exc):
                 raise
         else:

@@ -728,6 +728,7 @@ def average_csp_decoding(
             dtype={"subject": str},  # don't drop trailing zeros
         )
         all_decoding_data_freq.append(decoding_data_freq)
+        # Check to see if the TF sheet is there by a try/except
         try:
             decoding_data_time_freq = pd.read_excel(
                 fname_xlsx,
@@ -735,6 +736,8 @@ def average_csp_decoding(
                 dtype={"subject": str},  # don't drop trailing zeros
             )
         except ValueError as exc:
+            # Reraise if we don't get the expected error, which should contain
+            # the missing sheet name
             if "CSP Time-Frequency" not in str(exc):
                 raise
         else:

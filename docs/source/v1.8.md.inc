@@ -1,8 +1,8 @@
 ## v1.8.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- Disabling CSP time-frequency mode is now supported by passing an empty list to [`decoding_csp_times`][mne_bids_pipeline._config.decoding_csp_times] (#890 by @whoever)
 
 [//]: # (### :warning: Behavior changes)
 

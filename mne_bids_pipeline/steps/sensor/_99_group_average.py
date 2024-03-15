@@ -722,26 +722,20 @@ def average_csp_decoding(
     all_decoding_data_time_freq = []
     for key in list(in_files):
         fname_xlsx = in_files.pop(key)
-        decoding_data_freq = pd.read_excel(
-            fname_xlsx,
-            sheet_name="CSP Frequency",
-            dtype={"subject": str},  # don't drop trailing zeros
-        )
-        all_decoding_data_freq.append(decoding_data_freq)
-        # Check to see if the TF sheet is there by a try/except
-        try:
-            decoding_data_time_freq = pd.read_excel(
-                fname_xlsx,
-                sheet_name="CSP Time-Frequency",
+        with pd.ExcelFile(fname_xlsx) as xf:
+            decoding_data_freq = pd.read_excel(
+                xf,
+                sheet_name="CSP Frequency",
                 dtype={"subject": str},  # don't drop trailing zeros
             )
-        except ValueError as exc:
-            # The expected error for a missing sheet should have the sheet name,
-            # so reraise if we don't see it in the error message
-            if "CSP Time-Frequency" not in str(exc):
-                raise
-        else:
-            all_decoding_data_time_freq.append(decoding_data_time_freq)
+            all_decoding_data_freq.append(decoding_data_freq)
+            if "CSP Time-Frequency" in xf.sheet_names:
+                decoding_data_time_freq = pd.read_excel(
+                    xf,
+                    sheet_name="CSP Time-Frequency",
+                    dtype={"subject": str},  # don't drop trailing zeros
+                )
+                all_decoding_data_time_freq.append(decoding_data_time_freq)
         del fname_xlsx
 
     # Now calculate descriptes and bootstrap CIs.

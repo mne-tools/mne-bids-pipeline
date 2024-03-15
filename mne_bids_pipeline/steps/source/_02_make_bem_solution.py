@@ -99,7 +99,7 @@ def main(*, config) -> None:
         return
 
     if config.use_template_mri is not None:
-        msg = "Skipping, BEM solution computation not needed for " "MRI template …"
+        msg = "Skipping, BEM solution computation not needed for MRI template …"
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM

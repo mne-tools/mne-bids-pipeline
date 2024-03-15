@@ -16,7 +16,7 @@ from ._config_utils import (
     get_runs,
     get_task,
 )
-from ._io import _empty_room_match_path, _read_json
+from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
 from .typing import PathLike
@@ -403,6 +403,7 @@ def import_experimental_data(
         _fix_stim_artifact_func(cfg=cfg, raw=raw)
 
     if bids_path_bads_in is not None:
+        run = "rest" if data_is_rest else run  # improve logging
         bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
         msg = f"Marking {len(bads)} channel{_pl(bads)} as bad."
         logger.info(**gen_log_kwargs(message=msg))
@@ -585,6 +586,8 @@ def _get_run_path(
         add_bads=add_bads,
         kind=kind,
         allow_missing=allow_missing,
+        subject=subject,
+        session=session,
     )
 
 
@@ -651,6 +654,8 @@ def _get_noise_path(
         add_bads=add_bads,
         kind=kind,
         allow_missing=True,
+        subject=subject,
+        session=session,
     )
 
 
@@ -701,6 +706,12 @@ def _get_mf_reference_run_path(
     )
 
 
+def _empty_room_match_path(run_path: BIDSPath, cfg: SimpleNamespace) -> BIDSPath:
+    return run_path.copy().update(
+        extension=".json", suffix="emptyroommatch", root=cfg.deriv_root
+    )
+
+
 def _path_dict(
     *,
     cfg: SimpleNamespace,
@@ -709,6 +720,8 @@ def _path_dict(
     kind: Literal["orig", "sss", "filt"],
     allow_missing: bool,
     key: Optional[str] = None,
+    subject: str,
+    session: Optional[str],
 ) -> dict:
     if add_bads is None:
         add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
@@ -719,35 +732,30 @@ def _path_dict(
     if allow_missing and not in_files[key].fpath.exists():
         return dict()
     if add_bads:
-        bads_tsv_fname = _bads_path(cfg=cfg, bids_path_in=bids_path_in)
+        bads_tsv_fname = _bads_path(
+            cfg=cfg,
+            bids_path_in=bids_path_in,
+            subject=subject,
+            session=session,
+        )
         if bads_tsv_fname.fpath.is_file() or not allow_missing:
             in_files[f"{key}-bads"] = bads_tsv_fname
     return in_files
-
-
-def _auto_scores_path(
-    *,
-    cfg: SimpleNamespace,
-    bids_path_in: BIDSPath,
-) -> BIDSPath:
-    return bids_path_in.copy().update(
-        suffix="scores",
-        extension=".json",
-        root=cfg.deriv_root,
-        split=None,
-        check=False,
-    )
 
 
 def _bads_path(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
+    subject: str,
+    session: Optional[str],
 ) -> BIDSPath:
     return bids_path_in.copy().update(
         suffix="bads",
         extension=".tsv",
         root=cfg.deriv_root,
+        subject=subject,
+        session=session,
         split=None,
         check=False,
     )

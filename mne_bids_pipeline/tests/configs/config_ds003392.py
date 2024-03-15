@@ -37,6 +37,11 @@ decode = True
 decoding_time_generalization = True
 decoding_time_generalization_decim = 4
 contrasts = [("incoherent", "coherent")]
+decoding_csp = True
+decoding_csp_times = []
+decoding_csp_freqs = {
+    "alpha": (8, 12),
+}
 
 # Noise estimation
 noise_cov = "emptyroom"

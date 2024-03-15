@@ -67,13 +67,13 @@ def failsafe_run(
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
                 tb = traceback.extract_tb(e.__traceback__)
-                for fi, frame in enumerate(inspect.stack()):
+                for fi, frame in enumerate(tb):
                     is_step = pathlib.Path(frame.filename).parent.parent == step_dir
                     del frame
                     if is_step:
                         # omit everything before the "step" dir, which will
                         # generally be stuff from this file and joblib
-                        tb = tb[-fi:]
+                        tb = tb[fi:]
                         break
                 tb = "".join(traceback.format_list(tb))
 
@@ -221,9 +221,7 @@ class ConditionalStepMemory:
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
-                            msg = (
-                                f"Output file missing {str(fname)}, " "will recompute …"
-                            )
+                            msg = f"Output file missing: {fname}, will recompute …"
                             emoji = "🧩"
                             bad_out_files = True
                             break
@@ -231,7 +229,8 @@ class ConditionalStepMemory:
                         if this_hash != got_hash:
                             msg = (
                                 f"Output file {self.memory_file_method} mismatch for "
-                                f"{str(fname)}, will recompute …"
+                                f"{fname} ({this_hash} != {got_hash}), will "
+                                "recompute …"
                             )
                             emoji = "🚫"
                             bad_out_files = True

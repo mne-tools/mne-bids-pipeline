@@ -722,18 +722,20 @@ def average_csp_decoding(
     all_decoding_data_time_freq = []
     for key in list(in_files):
         fname_xlsx = in_files.pop(key)
-        decoding_data_freq = pd.read_excel(
-            fname_xlsx,
-            sheet_name="CSP Frequency",
-            dtype={"subject": str},  # don't drop trailing zeros
-        )
-        decoding_data_time_freq = pd.read_excel(
-            fname_xlsx,
-            sheet_name="CSP Time-Frequency",
-            dtype={"subject": str},  # don't drop trailing zeros
-        )
-        all_decoding_data_freq.append(decoding_data_freq)
-        all_decoding_data_time_freq.append(decoding_data_time_freq)
+        with pd.ExcelFile(fname_xlsx) as xf:
+            decoding_data_freq = pd.read_excel(
+                xf,
+                sheet_name="CSP Frequency",
+                dtype={"subject": str},  # don't drop trailing zeros
+            )
+            all_decoding_data_freq.append(decoding_data_freq)
+            if "CSP Time-Frequency" in xf.sheet_names:
+                decoding_data_time_freq = pd.read_excel(
+                    xf,
+                    sheet_name="CSP Time-Frequency",
+                    dtype={"subject": str},  # don't drop trailing zeros
+                )
+                all_decoding_data_time_freq.append(decoding_data_time_freq)
         del fname_xlsx
 
     # Now calculate descriptes and bootstrap CIs.
@@ -743,12 +745,15 @@ def average_csp_decoding(
         session=session,
         data=all_decoding_data_freq,
     )
-    grand_average_time_freq = _average_csp_time_freq(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        data=all_decoding_data_time_freq,
-    )
+    if len(all_decoding_data_time_freq):
+        grand_average_time_freq = _average_csp_time_freq(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            data=all_decoding_data_time_freq,
+        )
+    else:
+        grand_average_time_freq = None
 
     out_files = dict()
     out_files["freq"] = _decoding_out_fname(
@@ -762,17 +767,15 @@ def average_csp_decoding(
     )
     with pd.ExcelWriter(out_files["freq"]) as w:
         grand_average_freq.to_excel(w, sheet_name="CSP Frequency", index=False)
-        grand_average_time_freq.to_excel(
-            w, sheet_name="CSP Time-Frequency", index=False
-        )
+        if grand_average_time_freq is not None:
+            grand_average_time_freq.to_excel(
+                w, sheet_name="CSP Time-Frequency", index=False
+            )
+    del grand_average_time_freq
 
     # Perform a cluster-based permutation test.
     subjects = cfg.subjects
-    time_bins = np.array(cfg.decoding_csp_times)
-    if time_bins.ndim == 1:
-        time_bins = np.array(list(zip(time_bins[:-1], time_bins[1:])))
-    time_bins = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
-    freq_name_to_bins_map = _handle_csp_args(
+    freq_name_to_bins_map, time_bins = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
@@ -781,79 +784,84 @@ def average_csp_decoding(
         time_frequency_freq_min=cfg.time_frequency_freq_min,
         time_frequency_freq_max=cfg.time_frequency_freq_max,
     )
-    data_for_clustering = {}
-    for freq_range_name in freq_name_to_bins_map:
-        a = np.empty(
-            shape=(
-                len(subjects),
-                len(time_bins),
-                len(freq_name_to_bins_map[freq_range_name]),
-            )
-        )
-        a.fill(np.nan)
-        data_for_clustering[freq_range_name] = a
-
-    g = pd.concat(all_decoding_data_time_freq).groupby(
-        ["subject", "freq_range_name", "t_min", "t_max"]
-    )
-
-    for (subject_, freq_range_name, t_min, t_max), df in g:
-        scores = df["mean_crossval_score"]
-        sub_idx = subjects.index(subject_)
-        time_bin_idx = time_bins.loc[
-            (np.isclose(time_bins["t_min"], t_min))
-            & (np.isclose(time_bins["t_max"], t_max)),
-            :,
-        ].index
-        assert len(time_bin_idx) == 1
-        time_bin_idx = time_bin_idx[0]
-        data_for_clustering[freq_range_name][sub_idx][time_bin_idx] = scores
-
-    if cfg.cluster_forming_t_threshold is None:
-        import scipy.stats
-
-        cluster_forming_t_threshold = scipy.stats.t.ppf(
-            1 - 0.05,
-            len(cfg.subjects) - 1,  # one-sided test
-        )
+    if not len(time_bins):
+        fname_csp_cluster_results = None
     else:
-        cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
-
-    cluster_permutation_results = {}
-    for freq_range_name, X in data_for_clustering.items():
-        if len(X) < 2:
-            t_vals = np.full(X.shape[1:], np.nan)
-            H0 = all_clusters = cluster_p_vals = np.array([])
-        else:
-            (
-                t_vals,
-                all_clusters,
-                cluster_p_vals,
-                H0,
-            ) = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
-                X=X - 0.5,  # One-sample test against zero.
-                threshold=cluster_forming_t_threshold,
-                n_permutations=cfg.cluster_n_permutations,
-                adjacency=None,  # each time & freq bin connected to its neighbors
-                out_type="mask",
-                tail=1,  # one-sided: significantly above chance level
-                seed=cfg.random_state,
+        time_bins = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
+        data_for_clustering = {}
+        for freq_range_name in freq_name_to_bins_map:
+            a = np.empty(
+                shape=(
+                    len(subjects),
+                    len(time_bins),
+                    len(freq_name_to_bins_map[freq_range_name]),
+                )
             )
-        n_permutations = H0.size - 1
-        all_clusters = np.array(all_clusters)  # preserve "empty" 0th dimension
-        cluster_permutation_results[freq_range_name] = {
-            "mean_crossval_scores": X.mean(axis=0),
-            "t_vals": t_vals,
-            "clusters": all_clusters,
-            "cluster_p_vals": cluster_p_vals,
-            "cluster_t_threshold": cluster_forming_t_threshold,
-            "n_permutations": n_permutations,
-            "time_bin_edges": cfg.decoding_csp_times,
-            "freq_bin_edges": cfg.decoding_csp_freqs[freq_range_name],
-        }
+            a.fill(np.nan)
+            data_for_clustering[freq_range_name] = a
 
-    out_files["cluster"] = out_files["freq"].copy().update(extension=".mat")
-    savemat(file_name=out_files["cluster"], mdict=cluster_permutation_results)
+        g = pd.concat(all_decoding_data_time_freq).groupby(
+            ["subject", "freq_range_name", "t_min", "t_max"]
+        )
+
+        for (subject_, freq_range_name, t_min, t_max), df in g:
+            scores = df["mean_crossval_score"]
+            sub_idx = subjects.index(subject_)
+            time_bin_idx = time_bins.loc[
+                (np.isclose(time_bins["t_min"], t_min))
+                & (np.isclose(time_bins["t_max"], t_max)),
+                :,
+            ].index
+            assert len(time_bin_idx) == 1
+            time_bin_idx = time_bin_idx[0]
+            data_for_clustering[freq_range_name][sub_idx][time_bin_idx] = scores
+
+        if cfg.cluster_forming_t_threshold is None:
+            import scipy.stats
+
+            cluster_forming_t_threshold = scipy.stats.t.ppf(
+                1 - 0.05,
+                len(cfg.subjects) - 1,  # one-sided test
+            )
+        else:
+            cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
+
+        cluster_permutation_results = {}
+        for freq_range_name, X in data_for_clustering.items():
+            if len(X) < 2:
+                t_vals = np.full(X.shape[1:], np.nan)
+                H0 = all_clusters = cluster_p_vals = np.array([])
+            else:
+                (
+                    t_vals,
+                    all_clusters,
+                    cluster_p_vals,
+                    H0,
+                ) = mne.stats.permutation_cluster_1samp_test(  # noqa: E501
+                    X=X - 0.5,  # One-sample test against zero.
+                    threshold=cluster_forming_t_threshold,
+                    n_permutations=cfg.cluster_n_permutations,
+                    adjacency=None,  # each time & freq bin connected to its neighbors
+                    out_type="mask",
+                    tail=1,  # one-sided: significantly above chance level
+                    seed=cfg.random_state,
+                )
+            n_permutations = H0.size - 1
+            all_clusters = np.array(all_clusters)  # preserve "empty" 0th dimension
+            cluster_permutation_results[freq_range_name] = {
+                "mean_crossval_scores": X.mean(axis=0),
+                "t_vals": t_vals,
+                "clusters": all_clusters,
+                "cluster_p_vals": cluster_p_vals,
+                "cluster_t_threshold": cluster_forming_t_threshold,
+                "n_permutations": n_permutations,
+                "time_bin_edges": cfg.decoding_csp_times,
+                "freq_bin_edges": cfg.decoding_csp_freqs[freq_range_name],
+            }
+
+        out_files["cluster"] = out_files["freq"].copy().update(extension=".mat")
+        savemat(file_name=out_files["cluster"], mdict=cluster_permutation_results)
+        fname_csp_cluster_results = out_files["cluster"]
 
     assert subject == "average"
     with _open_report(
@@ -867,7 +875,7 @@ def average_csp_decoding(
             cond_1=cond_1,
             cond_2=cond_2,
             fname_csp_freq_results=out_files["freq"],
-            fname_csp_cluster_results=out_files["cluster"],
+            fname_csp_cluster_results=fname_csp_cluster_results,
         )
     return _prep_out_files(out_files=out_files, exec_params=exec_params)
 

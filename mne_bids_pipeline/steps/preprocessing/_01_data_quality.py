@@ -17,7 +17,6 @@ from ..._config_utils import (
     get_subjects,
 )
 from ..._import_data import (
-    _auto_scores_path,
     _bads_path,
     _get_mf_reference_run_path,
     _get_run_rest_noise_path,
@@ -159,7 +158,7 @@ def _find_bads_maxwell(
     elif cfg.find_noisy_channels_meg and not cfg.find_flat_channels_meg:
         msg = "Finding noisy channels using Maxwell filtering."
     else:
-        msg = "Finding flat channels and noisy channels using " "Maxwell filtering."
+        msg = "Finding flat channels and noisy channels using Maxwell filtering."
     logger.info(**gen_log_kwargs(message=msg))
 
     if run is None and task == "noise":
@@ -232,18 +231,23 @@ def _find_bads_maxwell(
     logger.info(**gen_log_kwargs(message=msg))
 
     if cfg.find_noisy_channels_meg:
-        out_files["auto_scores"] = _auto_scores_path(
-            cfg=cfg,
-            bids_path_in=bids_path_in,
+        out_files["auto_scores"] = bids_path_in.copy().update(
+            suffix="scores",
+            extension=".json",
+            root=cfg.deriv_root,
+            split=None,
+            check=False,
+            session=session,
+            subject=subject,
         )
-        if not out_files["auto_scores"].fpath.parent.exists():
-            out_files["auto_scores"].fpath.parent.mkdir(parents=True)
         _write_json(out_files["auto_scores"], auto_scores)
 
     # Write the bad channels to disk.
     out_files["bads_tsv"] = _bads_path(
         cfg=cfg,
         bids_path_in=bids_path_in,
+        subject=subject,
+        session=session,
     )
     bads_for_tsv = []
     reasons = []

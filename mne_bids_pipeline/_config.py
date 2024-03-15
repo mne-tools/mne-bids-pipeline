@@ -1611,7 +1611,7 @@ The edges of the time bins to use for CSP decoding.
 Must contain at least two elements. By default, 5 equally-spaced bins are
 created across the non-negative time range of the epochs.
 All specified time points must be contained in the epochs interval.
-If `None`, do not perform **time-frequency** analysis, and only run CSP on
+If an empty list, do not perform **time-frequency** analysis, and only run CSP on
 **frequency** data.
 
 ???+ example "Example"

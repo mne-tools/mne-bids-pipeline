@@ -594,14 +594,14 @@ def add_csp_grand_average(
     cond_1: str,
     cond_2: str,
     fname_csp_freq_results: BIDSPath,
-    fname_csp_cluster_results: pd.DataFrame,
+    fname_csp_cluster_results: Optional[pd.DataFrame],
 ):
     """Add CSP decoding results to the grand average report."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     # First, plot decoding scores across frequency bins (entire epochs).
     section = "Decoding: CSP"
-    freq_name_to_bins_map = _handle_csp_args(
+    freq_name_to_bins_map, _ = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
@@ -684,6 +684,8 @@ def add_csp_grand_average(
     )
 
     # Now, plot decoding scores across time-frequency bins.
+    if fname_csp_cluster_results is None:
+        return
     csp_cluster_results = loadmat(fname_csp_cluster_results)
     fig, ax = plt.subplots(
         nrows=1, ncols=2, sharex=True, sharey=True, constrained_layout=True

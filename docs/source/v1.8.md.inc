@@ -1,8 +1,8 @@
 ## v1.8.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- Disabling CSP time-frequency mode is now supported by passing an empty list to [`decoding_csp_times`][mne_bids_pipeline._config.decoding_csp_times] (#890 by @whoever)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -14,9 +14,10 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Fix handling of Maxwell-filtered data in CSP (#890 by @larsoner)
+- Avoid recomputation / cache miss when the same empty-room file is matched to multiple subjects (#890 by @larsoner)
 
 ### :medical_symbol: Code health
 

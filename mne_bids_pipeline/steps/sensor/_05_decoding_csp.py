@@ -79,21 +79,15 @@ def prepare_epochs_and_y(
     *, epochs: mne.BaseEpochs, contrast: tuple[str, str], cfg, fmin: float, fmax: float
 ) -> tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
-    epochs_filt = epochs.copy().pick(["meg", "eeg"])
-
-    # We only take mag to speed up computation
-    # because the information is redundant between grad and mag
-    if cfg.datatype == "meg" and cfg.use_maxwell_filter:
-        epochs_filt.pick("mag")
-
     # filtering out the conditions we are not interested in, to ensure here we
     # have a valid partition between the condition of the contrast.
-    #
+
     # XXX Hack for handling epochs selection via metadata
+    # This also makes a copy
     if contrast[0].startswith("event_name.isin"):
-        epochs_filt = epochs_filt[f"{contrast[0]} or {contrast[1]}"]
+        epochs_filt = epochs[f"{contrast[0]} or {contrast[1]}"]
     else:
-        epochs_filt = epochs_filt[contrast]
+        epochs_filt = epochs[contrast]
 
     # Filtering is costly, so do it last, after the selection of the channels
     # and epochs. We know that often the filter will be longer than the signal,
@@ -190,7 +184,7 @@ def one_subject_decoding(
     )
 
     # Loop over frequencies (all time points lumped together)
-    freq_name_to_bins_map = _handle_csp_args(
+    freq_name_to_bins_map, time_bins = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
@@ -264,11 +258,6 @@ def one_subject_decoding(
     #
     # Note: We don't support varying time ranges for different frequency
     # ranges to avoid leaking of information.
-    time_bins = np.array(cfg.decoding_csp_times)
-    if time_bins.ndim == 1:
-        time_bins = np.array(list(zip(time_bins[:-1], time_bins[1:])))
-    assert time_bins.ndim == 2
-
     tf_decoding_table_rows = []
 
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
@@ -292,13 +281,18 @@ def one_subject_decoding(
                 }
                 tf_decoding_table_rows.append(row)
 
-    tf_decoding_table = pd.concat(
-        [pd.DataFrame.from_dict(row) for row in tf_decoding_table_rows],
-        ignore_index=True,
-    )
+    if len(tf_decoding_table_rows):
+        tf_decoding_table = pd.concat(
+            [pd.DataFrame.from_dict(row) for row in tf_decoding_table_rows],
+            ignore_index=True,
+        )
+    else:
+        tf_decoding_table = pd.DataFrame()
     del tf_decoding_table_rows
 
     for idx, row in tf_decoding_table.iterrows():
+        if len(row) == 0:
+            break  # no data
         tmin = row["t_min"]
         tmax = row["t_max"]
         fmin = row["f_min"]
@@ -340,8 +334,10 @@ def one_subject_decoding(
     )
     with pd.ExcelWriter(fname_results) as w:
         freq_decoding_table.to_excel(w, sheet_name="CSP Frequency", index=False)
-        tf_decoding_table.to_excel(w, sheet_name="CSP Time-Frequency", index=False)
+        if not tf_decoding_table.empty:
+            tf_decoding_table.to_excel(w, sheet_name="CSP Time-Frequency", index=False)
     out_files = {"csp-excel": fname_results}
+    del freq_decoding_table
 
     # Report
     with _open_report(
@@ -350,15 +346,6 @@ def one_subject_decoding(
         msg = "Adding CSP decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
         section = "Decoding: CSP"
-        freq_name_to_bins_map = _handle_csp_args(
-            cfg.decoding_csp_times,
-            cfg.decoding_csp_freqs,
-            cfg.decoding_metric,
-            epochs_tmin=cfg.epochs_tmin,
-            epochs_tmax=cfg.epochs_tmax,
-            time_frequency_freq_min=cfg.time_frequency_freq_min,
-            time_frequency_freq_max=cfg.time_frequency_freq_max,
-        )
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast
@@ -381,14 +368,15 @@ def one_subject_decoding(
             csp_freq_results["scores"] = csp_freq_results["scores"].apply(
                 lambda x: np.array(x[1:-1].split(), float)
             )
-            csp_tf_results = pd.read_excel(
-                fname_decoding, sheet_name="CSP Time-Frequency"
-            )
-            csp_tf_results["scores"] = csp_tf_results["scores"].apply(
-                lambda x: np.array(x[1:-1].split(), float)
-            )
-            all_csp_tf_results[contrast] = csp_tf_results
-            del csp_tf_results
+            if not tf_decoding_table.empty:
+                csp_tf_results = pd.read_excel(
+                    fname_decoding, sheet_name="CSP Time-Frequency"
+                )
+                csp_tf_results["scores"] = csp_tf_results["scores"].apply(
+                    lambda x: np.array(x[1:-1].split(), float)
+                )
+                all_csp_tf_results[contrast] = csp_tf_results
+                del csp_tf_results
 
             all_decoding_scores = list()
             contrast_names = list()
@@ -497,6 +485,8 @@ def one_subject_decoding(
                 tags=tags,
                 replace=True,
             )
+            plt.close(fig)
+            del fig, title
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

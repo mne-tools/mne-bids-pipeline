@@ -139,7 +139,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
     )
     if dataset_name in all_demonstrated:
         logger.warning(
-            f"Duplicate dataset name {test_dataset_name} -> {dataset_name}, " "skipping"
+            f"Duplicate dataset name {test_dataset_name} -> {dataset_name}, skipping"
         )
         continue
     del test_dataset_options, test_dataset_name

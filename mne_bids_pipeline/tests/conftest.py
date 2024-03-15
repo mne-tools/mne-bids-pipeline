@@ -64,6 +64,8 @@ def pytest_configure(config):
     ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
     # joblib on Windows sometimes
     ignore:Persisting input arguments took.*:UserWarning
+    # matplotlib needs to update
+    ignore:Conversion of an array with ndim.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

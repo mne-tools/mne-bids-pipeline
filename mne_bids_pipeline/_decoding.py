@@ -34,7 +34,7 @@ def _handle_csp_args(
     )
     if decoding_csp_times is None:
         decoding_csp_times = np.linspace(max(0, epochs_tmin), epochs_tmax, num=6)
-    if len(decoding_csp_times) < 2:
+    if len(decoding_csp_times) and len(decoding_csp_times) < 2:
         raise ValueError("decoding_csp_times should contain at least 2 values.")
     if not np.array_equal(decoding_csp_times, np.sort(decoding_csp_times)):
         ValueError("decoding_csp_times should be sorted.")

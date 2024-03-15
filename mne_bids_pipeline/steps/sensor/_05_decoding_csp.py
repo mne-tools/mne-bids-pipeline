@@ -260,8 +260,8 @@ def one_subject_decoding(
     # ranges to avoid leaking of information.
     time_bins = np.array(cfg.decoding_csp_times)
     if time_bins.ndim == 1:
-        time_bins = np.array(list(zip(time_bins[:-1], time_bins[1:])))
-    assert time_bins.ndim == 2
+        time_bins = np.c_[time_bins[:-1], time_bins[1:]]
+    assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
 
     tf_decoding_table_rows = []
 
@@ -286,13 +286,18 @@ def one_subject_decoding(
                 }
                 tf_decoding_table_rows.append(row)
 
-    tf_decoding_table = pd.concat(
-        [pd.DataFrame.from_dict(row) for row in tf_decoding_table_rows],
-        ignore_index=True,
-    )
+    if len(tf_decoding_table_rows):
+        tf_decoding_table = pd.concat(
+            [pd.DataFrame.from_dict(row) for row in tf_decoding_table_rows],
+            ignore_index=True,
+        )
+    else:
+        tf_decoding_table = pd.DataFrame()
     del tf_decoding_table_rows
 
     for idx, row in tf_decoding_table.iterrows():
+        if len(row) == 0:
+            break  # no data
         tmin = row["t_min"]
         tmax = row["t_max"]
         fmin = row["f_min"]
@@ -334,8 +339,10 @@ def one_subject_decoding(
     )
     with pd.ExcelWriter(fname_results) as w:
         freq_decoding_table.to_excel(w, sheet_name="CSP Frequency", index=False)
-        tf_decoding_table.to_excel(w, sheet_name="CSP Time-Frequency", index=False)
+        if not tf_decoding_table.empty:
+            tf_decoding_table.to_excel(w, sheet_name="CSP Time-Frequency", index=False)
     out_files = {"csp-excel": fname_results}
+    del freq_decoding_table
 
     # Report
     with _open_report(
@@ -375,14 +382,15 @@ def one_subject_decoding(
             csp_freq_results["scores"] = csp_freq_results["scores"].apply(
                 lambda x: np.array(x[1:-1].split(), float)
             )
-            csp_tf_results = pd.read_excel(
-                fname_decoding, sheet_name="CSP Time-Frequency"
-            )
-            csp_tf_results["scores"] = csp_tf_results["scores"].apply(
-                lambda x: np.array(x[1:-1].split(), float)
-            )
-            all_csp_tf_results[contrast] = csp_tf_results
-            del csp_tf_results
+            if not tf_decoding_table.empty:
+                csp_tf_results = pd.read_excel(
+                    fname_decoding, sheet_name="CSP Time-Frequency"
+                )
+                csp_tf_results["scores"] = csp_tf_results["scores"].apply(
+                    lambda x: np.array(x[1:-1].split(), float)
+                )
+                all_csp_tf_results[contrast] = csp_tf_results
+                del csp_tf_results
 
             all_decoding_scores = list()
             contrast_names = list()

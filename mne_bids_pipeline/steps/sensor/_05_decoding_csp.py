@@ -184,7 +184,7 @@ def one_subject_decoding(
     )
 
     # Loop over frequencies (all time points lumped together)
-    freq_name_to_bins_map = _handle_csp_args(
+    freq_name_to_bins_map, time_bins = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
@@ -258,10 +258,6 @@ def one_subject_decoding(
     #
     # Note: We don't support varying time ranges for different frequency
     # ranges to avoid leaking of information.
-    time_bins = np.array(cfg.decoding_csp_times, float)
-    time_bins = np.c_[time_bins[:-1], time_bins[1:]]
-    assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
-
     tf_decoding_table_rows = []
 
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
@@ -350,15 +346,6 @@ def one_subject_decoding(
         msg = "Adding CSP decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
         section = "Decoding: CSP"
-        freq_name_to_bins_map = _handle_csp_args(
-            cfg.decoding_csp_times,
-            cfg.decoding_csp_freqs,
-            cfg.decoding_metric,
-            epochs_tmin=cfg.epochs_tmin,
-            epochs_tmax=cfg.epochs_tmax,
-            time_frequency_freq_min=cfg.time_frequency_freq_min,
-            time_frequency_freq_max=cfg.time_frequency_freq_max,
-        )
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
             cond_1, cond_2 = contrast

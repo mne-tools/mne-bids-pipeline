@@ -781,22 +781,19 @@ def average_csp_decoding(
 
     # Perform a cluster-based permutation test.
     subjects = cfg.subjects
-    time_bins = np.array(cfg.decoding_csp_times, float)
-    time_bins = np.c_[time_bins[:-1], time_bins[1:]]
-    assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
+    freq_name_to_bins_map, time_bins = _handle_csp_args(
+        cfg.decoding_csp_times,
+        cfg.decoding_csp_freqs,
+        cfg.decoding_metric,
+        epochs_tmin=cfg.epochs_tmin,
+        epochs_tmax=cfg.epochs_tmax,
+        time_frequency_freq_min=cfg.time_frequency_freq_min,
+        time_frequency_freq_max=cfg.time_frequency_freq_max,
+    )
     if not len(time_bins):
         fname_csp_cluster_results = None
     else:
         time_bins = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
-        freq_name_to_bins_map = _handle_csp_args(
-            cfg.decoding_csp_times,
-            cfg.decoding_csp_freqs,
-            cfg.decoding_metric,
-            epochs_tmin=cfg.epochs_tmin,
-            epochs_tmax=cfg.epochs_tmax,
-            time_frequency_freq_min=cfg.time_frequency_freq_min,
-            time_frequency_freq_max=cfg.time_frequency_freq_max,
-        )
         data_for_clustering = {}
         for freq_range_name in freq_name_to_bins_map:
             a = np.empty(

@@ -44,6 +44,9 @@ def _handle_csp_args(
         )
     if not np.array_equal(decoding_csp_times, np.sort(decoding_csp_times)):
         ValueError("decoding_csp_times should be sorted.")
+    time_bins = np.c_[decoding_csp_times[:-1], decoding_csp_times[1:]]
+    assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
+
     if decoding_metric != "roc_auc":
         raise ValueError(
             f'CSP decoding currently only supports the "roc_auc" '
@@ -82,7 +85,7 @@ def _handle_csp_args(
 
         freq_bins = list(zip(edges[:-1], edges[1:]))
         freq_name_to_bins_map[freq_range_name] = freq_bins
-    return freq_name_to_bins_map
+    return freq_name_to_bins_map, time_bins
 
 
 def _decoding_preproc_steps(

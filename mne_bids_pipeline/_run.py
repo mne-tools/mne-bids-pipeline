@@ -221,7 +221,7 @@ class ConditionalStepMemory:
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
-                            msg = f"Output file missing {str(fname)}, will recompute …"
+                            msg = f"Output file missing: {fname}, will recompute …"
                             emoji = "🧩"
                             bad_out_files = True
                             break
@@ -229,7 +229,7 @@ class ConditionalStepMemory:
                         if this_hash != got_hash:
                             msg = (
                                 f"Output file {self.memory_file_method} mismatch for "
-                                f"{str(fname)} ({this_hash} != {got_hash}), will "
+                                f"{fname} ({this_hash} != {got_hash}), will "
                                 "recompute …"
                             )
                             emoji = "🚫"

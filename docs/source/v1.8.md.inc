@@ -16,8 +16,8 @@
 
 ### :bug: Bug fixes
 
-- Fix handling of Maxwell filtered data was in CSP (#890 by @larsoner)
-- Avoid recomputation / cache miss when the same empty room file is matched to multiple subjects (#890 by @larsoner)
+- Fix handling of Maxwell-filtered data in CSP (#890 by @larsoner)
+- Avoid recomputation / cache miss when the same empty-room file is matched to multiple subjects (#890 by @larsoner)
 
 ### :medical_symbol: Code health
 

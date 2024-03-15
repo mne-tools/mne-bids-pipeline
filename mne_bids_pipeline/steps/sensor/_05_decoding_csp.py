@@ -258,9 +258,8 @@ def one_subject_decoding(
     #
     # Note: We don't support varying time ranges for different frequency
     # ranges to avoid leaking of information.
-    time_bins = np.array(cfg.decoding_csp_times)
-    if time_bins.ndim == 1:
-        time_bins = np.c_[time_bins[:-1], time_bins[1:]]
+    time_bins = np.array(cfg.decoding_csp_times, float)
+    time_bins = np.c_[time_bins[:-1], time_bins[1:]]
     assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
 
     tf_decoding_table_rows = []

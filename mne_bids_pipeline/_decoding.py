@@ -34,10 +34,13 @@ def _handle_csp_args(
     )
     if decoding_csp_times is None:
         decoding_csp_times = np.linspace(max(0, epochs_tmin), epochs_tmax, num=6)
-    if len(decoding_csp_times) == 1:
+    else:
+        decoding_csp_times = np.array(decoding_csp_times, float)
+    if decoding_csp_times.ndim != 1 or len(decoding_csp_times) == 1:
         raise ValueError(
-            "decoding_csp_times should contain at least 2 values to define time "
-            "intervals, or be empty to disable time-frequency mode."
+            "decoding_csp_times should be 1 dimensional and contain at least 2 values "
+            "to define time intervals, or be empty to disable time-frequency mode, got "
+            f"shape {decoding_csp_times.shape}"
         )
     if not np.array_equal(decoding_csp_times, np.sort(decoding_csp_times)):
         ValueError("decoding_csp_times should be sorted.")

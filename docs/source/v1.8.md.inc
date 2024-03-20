@@ -1,4 +1,4 @@
-## v1.8.0 (unreleased)
+## v1.8.0 (2024-03-20)
 
 ### :new: New features & enhancements
 

@@ -1,7 +1,9 @@
 import contextlib
 import re
+import traceback
 from functools import lru_cache
 from io import StringIO
+from textwrap import indent
 from types import SimpleNamespace
 from typing import Literal, Optional
 
@@ -67,8 +69,9 @@ def _open_report(
             report = mne.open_report(fname_report)
         except Exception as exc:
             raise exc.__class__(
-                f"Could not open {name} HDF5 file:\n{fname_report}\n"
-                f"Got error:\n{exc}\nPerhaps you need to delete it?"
+                f"Could not open {name} HDF5 file:\n{fname_report}, "
+                "Perhaps you need to delete it? Got error:\n\n"
+                f'{indent(traceback.format_exc(), "    ")}'
             ) from None
         try:
             yield report

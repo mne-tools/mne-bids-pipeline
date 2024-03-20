@@ -312,12 +312,13 @@ def find_ica_artifacts(
         )
 
     msg = (
-        f"Carefully review the extracted ICs in the section {repr(title)} of the "
-        "above report"
+        f'Carefully review the extracted ICs in the "{title}" section of the '
+        "above report."
     )
-    logger.warning(**gen_log_kwargs(message=msg))
-    msg = f"Mark components you wish to reject as 'bad' in: {out_files_components}"
-    logger.warning(**gen_log_kwargs(message=msg))
+    logger.info(**gen_log_kwargs(message=msg))
+    msg = "Mark components you wish to reject as 'bad' in:"
+    logger.info(**gen_log_kwargs(message=msg))
+    logger.info(**gen_log_kwargs(message=str(out_files_components)))
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

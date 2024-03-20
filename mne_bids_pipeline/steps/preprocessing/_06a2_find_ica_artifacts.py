@@ -298,6 +298,7 @@ def find_ica_artifacts(
         session=session,
         task=cfg.task,
     ) as report:
+        logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
             ica=ica,
             title=title,
@@ -311,14 +312,9 @@ def find_ica_artifacts(
             tags=("ica",),  # the default but be explicit
         )
 
-    msg = (
-        f'Carefully review the extracted ICs in the "{title}" section of the '
-        "above report."
-    )
-    logger.info(**gen_log_kwargs(message=msg))
-    msg = "Mark components you wish to reject as 'bad' in:"
-    logger.info(**gen_log_kwargs(message=msg))
-    logger.info(**gen_log_kwargs(message=str(out_files_components)))
+    msg = 'Carefully review the extracted ICs and mark components "bad" in:'
+    logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))
+    logger.info(**gen_log_kwargs(message=str(out_files_components), emoji="🛑"))
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

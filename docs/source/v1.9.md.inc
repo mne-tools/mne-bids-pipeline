@@ -4,9 +4,10 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 
-[//]: # (- Whatever (#000 by @whoever))
+- All ICA HTML reports have been consolidated in the standard subject `*_report.html`
+  file instead of producing separate files (#899 by @larsoner).
 
 [//]: # (### :package: Requirements)
 

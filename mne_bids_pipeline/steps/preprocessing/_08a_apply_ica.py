@@ -11,7 +11,6 @@ from typing import Optional
 import mne
 import pandas as pd
 from mne.preprocessing import read_ica
-from mne.report import Report
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
@@ -22,7 +21,7 @@ from ..._config_utils import (
 from ..._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _add_raw, _agg_backend, _open_report
+from ..._report import _add_raw, _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
@@ -117,12 +116,8 @@ def apply_ica_epochs(
     session: Optional[str],
     in_files: dict,
 ) -> dict:
-    bids_basename = in_files["ica"].copy().update(processing=None)
     out_files = dict()
     out_files["epochs"] = in_files["epochs"].copy().update(processing="ica", split=None)
-    out_files["report"] = bids_basename.copy().update(
-        processing="ica", suffix="report", extension=".html"
-    )
 
     title = f"ICA artifact removal – sub-{subject}"
     if session is not None:
@@ -157,32 +152,6 @@ def apply_ica_epochs(
         split_size=cfg._epochs_split_size,
     )
     _update_for_splits(out_files, "epochs")
-
-    # Compare ERP/ERF before and after ICA artifact rejection. The evoked
-    # response is calculated across ALL epochs, just like ICA was run on
-    # all epochs, regardless of their respective experimental condition.
-    #
-    # We apply baseline correction here to (hopefully!) make the effects of
-    # ICA easier to see. Otherwise, individual channels might just have
-    # arbitrary DC shifts, and we wouldn't be able to easily decipher what's
-    # going on!
-    report = Report(out_files["report"], title=title, verbose=False)
-    picks = ica.exclude if ica.exclude else None
-    with _agg_backend():
-        report.add_ica(
-            ica=ica,
-            title="Effects of ICA cleaning",
-            inst=epochs.copy().apply_baseline(cfg.baseline),
-            picks=picks,
-            replace=True,
-            n_jobs=1,  # avoid automatic parallelization
-        )
-    report.save(
-        out_files["report"],
-        overwrite=True,
-        open_browser=exec_params.interactive,
-    )
-
     assert len(in_files) == 0, in_files.keys()
 
     # Report
@@ -199,11 +168,10 @@ def apply_ica_epochs(
             exec_params=exec_params,
             subject=subject,
             session=session,
-            name="ICA.apply report",
         ) as report:
             report.add_ica(
                 ica=ica,
-                title="ICA",
+                title="ICA: removals",
                 inst=epochs,
                 picks=ica.exclude,
                 # TODO upstream
@@ -211,6 +179,7 @@ def apply_ica_epochs(
                 # f'before and after ICA '
                 # f'({len(ica.exclude)} ICs removed)'
                 replace=True,
+                n_jobs=1,  # avoid automatic parallelization
             )
 
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

@@ -7,7 +7,6 @@ To actually remove designated ICA components from your data, you will have to
 run the apply_ica step.
 """
 
-import shutil
 from types import SimpleNamespace
 from typing import Literal, Optional
 
@@ -113,9 +112,6 @@ def get_input_fnames_find_ica_artifacts(
         )
         _update_for_splits(in_files, key, single=True)
     in_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
-    in_files["report"] = bids_basename.copy().update(
-        processing="icafit", suffix="report", extension=".h5"
-    )
     return in_files
 
 
@@ -142,9 +138,6 @@ def find_ica_artifacts(
     # file changes).
     out_files_components = bids_basename.copy().update(
         processing="ica", suffix="components", extension=".tsv"
-    )
-    out_files["report"] = bids_basename.copy().update(
-        processing="ica+components", suffix="report", extension=".h5"
     )
     del bids_basename
     msg = "Loading ICA solution"
@@ -297,19 +290,17 @@ def find_ica_artifacts(
     ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
     eog_scores = None if len(eog_scores) == 0 else eog_scores
 
-    shutil.copyfile(in_files.pop("report"), out_files["report"])
+    title = "ICA: components"
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
         subject=subject,
         session=session,
         task=cfg.task,
-        fname_report=out_files["report"],
-        name="ICA report",
     ) as report:
         report.add_ica(
             ica=ica,
-            title="ICA cleaning",
+            title=title,
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
@@ -317,21 +308,16 @@ def find_ica_artifacts(
             eog_scores=eog_scores,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
+            tags=("ica",),  # the default but be explicit
         )
 
     msg = (
-        f"ICA completed. Please carefully review the extracted ICs in the "
-        f"report {out_files['report'].basename}, and mark all components "
-        f"you wish to reject as 'bad' in "
-        f"{out_files_components.basename}"
+        f"Carefully review the extracted ICs in the section {repr(title)} of the "
+        "above report"
     )
-    logger.info(**gen_log_kwargs(message=msg))
-
-    report.save(
-        out_files["report"],
-        overwrite=True,
-        open_browser=exec_params.interactive,
-    )
+    logger.warning(**gen_log_kwargs(message=msg))
+    msg = f"Mark components you wish to reject as 'bad' in: {out_files_components}"
+    logger.warning(**gen_log_kwargs(message=msg))
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

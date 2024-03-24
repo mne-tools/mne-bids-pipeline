@@ -157,7 +157,7 @@ def average_evokeds(
                 title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
             else:  # It's a contrast of two conditions.
                 title = (
-                    f"Average (sensor) contrast: {condition},"
+                    f"Average (sensor) contrast: {condition}, "
                     f"N = {len(cfg.subjects)}"
                 )
                 tags = tags + ("contrast",)

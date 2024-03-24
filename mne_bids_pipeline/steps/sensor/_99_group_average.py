@@ -156,7 +156,8 @@ def average_evokeds(
             if condition in cfg.conditions:
                 title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
             else:  # It's a contrast of two conditions.
-                title = f"Average (sensor) contrast: {condition}, N = {len(cfg.subjects)}"
+                title = f"Average (sensor) contrast: {condition}, 
+                        N = {len(cfg.subjects)}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(
@@ -679,7 +680,7 @@ def average_full_epochs_report(
         report.add_figure(
             fig=fig,
             title="Full-epochs decoding",
-            section=f"Decoding: full-epochs, N = {len(cfg.subjects)}"
+            section=f"Decoding: full-epochs, N = {len(cfg.subjects)}",
             caption=caption,
             tags=(
                 "epochs",

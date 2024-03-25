@@ -1,6 +1,7 @@
 ## v1.9.0
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
+
 - Added number of subject to sub-average report (#902 by @SophieHerbst)
 
 [//]: # (- Whatever (#000 by @whoever))

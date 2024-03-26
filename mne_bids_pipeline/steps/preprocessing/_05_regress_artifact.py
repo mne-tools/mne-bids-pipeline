@@ -12,7 +12,7 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._import_data import _get_run_rest_noise_path, _get_run_type, _import_data_kwargs
+from ..._import_data import _get_run_rest_noise_path, _import_data_kwargs, _read_raw_msg
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _add_raw, _open_report
@@ -59,8 +59,7 @@ def run_regress_artifact(
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     out_files[in_key] = bids_path_in.copy().update(processing="regress")
-    run_type = _get_run_type(run=run, task=task)
-    msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
+    msg = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(bids_path_in).load_data()
     projs = raw.info["projs"]

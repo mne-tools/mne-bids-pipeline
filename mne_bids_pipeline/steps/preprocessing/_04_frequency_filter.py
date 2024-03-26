@@ -30,8 +30,8 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     _get_run_rest_noise_path,
-    _get_run_type,
     _import_data_kwargs,
+    _read_raw_msg,
     import_er_data,
     import_experimental_data,
 )
@@ -167,9 +167,7 @@ def filter_data(
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
-
-    run_type = _get_run_type(run=run, task=task)
-    msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
+    msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter:
         raw = mne.io.read_raw_fif(bids_path_in)

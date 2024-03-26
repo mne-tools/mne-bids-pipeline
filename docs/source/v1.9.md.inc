@@ -14,9 +14,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Fix incorrect inclusion of autobad channels when disabling `find_bad_channels_meg` for example after enabling it (#902 by @larsoner)
 
 ### :medical_symbol: Code health and infrastructure
 

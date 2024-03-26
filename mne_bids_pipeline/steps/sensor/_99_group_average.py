@@ -655,6 +655,7 @@ def average_full_epochs_report(
     in_files: dict,
 ) -> dict:
     """Add decoding results to the grand average report."""
+    out_files = dict()
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -697,7 +698,7 @@ def average_full_epochs_report(
         )
         # close figure to save memory
         plt.close(fig)
-    return _prep_out_files(exec_params=exec_params, out_files=dict())
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
 @failsafe_run(

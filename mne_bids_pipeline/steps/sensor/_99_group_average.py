@@ -7,7 +7,6 @@ import os
 import os.path as op
 from functools import partial
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -47,7 +46,7 @@ def get_input_fnames_average_evokeds(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[dict],
+    session: dict | None,
 ) -> dict:
     in_files = dict()
     for this_subject in cfg.subjects:
@@ -76,7 +75,7 @@ def average_evokeds(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
@@ -185,7 +184,7 @@ class ClusterAcrossTime(TypedDict):
 def _decoding_cluster_permutation_test(
     scores: np.ndarray,
     times: np.ndarray,
-    cluster_forming_t_threshold: Optional[float],
+    cluster_forming_t_threshold: float | None,
     n_permutations: int,
     random_seed: int,
 ) -> tuple[np.ndarray, list[ClusterAcrossTime], int]:
@@ -220,7 +219,7 @@ def _get_epochs_in_files(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     in_files = dict()
     in_files["epochs"] = BIDSPath(
@@ -245,7 +244,7 @@ def _decoding_out_fname(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     cond_1: str,
     cond_2: str,
     kind: str,
@@ -277,7 +276,7 @@ def _get_input_fnames_decoding(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     cond_1: str,
     cond_2: str,
     kind: str,
@@ -308,7 +307,7 @@ def average_time_by_time_decoding(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     cond_1: str,
     cond_2: str,
     in_files: dict,
@@ -551,7 +550,7 @@ def average_full_epochs_decoding(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     cond_1: str,
     cond_2: str,
     in_files: dict,
@@ -626,7 +625,7 @@ def get_input_files_average_full_epochs_report(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     decoding_contrasts: list[list[str]],
 ) -> dict:
     in_files = dict()
@@ -650,7 +649,7 @@ def average_full_epochs_report(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     decoding_contrasts: list[list[str]],
     in_files: dict,
 ) -> dict:
@@ -712,7 +711,7 @@ def average_csp_decoding(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     cond_1: str,
     cond_2: str,
     in_files: dict,
@@ -887,7 +886,7 @@ def _average_csp_time_freq(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     data: pd.DataFrame,
 ) -> pd.DataFrame:
     # Prepare a dataframe for storing the results.

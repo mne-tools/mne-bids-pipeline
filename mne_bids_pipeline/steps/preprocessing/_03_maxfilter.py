@@ -17,7 +17,6 @@ The function loads machine-specific calibration files.
 import gc
 from copy import deepcopy
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -50,7 +49,7 @@ def get_input_fnames_esss(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     kwargs = dict(
         cfg=cfg,
@@ -76,7 +75,7 @@ def compute_esss_proj(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt
@@ -182,9 +181,9 @@ def get_input_fnames_maxwell_filter(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
     kwargs = dict(
@@ -274,9 +273,9 @@ def run_maxwell_filter(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
     in_files: dict,
 ) -> dict:
     if cfg.proc and "sss" in cfg.proc and cfg.use_maxwell_filter:
@@ -539,7 +538,7 @@ def get_config_esss(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         mf_esss=config.mf_esss,
@@ -553,7 +552,7 @@ def get_config_maxwell_filter(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         mf_cal_fname=get_mf_cal_fname(

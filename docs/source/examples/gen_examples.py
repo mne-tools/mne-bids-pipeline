@@ -9,7 +9,6 @@ import sys
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Union
 
 from tqdm import tqdm
 
@@ -24,7 +23,7 @@ root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
 
-def _bool_to_icon(x: Union[bool, Iterable]) -> str:
+def _bool_to_icon(x: bool | Iterable) -> str:
     if x:
         return "✅"
     else:

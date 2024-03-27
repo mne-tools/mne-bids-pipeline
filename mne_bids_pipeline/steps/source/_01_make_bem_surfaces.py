@@ -6,7 +6,6 @@ Generate the BEM surfaces from a T1 or FLASH MRI scan.
 import glob
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 
@@ -42,7 +41,7 @@ def get_input_fnames_make_bem_surfaces(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     in_files = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
@@ -59,7 +58,7 @@ def get_output_fnames_make_bem_surfaces(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     out_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
@@ -79,7 +78,7 @@ def make_bem_surfaces(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     mri_images, _, _ = _get_bem_params(cfg)

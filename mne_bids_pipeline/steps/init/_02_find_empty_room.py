@@ -1,7 +1,6 @@
 """Find empty-room data matches."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 from mne_bids import BIDSPath
 
@@ -20,7 +19,7 @@ from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
 def get_input_fnames_find_empty_room(
-    *, subject: str, session: Optional[str], run: Optional[str], cfg: SimpleNamespace
+    *, subject: str, session: str | None, run: str | None, cfg: SimpleNamespace
 ) -> dict[str, BIDSPath]:
     """Get paths of files required by find_empty_room function."""
     bids_path_in = BIDSPath(
@@ -63,8 +62,8 @@ def find_empty_room(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
+    session: str | None,
+    run: str | None,
     in_files: dict[str, BIDSPath],
 ) -> dict[str, BIDSPath]:
     raw_path = in_files.pop(f"raw_run-{run}")

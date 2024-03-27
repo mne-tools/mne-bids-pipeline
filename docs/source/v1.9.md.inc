@@ -16,7 +16,8 @@
 
 ### :bug: Bug fixes
 
-- Fix incorrect inclusion of autobad channels when disabling `find_bad_channels_meg` for example after enabling it (#902 by @larsoner)
+- Fixed incorrect inclusion of autobad channels when disabling `find_bad_channels_meg` for example after enabling it (#902 by @larsoner)
+- Fixed incomplete rerunning of group-average decoding stats (#902 by @larsoner)
 
 ### :medical_symbol: Code health and infrastructure
 

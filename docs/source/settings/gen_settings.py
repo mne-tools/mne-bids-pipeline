@@ -101,14 +101,18 @@ prefix = """\
 assign_re = re.compile(
     # Line starts with annotation syntax (name captured by the first group).
     r"^(\w+): "
-    # Then the annotation can be ...
-    "("
+    # Then the annotation can be (in a non-capturing group) ...
+    "(?:"
     # ... a standard assignment ...
     ".+ = .+"
     # ... or ...
     "|"
-    # ... the start of a multiline type annotation like "a: Union["
-    r"(Union|Optional|Literal)\["
+    # ... the start of a multiline type annotation like "a: Literal[" ...
+    r"Literal\["
+    # ... or ...
+    "|"
+    # ... the start of a multiline type annotation like "a: ("
+    r"\("
     # To the end of the line.
     ")$",
     re.MULTILINE,
@@ -186,8 +190,7 @@ def main():
         match = assign_re.match(line)
         if match is not None:
             have_params = True
-            name, typ, desc = match.groups()
-            current_lines.append(f"{prefix}{name}")
+            current_lines.append(f"{prefix}{match.groups()[0]}")
             continue
 
 

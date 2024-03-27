@@ -154,9 +154,12 @@ def average_evokeds(
         for condition, evoked in zip(conditions, evokeds):
             tags = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f"Average (sensor): {condition}"
+                title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
             else:  # It's a contrast of two conditions.
-                title = f"Average (sensor) contrast: {condition}"
+                title = (
+                    f"Average (sensor) contrast: {condition}, "
+                    f"N = {len(cfg.subjects)}"
+                )
                 tags = tags + ("contrast",)
 
             report.add_evokeds(
@@ -447,7 +450,7 @@ def average_time_by_time_decoding(
     )
     savemat(out_files["mat"], contrast_score_stats)
 
-    section = "Decoding: time-by-time"
+    section = f"Decoding: time-by-time, N = {len(cfg.subjects)}"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -679,7 +682,7 @@ def average_full_epochs_report(
         report.add_figure(
             fig=fig,
             title="Full-epochs decoding",
-            section="Decoding: full-epochs",
+            section=f"Decoding: full-epochs, N = {len(cfg.subjects)}",
             caption=caption,
             tags=(
                 "epochs",

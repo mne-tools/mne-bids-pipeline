@@ -279,7 +279,9 @@ class ConditionalStepMemory:
                 out_files = memorized_func.call(*args, **kwargs)
             else:
                 out_files = memorized_func(*args, **kwargs)
-            if self.require_output:
+            if self.get_output_fnames is not None:
+                pass  # explicit function to get output files behaves differently
+            elif self.require_output:
                 assert isinstance(out_files, dict) and len(out_files), (
                     f"Internal error: step must return non-empty out_files dict, got "
                     f"{type(out_files).__name__} for:\n{self.func_name}"

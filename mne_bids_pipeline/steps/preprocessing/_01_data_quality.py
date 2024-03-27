@@ -80,7 +80,7 @@ def assess_data_quality(
     key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(key)
     if key == "raw_task-noise_run-None":
-        bids_path_ref_in = in_files.pop("raw_ref_run")
+        bids_path_ref_in = in_files.pop("raw_ref_run", None)
     else:
         bids_path_ref_in = None
     msg, _ = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)

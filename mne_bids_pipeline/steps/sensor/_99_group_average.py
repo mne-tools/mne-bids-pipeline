@@ -246,13 +246,19 @@ def _decoding_out_fname(
     cfg: SimpleNamespace,
     subject: str,
     session: Optional[str],
-    cond_1: str,
-    cond_2: str,
+    cond_1: Optional[str],
+    cond_2: Optional[str],
     kind: str,
     extension: str = ".mat",
 ):
+    if cond_1 is None:
+        assert cond_2 is None
+        processing = ""
+    else:
+        assert cond_2 is not None
+        processing = f"{cond_1}+{cond_2}+"
     processing = (
-        f"{cond_1}+{cond_2}+{kind}+{cfg.decoding_metric}".replace(op.sep, "")
+        f"{processing}{kind}+{cfg.decoding_metric}".replace(op.sep, "")
         .replace("_", "-")
         .replace("-", "")
     )
@@ -656,6 +662,16 @@ def average_full_epochs_report(
 ) -> dict:
     """Add decoding results to the grand average report."""
     out_files = dict()
+    out_files["cluster"] = _decoding_out_fname(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        cond_1=None,
+        cond_2=None,
+        kind="FullEpochs",
+        extension=".xlsx",
+    )
+
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session
     ) as report:
@@ -674,12 +690,14 @@ def average_full_epochs_report(
             all_decoding_scores.append(np.atleast_1d(decoding_data["scores"].squeeze()))
             del decoding_data
 
-        fig, caption = _plot_full_epochs_decoding_scores(
+        fig, caption, data = _plot_full_epochs_decoding_scores(
             contrast_names=_contrasts_to_names(decoding_contrasts),
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,
             kind="grand-average",
         )
+        with pd.ExcelWriter(out_files["cluster"]) as w:
+            data.to_excel(w, sheet_name="FullEpochs", index=False)
         report.add_figure(
             fig=fig,
             title="Full-epochs decoding",

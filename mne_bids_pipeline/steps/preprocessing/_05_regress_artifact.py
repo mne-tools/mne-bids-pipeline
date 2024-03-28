@@ -58,7 +58,7 @@ def run_regress_artifact(
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     out_files[in_key] = bids_path_in.copy().update(processing="regress")
-    msg = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
+    msg, _ = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(bids_path_in).load_data()
     projs = raw.info["projs"]

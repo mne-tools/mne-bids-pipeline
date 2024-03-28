@@ -117,6 +117,7 @@ def gen_log_kwargs(
     emoji: str = "⏳️",
 ) -> LogKwargsT:
     # Try to figure these out
+    assert isinstance(message, str), type(message)
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
     if subject is None:

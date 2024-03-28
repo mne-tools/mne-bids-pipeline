@@ -5,7 +5,6 @@ The average power and inter-trial coherence are computed and saved to disk.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -29,7 +28,7 @@ def get_input_fnames_time_frequency(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     fname_epochs = BIDSPath(
         subject=subject,
@@ -60,7 +59,7 @@ def run_time_frequency(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt

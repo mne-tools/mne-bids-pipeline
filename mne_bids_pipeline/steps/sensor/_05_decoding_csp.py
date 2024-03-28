@@ -2,7 +2,6 @@
 
 import os.path as op
 from types import SimpleNamespace
-from typing import Optional
 
 import matplotlib.transforms
 import mne
@@ -102,7 +101,7 @@ def get_input_fnames_csp(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     contrast: tuple[str],
 ) -> dict:
     proc = _get_decoding_proc(config=cfg)
@@ -493,7 +492,7 @@ def one_subject_decoding(
 
 
 def get_config(
-    *, config: SimpleNamespace, subject: str, session: Optional[str]
+    *, config: SimpleNamespace, subject: str, session: str | None
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters

@@ -4,7 +4,6 @@ Compute and apply an inverse solution for each evoked data set.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne.minimum_norm import (
@@ -33,7 +32,7 @@ def get_input_fnames_inverse(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ):
     bids_path = BIDSPath(
         subject=subject,
@@ -68,7 +67,7 @@ def run_inverse(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     # TODO: Eventually we should maybe loop over ch_types, e.g., to create

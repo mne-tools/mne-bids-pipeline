@@ -4,7 +4,6 @@ Covariance matrices are computed and saved.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -34,7 +33,7 @@ def get_input_fnames_cov(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
@@ -94,12 +93,12 @@ def get_input_fnames_cov(
 
 def compute_cov_from_epochs(
     *,
-    tmin: Optional[float],
-    tmax: Optional[float],
+    tmin: float | None,
+    tmax: float | None,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
@@ -129,7 +128,7 @@ def compute_cov_from_raw(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
@@ -152,7 +151,7 @@ def retrieve_custom_cov(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
@@ -213,7 +212,7 @@ def run_covariance(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: str | None = None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt

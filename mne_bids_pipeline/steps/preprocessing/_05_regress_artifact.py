@@ -1,7 +1,6 @@
 """Temporal regression for artifact removal."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne.io.pick import _picks_to_idx
@@ -23,9 +22,9 @@ def get_input_fnames_regress_artifact(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
 ) -> dict:
     """Get paths of files required by regress_artifact function."""
     out = _get_run_rest_noise_path(
@@ -49,9 +48,9 @@ def run_regress_artifact(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
     in_files: dict,
 ) -> dict:
     model = EOGRegression(proj=False, **cfg.regress_artifact)

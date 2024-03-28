@@ -9,8 +9,9 @@ import pdb
 import sys
 import time
 import traceback
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Callable, Literal, Optional, Union
+from typing import Literal
 
 import json_tricks
 import pandas as pd
@@ -24,8 +25,8 @@ from ._logging import _is_testing, gen_log_kwargs, logger
 
 def failsafe_run(
     *,
-    get_input_fnames: Optional[Callable] = None,
-    get_output_fnames: Optional[Callable] = None,
+    get_input_fnames: Callable | None = None,
+    get_output_fnames: Callable | None = None,
     require_output: bool = True,
 ) -> Callable:
     def failsafe_run_decorator(func):
@@ -124,8 +125,8 @@ class ConditionalStepMemory:
         self,
         *,
         exec_params: SimpleNamespace,
-        get_input_fnames: Optional[Callable],
-        get_output_fnames: Optional[Callable],
+        get_input_fnames: Callable | None,
+        get_output_fnames: Callable | None,
         require_output: bool,
         func_name: str,
     ):
@@ -339,8 +340,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
 
 
 def _update_for_splits(
-    files_dict: Union[dict[str, BIDSPath], BIDSPath],
-    key: Optional[str],
+    files_dict: dict[str, BIDSPath] | BIDSPath,
+    key: str | None,
     *,
     single: bool = False,
     allow_missing: bool = False,
@@ -382,7 +383,7 @@ def _sanitize_callable(val):
 
 
 def _get_step_path(
-    stack: Optional[list[inspect.FrameInfo]] = None,
+    stack: list[inspect.FrameInfo] | None = None,
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
@@ -409,7 +410,7 @@ def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
     out_files: dict[str, BIDSPath],
-    check_relative: Optional[pathlib.Path] = None,
+    check_relative: pathlib.Path | None = None,
     bids_only: bool = True,
 ):
     if check_relative is None:
@@ -439,7 +440,7 @@ def _prep_out_files(
 
 def _path_to_str_hash(
     k: str,
-    v: Union[BIDSPath, pathlib.Path],
+    v: BIDSPath | pathlib.Path,
     *,
     method: Literal["mtime", "hash"],
     kind: str = "in",

@@ -81,9 +81,6 @@ def run_ica(
     out_files["epochs"] = (
         out_files["ica"].copy().update(suffix="epo", processing="icafit")
     )
-    out_files["report"] = bids_basename.copy().update(
-        processing="icafit", suffix="report", extension=".h5"
-    )
     del bids_basename
 
     # Generate a list of raw data paths (i.e., paths of individual runs)
@@ -247,17 +244,23 @@ def run_ica(
     logger.info(**gen_log_kwargs(message=msg))
     ica.save(out_files["ica"], overwrite=True)
 
-    # Start a report
+    # Add to report
+    tags = ("ica", "epochs")
+    title = "ICA: epochs for fitting"
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
         subject=subject,
         session=session,
         task=cfg.task,
-        fname_report=out_files["report"],
-        name="ICA.fit report",
     ) as report:
-        report.title = f"ICA – {report.title}"
+        report.add_epochs(
+            epochs=epochs,
+            title=title,
+            drop_log_ignore=(),
+            replace=True,
+            tags=tags,
+        )
         if cfg.ica_reject == "autoreject_local":
             caption = (
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
@@ -274,19 +277,14 @@ def run_ica(
             )
             report.add_figure(
                 fig=fig,
-                title="Epochs: Autoreject cleaning",
+                title="Autoreject cleaning",
+                section=title,
                 caption=caption,
-                tags=("ica", "epochs", "autoreject"),
+                tags=tags + ("autoreject",),
                 replace=True,
             )
             plt.close(fig)
             del caption
-        report.add_epochs(
-            epochs=epochs,
-            title="Epochs used for ICA fitting",
-            drop_log_ignore=(),
-            replace=True,
-        )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 

@@ -1,7 +1,6 @@
 """Assess data quality and find bad (and flat) channels."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import pandas as pd
@@ -36,9 +35,9 @@ def get_input_fnames_data_quality(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
 ) -> dict:
     """Get paths of files required by assess_data_quality function."""
     kwargs = dict(
@@ -68,9 +67,9 @@ def assess_data_quality(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
     in_files: dict,
 ) -> dict:
     """Assess data quality and find and mark bad channels."""
@@ -146,11 +145,11 @@ def _find_bads_maxwell(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     bids_path_in: BIDSPath,
-    bids_path_ref_in: Optional[BIDSPath],
+    bids_path_ref_in: BIDSPath | None,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
     out_files: dict,
 ):
     if cfg.find_flat_channels_meg and not cfg.find_noisy_channels_meg:
@@ -287,7 +286,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> SimpleNamespace:
     extra_kwargs = dict()
     if config.find_noisy_channels_meg or config.find_flat_channels_meg:

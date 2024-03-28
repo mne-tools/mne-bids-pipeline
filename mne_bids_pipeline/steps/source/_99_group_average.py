@@ -4,7 +4,6 @@ Source estimates are morphed to the ``fsaverage`` brain.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -28,7 +27,7 @@ def _stc_path(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     condition: str,
     morphed: bool,
 ) -> BIDSPath:
@@ -58,7 +57,7 @@ def get_input_fnames_morph_stc(
     cfg: SimpleNamespace,
     subject: str,
     fs_subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     in_files = dict()
     for condition in _all_conditions(cfg=cfg):
@@ -81,7 +80,7 @@ def morph_stc(
     exec_params: SimpleNamespace,
     subject: str,
     fs_subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     out_files = dict()
@@ -113,7 +112,7 @@ def get_input_fnames_run_average(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     in_files = dict()
     assert subject == "average"
@@ -137,7 +136,7 @@ def run_average(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ):
     assert subject == "average"

@@ -1,7 +1,7 @@
 """Rejection."""
 
 from collections.abc import Iterable
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import mne
 
@@ -11,11 +11,11 @@ from ._logging import gen_log_kwargs, logger
 def _get_reject(
     *,
     subject: str,
-    session: Optional[str],
-    reject: Union[dict[str, float], Literal["autoreject_global"]],
+    session: str | None,
+    reject: dict[str, float] | Literal["autoreject_global"],
     ch_types: Iterable[Literal["meg", "mag", "grad", "eeg"]],
     param: str,
-    epochs: Optional[mne.BaseEpochs] = None,
+    epochs: mne.BaseEpochs | None = None,
 ) -> dict[str, float]:
     if reject is None:
         return dict()

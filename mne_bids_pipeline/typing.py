@@ -2,7 +2,7 @@
 
 import pathlib
 import sys
-from typing import Annotated, Union
+from typing import Annotated
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
@@ -14,7 +14,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 from pydantic import PlainValidator
 
-PathLike = Union[str, pathlib.Path]
+PathLike = str | pathlib.Path
 
 
 class ArbitraryContrast(TypedDict):

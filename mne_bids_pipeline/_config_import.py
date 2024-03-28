@@ -7,7 +7,6 @@ import pathlib
 from dataclasses import field
 from functools import partial
 from types import SimpleNamespace
-from typing import Optional
 
 import matplotlib
 import mne
@@ -20,8 +19,8 @@ from .typing import PathLike
 
 def _import_config(
     *,
-    config_path: Optional[PathLike],
-    overrides: Optional[SimpleNamespace] = None,
+    config_path: PathLike | None,
+    overrides: SimpleNamespace | None = None,
     check: bool = True,
     log: bool = True,
 ) -> SimpleNamespace:
@@ -118,7 +117,7 @@ def _get_default_config():
     ignore_keys = {
         name.asname or name.name
         for element in tree.body
-        if isinstance(element, (ast.Import, ast.ImportFrom))
+        if isinstance(element, ast.Import | ast.ImportFrom)
         for name in element.names
     }
     config = SimpleNamespace(
@@ -160,8 +159,8 @@ def _update_config_from_path(
 def _update_with_user_config(
     *,
     config: SimpleNamespace,  # modified in-place
-    config_path: Optional[PathLike],
-    overrides: Optional[SimpleNamespace],
+    config_path: PathLike | None,
+    overrides: SimpleNamespace | None,
     log: bool = False,
 ) -> list[str]:
     # 1. Basics and hidden vars
@@ -233,7 +232,7 @@ def _update_with_user_config(
     return user_names
 
 
-def _check_config(config: SimpleNamespace, config_path: Optional[PathLike]) -> None:
+def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None:
     _pydantic_validate(config=config, config_path=config_path)
 
     # Eventually all of these could be pydantic-validated, but for now we'll
@@ -368,7 +367,7 @@ def _default_factory(key, val):
 
 def _pydantic_validate(
     config: SimpleNamespace,
-    config_path: Optional[PathLike],
+    config_path: PathLike | None,
 ):
     """Create dataclass from config type hints and validate with pydantic."""
     # https://docs.pydantic.dev/latest/usage/dataclasses/

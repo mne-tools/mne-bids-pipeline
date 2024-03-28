@@ -189,6 +189,7 @@ def assess_data_quality(
             title=f"Raw ({kind})",
             tags=("data-quality",),
         )
+        title = f"Bad channel detection: {run}"
         if cfg.find_noisy_channels_meg:
             assert auto_scores is not None
             msg = "Adding noisy channel detection to report"
@@ -200,12 +201,14 @@ def assess_data_quality(
                 fig=figs,
                 caption=captions,
                 section="Data quality",
-                title=f"Bad channel detection: {run}",
+                title=title,
                 tags=tags,
                 replace=True,
             )
             for fig in figs:
                 plt.close(fig)
+        else:
+            report.remove(title=title)
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

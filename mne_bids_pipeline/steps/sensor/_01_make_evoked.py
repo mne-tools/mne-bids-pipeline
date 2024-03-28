@@ -1,7 +1,6 @@
 """Extract evoked data for each condition."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -31,7 +30,7 @@ def get_input_fnames_evoked(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     fname_epochs = BIDSPath(
         subject=subject,
@@ -62,7 +61,7 @@ def run_evoked(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     out_files = dict()

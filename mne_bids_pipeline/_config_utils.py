@@ -5,7 +5,7 @@ import functools
 import pathlib
 from collections.abc import Iterable
 from types import ModuleType, SimpleNamespace
-from typing import Any, Literal, Optional, TypeVar, Union
+from typing import Any, Literal, TypeVar
 
 import mne
 import mne_bids
@@ -106,7 +106,7 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
     return subjects
 
 
-def get_sessions(config: SimpleNamespace) -> Union[list[None], list[str]]:
+def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=config.bids_root,
@@ -124,7 +124,7 @@ def get_sessions(config: SimpleNamespace) -> Union[list[None], list[str]]:
 
 def get_runs_all_subjects(
     config: SimpleNamespace,
-) -> dict[str, Union[list[None], list[str]]]:
+) -> dict[str, list[None] | list[str]]:
     """Give the mapping between subjects and their runs.
 
     Returns
@@ -149,7 +149,7 @@ def get_runs_all_subjects(
 @functools.cache
 def _get_runs_all_subjects_cached(
     **config_dict: dict[str, Any],
-) -> dict[str, Union[list[None], list[str]]]:
+) -> dict[str, list[None] | list[str]]:
     config = SimpleNamespace(**config_dict)
     # Sometimes we check list equivalence for ch_types, so convert it back
     config.ch_types = list(config.ch_types)
@@ -197,7 +197,7 @@ def get_runs(
     config: SimpleNamespace,
     subject: str,
     verbose: bool = False,
-) -> Union[list[str], list[None]]:
+) -> list[str] | list[None]:
     """Return a list of runs in the BIDS input data.
 
     Parameters
@@ -253,7 +253,7 @@ def get_runs_tasks(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     which: tuple[str] = ("runs", "noise", "rest"),
 ) -> list[tuple[str]]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
@@ -310,7 +310,7 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
         )
 
 
-def get_task(config: SimpleNamespace) -> Optional[str]:
+def get_task(config: SimpleNamespace) -> str | None:
     task = config.task
     if task:
         return task
@@ -416,7 +416,7 @@ def get_mf_ctc_fname(
 
 
 RawEpochsEvokedT = TypeVar(
-    "RawEpochsEvokedT", bound=Union[mne.io.BaseRaw, mne.BaseEpochs, mne.Evoked]
+    "RawEpochsEvokedT", bound=mne.io.BaseRaw | mne.BaseEpochs | mne.Evoked
 )
 
 
@@ -459,7 +459,7 @@ def _meg_in_ch_types(ch_types: str) -> bool:
 
 
 def get_noise_cov_bids_path(
-    cfg: SimpleNamespace, subject: str, session: Optional[str]
+    cfg: SimpleNamespace, subject: str, session: str | None
 ) -> BIDSPath:
     """Retrieve the path to the noise covariance file.
 
@@ -553,13 +553,13 @@ _EPOCHS_DESCRIPTION_TO_PROC_MAP = {
 }
 
 
-def _get_decoding_proc(config: SimpleNamespace) -> Optional[str]:
+def _get_decoding_proc(config: SimpleNamespace) -> str | None:
     return _EPOCHS_DESCRIPTION_TO_PROC_MAP[config.decoding_which_epochs]
 
 
 def get_eeg_reference(
     config: SimpleNamespace,
-) -> Union[Literal["average"], Iterable[str]]:
+) -> Literal["average"] | Iterable[str]:
     if config.eeg_reference == "average":
         return config.eeg_reference
     elif isinstance(config.eeg_reference, str):
@@ -635,7 +635,7 @@ def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
 # Adapted from MNE-Python
 def _pl(x, *, non_pl="", pl="s"):
     """Determine if plural should be used."""
-    len_x = x if isinstance(x, (int, np.generic)) else len(x)
+    len_x = x if isinstance(x, int | np.generic) else len(x)
     return non_pl if len_x == 1 else pl
 
 
@@ -643,7 +643,7 @@ def _proj_path(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> BIDSPath:
     return BIDSPath(
         subject=subject,

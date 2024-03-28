@@ -1,7 +1,6 @@
 """Estimate head positions."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 
@@ -25,9 +24,9 @@ def get_input_fnames_head_pos(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
 ) -> dict:
     """Get paths of files required by run_head_pos function."""
     return _get_run_rest_noise_path(
@@ -49,9 +48,9 @@ def run_head_pos(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt
@@ -148,7 +147,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         mf_mc_t_step_min=config.mf_mc_t_step_min,

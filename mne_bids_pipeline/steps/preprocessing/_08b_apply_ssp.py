@@ -5,7 +5,6 @@ projections components are removed from the data.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 
@@ -26,7 +25,7 @@ def get_input_fnames_apply_ssp_epochs(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     in_files = dict()
     in_files["proj"] = _proj_path(cfg=cfg, subject=subject, session=session)
@@ -43,7 +42,7 @@ def apply_ssp_epochs(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     out_files = dict()
@@ -74,9 +73,9 @@ def get_input_fnames_apply_ssp_raw(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
 ) -> dict:
     in_files = _get_run_rest_noise_path(
         cfg=cfg,
@@ -100,9 +99,9 @@ def apply_ssp_raw(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
     in_files: dict,
 ) -> dict:
     projs = mne.read_proj(in_files.pop("proj"))

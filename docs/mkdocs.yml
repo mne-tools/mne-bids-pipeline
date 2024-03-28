@@ -152,6 +152,8 @@ plugins:
                     show_root_toc_entry: false
                     show_root_full_path: false
                     separate_signature: true
+                    show_signature_annotations: true
+                    signature_crossrefs: true
                     line_length: 88  # Black's default
                     show_bases: false
                     docstring_style: numpy

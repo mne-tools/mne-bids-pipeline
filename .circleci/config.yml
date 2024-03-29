@@ -1063,6 +1063,10 @@ jobs:
       - bash_env
       - gitconfig
       - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
+      - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist
           # 1GB doc build to workspace then go retrieve it

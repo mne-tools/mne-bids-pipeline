@@ -1031,6 +1031,10 @@ jobs:
           at: ~/
       - bash_env
       - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
+      - run:
           name: Build documentation
           command: |
             set -eo pipefail

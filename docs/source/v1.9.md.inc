@@ -4,7 +4,7 @@
 
 - Added number of subject to `sub-average` report (#902, #910 by @SophieHerbst)
 - The type annotations in the default configuration file are now easier to read: We
-  replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908 by @hoechenberger)
+  replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908, #911 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))
 

@@ -2,7 +2,7 @@
 
 ### :new: New features & enhancements
 
-- Added number of subject to `sub-average` report (#902 by @SophieHerbst)
+- Added number of subject to `sub-average` report (#902, #910 by @SophieHerbst)
 - The type annotations in the default configuration file are now easier to read: We
   replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908 by @hoechenberger)
 

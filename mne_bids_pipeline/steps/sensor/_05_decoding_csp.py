@@ -392,7 +392,7 @@ def one_subject_decoding(
                     contrast_names.append(
                         f"{freq_range_name}\n" f"({f_min:0.1f}-{f_max:0.1f} Hz)"
                     )
-            fig, caption = _plot_full_epochs_decoding_scores(
+            fig, caption, _ = _plot_full_epochs_decoding_scores(
                 contrast_names=contrast_names,
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,

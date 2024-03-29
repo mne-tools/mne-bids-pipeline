@@ -209,7 +209,7 @@ def _plot_full_epochs_decoding_scores(
     g.set_xlabels("")
 
     fig = g.fig
-    return fig, caption
+    return fig, caption, data
 
 
 def _plot_time_by_time_decoding_scores(

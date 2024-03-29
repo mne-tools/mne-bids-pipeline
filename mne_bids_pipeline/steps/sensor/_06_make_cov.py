@@ -78,8 +78,7 @@ def get_input_fnames_cov(
             root=cfg.deriv_root,
             check=False,
         )
-        run_type = "resting-state" if cfg.noise_cov == "rest" else "empty-room"
-        if run_type == "resting-state":
+        if cfg.noise_cov == "rest":
             bids_path_raw_noise.task = "rest"
         else:
             bids_path_raw_noise.task = "noise"
@@ -133,8 +132,8 @@ def compute_cov_from_raw(
     out_files: dict,
 ) -> mne.Covariance:
     fname_raw = in_files.pop("raw")
-    run_type = "resting-state" if fname_raw.task == "rest" else "empty-room"
-    msg = f"Computing regularized covariance based on {run_type} recording."
+    run_msg = "resting-state" if fname_raw.task == "rest" else "empty-room"
+    msg = f"Computing regularized covariance based on {run_msg} recording."
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Input:  {fname_raw.basename}"
     logger.info(**gen_log_kwargs(message=msg))

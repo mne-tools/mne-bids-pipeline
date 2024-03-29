@@ -816,12 +816,13 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
     )
 
 
-def _get_run_type(
+def _read_raw_msg(
+    bids_path_in: BIDSPath,
     run: str | None,
     task: str | None,
-) -> str:
+) -> tuple[str]:
     if run is None and task in ("noise", "rest"):
         run_type = dict(rest="resting-state", noise="empty-room")[task]
     else:
         run_type = "experimental"
-    return run_type
+    return f"Reading {run_type} recording: {bids_path_in.basename}", run_type

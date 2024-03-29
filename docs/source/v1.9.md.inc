@@ -5,6 +5,9 @@
 - Added number of subject to `sub-average` report (#902 by @SophieHerbst)
 - The type annotations in the default configuration file are now easier to read: We
   replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908 by @hoechenberger)
+- Epochs metadata creation now supports variable time windows by specifying the names of events via
+  [`epochs_metadata_tmin`][mne_bids_pipeline._config.epochs_metadata_tmin] and
+  [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 
 [//]: # (- Whatever (#000 by @whoever))
 
@@ -15,6 +18,7 @@
 ### :package: Requirements
 
 - We dropped support for Python 3.9. You now need Python 3.10 or newer.
+- The minimum required version of MNE-Python is now 1.7.0.
 
 [//]: # (- Whatever (#000 by @whoever))
 

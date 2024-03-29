@@ -4,7 +4,6 @@ Covariance matrices are computed and saved.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -13,6 +12,7 @@ from ..._config_import import _import_config
 from ..._config_utils import (
     _bids_kwargs,
     _restrict_analyze_channels,
+    get_eeg_reference,
     get_noise_cov_bids_path,
     get_sessions,
     get_subjects,
@@ -33,7 +33,7 @@ def get_input_fnames_cov(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
@@ -78,8 +78,7 @@ def get_input_fnames_cov(
             root=cfg.deriv_root,
             check=False,
         )
-        run_type = "resting-state" if cfg.noise_cov == "rest" else "empty-room"
-        if run_type == "resting-state":
+        if cfg.noise_cov == "rest":
             bids_path_raw_noise.task = "rest"
         else:
             bids_path_raw_noise.task = "noise"
@@ -93,12 +92,12 @@ def get_input_fnames_cov(
 
 def compute_cov_from_epochs(
     *,
-    tmin: Optional[float],
-    tmax: Optional[float],
+    tmin: float | None,
+    tmax: float | None,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
@@ -128,13 +127,13 @@ def compute_cov_from_raw(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
     fname_raw = in_files.pop("raw")
-    run_type = "resting-state" if fname_raw.task == "rest" else "empty-room"
-    msg = f"Computing regularized covariance based on {run_type} recording."
+    run_msg = "resting-state" if fname_raw.task == "rest" else "empty-room"
+    msg = f"Computing regularized covariance based on {run_msg} recording."
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Input:  {fname_raw.basename}"
     logger.info(**gen_log_kwargs(message=msg))
@@ -151,7 +150,7 @@ def retrieve_custom_cov(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
     out_files: dict,
 ) -> mne.Covariance:
@@ -183,7 +182,7 @@ def retrieve_custom_cov(
         check=False,
     )
 
-    msg = "Retrieving noise covariance matrix from custom user-supplied " "function"
+    msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f'Output: {out_files["cov"].basename}'
     logger.info(**gen_log_kwargs(message=msg))
@@ -212,7 +211,7 @@ def run_covariance(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: str | None = None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt
@@ -292,6 +291,7 @@ def get_config(
         conditions=config.conditions,
         contrasts=config.contrasts,
         analyze_channels=config.analyze_channels,
+        eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
         **_bids_kwargs(config=config),
     )

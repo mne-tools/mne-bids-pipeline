@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from mne_bids_pipeline._config_import import _get_default_config
+from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
@@ -65,6 +66,23 @@ def test_options_documented():
         in_doc_all.update(vals)
     assert in_doc_all.difference(in_config) == set(), f"Extra values in {what}"
     assert in_config.difference(in_doc_all) == set(), f"Values missing from {what}"
+
+
+def test_config_options_used():
+    """Test that all config options are used somewhere."""
+    config = _get_default_config()
+    config_names = set(d for d in dir(config) if not d.startswith("__"))
+    for key in ("_epochs_split_size", "_raw_split_size"):
+        config_names.add(key)
+    for key in _EXECUTION_OPTIONS:
+        config_names.remove(key)
+    pcs = _ParseConfigSteps(force_empty=())
+    missing_from_config = sorted(set(pcs.steps) - config_names)
+    assert missing_from_config == [], f"Missing from config: {missing_from_config}"
+    missing_from_steps = sorted(config_names - set(pcs.steps))
+    assert missing_from_steps == [], f"Missing from steps: {missing_from_steps}"
+    for key, val in pcs.steps.items():
+        assert val, f"No steps for {key}"
 
 
 def test_datasets_in_doc():

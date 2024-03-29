@@ -1,3 +1,7 @@
+{% include-markdown "./v1.9.md.inc" %}
+
+{% include-markdown "./v1.8.md.inc" %}
+
 {% include-markdown "./v1.7.md.inc" %}
 
 {% include-markdown "./v1.6.md.inc" %}

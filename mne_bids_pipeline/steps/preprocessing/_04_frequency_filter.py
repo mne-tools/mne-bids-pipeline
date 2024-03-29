@@ -16,7 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import mne
 import numpy as np
@@ -30,8 +30,8 @@ from ..._config_utils import (
 )
 from ..._import_data import (
     _get_run_rest_noise_path,
-    _get_run_type,
     _import_data_kwargs,
+    _read_raw_msg,
     import_er_data,
     import_experimental_data,
 )
@@ -45,9 +45,9 @@ def get_input_fnames_frequency_filter(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
 ) -> dict:
     """Get paths of files required by filter_data function."""
     kind = "sss" if cfg.use_maxwell_filter else "orig"
@@ -65,14 +65,14 @@ def get_input_fnames_frequency_filter(
 def notch_filter(
     raw: mne.io.BaseRaw,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
-    freqs: Optional[Union[float, Iterable[float]]],
-    trans_bandwidth: Union[float, Literal["auto"]],
-    notch_widths: Optional[Union[float, Iterable[float]]],
+    task: str | None,
+    freqs: float | Iterable[float] | None,
+    trans_bandwidth: float | Literal["auto"],
+    notch_widths: float | Iterable[float] | None,
     run_type: Literal["experimental", "empty-room", "resting-state"],
-    picks: Optional[np.ndarray],
+    picks: np.ndarray | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if freqs is None:
@@ -97,15 +97,15 @@ def notch_filter(
 def bandpass_filter(
     raw: mne.io.BaseRaw,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
-    l_freq: Optional[float],
-    h_freq: Optional[float],
-    l_trans_bandwidth: Union[float, Literal["auto"]],
-    h_trans_bandwidth: Union[float, Literal["auto"]],
+    task: str | None,
+    l_freq: float | None,
+    h_freq: float | None,
+    l_trans_bandwidth: float | Literal["auto"],
+    h_trans_bandwidth: float | Literal["auto"],
     run_type: Literal["experimental", "empty-room", "resting-state"],
-    picks: Optional[np.ndarray],
+    picks: np.ndarray | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -135,9 +135,9 @@ def bandpass_filter(
 def resample(
     raw: mne.io.BaseRaw,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
     sfreq: float,
     run_type: Literal["experimental", "empty-room", "resting-state"],
 ) -> None:
@@ -157,9 +157,9 @@ def filter_data(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     run: str,
-    task: Optional[str],
+    task: str | None,
     in_files: dict,
 ) -> dict:
     """Filter data from a single subject."""
@@ -167,9 +167,7 @@ def filter_data(
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
     bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
-
-    run_type = _get_run_type(run=run, task=task)
-    msg = f"Reading {run_type} recording: " f"{bids_path_in.basename}"
+    msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter:
         raw = mne.io.read_raw_fif(bids_path_in)

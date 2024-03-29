@@ -10,7 +10,6 @@ the 'ica_reject' limits to remove high-amplitude non-biological artifacts
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import autoreject
 import mne
@@ -37,7 +36,7 @@ def get_input_fnames_run_ica(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     bids_basename = BIDSPath(
         subject=subject,
@@ -69,7 +68,7 @@ def run_ica(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     """Run ICA."""
@@ -295,7 +294,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,

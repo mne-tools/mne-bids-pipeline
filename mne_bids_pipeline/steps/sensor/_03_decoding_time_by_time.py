@@ -13,7 +13,6 @@ can learn about the entire time course of the signal.
 
 import os.path as op
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -54,7 +53,7 @@ def get_input_fnames_time_decoding(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     condition1: str,
     condition2: str,
 ) -> dict:
@@ -88,7 +87,7 @@ def run_time_decoding(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     condition1: str,
     condition2: str,
     in_files: dict,

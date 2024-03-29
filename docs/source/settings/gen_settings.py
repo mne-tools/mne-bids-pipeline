@@ -99,18 +99,16 @@ prefix = """\
 # We cannot use ast for this because it doesn't preserve comments. We could use
 # something like redbaron, but our code is hopefully simple enough!
 assign_re = re.compile(
-    # Line starts with annotation syntax (name captured by the first group).
-    r"^(\w+): "
-    # Then the annotation can be ...
-    "("
-    # ... a standard assignment ...
-    ".+ = .+"
-    # ... or ...
-    "|"
-    # ... the start of a multiline type annotation like "a: Union["
-    r"(Union|Optional|Literal)\["
-    # To the end of the line.
-    ")$",
+    "^"  #         The line starts, then is followed by
+    r"(\w+): "  #  annotation syntax (name captured by the first group),
+    "(?:"  #       then the rest of the line can be (in a non-capturing group):
+    ".+ = .+"  #     1. a standard assignment
+    "|"  #           2. or
+    r"Literal\["  #  3. the start of a multiline type annotation like "a: Literal["
+    "|"  #           4. or
+    r"\("  #         5. the start of a multiline 3.9+ type annotation like "a: ("
+    ")"  #         Then the end of our group
+    "$",  #       and immediately the end of the line.
     re.MULTILINE,
 )
 
@@ -186,8 +184,7 @@ def main():
         match = assign_re.match(line)
         if match is not None:
             have_params = True
-            name, typ, desc = match.groups()
-            current_lines.append(f"{prefix}{name}")
+            current_lines.append(f"{prefix}{match.groups()[0]}")
             continue
 
 

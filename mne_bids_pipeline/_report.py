@@ -1,9 +1,11 @@
 import contextlib
 import re
+import traceback
 from functools import lru_cache
 from io import StringIO
+from textwrap import indent
 from types import SimpleNamespace
-from typing import Literal, Optional
+from typing import Literal
 
 import matplotlib.transforms
 import mne
@@ -27,10 +29,10 @@ def _open_report(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str] = None,
-    task: Optional[str] = None,
-    fname_report: Optional[BIDSPath] = None,
+    session: str | None,
+    run: str | None = None,
+    task: str | None = None,
+    fname_report: BIDSPath | None = None,
     name: str = "report",
 ):
     if fname_report is None:
@@ -67,8 +69,9 @@ def _open_report(
             report = mne.open_report(fname_report)
         except Exception as exc:
             raise exc.__class__(
-                f"Could not open {name} HDF5 file:\n{fname_report}\n"
-                f"Got error:\n{exc}\nPerhaps you need to delete it?"
+                f"Could not open {name} HDF5 file:\n{fname_report}, "
+                "Perhaps you need to delete it? Got error:\n\n"
+                f'{indent(traceback.format_exc(), "    ")}'
             ) from None
         try:
             yield report
@@ -206,7 +209,7 @@ def _plot_full_epochs_decoding_scores(
     g.set_xlabels("")
 
     fig = g.fig
-    return fig, caption
+    return fig, caption, data
 
 
 def _plot_time_by_time_decoding_scores(
@@ -450,7 +453,7 @@ def _plot_decoding_time_generalization(
 
 
 def _gen_empty_report(
-    *, cfg: SimpleNamespace, subject: str, session: Optional[str]
+    *, cfg: SimpleNamespace, subject: str, session: str | None
 ) -> mne.Report:
     title = f"sub-{subject}"
     if session is not None:
@@ -467,7 +470,7 @@ def _contrasts_to_names(contrasts: list[list[str]]) -> list[str]:
 
 
 def add_event_counts(
-    *, cfg, subject: Optional[str], session: Optional[str], report: mne.Report
+    *, cfg, subject: str | None, session: str | None, report: mne.Report
 ) -> None:
     try:
         df_events = count_events(BIDSPath(root=cfg.bids_root, session=session))
@@ -492,9 +495,9 @@ def _finalize(
     report: mne.Report,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
-    run: Optional[str],
-    task: Optional[str],
+    session: str | None,
+    run: str | None,
+    task: str | None,
 ) -> None:
     """Add system information and the pipeline configuration to the report."""
     # ensure they are always appended
@@ -594,14 +597,14 @@ def add_csp_grand_average(
     cond_1: str,
     cond_2: str,
     fname_csp_freq_results: BIDSPath,
-    fname_csp_cluster_results: pd.DataFrame,
+    fname_csp_cluster_results: pd.DataFrame | None,
 ):
     """Add CSP decoding results to the grand average report."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     # First, plot decoding scores across frequency bins (entire epochs).
     section = "Decoding: CSP"
-    freq_name_to_bins_map = _handle_csp_args(
+    freq_name_to_bins_map, _ = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
         cfg.decoding_metric,
@@ -684,6 +687,8 @@ def add_csp_grand_average(
     )
 
     # Now, plot decoding scores across time-frequency bins.
+    if fname_csp_cluster_results is None:
+        return
     csp_cluster_results = loadmat(fname_csp_cluster_results)
     fig, ax = plt.subplots(
         nrows=1, ncols=2, sharex=True, sharey=True, constrained_layout=True
@@ -845,8 +850,8 @@ def _add_raw(
     bids_path_in: BIDSPath,
     title: str,
     tags: tuple = (),
-    raw: Optional[BaseRaw] = None,
-    extra_html: Optional[str] = None,
+    raw: BaseRaw | None = None,
+    extra_html: str | None = None,
 ):
     if bids_path_in.run is not None:
         title += f", run {repr(bids_path_in.run)}"
@@ -883,7 +888,7 @@ def _render_bem(
     cfg: SimpleNamespace,
     report: mne.report.Report,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ):
     logger.info(**gen_log_kwargs(message="Rendering MRI slices with BEM contours."))
     report.add_bem(

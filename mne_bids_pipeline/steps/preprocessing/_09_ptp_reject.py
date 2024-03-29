@@ -9,7 +9,6 @@ corrected by the ICA or the SSP processing.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import autoreject
 import mne
@@ -33,7 +32,7 @@ def get_input_fnames_drop_ptp(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     bids_path = BIDSPath(
         subject=subject,
@@ -63,7 +62,7 @@ def drop_ptp(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     out_files = dict()

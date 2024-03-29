@@ -1,6 +1,4 @@
-[//]: # (Don't forget to add this to changes.md as an include!)
-
-## vX.Y.0 (unreleased)
+## v1.6.0 (2024-03-01)
 
 :new: New features & enhancements
 

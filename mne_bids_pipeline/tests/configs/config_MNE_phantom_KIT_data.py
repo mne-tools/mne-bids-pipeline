@@ -4,7 +4,6 @@ KIT phantom data.
 https://mne.tools/dev/documentation/datasets.html#kit-phantom-dataset
 """
 
-study_name = "MNE-phantom-KIT-data"
 bids_root = "~/mne_data/MNE-phantom-KIT-data"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/MNE-phantom-KIT-data"
 task = "phantom"

@@ -9,8 +9,9 @@ import pdb
 import sys
 import time
 import traceback
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Callable, Literal, Optional, Union
+from typing import Literal
 
 import json_tricks
 import pandas as pd
@@ -23,8 +24,10 @@ from ._logging import _is_testing, gen_log_kwargs, logger
 
 
 def failsafe_run(
-    get_input_fnames: Optional[Callable] = None,
-    get_output_fnames: Optional[Callable] = None,
+    *,
+    get_input_fnames: Callable | None = None,
+    get_output_fnames: Callable | None = None,
+    require_output: bool = True,
 ) -> Callable:
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -36,6 +39,8 @@ def failsafe_run(
                 exec_params=exec_params,
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
+                require_output=require_output,
+                func_name=f"{__mne_bids_pipeline_step__}::{func.__name__}",
             )
             t0 = time.time()
             log_info = pd.concat(
@@ -67,13 +72,13 @@ def failsafe_run(
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
                 tb = traceback.extract_tb(e.__traceback__)
-                for fi, frame in enumerate(inspect.stack()):
+                for fi, frame in enumerate(tb):
                     is_step = pathlib.Path(frame.filename).parent.parent == step_dir
                     del frame
                     if is_step:
                         # omit everything before the "step" dir, which will
                         # generally be stuff from this file and joblib
-                        tb = tb[-fi:]
+                        tb = tb[fi:]
                         break
                 tb = "".join(traceback.format_list(tb))
 
@@ -116,7 +121,15 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, exec_params, get_input_fnames, get_output_fnames):
+    def __init__(
+        self,
+        *,
+        exec_params: SimpleNamespace,
+        get_input_fnames: Callable | None,
+        get_output_fnames: Callable | None,
+        require_output: bool,
+        func_name: str,
+    ):
         memory_location = exec_params.memory_location
         if memory_location is True:
             use_location = exec_params.deriv_root / exec_params.memory_subdir
@@ -134,6 +147,8 @@ class ConditionalStepMemory:
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
         self.memory_file_method = exec_params.memory_file_method
+        self.require_output = require_output
+        self.func_name = func_name
 
     def cache(self, func):
         def wrapper(*args, **kwargs):
@@ -221,9 +236,7 @@ class ConditionalStepMemory:
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
-                            msg = (
-                                f"Output file missing {str(fname)}, " "will recompute …"
-                            )
+                            msg = f"Output file missing: {fname}, will recompute …"
                             emoji = "🧩"
                             bad_out_files = True
                             break
@@ -231,7 +244,8 @@ class ConditionalStepMemory:
                         if this_hash != got_hash:
                             msg = (
                                 f"Output file {self.memory_file_method} mismatch for "
-                                f"{str(fname)}, will recompute …"
+                                f"{fname} ({this_hash} != {got_hash}), will "
+                                "recompute …"
                             )
                             emoji = "🚫"
                             bad_out_files = True
@@ -263,9 +277,19 @@ class ConditionalStepMemory:
 
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
             if force_run or unknown_inputs or bad_out_files:
-                memorized_func.call(*args, **kwargs)
+                out_files, _ = memorized_func.call(*args, **kwargs)
             else:
-                memorized_func(*args, **kwargs)
+                out_files = memorized_func(*args, **kwargs)
+            if self.require_output:
+                assert isinstance(out_files, dict) and len(out_files), (
+                    f"Internal error: step must return non-empty out_files dict, got "
+                    f"{type(out_files).__name__} for:\n{self.func_name}"
+                )
+            else:
+                assert out_files is None, (
+                    f"Internal error: step must return None, got {type(out_files)} "
+                    f"for:\n{self.func_name}"
+                )
 
         return wrapper
 
@@ -316,8 +340,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
 
 
 def _update_for_splits(
-    files_dict: Union[dict[str, BIDSPath], BIDSPath],
-    key: Optional[str],
+    files_dict: dict[str, BIDSPath] | BIDSPath,
+    key: str | None,
     *,
     single: bool = False,
     allow_missing: bool = False,
@@ -359,7 +383,7 @@ def _sanitize_callable(val):
 
 
 def _get_step_path(
-    stack: Optional[list[inspect.FrameInfo]] = None,
+    stack: list[inspect.FrameInfo] | None = None,
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
@@ -386,7 +410,7 @@ def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
     out_files: dict[str, BIDSPath],
-    check_relative: Optional[pathlib.Path] = None,
+    check_relative: pathlib.Path | None = None,
     bids_only: bool = True,
 ):
     if check_relative is None:
@@ -416,7 +440,7 @@ def _prep_out_files(
 
 def _path_to_str_hash(
     k: str,
-    v: Union[BIDSPath, pathlib.Path],
+    v: BIDSPath | pathlib.Path,
     *,
     method: Literal["mtime", "hash"],
     kind: str = "in",

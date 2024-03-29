@@ -5,7 +5,6 @@ These are often also referred to as PCA vectors.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -28,7 +27,7 @@ from ..._report import _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
 
 
-def _find_ecg_events(raw: mne.io.Raw, ch_name: Optional[str]) -> np.ndarray:
+def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> np.ndarray:
     """Wrap find_ecg_events to use the same defaults as create_ecg_events."""
     return find_ecg_events(raw, ch_name=ch_name, l_freq=8, h_freq=16)[0]
 
@@ -37,7 +36,7 @@ def get_input_fnames_run_ssp(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     bids_basename = BIDSPath(
         subject=subject,
@@ -69,7 +68,7 @@ def run_ssp(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     import matplotlib.pyplot as plt

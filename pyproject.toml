@@ -59,6 +59,14 @@ tests = [
   "pooch",
   "psutil",
   "ruff",
+  "jinja2",
+  "openneuro-py >= 2022.2.0",
+  "httpx >= 0.20",
+  "tqdm",
+  "Pygments",
+  "pyyaml",
+]
+docs = [
   "mkdocs",
   "mkdocs-material >= 9.0.4",
   "mkdocs-material-extensions",
@@ -67,13 +75,8 @@ tests = [
   "mkdocs-exclude",
   "mkdocstrings-python",
   "mike",
-  "jinja2",
   "livereload",
-  "openneuro-py >= 2022.2.0",
-  "httpx >= 0.20",
-  "tqdm",
-  "Pygments",
-  "pyyaml",
+  "black",                          # docstring reformatting
 ]
 
 [project.scripts]

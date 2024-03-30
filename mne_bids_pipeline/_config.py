@@ -1985,9 +1985,9 @@ A value that weights the source variances of the dipole components
 that are parallel (tangential) to the cortical surface.
 
 If `0`, then the inverse solution is computed with **fixed orientation**, i.e.,
-only dipoles perpendicular to the cortical surface are considered.
+only dipole components perpendicular to the cortical surface are considered.
 
-If `1`, it corresponds to **free orientation**, i.e., dipoles with any orientation are
+If `1`, it corresponds to **free orientation**, i.e., dipole components with any orientation are
 considered.
 
 The default value, `0.2`, is suitable for most surface-oriented source spaces.

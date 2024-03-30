@@ -2172,10 +2172,44 @@ If `None`, it defaults to the current default in MNE-Python.
 """
 
 # %%
-# # Execution
+# # Caching
 #
-# These options control how the pipeline is executed but should not affect
-# what outputs get produced.
+# These settings control if and how pipeline output is being cached to avoid unnecessary
+# computations on a re-run.
+
+memory_location: PathLike | bool | None = True
+"""
+If not None (or False), caching will be enabled and the cache files will be
+stored in the given directory. The default (True) will use a
+`"_cache"` subdirectory (name configurable via the
+[`memory_subdir`][mne_bids_pipeline._config.memory_subdir]
+variable) in the BIDS derivative root of the dataset.
+"""
+
+memory_subdir: str = "_cache"
+"""
+The caching directory name to use if `memory_location` is `True`.
+"""
+
+memory_file_method: Literal["mtime", "hash"] = "mtime"
+"""
+The method to use for cache invalidation (i.e., detecting changes). Using the
+"modified time" reported by the filesystem (`'mtime'`, default) is very fast
+but requires that the filesystem supports proper mtime reporting. Using file
+hashes (`'hash'`) is slower and requires reading all input files but should
+work on any filesystem.
+"""
+
+memory_verbose: int = 0
+"""
+The verbosity to use when using memory. The default (0) does not print, while
+1 will print the function calls that will be cached. See the documentation for
+the joblib.Memory class for more information."""
+
+# %%
+# # Parallelization
+#
+# These options control parallel processing (e.g., multiple subjects at once),
 
 n_jobs: int = 1
 """
@@ -2215,6 +2249,11 @@ dask_worker_memory_limit: str = "10G"
 The maximum amount of RAM per Dask worker.
 """
 
+# %%
+# # Logging
+#
+# These options control how much logging output is produced.
+
 log_level: Literal["info", "error"] = "info"
 """
 Set the pipeline logging verbosity.
@@ -2225,6 +2264,13 @@ mne_log_level: Literal["info", "error"] = "error"
 Set the MNE-Python logging verbosity.
 """
 
+
+# %%
+# # Error handling
+#
+# These options control how errors while processing the data or the configuration file
+# are handled.
+
 on_error: Literal["continue", "abort", "debug"] = "abort"
 """
 Whether to abort processing as soon as an error occurs, continue with all other
@@ -2234,35 +2280,6 @@ of an error.
 !!! info
     Enabling debug mode deactivates parallel processing.
 """
-
-memory_location: PathLike | bool | None = True
-"""
-If not None (or False), caching will be enabled and the cache files will be
-stored in the given directory. The default (True) will use a
-`"_cache"` subdirectory (name configurable via the
-[`memory_subdir`][mne_bids_pipeline._config.memory_subdir]
-variable) in the BIDS derivative root of the dataset.
-"""
-
-memory_subdir: str = "_cache"
-"""
-The caching directory name to use if `memory_location` is `True`.
-"""
-
-memory_file_method: Literal["mtime", "hash"] = "mtime"
-"""
-The method to use for cache invalidation (i.e., detecting changes). Using the
-"modified time" reported by the filesystem (`'mtime'`, default) is very fast
-but requires that the filesystem supports proper mtime reporting. Using file
-hashes (`'hash'`) is slower and requires reading all input files but should
-work on any filesystem.
-"""
-
-memory_verbose: int = 0
-"""
-The verbosity to use when using memory. The default (0) does not print, while
-1 will print the function calls that will be cached. See the documentation for
-the joblib.Memory class for more information."""
 
 config_validation: Literal["raise", "warn", "ignore"] = "raise"
 """

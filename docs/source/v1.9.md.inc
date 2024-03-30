@@ -10,7 +10,7 @@
 
 ### :warning: Behavior changes
 
-- The [`loose`][mne_bids_pipeline._config.depth] parameter doesn't accept `"auto""`
+- The [`loose`][mne_bids_pipeline._config.loose] parameter doesn't accept `"auto""`
   anymore. Please use `0.2` instead (the default value). (#915 by @hoechenberger)
 
 - The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`

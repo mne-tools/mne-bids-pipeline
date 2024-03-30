@@ -18,7 +18,7 @@
 
 ### :book: Documentation
 
-- We removed the `Execution` section from configuration options Documentation and
+- We removed the `Execution` section from configuration options documentation and
   replaced it with new, more explicit sections (namely, Caching, Parallelization,
   Logging, and Error handling). (#914 by @hoechenberger)
 

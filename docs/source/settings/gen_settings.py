@@ -85,7 +85,7 @@ section_tags = {
     "caching": ("cache",),
     "parallelization": ("paralleliation", "dask", "out-of-core"),
     "logging": ("logging", "error-handling"),
-    "error handling": ("error-handling"),
+    "error handling": ("error-handling",),
 }
 
 extra_headers = {

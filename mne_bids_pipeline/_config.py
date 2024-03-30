@@ -1979,23 +1979,26 @@ Exclude points closer than this distance (mm) to the bounding surface.
 
 # ## Inverse solution
 
-loose: float | Literal["auto"] = 0.2
+loose: float = 0.2
 """
-Value that weights the source variances of the dipole components
-that are parallel (tangential) to the cortical surface. If `0`, then the
-inverse solution is computed with **fixed orientation.**
-If `1`, it corresponds to **free orientation.**
-The default value, `'auto'`, is set to `0.2` for surface-oriented source
-spaces, and to `1.0` for volumetric, discrete, or mixed source spaces,
-unless `fixed is True` in which case the value 0. is used.
+A value that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface.
+
+If `0`, then the inverse solution is computed with **fixed orientation**, i.e.,
+only dipoles perpendicular to the cortical surface are considered.
+
+If `1`, it corresponds to **free orientation**, i.e., dipoles with any orientation are
+considered.
+
+The default value, `0.2`, is suitable for most surface-oriented source spaces.
 """
 
-depth: float | dict | None = 0.8
+depth: float | dict = 0.8
 """
-If float (default 0.8), it acts as the depth weighting exponent (`exp`)
-to use (must be between 0 and 1). None is equivalent to 0, meaning no
+If a float (default `0.8`), it acts as the depth weighting exponent (`exp`)
+to use (must be between `0` and `1`). `None` is equivalent to `0`, meaning no
 depth weighting is performed. Can also be a `dict` containing additional
-keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
+keyword arguments to pass to `mne.forward.compute_depth_prior`
 (see docstring for details and defaults).
 """
 

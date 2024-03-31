@@ -5,7 +5,7 @@ import shutil
 import sys
 from collections.abc import Collection
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import pytest
 
@@ -25,7 +25,7 @@ class _TestOptionsT(TypedDict, total=False):
     dataset: str  # key.split("_")[0]
     config: str  # f"config_{key}.py"
     steps: Collection[str]  # ("preprocessing", "sensor")
-    task: Optional[str]  # None
+    task: str | None  # None
     env: dict[str, str]  # {}
     requires: Collection[str]  # ()
     extra_config: str  # ""

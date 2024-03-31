@@ -4,7 +4,6 @@ Calculate forward solution for M/EEG channels.
 """
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -31,7 +30,7 @@ def _prepare_trans_template(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     info: mne.Info,
 ) -> mne.transforms.Transform:
     assert isinstance(cfg.use_template_mri, str)
@@ -67,7 +66,7 @@ def _prepare_trans_subject(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     bids_path: BIDSPath,
 ) -> mne.transforms.Transform:
     # Generate a head ↔ MRI transformation matrix from the
@@ -119,7 +118,7 @@ def run_forward(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     bids_path = BIDSPath(
@@ -218,7 +217,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> SimpleNamespace:
     if config.mri_t1_path_generator is None:
         t1_bids_path = None

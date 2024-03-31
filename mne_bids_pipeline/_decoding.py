@@ -1,5 +1,3 @@
-from typing import Optional
-
 import mne
 import numpy as np
 from joblib import parallel_backend
@@ -34,10 +32,19 @@ def _handle_csp_args(
     )
     if decoding_csp_times is None:
         decoding_csp_times = np.linspace(max(0, epochs_tmin), epochs_tmax, num=6)
-    if len(decoding_csp_times) < 2:
-        raise ValueError("decoding_csp_times should contain at least 2 values.")
+    else:
+        decoding_csp_times = np.array(decoding_csp_times, float)
+    if decoding_csp_times.ndim != 1 or len(decoding_csp_times) == 1:
+        raise ValueError(
+            "decoding_csp_times should be 1 dimensional and contain at least 2 values "
+            "to define time intervals, or be empty to disable time-frequency mode, got "
+            f"shape {decoding_csp_times.shape}"
+        )
     if not np.array_equal(decoding_csp_times, np.sort(decoding_csp_times)):
         ValueError("decoding_csp_times should be sorted.")
+    time_bins = np.c_[decoding_csp_times[:-1], decoding_csp_times[1:]]
+    assert time_bins.ndim == 2 and time_bins.shape[1] == 2, time_bins.shape
+
     if decoding_metric != "roc_auc":
         raise ValueError(
             f'CSP decoding currently only supports the "roc_auc" '
@@ -76,12 +83,12 @@ def _handle_csp_args(
 
         freq_bins = list(zip(edges[:-1], edges[1:]))
         freq_name_to_bins_map[freq_range_name] = freq_bins
-    return freq_name_to_bins_map
+    return freq_name_to_bins_map, time_bins
 
 
 def _decoding_preproc_steps(
     subject: str,
-    session: Optional[str],
+    session: str | None,
     epochs: mne.Epochs,
     pca: bool = True,
 ) -> list[BaseEstimator]:

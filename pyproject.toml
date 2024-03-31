@@ -7,7 +7,7 @@ name = "mne-bids-pipeline"
 # Keep in sync with README.md:
 description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "LICENSE.txt" }
 keywords = ["science", "neuroscience", "psychology"]
 authors = [
@@ -38,6 +38,7 @@ dependencies = [
   "seaborn",
   "json_tricks",
   "pydantic >= 2.0.0",
+  "annotated-types",
   "rich",
   "python-picard",
   "qtpy",
@@ -58,6 +59,14 @@ tests = [
   "pooch",
   "psutil",
   "ruff",
+  "jinja2",
+  "openneuro-py >= 2022.2.0",
+  "httpx >= 0.20",
+  "tqdm",
+  "Pygments",
+  "pyyaml",
+]
+docs = [
   "mkdocs",
   "mkdocs-material >= 9.0.4",
   "mkdocs-material-extensions",
@@ -66,13 +75,8 @@ tests = [
   "mkdocs-exclude",
   "mkdocstrings-python",
   "mike",
-  "jinja2",
   "livereload",
-  "openneuro-py >= 2022.2.0",
-  "httpx >= 0.20",
-  "tqdm",
-  "Pygments",
-  "pyyaml",
+  "black",                          # docstring reformatting
 ]
 
 [project.scripts]
@@ -95,7 +99,6 @@ exclude = [
   "/docs",
   "/docs/source/examples/gen_examples.py", # specify explicitly because its exclusion is negated in .gitignore
   "/Makefile",
-  "/BUILDING.md",
   "/CONTRIBUTING.md",
   "ignore_words.txt",
 ]

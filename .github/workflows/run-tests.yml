@@ -13,15 +13,15 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.11"
     - run: pip install --upgrade pip
     - run: pip install -ve .[tests] codespell tomli
     - run: make codespell-error
     - run: pytest mne_bids_pipeline -m "not dataset_test"
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v4
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
@@ -71,5 +71,5 @@ jobs:
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
         timeout-minutes: 1
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: success()

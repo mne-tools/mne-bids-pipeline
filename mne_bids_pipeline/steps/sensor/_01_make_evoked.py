@@ -1,7 +1,6 @@
 """Extract evoked data for each condition."""
 
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -11,6 +10,7 @@ from ..._config_utils import (
     _pl,
     _restrict_analyze_channels,
     get_all_contrasts,
+    get_eeg_reference,
     get_sessions,
     get_subjects,
 )
@@ -30,7 +30,7 @@ def get_input_fnames_evoked(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     fname_epochs = BIDSPath(
         subject=subject,
@@ -61,7 +61,7 @@ def run_evoked(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     out_files = dict()
@@ -172,6 +172,7 @@ def get_config(
         contrasts=get_all_contrasts(config),
         noise_cov=_sanitize_callable(config.noise_cov),
         analyze_channels=config.analyze_channels,
+        eeg_reference=get_eeg_reference(config),
         ch_types=config.ch_types,
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         **_bids_kwargs(config=config),

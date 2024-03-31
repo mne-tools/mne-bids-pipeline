@@ -4,7 +4,6 @@ See https://openneuro.org/datasets/ds000246/versions/1.0.0 for more
 information.
 """
 
-study_name = "ds000246"
 bids_root = "~/mne_data/ds000246"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000246"
 

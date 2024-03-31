@@ -1,6 +1,5 @@
 """hMT+ Localizer."""
 
-study_name = "localizer"
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
 
@@ -38,6 +37,11 @@ decode = True
 decoding_time_generalization = True
 decoding_time_generalization_decim = 4
 contrasts = [("incoherent", "coherent")]
+decoding_csp = True
+decoding_csp_times = []
+decoding_csp_freqs = {
+    "alpha": (8, 12),
+}
 
 # Noise estimation
 noise_cov = "emptyroom"

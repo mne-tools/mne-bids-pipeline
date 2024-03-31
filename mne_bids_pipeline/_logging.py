@@ -4,7 +4,7 @@ import datetime
 import inspect
 import logging
 import os
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 import rich.console
 import rich.theme
@@ -14,8 +14,8 @@ from .typing import LogKwargsT
 
 class ConsoleKwargs(TypedDict):
     soft_wrap: bool
-    force_terminal: Union[bool, None]
-    legacy_windows: Union[bool, None]
+    force_terminal: bool | None
+    legacy_windows: bool | None
     theme: rich.theme.Theme
 
 
@@ -81,31 +81,25 @@ class _MBPLogger:
         level = int(level)
         self._level = level
 
-    def debug(self, msg: str, *, extra: Optional[dict[Any, Any]] = None) -> None:
+    def debug(self, msg: str, *, extra: dict[Any, Any] | None = None) -> None:
         self._log_message(kind="debug", msg=msg, **(extra or {}))
 
-    def info(
-        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
-    ) -> None:
+    def info(self, msg: str, *, extra: dict[Any, Any] | None | None = None) -> None:
         self._log_message(kind="info", msg=msg, **(extra or {}))
 
-    def warning(
-        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
-    ) -> None:
+    def warning(self, msg: str, *, extra: dict[Any, Any] | None | None = None) -> None:
         self._log_message(kind="warning", msg=msg, **(extra or {}))
 
-    def error(
-        self, msg: str, *, extra: Optional[Optional[dict[Any, Any]]] = None
-    ) -> None:
+    def error(self, msg: str, *, extra: dict[Any, Any] | None | None = None) -> None:
         self._log_message(kind="error", msg=msg, **(extra or {}))
 
     def _log_message(
         self,
         kind: str,
         msg: str,
-        subject: Optional[Union[str, int]] = None,
-        session: Optional[Union[str, int]] = None,
-        run: Optional[Union[str, int]] = None,
+        subject: str | int | None = None,
+        session: str | int | None = None,
+        run: str | int | None = None,
         emoji: str = "",
     ):
         this_level = getattr(logging, kind.upper())
@@ -127,13 +121,14 @@ logger = _MBPLogger()
 def gen_log_kwargs(
     message: str,
     *,
-    subject: Optional[Union[str, int]] = None,
-    session: Optional[Union[str, int]] = None,
-    run: Optional[Union[str, int]] = None,
-    task: Optional[str] = None,
+    subject: str | int | None = None,
+    session: str | int | None = None,
+    run: str | int | None = None,
+    task: str | None = None,
     emoji: str = "⏳️",
 ) -> LogKwargsT:
     # Try to figure these out
+    assert isinstance(message, str), type(message)
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
     if subject is None:

@@ -1,9 +1,9 @@
 # Default settings for data processing and analysis.
 
-from collections.abc import Sequence
-from typing import Annotated, Any, Callable, Literal, Optional, Union
+from collections.abc import Callable, Sequence
+from typing import Annotated, Any, Literal
 
-from annotated_types import Ge, Interval, Len
+from annotated_types import Ge, Interval, Len, MinLen
 from mne import Covariance
 from mne_bids import BIDSPath
 
@@ -17,18 +17,7 @@ from mne_bids_pipeline.typing import (
 # %%
 # # General settings
 
-study_name: str = ""
-"""
-Specify the name of your study. It will be used to populate filenames for
-saving the analysis results.
-
-???+ example "Example"
-    ```python
-    study_name = 'my-study'
-    ```
-"""
-
-bids_root: Optional[PathLike] = None
+bids_root: PathLike | None = None
 """
 Specify the BIDS root directory. Pass an empty string or ```None` to use
 the value specified in the `BIDS_ROOT` environment variable instead.
@@ -41,7 +30,7 @@ Raises an exception if the BIDS root has not been specified.
     ```
 """
 
-deriv_root: Optional[PathLike] = None
+deriv_root: PathLike | None = None
 """
 The root of the derivatives directory in which the pipeline will store
 the processing results. If `None`, this will be
@@ -52,7 +41,7 @@ the processing results. If `None`, this will be
     set [`subjects_dir`][mne_bids_pipeline._config.subjects_dir] as well.
 """
 
-subjects_dir: Optional[PathLike] = None
+subjects_dir: PathLike | None = None
 """
 Path to the directory that contains the FreeSurfer reconstructions of all
 subjects. Specifically, this defines the `SUBJECTS_DIR` that is used by
@@ -84,7 +73,7 @@ window.
     Enabling interactive mode deactivates parallel processing.
 """
 
-sessions: Union[list, Literal["all"]] = "all"
+sessions: list | Literal["all"] = "all"
 """
 The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
@@ -100,13 +89,13 @@ task_is_rest: bool = False
 Whether the task should be treated as resting-state data.
 """
 
-runs: Union[Sequence, Literal["all"]] = "all"
+runs: Sequence | Literal["all"] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
 """
 
-exclude_runs: Optional[dict[str, list[str]]] = None
+exclude_runs: dict[str, list[str]] | None = None
 """
 Specify runs to exclude from analysis, for each participant individually.
 
@@ -122,34 +111,34 @@ Specify runs to exclude from analysis, for each participant individually.
     did not understand the instructions, etc.).
 """
 
-crop_runs: Optional[tuple[float, float]] = None
+crop_runs: tuple[float, float] | None = None
 """
 Crop the raw data of each run to the specified time interval `[tmin, tmax]`,
 in seconds. The runs will be cropped before Maxwell or frequency filtering is
 applied. If `None`, do not crop the data.
 """
 
-acq: Optional[str] = None
+acq: str | None = None
 """
 The BIDS `acquisition` entity.
 """
 
-proc: Optional[str] = None
+proc: str | None = None
 """
 The BIDS `processing` entity.
 """
 
-rec: Optional[str] = None
+rec: str | None = None
 """
 The BIDS `recording` entity.
 """
 
-space: Optional[str] = None
+space: str | None = None
 """
 The BIDS `space` entity.
 """
 
-subjects: Union[Sequence[str], Literal["all"]] = "all"
+subjects: Sequence[str] | Literal["all"] = "all"
 """
 Subjects to analyze. If `'all'`, include all subjects. To only
 include a subset of subjects, pass a list of their identifiers. Even
@@ -216,7 +205,7 @@ The channel types to consider.
     ```
 """
 
-data_type: Optional[Literal["meg", "eeg"]] = None
+data_type: Literal["meg", "eeg"] | None = None
 """
 The BIDS data type.
 
@@ -250,7 +239,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Optional[Sequence[str]] = None
+eog_channels: Sequence[str] | None = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -285,7 +274,7 @@ a subset of them here, only this subset will be used during processing.
     ```
 """
 
-eeg_bipolar_channels: Optional[dict[str, tuple[str, str]]] = None
+eeg_bipolar_channels: dict[str, tuple[str, str]] | None = None
 """
 Combine two channels into a bipolar channel, whose signal is the **difference**
 between the two combined channels, and add it to the data.
@@ -318,7 +307,7 @@ Can also be `None` if you do not want to create bipolar channels.
     ```
 """
 
-eeg_reference: Union[Literal["average"], str, Sequence["str"]] = "average"
+eeg_reference: Literal["average"] | str | Sequence["str"] = "average"
 """
 The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
@@ -341,7 +330,7 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```
 """
 
-eeg_template_montage: Optional[Union[str, DigMontageType]] = None
+eeg_template_montage: str | DigMontageType | None = None
 """
 In situations where you wish to process EEG data and no individual
 digitization points (measured channel locations) are available, you can apply
@@ -382,7 +371,9 @@ to remove the anode, cathode, or both.
     ```
 """
 
-analyze_channels: Union[Literal["all", "ch_types"], Sequence["str"]] = "ch_types"
+analyze_channels: Literal["all", "ch_types"] | Annotated[Sequence["str"], MinLen(1)] = (
+    "ch_types"
+)
 """
 The names of the channels to analyze during ERP/ERF and time-frequency analysis
 steps. For certain paradigms, e.g. EEG ERP research, it is common to constrain
@@ -413,7 +404,7 @@ Parameters to be passed to `read_raw_bids()` calls when importing raw data.
     ```
 """
 
-read_raw_bids_verbose: Optional[Literal["error"]] = None
+read_raw_bids_verbose: Literal["error"] | None = None
 """
 Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
 If you know your dataset will contain files that are not perfectly BIDS
@@ -421,7 +412,7 @@ compliant (e.g., "Did not find any meg.json..."), you can set this to
 `'error'` to suppress warnings emitted by read_raw_bids.
 """
 
-plot_psd_for_runs: Union[Literal["all"], Sequence[str]] = "all"
+plot_psd_for_runs: Literal["all"] | Sequence[str] = "all"
 """
 For which runs to add a power spectral density (PSD) plot to the generated
 report. This can take a considerable amount of time if you have many long
@@ -429,18 +420,12 @@ runs. In this case, specify the runs, or pass an empty list to disable raw PSD
 plotting.
 """
 
-random_state: Optional[int] = 42
+random_state: int | None = 42
 """
 You can specify the seed of the random number generator (RNG).
 This setting is passed to the ICA algorithm and to the decoding function,
 ensuring reproducible results. Set to `None` to avoid setting the RNG
 to a defined state.
-"""
-
-shortest_event: int = 1
-"""
-Minimum number of samples an event must last. If the
-duration is less than this, an exception will be raised.
 """
 
 # %%
@@ -589,7 +574,7 @@ Whether or not to use Maxwell filtering to preprocess the data.
     before applying Maxwell filter.
 """
 
-mf_st_duration: Optional[float] = None
+mf_st_duration: float | None = None
 """
 There are two kinds of Maxwell filtering: SSS (signal space separation) and
 tSSS (temporal signal space separation)
@@ -630,7 +615,7 @@ The correlation limit for spatio-temporal SSS (tSSS).
     ```
 """
 
-mf_head_origin: Union[Literal["auto"], FloatArrayLike] = "auto"
+mf_head_origin: Literal["auto"] | FloatArrayLike = "auto"
 """
 `mf_head_origin` : array-like, shape (3,) | 'auto'
 Origin of internal and external multipolar moment space in meters.
@@ -645,7 +630,7 @@ options or specifying the origin manually.
     ```
 """
 
-mf_destination: Union[Literal["reference_run"], FloatArrayLike] = "reference_run"
+mf_destination: Literal["reference_run"] | FloatArrayLike = "reference_run"
 """
 Despite all possible care to avoid movements in the MEG, the participant
 will likely slowly drift down from the Dewar or slightly shift the head
@@ -676,7 +661,7 @@ or higher for datasets where lower or higher spatial complexity, respectively,
 is expected.
 """
 
-mf_reference_run: Optional[str] = None
+mf_reference_run: str | None = None
 """
 Which run to take as the reference for adjusting the head position of all
 runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
@@ -688,7 +673,7 @@ If `None`, pick the first run.
     ```
 """
 
-mf_cal_fname: Optional[str] = None
+mf_cal_fname: str | None = None
 """
 !!! warning
      This parameter should only be used for BIDS datasets that don't store
@@ -702,7 +687,7 @@ location is used.
     ```
 """  # noqa : E501
 
-mf_ctc_fname: Optional[str] = None
+mf_ctc_fname: str | None = None
 """
 Path to the Maxwell Filter cross-talk file. If `None`, the recommended
 location is used.
@@ -722,7 +707,7 @@ mf_esss: int = 0
 Number of extended SSS (eSSS) basis projectors to use from empty-room data.
 """
 
-mf_esss_reject: Optional[dict[str, float]] = None
+mf_esss_reject: dict[str, float] | None = None
 """
 Rejection parameters to use when computing the extended SSS (eSSS) basis.
 """
@@ -737,7 +722,7 @@ mf_mc_t_step_min: float = 0.01
 Minimum time step to use during cHPI coil amplitude estimation.
 """
 
-mf_mc_t_window: Union[float, Literal["auto"]] = "auto"
+mf_mc_t_window: float | Literal["auto"] = "auto"
 """
 The window to use during cHPI coil amplitude estimation and in cHPI filtering.
 Can be "auto" to autodetect a reasonable value or a float (in seconds).
@@ -753,19 +738,19 @@ mf_mc_dist_limit: float = 0.005
 Minimum distance (m) to accept for cHPI position fitting.
 """
 
-mf_mc_rotation_velocity_limit: Optional[float] = None
+mf_mc_rotation_velocity_limit: float | None = None
 """
 The rotation velocity limit (degrees/second) to use when annotating
 movement-compensated data. If `None`, no annotations will be added.
 """
 
-mf_mc_translation_velocity_limit: Optional[float] = None
+mf_mc_translation_velocity_limit: float | None = None
 """
 The translation velocity limit (meters/second) to use when annotating
 movement-compensated data. If `None`, no annotations will be added.
 """
 
-mf_filter_chpi: Optional[bool] = None
+mf_filter_chpi: bool | None = None
 """
 Use mne.chpi.filter_chpi after Maxwell filtering. Can be None to use
 the same value as [`mf_mc`][mne_bids_pipeline._config.mf_mc].
@@ -796,33 +781,33 @@ Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell
 # If you need more fancy analysis, you are already likely past this kind
 # of tips! 😇
 
-l_freq: Optional[float] = None
+l_freq: float | None = None
 """
 The low-frequency cut-off in the highpass filtering step.
 Keep it `None` if no highpass filtering should be applied.
 """
 
-h_freq: Optional[float] = 40.0
+h_freq: float | None = 40.0
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it `None` if no lowpass filtering should be applied.
 """
 
-l_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
+l_trans_bandwidth: float | Literal["auto"] = "auto"
 """
 Specifies the transition bandwidth of the
 highpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
-h_trans_bandwidth: Union[float, Literal["auto"]] = "auto"
+h_trans_bandwidth: float | Literal["auto"] = "auto"
 """
 Specifies the transition bandwidth of the
 lowpass filter. By default it's `'auto'` and uses default MNE
 parameters.
 """
 
-notch_freq: Optional[Union[float, Sequence[float]]] = None
+notch_freq: float | Sequence[float] | None = None
 """
 Notch filter frequency. More than one frequency can be supplied, e.g. to remove
 harmonics. Keep it `None` if no notch filter should be applied.
@@ -846,7 +831,7 @@ notch_trans_bandwidth: float = 1.0
 Specifies the transition bandwidth of the notch filter. The default is `1.`.
 """
 
-notch_widths: Optional[Union[float, Sequence[float]]] = None
+notch_widths: float | Sequence[float] | None = None
 """
 Specifies the width of each stop band. `None` uses the MNE default.
 """
@@ -860,7 +845,7 @@ Specifies the width of each stop band. `None` uses the MNE default.
 # resample your data down to 500 Hz without preventing reliable time-frequency
 # exploration of your data.
 
-raw_resample_sfreq: Optional[float] = None
+raw_resample_sfreq: float | None = None
 """
 Specifies at which sampling frequency the data should be resampled.
 If `None`, then no resampling will be done.
@@ -931,7 +916,7 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
-epochs_metadata_tmin: Optional[float] = None
+epochs_metadata_tmin: float | None = None
 """
 The beginning of the time window for metadata generation, in seconds,
 relative to the time-locked event of the respective epoch. This may be less
@@ -939,13 +924,13 @@ than or larger than the epoch's first time point. If `None`, use the first
 time point of the epoch.
 """
 
-epochs_metadata_tmax: Optional[float] = None
+epochs_metadata_tmax: float | None = None
 """
 Same as `epochs_metadata_tmin`, but specifying the **end** of the time
 window for metadata generation.
 """
 
-epochs_metadata_keep_first: Optional[Sequence[str]] = None
+epochs_metadata_keep_first: Sequence[str] | None = None
 """
 Event groupings using hierarchical event descriptors (HEDs) for which to store
 the time of the **first** occurrence of any event of this group in a new column
@@ -973,14 +958,14 @@ aggregation will take place and no new columns will be created.
     and `first_stimulus`.
 """
 
-epochs_metadata_keep_last: Optional[Sequence[str]] = None
+epochs_metadata_keep_last: Sequence[str] | None = None
 """
 Same as `epochs_metadata_keep_first`, but for keeping the **last**
 occurrence of matching event types. The columns indicating the event types
 will be named with a `last_` instead of a `first_` prefix.
 """
 
-epochs_metadata_query: Optional[str] = None
+epochs_metadata_query: str | None = None
 """
 A [metadata query][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
 specifying which epochs to keep. If the query fails because it refers to an
@@ -993,7 +978,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """  # noqa: E501
 
-conditions: Optional[Union[Sequence[str], dict[str, str]]] = None
+conditions: Sequence[str] | dict[str, str] | None = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1045,18 +1030,18 @@ The end of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-rest_epochs_duration: Optional[float] = None
+rest_epochs_duration: float | None = None
 """
 Duration of epochs in seconds.
 """
 
-rest_epochs_overlap: Optional[float] = None
+rest_epochs_overlap: float | None = None
 """
 Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
-baseline: Optional[tuple[Optional[float], Optional[float]]] = (None, 0)
+baseline: tuple[float | None, float | None] | None = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
 if `None`, no baseline correction is applied.
@@ -1108,7 +1093,7 @@ End time of the interpolation window in seconds.
 
 # ### SSP, ICA, and artifact regression
 
-regress_artifact: Optional[dict[str, Any]] = None
+regress_artifact: dict[str, Any] | None = None
 """
 Keyword arguments to pass to the `mne.preprocessing.EOGRegression` model used
 in `mne.preprocessing.regress_artifact`. If `None`, no time-domain regression will
@@ -1126,7 +1111,7 @@ Artifact regression is applied before SSP or ICA.
     ```
 """  # noqa: E501
 
-spatial_filter: Optional[Literal["ssp", "ica"]] = None
+spatial_filter: Literal["ssp", "ica"] | None = None
 """
 Whether to use a spatial filter to detect and remove artifacts. The BIDS
 Pipeline offers the use of signal-space projection (SSP) and independent
@@ -1186,7 +1171,7 @@ estimate projectors from all MEG sensors simultaneously. The default is
 `'separate'` otherwise.
 """
 
-ssp_reject_ecg: Optional[Union[dict[str, float], Literal["autoreject_global"]]] = None
+ssp_reject_ecg: dict[str, float] | Literal["autoreject_global"] | None = None
 """
 Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1204,7 +1189,7 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_reject_eog: Optional[Union[dict[str, float], Literal["autoreject_global"]]] = None
+ssp_reject_eog: dict[str, float] | Literal["autoreject_global"] | None = None
 """
 Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
 This allows you to remove strong transient artifacts, which could negatively
@@ -1222,13 +1207,13 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_ecg_channel: Optional[str] = None
+ssp_ecg_channel: str | None = None
 """
 Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
 is not reliable.
 """
 
-ica_reject: Optional[Union[dict[str, float], Literal["autoreject_local"]]] = None
+ica_reject: dict[str, float] | Literal["autoreject_local"] | None = None
 """
 Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
 remove strong transient artifacts from the epochs used for fitting ICA, which could
@@ -1286,7 +1271,7 @@ generated ICA decomposition is identical to the one generated by the extended In
 algorithm (but may converge in less time).
 """
 
-ica_l_freq: Optional[float] = 1.0
+ica_l_freq: float | None = 1.0
 """
 The cutoff frequency of the high-pass filter to apply before running ICA.
 Using a relatively high cutoff like 1 Hz will remove slow drifts from the
@@ -1320,7 +1305,7 @@ it converges quicker than the other algorithms; but e.g. for FastICA, this
 limit may be too low to achieve convergence.
 """
 
-ica_n_components: Optional[Union[float, int]] = None
+ica_n_components: float | int | None = None
 """
 MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
@@ -1345,7 +1330,7 @@ rank-deficient data.
 This setting may drastically alter the time required to compute ICA.
 """
 
-ica_decim: Optional[int] = None
+ica_decim: int | None = None
 """
 The decimation parameter to compute ICA. If 5 it means
 that 1 every 5 sample is used by ICA solver. The higher the faster
@@ -1373,9 +1358,9 @@ false-alarm rate increases dramatically.
 #     You can do a quick average of blink data and check what the amplitude looks
 #     like.
 
-reject: Optional[
-    Union[dict[str, float], Literal["autoreject_global", "autoreject_local"]]
-] = None
+reject: dict[str, float] | Literal["autoreject_global", "autoreject_local"] | None = (
+    None
+)
 """
 Peak-to-peak amplitude limits to mark epochs as bad. This allows you to remove
 epochs with strong transient artifacts.
@@ -1412,7 +1397,7 @@ to control how many channels are allowed to be bad before an epoch gets dropped.
     ```
 """  # noqa: E501
 
-reject_tmin: Optional[float] = None
+reject_tmin: float | None = None
 """
 Start of the time window used to reject epochs. If `None`, the window will
 start with the first time point. Has no effect if
@@ -1424,7 +1409,7 @@ start with the first time point. Has no effect if
     ```
 """
 
-reject_tmax: Optional[float] = None
+reject_tmax: float | None = None
 """
 End of the time window used to reject epochs. If `None`, the window will end
 with the last time point. Has no effect if
@@ -1458,7 +1443,7 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 
 # ## Condition contrasts
 
-contrasts: Sequence[Union[tuple[str, str], ArbitraryContrast]] = []
+contrasts: Sequence[tuple[str, str] | ArbitraryContrast] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
@@ -1554,14 +1539,14 @@ If `"cleaned"`, use the epochs after ICA / SSP and the following cleaning throug
 PTP-based rejection or Autoreject (epochs with the filename `*proc-clean_epo.fif`).
 """
 
-decoding_epochs_tmin: Optional[float] = 0.0
+decoding_epochs_tmin: float | None = 0.0
 """
 The first time sample to use for full epochs decoding. By default it starts
 at 0. If `None`,, it starts at the beginning of the epoch. Does not affect time-by-time
 decoding.
 """
 
-decoding_epochs_tmax: Optional[float] = None
+decoding_epochs_tmax: float | None = None
 """
 The last time sample to use for full epochs decoding. By default it is set
 to None so it ends at the end of the epoch.
@@ -1620,13 +1605,13 @@ time and frequency ranges. This allows to obtain decoding scores defined over
 time and frequency.
 """
 
-decoding_csp_times: Optional[FloatArrayLike] = None
+decoding_csp_times: FloatArrayLike | None = None
 """
 The edges of the time bins to use for CSP decoding.
 Must contain at least two elements. By default, 5 equally-spaced bins are
 created across the non-negative time range of the epochs.
 All specified time points must be contained in the epochs interval.
-If `None`, do not perform **time-frequency** analysis, and only run CSP on
+If an empty list, do not perform **time-frequency** analysis, and only run CSP on
 **frequency** data.
 
 ???+ example "Example"
@@ -1640,7 +1625,7 @@ If `None`, do not perform **time-frequency** analysis, and only run CSP on
     ```
 """
 
-decoding_csp_freqs: Optional[dict[str, FloatArrayLike]] = None
+decoding_csp_freqs: dict[str, FloatArrayLike] | None = None
 """
 The edges of the frequency bins to use for CSP decoding.
 
@@ -1690,7 +1675,7 @@ The number of bootstrap resamples when estimating the standard error and
 confidence interval of the mean decoding scores.
 """
 
-cluster_forming_t_threshold: Optional[float] = None
+cluster_forming_t_threshold: float | None = None
 """
 The t-value threshold to use for forming clusters in the cluster-based
 permutation test run on the the time-by-time decoding scores.
@@ -1732,7 +1717,7 @@ The conditions to compute time-frequency decomposition on.
     ```
 """
 
-time_frequency_freq_min: Optional[float] = 8
+time_frequency_freq_min: float | None = 8
 """
 Minimum frequency for the time frequency analysis, in Hz.
 ???+ example "Example"
@@ -1741,7 +1726,7 @@ Minimum frequency for the time frequency analysis, in Hz.
     ```
 """
 
-time_frequency_freq_max: Optional[float] = 40
+time_frequency_freq_max: float | None = 40
 """
 Maximum frequency for the time frequency analysis, in Hz.
 ???+ example "Example"
@@ -1750,7 +1735,7 @@ Maximum frequency for the time frequency analysis, in Hz.
     ```
 """
 
-time_frequency_cycles: Optional[Union[float, FloatArrayLike]] = None
+time_frequency_cycles: float | FloatArrayLike | None = None
 """
 The number of cycles to use in the Morlet wavelet. This can be a single number
 or one per frequency, where frequencies are calculated via
@@ -1769,7 +1754,7 @@ highlight induced activity.
      This also applies to CSP analysis.
 """
 
-time_frequency_baseline: Optional[tuple[float, float]] = None
+time_frequency_baseline: tuple[float, float] | None = None
 """
 Baseline period to use for the time-frequency analysis. If `None`, no baseline.
 ???+ example "Example"
@@ -1788,7 +1773,7 @@ Baseline mode to use for the time-frequency analysis. Can be chosen among:
     ```
 """
 
-time_frequency_crop: Optional[dict] = None
+time_frequency_crop: dict | None = None
 """
 Period and frequency range to crop the time-frequency analysis to.
 If `None`, no cropping.
@@ -1826,7 +1811,7 @@ Whether to run source estimation processing steps if not explicitly requested.
 
 # ## BEM surface
 
-use_template_mri: Optional[str] = None
+use_template_mri: str | None = None
 """
 Whether to use a template MRI subject such as FreeSurfer's `fsaverage` subject.
 This may come in handy if you don't have individual MR scans of your
@@ -1900,7 +1885,7 @@ Whether to print the complete output of FreeSurfer commands. Note that if
 
 # ## Source space & forward solution
 
-mri_t1_path_generator: Optional[Callable[[BIDSPath], BIDSPath]] = None
+mri_t1_path_generator: Callable[[BIDSPath], BIDSPath] | None = None
 """
 To perform source-level analyses, the Pipeline needs to generate a
 transformation matrix that translates coordinates from MEG and EEG sensor
@@ -1960,7 +1945,7 @@ generated – and returned by the function, pointing to the T1-weighted image.
     ```
 """
 
-mri_landmarks_kind: Optional[Callable[[BIDSPath], str]] = None
+mri_landmarks_kind: Callable[[BIDSPath], str] | None = None
 """
 This config option allows to look for specific landmarks in the json
 sidecar file of the T1 MRI file. This can be useful when we have different
@@ -1977,7 +1962,7 @@ fiducials derived for the coregistration transformation of a given session.
     ```
 """
 
-spacing: Union[Literal["oct5", "oct6", "ico4", "ico5", "all"], int] = "oct6"
+spacing: Literal["oct5", "oct6", "ico4", "ico5", "all"] | int = "oct6"
 """
 The spacing to use. Can be `'ico#'` for a recursively subdivided
 icosahedron, `'oct#'` for a recursively subdivided octahedron,
@@ -1994,7 +1979,7 @@ Exclude points closer than this distance (mm) to the bounding surface.
 
 # ## Inverse solution
 
-loose: Union[float, Literal["auto"]] = 0.2
+loose: float | Literal["auto"] = 0.2
 """
 Value that weights the source variances of the dipole components
 that are parallel (tangential) to the cortical surface. If `0`, then the
@@ -2005,7 +1990,7 @@ spaces, and to `1.0` for volumetric, discrete, or mixed source spaces,
 unless `fixed is True` in which case the value 0. is used.
 """
 
-depth: Optional[Union[float, dict]] = 0.8
+depth: float | dict | None = 0.8
 """
 If float (default 0.8), it acts as the depth weighting exponent (`exp`)
 to use (must be between 0 and 1). None is equivalent to 0, meaning no
@@ -2020,11 +2005,11 @@ Use minimum norm, dSPM (default), sLORETA, or eLORETA to calculate the inverse
 solution.
 """
 
-noise_cov: Union[
-    tuple[Optional[float], Optional[float]],
-    Literal["emptyroom", "rest", "ad-hoc"],
-    Callable[[BIDSPath], Covariance],
-] = (None, 0)
+noise_cov: (
+    tuple[float | None, float | None]
+    | Literal["emptyroom", "rest", "ad-hoc"]
+    | Callable[[BIDSPath], Covariance]
+) = (None, 0)
 """
 Specify how to estimate the noise covariance matrix, which is used in
 inverse modeling.
@@ -2104,7 +2089,7 @@ The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
 """
 
-source_info_path_update: Optional[dict[str, str]] = dict(suffix="ave")
+source_info_path_update: dict[str, str] | None = dict(suffix="ave")
 """
 When computing the forward and inverse solutions, by default the pipeline
 retrieves the `mne.Info` object from the cleaned evoked data. However, in
@@ -2146,7 +2131,7 @@ empty list, `[]`.
 
 # ## Report generation
 
-report_evoked_n_time_points: Optional[int] = None
+report_evoked_n_time_points: int | None = None
 """
 Specifies the number of time points to display for each evoked
 in the report. If `None`, it defaults to the current default in MNE-Python.
@@ -2158,7 +2143,7 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
-report_stc_n_time_points: Optional[int] = None
+report_stc_n_time_points: int | None = None
 """
 Specifies the number of time points to display for each source estimates
 in the report. If `None`, it defaults to the current default in MNE-Python.
@@ -2170,7 +2155,7 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
-report_add_epochs_image_kwargs: Optional[dict] = None
+report_add_epochs_image_kwargs: dict | None = None
 """
 Specifies the limits for the color scales of the epochs_image in the report.
 If `None`, it defaults to the current default in MNE-Python.
@@ -2187,70 +2172,12 @@ If `None`, it defaults to the current default in MNE-Python.
 """
 
 # %%
-# # Execution
+# # Caching
 #
-# These options control how the pipeline is executed but should not affect
-# what outputs get produced.
+# These settings control if and how pipeline output is being cached to avoid unnecessary
+# computations on a re-run.
 
-n_jobs: int = 1
-"""
-Specifies how many subjects you want to process in parallel. If `1`, disables
-parallel processing.
-"""
-
-parallel_backend: Literal["loky", "dask"] = "loky"
-"""
-Specifies which backend to use for parallel job execution. `loky` is the
-default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
-be installed. Ignored if [`n_jobs`][mne_bids_pipeline._config.n_jobs] is set to
-`1`.
-"""
-
-dask_open_dashboard: bool = False
-"""
-Whether to open the Dask dashboard in the default webbrowser automatically.
-Ignored if `parallel_backend` is not `'dask'`.
-"""
-
-dask_temp_dir: Optional[PathLike] = None
-"""
-The temporary directory to use by Dask. Dask places lock-files in this
-directory, and also uses it to "spill" RAM contents to disk if the amount of
-free memory in the system hits a critical low. It is recommended to point this
-to a location on a fast, local disk (i.e., not a network-attached storage) to
-ensure good performance. The directory needs to be writable and will be created
-if it does not exist.
-
-If `None`, will use `.dask-worker-space` inside of
-[`deriv_root`][mne_bids_pipeline._config.deriv_root].
-"""
-
-dask_worker_memory_limit: str = "10G"
-"""
-The maximum amount of RAM per Dask worker.
-"""
-
-log_level: Literal["info", "error"] = "info"
-"""
-Set the pipeline logging verbosity.
-"""
-
-mne_log_level: Literal["info", "error"] = "error"
-"""
-Set the MNE-Python logging verbosity.
-"""
-
-on_error: Literal["continue", "abort", "debug"] = "abort"
-"""
-Whether to abort processing as soon as an error occurs, continue with all other
-processing steps for as long as possible, or drop you into a debugger in case
-of an error.
-
-!!! info
-    Enabling debug mode deactivates parallel processing.
-"""
-
-memory_location: Optional[Union[PathLike, bool]] = True
+memory_location: PathLike | bool | None = True
 """
 If not None (or False), caching will be enabled and the cache files will be
 stored in the given directory. The default (True) will use a
@@ -2278,6 +2205,81 @@ memory_verbose: int = 0
 The verbosity to use when using memory. The default (0) does not print, while
 1 will print the function calls that will be cached. See the documentation for
 the joblib.Memory class for more information."""
+
+# %%
+# # Parallelization
+#
+# These options control parallel processing (e.g., multiple subjects at once),
+
+n_jobs: int = 1
+"""
+Specifies how many subjects you want to process in parallel. If `1`, disables
+parallel processing.
+"""
+
+parallel_backend: Literal["loky", "dask"] = "loky"
+"""
+Specifies which backend to use for parallel job execution. `loky` is the
+default backend used by `joblib`. `dask` requires [`Dask`](https://dask.org) to
+be installed. Ignored if [`n_jobs`][mne_bids_pipeline._config.n_jobs] is set to
+`1`.
+"""
+
+dask_open_dashboard: bool = False
+"""
+Whether to open the Dask dashboard in the default webbrowser automatically.
+Ignored if `parallel_backend` is not `'dask'`.
+"""
+
+dask_temp_dir: PathLike | None = None
+"""
+The temporary directory to use by Dask. Dask places lock-files in this
+directory, and also uses it to "spill" RAM contents to disk if the amount of
+free memory in the system hits a critical low. It is recommended to point this
+to a location on a fast, local disk (i.e., not a network-attached storage) to
+ensure good performance. The directory needs to be writable and will be created
+if it does not exist.
+
+If `None`, will use `.dask-worker-space` inside of
+[`deriv_root`][mne_bids_pipeline._config.deriv_root].
+"""
+
+dask_worker_memory_limit: str = "10G"
+"""
+The maximum amount of RAM per Dask worker.
+"""
+
+# %%
+# # Logging
+#
+# These options control how much logging output is produced.
+
+log_level: Literal["info", "error"] = "info"
+"""
+Set the pipeline logging verbosity.
+"""
+
+mne_log_level: Literal["info", "error"] = "error"
+"""
+Set the MNE-Python logging verbosity.
+"""
+
+
+# %%
+# # Error handling
+#
+# These options control how errors while processing the data or the configuration file
+# are handled.
+
+on_error: Literal["continue", "abort", "debug"] = "abort"
+"""
+Whether to abort processing as soon as an error occurs, continue with all other
+processing steps for as long as possible, or drop you into a debugger in case
+of an error.
+
+!!! info
+    Enabling debug mode deactivates parallel processing.
+"""
 
 config_validation: Literal["raise", "warn", "ignore"] = "raise"
 """

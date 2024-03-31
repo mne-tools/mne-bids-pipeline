@@ -10,7 +10,6 @@ which condition.
 
 import os.path as op
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 import numpy as np
@@ -46,7 +45,7 @@ def get_input_fnames_epochs_decoding(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     condition1: str,
     condition2: str,
 ) -> dict:
@@ -80,7 +79,7 @@ def run_epochs_decoding(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     condition1: str,
     condition2: str,
     in_files: dict,
@@ -201,7 +200,7 @@ def run_epochs_decoding(
             all_contrasts.append(contrast)
             del fname_decoding, processing, a_vs_b, decoding_data
 
-        fig, caption = _plot_full_epochs_decoding_scores(
+        fig, caption, _ = _plot_full_epochs_decoding_scores(
             contrast_names=_contrasts_to_names(all_contrasts),
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,

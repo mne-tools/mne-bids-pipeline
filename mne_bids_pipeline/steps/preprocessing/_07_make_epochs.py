@@ -9,7 +9,6 @@ To save space, the epoch data can be decimated.
 
 import inspect
 from types import SimpleNamespace
-from typing import Optional
 
 import mne
 from mne_bids import BIDSPath
@@ -38,7 +37,7 @@ def get_input_fnames_epochs(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     """Get paths of files required by filter_data function."""
     # Construct the basenames of the files we wish to load, and of the empty-
@@ -79,7 +78,7 @@ def run_epochs(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     """Extract epochs for one subject."""

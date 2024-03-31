@@ -3,24 +3,22 @@
 Initialize the derivatives directory.
 """
 
+from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional
 
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
 from ..._config_utils import _bids_kwargs, get_sessions, get_subjects
 from ..._logging import gen_log_kwargs, logger
-from ..._run import failsafe_run
+from ..._run import _prep_out_files, failsafe_run
 
 
-def init_dataset(cfg) -> None:
+@failsafe_run()
+def init_dataset(cfg: SimpleNamespace, exec_params: SimpleNamespace) -> dict[str, Path]:
     """Prepare the pipeline directory in /derivatives."""
-    fname_json = cfg.deriv_root / "dataset_description.json"
-    if fname_json.is_file():
-        msg = "Output directories already exist …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="✅"))
-        return
+    out_files = dict()
+    out_files["json"] = cfg.deriv_root / "dataset_description.json"
     logger.info(**gen_log_kwargs(message="Initializing output directories."))
 
     cfg.deriv_root.mkdir(exist_ok=True, parents=True)
@@ -38,16 +36,18 @@ def init_dataset(cfg) -> None:
         "URL": "n/a",
     }
 
-    _write_json(fname_json, ds_json, overwrite=True)
+    _write_json(out_files["json"], ds_json, overwrite=True)
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, bids_only=False
+    )
 
 
-@failsafe_run()
 def init_subject_dirs(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> None:
     """Create processing data output directories for individual participants."""
     out_dir = cfg.deriv_root / f"sub-{subject}"
@@ -73,7 +73,7 @@ def get_config(
 
 def main(*, config):
     """Initialize the output directories."""
-    init_dataset(cfg=get_config(config=config))
+    init_dataset(cfg=get_config(config=config), exec_params=config.exec_params)
     # Don't bother with parallelization here as I/O operations are generally
     # not well parallelized (and this should be very fast anyway)
     for subject in get_subjects(config):

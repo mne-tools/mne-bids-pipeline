@@ -9,7 +9,7 @@ run the apply_ica step.
 
 import shutil
 from types import SimpleNamespace
-from typing import Literal, Optional
+from typing import Literal
 
 import mne
 import numpy as np
@@ -34,11 +34,11 @@ def detect_bad_components(
     *,
     cfg,
     which: Literal["eog", "ecg"],
-    epochs: Optional[mne.BaseEpochs],
+    epochs: mne.BaseEpochs | None,
     ica: mne.preprocessing.ICA,
-    ch_names: Optional[list[str]],
+    ch_names: list[str] | None,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> tuple[list[int], np.ndarray]:
     artifact = which.upper()
     if epochs is None:
@@ -89,7 +89,7 @@ def get_input_fnames_find_ica_artifacts(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
 ) -> dict:
     bids_basename = BIDSPath(
         subject=subject,
@@ -127,7 +127,7 @@ def find_ica_artifacts(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    session: Optional[str],
+    session: str | None,
     in_files: dict,
 ) -> dict:
     """Run ICA."""
@@ -341,7 +341,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
-    session: Optional[str] = None,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,

@@ -1,7 +1,8 @@
 """Parallelization."""
 
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Callable, Literal
+from typing import Literal
 
 import joblib
 from mne.utils import logger as mne_logger

@@ -271,6 +271,7 @@ class ConditionalStepMemory:
             del out_files
 
             if msg is not None:
+                assert emoji is not None  # help type checker
                 logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
             if short_circuit:
                 return
@@ -327,6 +328,7 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
                     new_val += val.__qualname__
                 val = "custom callable" if not new_val else new_val
             val = json_tricks.dumps(val, indent=4, sort_keys=False)
+            assert isinstance(val, str)  # help type checker
             # 32767 char limit per cell (could split over lines but if something is
             # this long, you'll probably get the gist from the first 32k chars)
             if len(val) > 32767:

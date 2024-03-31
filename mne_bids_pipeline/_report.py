@@ -32,11 +32,11 @@ def _open_report(
     session: str | None,
     run: str | None = None,
     task: str | None = None,
-    fname_report: BIDSPath | None = None,
+    bp_report: BIDSPath | None = None,
     name: str = "report",
 ):
-    if fname_report is None:
-        fname_report = BIDSPath(
+    if bp_report is None:
+        bp_report = BIDSPath(
             subject=subject,
             session=session,
             # Report is across all runs, but for logging purposes it's helpful
@@ -52,11 +52,14 @@ def _open_report(
             suffix="report",
             check=False,
         )
-    fname_report = fname_report.fpath
-    assert fname_report.suffix == ".h5", fname_report.suffix
+
+    report_path = bp_report.fpath
+    del bp_report
+    assert report_path.suffix == ".h5", report_path.suffix
+
     # prevent parallel file access
-    with FileLock(f"{fname_report}.lock"), _agg_backend():
-        if not fname_report.is_file():
+    with FileLock(f"{report_path}.lock"), _agg_backend():
+        if not report_path.is_file():
             msg = f"Initializing {name} HDF5 file"
             logger.info(**gen_log_kwargs(message=msg))
             report = _gen_empty_report(
@@ -64,12 +67,12 @@ def _open_report(
                 subject=subject,
                 session=session,
             )
-            report.save(fname_report)
+            report.save(report_path)
         try:
-            report = mne.open_report(fname_report)
+            report = mne.open_report(report_path)
         except Exception as exc:
             raise exc.__class__(
-                f"Could not open {name} HDF5 file:\n{fname_report}, "
+                f"Could not open {name} HDF5 file:\n{report_path}, "
                 "Perhaps you need to delete it? Got error:\n\n"
                 f'{indent(traceback.format_exc(), "    ")}'
             ) from None
@@ -87,10 +90,10 @@ def _open_report(
                 )
             except Exception as exc:
                 logger.warning(f"Failed: {exc}")
-            fname_report_html = fname_report.with_suffix(".html")
+            fname_report_html = report_path.with_suffix(".html")
             msg = f"Saving {name}: {_linkfile(fname_report_html)}"
             logger.info(**gen_log_kwargs(message=msg))
-            report.save(fname_report, overwrite=True)
+            report.save(report_path, overwrite=True)
             report.save(fname_report_html, overwrite=True, open_browser=False)
 
 

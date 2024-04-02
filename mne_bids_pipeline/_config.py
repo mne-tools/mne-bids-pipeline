@@ -2098,7 +2098,7 @@ This parameter allows you to explicitly specify from which file to retrieve the
 `mne.Info` object. Use this parameter to supply a dictionary to
 `BIDSPath.update()` during the forward and inverse processing steps.
 If set to `None` (default), the info will be retrieved either from the raw
-file specified in `noise_cov`, or the cleaned epochs
+file specified in `noise_cov`, or the cleaned evoked
 (if `noise_cov` is None or `ad-hoc`).
 
 ???+ example "Example"

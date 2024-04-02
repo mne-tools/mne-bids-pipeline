@@ -2114,6 +2114,9 @@ file specified in `noise_cov`, or the cleaned epochs
                                 'suffix': 'raw',
                                 'task': 'rest'}
     ```
+    If you set `noise_cov = 'rest'` and `source_path_info = None`, then the behavior is identical
+    to that above (it will automatically use the resting state data).
+
 """
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]

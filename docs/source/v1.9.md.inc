@@ -6,7 +6,7 @@
 - The type annotations in the default configuration file are now easier to read: We
   replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908, #911 by @hoechenberger)
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 - Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py` 
   and `_05_make_inverse.py`, we retrieve the info from the file from which 
   the `noise_cov` is computed (#919 by @SophieHerbst)

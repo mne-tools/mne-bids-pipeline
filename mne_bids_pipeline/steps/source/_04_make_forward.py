@@ -105,7 +105,7 @@ def get_input_fnames_forward(*, cfg, subject, session):
     # for consistency with 05_make_inverse, read the info from the
     # data used for the noise_cov
     if cfg.source_info_path_update is None:
-        if cfg.noise_cov == "rest" | cfg.noise_cov == "noise":
+        if cfg.noise_cov in ("rest", "noise"):
             source_info_path_update = dict(
                 processing='clean',
                 suffix='raw',

@@ -2114,8 +2114,9 @@ file specified in `noise_cov`, or the cleaned evoked
                                 'suffix': 'raw',
                                 'task': 'rest'}
     ```
-    If you set `noise_cov = 'rest'` and `source_path_info = None`, then the behavior is identical
-    to that above (it will automatically use the resting state data).
+    If you set `noise_cov = 'rest'` and `source_path_info = None`,
+    then the behavior is identical to that above
+    (it will automatically use the resting state data).
 
 """
 

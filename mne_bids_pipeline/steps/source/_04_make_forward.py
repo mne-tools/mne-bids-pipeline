@@ -102,7 +102,22 @@ def get_input_fnames_forward(*, cfg, subject, session):
         check=False,
     )
     in_files = dict()
-    in_files["info"] = bids_path.copy().update(**cfg.source_info_path_update)
+    # for consistency with 05_make_inverse, read the info from the
+    # data used for the noise_cov
+    if cfg.source_info_path_update is None:
+        if cfg.noise_cov == "rest" | cfg.noise_cov == "noise":
+            source_info_path_update = dict(
+                'processing': 'clean',
+                'suffix': 'raw',
+                'task': cfg.noise_cov
+                )
+        else:
+            source_info_path_update = dict(suffix="ave")
+            # XXX is this the right solution also for noise_cov = 'ad-hoc'?
+    else:
+        source_info_path_update = cfg.source_info_path_update
+
+    in_files["info"] = bids_path.copy().update(source_info_path_update)
     bem_path = cfg.fs_subjects_dir / cfg.fs_subject / "bem"
     _, tag = _get_bem_conductivity(cfg)
     in_files["bem"] = bem_path / f"{cfg.fs_subject}-{tag}-bem-sol.fif"

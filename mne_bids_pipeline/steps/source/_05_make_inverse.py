@@ -50,11 +50,13 @@ def get_input_fnames_inverse(
     in_files = dict()
     # make sure the info matches the data from which the noise cov
     # is computed to avoid rank-mismatch
-    if cfg.source_info_path_update == None:
+    if cfg.source_info_path_update is None:
         if cfg.noise_cov == "rest" | cfg.noise_cov == "noise":
-            source_info_path_update = {'processing': 'clean',
-                            'suffix': 'raw',
-                            'task': cfg.noise_cov}
+            source_info_path_update = dict(
+                'processing': 'clean',
+                'suffix': 'raw',
+                'task': cfg.noise_cov
+                )
         else:
             source_info_path_update = dict(suffix="ave")
             # XXX is this the right solution also for noise_cov = 'ad-hoc'?

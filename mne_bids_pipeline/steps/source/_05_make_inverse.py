@@ -61,8 +61,7 @@ def get_input_fnames_inverse(
             source_info_path_update = dict(suffix="ave")
             # XXX is this the right solution also for noise_cov = 'ad-hoc'?
     else:
-        source_info_path_update = cfg.source_info_path_update
-
+        source_info_path_update = cfg.source_info_path_update    
     in_files["info"] = bids_path.copy().update(**source_info_path_update)
     in_files["forward"] = bids_path.copy().update(suffix="fwd")
     if cfg.noise_cov != "ad-hoc":

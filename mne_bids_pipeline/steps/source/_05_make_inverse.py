@@ -66,7 +66,6 @@ def get_input_fnames_inverse(
         in_files["cov"] = get_noise_cov_bids_path(
             cfg=cfg, subject=subject, session=session
         )
-        dict(suffix="ave")
     if "evoked" in cfg.inverse_targets:
         in_files["evoked"] = bids_path.copy().update(suffix="ave")
     return in_files

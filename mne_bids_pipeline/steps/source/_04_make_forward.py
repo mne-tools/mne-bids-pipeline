@@ -107,10 +107,8 @@ def get_input_fnames_forward(*, cfg, subject, session):
     if cfg.source_info_path_update is None:
         if cfg.noise_cov in ("rest", "noise"):
             source_info_path_update = dict(
-                processing='clean',
-                suffix='raw',
-                task=cfg.noise_cov
-                )
+                processing="clean", suffix="raw", task=cfg.noise_cov
+            )
         else:
             source_info_path_update = dict(suffix="ave")
             # XXX is this the right solution also for noise_cov = 'ad-hoc'?

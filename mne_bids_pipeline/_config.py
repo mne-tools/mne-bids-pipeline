@@ -1979,24 +1979,33 @@ Exclude points closer than this distance (mm) to the bounding surface.
 
 # ## Inverse solution
 
-loose: float | Literal["auto"] = 0.2
+loose: Annotated[float, Interval(ge=0, le=1)] | Literal["auto"] = 0.2
 """
-Value that weights the source variances of the dipole components
-that are parallel (tangential) to the cortical surface. If `0`, then the
-inverse solution is computed with **fixed orientation.**
-If `1`, it corresponds to **free orientation.**
-The default value, `'auto'`, is set to `0.2` for surface-oriented source
-spaces, and to `1.0` for volumetric, discrete, or mixed source spaces,
-unless `fixed is True` in which case the value 0. is used.
+A value between 0 and 1 that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface.
+
+If `0`, then the inverse solution is computed with **fixed orientation**, i.e.,
+only dipole components perpendicular to the cortical surface are considered.
+
+If `1`, it corresponds to **free orientation**, i.e., dipole components with any
+orientation are considered.
+
+The default value, `0.2`, is suitable for surface-oriented source spaces.
+
+For volume or mixed source spaces, choose `1.0`.
+
+!!! info
+    Support for modeling volume and mixed source spaces will be added in a future
+    version of MNE-BIDS-Pipeline.
 """
 
-depth: float | dict | None = 0.8
+depth: Annotated[float, Interval(ge=0, le=1)] | dict = 0.8
 """
-If float (default 0.8), it acts as the depth weighting exponent (`exp`)
-to use (must be between 0 and 1). None is equivalent to 0, meaning no
-depth weighting is performed. Can also be a `dict` containing additional
-keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-(see docstring for details and defaults).
+If a number, it acts as the depth weighting exponent to use
+(must be between `0` and`1`), with`0` meaning no depth weighting is performed.
+
+Can also be a dictionary containing additional keyword arguments to pass to
+`mne.forward.compute_depth_prior` (see docstring for details and defaults).
 """
 
 inverse_method: Literal["MNE", "dSPM", "sLORETA", "eLORETA"] = "dSPM"
@@ -2187,8 +2196,12 @@ If `None`, it defaults to the current default in MNE-Python.
 # %%
 # # Caching
 #
-# These settings control if and how pipeline output is being cached to avoid unnecessary
-# computations on a re-run.
+# Per default, the pipeline output is cached (temporarily stored),
+# to avoid unnecessary reruns of previously computed steps.
+# Yet, for consistency, changes in configuration parameters trigger
+# automatic reruns of previous steps.
+# !!! info
+#     To force rerunning a given step, run the pipeline with the option: `--no-cache`.
 
 memory_location: PathLike | bool | None = True
 """

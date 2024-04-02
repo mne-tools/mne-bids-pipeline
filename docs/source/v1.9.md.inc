@@ -10,20 +10,18 @@
 - Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py` 
   and `_05_make_inverse.py`, we retrieve the info from the file from which 
   the `noise_cov` is computed (#919 by @SophieHerbst)
-
-[//]: # (- Whatever (#000 by @whoever))
+- The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`
+  anymore. Please use `0` instead. (#915 by @hoechenberger)
 
 ### :package: Requirements
 
 - We dropped support for Python 3.9. You now need Python 3.10 or newer. (#908 by @hoechenberger)
 
-[//]: # (- Whatever (#000 by @whoever))
-
 ### :book: Documentation
 
 - We removed the `Execution` section from configuration options documentation and
   replaced it with new, more explicit sections (namely, Caching, Parallelization,
-  Logging, and Error handling). (#914 by @hoechenberger)
+  Logging, and Error handling), and enhanced documentation. (#914 by @hoechenberger, #916 by @SophieHerbst)
 
 ### :bug: Bug fixes
 

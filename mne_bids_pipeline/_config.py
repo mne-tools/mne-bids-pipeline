@@ -2098,15 +2098,17 @@ The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
 """
 
-source_info_path_update: dict[str, str] | None = dict(suffix="ave")
+source_info_path_update: dict[str, str] | None = None
 """
-When computing the forward and inverse solutions, by default the pipeline
-retrieves the `mne.Info` object from the cleaned evoked data. However, in
-certain situations you may wish to use a different `Info`.
-
+When computing the forward and inverse solutions, it is important to
+provide the `mne.Info` object from the data on which the noise covariance was
+computed, to avoid problems resulting from mismatching ranks.
 This parameter allows you to explicitly specify from which file to retrieve the
 `mne.Info` object. Use this parameter to supply a dictionary to
 `BIDSPath.update()` during the forward and inverse processing steps.
+If set to `None` (default), the info will be retrieved either from the raw
+file specified in `noise_cov`, or the cleaned evoked
+(if `noise_cov` is None or `ad-hoc`).
 
 ???+ example "Example"
     Use the `Info` object stored in the cleaned epochs:
@@ -2114,6 +2116,17 @@ This parameter allows you to explicitly specify from which file to retrieve the
     source_info_path_update = {'processing': 'clean',
                                'suffix': 'epo'}
     ```
+
+    Use the `Info` object stored in a raw file (e.g. resting state):
+    ```python
+    source_info_path_update = {'processing': 'clean',
+                                'suffix': 'raw',
+                                'task': 'rest'}
+    ```
+    If you set `noise_cov = 'rest'` and `source_path_info = None`,
+    then the behavior is identical to that above
+    (it will automatically use the resting state data).
+
 """
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]

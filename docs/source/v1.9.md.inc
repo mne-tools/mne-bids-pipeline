@@ -8,6 +8,9 @@
 
 ### :warning: Behavior changes
 
+- Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py` 
+  and `_05_make_inverse.py`, we retrieve the info from the file from which 
+  the `noise_cov` is computed (#919 by @SophieHerbst)
 - The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`
   anymore. Please use `0` instead. (#915 by @hoechenberger)
 

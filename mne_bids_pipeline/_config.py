@@ -2091,14 +2091,14 @@ of `mne.compute_covariance` for details.
 
 source_info_path_update: dict[str, str] | None = None
 """
-When computing the forward and inverse solutions, it is important to 
+When computing the forward and inverse solutions, it is important to
 provide the `mne.Info` object from the data on which the noise covariance was
-computed, to avoid problems resulting from mismatching ranks. 
+computed, to avoid problems resulting from mismatching ranks.
 This parameter allows you to explicitly specify from which file to retrieve the
 `mne.Info` object. Use this parameter to supply a dictionary to
 `BIDSPath.update()` during the forward and inverse processing steps.
-If set to `None` (default), the info will be retrieved either from the raw 
-file specified in `noise_cov`, or the cleaned epochs 
+If set to `None` (default), the info will be retrieved either from the raw
+file specified in `noise_cov`, or the cleaned epochs
 (if `noise_cov` is None or `ad-hoc`).
 
 ???+ example "Example"

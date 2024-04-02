@@ -51,7 +51,7 @@ def get_input_fnames_inverse(
     # make sure the info matches the data from which the noise cov
     # is computed to avoid rank-mismatch
     if cfg.source_info_path_update is None:
-        if cfg.noise_cov == "rest" | cfg.noise_cov == "noise":
+        if cfg.noise_cov in ("rest", "noise"):
             source_info_path_update = dict(
                 processing='clean',
                 suffix='raw',
@@ -63,7 +63,7 @@ def get_input_fnames_inverse(
     else:
         source_info_path_update = cfg.source_info_path_update
 
-    in_files["info"] = bids_path.copy().update(source_info_path_update)
+    in_files["info"] = bids_path.copy().update(**source_info_path_update)
     in_files["forward"] = bids_path.copy().update(suffix="fwd")
     if cfg.noise_cov != "ad-hoc":
         in_files["cov"] = get_noise_cov_bids_path(

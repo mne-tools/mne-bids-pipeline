@@ -1993,6 +1993,10 @@ orientation are considered.
 The default value, `0.2`, is suitable for surface-oriented source spaces.
 
 For volume or mixed source spaces, choose `1.0`.
+
+!!! info
+    Support for modeling volume and mixed source spaces will be added in a future
+    version of MNE-BIDS-Pipeline.
 """
 
 depth: Annotated[float, Interval(ge=0, le=1)] | dict = 0.8
@@ -2000,7 +2004,7 @@ depth: Annotated[float, Interval(ge=0, le=1)] | dict = 0.8
 If a number, it acts as the depth weighting exponent to use
 (must be between `0` and`1`), with`0` meaning no depth weighting is performed.
 
-Can also be a `dict` containing additional keyword arguments to pass to
+Can also be a dictionary containing additional keyword arguments to pass to
 `mne.forward.compute_depth_prior` (see docstring for details and defaults).
 """
 

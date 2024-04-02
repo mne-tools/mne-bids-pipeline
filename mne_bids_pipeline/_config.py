@@ -1979,7 +1979,7 @@ Exclude points closer than this distance (mm) to the bounding surface.
 
 # ## Inverse solution
 
-loose: Annotated[float, Interval(ge=0, le=1)] = 0.2
+loose: Annotated[float, Interval(ge=0, le=1)] | Literal["auto"] = 0.2
 """
 A value between 0 and 1 that weights the source variances of the dipole components
 that are parallel (tangential) to the cortical surface.

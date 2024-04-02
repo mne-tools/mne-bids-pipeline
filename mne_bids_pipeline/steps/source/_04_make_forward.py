@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _render_bem
-from ..._run import _prep_out_files, failsafe_run, save_logs
+from ..._run import _prep_out_files, _sanitize_callable, failsafe_run, save_logs
 
 
 def _prepare_trans_template(
@@ -257,6 +257,7 @@ def get_config(
         use_template_mri=config.use_template_mri,
         adjust_coreg=config.adjust_coreg,
         source_info_path_update=config.source_info_path_update,
+        noise_cov=_sanitize_callable(config.noise_cov),
         ch_types=config.ch_types,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),

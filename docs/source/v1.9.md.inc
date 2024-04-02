@@ -6,15 +6,14 @@
 - The type annotations in the default configuration file are now easier to read: We
   replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908, #911 by @hoechenberger)
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 
-[//]: # (- Whatever (#000 by @whoever))
+- The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`
+  anymore. Please use `0` instead. (#915 by @hoechenberger)
 
 ### :package: Requirements
 
 - We dropped support for Python 3.9. You now need Python 3.10 or newer. (#908 by @hoechenberger)
-
-[//]: # (- Whatever (#000 by @whoever))
 
 ### :book: Documentation
 

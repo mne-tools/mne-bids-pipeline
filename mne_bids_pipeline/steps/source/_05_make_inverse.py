@@ -57,7 +57,7 @@ def get_input_fnames_inverse(
                             'task': cfg.noise_cov}
         else:
             source_info_path_update = dict(suffix="ave")
-            # XXX is this the good solution also for noise_cov = 'ad-hoc'?
+            # XXX is this the right solution also for noise_cov = 'ad-hoc'?
     else:
         source_info_path_update = cfg.source_info_path_update
 
@@ -68,10 +68,6 @@ def get_input_fnames_inverse(
             cfg=cfg, subject=subject, session=session
         )
         dict(suffix="ave")
-noise_cov = 'rest'
-source_info_path_update = {'processing': 'clean',
-                            'suffix': 'raw',
-                            'task': noise_cov}
     if "evoked" in cfg.inverse_targets:
         in_files["evoked"] = bids_path.copy().update(suffix="ave")
     return in_files

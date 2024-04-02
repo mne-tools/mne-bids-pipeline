@@ -2174,8 +2174,11 @@ If `None`, it defaults to the current default in MNE-Python.
 # %%
 # # Caching
 #
-# These settings control if and how pipeline output is being cached to avoid unnecessary
-# computations on a re-run.
+# Per default, the pipeline output is cached (temporarily stored),
+# to avoid unnecessary reruns of previously computed steps.
+# Yet, for consistency, changes in configuration parameters trigger
+# automatic reruns of previous steps.
+# To force rerunning a given step, run the pipeline with the option: --no-cache
 
 memory_location: PathLike | bool | None = True
 """

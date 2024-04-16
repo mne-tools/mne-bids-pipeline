@@ -66,6 +66,10 @@ def pytest_configure(config):
     ignore:Persisting input arguments took.*:UserWarning
     # matplotlib needs to update
     ignore:Conversion of an array with ndim.*:DeprecationWarning
+    # scipy
+    ignore:nperseg .* is greater.*:UserWarning
+    # NumPy 2.0
+    ignore:__array_wrap__ must accept context.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

@@ -1031,6 +1031,10 @@ jobs:
           at: ~/
       - bash_env
       - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
+      - run:
           name: Build documentation
           command: |
             set -eo pipefail
@@ -1058,6 +1062,10 @@ jobs:
           at: ~/
       - bash_env
       - gitconfig
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist

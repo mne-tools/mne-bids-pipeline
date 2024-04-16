@@ -344,7 +344,6 @@ def _default_factory(key, val):
     allowlist = [
         {"n_mag": 1, "n_grad": 1, "n_eeg": 1},  # n_proj_*
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
-        {"suffix": "ave"},  # source_info_path_update
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
     ]

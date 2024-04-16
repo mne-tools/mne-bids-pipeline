@@ -1989,24 +1989,33 @@ Exclude points closer than this distance (mm) to the bounding surface.
 
 # ## Inverse solution
 
-loose: float | Literal["auto"] = 0.2
+loose: Annotated[float, Interval(ge=0, le=1)] | Literal["auto"] = 0.2
 """
-Value that weights the source variances of the dipole components
-that are parallel (tangential) to the cortical surface. If `0`, then the
-inverse solution is computed with **fixed orientation.**
-If `1`, it corresponds to **free orientation.**
-The default value, `'auto'`, is set to `0.2` for surface-oriented source
-spaces, and to `1.0` for volumetric, discrete, or mixed source spaces,
-unless `fixed is True` in which case the value 0. is used.
+A value between 0 and 1 that weights the source variances of the dipole components
+that are parallel (tangential) to the cortical surface.
+
+If `0`, then the inverse solution is computed with **fixed orientation**, i.e.,
+only dipole components perpendicular to the cortical surface are considered.
+
+If `1`, it corresponds to **free orientation**, i.e., dipole components with any
+orientation are considered.
+
+The default value, `0.2`, is suitable for surface-oriented source spaces.
+
+For volume or mixed source spaces, choose `1.0`.
+
+!!! info
+    Support for modeling volume and mixed source spaces will be added in a future
+    version of MNE-BIDS-Pipeline.
 """
 
-depth: float | dict | None = 0.8
+depth: Annotated[float, Interval(ge=0, le=1)] | dict = 0.8
 """
-If float (default 0.8), it acts as the depth weighting exponent (`exp`)
-to use (must be between 0 and 1). None is equivalent to 0, meaning no
-depth weighting is performed. Can also be a `dict` containing additional
-keyword arguments to pass to :func:`mne.forward.compute_depth_prior`
-(see docstring for details and defaults).
+If a number, it acts as the depth weighting exponent to use
+(must be between `0` and`1`), with`0` meaning no depth weighting is performed.
+
+Can also be a dictionary containing additional keyword arguments to pass to
+`mne.forward.compute_depth_prior` (see docstring for details and defaults).
 """
 
 inverse_method: Literal["MNE", "dSPM", "sLORETA", "eLORETA"] = "dSPM"
@@ -2099,15 +2108,17 @@ The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
 """
 
-source_info_path_update: dict[str, str] | None = dict(suffix="ave")
+source_info_path_update: dict[str, str] | None = None
 """
-When computing the forward and inverse solutions, by default the pipeline
-retrieves the `mne.Info` object from the cleaned evoked data. However, in
-certain situations you may wish to use a different `Info`.
-
+When computing the forward and inverse solutions, it is important to
+provide the `mne.Info` object from the data on which the noise covariance was
+computed, to avoid problems resulting from mismatching ranks.
 This parameter allows you to explicitly specify from which file to retrieve the
 `mne.Info` object. Use this parameter to supply a dictionary to
 `BIDSPath.update()` during the forward and inverse processing steps.
+If set to `None` (default), the info will be retrieved either from the raw
+file specified in `noise_cov`, or the cleaned evoked
+(if `noise_cov` is None or `ad-hoc`).
 
 ???+ example "Example"
     Use the `Info` object stored in the cleaned epochs:
@@ -2115,6 +2126,17 @@ This parameter allows you to explicitly specify from which file to retrieve the
     source_info_path_update = {'processing': 'clean',
                                'suffix': 'epo'}
     ```
+
+    Use the `Info` object stored in a raw file (e.g. resting state):
+    ```python
+    source_info_path_update = {'processing': 'clean',
+                                'suffix': 'raw',
+                                'task': 'rest'}
+    ```
+    If you set `noise_cov = 'rest'` and `source_path_info = None`,
+    then the behavior is identical to that above
+    (it will automatically use the resting state data).
+
 """
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]
@@ -2182,10 +2204,48 @@ If `None`, it defaults to the current default in MNE-Python.
 """
 
 # %%
-# # Execution
+# # Caching
 #
-# These options control how the pipeline is executed but should not affect
-# what outputs get produced.
+# Per default, the pipeline output is cached (temporarily stored),
+# to avoid unnecessary reruns of previously computed steps.
+# Yet, for consistency, changes in configuration parameters trigger
+# automatic reruns of previous steps.
+# !!! info
+#     To force rerunning a given step, run the pipeline with the option: `--no-cache`.
+
+memory_location: PathLike | bool | None = True
+"""
+If not None (or False), caching will be enabled and the cache files will be
+stored in the given directory. The default (True) will use a
+`"_cache"` subdirectory (name configurable via the
+[`memory_subdir`][mne_bids_pipeline._config.memory_subdir]
+variable) in the BIDS derivative root of the dataset.
+"""
+
+memory_subdir: str = "_cache"
+"""
+The caching directory name to use if `memory_location` is `True`.
+"""
+
+memory_file_method: Literal["mtime", "hash"] = "mtime"
+"""
+The method to use for cache invalidation (i.e., detecting changes). Using the
+"modified time" reported by the filesystem (`'mtime'`, default) is very fast
+but requires that the filesystem supports proper mtime reporting. Using file
+hashes (`'hash'`) is slower and requires reading all input files but should
+work on any filesystem.
+"""
+
+memory_verbose: int = 0
+"""
+The verbosity to use when using memory. The default (0) does not print, while
+1 will print the function calls that will be cached. See the documentation for
+the joblib.Memory class for more information."""
+
+# %%
+# # Parallelization
+#
+# These options control parallel processing (e.g., multiple subjects at once),
 
 n_jobs: int = 1
 """
@@ -2225,6 +2285,11 @@ dask_worker_memory_limit: str = "10G"
 The maximum amount of RAM per Dask worker.
 """
 
+# %%
+# # Logging
+#
+# These options control how much logging output is produced.
+
 log_level: Literal["info", "error"] = "info"
 """
 Set the pipeline logging verbosity.
@@ -2235,6 +2300,13 @@ mne_log_level: Literal["info", "error"] = "error"
 Set the MNE-Python logging verbosity.
 """
 
+
+# %%
+# # Error handling
+#
+# These options control how errors while processing the data or the configuration file
+# are handled.
+
 on_error: Literal["continue", "abort", "debug"] = "abort"
 """
 Whether to abort processing as soon as an error occurs, continue with all other
@@ -2244,35 +2316,6 @@ of an error.
 !!! info
     Enabling debug mode deactivates parallel processing.
 """
-
-memory_location: PathLike | bool | None = True
-"""
-If not None (or False), caching will be enabled and the cache files will be
-stored in the given directory. The default (True) will use a
-`"_cache"` subdirectory (name configurable via the
-[`memory_subdir`][mne_bids_pipeline._config.memory_subdir]
-variable) in the BIDS derivative root of the dataset.
-"""
-
-memory_subdir: str = "_cache"
-"""
-The caching directory name to use if `memory_location` is `True`.
-"""
-
-memory_file_method: Literal["mtime", "hash"] = "mtime"
-"""
-The method to use for cache invalidation (i.e., detecting changes). Using the
-"modified time" reported by the filesystem (`'mtime'`, default) is very fast
-but requires that the filesystem supports proper mtime reporting. Using file
-hashes (`'hash'`) is slower and requires reading all input files but should
-work on any filesystem.
-"""
-
-memory_verbose: int = 0
-"""
-The verbosity to use when using memory. The default (0) does not print, while
-1 will print the function calls that will be cached. See the documentation for
-the joblib.Memory class for more information."""
 
 config_validation: Literal["raise", "warn", "ignore"] = "raise"
 """

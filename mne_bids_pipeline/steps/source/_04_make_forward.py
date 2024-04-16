@@ -23,7 +23,7 @@ from ..._config_utils import (
 from ..._logging import gen_log_kwargs, logger
 from ..._parallel import get_parallel_backend, parallel_func
 from ..._report import _open_report, _render_bem
-from ..._run import _prep_out_files, failsafe_run, save_logs
+from ..._run import _prep_out_files, _sanitize_callable, failsafe_run, save_logs
 
 
 def _prepare_trans_template(
@@ -102,7 +102,18 @@ def get_input_fnames_forward(*, cfg, subject, session):
         check=False,
     )
     in_files = dict()
-    in_files["info"] = bids_path.copy().update(**cfg.source_info_path_update)
+    # for consistency with 05_make_inverse, read the info from the
+    # data used for the noise_cov
+    if cfg.source_info_path_update is None:
+        if cfg.noise_cov in ("rest", "noise"):
+            source_info_path_update = dict(
+                processing="clean", suffix="raw", task=cfg.noise_cov
+            )
+        else:
+            source_info_path_update = dict(suffix="ave")
+    else:
+        source_info_path_update = cfg.source_info_path_update
+    in_files["info"] = bids_path.copy().update(**source_info_path_update)
     bem_path = cfg.fs_subjects_dir / cfg.fs_subject / "bem"
     _, tag = _get_bem_conductivity(cfg)
     in_files["bem"] = bem_path / f"{cfg.fs_subject}-{tag}-bem-sol.fif"
@@ -242,6 +253,7 @@ def get_config(
         use_template_mri=config.use_template_mri,
         adjust_coreg=config.adjust_coreg,
         source_info_path_update=config.source_info_path_update,
+        noise_cov=_sanitize_callable(config.noise_cov),
         ch_types=config.ch_types,
         fs_subject=get_fs_subject(config=config, subject=subject),
         fs_subjects_dir=get_fs_subjects_dir(config),

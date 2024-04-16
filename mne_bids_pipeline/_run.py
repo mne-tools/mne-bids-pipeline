@@ -24,8 +24,10 @@ from ._logging import _is_testing, gen_log_kwargs, logger
 
 
 def failsafe_run(
+    *,
     get_input_fnames: Callable | None = None,
     get_output_fnames: Callable | None = None,
+    require_output: bool = True,
 ) -> Callable:
     def failsafe_run_decorator(func):
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -37,6 +39,8 @@ def failsafe_run(
                 exec_params=exec_params,
                 get_input_fnames=get_input_fnames,
                 get_output_fnames=get_output_fnames,
+                require_output=require_output,
+                func_name=f"{__mne_bids_pipeline_step__}::{func.__name__}",
             )
             t0 = time.time()
             log_info = pd.concat(
@@ -117,7 +121,15 @@ def hash_file_path(path: pathlib.Path) -> str:
 
 
 class ConditionalStepMemory:
-    def __init__(self, *, exec_params, get_input_fnames, get_output_fnames):
+    def __init__(
+        self,
+        *,
+        exec_params: SimpleNamespace,
+        get_input_fnames: Callable | None,
+        get_output_fnames: Callable | None,
+        require_output: bool,
+        func_name: str,
+    ):
         memory_location = exec_params.memory_location
         if memory_location is True:
             use_location = exec_params.deriv_root / exec_params.memory_subdir
@@ -135,6 +147,8 @@ class ConditionalStepMemory:
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
         self.memory_file_method = exec_params.memory_file_method
+        self.require_output = require_output
+        self.func_name = func_name
 
     def cache(self, func):
         def wrapper(*args, **kwargs):
@@ -263,9 +277,19 @@ class ConditionalStepMemory:
 
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
             if force_run or unknown_inputs or bad_out_files:
-                memorized_func.call(*args, **kwargs)
+                out_files, _ = memorized_func.call(*args, **kwargs)
             else:
-                memorized_func(*args, **kwargs)
+                out_files = memorized_func(*args, **kwargs)
+            if self.require_output:
+                assert isinstance(out_files, dict) and len(out_files), (
+                    f"Internal error: step must return non-empty out_files dict, got "
+                    f"{type(out_files).__name__} for:\n{self.func_name}"
+                )
+            else:
+                assert out_files is None, (
+                    f"Internal error: step must return None, got {type(out_files)} "
+                    f"for:\n{self.func_name}"
+                )
 
         return wrapper
 

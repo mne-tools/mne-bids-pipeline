@@ -10,8 +10,8 @@
 
 - All ICA HTML reports have been consolidated in the standard subject `*_report.html`
   file instead of producing separate files (#899 by @larsoner).
-- Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py` 
-  and `_05_make_inverse.py`, we retrieve the info from the file from which 
+- Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py`
+  and `_05_make_inverse.py`, we retrieve the info from the file from which
   the `noise_cov` is computed (#919 by @SophieHerbst)
 - The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`
   anymore. Please use `0` instead. (#915 by @hoechenberger)
@@ -33,6 +33,7 @@
   bad channels from the first pipeline run. Now, we ensure that the original bad channels would be used and the
   related section is removed from the report in this case. (#902 by @larsoner)
 - Fixed group-average decoding statistics were not updated in some cases, even if relevant configuration options had been changed. (#902 by @larsoner)
+- Fixed a compatibility bug with joblib 1.4.0
 
 ### :medical_symbol: Code health and infrastructure
 

@@ -1126,6 +1126,16 @@ artifacts from the data. For ICA, the independent components related to
 EOG and ECG activity will be omitted during the signal reconstruction step in
 order to remove the artifacts. The ICA procedure can be configured in various
 ways using the configuration options you can find below.
+
+!!! warning "ICA requires manual intervention!"
+    After the automatic ICA component detection step, review each subject's
+    `*_report.html` report file check if the set of ICA components to be removed
+    is correct. Adjustments should be made to the `*_proc-ica_components.tsv`
+    file, which will then be used in the step that is applied during ICA.
+
+    ICA component order can be considered arbitrary, so any time the ICA is
+    re-fit – i.e., if you change any parameters that affect steps prior to
+    ICA fitting – this file will need to be updated!
 """
 
 min_ecg_epochs: Annotated[int, Ge(1)] = 5

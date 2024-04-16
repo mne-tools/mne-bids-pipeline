@@ -109,6 +109,18 @@ for test_name, test_dataset_options in TEST_SUITE.items():
         datasets_without_html.append(dataset_name)
         continue
 
+    # For ERP_CORE, cut down on what we show otherwise our website is huge
+    if "ERP_CORE" in test_name:
+        show = ["015", "average"]
+        orig_fnames = html_report_fnames
+        html_report_fnames = [
+            f
+            for f in html_report_fnames
+            if any(f"sub-{s}" in f.parts and f"sub-{s}" in f.name for s in show)
+        ]
+        assert len(html_report_fnames), orig_fnames
+        del orig_fnames
+
     fname_iter = tqdm(
         html_report_fnames,
         desc=f"  {test_name}",

@@ -277,7 +277,12 @@ class ConditionalStepMemory:
 
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
             if force_run or unknown_inputs or bad_out_files:
-                out_files, _ = memorized_func.call(*args, **kwargs)
+                # Joblib 1.4.0 only returns the output, but 1.3.2 returns both.
+                # Fortunately we can use tuple-ness to tell the difference (we always
+                # return None or a dict)
+                out_files = memorized_func.call(*args, **kwargs)
+                if isinstance(out_files, tuple):
+                    out_files = out_files[0]
             else:
                 out_files = memorized_func(*args, **kwargs)
             if self.require_output:

@@ -50,7 +50,7 @@ jobs:
             pip install --upgrade --progress-bar off pip
             pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
-            pip install "PyQt6!=6.6.1,!=6.6.2" "PyQt6-Qt6!=6.6.1,!=6.6.2"
+            pip install "PyQt6!=6.6.1,!=6.6.2!=6.6.3" "PyQt6-Qt6!=6.6.1"
       - run:
           name: Check Qt
           command: |

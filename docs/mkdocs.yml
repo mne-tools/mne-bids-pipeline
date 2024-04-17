@@ -103,7 +103,11 @@ nav:
             - Source space & forward solution: settings/source/forward.md
             - Inverse solution: settings/source/inverse.md
         - Report generation: settings/reports/report_generation.md
-        - Execution: settings/execution.md
+        - Caching: settings/caching.md
+        - Parallelization: settings/parallelization.md
+        - Logging: settings/logging.md
+        - Error handling: settings/error_handling.md
+
     - Examples:
         - Examples Gallery: examples/examples.md
         - examples/ds003392.md
@@ -153,6 +157,7 @@ plugins:
                     show_root_full_path: false
                     separate_signature: true
                     show_signature_annotations: true
+                    unwrap_annotated: true
                     signature_crossrefs: true
                     line_length: 88  # Black's default
                     show_bases: false

@@ -603,7 +603,7 @@ def add_csp_grand_average(
     import matplotlib.pyplot as plt  # nested import to help joblib
 
     # First, plot decoding scores across frequency bins (entire epochs).
-    section = "Decoding: CSP"
+    section = f"Decoding: CSP, N = {len(cfg.subjects)}"
     freq_name_to_bins_map, _ = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,

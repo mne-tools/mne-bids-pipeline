@@ -50,7 +50,7 @@ jobs:
             pip install --upgrade --progress-bar off pip
             pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
-            pip install "PyQt6!=6.6.1,!=6.6.2" "PyQt6-Qt6!=6.6.1,!=6.6.2"
+            pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3"
       - run:
           name: Check Qt
           command: |
@@ -1031,6 +1031,10 @@ jobs:
           at: ~/
       - bash_env
       - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
+      - run:
           name: Build documentation
           command: |
             set -eo pipefail
@@ -1058,6 +1062,10 @@ jobs:
           at: ~/
       - bash_env
       - gitconfig
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -ve .[docs]
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist

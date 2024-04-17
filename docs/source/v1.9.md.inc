@@ -2,25 +2,33 @@
 
 ### :new: New features & enhancements
 
-- Added number of subject to `sub-average` report (#902 by @SophieHerbst)
+- Added number of subject to `sub-average` report (#902, #910 by @SophieHerbst)
 - The type annotations in the default configuration file are now easier to read: We
-  replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908 by @hoechenberger)
+  replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908, #911 by @hoechenberger)
 - Epochs metadata creation now supports variable time windows by specifying the names of events via
   [`epochs_metadata_tmin`][mne_bids_pipeline._config.epochs_metadata_tmin] and
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 
-[//]: # (- Whatever (#000 by @whoever))
+### :warning: Behavior changes
 
-[//]: # (### :warning: Behavior changes)
-
-[//]: # (- Whatever (#000 by @whoever))
+- All ICA HTML reports have been consolidated in the standard subject `*_report.html`
+  file instead of producing separate files (#899 by @larsoner).
+- Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py`
+  and `_05_make_inverse.py`, we retrieve the info from the file from which
+  the `noise_cov` is computed (#919 by @SophieHerbst)
+- The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`
+  anymore. Please use `0` instead. (#915 by @hoechenberger)
 
 ### :package: Requirements
 
-- We dropped support for Python 3.9. You now need Python 3.10 or newer.
 - The minimum required version of MNE-Python is now 1.7.0.
+- We dropped support for Python 3.9. You now need Python 3.10 or newer. (#908 by @hoechenberger)
 
-[//]: # (- Whatever (#000 by @whoever))
+### :book: Documentation
+
+- We removed the `Execution` section from configuration options documentation and
+  replaced it with new, more explicit sections (namely, Caching, Parallelization,
+  Logging, and Error handling), and enhanced documentation. (#914 by @hoechenberger, #916 by @SophieHerbst)
 
 ### :bug: Bug fixes
 
@@ -29,6 +37,7 @@
   bad channels from the first pipeline run. Now, we ensure that the original bad channels would be used and the
   related section is removed from the report in this case. (#902 by @larsoner)
 - Fixed group-average decoding statistics were not updated in some cases, even if relevant configuration options had been changed. (#902 by @larsoner)
+- Fixed a compatibility bug with joblib 1.4.0
 
 ### :medical_symbol: Code health and infrastructure
 

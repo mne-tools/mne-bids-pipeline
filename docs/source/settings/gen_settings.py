@@ -46,7 +46,13 @@ section_to_file = {  # .md will be added to the files
     "reports": "reports",
     "report generation": "report_generation",
     # root file
-    "execution": "execution",
+    "caching": "caching",
+    # root file
+    "parallelization": "parallelization",
+    # root file
+    "logging": "logging",
+    # root file
+    "error handling": "error_handling",
 }
 # TODO: Make sure these are consistent, autogenerate some based on section names,
 # and/or autogenerate based on inputs/outputs of actual functions.
@@ -76,7 +82,10 @@ section_tags = {
     "inverse solution": ("inverse-solution",),
     "reports": (),
     "report generation": ("report",),
-    "execution": (),
+    "caching": ("cache",),
+    "parallelization": ("paralleliation", "dask", "out-of-core"),
+    "logging": ("logging", "error-handling"),
+    "error handling": ("error-handling",),
 }
 
 extra_headers = {

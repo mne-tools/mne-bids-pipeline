@@ -55,6 +55,7 @@ echo 'export MPLBACKEND=Agg' >> "$BASH_ENV"
 echo "source ~/python_env/bin/activate" >> "$BASH_ENV"
 echo "export MNE_3D_OPTION_MULTI_SAMPLES=1" >> "$BASH_ENV"
 echo "export MNE_BIDS_PIPELINE_FORCE_TERMINAL=true" >> "$BASH_ENV"
+echo "export FORCE_COLOR=1" >> "$BASH_ENV"  # for rich to use color in logs
 mkdir -p ~/.local/bin
 if [[ ! -f ~/.local/bin/python ]]; then
     ln -s ~/python_env/bin/python ~/.local/bin/python

@@ -1,6 +1,6 @@
 """ERP CORE.
 
-This example demonstrate how to process 5 participants from the
+This example demonstrates how to process 5 participants from the
 [ERP CORE](https://erpinfo.org/erp-core) dataset. It shows how to obtain 7 ERP
 components from a total of 6 experimental tasks:
 

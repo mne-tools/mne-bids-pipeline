@@ -196,7 +196,12 @@ def apply_ica_raw(
     run: str,
     task: str | None,
     in_files: dict,
-) -> dict:
+) -> dict | None:
+    if cfg.spatial_filter_raw is None and not (cfg.task == "rest" or cfg.task_is_rest):
+        return
+    elif cfg.spatial_filter_raw is False:
+        return
+
     ica = _read_ica_and_exclude(in_files)
     in_key = list(in_files)[0]
     assert in_key.startswith("raw"), in_key
@@ -240,6 +245,8 @@ def get_config(
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
+        spatial_filter_raw=config.spatial_filter_raw,
+        task_is_rest=config.task_is_rest,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),

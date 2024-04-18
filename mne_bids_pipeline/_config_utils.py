@@ -661,7 +661,7 @@ def _proj_path(
 
 
 def _which_spatial_filter_raw(*, config: SimpleNamespace) -> tuple[str]:
-    if config.spatial_fliter_raw:
+    if config.spatial_filter_raw:
         return ("runs", "noise", "rest")
     elif config.spatial_filter_raw is None:
         return ("noise", "rest")

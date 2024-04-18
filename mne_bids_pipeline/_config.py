@@ -1138,6 +1138,13 @@ ways using the configuration options you can find below.
     ICA fitting – this file will need to be updated!
 """
 
+spatial_filter_raw: bool | None = None
+"""
+Whether to clean the raw data with the spatial filter. If `True`, creates cleaned data
+for all raw data. If `False`, no raw data is written. If `None`, creates
+cleaned raw data for resting-state and empty-room runs if present.
+"""
+
 min_ecg_epochs: Annotated[int, Ge(1)] = 5
 """
 Minimal number of ECG epochs needed to compute SSP projectors.

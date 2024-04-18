@@ -2,15 +2,22 @@
 
 ### :new: New features & enhancements
 
-- Added number of subject to `sub-average` report (#902, #910 by @SophieHerbst)
+- Added number of subjects to `sub-average` report (#902, #910 by @SophieHerbst)
 - The type annotations in the default configuration file are now easier to read: We
   replaced `Union[X, Y]` with `X | Y` and `Optional[X]` with `X | None`. (#908, #911 by @hoechenberger)
+- Added a new configuration option [`spatial_filter_raw`][mne_bids_pipeline._config.spatial_filter_raw]
+  to control whether to create cleaned raw data via ICA or SSP. Previously, we'd only clean epochs.
+  (#840, #926 by @larsoner and @hoechenberger)
 
 ### :warning: Behavior changes
 
 - All ICA HTML reports have been consolidated in the standard subject `*_report.html`
   file instead of producing separate files (#899 by @larsoner).
-- Changed default for `source_info_path_update` to `None`.  In `_04_make_forward.py`
+- When using ICA or SSP with resting-state data, we now automatically produce cleaned raw data files. This
+  behavior can be controlled via the new [`spatial_filter_raw`][mne_bids_pipeline._config.spatial_filter_raw]
+  configuration option. (#840, #926 by @larsoner and @hoechenberger)
+- Changed default for [`source_info_path_update`][mne_bids_pipeline._config.source_info_path_update]
+  to `None`.  In `_04_make_forward.py`
   and `_05_make_inverse.py`, we retrieve the info from the file from which
   the `noise_cov` is computed (#919 by @SophieHerbst)
 - The [`depth`][mne_bids_pipeline._config.depth] parameter doesn't accept `None`

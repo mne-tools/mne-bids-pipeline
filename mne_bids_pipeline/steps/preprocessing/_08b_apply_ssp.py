@@ -10,6 +10,7 @@ import mne
 
 from ..._config_utils import (
     _proj_path,
+    _which_spatial_filter_raw,
     get_runs_tasks,
     get_sessions,
     get_subjects,
@@ -181,6 +182,7 @@ def main(*, config: SimpleNamespace) -> None:
         parallel, run_func = parallel_func(
             apply_ssp_raw, exec_params=config.exec_params
         )
+        which = _which_spatial_filter_raw(config=config)
         logs += parallel(
             run_func(
                 cfg=get_config(
@@ -199,6 +201,7 @@ def main(*, config: SimpleNamespace) -> None:
                 config=config,
                 subject=subject,
                 session=session,
+                which=which,
             )
         )
     save_logs(config=config, logs=logs)

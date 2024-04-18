@@ -13,6 +13,7 @@ from mne.preprocessing import read_ica
 from mne_bids import BIDSPath
 
 from ..._config_utils import (
+    _which_spatial_filter_raw,
     get_runs_tasks,
     get_sessions,
     get_subjects,
@@ -196,12 +197,7 @@ def apply_ica_raw(
     run: str,
     task: str | None,
     in_files: dict,
-) -> dict | None:
-    if cfg.spatial_filter_raw is None and not (cfg.task == "rest" or cfg.task_is_rest):
-        return
-    elif cfg.spatial_filter_raw is False:
-        return
-
+) -> dict:
     ica = _read_ica_and_exclude(in_files)
     in_key = list(in_files)[0]
     assert in_key.startswith("raw"), in_key
@@ -245,8 +241,6 @@ def get_config(
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
-        spatial_filter_raw=config.spatial_filter_raw,
-        task_is_rest=config.task_is_rest,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),
@@ -283,6 +277,7 @@ def main(*, config: SimpleNamespace) -> None:
         parallel, run_func = parallel_func(
             apply_ica_raw, exec_params=config.exec_params
         )
+        which = _which_spatial_filter_raw(config=config)
         logs += parallel(
             run_func(
                 cfg=get_config(
@@ -301,6 +296,7 @@ def main(*, config: SimpleNamespace) -> None:
                 config=config,
                 subject=subject,
                 session=session,
+                which=which,
             )
         )
     save_logs(config=config, logs=logs)

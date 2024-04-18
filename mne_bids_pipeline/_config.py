@@ -1141,8 +1141,8 @@ ways using the configuration options you can find below.
 spatial_filter_raw: bool | None = None
 """
 Whether to clean the raw data with the spatial filter. If `True`, creates cleaned data
-from both, epochs and raw. If `False`, only creates cleaned epochs. If `None`, creates
-cleaned epochs and raw for resting-state data, and only cleaned epochs otherwise.
+for all raw data. If `False`, no raw data is written. If `None`, creates
+cleaned raw data for resting-state and empty-room runs if present.
 """
 
 min_ecg_epochs: Annotated[int, Ge(1)] = 5

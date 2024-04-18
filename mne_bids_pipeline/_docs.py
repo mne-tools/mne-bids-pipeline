@@ -100,6 +100,7 @@ _EXTRA_FUNCS = {
     "_bids_kwargs": ("get_task",),
     "_import_data_kwargs": ("get_mf_reference_run",),
     "get_runs": ("get_runs_all_subjects",),
+    "_which_spatial_filter_raw": ("spatial_filter_raw",),
 }
 
 
@@ -144,6 +145,10 @@ class _ParseConfigSteps:
                     for call in ast.walk(func):
                         if not isinstance(call, ast.Call):
                             continue
+                        # e.g., which = _which_spatial_filter_raw(config=config)
+                        if isinstance(call.func, ast.Name):
+                            for attr in _EXTRA_FUNCS.get(call.func.id, ()):
+                                self._add_step_option(step, attr)
                         for keyword in call.keywords:
                             if not isinstance(keyword.value, ast.Attribute):
                                 continue
@@ -226,7 +231,7 @@ class _ParseConfigSteps:
                     if isinstance(keyword.value, ast.Name):
                         key = f"{where}:{keyword.value.id}"
                         if key in _MANUAL_KWS:
-                            for option in _MANUAL_KWS[f"{where}:{keyword.value.id}"]:
+                            for option in _MANUAL_KWS[key]:
                                 self._add_step_option(step, option)
                             continue
                         raise RuntimeError(f"{where} cannot handle Name {key=}")

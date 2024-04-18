@@ -76,9 +76,6 @@ def test_config_options_used():
         config_names.add(key)
     for key in _EXECUTION_OPTIONS:
         config_names.remove(key)
-    # Used in main only
-    for key in ("spatial_filter_raw",):
-        config_names.remove(key)
     pcs = _ParseConfigSteps(force_empty=())
     missing_from_config = sorted(set(pcs.steps) - config_names)
     assert missing_from_config == [], f"Missing from config: {missing_from_config}"

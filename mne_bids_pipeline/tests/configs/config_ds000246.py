@@ -17,6 +17,7 @@ subjects = ["0001"]
 ch_types = ["meg"]
 reject = dict(mag=4e-12, eog=250e-6)
 conditions = ["standard", "deviant", "button"]
+epochs_metadata_tmin = ["standard", "deviant"]  # for testing only
 contrasts = [("deviant", "standard")]
 decode = True
 decoding_time_generalization = True

@@ -8,6 +8,7 @@
 - Epochs metadata creation now supports variable time windows by specifying the names of events via
   [`epochs_metadata_tmin`][mne_bids_pipeline._config.epochs_metadata_tmin] and
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
+- If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
 
 ### :warning: Behavior changes
 

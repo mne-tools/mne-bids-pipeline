@@ -98,7 +98,7 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
         missing_subjects = set(s) - set(_valid_subjects)
         if missing_subjects:
             raise FileNotFoundError(
-                "The following requested subject(s) were not found in the dataset: "
+                "The following requested subjects were not found in the dataset: "
                 f"{', '.join(missing_subjects)}"
             )
 

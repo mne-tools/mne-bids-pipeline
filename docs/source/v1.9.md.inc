@@ -45,6 +45,7 @@
 - Fixed a compatibility bug with joblib 1.4.0. (#899 by @larsoner)
 - Fixed how "original" raw data is included in the report. Previously, bad channels, subject, and experimenter name would not
   be displayed correctly. (#930 by @hoechenberger)
+- In the report's table of contents, don't put the run numbers in quotation marks. (#933 by @hoechenberger)
 
 ### :medical_symbol: Code health and infrastructure
 

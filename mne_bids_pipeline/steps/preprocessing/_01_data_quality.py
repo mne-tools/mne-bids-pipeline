@@ -232,7 +232,7 @@ def _find_bads_maxwell(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
-    raw: mne.io.Raw,
+    raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
     run: str | None,

@@ -151,7 +151,7 @@ def drop_ptp(
 
         msg = (
             f"Removed {n_epochs_rejected} of {n_epochs_before_reject} epochs via PTP "
-            f"rejection thresholds: {ica_reject}"
+            f"rejection thresholds: {reject}"
         )
         logger.info(**gen_log_kwargs(message=msg))
 

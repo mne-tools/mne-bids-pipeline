@@ -204,8 +204,8 @@ def run_ica(
         n_epochs_rejected = n_epochs_before_reject - n_epochs_after_reject
 
         msg = (
-            f"Removed {n_epochs_rejected} epochs via PTP rejection thresholds: "
-            f"{ica_reject}"
+            f"Removed {n_epochs_rejected} of {n_epochs_before_reject} epochs via PTP "
+            f"rejection thresholds: {ica_reject}"
         )
         logger.info(**gen_log_kwargs(message=msg))
         ar = None

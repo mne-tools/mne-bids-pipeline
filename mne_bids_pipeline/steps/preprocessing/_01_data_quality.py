@@ -180,7 +180,7 @@ def assess_data_quality(
     tsv_data.to_csv(out_files["bads_tsv"], sep="\t", index=False)
 
     # Report
-    # Restore bads to their original state before generating the report
+    # Restore bads to their original state so they will show up in the report
     raw.info["bads"] = preexisting_bads
 
     with _open_report(

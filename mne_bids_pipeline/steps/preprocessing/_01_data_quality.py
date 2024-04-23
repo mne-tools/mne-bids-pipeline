@@ -173,7 +173,7 @@ def assess_data_quality(
             if ch in bads_for_tsv:
                 continue
             bads_for_tsv.append(ch)
-            reasons.append(["pre-existing (before MNE-BIDS-pipeline was run)"])
+            reasons.append("pre-existing (before MNE-BIDS-pipeline was run)")
 
     tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
     tsv_data = tsv_data.sort_values(by="name")

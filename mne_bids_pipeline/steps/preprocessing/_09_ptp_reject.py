@@ -142,14 +142,18 @@ def drop_ptp(
                     logger.info(**gen_log_kwargs(message=msg))
                     reject[ch_type] = threshold
 
-        msg = f"Using PTP rejection thresholds: {reject}"
-        logger.info(**gen_log_kwargs(message=msg))
-
         n_epochs_before_reject = len(epochs)
         epochs.reject_tmin = cfg.reject_tmin
         epochs.reject_tmax = cfg.reject_tmax
         epochs.drop_bad(reject=reject)
         n_epochs_after_reject = len(epochs)
+        n_epochs_rejected = n_epochs_before_reject - n_epochs_after_reject
+
+        msg = (
+            f"Removed {n_epochs_rejected} epochs via PTP rejection thresholds: "
+            f"{ica_reject}"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
 
     if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
         msg = (

@@ -848,9 +848,9 @@ def _add_raw(
     cfg: SimpleNamespace,
     report: mne.report.Report,
     bids_path_in: BIDSPath,
+    raw: BaseRaw,
     title: str,
     tags: tuple = (),
-    raw: BaseRaw | None = None,
     extra_html: str | None = None,
 ):
     if bids_path_in.run is not None:
@@ -865,7 +865,7 @@ def _add_raw(
     tags = ("raw", f"run-{bids_path_in.run}") + tags
     with mne.use_log_level("error"):
         report.add_raw(
-            raw=raw or bids_path_in,
+            raw=raw,
             title=title,
             butterfly=5,
             psd=plot_raw_psd,

@@ -101,7 +101,7 @@ def assess_data_quality(
             cfg=cfg,
             data_is_rest=data_is_rest,
         )
-    preexisting_bads = set(raw.info["bads"])
+    preexisting_bads = sorted(raw.info["bads"])
 
     if _do_mf_autobad(cfg=cfg):
         (
@@ -118,13 +118,13 @@ def assess_data_quality(
             task=task,
         )
         bads = sorted(set(raw.info["bads"] + auto_noisy_chs + auto_flat_chs))
-        msg = f"Found {len(bads)} channel{_pl(bads)} as bad."
+        msg = f"Found {len(bads)} bad channel{_pl(bads)}."
         raw.info["bads"] = bads
         del bads
         logger.info(**gen_log_kwargs(message=msg))
     else:
         auto_scores = auto_noisy_chs = auto_flat_chs = None
-    del key, raw
+    del key
 
     # Always output the scores and bads TSV
     out_files["auto_scores"] = bids_path_in.copy().update(
@@ -149,27 +149,40 @@ def assess_data_quality(
     reasons = []
 
     if auto_flat_chs:
-        bads_for_tsv.extend(auto_flat_chs)
-        reasons.extend(["auto-flat"] * len(auto_flat_chs))
-        preexisting_bads -= set(auto_flat_chs)
+        for ch in auto_flat_chs:
+            reason = (
+                "pre-existing (before MNE-BIDS-pipeline was run) & auto-flat"
+                if ch in preexisting_bads
+                else "auto-flat"
+            )
+            bads_for_tsv.append(ch)
+            reasons.append(reason)
 
-    if auto_noisy_chs is not None:
-        bads_for_tsv.extend(auto_noisy_chs)
-        reasons.extend(["auto-noisy"] * len(auto_noisy_chs))
-        preexisting_bads -= set(auto_noisy_chs)
+    if auto_noisy_chs:
+        for ch in auto_noisy_chs:
+            reason = (
+                "pre-existing (before MNE-BIDS-pipeline was run) & auto-noisy"
+                if ch in preexisting_bads
+                else "auto-noisy"
+            )
+            bads_for_tsv.append(ch)
+            reasons.append(reason)
 
-    preexisting_bads = sorted(preexisting_bads)
     if preexisting_bads:
-        bads_for_tsv.extend(preexisting_bads)
-        reasons.extend(
-            ["pre-existing (before MNE-BIDS-pipeline was run)"] * len(preexisting_bads)
-        )
+        for ch in preexisting_bads:
+            if ch in bads_for_tsv:
+                continue
+            bads_for_tsv.append(ch)
+            reasons.append("pre-existing (before MNE-BIDS-pipeline was run)")
 
     tsv_data = pd.DataFrame(dict(name=bads_for_tsv, reason=reasons))
     tsv_data = tsv_data.sort_values(by="name")
     tsv_data.to_csv(out_files["bads_tsv"], sep="\t", index=False)
 
     # Report
+    # Restore bads to their original state so they will show up in the report
+    raw.info["bads"] = preexisting_bads
+
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
@@ -186,6 +199,7 @@ def assess_data_quality(
             cfg=cfg,
             report=report,
             bids_path_in=bids_path_in,
+            raw=raw,
             title=f"Raw ({kind})",
             tags=("data-quality",),
         )
@@ -218,7 +232,7 @@ def _find_bads_maxwell(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
-    raw: mne.io.Raw,
+    raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
     run: str | None,

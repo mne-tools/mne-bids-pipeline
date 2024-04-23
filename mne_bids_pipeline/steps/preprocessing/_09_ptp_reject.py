@@ -171,7 +171,7 @@ def drop_ptp(
             f"No epochs remaining after {rejection_type} rejection. Cannot continue."
         )
 
-    msg = "Saving cleaned, baseline-corrected epochs …"
+    msg = f"Saving {n_epochs_after_reject} cleaned, baseline-corrected epochs …"
 
     epochs.apply_baseline(cfg.baseline)
     epochs.save(

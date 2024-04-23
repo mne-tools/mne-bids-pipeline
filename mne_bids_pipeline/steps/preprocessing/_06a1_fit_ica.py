@@ -224,7 +224,7 @@ def run_ica(
             f"No epochs remaining after {rejection_type} rejection. Cannot continue."
         )
 
-    msg = "Saving ICA epochs to disk."
+    msg = f"Saving {n_epochs_after_reject} ICA epochs to disk."
     logger.info(**gen_log_kwargs(message=msg))
     epochs.save(
         out_files["epochs"],

@@ -65,7 +65,7 @@ def detect_bad_components(
         )
 
     if not inds:
-        adjust_setting = "ica_eog_threshold" if which == "eog" else "ica_ecg_threshold"
+        adjust_setting = f"ica_{which}_threshold"
         warn = (
             f"No {artifact}-related ICs detected, this is highly "
             f"suspicious. A manual check is suggested. You may wish to "

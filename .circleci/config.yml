@@ -76,7 +76,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000117-2
+            - data-cache-ds000117-3
       - bash_env
       - run:
           name: Get ds000117
@@ -84,7 +84,7 @@ jobs:
             $DOWNLOAD_DATA ds000117
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000117-2
+          key: data-cache-ds000117-3
           paths:
             - ~/mne_data/ds000117
 
@@ -151,7 +151,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000246-2
+            - data-cache-ds000246-3
       - bash_env
       - run:
           name: Get ds000246
@@ -159,7 +159,7 @@ jobs:
             $DOWNLOAD_DATA ds000246
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000246-2
+          key: data-cache-ds000246-3
           paths:
             - ~/mne_data/ds000246
 
@@ -342,7 +342,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000117-2
+            - data-cache-ds000117-3
       - run:
           name: test ds000117
           command: $RUN_TESTS ds000117
@@ -447,7 +447,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000246-2
+            - data-cache-ds000246-3
       - run:
           name: test ds000246
           no_output_timeout: 15m

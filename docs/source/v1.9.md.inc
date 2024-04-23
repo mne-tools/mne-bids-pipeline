@@ -39,6 +39,7 @@
   related section is removed from the report in this case. (#902 by @larsoner)
 - Fixed group-average decoding statistics were not updated in some cases, even if relevant configuration options had been changed. (#902 by @larsoner)
 - Fixed a compatibility bug with joblib 1.4.0
+- In the report's table of contents, don't put the run numbers in quotation marks. (#933 by @hoechenberger)
 
 ### :medical_symbol: Code health and infrastructure
 

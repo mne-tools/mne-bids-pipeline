@@ -9,7 +9,7 @@
   [`epochs_metadata_tmin`][mne_bids_pipeline._config.epochs_metadata_tmin] and
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 - If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
-- We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936 by @hoechenberger)
+- We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936, #937 by @hoechenberger)
 
 ### :warning: Behavior changes
 

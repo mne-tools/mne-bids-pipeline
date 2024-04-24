@@ -138,7 +138,10 @@ def apply_ica_epochs(
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     # Now actually reject the components.
-    msg = f'Rejecting ICs: {", ".join([str(ic) for ic in ica.exclude])}'
+    msg = (
+        f'Rejecting ICs with the following indices: '
+        f'{", ".join([str(i) for i in ica.exclude])}'
+    )
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 

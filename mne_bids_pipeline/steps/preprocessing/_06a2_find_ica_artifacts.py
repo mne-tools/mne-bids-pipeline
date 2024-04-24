@@ -75,7 +75,7 @@ def detect_bad_components(
     else:
         msg = (
             f"Detected {len(inds)} {artifact}-related ICs in "
-            f"{len(epochs)} {artifact} epochs."
+            f"{len(epochs)} {artifact} epochs: {', '.join([str(i) for i in inds])}"
         )
         logger.info(**gen_log_kwargs(message=msg))
 

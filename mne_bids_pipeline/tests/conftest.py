@@ -70,6 +70,7 @@ def pytest_configure(config):
     ignore:nperseg .* is greater.*:UserWarning
     # NumPy 2.0
     ignore:__array_wrap__ must accept context.*:DeprecationWarning
+    ignore:__array__ implementation doesn't accept.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

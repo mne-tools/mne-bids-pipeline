@@ -22,6 +22,7 @@
 - When using automated bad channel detection, now indicate the generated `*_bads.tsv` files whether a channel
   had previously already been marked as bad in the dataset. Resulting entries in the TSV file may now look like:
   `"pre-existing (before MNE-BIDS-pipeline was run) & auto-noisy"` (previously: only `"auto-noisy"`). (#930 by @hoechenberger)
+- The `ica_ctps_ecg_threshold` has been renamed to [`ica_ecg_threshold`][`mne_bids_pipeline._config.ica_ecg_threshold]. (#935 by @hoechenberger)
 
 ### :package: Requirements
 

@@ -170,7 +170,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000247-2
+            - data-cache-ds000247-3
       - bash_env
       - run:
           name: Get ds000247
@@ -178,7 +178,7 @@ jobs:
             $DOWNLOAD_DATA ds000247
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000247-2
+          key: data-cache-ds000247-3
           paths:
             - ~/mne_data/ds000247
 
@@ -475,7 +475,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000247-2
+            - data-cache-ds000247-3
       - run:
           name: test ds000247
           command: $RUN_TESTS ds000247

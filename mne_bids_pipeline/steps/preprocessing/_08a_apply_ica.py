@@ -142,7 +142,7 @@ def apply_ica_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
-    msg = "Saving reconstructed epochs after ICA."
+    msg = f"Saving {len(epochs)} reconstructed epochs after ICA."
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned.save(
         out_files["epochs"],

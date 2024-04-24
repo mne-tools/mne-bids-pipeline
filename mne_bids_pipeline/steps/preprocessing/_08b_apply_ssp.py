@@ -58,6 +58,10 @@ def apply_ssp_epochs(
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
     projs = mne.read_proj(in_files.pop("proj"))
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
+
+    msg = f"Saving {len(epochs_cleaned)} reconstructed epochs after SSP."
+    logger.info(**gen_log_kwargs(message=msg))
+
     epochs_cleaned.save(
         out_files["epochs"],
         overwrite=True,

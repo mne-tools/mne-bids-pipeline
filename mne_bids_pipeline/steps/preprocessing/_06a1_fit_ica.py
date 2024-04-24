@@ -177,9 +177,14 @@ def run_ica(
         ar.fit(epochs)
         ar_reject_log = ar.get_reject_log(epochs)
         epochs = epochs[~ar_reject_log.bad_epochs]
+
+        n_epochs_before_reject = len(epochs)
+        n_epochs_rejected = ar_reject_log.bad_epochs.sum()
+        n_epochs_after_reject = n_epochs_before_reject - n_epochs_rejected
+
         ar_n_interpolate_ = ar.n_interpolate_
         msg = (
-            f"autoreject marked {ar_reject_log.bad_epochs.sum()} epochs as bad "
+            f"autoreject marked {n_epochs_rejected} epochs as bad "
             f"(cross-validated n_interpolate limit: {ar_n_interpolate_})"
         )
         logger.info(**gen_log_kwargs(message=msg))
@@ -193,11 +198,33 @@ def run_ica(
             ch_types=cfg.ch_types,
             param="ica_reject",
         )
-        msg = f"Using PTP rejection thresholds: {ica_reject}"
-        logger.info(**gen_log_kwargs(message=msg))
+        n_epochs_before_reject = len(epochs)
         epochs.drop_bad(reject=ica_reject)
+        n_epochs_after_reject = len(epochs)
+        n_epochs_rejected = n_epochs_before_reject - n_epochs_after_reject
+
+        msg = (
+            f"Removed {n_epochs_rejected} of {n_epochs_before_reject} epochs via PTP "
+            f"rejection thresholds: {ica_reject}"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
         ar = None
-    msg = "Saving ICA epochs to disk."
+
+    if 0 < n_epochs_after_reject < 0.5 * n_epochs_before_reject:
+        msg = (
+            "More than 50% of all epochs rejected. Please check the "
+            "rejection thresholds."
+        )
+        logger.warning(**gen_log_kwargs(message=msg))
+    elif n_epochs_after_reject == 0:
+        rejection_type = (
+            cfg.ica_reject if cfg.ica_reject == "autoreject_local" else "PTP-based"
+        )
+        raise RuntimeError(
+            f"No epochs remaining after {rejection_type} rejection. Cannot continue."
+        )
+
+    msg = f"Saving {n_epochs_after_reject} ICA epochs to disk."
     logger.info(**gen_log_kwargs(message=msg))
     epochs.save(
         out_files["epochs"],

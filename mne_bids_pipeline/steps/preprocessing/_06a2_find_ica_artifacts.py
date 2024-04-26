@@ -60,14 +60,12 @@ def detect_bad_components(
         inds, scores = ica.find_bads_ecg(
             epochs,
             method="ctps",
-            threshold=cfg.ica_ctps_ecg_threshold,
+            threshold=cfg.ica_ecg_threshold,
             ch_name=ch_names,
         )
 
     if not inds:
-        adjust_setting = (
-            "ica_eog_threshold" if which == "eog" else "ica_ctps_ecg_threshold"
-        )
+        adjust_setting = f"ica_{which}_threshold"
         warn = (
             f"No {artifact}-related ICs detected, this is highly "
             f"suspicious. A manual check is suggested. You may wish to "
@@ -77,7 +75,7 @@ def detect_bad_components(
     else:
         msg = (
             f"Detected {len(inds)} {artifact}-related ICs in "
-            f"{len(epochs)} {artifact} epochs."
+            f"{len(epochs)} {artifact} epochs: {', '.join([str(i) for i in inds])}"
         )
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -131,6 +129,9 @@ def find_ica_artifacts(
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
     out_files = dict()
     out_files["ica"] = bids_basename.copy().update(processing="ica", suffix="ica")
+    out_files["ecg"] = bids_basename.copy().update(processing="ica+ecg", suffix="ave")
+    out_files["eog"] = bids_basename.copy().update(processing="ica+eog", suffix="ave")
+
     # DO NOT add this to out_files["ica"] because we expect it to be modified by users.
     # If the modify it and it's in out_files, caching will detect the hash change and
     # consider *this step* a cache miss, and it will run again, overwriting the user's
@@ -290,6 +291,18 @@ def find_ica_artifacts(
     ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
     eog_scores = None if len(eog_scores) == 0 else eog_scores
 
+    # Save ECG and EOG evokeds to disk.
+    for artifact_name, artifact_evoked in zip(("ecg", "eog"), (ecg_evoked, eog_evoked)):
+        if artifact_evoked:
+            msg = f"Saving {artifact_name.upper()} artifact: {out_files[artifact_name]}"
+            logger.info(**gen_log_kwargs(message=msg))
+            artifact_evoked.save(out_files[artifact_name], overwrite=True)
+        else:
+            # Don't track the non-existent output file
+            del out_files[artifact_name]
+
+    del artifact_name, artifact_evoked
+
     title = "ICA: components"
     with _open_report(
         cfg=cfg,
@@ -333,7 +346,7 @@ def get_config(
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,
         ica_eog_threshold=config.ica_eog_threshold,
-        ica_ctps_ecg_threshold=config.ica_ctps_ecg_threshold,
+        ica_ecg_threshold=config.ica_ecg_threshold,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

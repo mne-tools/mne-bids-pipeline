@@ -854,7 +854,7 @@ def _add_raw(
     extra_html: str | None = None,
 ):
     if bids_path_in.run is not None:
-        title += f", run {repr(bids_path_in.run)}"
+        title += f", run {bids_path_in.run}"
     elif bids_path_in.task in ("noise", "rest"):
         title += f", {bids_path_in.task}"
     plot_raw_psd = (

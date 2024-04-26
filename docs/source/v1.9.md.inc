@@ -9,6 +9,8 @@
   [`epochs_metadata_tmin`][mne_bids_pipeline._config.epochs_metadata_tmin] and
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 - If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
+- We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936, #937 by @hoechenberger)
+- ECG and EOG signals created during ICA artifact detection are now saved to disk. (#938 by @hoechenberger)
 
 ### :warning: Behavior changes
 
@@ -22,6 +24,7 @@
 - When using automated bad channel detection, now indicate the generated `*_bads.tsv` files whether a channel
   had previously already been marked as bad in the dataset. Resulting entries in the TSV file may now look like:
   `"pre-existing (before MNE-BIDS-pipeline was run) & auto-noisy"` (previously: only `"auto-noisy"`). (#930 by @hoechenberger)
+- The `ica_ctps_ecg_threshold` has been renamed to [`ica_ecg_threshold`][mne_bids_pipeline._config.ica_ecg_threshold]. (#935 by @hoechenberger)
 
 ### :package: Requirements
 
@@ -44,6 +47,7 @@
 - Fixed a compatibility bug with joblib 1.4.0. (#899 by @larsoner)
 - Fixed how "original" raw data is included in the report. Previously, bad channels, subject, and experimenter name would not
   be displayed correctly. (#930 by @hoechenberger)
+- In the report's table of contents, don't put the run numbers in quotation marks. (#933 by @hoechenberger)
 
 ### :medical_symbol: Code health and infrastructure
 

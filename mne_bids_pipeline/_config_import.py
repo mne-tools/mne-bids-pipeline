@@ -415,6 +415,9 @@ _REMOVED_NAMES = {
     "N_JOBS": dict(
         new_name="n_jobs",
     ),
+    "ica_ctps_ecg_threshold": dict(
+        new_name="ica_ecg_threshold",
+    ),
 }
 
 

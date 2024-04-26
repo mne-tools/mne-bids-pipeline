@@ -1362,9 +1362,10 @@ it is to run but the less data you have to compute a good ICA. Set to
 `1` or `None` to not perform any decimation.
 """
 
-ica_ctps_ecg_threshold: float = 0.1
+ica_ecg_threshold: float = 0.1
 """
-The threshold parameter passed to `find_bads_ecg` method.
+The cross-trial phase statistics (CTPS) threshold parameter used for detecting
+ECG-related ICs.
 """
 
 ica_eog_threshold: float = 3.0

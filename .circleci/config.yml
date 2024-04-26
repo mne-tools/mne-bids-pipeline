@@ -50,7 +50,7 @@ jobs:
             pip install --upgrade --progress-bar off pip
             pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
-            pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3"
+            pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
       - run:
           name: Check Qt
           command: |
@@ -170,7 +170,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000247-2
+            - data-cache-ds000247-3
       - bash_env
       - run:
           name: Get ds000247
@@ -178,7 +178,7 @@ jobs:
             $DOWNLOAD_DATA ds000247
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000247-2
+          key: data-cache-ds000247-3
           paths:
             - ~/mne_data/ds000247
 
@@ -475,7 +475,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000247-2
+            - data-cache-ds000247-3
       - run:
           name: test ds000247
           command: $RUN_TESTS ds000247

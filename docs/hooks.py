@@ -12,22 +12,14 @@ from mne_bids_pipeline._docs import _ParseConfigSteps
 logger = logging.getLogger("mkdocs")
 
 config_updated = False
-_parse_config_steps = _ParseConfigSteps()
 
 
 # This hack can be cleaned up once this is resolved:
 # https://github.com/mkdocstrings/mkdocstrings/issues/615#issuecomment-1971568301
 def on_pre_build(config: MkDocsConfig) -> None:
     """Monkey patch mkdocstrings-python jinja template to have global vars."""
-    import mkdocstrings_handlers.python.handler
-
-    old_update_env = mkdocstrings_handlers.python.handler.PythonHandler.update_env
-
-    def update_env(self, md, config: dict) -> None:
-        old_update_env(self, md=md, config=config)
-        self.env.globals["pipeline_steps"] = _parse_config_steps
-
-    mkdocstrings_handlers.python.handler.PythonHandler.update_env = update_env
+    python_handler = config["plugins"]["mkdocstrings"].get_handler("python")
+    python_handler.env.globals["pipeline_steps"] = _ParseConfigSteps()
 
 
 # Ideally there would be a better hook, but it's unclear if context can

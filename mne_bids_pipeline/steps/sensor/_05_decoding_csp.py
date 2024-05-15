@@ -170,11 +170,13 @@ def one_subject_decoding(
     clf = make_pipeline(
         *preproc_steps,
         csp,
-        LinearModel(LogReg(
-            solver="liblinear",  # much faster than the default
-            random_state=cfg.random_state,
-            n_jobs=1,
-        )),
+        LinearModel(
+            LogReg(
+                solver="liblinear",  # much faster than the default
+                random_state=cfg.random_state,
+                n_jobs=1,
+            )
+        ),
     )
     cv = StratifiedKFold(
         n_splits=cfg.decoding_n_splits,
@@ -261,7 +263,7 @@ def one_subject_decoding(
         # PATTERNS
         csp.fit_transform(X, y)
         sensor_pattern_csp = csp.patterns_
-        
+
         # save scores
         # XXX right now this saves in working directory
         csp_fname = cond1 + cond2 + str(fmin) + str(fmax)

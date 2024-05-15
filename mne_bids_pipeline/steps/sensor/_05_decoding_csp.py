@@ -7,11 +7,10 @@ import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import CSP, LinearModel
+from mne.decoding import CSP
 from mne_bids import BIDSPath
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
 
 from ..._config_utils import (
     _bids_kwargs,
@@ -244,9 +243,6 @@ def one_subject_decoding(
         # Get the data for all time points
         X = epochs_filt.get_data()
 
-        
-        
-
         cv_scores = cross_val_score(
             estimator=clf,
             X=X,
@@ -264,15 +260,14 @@ def one_subject_decoding(
 
         # COEFS
         clf.fit(X, y)
-        weights_csp = mne.decoding.get_coef(clf, 'patterns_', inverse_transform=True)
+        weights_csp = mne.decoding.get_coef(clf, "patterns_", inverse_transform=True)
 
         # save scores
         # XXX right now this saves in working directory
         csp_fname = cond1 + cond2 + str(fmin) + str(fmax)
 
-        np.save(csp_fname + '_patterns', sensor_pattern_csp)
-        np.save(csp_fname + '_weights', weights_csp)
-
+        np.save(csp_fname + "_patterns", sensor_pattern_csp)
+        np.save(csp_fname + "_weights", weights_csp)
 
     # Loop over times x frequencies
     #
@@ -351,14 +346,14 @@ def one_subject_decoding(
 
         # COEFS
         clf.fit(X, y)
-        weights_csp = mne.decoding.get_coef(clf, 'patterns_', inverse_transform=True)
+        weights_csp = mne.decoding.get_coef(clf, "patterns_", inverse_transform=True)
 
         # save scores
         # XXX right now this saves in working directory
         csp_fname = cond1 + cond2 + str(fmin) + str(fmax) + str(tmin) + str(tmax)
 
-        np.save(csp_fname + '_patterns', sensor_pattern_csp)
-        np.save(csp_fname + '_weights', weights_csp)
+        np.save(csp_fname + "_patterns", sensor_pattern_csp)
+        np.save(csp_fname + "_weights", weights_csp)
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f"{condition1}+{condition2}".replace(op.sep, "")

@@ -7,7 +7,7 @@ import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import CSP
+from mne.decoding import CSP, LinearModel
 from mne_bids import BIDSPath
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
@@ -162,6 +162,10 @@ def one_subject_decoding(
         epochs=epochs,
     )
 
+    # Create output directory if it doesn't already exist
+    output_dir = bids_path.fpath.parent / "CSD_output"
+    output_dir.mkdir(exist_ok=True)
+
     # Classifier
     csp = CSP(
         n_components=4,  # XXX revisit
@@ -262,12 +266,12 @@ def one_subject_decoding(
         csp.fit_transform(X, y)
         sensor_pattern_csp = csp.patterns_
         
-        # save scores
-        # XXX right now this saves in working directory
-        csp_fname = cond1 + cond2 + str(fmin) + str(fmax)
+        # save weights and patterns
+        csp_patterns_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_patterns"
+        csp_weights_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_weights"
 
-        np.save(csp_fname + "_patterns", sensor_pattern_csp)
-        np.save(csp_fname + "_weights", weights_csp)
+        np.save(op.join(output_dir, csp_patterns_fname), sensor_pattern_csp)
+        np.save(op.join(output_dir, csp_weights_fname), weights_csp)
 
     # Loop over times x frequencies
     #
@@ -348,12 +352,12 @@ def one_subject_decoding(
         csp.fit_transform(X, y)
         sensor_pattern_csp = csp.patterns_
 
-        # save scores
-        # XXX right now this saves in working directory
-        csp_fname = cond1 + cond2 + str(fmin) + str(fmax) + str(tmin) + str(tmax)
+        # save weights and patterns
+        csp_patterns_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_{str(tmin)}_{str(tmax)}_s_patterns"
+        csp_weights_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_{str(tmin)}_{str(tmax)}_s_patterns"
 
-        np.save(csp_fname + "_patterns", sensor_pattern_csp)
-        np.save(csp_fname + "_weights", weights_csp)
+        np.save(op.join(output_dir, csp_patterns_fname), sensor_pattern_csp)
+        np.save(op.join(output_dir, csp_weights_fname), weights_csp)
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f"{condition1}+{condition2}".replace(op.sep, "")

@@ -264,7 +264,7 @@ def one_subject_decoding(
 
         # COEFS
         clf.fit(X, y)
-        weights_csp = get_coef(clf, 'patterns_', inverse_transform=True)
+        weights_csp = mne.decoding.get_coef(clf, 'patterns_', inverse_transform=True)
 
         # save scores
         # XXX right now this saves in working directory
@@ -351,7 +351,7 @@ def one_subject_decoding(
 
         # COEFS
         clf.fit(X, y)
-        weights_csp = get_coef(clf, 'patterns_', inverse_transform=True)
+        weights_csp = mne.decoding.get_coef(clf, 'patterns_', inverse_transform=True)
 
         # save scores
         # XXX right now this saves in working directory

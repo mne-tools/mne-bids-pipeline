@@ -78,16 +78,16 @@
     {% endblock contents %}
 
     {# START NEW CODE #}
-    {% if pipeline_steps(attribute_name) %}
+    {% if pipeline_steps(attribute.name) %}
     {# https://squidfunk.github.io/mkdocs-material/reference/admonitions/#collapsible-blocks #}
     <details class="abstract">
       <summary>Pipeline steps using this setting</summary>
       <p>
         The following steps are directly affected by changes to
-        <code>{{ attribute_name }}</code>:
+        <code>{{ attribute.name }}</code>:
       </p>
       <ul>
-        {% for step in pipeline_steps(attribute_name) %}
+        {% for step in pipeline_steps(attribute.name) %}
         <li><code>{{ step }}</code></li>
         {% endfor %}
       </ul>

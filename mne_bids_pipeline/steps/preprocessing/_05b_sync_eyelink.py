@@ -108,7 +108,7 @@ def sync_eyelink(
         msg = f"Syncing eyelink data (fake for now) {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
-        raw_et = mne.io.read_raw_eyelink(et_fname)
+        raw_et = mne.io.read_raw_eyelink(et_fname,find_overlaps=True)
         
         et_sync_times = [annotation["onset"] for annotation in raw_et.annotations if re.search(cfg.sync_eventtype_regex_et,annotation["description"])]
         sync_times    = [annotation["onset"] for annotation in raw.annotations    if re.search(cfg.sync_eventtype_regex,   annotation["description"])]
@@ -118,8 +118,8 @@ def sync_eyelink(
         #logger.info(**gen_log_kwargs(message=f"{sync_times}"))
 
 
-        #mne.preprocessing.eyetracking.interpolate_blinks(raw_et, buffer=(0.05, 0.05), interpolate_gaze=False)        
-        
+        #mne.preprocessing.eyetracking.interpolate_blinks(raw_et, buffer=(0.05, 0.05), interpolate_gaze=True)        
+
         
         # Align the data
         mne.preprocessing.realign_raw(raw, raw_et, sync_times, et_sync_times)
@@ -127,6 +127,7 @@ def sync_eyelink(
 
         # add ET data to EEG
         raw.add_channels([raw_et], force_update_info=True)
+        raw._raw_extras.append(raw_et._raw_extras)
 
         raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,raw_et.annotations,0,0,0,1))
 

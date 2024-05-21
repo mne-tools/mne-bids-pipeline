@@ -249,7 +249,7 @@ def get_config(
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
         runs=get_runs(config=config, subject=subject),
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

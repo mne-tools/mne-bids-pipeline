@@ -149,7 +149,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),
     )

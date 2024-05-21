@@ -243,7 +243,7 @@ def get_config(
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),
     )

@@ -335,7 +335,7 @@ def get_config(
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
         runs=get_runs(config=config, subject=subject),
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

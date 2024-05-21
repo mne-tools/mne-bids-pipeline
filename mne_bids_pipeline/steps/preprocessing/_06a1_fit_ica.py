@@ -349,7 +349,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_bids_kwargs(config=config),
     )

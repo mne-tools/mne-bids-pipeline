@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 
 import mne
+import os.path
 import re
 import numpy as np
 from mne_bids import BIDSPath
@@ -55,6 +56,20 @@ def get_input_fnames_sync_eyelink(
         extension=".asc",
     )
 
+
+    et_edf_bids_basename = BIDSPath(
+        subject=subject,
+        session=session,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        datatype="beh",
+        root=cfg.bids_root,
+        suffix="et",
+        check=False,
+        extension=".edf",
+    )
+
     in_files = dict()
     for run in cfg.runs:
         key = f"raw_run-{run}"
@@ -69,6 +84,11 @@ def get_input_fnames_sync_eyelink(
             run=run
         )
 
+        key = f"et_edf_run-{run}"
+        in_files[key] = et_edf_bids_basename.copy().update(
+            run=run
+        )
+        
 
 
     
@@ -94,6 +114,7 @@ def sync_eyelink(
 
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     et_fnames = [in_files.pop(f"et_run-{run}") for run in cfg.runs]
+    et_edf_fnames = [in_files.pop(f"et_edf_run-{run}") for run in cfg.runs]
     
     logger.info(**gen_log_kwargs(message=f"et_fnames {et_fnames}"))
     out_files = dict()
@@ -104,10 +125,17 @@ def sync_eyelink(
 
     
     
-    for idx, (run, raw_fname,et_fname) in enumerate(zip(cfg.runs, raw_fnames,et_fnames)):
+    for idx, (run, raw_fname,et_fname,et_edf_fname) in enumerate(zip(cfg.runs, raw_fnames,et_fnames,et_edf_fnames)):
         msg = f"Syncing eyelink data (fake for now) {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        if not os.path.isfile(et_fname):
+            logger.info(**gen_log_kwargs(message=f"couldnt find {et_fname} file, trying to call edf2asc"))
+            if not os.path.isfile(et_edf_fname):
+                logger.error(**gen_log_kwargs(message=f"also didnt find {et_edf_fname} file, one of both need to exist for ET sync."))
+            import subprocess
+            subprocess.run(["edf2asc", et_edf_fname]) 
+
         raw_et = mne.io.read_raw_eyelink(et_fname,find_overlaps=True)
         
         et_sync_times = [annotation["onset"] for annotation in raw_et.annotations if re.search(cfg.sync_eventtype_regex_et,annotation["description"])]

@@ -249,6 +249,7 @@ def one_subject_decoding(
             scoring=cfg.decoding_metric,
             cv=cv,
             n_jobs=1,
+            error_score="raise",
         )
         freq_decoding_table.loc[idx, "mean_crossval_score"] = cv_scores.mean()
         freq_decoding_table.at[idx, "scores"] = cv_scores
@@ -315,6 +316,7 @@ def one_subject_decoding(
             scoring=cfg.decoding_metric,
             cv=cv,
             n_jobs=1,
+            error_score="raise",
         )
         score = cv_scores.mean()
         tf_decoding_table.loc[idx, "mean_crossval_score"] = score

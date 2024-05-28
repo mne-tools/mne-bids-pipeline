@@ -1,9 +1,10 @@
 {# Modified from https://github.com/mkdocstrings/python/blob/master/src/mkdocstrings_handlers/python/templates/material/_base/attribute.html #}
+{# Updated 2024/05/20. See "START NEW CODE" for block that is new. #}
 
 {{ log.debug("Rendering " + attribute.path) }}
 
 <div class="doc doc-object doc-attribute">
-{% with obj = attribute, html_id = attribute.path %}
+{% with html_id = attribute.path %}
 
   {% if root %}
     {% set show_full_path = config.show_root_full_path %}
@@ -15,24 +16,21 @@
     {% set show_full_path = config.show_object_full_path %}
   {% endif %}
 
-  {% set attribute_name = attribute.path if show_full_path else attribute.name %}
-
   {% if not root or config.show_root_heading %}
-    {% filter heading(
-        heading_level,
+
+    {% filter heading(heading_level,
         role="data" if attribute.parent.kind.value == "module" else "attr",
         id=html_id,
         class="doc doc-heading",
-        toc_label=('<code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;'|safe if config.show_symbol_type_toc else '') + attribute.name,
-    ) %}
+        toc_label=attribute.name) %}
 
       {% block heading scoped %}
-        {% if config.show_symbol_type_heading %}<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>{% endif %}
         {% if config.separate_signature %}
-          <span class="doc doc-object-name doc-attribute-name">{{ attribute_name }}</span>
+          <span class="doc doc-object-name doc-attribute-name">{% if show_full_path %}{{ attribute.path }}{% else %}{{ attribute.name }}{% endif %}</span>
         {% else %}
-          {%+ filter highlight(language="python", inline=True) %}
-            {{ attribute_name }}{% if attribute.annotation %}: {{ attribute.annotation }}{% endif %}
+          {% filter highlight(language="python", inline=True) %}
+            {% if show_full_path %}{{ attribute.path }}{% else %}{{ attribute.name }}{% endif %}
+            {% if attribute.annotation %}: {{ attribute.annotation }}{% endif %}
             {% if attribute.value %} = {{ attribute.value }}{% endif %}
           {% endfilter %}
         {% endif %}
@@ -48,21 +46,23 @@
 
     {% block signature scoped %}
       {% if config.separate_signature %}
-        {% filter format_attribute(attribute, config.line_length, crossrefs=config.signature_crossrefs) %}
-          {{ attribute.name }}
+        {% filter highlight(language="python", inline=False) %}
+          {% filter format_code(config.line_length) %}
+            {% if show_full_path %}{{ attribute.path }}{% else %}{{ attribute.name }}{% endif %}
+            {% if attribute.annotation %}: {{ attribute.annotation|safe }}{% endif %}
+            {% if attribute.value %} = {{ attribute.value|safe }}{% endif %}
+          {% endfilter %}
         {% endfilter %}
       {% endif %}
     {% endblock signature %}
 
   {% else %}
-
     {% if config.show_root_toc_entry %}
       {% filter heading(heading_level,
           role="data" if attribute.parent.kind.value == "module" else "attr",
           id=html_id,
-          toc_label=('<code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;'|safe if config.show_symbol_type_toc else '') + attribute.name,
-          hidden=True,
-      ) %}
+          toc_label=attribute.path if config.show_root_full_path else attribute.name,
+          hidden=True) %}
       {% endfilter %}
     {% endif %}
     {% set heading_level = heading_level - 1 %}
@@ -78,16 +78,16 @@
     {% endblock contents %}
 
     {# START NEW CODE #}
-    {% if pipeline_steps(attribute_name) %}
+    {% if pipeline_steps(attribute.name) %}
     {# https://squidfunk.github.io/mkdocs-material/reference/admonitions/#collapsible-blocks #}
     <details class="abstract">
       <summary>Pipeline steps using this setting</summary>
       <p>
         The following steps are directly affected by changes to
-        <code>{{ attribute_name }}</code>:
+        <code>{{ attribute.name }}</code>:
       </p>
       <ul>
-        {% for step in pipeline_steps(attribute_name) %}
+        {% for step in pipeline_steps(attribute.name) %}
         <li><code>{{ step }}</code></li>
         {% endfor %}
       </ul>

@@ -65,6 +65,8 @@ def drop_ptp(
     session: str | None,
     in_files: dict,
 ) -> dict:
+    import matplotlib.pyplot as plt
+
     out_files = dict()
     out_files["epochs"] = (
         in_files["epochs"]
@@ -204,16 +206,16 @@ def drop_ptp(
                 f"{ar.n_interpolate_} channels were bad (cross-validated n_interpolate "
                 f"limit; excluding globally bad and non-data channels, shown in white)."
             )
+            fig = reject_log.plot(orientation="horizontal", aspect="auto", show=False)
             report.add_figure(
-                fig=reject_log.plot(
-                    orientation="horizontal", aspect="auto", show=False
-                ),
+                fig=fig,
                 title=f"{kind} cleaning",
                 caption=caption,
                 section=title,
                 tags=tags,
                 replace=True,
             )
+            plt.close(fig)
             del caption
         else:
             report.add_html(

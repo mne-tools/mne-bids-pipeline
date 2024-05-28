@@ -157,7 +157,7 @@ def sync_eyelink(
         raw.add_channels([raw_et], force_update_info=True)
         raw._raw_extras.append(raw_et._raw_extras)
 
-        raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,raw_et.annotations,0,0,0,1))
+        raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,raw_et.annotations,0,raw.first_samp,raw_et.first_samp,raw.info["sfreq"]))
 
 
         

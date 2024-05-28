@@ -130,9 +130,9 @@ def sync_eyelink(
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
         if not os.path.isfile(et_fname):
-            logger.info(**gen_log_kwargs(message=f"couldnt find {et_fname} file, trying to call edf2asc"))
+            logger.info(**gen_log_kwargs(message=f"Couldn't find {et_fname} file, trying to call edf2asc."))
             if not os.path.isfile(et_edf_fname):
-                logger.error(**gen_log_kwargs(message=f"also didnt find {et_edf_fname} file, one of both need to exist for ET sync."))
+                logger.error(**gen_log_kwargs(message=f"Also didn't find {et_edf_fname} file, one of both need to exist for ET sync."))
             import subprocess
             subprocess.run(["edf2asc", et_edf_fname]) 
 
@@ -146,6 +146,15 @@ def sync_eyelink(
         #logger.info(**gen_log_kwargs(message=f"{sync_times}"))
 
 
+        # Check whether the eye-tracking data contains nan values. If yes replace them with zeros.
+        if np.isnan(raw_et.get_data()).any():
+
+            # Set all nan values in the eye-tracking data to 0 (to make resampling possible)
+            # TODO: Decide whether this is a good approch or whether interpolation (e.g. of blinks) is useful
+            # TODO: Decide about setting the values (e.g. for blinks) back to nan after synchronising the signals
+            np.nan_to_num(raw_et._data, copy=False, nan=0.0)
+            logger.info(**gen_log_kwargs(message=f"The eye-tracking data contained nan values. They were replaced with zeros."))
+
         #mne.preprocessing.eyetracking.interpolate_blinks(raw_et, buffer=(0.05, 0.05), interpolate_gaze=True)        
 
         
@@ -153,15 +162,14 @@ def sync_eyelink(
         mne.preprocessing.realign_raw(raw, raw_et, sync_times, et_sync_times)
 
 
-        # add ET data to EEG
+        # Add ET data to EEG
         raw.add_channels([raw_et], force_update_info=True)
         raw._raw_extras.append(raw_et._raw_extras)
 
+        # Also add ET annotations to EEG
         raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,raw_et.annotations,0,raw.first_samp,raw_et.first_samp,raw.info["sfreq"]))
 
 
-        
-        
         msg = f"Saving synced data to disk."
         logger.info(**gen_log_kwargs(message=msg))
         raw.save(

@@ -137,6 +137,11 @@ def sync_eyelink(
             subprocess.run(["edf2asc", et_edf_fname]) 
 
         raw_et = mne.io.read_raw_eyelink(et_fname,find_overlaps=True)
+
+        # If the user did not specify a regular expression for the eye-tracking sync events, it is assumed that it's
+        # identical to the regex for the EEG sync events
+        if not cfg.sync_eventtype_regex_et:
+            cfg.sync_eventtype_regex_et = cfg.sync_eventtype_regex
         
         et_sync_times = [annotation["onset"] for annotation in raw_et.annotations if re.search(cfg.sync_eventtype_regex_et,annotation["description"])]
         sync_times    = [annotation["onset"] for annotation in raw.annotations    if re.search(cfg.sync_eventtype_regex,   annotation["description"])]

@@ -1111,7 +1111,6 @@ remove_blink_saccades: bool = True
 sync_eventtype_regex: str = ".*"
 sync_eventtype_regex_et: str = ""
 
-
 # ### SSP, ICA, and artifact regression
 
 regress_artifact: dict[str, Any] | None = None

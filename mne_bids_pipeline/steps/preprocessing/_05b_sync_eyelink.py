@@ -1,7 +1,4 @@
-
 from types import SimpleNamespace
-
-
 import mne
 import os.path
 import re
@@ -21,7 +18,6 @@ from ..._parallel import get_parallel_backend, parallel_func
 from ..._reject import _get_reject
 from ..._report import _open_report
 from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
-
 
 
 def get_input_fnames_sync_eyelink(
@@ -83,16 +79,13 @@ def get_input_fnames_sync_eyelink(
         in_files[key] = et_bids_basename.copy().update(
             run=run
         )
+        _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
 
         key = f"et_edf_run-{run}"
         in_files[key] = et_edf_bids_basename.copy().update(
             run=run
         )
-        
-
-
-    
-
+        _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
     
     return in_files
 
@@ -119,8 +112,7 @@ def sync_eyelink(
     logger.info(**gen_log_kwargs(message=f"et_fnames {et_fnames}"))
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
-    out_files["eyelink"] = bids_basename.copy().update(processing="syncET", suffix="raw")
-    
+    out_files["eyelink"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
     del bids_basename
 
     
@@ -134,7 +126,7 @@ def sync_eyelink(
             if not os.path.isfile(et_edf_fname):
                 logger.error(**gen_log_kwargs(message=f"Also didn't find {et_edf_fname} file, one of both need to exist for ET sync."))
             import subprocess
-            subprocess.run(["edf2asc", et_edf_fname]) 
+            subprocess.run(["edf2asc", et_edf_fname]) # TODO: Still needs to be tested
 
         raw_et = mne.io.read_raw_eyelink(et_fname,find_overlaps=True)
 
@@ -155,7 +147,7 @@ def sync_eyelink(
         if np.isnan(raw_et.get_data()).any():
 
             # Set all nan values in the eye-tracking data to 0 (to make resampling possible)
-            # TODO: Decide whether this is a good approch or whether interpolation (e.g. of blinks) is useful
+            # TODO: Decide whether this is a good approach or whether interpolation (e.g. of blinks) is useful
             # TODO: Decide about setting the values (e.g. for blinks) back to nan after synchronising the signals
             np.nan_to_num(raw_et._data, copy=False, nan=0.0)
             logger.info(**gen_log_kwargs(message=f"The eye-tracking data contained nan values. They were replaced with zeros."))
@@ -180,10 +172,11 @@ def sync_eyelink(
         raw.save(
             out_files["eyelink"],
             overwrite=True,
+            split_naming="bids", # TODO: Find out if we need to add this or not
             split_size=cfg._raw_split_size, # ???
         )
         # no idea what the split stuff is...
-        #_update_for_splits(out_files, "epochs")
+        _update_for_splits(out_files, "eyelink") # TODO: Find out if we need to add this or not
 
     
 
@@ -248,7 +241,6 @@ def main(*, config: SimpleNamespace) -> None:
         msg = "Skipping, sync_eyelink is set to False …"
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
-
 
 
     with get_parallel_backend(config.exec_params):

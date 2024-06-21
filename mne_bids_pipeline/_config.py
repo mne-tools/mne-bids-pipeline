@@ -348,7 +348,7 @@ https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 
 !!! warning
     If the data contains channel names that are not part of the template montage, the
-     pipeline run will fail with an error message. You must either pick a different
+    pipeline run will fail with an error message. You must either pick a different
     montage or remove those channels via
     [`drop_channels`][mne_bids_pipeline._config.drop_channels] to continue.
 

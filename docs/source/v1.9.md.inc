@@ -10,7 +10,7 @@
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 - If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
 - We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936, #937 by @hoechenberger)
-- ECG and EOG signals created during ICA artifact detection are now saved to disk. (#938 by @hoechenberger)
+- ECG and EOG signals created during ICA artifact detection are now saved to disk. (#936 by @hoechenberger)
 
 ### :warning: Behavior changes
 
@@ -25,6 +25,11 @@
   had previously already been marked as bad in the dataset. Resulting entries in the TSV file may now look like:
   `"pre-existing (before MNE-BIDS-pipeline was run) & auto-noisy"` (previously: only `"auto-noisy"`). (#930 by @hoechenberger)
 - The `ica_ctps_ecg_threshold` has been renamed to [`ica_ecg_threshold`][mne_bids_pipeline._config.ica_ecg_threshold]. (#935 by @hoechenberger)
+- We changed the behavior when setting an EEG montage:
+  - When applying the montage, we now also check for channel aliases (e.g. `M1 -> TP9`).
+  - If the data contains a channel that is not present in the montage, we now abort with an exception (previously, we emitted a warning).
+    This is to prevent silent errors. To proceed in this situation, select a different montage, or drop the respective channels via
+    the [`drop_channels`][mne_bids_pipeline._config.drop_channels] configuration option. (#960 by @hoechenberger)
 
 ### :package: Requirements
 

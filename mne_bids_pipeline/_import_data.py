@@ -326,14 +326,10 @@ def _set_eeg_montage(
     Modifies ``raw`` in-place.
     """
     montage = cfg.eeg_template_montage
-    is_mne_montage = isinstance(montage, mne.channels.montage.DigMontage)
-    montage_name = "custom_montage" if is_mne_montage else montage
     if cfg.datatype == "eeg" and montage:
         msg = f"Setting EEG channel locations to template montage: " f"{montage}."
         logger.info(**gen_log_kwargs(message=msg))
-        if not is_mne_montage:
-            montage = mne.channels.make_standard_montage(montage_name)
-        raw.set_montage(montage, match_case=False, on_missing="warn")
+        raw.set_montage(montage, match_case=False, match_alias=True)
 
 
 def _fix_stim_artifact_func(cfg: SimpleNamespace, raw: mne.io.BaseRaw) -> None:

@@ -10,7 +10,7 @@
   [`epochs_metadata_tmax`][mne_bids_pipeline._config.epochs_metadata_tmax]. (#873 by @hoechenberger)
 - If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
 - We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936, #937 by @hoechenberger)
-- ECG and EOG signals created during ICA artifact detection are now saved to disk. (#936 by @hoechenberger)
+- ECG and EOG signals created during ICA artifact detection are now saved to disk. (#938 by @hoechenberger)
 
 ### :warning: Behavior changes
 

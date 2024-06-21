@@ -25,6 +25,11 @@
   had previously already been marked as bad in the dataset. Resulting entries in the TSV file may now look like:
   `"pre-existing (before MNE-BIDS-pipeline was run) & auto-noisy"` (previously: only `"auto-noisy"`). (#930 by @hoechenberger)
 - The `ica_ctps_ecg_threshold` has been renamed to [`ica_ecg_threshold`][mne_bids_pipeline._config.ica_ecg_threshold]. (#935 by @hoechenberger)
+- We changed the behavior when setting an EEG montage:
+  - When applying the montage, we now also check for channel aliases (e.g. `M1 -> TP9`).
+  - If the data contains a channel that is not present in the montage, we now abort with an exception (previously, we emitted a warning).
+    This is to prevent silent errors. To proceed in this situation, select a different montage, or drop the respective channels via
+    the [`drop_channels`][mne_bids_pipeline._config.drop_channels] configuration option. (#960 by @hoechenberger)
 
 ### :package: Requirements
 

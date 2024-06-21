@@ -346,6 +346,13 @@ name of a built-in template montage in MNE-Python.
 You can find an overview of supported template montages at
 https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
 
+!!! warning
+    If the data contains channel names that are not part of the template montage, the
+    pipeline run will fail with an error message. You must either pick a different
+    montage or remove those channels via
+    [`drop_channels`][mne_bids_pipeline._config.drop_channels] to continue.
+
+
 ???+ example "Example"
     Do not apply template montage:
     ```python
@@ -362,7 +369,8 @@ drop_channels: Sequence[str] = []
 """
 Names of channels to remove from the data. This can be useful, for example,
 if you have added a new bipolar channel via `eeg_bipolar_channels` and now wish
-to remove the anode, cathode, or both.
+to remove the anode, cathode, or both; or if your selected EEG template montage
+doesn't contain coordinates for some channels.
 
 ???+ example "Example"
     Exclude channels `Fp1` and `Cz` from processing:

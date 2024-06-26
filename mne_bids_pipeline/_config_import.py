@@ -361,6 +361,7 @@ def _default_factory(key, val):
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
         #["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"], # icalabel_include
+        ["brain","other"]
     ]
     for typ in (dict, list):
         if isinstance(val, typ):

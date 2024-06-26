@@ -365,6 +365,7 @@ def _default_factory(key: str, val: Any) -> Any:
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
         #["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"], # icalabel_include
+        ["brain","other"]
     ]
 
     def default_factory() -> Any:

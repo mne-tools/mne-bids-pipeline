@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
+from mne_icalabel import label_components
+import mne_icalabel
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
@@ -157,114 +159,145 @@ def find_ica_artifacts(
     epochs_ecg = None
     ecg_ics: list[int] = []
     ecg_scores: FloatArrayT = np.zeros(0)
-    for ri, raw_fname in enumerate(raw_fnames):
-        # Have the channels needed to make ECG epochs
-        raw = mne.io.read_raw(raw_fname, preload=False)
-        # ECG epochs
-        if not (
-            "ecg" in raw.get_channel_types()
-            or "meg" in cfg.ch_types
-            or "mag" in cfg.ch_types
-        ):
-            msg = (
-                "No ECG or magnetometer channels are present, cannot "
-                "automate artifact detection for ECG."
+    if cfg.ica_use_ecg_detection:
+        for ri, raw_fname in enumerate(raw_fnames):
+            # Have the channels needed to make ECG epochs
+            raw = mne.io.read_raw(raw_fname, preload=False)
+            # ECG epochs
+            if not (
+                "ecg" in raw.get_channel_types()
+                or "meg" in cfg.ch_types
+                or "mag" in cfg.ch_types
+            ):
+                msg = (
+                    "No ECG or magnetometer channels are present, cannot "
+                    "automate artifact detection for ECG."
+                )
+                logger.info(**gen_log_kwargs(message=msg))
+                break
+            elif ri == 0:
+                msg = "Creating ECG epochs …"
+                logger.info(**gen_log_kwargs(message=msg))
+
+            # We want to extract a total of 5 min of data for ECG epochs generation
+            # (across all runs)
+            total_ecg_dur = 5 * 60
+            ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
+            t_mid = (raw.times[-1] + raw.times[0]) / 2
+            raw = raw.crop(
+                tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
+                tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
+            ).load_data()
+
+            these_ecg_epochs = create_ecg_epochs(
+                raw,
+                baseline=(None, -0.2),
+                tmin=-0.5,
+                tmax=0.5,
             )
-            logger.info(**gen_log_kwargs(message=msg))
-            break
-        elif ri == 0:
-            msg = "Creating ECG epochs …"
-            logger.info(**gen_log_kwargs(message=msg))
-
-        # We want to extract a total of 5 min of data for ECG epochs generation
-        # (across all runs)
-        total_ecg_dur = 5 * 60
-        ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
-        t_mid = (raw.times[-1] + raw.times[0]) / 2
-        raw = raw.crop(
-            tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
-            tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
-        ).load_data()
-
-        these_ecg_epochs = create_ecg_epochs(
-            raw,
-            baseline=(None, -0.2),
-            tmin=-0.5,
-            tmax=0.5,
-        )
-        del raw  # Free memory
-        if len(these_ecg_epochs):
-            if epochs.reject is not None:
-                these_ecg_epochs.drop_bad(reject=epochs.reject)
+            del raw  # Free memory
             if len(these_ecg_epochs):
-                if epochs_ecg is None:
-                    epochs_ecg = these_ecg_epochs
-                else:
-                    epochs_ecg = mne.concatenate_epochs(
-                        [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
-                    )
-        del these_ecg_epochs
-    else:  # did not break so had usable channels
-        ecg_ics, ecg_scores = detect_bad_components(
-            cfg=cfg,
-            which="ecg",
-            epochs=epochs_ecg,
-            ica=ica,
-            ch_names=None,  # we currently don't allow for custom channels
-            subject=subject,
-            session=session,
-        )
+                if epochs.reject is not None:
+                    these_ecg_epochs.drop_bad(reject=epochs.reject)
+                if len(these_ecg_epochs):
+                    if epochs_ecg is None:
+                        epochs_ecg = these_ecg_epochs
+                    else:
+                        epochs_ecg = mne.concatenate_epochs(
+                            [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
+                        )
+            del these_ecg_epochs
+        else:  # did not break so had usable channels
+            ecg_ics, ecg_scores = detect_bad_components(
+                cfg=cfg,
+                which="ecg",
+                epochs=epochs_ecg,
+                ica=ica,
+                ch_names=None,  # we currently don't allow for custom channels
+                subject=subject,
+                session=session,
+            )
 
     # EOG component detection
     epochs_eog = None
     eog_ics: list[int] = []
     eog_scores = np.zeros(0)
-    for ri, raw_fname in enumerate(raw_fnames):
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
-        if cfg.eog_channels:
-            ch_names = cfg.eog_channels
-            assert all([ch_name in raw.ch_names for ch_name in ch_names])
-        else:
-            eog_picks = mne.pick_types(raw.info, meg=False, eog=True)
-            ch_names = [raw.ch_names[pick] for pick in eog_picks]
-        if not ch_names:
-            msg = "No EOG channel is present, cannot automate IC detection for EOG."
-            logger.info(**gen_log_kwargs(message=msg))
-            break
-        elif ri == 0:
-            msg = "Creating EOG epochs …"
-            logger.info(**gen_log_kwargs(message=msg))
-        these_eog_epochs = create_eog_epochs(
-            raw,
-            ch_name=ch_names,
-            baseline=(None, -0.2),
-        )
-        if len(these_eog_epochs):
-            if epochs.reject is not None:
-                these_eog_epochs.drop_bad(reject=epochs.reject)
+    if cfg.ica_use_eog_detection:
+        for ri, raw_fname in enumerate(raw_fnames):
+            raw = mne.io.read_raw_fif(raw_fname, preload=True)
+            if cfg.eog_channels:
+                ch_names = cfg.eog_channels
+                assert all([ch_name in raw.ch_names for ch_name in ch_names])
+            else:
+                eog_picks = mne.pick_types(raw.info, meg=False, eog=True)
+                ch_names = [raw.ch_names[pick] for pick in eog_picks]
+            if not ch_names:
+                msg = "No EOG channel is present, cannot automate IC detection for EOG."
+                logger.info(**gen_log_kwargs(message=msg))
+                break
+            elif ri == 0:
+                msg = "Creating EOG epochs …"
+                logger.info(**gen_log_kwargs(message=msg))
+            these_eog_epochs = create_eog_epochs(
+                raw,
+                ch_name=ch_names,
+                baseline=(None, -0.2),
+            )
             if len(these_eog_epochs):
-                if epochs_eog is None:
-                    epochs_eog = these_eog_epochs
-                else:
-                    epochs_eog = mne.concatenate_epochs(
-                        [epochs_eog, these_eog_epochs], on_mismatch="warn"
-                    )
-    else:  # did not break
-        eog_ics, eog_scores = detect_bad_components(
-            cfg=cfg,
-            which="eog",
-            epochs=epochs_eog,
-            ica=ica,
-            ch_names=cfg.eog_channels,
-            subject=subject,
-            session=session,
+                if epochs.reject is not None:
+                    these_eog_epochs.drop_bad(reject=epochs.reject)
+                if len(these_eog_epochs):
+                    if epochs_eog is None:
+                        epochs_eog = these_eog_epochs
+                    else:
+                        epochs_eog = mne.concatenate_epochs(
+                            [epochs_eog, these_eog_epochs], on_mismatch="warn"
+                        )
+        else:  # did not break
+            eog_ics, eog_scores = detect_bad_components(
+                cfg=cfg,
+                which="eog",
+                epochs=epochs_eog,
+                ica=ica,
+                ch_names=cfg.eog_channels,
+                subject=subject,
+                session=session,
+            )
+    
+
+    # Run MNE-ICALabel if requested.
+    if cfg.ica_use_icalabel:
+        icalabel_ics = []
+        icalabel_labels = []
+        icalabel_prob = []
+        msg = "Performing automated artifact detection (MNE-ICALabel) …"
+        logger.info(**gen_log_kwargs(message=msg))
+        
+        label_results = mne_icalabel.label_components(inst=epochs, ica=ica, method="iclabel")
+        for idx, (label,prob) in enumerate(zip(label_results["labels"],label_results["y_pred_proba"])):
+            #icalabel_include = ["brain", "other"]
+            print(label)
+            print(prob)
+
+            if label not in cfg.icalabel_include:
+                icalabel_ics.append(idx)
+                icalabel_labels.append(label)
+                icalabel_prob.append(prob)
+
+        msg = (
+            f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
+            f"in {len(epochs)} epochs."
         )
+        logger.info(**gen_log_kwargs(message=msg))
+    else:
+        icalabel_ics = []
+
+    ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
     msg = "Saving ICA solution and detected artifacts to disk."
     logger.info(**gen_log_kwargs(message=msg))
-    ica.exclude = sorted(set(ecg_ics + eog_ics))
     ica.save(out_files["ica"], overwrite=True)
 
     # Create TSV.
@@ -278,15 +311,28 @@ def find_ica_artifacts(
         )
     )
 
-    for component in ecg_ics:
-        row_idx = tsv_data["component"] == component
-        tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected ECG artifact"
-
-    for component in eog_ics:
-        row_idx = tsv_data["component"] == component
-        tsv_data.loc[row_idx, "status"] = "bad"
-        tsv_data.loc[row_idx, "status_description"] = "Auto-detected EOG artifact"
+    if cfg.ica_use_icalabel:
+        assert len(icalabel_ics) == len(icalabel_labels)
+        for component, label in zip(icalabel_ics, icalabel_labels):
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = f"Auto-detected {label} (MNE-ICALabel)"
+    if cfg.ica_use_ecg_detection:
+        for component in ecg_ics:
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = "Auto-detected ECG artifact (MNE)"
+    if cfg.ica_use_eog_detection:
+        for component in eog_ics:
+            row_idx = tsv_data["component"] == component
+            tsv_data.loc[row_idx, "status"] = "bad"
+            tsv_data.loc[
+                row_idx, "status_description"
+            ] = "Auto-detected EOG artifact (MNE)"
 
     tsv_data.to_csv(out_files_components, sep="\t", index=False)
 
@@ -350,8 +396,12 @@ def get_config(
         task_is_rest=config.task_is_rest,
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,
+        ica_use_eog_detection = config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
+        ica_use_ecg_detection = config.ica_use_ecg_detection,
         ica_ecg_threshold=config.ica_ecg_threshold,
+        ica_use_icalabel=config.ica_use_icalabel,
+        icalabel_include = config.icalabel_include,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

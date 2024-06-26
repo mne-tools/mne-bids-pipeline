@@ -14,9 +14,11 @@ import mne
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
+from mne.viz import plot_ica_components
 from mne_bids import BIDSPath
 from mne_icalabel import label_components
 import mne_icalabel
+import matplotlib.pyplot as plt
 
 from ..._config_utils import (
     _bids_kwargs,
@@ -372,6 +374,22 @@ def find_ica_artifacts(
             n_jobs=1,  # avoid automatic parallelization
             tags=("ica",),  # the default but be explicit
         )
+
+        # Add a plot for each excluded IC together with the given label and the probability
+        # TODO: Improve this plot e.g. combine all figures in one plot
+        for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
+            excluded_IC_figure = plot_ica_components(
+                ica=ica,
+                picks=ic,
+            )
+            excluded_IC_figure.axes[0].text(0, -0.15, f"Label: {label} \n Probability: {prob:.3f}", ha="center", fontsize=8, bbox={"facecolor":"orange", "alpha":0.5, "pad":5})
+
+            report.add_figure(
+                fig=excluded_IC_figure,
+                title = f'ICA{ic:03}',
+                replace=True,
+            )
+            plt.close(excluded_IC_figure)
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))

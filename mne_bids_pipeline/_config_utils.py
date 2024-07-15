@@ -250,7 +250,7 @@ def get_runs(
         inclusion = set(runs).issubset(set(valid_runs))
         if not inclusion:
             raise ValueError(
-                f"Invalid run. It can be a subset of {valid_runs} but " f"got {runs}"
+                f"Invalid run. It can be a subset of {valid_runs} but got {runs}"
             )
     return runs
 

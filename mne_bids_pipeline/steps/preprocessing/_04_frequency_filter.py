@@ -109,11 +109,11 @@ def bandpass_filter(
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
-        msg = f"High-pass filtering {run_type} data; lower bound: " f"{l_freq} Hz"
+        msg = f"High-pass filtering {run_type} data; lower bound: {l_freq} Hz"
     elif l_freq is None and h_freq is not None:
-        msg = f"Low-pass filtering {run_type} data; upper bound: " f"{h_freq} Hz"
+        msg = f"Low-pass filtering {run_type} data; upper bound: {h_freq} Hz"
     elif l_freq is not None and h_freq is not None:
-        msg = f"Band-pass filtering {run_type} data; range: " f"{l_freq} – {h_freq} Hz"
+        msg = f"Band-pass filtering {run_type} data; range: {l_freq} – {h_freq} Hz"
     else:
         msg = f"Not applying frequency filtering to {run_type} data."
 

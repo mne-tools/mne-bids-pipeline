@@ -76,7 +76,7 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
     client.auto_restart = False  # don't restart killed workers
 
     dashboard_url = client.dashboard_link
-    msg = "Dask client dashboard: " f"[link={dashboard_url}]{dashboard_url}[/link]"
+    msg = f"Dask client dashboard: [link={dashboard_url}]{dashboard_url}[/link]"
     logger.info(**gen_log_kwargs(message=msg, emoji="🌎"))
 
     if exec_params.dask_open_dashboard:

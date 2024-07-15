@@ -307,9 +307,7 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
 
         # Only add the label once
         if n_significant_clusters_plotted == 0:
-            label = (
-                f"$p$ < {cfg.cluster_permutation_p_threshold} " f"(cluster pemutation)"
-            )
+            label = f"$p$ < {cfg.cluster_permutation_p_threshold} (cluster pemutation)"
         else:
             label = None
 

@@ -63,9 +63,7 @@ def failsafe_run(
                     for k in ("subject", "session", "task", "run")
                     if k in kwargs
                 }
-                message = (
-                    f"A critical error occurred. " f"The error message was: {str(e)}"
-                )
+                message = f"A critical error occurred. The error message was: {str(e)}"
                 log_info["success"] = False
                 log_info["error_message"] = str(e)
 

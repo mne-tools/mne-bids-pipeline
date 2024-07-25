@@ -16,17 +16,22 @@ import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     get_eeg_reference,
     get_runs,
     get_sessions,
     get_subjects,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def detect_bad_components(

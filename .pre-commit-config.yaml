@@ -1,9 +1,5 @@
 ---
 files: ^(.*\.(py|yaml))$
-# We need to match the exclude list in pyproject.toml because pre-commit.ci
-# passes filenames and these do not get passed through the tool.black filter
-# for example
-exclude: ^(\.[^/]*cache/.*|.*/freesurfer/contrib/.*)$
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.10

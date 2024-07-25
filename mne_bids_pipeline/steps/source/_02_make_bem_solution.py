@@ -8,15 +8,15 @@ from types import SimpleNamespace
 
 import mne
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _get_bem_conductivity,
     get_fs_subject,
     get_fs_subjects_dir,
     get_subjects,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 
 
 def get_input_fnames_make_bem_solution(

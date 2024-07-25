@@ -117,9 +117,11 @@ addopts = "-ra -vv --tb=short --cov=mne_bids_pipeline --cov-report= --junit-xml=
 testpaths = ["mne_bids_pipeline"]
 junit_family = "xunit2"
 
+[tool.ruff]
+exclude = ["**/freesurfer/contrib", "dist/", "build/", "**/.*cache"]
+
 [tool.ruff.lint]
-select = ["A", "B006", "D", "E", "F", "I", "W", "UP"]
-exclude = ["**/freesurfer/contrib", "dist/", "build/"]
+select = ["A", "B006", "D", "E", "F", "I", "W", "UP", "TID252"]
 ignore = [
   "D104", # Missing docstring in public package
 ]

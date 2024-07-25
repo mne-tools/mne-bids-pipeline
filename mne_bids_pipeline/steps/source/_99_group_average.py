@@ -9,7 +9,7 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     get_fs_subject,
     get_fs_subjects_dir,
@@ -17,10 +17,10 @@ from ..._config_utils import (
     get_subjects,
     sanitize_cond_name,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _all_conditions, _open_report
-from ..._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _all_conditions, _open_report
+from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 
 
 def _stc_path(

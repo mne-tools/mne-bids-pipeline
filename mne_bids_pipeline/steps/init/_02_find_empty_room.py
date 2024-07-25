@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _pl,
     get_datatype,
@@ -12,10 +12,15 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._import_data import _empty_room_match_path
-from ..._io import _write_json
-from ..._logging import gen_log_kwargs, logger
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._import_data import _empty_room_match_path
+from mne_bids_pipeline._io import _write_json
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def get_input_fnames_find_empty_room(

@@ -10,7 +10,7 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _restrict_analyze_channels,
     get_eeg_reference,
@@ -18,10 +18,15 @@ from ..._config_utils import (
     get_subjects,
     sanitize_cond_name,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report, _sanitize_cond_tag
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _open_report, _sanitize_cond_tag
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def get_input_fnames_time_frequency(

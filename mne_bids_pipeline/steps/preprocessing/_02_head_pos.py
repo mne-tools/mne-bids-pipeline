@@ -4,20 +4,16 @@ from types import SimpleNamespace
 
 import mne
 
-from ..._config_utils import (
-    get_runs_tasks,
-    get_sessions,
-    get_subjects,
-)
-from ..._import_data import (
+from mne_bids_pipeline._config_utils import get_runs_tasks, get_sessions, get_subjects
+from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
     import_experimental_data,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _open_report
-from ..._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 
 
 def get_input_fnames_head_pos(

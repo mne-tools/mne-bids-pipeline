@@ -12,7 +12,7 @@ from mne import compute_proj_epochs, compute_proj_evoked
 from mne.preprocessing import find_ecg_events, find_eog_events
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _pl,
     _proj_path,
@@ -20,11 +20,16 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._reject import _get_reject
-from ..._report import _open_report
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reject import _get_reject
+from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> np.ndarray:

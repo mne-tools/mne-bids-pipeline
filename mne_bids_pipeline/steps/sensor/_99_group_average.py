@@ -14,7 +14,7 @@ import pandas as pd
 from mne_bids import BIDSPath
 from scipy.io import loadmat, savemat
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _pl,
     _restrict_analyze_channels,
@@ -23,10 +23,10 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._decoding import _handle_csp_args
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import (
+from mne_bids_pipeline._decoding import _handle_csp_args
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import (
     _all_conditions,
     _contrasts_to_names,
     _open_report,
@@ -38,8 +38,13 @@ from ..._report import (
     add_event_counts,
     plot_time_by_time_decoding_t_values,
 )
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
-from ...typing import TypedDict
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
+from mne_bids_pipeline.typing import TypedDict
 
 
 def get_input_fnames_average_evokeds(

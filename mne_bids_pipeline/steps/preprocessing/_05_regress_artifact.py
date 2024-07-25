@@ -6,16 +6,21 @@ import mne
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from ..._config_utils import (
-    get_runs_tasks,
-    get_sessions,
-    get_subjects,
+from mne_bids_pipeline._config_utils import get_runs_tasks, get_sessions, get_subjects
+from mne_bids_pipeline._import_data import (
+    _get_run_rest_noise_path,
+    _import_data_kwargs,
+    _read_raw_msg,
 )
-from ..._import_data import _get_run_rest_noise_path, _import_data_kwargs, _read_raw_msg
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _add_raw, _open_report
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _add_raw, _open_report
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def get_input_fnames_regress_artifact(

@@ -15,16 +15,18 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 
-from ..._config_utils import (
-    _bids_kwargs,
-    get_sessions,
-    get_subjects,
+from mne_bids_pipeline._config_utils import _bids_kwargs, get_sessions, get_subjects
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reject import _get_reject
+from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._reject import _get_reject
-from ..._report import _open_report
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+
 from ._07_make_epochs import _add_epochs_image_kwargs
 
 

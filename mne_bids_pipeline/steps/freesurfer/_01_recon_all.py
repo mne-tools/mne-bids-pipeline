@@ -11,9 +11,9 @@ from pathlib import Path
 
 from mne.utils import run_subprocess
 
-from ..._config_utils import get_fs_subjects_dir, get_subjects
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._config_utils import get_fs_subjects_dir, get_subjects
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 

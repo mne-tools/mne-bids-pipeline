@@ -12,7 +12,7 @@ from mne_bids import BIDSPath
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
     _restrict_analyze_channels,
@@ -21,16 +21,25 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._decoding import LogReg, _decoding_preproc_steps, _handle_csp_args
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import (
+from mne_bids_pipeline._decoding import (
+    LogReg,
+    _decoding_preproc_steps,
+    _handle_csp_args,
+)
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import (
     _imshow_tf,
     _open_report,
     _plot_full_epochs_decoding_scores,
     _sanitize_cond_tag,
 )
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.ndarray:

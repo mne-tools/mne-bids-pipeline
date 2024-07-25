@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import mne
 from mne_bids import BIDSPath
 
-from ..._config_import import _import_config
-from ..._config_utils import (
+from mne_bids_pipeline._config_import import _import_config
+from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _restrict_analyze_channels,
     get_eeg_reference,
@@ -17,10 +17,10 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _all_conditions, _open_report, _sanitize_cond_tag
-from ..._run import (
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
+from mne_bids_pipeline._run import (
     _prep_out_files,
     _sanitize_callable,
     _update_for_splits,

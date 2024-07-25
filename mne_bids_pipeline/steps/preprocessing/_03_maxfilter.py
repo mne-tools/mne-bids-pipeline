@@ -22,7 +22,7 @@ import mne
 import numpy as np
 from mne_bids import read_raw_bids
 
-from ..._config_utils import (
+from mne_bids_pipeline._config_utils import (
     _pl,
     get_mf_cal_fname,
     get_mf_ctc_fname,
@@ -30,7 +30,7 @@ from ..._config_utils import (
     get_sessions,
     get_subjects,
 )
-from ..._import_data import (
+from mne_bids_pipeline._import_data import (
     _get_mf_reference_run_path,
     _get_run_path,
     _get_run_rest_noise_path,
@@ -38,10 +38,15 @@ from ..._import_data import (
     import_er_data,
     import_experimental_data,
 )
-from ..._logging import gen_log_kwargs, logger
-from ..._parallel import get_parallel_backend, parallel_func
-from ..._report import _add_raw, _open_report
-from ..._run import _prep_out_files, _update_for_splits, failsafe_run, save_logs
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _add_raw, _open_report
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 
 
 # %% eSSS

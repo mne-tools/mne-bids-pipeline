@@ -39,9 +39,7 @@ echo "export DOWNLOAD_DATA=\"coverage run -m mne_bids_pipeline._download\"" >> "
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
 bash setup_xvfb.sh
 sudo apt install -qq tcsh libxft2
-# TODO: Restore
-#wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
-source .circleci/get_minimal_commands.sh
+wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 mkdir -p ~/mne_data
 echo "set -e" >> "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' >> "$BASH_ENV"

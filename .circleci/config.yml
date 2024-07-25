@@ -67,7 +67,7 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
-            - .pyenv/versions
+            - .pyenv
 
   cache_ds000117:
     <<: *imageconfig

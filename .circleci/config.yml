@@ -51,8 +51,6 @@ jobs:
             pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
             pip install -ve .[tests]
             pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
-            echo $PATH
-            which coverage
       - run:
           name: Check Qt
           command: |
@@ -69,7 +67,7 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
-            - python_env
+            - .pyenv/versions
 
   cache_ds000117:
     <<: *imageconfig

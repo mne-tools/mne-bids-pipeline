@@ -39,7 +39,7 @@ echo "export DOWNLOAD_DATA=\"coverage run -m mne_bids_pipeline._download\"" >> "
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
 bash setup_xvfb.sh
 sudo apt install -qq tcsh python3.12-venv python3-venv libxft2
-python3.10 -m venv ~/python_env
+python3 -m venv ~/python_env
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 mkdir -p ~/mne_data

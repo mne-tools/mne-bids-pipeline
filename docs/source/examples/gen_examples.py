@@ -225,9 +225,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         assert "mne" in options
         url = f"https://mne.tools/dev/generated/mne.datasets.{options['mne']}.data_path.html"  # noqa: E501
 
-    source_str = (
-        f"## Dataset source\n\nThis dataset was acquired from " f"[{url}]({url})\n"
-    )
+    source_str = f"## Dataset source\n\nThis dataset was acquired from [{url}]({url})\n"
 
     if "openneuro" in options:
         for key in ("include", "exclude"):

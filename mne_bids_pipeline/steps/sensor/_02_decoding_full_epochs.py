@@ -220,7 +220,7 @@ def run_epochs_decoding(
                 "contrast",
                 "decoding",
                 *[
-                    f"{_sanitize_cond_tag(cond_1)}–" f"{_sanitize_cond_tag(cond_2)}"
+                    f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
                     for cond_1, cond_2 in cfg.contrasts
                 ],
             ),

@@ -401,7 +401,7 @@ def one_subject_decoding(
                     f_min = float(freq_bin[0])
                     f_max = float(freq_bin[1])
                     contrast_names.append(
-                        f"{freq_range_name}\n" f"({f_min:0.1f}-{f_max:0.1f} Hz)"
+                        f"{freq_range_name}\n({f_min:0.1f}-{f_max:0.1f} Hz)"
                     )
             fig, caption, _ = _plot_full_epochs_decoding_scores(
                 contrast_names=contrast_names,

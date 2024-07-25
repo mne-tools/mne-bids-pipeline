@@ -137,7 +137,7 @@ def make_epochs(
         try:
             idx_keep = epochs.metadata.eval(metadata_query, engine="python")
         except pandas.core.computation.ops.UndefinedVariableError:
-            msg = f"Metadata query failed to select any columns: " f"{metadata_query}"
+            msg = f"Metadata query failed to select any columns: {metadata_query}"
             logger.warn(**gen_log_kwargs(message=msg))
             return epochs
 
@@ -327,7 +327,7 @@ def _set_eeg_montage(
     """
     montage = cfg.eeg_template_montage
     if cfg.datatype == "eeg" and montage:
-        msg = f"Setting EEG channel locations to template montage: " f"{montage}."
+        msg = f"Setting EEG channel locations to template montage: {montage}."
         logger.info(**gen_log_kwargs(message=msg))
         raw.set_montage(montage, match_case=False, match_alias=True)
 

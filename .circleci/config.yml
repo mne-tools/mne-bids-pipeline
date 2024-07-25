@@ -289,10 +289,6 @@ jobs:
       - run:
           name: Get eeg_matchingpennies
           command: |
-            set -x
-            echo $PATH
-            ls -al .pyenv/versions
-            which coverage
             $DOWNLOAD_DATA eeg_matchingpennies
       - codecov/upload
       - save_cache:

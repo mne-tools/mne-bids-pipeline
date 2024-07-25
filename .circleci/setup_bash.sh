@@ -40,6 +40,7 @@ wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_
 bash setup_xvfb.sh
 sudo apt install -qq tcsh libxft2
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
+source get_minimal_commands.sh
 mkdir -p ~/mne_data
 echo "set -e" >> "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' >> "$BASH_ENV"

@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/base:2022.10-22.04
+    - image: cimg/python:3.12.4
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
@@ -67,7 +67,7 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
-            - python_env
+            - .pyenv
 
   cache_ds000117:
     <<: *imageconfig

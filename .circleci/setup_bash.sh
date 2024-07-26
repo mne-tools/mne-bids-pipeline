@@ -32,15 +32,13 @@ else
 fi
 
 # Set up image
-sudo ln -s /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 /usr/lib/x86_64-linux-gnu/libxcb-util.so.1
 echo "export RUN_TESTS=\".circleci/run_dataset_and_copy_files.sh\"" >> "$BASH_ENV"
 echo "export DOWNLOAD_DATA=\"coverage run -m mne_bids_pipeline._download\"" >> "$BASH_ENV"
 
-# Similar CircleCI setup to mne-python (Xvfb, venv, minimal commands, env vars)
+# Similar CircleCI setup to mne-python (Xvfb, minimal commands, env vars)
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
 bash setup_xvfb.sh
-sudo apt install -qq tcsh python3.10-venv python3-venv libxft2
-python3.10 -m venv ~/python_env
+sudo apt install -qq tcsh libxft2
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
 source get_minimal_commands.sh
 mkdir -p ~/mne_data
@@ -48,15 +46,9 @@ echo "set -e" >> "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' >> "$BASH_ENV"
 echo 'shopt -s globstar' >> "$BASH_ENV"  # Enable recursive globbing via **
 echo 'export MNE_DATA=$HOME/mne_data' >> "$BASH_ENV"
-echo "export PATH=~/.local/bin/:$PATH" >> "$BASH_ENV"
 echo 'export DISPLAY=:99' >> "$BASH_ENV"
 echo 'export XDG_RUNTIME_DIR=/tmp/runtime-circleci' >> "$BASH_ENV"
 echo 'export MPLBACKEND=Agg' >> "$BASH_ENV"
-echo "source ~/python_env/bin/activate" >> "$BASH_ENV"
 echo "export MNE_3D_OPTION_MULTI_SAMPLES=1" >> "$BASH_ENV"
 echo "export MNE_BIDS_PIPELINE_FORCE_TERMINAL=true" >> "$BASH_ENV"
 echo "export FORCE_COLOR=1" >> "$BASH_ENV"  # for rich to use color in logs
-mkdir -p ~/.local/bin
-if [[ ! -f ~/.local/bin/python ]]; then
-    ln -s ~/python_env/bin/python ~/.local/bin/python
-fi

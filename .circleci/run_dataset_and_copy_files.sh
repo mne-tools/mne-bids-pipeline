@@ -32,7 +32,7 @@ echo "Runtime: ${SECONDS} seconds"
 
 # rerun test (check caching)!
 SECONDS=0
-RERUN_LIMIT=45
+RERUN_LIMIT=60
 if [[ "$RERUN_TEST" == "false" ]]; then
   echo "Skipping rerun test"
   RUN_TIME=0

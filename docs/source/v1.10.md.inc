@@ -4,9 +4,9 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :warning: Behavior changes)
+### :warning: Behavior changes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Empty room matching is now done for all sessions (previously only for the first session) for each subject. (#976 by @drammock)
 
 [//]: # (### :package: Requirements)
 

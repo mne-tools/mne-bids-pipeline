@@ -461,6 +461,7 @@ def run_maxwell_filter(
         mne.chpi.filter_chpi(
             raw_sss,
             t_window=cfg.mf_mc_t_window,
+            allow_line_only=(task == "noise"),
         )
 
     if cfg.mf_mc and (

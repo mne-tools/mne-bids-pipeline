@@ -14,7 +14,7 @@
 
 ### :bug: Bug fixes
 
-- When running the pipeline with [`mf_filter_chpi`][mne_bids_pipeline._config. mf_filter_chpi] enabled,
+- When running the pipeline with [`mf_filter_chpi`][mne_bids_pipeline._config.mf_filter_chpi] enabled,
   emptyroom files that lack cHPI channels will now be processed (for line noise only) instead of raising
   an error. (#977 by @drammock)
 

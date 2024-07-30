@@ -12,9 +12,11 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- When running the pipeline with [`mf_filter_chpi`][mne_bids_pipeline._config. mf_filter_chpi] enabled,
+  emptyroom files that lack cHPI channels will now be processed (for line noise only) instead of raising
+  an error. (#977 by @drammock)
 
 ### :medical_symbol: Code health
 

@@ -67,6 +67,8 @@ extra_css:
 extra_javascript:
   - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
   - javascripts/tablesort.js
+not_in_nav: |
+  /governance.md
 nav:
     - Home: index.md
     - Getting started:
@@ -190,3 +192,13 @@ markdown_extensions:
         permalink: true  # Add paragraph symbol to link to current headline
     - pymdownx.tabbed:
         alternate_style: true
+
+# https://www.mkdocs.org/user-guide/configuration/#validation
+validation:
+  # Everything set to "warn" will cause an error when building in strict mode with
+  # mkdocs build --strict
+  omitted_files: warn
+  not_found: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

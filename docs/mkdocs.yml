@@ -192,3 +192,11 @@ markdown_extensions:
         permalink: true  # Add paragraph symbol to link to current headline
     - pymdownx.tabbed:
         alternate_style: true
+
+validation:
+  # Everything set to "warn" will cause an error when building in strict mode with
+  # mkdocs build --strict
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

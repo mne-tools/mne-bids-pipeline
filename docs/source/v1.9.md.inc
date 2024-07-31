@@ -44,7 +44,7 @@
 
 ### :bug: Bug fixes
 
-- When running the pipeline with [`find_bad_channels_meg`][mne_bids_pipeline._config. find_bad_channels_meg] enabled,
+- When running the pipeline with [`find_noisy_channels_meg`][mne_bids_pipeline._config.find_noisy_channels_meg] enabled,
   then disabling it and running the pipeline again, the pipeline would incorrectly still use automatically detected
   bad channels from the first pipeline run. Now, we ensure that the original bad channels would be used and the
   related section is removed from the report in this case. (#902 by @larsoner)

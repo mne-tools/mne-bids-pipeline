@@ -4,17 +4,17 @@
 
 [//]: # (- Whatever (#000 by @whoever))
 
-### :warning: Behavior changes
+[//]: # (### :warning: Behavior changes)
 
-- Empty room matching is now done for all sessions (previously only for the first session) for each subject. (#976 by @drammock)
+[//]: # (- Whatever (#000 by @whoever))
 
 [//]: # (### :package: Requirements)
 
 [//]: # (- Whatever (#000 by @whoever))
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
 
-[//]: # (- Whatever (#000 by @whoever))
+- Empty room matching is now done for all sessions (previously only for the first session) for each subject. (#976 by @drammock)
 
 ### :medical_symbol: Code health
 

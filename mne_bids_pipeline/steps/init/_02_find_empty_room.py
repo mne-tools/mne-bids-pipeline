@@ -128,16 +128,15 @@ def main(*, config) -> None:
     # in parallel.
     logs = list()
     for subject in get_subjects(config):
-        run = get_mf_reference_run(config=config)
-        logs.append(
-            find_empty_room(
-                cfg=get_config(
-                    config=config,
-                ),
-                exec_params=config.exec_params,
-                subject=subject,
-                session=get_sessions(config)[0],
-                run=run,
+        for session in get_sessions(config):
+            run = get_mf_reference_run(config=config)
+            logs.append(
+                find_empty_room(
+                    cfg=get_config(config=config),
+                    exec_params=config.exec_params,
+                    subject=subject,
+                    session=session,
+                    run=run,
+                )
             )
-        )
     save_logs(config=config, logs=logs)

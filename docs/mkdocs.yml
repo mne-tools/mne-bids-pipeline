@@ -21,12 +21,10 @@ theme:
         - content.code.copy  # copy button
     palette:
       # Palette toggle for automated theme selection
-      # Currently only available to sponsors
-      #
-      # - media: "(prefers-color-scheme)"
-      #   toggle:
-      #     icon: material/brightness-auto
-      #     name: Switch to light mode
+      - media: "(prefers-color-scheme)"
+        toggle:
+          icon: material/brightness-auto
+          name: Switch to light mode
 
       # Palette toggle for light mode
       - media: "(prefers-color-scheme: light)"

@@ -19,6 +19,10 @@
     1. Emptyroom files that lack cHPI channels will now be processed (for line noise only) instead of raising an error.
     2. cHPI filtering is now performed before movement compensation.
 
+### :books: Documentation
+
+- Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
+
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)

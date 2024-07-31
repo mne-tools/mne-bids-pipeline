@@ -425,6 +425,7 @@ def run_maxwell_filter(
             allow_line_only=(task == "noise"),
         )
 
+    logger.info(**gen_log_kwargs(message="Maxwell filtering"))
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()

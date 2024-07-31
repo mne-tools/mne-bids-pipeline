@@ -58,14 +58,13 @@ def pytest_configure(config):
     #  in _add_ica_artifact_sources
     #    self._add_figure(
     always:constrained_layout not applied.*:UserWarning
+    ignore:.*ing of figures upon backend switching.*:
     ignore:datetime\.datetime\.utcfromtimestamp.*:DeprecationWarning
     ignore:datetime\.datetime\.utcnow.*:DeprecationWarning
     # pandas with no good workaround
     ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
     # joblib on Windows sometimes
     ignore:Persisting input arguments took.*:UserWarning
-    # matplotlib needs to update
-    ignore:Conversion of an array with ndim.*:DeprecationWarning
     # scipy
     ignore:nperseg .* is greater.*:UserWarning
     # NumPy 2.0

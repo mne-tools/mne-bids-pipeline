@@ -41,7 +41,7 @@ nstructions](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads).
 ## :brain: Generate surfaces and brain parcellation
 
 MNE-BIDS-Pipeline provides a convenient way to invoke FreeSurfer. After
-[adjusting your configuration file](basic_usage.md#adjust-your-configuration-file),
+[adjusting your configuration file](../settings/general.md),
 invoke FreeSurfer via in the following way:
 
 ```shell

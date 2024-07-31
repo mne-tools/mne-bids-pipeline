@@ -15,4 +15,5 @@ python $STEP_DIR/source/settings/gen_settings.py
 
 echo "Building the documentation …"
 cd $STEP_DIR
-mkdocs build
+mkdocs build --strict
+

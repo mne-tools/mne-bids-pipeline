@@ -417,6 +417,14 @@ def run_maxwell_filter(
         )
         logger.warning(**gen_log_kwargs(message=msg))
 
+    if filter_chpi:
+        logger.info(**gen_log_kwargs(message="Filtering cHPI"))
+        mne.chpi.filter_chpi(
+            raw,
+            t_window=cfg.mf_mc_t_window,
+            allow_line_only=(task == "noise"),
+        )
+
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()
@@ -455,14 +463,6 @@ def run_maxwell_filter(
                 f"were processed  differently."
             )
             raise RuntimeError(msg)
-
-    if filter_chpi:
-        logger.info(**gen_log_kwargs(message="Filtering cHPI"))
-        mne.chpi.filter_chpi(
-            raw_sss,
-            t_window=cfg.mf_mc_t_window,
-            allow_line_only=(task == "noise"),
-        )
 
     if cfg.mf_mc and (
         cfg.mf_mc_rotation_velocity_limit is not None

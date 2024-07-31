@@ -193,10 +193,12 @@ markdown_extensions:
     - pymdownx.tabbed:
         alternate_style: true
 
+# https://www.mkdocs.org/user-guide/configuration/#validation
 validation:
   # Everything set to "warn" will cause an error when building in strict mode with
   # mkdocs build --strict
-  omitted_files: warn
+  omitted_files: info  # we intentionally omit governance.md
+  not_found: warn
   absolute_links: warn
   unrecognized_links: warn
   anchors: warn

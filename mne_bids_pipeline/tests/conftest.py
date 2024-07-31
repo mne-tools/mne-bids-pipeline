@@ -65,6 +65,8 @@ def pytest_configure(config):
     ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
     # joblib on Windows sometimes
     ignore:Persisting input arguments took.*:UserWarning
+    # matplotlib needs to update
+    ignore:Conversion of an array with ndim.*:DeprecationWarning
     # scipy
     ignore:nperseg .* is greater.*:UserWarning
     # NumPy 2.0

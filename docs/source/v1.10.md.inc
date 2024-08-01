@@ -24,7 +24,7 @@
 ### :books: Documentation
 
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
-- Bundle all previously-external JavaScript with out documentation to better preserve users' privacy (#982 by @hoechenberger)
+- Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)

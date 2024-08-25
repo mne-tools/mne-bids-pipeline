@@ -11,25 +11,33 @@ from pathlib import Path
 
 from mne.utils import run_subprocess
 
-from mne_bids_pipeline._config_utils import get_fs_subjects_dir, get_subjects
+from mne_bids_pipeline._config_utils import (
+    get_fs_subjects_dir,
+    get_sessions,
+    get_subjects,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 
 
-def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
+def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
+    sub_ses = f"Subject {subject}"
+    if session is not None:
+        subj_dir = subj_dir / f"ses-{session}"
+        sub_ses = f"{sub_ses} session {session}"
 
     if subj_dir.exists():
         msg = (
-            f"Subject {subject} is already present. Please delete the "
+            f"Recon for {sub_ses} is already present. Please delete the "
             f"directory if you want to recompute."
         )
         logger.info(**gen_log_kwargs(message=msg))
         return
     msg = (
-        "Running recon-all on subject {subject}. This will take "
+        "Running recon-all on {sub_ses}. This will take "
         "a LONG time – it's a good idea to let it run over night."
     )
     logger.info(**gen_log_kwargs(message=msg))
@@ -56,6 +64,8 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir) -> None:
         f"--license_file={license_file}",
         f"--participant_label={subject}",
     ]
+    if session is not None:
+        cmd += [f"--session_label={session}"]
     logger.debug("Running: " + " ".join(cmd))
     run_subprocess(cmd, env=env, verbose=logger.level)
 
@@ -83,6 +93,7 @@ def main(*, config) -> None:
 
     """  # noqa
     subjects = get_subjects(config)
+    sessions = get_sessions(config)
     root_dir = config.bids_root
     subjects_dir = Path(get_fs_subjects_dir(config))
     subjects_dir.mkdir(parents=True, exist_ok=True)
@@ -90,8 +101,20 @@ def main(*, config) -> None:
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(run_recon, exec_params=config.exec_params)
         parallel(
-            run_func(root_dir, subject, fs_bids_app, subjects_dir)
+            # TODO How can we infer if inner `for session in sessions` loop is needed?
+            #      Should we specify in `config`? As written, it will *only* work for
+            #      cases where subjects_dir has this layout:
+            #          sub-1
+            #            |- ses-a
+            #            |- ses-b
+            #          sub-2
+            #            |- ses-a
+            #          ...
+            #      "Normal" cases won't work (where there's only one MRI per subject and
+            #      no subdirs for "session" inside each subj in the `subjects_dir`).
+            run_func(root_dir, subject, fs_bids_app, subjects_dir, session)
             for subject in subjects
+            for session in sessions
         )
 
         # Handle fsaverage

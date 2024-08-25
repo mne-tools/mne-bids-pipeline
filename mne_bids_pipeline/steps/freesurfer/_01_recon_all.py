@@ -77,9 +77,9 @@ def main(*, config) -> None:
 
     You must have freesurfer available on your system.
 
-    Run via the MNE BIDS Pipeline's `run.py`:
+    Run via the MNE BIDS Pipeline's CLI:
 
-    python run.py --steps=freesurfer --config=your_pipeline_config.py
+    mne_bids_pipeline --steps=freesurfer --config=your_pipeline_config.py
 
     """  # noqa
     subjects = get_subjects(config)

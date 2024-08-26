@@ -70,6 +70,10 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> Non
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
+def _has_session_specific_anat(subject, session, subjects_dir):
+    return (subjects_dir / f"sub-{subject}" / f"ses-{session}").exists()
+
+
 def main(*, config) -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
@@ -98,23 +102,22 @@ def main(*, config) -> None:
     subjects_dir = Path(get_fs_subjects_dir(config))
     subjects_dir.mkdir(parents=True, exist_ok=True)
 
+    # check for session-specific MRIs within subject, and handle accordingly
+    subj_sess = list()
+    for _subj in subjects:
+        for _sess in sessions:
+            session = (
+                _sess
+                if _has_session_specific_anat(_subj, _sess, subjects_dir)
+                else None
+            )
+            subj_sess.append((_subj, session))
+
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(run_recon, exec_params=config.exec_params)
         parallel(
-            # TODO How can we infer if inner `for session in sessions` loop is needed?
-            #      Should we specify in `config`? As written, it will *only* work for
-            #      cases where subjects_dir has this layout:
-            #          sub-1
-            #            |- ses-a
-            #            |- ses-b
-            #          sub-2
-            #            |- ses-a
-            #          ...
-            #      "Normal" cases won't work (where there's only one MRI per subject and
-            #      no subdirs for "session" inside each subj in the `subjects_dir`).
             run_func(root_dir, subject, fs_bids_app, subjects_dir, session)
-            for subject in subjects
-            for session in sessions
+            for subject, session in subj_sess
         )
 
         # Handle fsaverage

@@ -26,7 +26,7 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> Non
     subj_dir = subjects_dir / f"sub-{subject}"
     sub_ses = f"Subject {subject}"
     if session is not None:
-        subj_dir = subj_dir / f"ses-{session}"
+        subj_dir = subj_dir.with_name(f"{subj_dir.name}_ses-{session}")
         sub_ses = f"{sub_ses} session {session}"
 
     if subj_dir.exists():
@@ -71,7 +71,7 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> Non
 
 
 def _has_session_specific_anat(subject, session, subjects_dir):
-    return (subjects_dir / f"sub-{subject}" / f"ses-{session}").exists()
+    return (subjects_dir / f"sub-{subject}_ses-{session}").exists()
 
 
 def main(*, config) -> None:

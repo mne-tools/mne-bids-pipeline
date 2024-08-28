@@ -12,6 +12,7 @@ from mne_bids_pipeline._config_utils import (
     _get_bem_conductivity,
     get_fs_subject,
     get_fs_subjects_dir,
+    get_sessions,
     get_subjects,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -81,9 +82,10 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
         ch_types=config.ch_types,
         use_template_mri=config.use_template_mri,
@@ -112,11 +114,12 @@ def main(*, config) -> None:
         )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
                 force_run=config.recreate_bem,
             )
             for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

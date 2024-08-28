@@ -36,13 +36,17 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
         return pathlib.Path(config.subjects_dir).expanduser().resolve()
 
 
-def get_fs_subject(config: SimpleNamespace, subject: str) -> str:
+def get_fs_subject(
+    config: SimpleNamespace, subject: str, session: str | None = None
+) -> str:
     subjects_dir = get_fs_subjects_dir(config)
 
     if config.use_template_mri is not None:
         return config.use_template_mri
 
-    if (pathlib.Path(subjects_dir) / subject).exists():
+    if session is not None:
+        return f"sub-{subject}_ses-{session}"
+    elif (pathlib.Path(subjects_dir) / subject).exists():
         return subject
     else:
         return f"sub-{subject}"

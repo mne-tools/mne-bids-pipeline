@@ -123,9 +123,10 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config=config),
         bem_mri_images=config.bem_mri_images,
         freesurfer_verbose=config.freesurfer_verbose,
@@ -160,12 +161,14 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
-                session=get_sessions(config)[0],
+                session=session,
                 force_run=config.recreate_bem,
             )
             for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

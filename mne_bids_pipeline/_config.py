@@ -989,7 +989,7 @@ will be named with a `last_` instead of a `first_` prefix.
 
 epochs_metadata_query: str | None = None
 """
-A [metadata query][https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html]
+A [metadata query](https://mne.tools/stable/auto_tutorials/epochs/30_epochs_metadata.html)
 specifying which epochs to keep. If the query fails because it refers to an
 unknown metadata column, a warning will be emitted and all epochs will be kept.
 
@@ -1262,7 +1262,7 @@ perform any interpolation.
     rejection thresholds were too strict before running ICA, i.e., too many epochs
     got rejected. `"autoreject_local"`, however, usually performed nicely.
     The `autoreject` documentation
-    [recommends][https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html]
+    [recommends](https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html)
     running local `autoreject` before and after ICA, which can be achieved by setting
     both, `ica_reject` and [`reject`][mne_bids_pipeline._config.reject], to
     `"autoreject_local"`.

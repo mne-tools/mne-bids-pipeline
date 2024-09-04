@@ -38,6 +38,7 @@ def get_output_fnames_make_bem_solution(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> dict:
     out_files = dict()
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "bem"

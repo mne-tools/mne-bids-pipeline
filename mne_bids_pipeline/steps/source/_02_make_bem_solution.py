@@ -24,6 +24,7 @@ def get_input_fnames_make_bem_solution(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> dict:
     in_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)

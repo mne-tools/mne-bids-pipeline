@@ -94,7 +94,7 @@ def main(*, config: SimpleNamespace) -> None:
         subjects = [config.use_template_mri]
     else:
         subjects = get_subjects(config=config)
-        sessions = get_sessions(config=config)
+    sessions = get_sessions(config=config)
 
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(

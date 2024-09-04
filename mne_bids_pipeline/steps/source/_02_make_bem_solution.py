@@ -57,9 +57,10 @@ def make_bem_solution(
     exec_params: SimpleNamespace,
     subject: str,
     in_files: dict,
+    session: str | None = None,
 ) -> dict:
     msg = "Calculating BEM solution"
-    logger.info(**gen_log_kwargs(message=msg, subject=subject))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject, session=session))
     conductivity, _ = _get_bem_conductivity(cfg)
     bem_model = mne.make_bem_model(
         subject=cfg.fs_subject,
@@ -117,6 +118,7 @@ def main(*, config) -> None:
                 cfg=get_config(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
+                session=session,
                 force_run=config.recreate_bem,
             )
             for subject in get_subjects(config)

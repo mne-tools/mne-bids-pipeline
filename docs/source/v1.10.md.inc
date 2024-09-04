@@ -28,3 +28,7 @@
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
+
+### :medical_symbol: Code health and infrastructure
+
+- Improve logging messages in maxwell filtering steps. (#893 by @drammock)

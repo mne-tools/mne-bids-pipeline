@@ -11,6 +11,7 @@
 - If you requested processing of non-existing subjects, we will now provide a more helpful error message. (#928 by @hoechenberger)
 - We improved the logging output for automnated epochs rejection and cleaning via ICA and SSP. (#936, #937 by @hoechenberger)
 - ECG and EOG signals created during ICA artifact detection are now saved to disk. (#938 by @hoechenberger)
+- It is now possible to use separate MRIs for each session within a subject, as in longitudinal studies. This is achieved by creating separate "subject" folders for each subject-session combination, with the naming convention `sub-XXX_ses-YYY`, in the freesurfer `SUBJECTS_DIR`. (#987 by @drammock)
 
 ### :warning: Behavior changes
 

@@ -10,6 +10,7 @@ import mne
 from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
+    get_sessions,
     get_subjects,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -71,11 +72,12 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
     )
     return cfg
@@ -92,6 +94,7 @@ def main(*, config: SimpleNamespace) -> None:
         subjects = [config.use_template_mri]
     else:
         subjects = get_subjects(config=config)
+    sessions = get_sessions(config=config)
 
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
@@ -102,10 +105,12 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
             )
             for subject in subjects
+            for session in sessions
         )
     save_logs(config=config, logs=logs)

@@ -13,6 +13,7 @@ import mne.bem
 from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
+    get_sessions,
     get_subjects,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -81,9 +82,14 @@ def make_coreg_surfaces(
     )
 
 
-def get_config(*, config, subject) -> SimpleNamespace:
+def get_config(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None = None,
+) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        fs_subject=get_fs_subject(config, subject),
+        fs_subject=get_fs_subject(config, subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
     )
     return cfg
@@ -92,6 +98,7 @@ def get_config(*, config, subject) -> SimpleNamespace:
 def main(*, config) -> None:
     # Ensure we're also processing fsaverage if present
     subjects = get_subjects(config)
+    sessions = get_sessions(config)
     if (Path(get_fs_subjects_dir(config)) / "fsaverage").exists():
         subjects.append("fsaverage")
 
@@ -105,10 +112,12 @@ def main(*, config) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 force_run=config.recreate_scalp_surface,
                 subject=subject,
             )
             for subject in subjects
+            for session in sessions
         )

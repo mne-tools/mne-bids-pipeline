@@ -83,7 +83,7 @@ def _get_datatypes_cached(root):
     return mne_bids.get_datatypes(root=root)
 
 
-def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str]:
+def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str, ...]:
     _all_datatypes: list[str] = _get_datatypes_cached(root=config.bids_root)
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
@@ -163,7 +163,7 @@ def _get_runs_all_subjects_cached(
     config = SimpleNamespace(**config_dict)
     # Sometimes we check list equivalence for ch_types, so convert it back
     config.ch_types = list(config.ch_types)
-    subj_runs = dict()
+    subj_runs: dict[str, list[None] | list[str]] = dict()
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
         valid_runs_subj = _get_entity_vals_cached(
@@ -174,19 +174,19 @@ def _get_runs_all_subjects_cached(
 
         # If we don't have any `run` entities, just set it to None, as we
         # commonly do when creating a BIDSPath.
-        if not valid_runs_subj:
-            valid_runs_subj = [None]
-
-        if subject in (config.exclude_runs or {}):
-            valid_runs_subj = [
-                r for r in valid_runs_subj if r not in config.exclude_runs[subject]
-            ]
-        subj_runs[subject] = valid_runs_subj
+        if valid_runs_subj:
+            if subject in (config.exclude_runs or {}):
+                valid_runs_subj = [
+                    r for r in valid_runs_subj if r not in config.exclude_runs[subject]
+                ]
+            subj_runs[subject] = valid_runs_subj
+        else:
+            subj_runs[subject] = [None]
 
     return subj_runs
 
 
-def get_intersect_run(config: SimpleNamespace) -> list[str]:
+def get_intersect_run(config: SimpleNamespace) -> list[str | None]:
     """Return the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects(config)
     # Do not use something like:
@@ -194,7 +194,7 @@ def get_intersect_run(config: SimpleNamespace) -> list[str]:
     # as it will not preserve order. Instead just be explicit and preserve order.
     # We could use "sorted", but it's probably better to use the order provided by
     # the user (if they want to put `runs=["02", "01"]` etc. it's better to use "02")
-    all_runs = list()
+    all_runs: list[str | None] = list()
     for runs in subj_runs.values():
         for run in runs:
             if run not in all_runs:
@@ -264,38 +264,47 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: str | None,
-    which: tuple[str] = ("runs", "noise", "rest"),
-) -> list[tuple[str]]:
+    which: tuple[str, ...] = ("runs", "noise", "rest"),
+) -> tuple[tuple[str | None, str | None], ...]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
     from ._import_data import _get_noise_path, _get_rest_path
 
     assert isinstance(which, tuple)
     assert all(isinstance(inc, str) for inc in which)
     assert all(inc in ("runs", "noise", "rest") for inc in which)
-    runs = list()
-    tasks = list()
+    runs: list[str | None] = list()
+    tasks: list[str | None] = list()
     if "runs" in which:
         runs.extend(get_runs(config=config, subject=subject))
         tasks.extend([get_task(config=config)] * len(runs))
-    kwargs = dict(
-        cfg=config,
-        subject=subject,
-        session=session,
-        kind="orig",
-        add_bads=False,
-    )
-    if "rest" in which and _get_rest_path(**kwargs):
-        runs.append(None)
-        tasks.append("rest")
+    if "rest" in which:
+        rest_path = _get_rest_path(
+            cfg=config,
+            subject=subject,
+            session=session,
+            kind="orig",
+            add_bads=False,
+        )
+        if rest_path:
+            runs.append(None)
+            tasks.append("rest")
     if "noise" in which:
         mf_reference_run = get_mf_reference_run(config=config)
-        if _get_noise_path(mf_reference_run=mf_reference_run, **kwargs):
+        noise_path = _get_noise_path(
+            mf_reference_run=mf_reference_run,
+            cfg=config,
+            subject=subject,
+            session=session,
+            kind="orig",
+            add_bads=False,
+        )
+        if noise_path:
             runs.append(None)
             tasks.append("noise")
     return tuple(zip(runs, tasks))
 
 
-def get_mf_reference_run(config: SimpleNamespace) -> str:
+def get_mf_reference_run(config: SimpleNamespace) -> str | None:
     # Retrieve to run identifier (number, name) of the reference run
     if config.mf_reference_run is not None:
         return config.mf_reference_run
@@ -310,14 +319,13 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
             f"dataset only contains the following runs: {inter_runs}"
         )
         raise ValueError(msg)
-    if inter_runs:
-        return inter_runs[0]
-    else:
+    if not inter_runs:
         raise ValueError(
             f"The intersection of runs by subjects is empty. "
             f"Check the list of runs: "
             f"{get_runs_all_subjects(config)}"
         )
+    return inter_runs[0]
 
 
 def get_task(config: SimpleNamespace) -> str | None:
@@ -374,7 +382,7 @@ def sanitize_cond_name(cond: str) -> str:
 
 
 def get_mf_cal_fname(
-    *, config: SimpleNamespace, subject: str, session: str
+    *, config: SimpleNamespace, subject: str, session: str | None
 ) -> pathlib.Path:
     if config.mf_cal_fname is None:
         bids_path = BIDSPath(
@@ -402,7 +410,7 @@ def get_mf_cal_fname(
 
 
 def get_mf_ctc_fname(
-    *, config: SimpleNamespace, subject: str, session: str
+    *, config: SimpleNamespace, subject: str, session: str | None
 ) -> pathlib.Path:
     if config.mf_ctc_fname is None:
         mf_ctc_fpath = BIDSPath(
@@ -451,9 +459,10 @@ def _restrict_analyze_channels(
     return inst
 
 
-def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float], str]:
+def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float, ...] | None, str]:
+    conductivity: tuple[float, ...] | None = None  # should never be used
     if cfg.fs_subject in ("fsaverage", cfg.use_template_mri):
-        conductivity = None  # should never be used
+        pass
         tag = "5120-5120-5120"
     elif "eeg" in cfg.ch_types:
         conductivity = (0.3, 0.006, 0.3)
@@ -578,7 +587,7 @@ def get_eeg_reference(
         return config.eeg_reference
 
 
-def _validate_contrasts(contrasts: SimpleNamespace) -> None:
+def _validate_contrasts(contrasts: list[tuple | dict]) -> None:
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:
@@ -595,7 +604,7 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
             raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
-def _get_step_modules() -> dict[str, tuple[ModuleType]]:
+def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     from .steps import freesurfer, init, preprocessing, sensor, source
 
     INIT_STEPS = init._STEPS

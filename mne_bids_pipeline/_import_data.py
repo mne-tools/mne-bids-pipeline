@@ -19,7 +19,7 @@ from ._config_utils import (
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from .typing import PathLike
+from .typing import PathLike, RunKindT, RunTypeT
 
 
 def make_epochs(
@@ -138,7 +138,7 @@ def make_epochs(
             idx_keep = epochs.metadata.eval(metadata_query, engine="python")
         except pandas.core.computation.ops.UndefinedVariableError:
             msg = f"Metadata query failed to select any columns: {metadata_query}"
-            logger.warn(**gen_log_kwargs(message=msg))
+            logger.warning(**gen_log_kwargs(message=msg))
             return epochs
 
         idx_drop = epochs.metadata.index[~idx_keep]
@@ -205,16 +205,15 @@ def _rename_events_func(
     # Do the actual event renaming.
     msg = "Renaming events …"
     logger.info(**gen_log_kwargs(message=msg))
-    descriptions = list(raw.annotations.description)
+    descriptions_list = list(raw.annotations.description)
     for old_event_name, new_event_name in cfg.rename_events.items():
         msg = f"… {old_event_name} -> {new_event_name}"
         logger.info(**gen_log_kwargs(message=msg))
-        for idx, description in enumerate(descriptions.copy()):
+        for idx, description in enumerate(descriptions_list):
             if description == old_event_name:
-                descriptions[idx] = new_event_name
+                descriptions_list[idx] = new_event_name
 
-    descriptions = np.asarray(descriptions, dtype=str)
-    raw.annotations.description = descriptions
+    raw.annotations.description = np.array(descriptions_list, dtype=str)
 
 
 def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
@@ -526,7 +525,7 @@ def _get_bids_path_in(
     session: str | None,
     run: str | None,
     task: str | None,
-    kind: Literal["orig", "sss", "filt"] = "orig",
+    kind: RunKindT = "orig",
 ) -> BIDSPath:
     # b/c can be used before this is updated
     path_kwargs = dict(
@@ -562,11 +561,11 @@ def _get_run_path(
     session: str | None,
     run: str | None,
     task: str | None,
-    kind: Literal["orig", "sss", "filt"],
+    kind: RunKindT,
     add_bads: bool | None = None,
     allow_missing: bool = False,
     key: str | None = None,
-) -> dict:
+) -> dict[str, BIDSPath]:
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
@@ -592,9 +591,9 @@ def _get_rest_path(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    kind: Literal["orig", "sss", "filt"],
+    kind: RunKindT,
     add_bads: bool | None = None,
-) -> dict:
+) -> dict[str, BIDSPath]:
     if not (cfg.process_rest and not cfg.task_is_rest):
         return dict()
     return _get_run_path(
@@ -614,10 +613,10 @@ def _get_noise_path(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    kind: Literal["orig", "sss", "filt"],
+    kind: RunKindT,
     mf_reference_run: str | None,
     add_bads: bool | None = None,
-) -> dict:
+) -> dict[str, BIDSPath]:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
     if kind != "orig":
@@ -662,25 +661,40 @@ def _get_run_rest_noise_path(
     session: str | None,
     run: str | None,
     task: str | None,
-    kind: Literal["orig", "sss", "filt"],
+    kind: RunKindT,
     mf_reference_run: str | None,
     add_bads: bool | None = None,
-) -> dict:
-    kwargs = dict(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        kind=kind,
-        add_bads=add_bads,
-    )
+) -> dict[str, BIDSPath]:
     if run is None and task in ("noise", "rest"):
         if task == "noise":
-            return _get_noise_path(mf_reference_run=mf_reference_run, **kwargs)
+            path = _get_noise_path(
+                mf_reference_run=mf_reference_run,
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                kind=kind,
+                add_bads=add_bads,
+            )
         else:
             assert task == "rest"
-            return _get_rest_path(**kwargs)
+            path = _get_rest_path(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                kind=kind,
+                add_bads=add_bads,
+            )
     else:
-        return _get_run_path(run=run, task=task, **kwargs)
+        path = _get_run_path(
+            run=run,
+            task=task,
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            kind=kind,
+            add_bads=add_bads,
+        )
+    return path
 
 
 def _get_mf_reference_run_path(
@@ -713,12 +727,12 @@ def _path_dict(
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
     add_bads: bool | None = None,
-    kind: Literal["orig", "sss", "filt"],
+    kind: RunKindT,
     allow_missing: bool,
     key: str | None = None,
     subject: str,
     session: str | None,
-) -> dict:
+) -> dict[str, BIDSPath]:
     if add_bads is None:
         add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()
@@ -816,9 +830,11 @@ def _read_raw_msg(
     bids_path_in: BIDSPath,
     run: str | None,
     task: str | None,
-) -> tuple[str]:
+) -> tuple[str, RunTypeT]:
+    run_type: RunTypeT = "experimental"
     if run is None and task in ("noise", "rest"):
-        run_type = dict(rest="resting-state", noise="empty-room")[task]
-    else:
-        run_type = "experimental"
+        if task == "noise":
+            run_type = "empty-room"
+        else:
+            run_type = "resting-state"
     return f"Reading {run_type} recording: {bids_path_in.basename}", run_type

@@ -9,7 +9,7 @@ import pdb
 import sys
 import time
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from types import SimpleNamespace
 from typing import Literal
 
@@ -300,7 +300,7 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
+def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
     fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
 
     # Get the script from which the function is called for logging
@@ -319,7 +319,7 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
             if_sheet_exists="replace" if append else None,
         )
         assert isinstance(config, SimpleNamespace), type(config)
-        cf_df = dict()
+        cf_dict = dict()
         for key, val in config.__dict__.items():
             # We need to be careful about functions, json_tricks does not work with them
             if inspect.isfunction(val):
@@ -334,8 +334,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
             # this long, you'll probably get the gist from the first 32k chars)
             if len(val) > 32767:
                 val = val[:32765] + " …"
-            cf_df[key] = val
-        cf_df = pd.DataFrame([cf_df], dtype=object)
+            cf_dict[key] = val
+        cf_df = pd.DataFrame([cf_dict], dtype=object)
         with writer:
             # Config first then the data
             cf_df.to_excel(writer, sheet_name="config", index=False)
@@ -390,9 +390,10 @@ def _get_step_path(
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
-    paths = list()
+    paths: list[str] = list()
     for frame in stack:
         fname = pathlib.Path(frame.filename)
+        paths.append(frame.filename)
         if "steps" in fname.parts:
             return fname
         else:  # pragma: no cover
@@ -401,8 +402,8 @@ def _get_step_path(
             except KeyError:
                 pass
     else:  # pragma: no cover
-        paths = "\n".join(paths)
-        raise RuntimeError(f"Could not find step path in call stack:\n{paths}")
+        paths_str = "\n".join(paths)
+        raise RuntimeError(f"Could not find step path in call stack:\n{paths_str}")
 
 
 def _short_step_path(step_path: pathlib.Path) -> str:
@@ -447,11 +448,12 @@ def _path_to_str_hash(
     *,
     method: Literal["mtime", "hash"],
     kind: str = "in",
-):
+) -> tuple[str, str | float]:
     if isinstance(v, BIDSPath):
         v = v.fpath
     assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
     assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
+    this_hash: str | float = ""
     if method == "mtime":
         this_hash = v.stat().st_mtime
     else:

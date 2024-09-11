@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 import mne
 import numpy as np
-from mne_bids import read_raw_bids
+from mne_bids import BIDSPath, read_raw_bids
 
 from mne_bids_pipeline._config_utils import (
     _pl,
@@ -56,19 +56,22 @@ def get_input_fnames_esss(
     subject: str,
     session: str | None,
 ) -> dict:
-    kwargs = dict(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-    )
     in_files = _get_run_rest_noise_path(
         run=None,
         task="noise",
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
-        **kwargs,
+        cfg=cfg,
+        subject=subject,
+        session=session,
     )
-    in_files.update(_get_mf_reference_run_path(**kwargs))
+    in_files.update(
+        _get_mf_reference_run_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+        )
+    )
     return in_files
 
 
@@ -191,17 +194,14 @@ def get_input_fnames_maxwell_filter(
     task: str | None,
 ) -> dict:
     """Get paths of files required by maxwell_filter function."""
-    kwargs = dict(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-    )
     in_files = _get_run_rest_noise_path(
         run=run,
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
-        **kwargs,
+        cfg=cfg,
+        subject=subject,
+        session=session,
     )
     in_key = f"raw_task-{task}_run-{run}"
     assert in_key in in_files
@@ -216,7 +216,9 @@ def get_input_fnames_maxwell_filter(
             task=pos_task,
             add_bads=False,
             kind="orig",
-            **kwargs,
+            cfg=cfg,
+            subject=subject,
+            session=session,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
         in_files[f"{in_key}-pos"] = path.update(
             suffix="headpos",
@@ -246,7 +248,13 @@ def get_input_fnames_maxwell_filter(
 
     # reference run (used for `destination` and also bad channels for noise)
     # use add_bads=None here to mean "add if autobad is turned on"
-    in_files.update(_get_mf_reference_run_path(**kwargs))
+    in_files.update(
+        _get_mf_reference_run_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+        )
+    )
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
@@ -281,8 +289,8 @@ def run_maxwell_filter(
     session: str | None,
     run: str | None,
     task: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: dict[str, BIDSPath],
+) -> dict[str, BIDSPath]:
     if cfg.proc and "sss" in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(
             f"You cannot set use_maxwell_filter to True "
@@ -293,13 +301,14 @@ def run_maxwell_filter(
         destination = cfg.mf_destination
         assert destination == "reference_run"
     else:
-        destination = np.array(cfg.mf_destination, float)
-        assert destination.shape == (4, 4)
-        destination = mne.transforms.Transform("meg", "head", destination)
+        destination_array = np.array(cfg.mf_destination, float)
+        assert destination_array.shape == (4, 4)
+        destination = mne.transforms.Transform("meg", "head", destination_array)
 
     filter_chpi = cfg.mf_mc if cfg.mf_filter_chpi is None else cfg.mf_filter_chpi
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
+        assert task is not None
         nice_names = dict(rest="resting-state", noise="empty-room")
         recording_type = nice_names[task]
     else:
@@ -465,6 +474,8 @@ def run_maxwell_filter(
             )
             raise RuntimeError(msg)
 
+    movement_annot: mne.Annotations | None = None
+    extra_html: str | None = None
     if cfg.mf_mc and (
         cfg.mf_mc_rotation_velocity_limit is not None
         or cfg.mf_mc_translation_velocity_limit is not None
@@ -476,7 +487,7 @@ def run_maxwell_filter(
             translation_velocity_limit=cfg.mf_mc_translation_velocity_limit,
         )
         perc_time = 100 / raw_sss.times[-1]
-        extra_html = list()
+        extra_html_list = list()
         for kind, unit in (("translation", "m"), ("rotation", "°")):
             limit = getattr(cfg, f"mf_mc_{kind}_velocity_limit")
             if limit is None:
@@ -492,14 +503,12 @@ def run_maxwell_filter(
                 f"limit for {tot_time:0.1f} s ({perc:0.1f}%)"
             )
             logger_meth(**gen_log_kwargs(message=msg))
-            extra_html.append(f"<li>{msg}</li>")
+            extra_html_list.append(f"<li>{msg}</li>")
         extra_html = (
             "<p>The raw data were annotated with the following movement-related bad "
-            f"segment annotations:<ul>{''.join(extra_html)}</ul></p>"
+            f"segment annotations:<ul>{''.join(extra_html_list)}</ul></p>"
         )
         raw_sss.set_annotations(raw_sss.annotations + movement_annot)
-    else:
-        movement_annot = extra_html = None
 
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"

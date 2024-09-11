@@ -530,23 +530,23 @@ div.accordion-body pre.my-0 code {
 # We make a lot of calls to this function and it takes > 1 sec generally
 # to run, so run it just once (it shouldn't meaningfully change anyway)
 @lru_cache(maxsize=1)
-def _cached_sys_info():
+def _cached_sys_info() -> str:
     with StringIO() as f:
         mne.sys_info(f)
         return f.getvalue()
 
 
-def _all_conditions(*, cfg):
+def _all_conditions(*, cfg: SimpleNamespace) -> list[str]:
     if isinstance(cfg.conditions, dict):
         conditions = list(cfg.conditions.keys())
     else:
-        conditions = cfg.conditions.copy()
+        conditions = list(cfg.conditions)
     all_contrasts = get_all_contrasts(cfg)
     conditions.extend([contrast["name"] for contrast in all_contrasts])
     return conditions
 
 
-def _sanitize_cond_tag(cond):
+def _sanitize_cond_tag(cond: str) -> str:
     return str(cond).lower().replace(" ", "-")
 
 
@@ -590,7 +590,7 @@ def add_csp_grand_average(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: str,
+    session: str | None,
     report: mne.Report,
     cond_1: str,
     cond_2: str,
@@ -615,7 +615,7 @@ def add_csp_grand_average(
     freq_bin_starts = list()
     freq_bin_widths = list()
     decoding_scores = list()
-    error_bars = list()
+    error_bars_list = list()
     csp_freq_results = pd.read_excel(fname_csp_freq_results, sheet_name="CSP Frequency")
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
         results = csp_freq_results.loc[
@@ -631,10 +631,10 @@ def add_csp_grand_average(
             cis_upper = results["mean_ci_upper"][bi]
             error_bars_lower = decoding_scores[-1] - cis_lower
             error_bars_upper = cis_upper - decoding_scores[-1]
-            error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
-            assert len(error_bars[-1]) == 2  # lower, upper
+            error_bars_list.append(np.stack([error_bars_lower, error_bars_upper]))
+            assert len(error_bars_list[-1]) == 2  # lower, upper
             del cis_lower, cis_upper, error_bars_lower, error_bars_upper
-    error_bars = np.array(error_bars, float).T
+    error_bars = np.array(error_bars_list, float).T
 
     if cfg.decoding_metric == "roc_auc":
         metric = "ROC AUC"

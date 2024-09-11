@@ -160,6 +160,7 @@ def run_ica(
 
         del these_epochs
     del run
+    assert epochs is not None
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
@@ -294,6 +295,7 @@ def run_ica(
             tags=tags,
         )
         if cfg.ica_reject == "autoreject_local":
+            assert ar_reject_log is not None
             caption = (
                 f"Autoreject was run to produce cleaner epochs before fitting ICA. "
                 f"{ar_reject_log.bad_epochs.sum()} epochs were rejected because more "

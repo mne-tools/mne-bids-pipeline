@@ -14,7 +14,7 @@ from ._parallel import get_parallel_backend
 from ._run import _short_step_path
 
 
-def main():
+def main() -> None:
     from . import __version__
 
     parser = argparse.ArgumentParser()
@@ -115,7 +115,7 @@ def main():
 
     config = options.config
     config_switch = options.config_switch
-    bad = False
+    bad: str | bool = False
     if config is None:
         if config_switch is None:
             bad = "neither was provided"
@@ -199,6 +199,7 @@ def main():
         else:
             # User specified 'stage/step'
             for step_module in STEP_MODULES[stage]:
+                assert step_module.__file__ is not None
                 step_name = pathlib.Path(step_module.__file__).name
                 if step in step_name:
                     step_modules.append(step_module)
@@ -229,6 +230,7 @@ def main():
 
     for step_module in step_modules:
         start = time.time()
+        assert step_module.__file__ is not None
         step = _short_step_path(pathlib.Path(step_module.__file__))
         logger.title(title=f"{step}")
         step_module.main(config=config_imported)
@@ -238,9 +240,9 @@ def main():
         minutes, seconds = divmod(remainder, 60)
         minutes = int(minutes)
         seconds = int(np.ceil(seconds))  # always take full seconds
-        elapsed = f"{seconds}s"
+        elapsed_str = f"{seconds}s"
         if minutes:
-            elapsed = f"{minutes}m {elapsed}"
+            elapsed_str = f"{minutes}m {elapsed_str}"
         if hours:
-            elapsed = f"{hours}h {elapsed}"
-        logger.end(f"done ({elapsed})")
+            elapsed_str = f"{hours}h {elapsed_str}"
+        logger.end(f"done ({elapsed_str})")

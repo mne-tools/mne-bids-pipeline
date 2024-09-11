@@ -51,7 +51,7 @@ def detect_bad_components(
             f"Not running {artifact} artifact detection."
         )
         logger.info(**gen_log_kwargs(message=msg))
-        return [], []
+        return [], np.zeros(0)
     msg = f"Performing automated {artifact} artifact detection …"
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -155,7 +155,8 @@ def find_ica_artifacts(
 
     # ECG component detection
     epochs_ecg = None
-    ecg_ics, ecg_scores = [], []
+    ecg_ics: list[int] = []
+    ecg_scores = np.zeros(0)
     for ri, raw_fname in enumerate(raw_fnames):
         # Have the channels needed to make ECG epochs
         raw = mne.io.read_raw(raw_fname, preload=False)
@@ -216,7 +217,8 @@ def find_ica_artifacts(
 
     # EOG component detection
     epochs_eog = None
-    eog_ics = eog_scores = []
+    eog_ics: list[int] = []
+    eog_scores = np.zeros(0)
     for ri, raw_fname in enumerate(raw_fnames):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
         if cfg.eog_channels:
@@ -293,8 +295,6 @@ def find_ica_artifacts(
 
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
     eog_evoked = None if epochs_eog is None else epochs_eog.average()
-    ecg_scores = None if len(ecg_scores) == 0 else ecg_scores
-    eog_scores = None if len(eog_scores) == 0 else eog_scores
 
     # Save ECG and EOG evokeds to disk.
     for artifact_name, artifact_evoked in zip(("ecg", "eog"), (ecg_evoked, eog_evoked)):
@@ -323,8 +323,8 @@ def find_ica_artifacts(
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
-            ecg_scores=ecg_scores,
-            eog_scores=eog_scores,
+            ecg_scores=ecg_scores or None,
+            eog_scores=eog_scores or None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
             tags=("ica",),  # the default but be explicit

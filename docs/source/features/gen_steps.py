@@ -115,12 +115,10 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
     if dir_ == "all":
         continue  # this is an alias
     dir_module = importlib.import_module(f"mne_bids_pipeline.steps.{dir_}")
+    assert dir_module.__doc__ is not None
     dir_header = dir_module.__doc__.split("\n")[0].rstrip(".")
-    dir_body = dir_module.__doc__.split("\n", maxsplit=1)
-    if len(dir_body) > 1:
-        dir_body = dir_body[1].strip()
-    else:
-        dir_body = ""
+    dir_body_list = dir_module.__doc__.split("\n", maxsplit=1)
+    dir_body = dir_body_list[1].strip() if len(dir_body_list) > 1 else ""
     icon = icon_map[dir_header]
     module_header = f"{di}. {icon} {dir_header}"
     lines.append(f"## {module_header}\n")
@@ -132,6 +130,8 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
     dir_name, step_title = dir_, f"Run all {dir_header.lower()} steps."
     lines.append(f"`{dir_name}` | {step_title} |")
     for module in modules:
+        assert module.__file__ is not None
+        assert module.__doc__ is not None
         step_name = f"{dir_name}/{Path(module.__file__).name}"[:-3]
         step_title = module.__doc__.split("\n")[0]
         lines.append(f"`{step_name}` | {step_title} |")
@@ -153,6 +153,8 @@ flowchart TD"""
     prev_idx = None
     title_map = {}
     for mi, module in enumerate(modules, 1):
+        assert module.__doc__ is not None
+        assert module.__name__ is not None
         step_title = module.__doc__.split("\n")[0].rstrip(".")
         idx = module.__name__.split(".")[-1].split("_")[1]  # 01, 05a, etc.
         # Need to quote the title to deal with parens, and sanitize quotes
@@ -189,12 +191,12 @@ flowchart TD"""
                     mapped.add(idx)
                     a_b[ii] = f'{idx}["{title_map[idx]}"]'
             overview_lines.append(f"    {chr_pre}{a_b[0]} --> {chr_pre}{a_b[1]}")
-        all_steps = set(
-            sum(
-                [a_b for a_b in manual_order[dir_header] if not isinstance(a_b, str)],
-                (),
-            )
-        )
+        all_steps_list: list[str] = list()
+        for a_b in manual_order[dir_header]:
+            if not isinstance(a_b, str):
+                all_steps_list.extend(a_b)
+        all_steps = set(all_steps_list)
+        assert len(all_steps) == len(all_steps_list)
         assert mapped == all_steps, all_steps.symmetric_difference(mapped)
     overview_lines.append("```\n\n</details>\n")
 

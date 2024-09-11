@@ -70,33 +70,40 @@ class _MBPLogger:
         level = int(level)
         self._level = level
 
-    def debug(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def debug(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="debug", msg=msg, **(extra or {}))
 
-    def info(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def info(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="info", msg=msg, **(extra or {}))
 
-    def warning(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def warning(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="warning", msg=msg, **(extra or {}))
 
-    def error(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def error(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="error", msg=msg, **(extra or {}))
 
     def _log_message(
         self,
         kind: str,
         msg: str,
-        subject: str | int | None = None,
-        session: str | int | None = None,
-        run: str | int | None = None,
+        subject: str | None = None,
+        session: str | None = None,
+        run: str | None = None,
         emoji: str = "",
     ):
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
         # Construct str
-        essr = [x for x in [emoji, subject, session, run] if x]
-        essr = " ".join(essr)
+        essr = " ".join(x for x in [emoji, subject, session, run] if x)
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")

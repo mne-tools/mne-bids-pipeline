@@ -86,7 +86,7 @@ def average_evokeds(
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
     conditions = _all_conditions(cfg=cfg)
-    evokeds = [list() for _ in range(len(conditions))]
+    evokeds_nested: list[list[mne.Evked]] = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
     for key in keys:
@@ -95,14 +95,17 @@ def average_evokeds(
         fname_in = in_files.pop(key)
         these_evokeds = mne.read_evokeds(fname_in)
         for idx, evoked in enumerate(these_evokeds):
-            evokeds[idx].append(evoked)  # Insert into the container
+            evokeds_nested[idx].append(evoked)  # Insert into the container
 
-    for idx, these_evokeds in enumerate(evokeds):
-        evokeds[idx] = mne.grand_average(
-            these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
-        )  # Combine subjects
+    evokeds: list[mne.Evoked] = list()
+    for these_evokeds in evokeds_nested:
+        evokeds.append(
+            mne.grand_average(
+                these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
+            )  # Combine subjects
+        )
         # Keep condition in comment
-        evokeds[idx].comment = "Grand average: " + these_evokeds[0].comment
+        evokeds[-1].comment = "Grand average: " + these_evokeds[0].comment
 
     out_files = dict()
     fname_out = out_files["evokeds"] = BIDSPath(
@@ -156,7 +159,7 @@ def average_evokeds(
             msg = "No evoked conditions or contrasts found."
         logger.info(**gen_log_kwargs(message=msg))
         for condition, evoked in zip(conditions, evokeds):
-            tags = ("evoked", _sanitize_cond_tag(condition))
+            tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
                 title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
             else:  # It's a contrast of two conditions.
@@ -333,10 +336,9 @@ def average_time_by_time_decoding(
     times = epochs.times
     del epochs
 
+    time_points_shape: tuple[int, ...] = (len(times),)
     if cfg.decoding_time_generalization:
-        time_points_shape = (len(times), len(times))
-    else:
-        time_points_shape = (len(times),)
+        time_points_shape += (len(times),)
 
     n_subjects = len(cfg.subjects)
     contrast_score_stats = {

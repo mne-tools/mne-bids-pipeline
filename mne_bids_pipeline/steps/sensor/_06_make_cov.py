@@ -221,23 +221,38 @@ def run_covariance(
         cfg=cfg, subject=subject, session=session
     )
     cov_type = _get_cov_type(cfg)
-    kwargs = dict(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        in_files=in_files,
-        out_files=out_files,
-        exec_params=exec_params,
-    )
     fname_info = in_files.pop("report_info")
     fname_evoked = in_files.pop("evoked", None)
     if cov_type == "custom":
-        cov = retrieve_custom_cov(**kwargs)
+        cov = retrieve_custom_cov(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            out_files=out_files,
+            exec_params=exec_params,
+        )
     elif cov_type == "raw":
-        cov = compute_cov_from_raw(**kwargs)
+        cov = compute_cov_from_raw(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            out_files=out_files,
+            exec_params=exec_params,
+        )
     else:
         tmin, tmax = cfg.noise_cov
-        cov = compute_cov_from_epochs(tmin=tmin, tmax=tmax, **kwargs)
+        cov = compute_cov_from_epochs(
+            tmin=tmin,
+            tmax=tmax,
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            in_files=in_files,
+            out_files=out_files,
+            exec_params=exec_params,
+        )
     cov.save(out_files["cov"], overwrite=True)
 
     # Report
@@ -261,7 +276,11 @@ def run_covariance(
             section = "Noise covariance"
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
-                tags = ("evoked", "covariance", _sanitize_cond_tag(condition))
+                tags: tuple[str, ...] = (
+                    "evoked",
+                    "covariance",
+                    _sanitize_cond_tag(condition),
+                )
                 title = f"Whitening: {condition}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)

@@ -128,3 +128,30 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.mypy]
+ignore_errors = false
+scripts_are_modules = true
+ignore_missing_imports = true
+strict = false
+modules = ["mne_bids_pipeline"]
+disable_error_code = [
+    "import-untyped",
+]
+
+[[tool.mypy.overrides]]
+module = ["mne_bids_pipeline.steps.freesurfer.contrib.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ['mne_bids_pipeline.tests.configs.*']
+# Ignare: Need type annotation for "plot_psd_for_runs" [var-annotated]
+disable_error_code = [
+    "var-annotated",
+]
+
+[[tool.mypy.overrides]]
+module = ["mne_bids_pipeline.tests.configs.config_ERP_CORE"]
+disable_error_code = [
+    "assignment",
+]

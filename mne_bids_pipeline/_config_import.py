@@ -1,7 +1,7 @@
 import ast
 import copy
 import difflib
-import importlib
+import importlib.util
 import os
 import pathlib
 from dataclasses import field
@@ -48,7 +48,7 @@ def _import_config(
         log=log,
     )
 
-    extra_exec_params_keys = ()
+    extra_exec_params_keys: tuple[str, ...] = ()
     extra_config = os.getenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", "")
     if extra_config:
         msg = f"With testing config: {extra_config}"
@@ -142,7 +142,10 @@ def _update_config_from_path(
     spec = importlib.util.spec_from_file_location(
         name="custom_config", location=config_path
     )
+    assert spec is not None
+    assert spec.loader is not None
     custom_cfg = importlib.util.module_from_spec(spec)
+    assert custom_cfg is not None
     spec.loader.exec_module(custom_cfg)
     for key in dir(custom_cfg):
         if not key.startswith("__"):
@@ -395,12 +398,12 @@ def _pydantic_validate(
     # Now use pydantic to automagically validate
     user_vals = {key: val for key, val in config.__dict__.items() if key in annotations}
     try:
-        UserConfig.model_validate(user_vals)
+        UserConfig.model_validate(user_vals)  # type: ignore[attr-defined]
     except ValidationError as err:
         raise ValueError(str(err)) from None
 
 
-_REMOVED_NAMES = {
+_REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     "debug": dict(
         new_name="on_error",
         instead='use on_error="debug" instead',
@@ -430,7 +433,6 @@ def _check_misspellings_removals(
 ) -> None:
     # for each name in the user names, check if it's in the valid names but
     # the correct one is not defined
-    valid_names = set(valid_names)
     for user_name in user_names:
         if user_name not in valid_names:
             # find the closest match

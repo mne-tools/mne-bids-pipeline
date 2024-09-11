@@ -15,7 +15,7 @@ from tqdm import tqdm
 import mne_bids_pipeline
 import mne_bids_pipeline.tests.datasets
 from mne_bids_pipeline._config_import import _import_config
-from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
+from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS, DATASET_OPTIONS_T
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
 this_dir = Path(__file__).parent
@@ -160,7 +160,9 @@ for test_dataset_name, test_dataset_options in ds_iter:
         continue
 
     assert dataset_options_key in DATASET_OPTIONS, dataset_options_key
-    options = DATASET_OPTIONS[dataset_options_key].copy()  # we modify locally
+    options: DATASET_OPTIONS_T = DATASET_OPTIONS[
+        dataset_options_key
+    ].copy()  # we modify locally
 
     report_str = "\n## Generated output\n\n"
     example_target_dir = this_dir / dataset_name
@@ -228,8 +230,8 @@ for test_dataset_name, test_dataset_options in ds_iter:
     source_str = f"## Dataset source\n\nThis dataset was acquired from [{url}]({url})\n"
 
     if "openneuro" in options:
-        for key in ("include", "exclude"):
-            options[key] = options.get(key, [])
+        options["include"] = options.get("include", [])
+        options["exclude"] = options.get("exclude", [])
         download_str = (
             f'\n??? example "How to download this dataset"\n'
             f"    Run in your terminal:\n"
@@ -295,6 +297,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
         f.write(download_str)
         f.write(config_str)
         f.write(report_str)
+    del dataset_name, funcs
 
 # Finally, write our examples.html file with a table of examples
 
@@ -315,13 +318,13 @@ out_path = this_dir / "examples.md"
 with out_path.open("w", encoding="utf-8") as f:
     f.write(_example_header)
     header_written = False
-    for dataset_name, funcs in all_demonstrated.items():
+    for this_dataset_name, these_funcs in all_demonstrated.items():
         if not header_written:
-            f.write("Dataset | " + " | ".join(funcs.keys()) + "\n")
-            f.write("--------|" + "|".join([":---:"] * len(funcs)) + "\n")
+            f.write("Dataset | " + " | ".join(these_funcs.keys()) + "\n")
+            f.write("--------|" + "|".join([":---:"] * len(these_funcs)) + "\n")
             header_written = True
         f.write(
-            f"[{dataset_name}]({dataset_name}.md) | "
-            + " | ".join(_bool_to_icon(v) for v in funcs.values())
+            f"[{this_dataset_name}]({this_dataset_name}.md) | "
+            + " | ".join(_bool_to_icon(v) for v in these_funcs.values())
             + "\n"
         )

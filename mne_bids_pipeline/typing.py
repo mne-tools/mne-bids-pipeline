@@ -2,7 +2,7 @@
 
 import pathlib
 import sys
-from typing import Annotated
+from typing import Annotated, Literal
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
@@ -30,6 +30,10 @@ class LogKwargsT(TypedDict):
 
     msg: str
     extra: dict[str, str]
+
+
+RunTypeT = Literal["experimental", "empty-room", "resting-state"]
+RunKindT = Literal["orig", "sss", "filt"]
 
 
 def assert_float_array_like(val):

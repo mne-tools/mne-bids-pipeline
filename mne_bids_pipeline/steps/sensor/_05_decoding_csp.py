@@ -223,6 +223,7 @@ def one_subject_decoding(
         ignore_index=True,
     )
     del freq_decoding_table_rows
+    assert isinstance(freq_decoding_table, pd.DataFrame)
 
     def _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin=None, tmax=None):
         msg = (
@@ -234,11 +235,16 @@ def one_subject_decoding(
         return msg
 
     for idx, row in freq_decoding_table.iterrows():
-        fmin = row["f_min"]
-        fmax = row["f_max"]
-        cond1 = row["cond_1"]
-        cond2 = row["cond_2"]
-        freq_range_name = row["freq_range_name"]
+        assert isinstance(row["f_min"], pd.Series)
+        fmin = row["f_min"].item()
+        assert isinstance(row["f_max"], pd.Series)
+        fmax = row["f_max"].item()
+        assert isinstance(row["cond_1"], pd.Series)
+        cond1 = row["cond_1"].item()
+        assert isinstance(row["cond_2"], pd.Series)
+        cond2 = row["cond_2"].item()
+        assert isinstance(row["freq_range_name"], pd.Series)
+        freq_range_name = row["freq_range_name"].item()
 
         msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
         logger.info(**gen_log_kwargs(msg))
@@ -434,30 +440,31 @@ def one_subject_decoding(
                 f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
             )
             results = all_csp_tf_results[contrast]
-            mean_crossval_scores = list()
+            mean_crossval_scores: list[float] = list()
             tmin, tmax, fmin, fmax = list(), list(), list(), list()
             mean_crossval_scores.extend(
-                results["mean_crossval_score"].to_numpy().ravel()
+                results["mean_crossval_score"].to_numpy().ravel().tolist()
             )
             tmin.extend(results["t_min"].to_numpy().ravel())
             tmax.extend(results["t_max"].to_numpy().ravel())
             fmin.extend(results["f_min"].to_numpy().ravel())
             fmax.extend(results["f_max"].to_numpy().ravel())
-            mean_crossval_scores = np.array(mean_crossval_scores, float)
+            mean_crossval_scores_array = np.array(mean_crossval_scores, float)
+            del mean_crossval_scores
             fig, ax = plt.subplots(constrained_layout=True)
             # XXX Add support for more metrics
             assert cfg.decoding_metric == "roc_auc"
             metric = "ROC AUC"
             vmax = (
                 max(
-                    np.abs(mean_crossval_scores.min() - 0.5),
-                    np.abs(mean_crossval_scores.max() - 0.5),
+                    np.abs(mean_crossval_scores_array.min() - 0.5),
+                    np.abs(mean_crossval_scores_array.max() - 0.5),
                 )
                 + 0.5
             )
             vmin = 0.5 - (vmax - 0.5)
             img = _imshow_tf(
-                mean_crossval_scores,
+                mean_crossval_scores_array,
                 ax,
                 tmin=tmin,
                 tmax=tmax,

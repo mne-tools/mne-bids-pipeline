@@ -73,7 +73,6 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
         threads_per_worker=1,
         name="mne-bids-pipeline",
     )
-    client.auto_restart = False  # don't restart killed workers
 
     dashboard_url = client.dashboard_link
     msg = f"Dask client dashboard: [link={dashboard_url}]{dashboard_url}[/link]"
@@ -92,11 +91,12 @@ def get_parallel_backend_name(
     *,
     exec_params: SimpleNamespace,
 ) -> Literal["dask", "loky"]:
+    backend: Literal["dask", "loky"] = "loky"
     if (
         exec_params.parallel_backend == "loky"
         or get_n_jobs(exec_params=exec_params) == 1
     ):
-        backend = "loky"
+        pass
     elif exec_params.parallel_backend == "dask":
         # Disable interactive plotting backend
         import matplotlib

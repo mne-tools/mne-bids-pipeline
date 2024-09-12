@@ -5,7 +5,6 @@ import os
 import re
 import sys
 from pathlib import Path
-from types import CodeType
 
 import yaml
 
@@ -23,7 +22,7 @@ def test_options_documented():
     with open(root_path / "_config.py") as fid:
         contents = fid.read()
     contents = ast.parse(contents)
-    assert isinstance(contents, CodeType)
+    assert isinstance(contents, ast.Module), type(contents)
     in_config_list = [
         item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
     ]

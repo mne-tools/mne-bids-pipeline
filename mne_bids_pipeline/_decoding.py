@@ -9,18 +9,19 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
 from ._logging import gen_log_kwargs, logger
+from .typing import FloatArrayT
 
 
-class LogReg(LogisticRegression):
+class LogReg(LogisticRegression):  # type: ignore[misc]
     """Hack to avoid a warning with n_jobs != 1 when using dask."""
 
-    def fit(self, *args, **kwargs):
+    def fit(self, *args, **kwargs):  # type: ignore
         with parallel_backend("loky"):
             return super().fit(*args, **kwargs)
 
 
 def _handle_csp_args(
-    decoding_csp_times: list[float] | tuple[float, ...] | np.ndarray | None,
+    decoding_csp_times: list[float] | tuple[float, ...] | FloatArrayT | None,
     decoding_csp_freqs: dict[str, Any] | None,
     decoding_metric: str,
     *,
@@ -28,7 +29,7 @@ def _handle_csp_args(
     epochs_tmax: float,
     time_frequency_freq_min: float,
     time_frequency_freq_max: float,
-) -> tuple[dict[str, list[tuple[float, float]]], np.ndarray]:
+) -> tuple[dict[str, list[tuple[float, float]]], FloatArrayT]:
     _validate_type(
         decoding_csp_times, (None, list, tuple, np.ndarray), "decoding_csp_times"
     )

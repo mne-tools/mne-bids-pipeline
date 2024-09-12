@@ -25,6 +25,7 @@ from scipy.io import loadmat
 from ._config_utils import get_all_contrasts
 from ._decoding import _handle_csp_args
 from ._logging import _linkfile, gen_log_kwargs, logger
+from .typing import FloatArrayT
 
 
 @contextlib.contextmanager
@@ -135,7 +136,7 @@ def _open_report(
 
 def _plot_full_epochs_decoding_scores(
     contrast_names: list[str],
-    scores: list[np.ndarray],
+    scores: list[FloatArrayT],
     metric: str,
     kind: Literal["single-subject", "grand-average"] = "single-subject",
 ) -> tuple[matplotlib.figure.Figure, str, pd.DataFrame]:
@@ -188,7 +189,7 @@ def _plot_full_epochs_decoding_scores(
         )
 
         # And now add the mean CV score on top.
-        def _plot_mean_cv_score(x: np.ndarray, **kwargs: dict[str, Any]) -> None:
+        def _plot_mean_cv_score(x: FloatArrayT, **kwargs: dict[str, Any]) -> None:
             plt.plot(x.mean(), **kwargs)
 
         g.map(
@@ -218,8 +219,8 @@ def _plot_full_epochs_decoding_scores(
 
 def _plot_time_by_time_decoding_scores(
     *,
-    times: np.ndarray,
-    cross_val_scores: np.ndarray,
+    times: FloatArrayT,
+    cross_val_scores: FloatArrayT,
     metric: str,
     time_generalization: bool,
     decim: int,

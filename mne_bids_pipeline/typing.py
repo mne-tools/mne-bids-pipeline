@@ -2,7 +2,7 @@
 
 import pathlib
 import sys
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeAlias
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
@@ -17,15 +17,21 @@ from pydantic import PlainValidator
 PathLike = str | pathlib.Path
 
 __all__ = [
-    "TypedDict",
+    "ArbitraryContrast",
+    "DigMontageType",
+    "FloatArrayLike",
+    "FloatArrayT",
+    "LogKwargsT",
+    "OutFilesT",
     "PathLike",
     "RunTypeT",
     "RunKindT",
-    "ArbitraryContrast",
-    "LogKwargsT",
-    "FloatArrayLike",
-    "DigMontageType",
+    "TypedDict",
 ]
+
+
+FloatArrayT: TypeAlias = np.ndarray[Any, np.dtype[np.float64]]
+OutFilesT = dict[str, tuple[str, str | float]]
 
 
 class ArbitraryContrast(TypedDict):
@@ -47,11 +53,11 @@ RunTypeT = Literal["experimental", "empty-room", "resting-state"]
 RunKindT = Literal["orig", "sss", "filt"]
 
 
-def assert_float_array_like(val: Any) -> np.ndarray:
+def assert_float_array_like(val: Any) -> FloatArrayT:
     """Convert the input into a NumPy float array."""
     # https://docs.pydantic.dev/latest/errors/errors/#custom-errors
     # Should raise ValueError or AssertionError... NumPy should do this for us
-    return np.array(val, dtype="float")
+    return np.array(val, dtype=np.float64)
 
 
 FloatArrayLike = Annotated[

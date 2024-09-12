@@ -31,6 +31,7 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
         )
 
     if not config.subjects_dir:
+        assert isinstance(config.bids_root, pathlib.Path)
         return config.bids_root / "derivatives" / "freesurfer" / "subjects"
     else:
         return pathlib.Path(config.subjects_dir).expanduser().resolve()
@@ -42,6 +43,7 @@ def get_fs_subject(
     subjects_dir = get_fs_subjects_dir(config)
 
     if config.use_template_mri is not None:
+        assert isinstance(config.use_template_mri, str), type(config.use_template_mri)
         return config.use_template_mri
 
     if session is not None:
@@ -53,38 +55,41 @@ def get_fs_subject(
 
 
 @functools.cache
-def _get_entity_vals_cached(*args, **kwargs) -> list[str]:
-    return mne_bids.get_entity_vals(*args, **kwargs)
+def _get_entity_vals_cached(
+    *args: list[Any],
+    **kwargs: dict[str, Any],
+) -> tuple[str, ...]:
+    return tuple(str(x) for x in mne_bids.get_entity_vals(*args, **kwargs))
 
 
 def get_datatype(config: SimpleNamespace) -> Literal["meg", "eeg"]:
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
-    if config.data_type is not None:
-        return config.data_type
-    elif config.data_type is None and config.ch_types == ["eeg"]:
-        return "eeg"
-    elif config.data_type is None and any(
-        [t in ["meg", "mag", "grad"] for t in config.ch_types]
-    ):
+    if config.data_type == "meg":
         return "meg"
-    else:
-        raise RuntimeError(
-            "This probably shouldn't happen, got "
-            f"config.data_type={repr(config.data_type)} and "
-            f"config.ch_types={repr(config.ch_types)} "
-            "but could not determine the datatype. Please contact "
-            "the MNE-BIDS-pipeline developers. Thank you."
-        )
+    if config.data_type == "eeg":
+        return "eeg"
+    if config.data_type is None:
+        if config.ch_types == ["eeg"]:
+            return "eeg"
+        if any(t in ["meg", "mag", "grad"] for t in config.ch_types):
+            return "meg"
+    raise RuntimeError(
+        "This probably shouldn't happen, got "
+        f"config.data_type={repr(config.data_type)} and "
+        f"config.ch_types={repr(config.ch_types)} "
+        "but could not determine the datatype. Please contact "
+        "the MNE-BIDS-pipeline developers. Thank you."
+    )
 
 
 @functools.cache
-def _get_datatypes_cached(root):
-    return mne_bids.get_datatypes(root=root)
+def _get_datatypes_cached(root: pathlib.Path) -> tuple[str, ...]:
+    return tuple(mne_bids.get_datatypes(root=root))
 
 
 def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str, ...]:
-    _all_datatypes: list[str] = _get_datatypes_cached(root=config.bids_root)
+    _all_datatypes = _get_datatypes_cached(root=config.bids_root)
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 
@@ -116,7 +121,7 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
     return subjects
 
 
-def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
+def get_sessions(config: SimpleNamespace) -> tuple[None] | tuple[str, ...]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=config.bids_root,
@@ -127,14 +132,14 @@ def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
         sessions = _all_sessions
 
     if not sessions:
-        return [None]
+        return (None,)
     else:
-        return sessions
+        return tuple(str(x) for x in sessions)
 
 
 def get_runs_all_subjects(
     config: SimpleNamespace,
-) -> dict[str, list[None] | list[str]]:
+) -> dict[str, tuple[None] | tuple[str, ...]]:
     """Give the mapping between subjects and their runs.
 
     Returns
@@ -144,26 +149,24 @@ def get_runs_all_subjects(
     (and not for each subject present in the bids_path).
     """
     # Use caching under the hood for speed
-    return copy.deepcopy(
-        _get_runs_all_subjects_cached(
-            bids_root=config.bids_root,
-            data_type=config.data_type,
-            ch_types=tuple(config.ch_types),
-            subjects=tuple(config.subjects) if config.subjects != "all" else "all",
-            exclude_subjects=tuple(config.exclude_subjects),
-            exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
-        )
+    return _get_runs_all_subjects_cached(
+        bids_root=config.bids_root,
+        data_type=config.data_type,
+        ch_types=tuple(config.ch_types),
+        subjects=tuple(config.subjects) if config.subjects != "all" else "all",
+        exclude_subjects=tuple(config.exclude_subjects),
+        exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
     )
 
 
 @functools.cache
 def _get_runs_all_subjects_cached(
     **config_dict: dict[str, Any],
-) -> dict[str, list[None] | list[str]]:
+) -> dict[str, tuple[None] | tuple[str, ...]]:
     config = SimpleNamespace(**config_dict)
     # Sometimes we check list equivalence for ch_types, so convert it back
     config.ch_types = list(config.ch_types)
-    subj_runs: dict[str, list[None] | list[str]] = dict()
+    subj_runs: dict[str, tuple[None] | tuple[str, ...]] = dict()
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
         valid_runs_subj = _get_entity_vals_cached(
@@ -176,12 +179,12 @@ def _get_runs_all_subjects_cached(
         # commonly do when creating a BIDSPath.
         if valid_runs_subj:
             if subject in (config.exclude_runs or {}):
-                valid_runs_subj = [
+                valid_runs_subj = tuple(
                     r for r in valid_runs_subj if r not in config.exclude_runs[subject]
-                ]
+                )
             subj_runs[subject] = valid_runs_subj
         else:
-            subj_runs[subject] = [None]
+            subj_runs[subject] = (None,)
 
     return subj_runs
 
@@ -256,7 +259,10 @@ def get_runs(
             raise ValueError(
                 f"Invalid run. It can be a subset of {valid_runs} but got {runs}"
             )
-    return runs
+    runs_out = list(runs)
+    if runs_out != [None]:
+        runs_out = list(str(x) for x in runs_out)
+    return runs_out
 
 
 def get_runs_tasks(
@@ -307,6 +313,7 @@ def get_runs_tasks(
 def get_mf_reference_run(config: SimpleNamespace) -> str | None:
     # Retrieve to run identifier (number, name) of the reference run
     if config.mf_reference_run is not None:
+        assert isinstance(config.mf_reference_run, str), type(config.mf_reference_run)
         return config.mf_reference_run
     # Use the first run
     inter_runs = get_intersect_run(config)
@@ -331,6 +338,7 @@ def get_mf_reference_run(config: SimpleNamespace) -> str | None:
 def get_task(config: SimpleNamespace) -> str | None:
     task = config.task
     if task:
+        assert isinstance(task, str), type(task)
         return task
     _valid_tasks = _get_entity_vals_cached(
         root=config.bids_root,
@@ -406,6 +414,7 @@ def get_mf_cal_fname(
                 f"file at {str(mf_cal_fpath)}."
             )
 
+    assert isinstance(mf_cal_fpath, pathlib.Path), type(mf_cal_fpath)
     return mf_cal_fpath
 
 
@@ -430,6 +439,7 @@ def get_mf_ctc_fname(
                 f"file at {str(mf_ctc_fpath)}."
             )
 
+    assert isinstance(mf_ctc_fpath, pathlib.Path), type(mf_ctc_fpath)
     return mf_ctc_fpath
 
 
@@ -580,14 +590,16 @@ def get_eeg_reference(
     config: SimpleNamespace,
 ) -> Literal["average"] | Iterable[str]:
     if config.eeg_reference == "average":
-        return config.eeg_reference
+        return "average"
     elif isinstance(config.eeg_reference, str):
         return [config.eeg_reference]
     else:
+        assert isinstance(config.eeg_reference, Iterable)
+        assert all(isinstance(x, str) for x in config.eeg_reference)
         return config.eeg_reference
 
 
-def _validate_contrasts(contrasts: list[tuple | dict]) -> None:
+def _validate_contrasts(contrasts: list[tuple[str, str] | dict[str, Any]]) -> None:
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:
@@ -633,7 +645,7 @@ def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     return STEP_MODULES
 
 
-def _bids_kwargs(*, config: SimpleNamespace) -> dict:
+def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, Any]:
     """Get the standard BIDS config entries."""
     return dict(
         proc=config.proc,
@@ -648,7 +660,7 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict:
 
 
 def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
-    return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg
+    return bool(cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg)
 
 
 # Adapted from MNE-Python

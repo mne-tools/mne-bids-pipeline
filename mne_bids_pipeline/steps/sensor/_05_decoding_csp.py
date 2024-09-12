@@ -439,8 +439,10 @@ def one_subject_decoding(
             )
             results = all_csp_tf_results[contrast]
             mean_crossval_scores: list[float] = list()
-            tmin_list, tmax_list = list(), list()
-            fmin_list, fmax_list = list(), list()
+            tmin_list: list[float] = list()
+            tmax_list: list[float] = list()
+            fmin_list: list[float] = list()
+            fmax_list: list[float] = list()
             mean_crossval_scores.extend(
                 results["mean_crossval_score"].to_numpy().ravel().tolist()
             )
@@ -465,10 +467,10 @@ def one_subject_decoding(
             img = _imshow_tf(
                 mean_crossval_scores_array,
                 ax,
-                tmin=tmin_list,
-                tmax=tmax_list,
-                fmin=fmin_list,
-                fmax=fmax_list,
+                tmin=np.array(tmin_list, float),
+                tmax=np.array(tmax_list, float),
+                fmin=np.array(fmin_list, float),
+                fmax=np.array(fmax_list, float),
                 vmin=vmin,
                 vmax=vmax,
             )

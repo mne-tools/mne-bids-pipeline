@@ -815,13 +815,14 @@ def average_csp_decoding(
     if not len(time_bins):
         fname_csp_cluster_results = None
     else:
-        time_bins = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
+        time_bins_df = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
+        del time_bins
         data_for_clustering = {}
         for freq_range_name in freq_name_to_bins_map:
             a = np.empty(
                 shape=(
                     len(subjects),
-                    len(time_bins),
+                    len(time_bins_df),
                     len(freq_name_to_bins_map[freq_range_name]),
                 )
             )
@@ -835,9 +836,9 @@ def average_csp_decoding(
         for (subject_, freq_range_name, t_min, t_max), df in g:
             scores = df["mean_crossval_score"]
             sub_idx = subjects.index(subject_)
-            time_bin_idx = time_bins.loc[
-                (np.isclose(time_bins["t_min"], t_min))
-                & (np.isclose(time_bins["t_max"], t_max)),
+            time_bin_idx = time_bins_df.loc[
+                (np.isclose(time_bins_df["t_min"], t_min))
+                & (np.isclose(time_bins_df["t_max"], t_max)),
                 :,
             ].index
             assert len(time_bin_idx) == 1

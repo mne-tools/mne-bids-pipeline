@@ -7,6 +7,7 @@ import pathlib
 from dataclasses import field
 from functools import partial
 from types import SimpleNamespace
+from typing import Any
 
 import matplotlib
 import mne
@@ -107,7 +108,7 @@ def _import_config(
     return config
 
 
-def _get_default_config():
+def _get_default_config() -> SimpleNamespace:
     from . import _config
 
     # Don't use _config itself as it's mutable -- make a new object
@@ -134,7 +135,7 @@ def _update_config_from_path(
     *,
     config: SimpleNamespace,
     config_path: PathLike,
-):
+) -> list[str]:
     user_names = list()
     config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
     # Import configuration from an arbitrary path without having to fiddle
@@ -341,7 +342,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             )
 
 
-def _default_factory(key, val):
+def _default_factory(key: str, val: Any) -> Any:
     # convert a default to a default factory if needed, having an explicit
     # allowlist of non-empty ones
     allowlist = [
@@ -350,6 +351,10 @@ def _default_factory(key, val):
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
     ]
+
+    def default_factory() -> Any:
+        return val
+
     for typ in (dict, list):
         if isinstance(val, typ):
             try:
@@ -359,18 +364,18 @@ def _default_factory(key, val):
                 default_factory = typ
             else:
                 if typ is dict:
-                    default_factory = partial(typ, **allowlist[idx])
+                    default_factory = partial(typ, **allowlist[idx])  # type: ignore
                 else:
                     assert typ is list
-                    default_factory = partial(typ, allowlist[idx])
-            return field(default_factory=default_factory)
+                    default_factory = partial(typ, allowlist[idx])  # type: ignore
+            return field(default_factory=default_factory)  # type: ignore
     return val
 
 
 def _pydantic_validate(
     config: SimpleNamespace,
     config_path: PathLike | None,
-):
+) -> None:
     """Create dataclass from config type hints and validate with pydantic."""
     # https://docs.pydantic.dev/latest/usage/dataclasses/
     from . import _config as root_config

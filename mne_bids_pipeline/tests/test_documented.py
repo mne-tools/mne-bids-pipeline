@@ -41,7 +41,7 @@ def test_options_documented():
         sys.path.pop()
     main()
     assert settings_path.is_dir()
-    in_doc = dict()
+    in_doc: dict[str, set[str]] = dict()
     key = "        - "
     for dirpath, _, fnames in os.walk(settings_path):
         for fname in fnames:

@@ -11,7 +11,7 @@ import time
 import traceback
 from collections.abc import Callable, Iterable
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
 import json_tricks
 import pandas as pd
@@ -21,15 +21,16 @@ from mne_bids import BIDSPath
 
 from ._config_utils import get_task
 from ._logging import _is_testing, gen_log_kwargs, logger
+from .typing import OutFilesT
 
 
 def failsafe_run(
     *,
-    get_input_fnames: Callable | None = None,  # type: ignore[type-arg]
-    get_output_fnames: Callable | None = None,  # type: ignore[type-arg]
+    get_input_fnames: Callable[..., Any] | None = None,
+    get_output_fnames: Callable[..., Any] | None = None,
     require_output: bool = True,
-) -> Callable:  # type: ignore[type-arg]
-    def failsafe_run_decorator(func: Callable) -> Callable:  # type: ignore[type-arg]
+) -> Callable[..., Any]:
+    def failsafe_run_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)  # Preserve "identity" of original function
         def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):  # type: ignore
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
@@ -52,7 +53,7 @@ def failsafe_run(
 
             try:
                 assert len(args) == 0, args  # make sure params are only kwargs
-                out = memory.cache(func)(*args, **kwargs)  # type: ignore
+                out = memory.cache(func)(*args, **kwargs)
                 assert out is None  # nothing should be returned
                 log_info["success"] = True
                 log_info["error_message"] = ""
@@ -69,16 +70,16 @@ def failsafe_run(
 
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
-                tb = traceback.extract_tb(e.__traceback__)
-                for fi, frame in enumerate(tb):
+                tb_list = list(traceback.extract_tb(e.__traceback__))
+                for fi, frame in enumerate(tb_list):
                     is_step = pathlib.Path(frame.filename).parent.parent == step_dir
                     del frame
                     if is_step:
                         # omit everything before the "step" dir, which will
                         # generally be stuff from this file and joblib
-                        tb = tb[fi:]
+                        tb_list = tb_list[fi:]
                         break
-                tb = "".join(traceback.format_list(tb))
+                tb = "".join(traceback.format_list(tb_list))
 
                 if on_error == "abort":
                     message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
@@ -94,9 +95,9 @@ def failsafe_run(
                     logger.error(
                         **gen_log_kwargs(message=message, **kwargs_log, emoji="🐛")
                     )
-                    extype, value, tb = sys.exc_info()
+                    _, _, tb_ = sys.exc_info()
                     print(tb)
-                    pdb.post_mortem(tb)
+                    pdb.post_mortem(tb_)
                     sys.exit(1)
                 else:
                     message += "\n\nContinuing pipeline run."
@@ -123,11 +124,11 @@ class ConditionalStepMemory:
         self,
         *,
         exec_params: SimpleNamespace,
-        get_input_fnames: Callable | None,
-        get_output_fnames: Callable | None,
+        get_input_fnames: Callable[..., Any] | None,
+        get_output_fnames: Callable[..., Any] | None,
         require_output: bool,
         func_name: str,
-    ):
+    ) -> None:
         memory_location = exec_params.memory_location
         if memory_location is True:
             use_location = exec_params.deriv_root / exec_params.memory_subdir
@@ -148,8 +149,8 @@ class ConditionalStepMemory:
         self.require_output = require_output
         self.func_name = func_name
 
-    def cache(self, func):
-        def wrapper(*args, **kwargs):
+    def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> None:
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -197,6 +198,7 @@ class ConditionalStepMemory:
                     hashes.append(hash_(k, sidecar))
 
             kwargs["cfg"] = copy.deepcopy(kwargs["cfg"])
+            assert isinstance(kwargs["cfg"], SimpleNamespace), type(kwargs["cfg"])
             kwargs["cfg"].hashes = hashes
             del in_files  # will be modified by func call
 
@@ -204,7 +206,8 @@ class ConditionalStepMemory:
             # call (https://github.com/joblib/joblib/issues/1342), but our hash
             # should be plenty fast so let's not bother for now.
             memorized_func = self.memory.cache(func, ignore=self.ignore)
-            msg = emoji = None
+            msg: str | None = None
+            emoji: str | None = None
             short_circuit = False
             # Used for logging automatically
             subject = kwargs.get("subject", None)  # noqa
@@ -269,6 +272,7 @@ class ConditionalStepMemory:
             del out_files
 
             if msg is not None:
+                assert emoji is not None
                 logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
             if short_circuit:
                 return
@@ -377,7 +381,7 @@ def _update_for_splits(
     return bids_path
 
 
-def _sanitize_callable(val):
+def _sanitize_callable(val: Any) -> Any:
     # Callables are not nicely pickleable, so let's pass a string instead
     if callable(val):
         return "custom"
@@ -398,9 +402,12 @@ def _get_step_path(
             return fname
         else:  # pragma: no cover
             try:
-                return frame.frame.f_locals["__mne_bids_pipeline_step__"]
+                out = frame.frame.f_locals["__mne_bids_pipeline_step__"]
             except KeyError:
                 pass
+            else:
+                assert isinstance(out, pathlib.Path)
+                return out
     else:  # pragma: no cover
         paths_str = "\n".join(paths)
         raise RuntimeError(f"Could not find step path in call stack:\n{paths_str}")
@@ -416,7 +423,7 @@ def _prep_out_files(
     out_files: dict[str, BIDSPath],
     check_relative: pathlib.Path | None = None,
     bids_only: bool = True,
-):
+) -> OutFilesT:
     if check_relative is None:
         check_relative = exec_params.deriv_root
     for key, fname in out_files.items():

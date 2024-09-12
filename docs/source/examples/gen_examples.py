@@ -7,8 +7,9 @@ import logging
 import shutil
 import sys
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
 from pathlib import Path
+from typing import Any
 
 from tqdm import tqdm
 
@@ -23,7 +24,7 @@ root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
 
-def _bool_to_icon(x: bool | Iterable) -> str:
+def _bool_to_icon(x: bool | Iterable[Any]) -> str:
     if x:
         return "✅"
     else:
@@ -31,7 +32,7 @@ def _bool_to_icon(x: bool | Iterable) -> str:
 
 
 @contextlib.contextmanager
-def _task_context(task):
+def _task_context(task: str | None) -> Generator[None, None, None]:
     old_argv = sys.argv
     if task:
         sys.argv = [sys.argv[0], f"--task={task}"]
@@ -41,7 +42,7 @@ def _task_context(task):
         sys.argv = old_argv
 
 
-def _gen_demonstrated_funcs(example_config_path: Path) -> dict:
+def _gen_demonstrated_funcs(example_config_path: Path) -> dict[str, bool]:
     """Generate dict of demonstrated functionality based on config."""
     # Here we use a defaultdict, and for keys that might vary across configs
     # we should use an `funcs[key] = funcs[key] or ...` so that we effectively

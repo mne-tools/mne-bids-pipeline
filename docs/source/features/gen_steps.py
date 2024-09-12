@@ -196,7 +196,6 @@ flowchart TD"""
             if not isinstance(a_b, str):
                 all_steps_list.extend(a_b)
         all_steps = set(all_steps_list)
-        assert len(all_steps) == len(all_steps_list)
         assert mapped == all_steps, all_steps.symmetric_difference(mapped)
     overview_lines.append("```\n\n</details>\n")
 

@@ -223,7 +223,6 @@ def one_subject_decoding(
         ignore_index=True,
     )
     del freq_decoding_table_rows
-    assert isinstance(freq_decoding_table, pd.DataFrame)
 
     def _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin=None, tmax=None):
         msg = (
@@ -235,16 +234,12 @@ def one_subject_decoding(
         return msg
 
     for idx, row in freq_decoding_table.iterrows():
-        assert isinstance(row["f_min"], pd.Series)
-        fmin = row["f_min"].item()
-        assert isinstance(row["f_max"], pd.Series)
-        fmax = row["f_max"].item()
-        assert isinstance(row["cond_1"], pd.Series)
-        cond1 = row["cond_1"].item()
-        assert isinstance(row["cond_2"], pd.Series)
-        cond2 = row["cond_2"].item()
-        assert isinstance(row["freq_range_name"], pd.Series)
-        freq_range_name = row["freq_range_name"].item()
+        assert isinstance(row, pd.Series)
+        fmin = row["f_min"]
+        fmax = row["f_max"]
+        cond1 = row["cond_1"]
+        cond2 = row["cond_2"]
+        freq_range_name = row["freq_range_name"]
 
         msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
         logger.info(**gen_log_kwargs(msg))
@@ -268,6 +263,7 @@ def one_subject_decoding(
         )
         freq_decoding_table.loc[idx, "mean_crossval_score"] = cv_scores.mean()
         freq_decoding_table.at[idx, "scores"] = cv_scores
+        del fmin, fmax, cond1, cond2, freq_range_name
 
     # Loop over times x frequencies
     #
@@ -308,6 +304,7 @@ def one_subject_decoding(
     for idx, row in tf_decoding_table.iterrows():
         if len(row) == 0:
             break  # no data
+        assert isinstance(row, pd.Series)
         tmin = row["t_min"]
         tmax = row["t_max"]
         fmin = row["f_min"]
@@ -339,6 +336,7 @@ def one_subject_decoding(
         msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
         msg += f": {cfg.decoding_metric}={score:0.3f}"
         logger.info(**gen_log_kwargs(msg))
+        del tmin, tmax, fmin, fmax, cond1, cond2, freq_range_name
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f"{condition1}+{condition2}".replace(op.sep, "")
@@ -441,14 +439,15 @@ def one_subject_decoding(
             )
             results = all_csp_tf_results[contrast]
             mean_crossval_scores: list[float] = list()
-            tmin, tmax, fmin, fmax = list(), list(), list(), list()
+            tmin_list, tmax_list = list(), list()
+            fmin_list, fmax_list = list(), list()
             mean_crossval_scores.extend(
                 results["mean_crossval_score"].to_numpy().ravel().tolist()
             )
-            tmin.extend(results["t_min"].to_numpy().ravel())
-            tmax.extend(results["t_max"].to_numpy().ravel())
-            fmin.extend(results["f_min"].to_numpy().ravel())
-            fmax.extend(results["f_max"].to_numpy().ravel())
+            tmin_list.extend(results["t_min"].to_numpy().ravel())
+            tmax_list.extend(results["t_max"].to_numpy().ravel())
+            fmin_list.extend(results["f_min"].to_numpy().ravel())
+            fmax_list.extend(results["f_max"].to_numpy().ravel())
             mean_crossval_scores_array = np.array(mean_crossval_scores, float)
             del mean_crossval_scores
             fig, ax = plt.subplots(constrained_layout=True)
@@ -466,10 +465,10 @@ def one_subject_decoding(
             img = _imshow_tf(
                 mean_crossval_scores_array,
                 ax,
-                tmin=tmin,
-                tmax=tmax,
-                fmin=fmin,
-                fmax=fmax,
+                tmin=tmin_list,
+                tmax=tmax_list,
+                fmin=fmin_list,
+                fmax=fmax_list,
                 vmin=vmin,
                 vmax=vmax,
             )
@@ -478,7 +477,7 @@ def one_subject_decoding(
             )
             for freq_range_name, bins in freq_name_to_bins_map.items():
                 ax.text(
-                    tmin[0],
+                    tmin_list[0],
                     0.5 * bins[0][0] + 0.5 * bins[-1][1],
                     freq_range_name,
                     transform=offset,
@@ -486,8 +485,8 @@ def one_subject_decoding(
                     va="center",
                     rotation=90,
                 )
-            ax.set_xlim([np.min(tmin), np.max(tmax)])
-            ax.set_ylim([np.min(fmin), np.max(fmax)])
+            ax.set_xlim([np.min(tmin_list), np.max(tmax_list)])
+            ax.set_ylim([np.min(fmin_list), np.max(fmax_list)])
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Frequency (Hz)")
             cbar = fig.colorbar(

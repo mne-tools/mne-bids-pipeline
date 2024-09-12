@@ -3,6 +3,8 @@ import inspect
 import re
 from collections import defaultdict
 from pathlib import Path
+from types import FunctionType
+from typing import Any
 
 from tqdm import tqdm
 
@@ -104,11 +106,11 @@ _EXTRA_FUNCS = {
 
 
 class _ParseConfigSteps:
-    def __init__(self, force_empty=None):
+    def __init__(self, force_empty: tuple[str, ...] | None = None) -> None:
         self._force_empty = _FORCE_EMPTY if force_empty is None else force_empty
-        self.steps = defaultdict(list)
+        self.steps: dict[str, Any] = defaultdict(list)
         # Add a few helper functions
-        for func in (
+        for func_extra in (
             _config_utils.get_eeg_reference,
             _config_utils.get_all_contrasts,
             _config_utils.get_decoding_contrasts,
@@ -117,15 +119,16 @@ class _ParseConfigSteps:
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
         ):
-            this_list = []
-            for attr in ast.walk(ast.parse(inspect.getsource(func))):
+            this_list: list[str] = []
+            assert isinstance(func_extra, FunctionType)
+            for attr in ast.walk(ast.parse(inspect.getsource(func_extra))):
                 if not isinstance(attr, ast.Attribute):
                     continue
                 if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
                     continue
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
-            _MANUAL_KWS[func.__name__] = tuple(this_list)
+            _MANUAL_KWS[func_extra.__name__] = tuple(this_list)
 
         for module in tqdm(
             sum(_config_utils._get_step_modules().values(), tuple()),
@@ -147,6 +150,7 @@ class _ParseConfigSteps:
                         for keyword in call.keywords:
                             if not isinstance(keyword.value, ast.Attribute):
                                 continue
+                            assert isinstance(keyword.value.value, ast.Name)
                             if keyword.value.value.id != "config":
                                 continue
                             if keyword.value.attr in ("exec_params",):
@@ -165,6 +169,7 @@ class _ParseConfigSteps:
                         for attr in ast.walk(cond.test):
                             if not isinstance(attr, ast.Attribute):
                                 continue
+                            assert isinstance(attr.value, ast.Name)
                             if attr.value.id != "config":
                                 continue
                             self._add_step_option(step, attr.attr)
@@ -175,6 +180,7 @@ class _ParseConfigSteps:
                 for call in ast.walk(func):
                     if not isinstance(call, ast.Call):
                         continue
+                    assert isinstance(call.func, ast.Name)
                     if call.func.id != "SimpleNamespace":
                         continue
                     break
@@ -183,6 +189,7 @@ class _ParseConfigSteps:
                 assert call.args == []
                 for keyword in call.keywords:
                     if isinstance(keyword.value, ast.Call):
+                        assert isinstance(keyword.value.func, ast.Name)
                         key = keyword.value.func.id
                         if key in _MANUAL_KWS:
                             for option in _MANUAL_KWS[key]:
@@ -191,6 +198,7 @@ class _ParseConfigSteps:
                         if keyword.value.func.id == "_sanitize_callable":
                             assert len(keyword.value.args) == 1
                             assert isinstance(keyword.value.args[0], ast.Attribute)
+                            assert isinstance(keyword.value.args[0].value, ast.Name)
                             assert keyword.value.args[0].value.id == "config"
                             self._add_step_option(step, keyword.value.args[0].attr)
                             continue
@@ -213,6 +221,7 @@ class _ParseConfigSteps:
                         for func_name in _EXTRA_FUNCS.get(key, ()):
                             funcs.append(getattr(_config_utils, func_name))
                         for fi, func in enumerate(funcs):
+                            assert isinstance(func, FunctionType), func
                             source = inspect.getsource(func)
                             assert "config: SimpleNamespace" in source, key
                             if fi == 0:
@@ -240,6 +249,7 @@ class _ParseConfigSteps:
                     option = keyword.value.attr
                     if option in _IGNORE_OPTIONS:
                         continue
+                    assert isinstance(keyword.value.value, ast.Name)
                     assert keyword.value.value.id == "config", f"{where} {keyword.value.value.id}"  # noqa: E501  # fmt: skip
                     self._add_step_option(step, option)
             if step in _NO_CONFIG:

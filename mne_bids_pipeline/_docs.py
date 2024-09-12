@@ -108,7 +108,12 @@ _EXTRA_FUNCS = {
 class _ParseConfigSteps:
     def __init__(self, force_empty: tuple[str, ...] | None = None) -> None:
         self._force_empty = _FORCE_EMPTY if force_empty is None else force_empty
-        self.steps: dict[str, Any] = defaultdict(list)
+        steps: dict[str, Any] = defaultdict(list)
+
+        def _add_step_option(step: str, option: str) -> None:
+            if step not in steps[option]:
+                steps[option].append(step)
+
         # Add a few helper functions
         for func_extra in (
             _config_utils.get_eeg_reference,
@@ -155,7 +160,7 @@ class _ParseConfigSteps:
                                 continue
                             if keyword.value.attr in ("exec_params",):
                                 continue
-                            self._add_step_option(step, keyword.value.attr)
+                            _add_step_option(step, keyword.value.attr)
                     # Also look for root-level conditionals like use_maxwell_filter
                     # or spatial_filter
                     for cond in ast.iter_child_nodes(func):
@@ -172,7 +177,7 @@ class _ParseConfigSteps:
                             assert isinstance(attr.value, ast.Name)
                             if attr.value.id != "config":
                                 continue
-                            self._add_step_option(step, attr.attr)
+                            _add_step_option(step, attr.attr)
                 # Now look at get_config* functions
                 if not func.name.startswith("get_config"):
                     continue
@@ -193,14 +198,14 @@ class _ParseConfigSteps:
                         key = keyword.value.func.id
                         if key in _MANUAL_KWS:
                             for option in _MANUAL_KWS[key]:
-                                self._add_step_option(step, option)
+                                _add_step_option(step, option)
                             continue
                         if keyword.value.func.id == "_sanitize_callable":
                             assert len(keyword.value.args) == 1
                             assert isinstance(keyword.value.args[0], ast.Attribute)
                             assert isinstance(keyword.value.args[0].value, ast.Name)
                             assert keyword.value.args[0].value.id == "config"
-                            self._add_step_option(step, keyword.value.args[0].attr)
+                            _add_step_option(step, keyword.value.args[0].attr)
                             continue
                         if key not in (
                             "_bids_kwargs",
@@ -230,13 +235,13 @@ class _ParseConfigSteps:
                             attrs = _CONFIG_RE.findall(source)
                             assert len(attrs), f"No config.* found in source of {key}"
                             for attr in attrs:
-                                self._add_step_option(step, attr)
+                                _add_step_option(step, attr)
                         continue
                     if isinstance(keyword.value, ast.Name):
                         key = f"{where}:{keyword.value.id}"
                         if key in _MANUAL_KWS:
                             for option in _MANUAL_KWS[f"{where}:{keyword.value.id}"]:
-                                self._add_step_option(step, option)
+                                _add_step_option(step, option)
                             continue
                         raise RuntimeError(f"{where} cannot handle Name {key=}")
                     if isinstance(keyword.value, ast.IfExp):  # conditional
@@ -251,20 +256,16 @@ class _ParseConfigSteps:
                         continue
                     assert isinstance(keyword.value.value, ast.Name)
                     assert keyword.value.value.id == "config", f"{where} {keyword.value.value.id}"  # noqa: E501  # fmt: skip
-                    self._add_step_option(step, option)
+                    _add_step_option(step, option)
             if step in _NO_CONFIG:
                 assert not found, f"Found unexpected get_config* in {step}"
             else:
                 assert found, f"Could not find get_config* in {step}"
         for key in self._force_empty:
-            self.steps[key] = list()
-        for key, val in self.steps.items():
+            steps[key] = list()
+        for key, val in steps.items():
             assert len(val) == len(set(val)), f"{key} {val}"
-        self.steps = {k: tuple(v) for k, v in self.steps.items()}  # no defaultdict
+        self.steps: dict[str, tuple[str, ...]] = {k: tuple(v) for k, v in steps.items()}
 
-    def _add_step_option(self, step, option):
-        if step not in self.steps[option]:
-            self.steps[option].append(step)
-
-    def __call__(self, option: str) -> list[str]:
+    def __call__(self, option: str) -> tuple[str, ...]:
         return self.steps[option]

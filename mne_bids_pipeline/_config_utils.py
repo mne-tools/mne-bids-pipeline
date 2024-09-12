@@ -3,7 +3,7 @@
 import copy
 import functools
 import pathlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
 
@@ -652,7 +652,7 @@ def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
 
 
 # Adapted from MNE-Python
-def _pl(x, *, non_pl="", pl="s"):
+def _pl(x: int | np.generic | Sized, *, non_pl: str = "", pl: str = "s") -> str:
     """Determine if plural should be used."""
     len_x = x if isinstance(x, int | np.generic) else len(x)
     return non_pl if len_x == 1 else pl

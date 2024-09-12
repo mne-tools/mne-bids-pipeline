@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
 import mne
 import numpy as np
@@ -487,7 +487,7 @@ def import_er_data(
 
 def _find_breaks_func(
     *,
-    cfg,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -703,7 +703,7 @@ def _get_mf_reference_run_path(
     subject: str,
     session: str | None,
     add_bads: bool | None = None,
-) -> dict:
+) -> dict[str, BIDSPath]:
     return _get_run_path(
         cfg=cfg,
         subject=subject,
@@ -777,10 +777,13 @@ def _read_bads_tsv(
     bids_path_bads: BIDSPath,
 ) -> list[str]:
     bads_tsv = pd.read_csv(bids_path_bads.fpath, sep="\t", header=0)
-    return bads_tsv[bads_tsv.columns[0]].tolist()
+    out = bads_tsv[bads_tsv.columns[0]].tolist()
+    assert isinstance(out, list)
+    assert all(isinstance(o, str) for o in out)
+    return out
 
 
-def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict:
+def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, Any]:
     """Get config params needed for any raw data loading."""
     return dict(
         # import_experimental_data / general

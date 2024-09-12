@@ -323,8 +323,8 @@ def find_ica_artifacts(
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
-            ecg_scores=ecg_scores or None,
-            eog_scores=eog_scores or None,
+            ecg_scores=ecg_scores if len(ecg_scores) else None,
+            eog_scores=eog_scores if len(eog_scores) else None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
             tags=("ica",),  # the default but be explicit

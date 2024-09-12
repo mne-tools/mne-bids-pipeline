@@ -25,13 +25,13 @@ from ._logging import _is_testing, gen_log_kwargs, logger
 
 def failsafe_run(
     *,
-    get_input_fnames: Callable | None = None,
-    get_output_fnames: Callable | None = None,
+    get_input_fnames: Callable | None = None,  # type: ignore[type-arg]
+    get_output_fnames: Callable | None = None,  # type: ignore[type-arg]
     require_output: bool = True,
-) -> Callable:
-    def failsafe_run_decorator(func):
+) -> Callable:  # type: ignore[type-arg]
+    def failsafe_run_decorator(func: Callable) -> Callable:  # type: ignore[type-arg]
         @functools.wraps(func)  # Preserve "identity" of original function
-        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):
+        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):  # type: ignore
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
@@ -52,7 +52,7 @@ def failsafe_run(
 
             try:
                 assert len(args) == 0, args  # make sure params are only kwargs
-                out = memory.cache(func)(*args, **kwargs)
+                out = memory.cache(func)(*args, **kwargs)  # type: ignore
                 assert out is None  # nothing should be returned
                 log_info["success"] = True
                 log_info["error_message"] = ""

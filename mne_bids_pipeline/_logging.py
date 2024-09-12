@@ -53,12 +53,12 @@ class _MBPLogger:
         self.__console = rich.console.Console(**kwargs)
         return self.__console
 
-    def title(self, title):
+    def title(self, title: str) -> None:
         # Align left with ASCTIME offset
         title = f"[title]┌────────┬ {title}[/]"
         self._console.rule(title=title, characters="─", style="title", align="left")
 
-    def end(self, msg=""):
+    def end(self, msg: str = "") -> None:
         self._console.print(f"[title]└────────┴ {msg}[/]")
 
     @property
@@ -167,7 +167,7 @@ def gen_log_kwargs(
     return kwargs
 
 
-def _linkfile(uri):
+def _linkfile(uri: str) -> str:
     return f"[link=file://{uri}]{uri}[/link]"
 
 

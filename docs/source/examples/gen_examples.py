@@ -231,8 +231,8 @@ for test_dataset_name, test_dataset_options in ds_iter:
     source_str = f"## Dataset source\n\nThis dataset was acquired from [{url}]({url})\n"
 
     if "openneuro" in options:
-        options["include"] = options.get("include", [])
-        options["exclude"] = options.get("exclude", [])
+        options.setdefault("include", [])
+        options.setdefault("exclude", [])
         download_str = (
             f'\n??? example "How to download this dataset"\n'
             f"    Run in your terminal:\n"

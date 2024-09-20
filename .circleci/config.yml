@@ -56,7 +56,7 @@ jobs:
           command: |
             wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
             bash check_qt_import.sh PyQt6
-      # Look at what we have and fail early if there is some library conflict
+      # Look at what we have and fail early if there are library conflicts
       - run:
           name: Check installation
           command: |

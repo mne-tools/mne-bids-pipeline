@@ -79,6 +79,12 @@ The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
 """
 
+allow_missing_sessions: bool = False
+"""
+Whether to continue processing the dataset if some combinations of `subjects` and
+`sessions` are missing.
+"""
+
 task: str = ""
 """
 The task to process.

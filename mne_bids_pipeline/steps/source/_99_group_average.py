@@ -15,6 +15,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
+    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -221,8 +222,8 @@ def main(*, config: SimpleNamespace) -> None:
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(config))
     cfg = get_config(config=config)
     exec_params = config.exec_params
-    subjects = get_subjects(config)
-    sessions = get_sessions(config)
+    all_sessions = get_sessions(config)
+    subjects_sessions = get_subjects_sessions(config)
 
     logs = list()
     with get_parallel_backend(exec_params):
@@ -235,7 +236,7 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject),
                 session=session,
             )
-            for subject in subjects
+            for subject, sessions in subjects_sessions.items()
             for session in sessions
         )
     logs += [
@@ -245,6 +246,6 @@ def main(*, config: SimpleNamespace) -> None:
             session=session,
             subject="average",
         )
-        for session in sessions
+        for session in all_sessions
     ]
     save_logs(config=config, logs=logs)

@@ -9,8 +9,7 @@ from mne_bids_pipeline._config_utils import (
     _pl,
     get_datatype,
     get_mf_reference_run,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import _empty_room_match_path
 from mne_bids_pipeline._io import _write_json
@@ -127,8 +126,8 @@ def main(*, config) -> None:
     # This will be I/O bound if the sidecar is not complete, so let's not run
     # in parallel.
     logs = list()
-    for subject in get_subjects(config):
-        for session in get_sessions(config):
+    for subject, sessions in get_subjects_sessions(config).items():
+        for session in sessions:
             run = get_mf_reference_run(config=config)
             logs.append(
                 find_empty_room(

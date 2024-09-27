@@ -128,7 +128,7 @@ def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
         return sessions
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[None] | list[str]]:
+def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
     subj_sessions = dict()
     all_sessions = _get_entity_vals_cached(
         config.bids_root,
@@ -149,7 +149,7 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[None] | lis
                 f"{tuple(sorted(missing_sessions))}, and "
                 "`config.allow_missing_sessions` is False"
             )
-        subj_sessions[subject] = valid_sessions_subj | [None]
+        subj_sessions[subject] = valid_sessions_subj
     return subj_sessions
 
 

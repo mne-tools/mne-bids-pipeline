@@ -337,7 +337,7 @@ def run_maxwell_filter(
     assert isinstance(destination, mne.transforms.Transform), destination
 
     # Maxwell-filter experimental data.
-    apply_msg = "Applying "
+    apply_msg = "Preparing to apply "
     extra = list()
     if cfg.mf_st_duration:
         apply_msg += f"tSSS ({cfg.mf_st_duration} sec, corr={cfg.mf_st_correlation})"

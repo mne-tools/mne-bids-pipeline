@@ -233,7 +233,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=cfg,
                 exec_params=exec_params,
                 subject=subject,
-                fs_subject=get_fs_subject(config=cfg, subject=subject),
+                fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
             for subject, sessions in subjects_sessions.items()

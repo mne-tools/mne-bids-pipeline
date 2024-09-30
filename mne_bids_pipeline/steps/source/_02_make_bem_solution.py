@@ -12,6 +12,7 @@ from mne_bids_pipeline._config_utils import (
     _get_bem_conductivity,
     get_fs_subject,
     get_fs_subjects_dir,
+    get_sessions,
     get_subjects,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -23,6 +24,7 @@ def get_input_fnames_make_bem_solution(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> dict:
     in_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
@@ -37,6 +39,7 @@ def get_output_fnames_make_bem_solution(
     *,
     cfg: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> dict:
     out_files = dict()
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "bem"
@@ -56,9 +59,10 @@ def make_bem_solution(
     exec_params: SimpleNamespace,
     subject: str,
     in_files: dict,
+    session: str | None = None,
 ) -> dict:
     msg = "Calculating BEM solution"
-    logger.info(**gen_log_kwargs(message=msg, subject=subject))
+    logger.info(**gen_log_kwargs(message=msg, subject=subject, session=session))
     conductivity, _ = _get_bem_conductivity(cfg)
     bem_model = mne.make_bem_model(
         subject=cfg.fs_subject,
@@ -81,9 +85,10 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
         ch_types=config.ch_types,
         use_template_mri=config.use_template_mri,
@@ -112,11 +117,13 @@ def main(*, config) -> None:
         )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
+                session=session,
                 force_run=config.recreate_bem,
             )
             for subject in get_subjects(config)
+            for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

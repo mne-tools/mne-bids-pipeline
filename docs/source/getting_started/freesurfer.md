@@ -2,7 +2,17 @@
     Preparations for inverse modeling involve the installation of
     [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/).
     If you do not intend to run the source reconstruction steps of MNE-BIDS-Pipeline,
-    you can skip the instructions below.
+    you can skip the instructions on this page.
+
+    Additionally, to visualize the source reconstruction steps and add those images to
+    the pipeline reports, the pipeline must be run on a machine capable of 3D rendering
+    (i.e., not a headless server). If you must use a headless server, you should either
+    prefix the pipeline command with `xvfb-run` (to use
+    [xvfb](https://www.x.org/releases/X11R7.6/doc/man/man1/Xvfb.1.xhtml) to emulate a
+    display), or alternatively you can install a different version of one of our
+    dependencies (the 3D library `vtk`) that does offscreen rendering (see
+    [these instructions](https://mne.tools/stable/install/advanced.html#installing-to-a-headless-linux-server)
+    on the MNE-Python website).
 
 !!! warning
     FreeSurfer does not natively run on Windows. We are currently working on
@@ -70,3 +80,4 @@ creation.
 *[FLASH]: Fast low angle shot
 *[MRI]: Magnetic resonance imaging
 *[BEM]: Boundary element model
+*[xvfb]: X virtual framebuffer

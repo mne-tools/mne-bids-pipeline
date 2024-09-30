@@ -259,7 +259,7 @@ def get_config(
         source_info_path_update=config.source_info_path_update,
         noise_cov=_sanitize_callable(config.noise_cov),
         ch_types=config.ch_types,
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
         t1_bids_path=t1_bids_path,
         landmarks_kind=landmarks_kind,

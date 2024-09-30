@@ -1,8 +1,8 @@
 ## v1.10.0 (unreleased)
 
-[//]: # (### :new: New features & enhancements)
+### :new: New features & enhancements
 
-[//]: # (- Whatever (#000 by @whoever))
+- It is now possible to use separate MRIs for each session within a subject, as in longitudinal studies. This is achieved by creating separate "subject" folders for each subject-session combination, with the naming convention `sub-XXX_ses-YYY`, in the freesurfer `SUBJECTS_DIR`. (#987 by @drammock)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -25,6 +25,12 @@
 
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
+- Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
+
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
+
+### :medical_symbol: Code health and infrastructure
+
+- Improve logging messages in maxwell filtering steps. (#893 by @drammock)

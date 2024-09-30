@@ -165,6 +165,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         source_info_path_update=config.source_info_path_update,
@@ -177,7 +178,7 @@ def get_config(
         inverse_method=config.inverse_method,
         noise_cov=_sanitize_callable(config.noise_cov),
         report_stc_n_time_points=config.report_stc_n_time_points,
-        fs_subject=get_fs_subject(config=config, subject=subject),
+        fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
         **_bids_kwargs(config=config),
     )
@@ -198,6 +199,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,

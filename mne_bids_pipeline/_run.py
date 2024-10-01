@@ -9,9 +9,9 @@ import pdb
 import sys
 import time
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
 import json_tricks
 import pandas as pd
@@ -21,17 +21,18 @@ from mne_bids import BIDSPath
 
 from ._config_utils import get_task
 from ._logging import _is_testing, gen_log_kwargs, logger
+from .typing import OutFilesT
 
 
 def failsafe_run(
     *,
-    get_input_fnames: Callable | None = None,
-    get_output_fnames: Callable | None = None,
+    get_input_fnames: Callable[..., Any] | None = None,
+    get_output_fnames: Callable[..., Any] | None = None,
     require_output: bool = True,
-) -> Callable:
-    def failsafe_run_decorator(func):
+) -> Callable[..., Any]:
+    def failsafe_run_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)  # Preserve "identity" of original function
-        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):
+        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):  # type: ignore
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
@@ -69,16 +70,16 @@ def failsafe_run(
 
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
-                tb = traceback.extract_tb(e.__traceback__)
-                for fi, frame in enumerate(tb):
+                tb_list = list(traceback.extract_tb(e.__traceback__))
+                for fi, frame in enumerate(tb_list):
                     is_step = pathlib.Path(frame.filename).parent.parent == step_dir
                     del frame
                     if is_step:
                         # omit everything before the "step" dir, which will
                         # generally be stuff from this file and joblib
-                        tb = tb[fi:]
+                        tb_list = tb_list[fi:]
                         break
-                tb = "".join(traceback.format_list(tb))
+                tb = "".join(traceback.format_list(tb_list))
 
                 if on_error == "abort":
                     message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
@@ -94,9 +95,9 @@ def failsafe_run(
                     logger.error(
                         **gen_log_kwargs(message=message, **kwargs_log, emoji="🐛")
                     )
-                    extype, value, tb = sys.exc_info()
+                    _, _, tb_ = sys.exc_info()
                     print(tb)
-                    pdb.post_mortem(tb)
+                    pdb.post_mortem(tb_)
                     sys.exit(1)
                 else:
                     message += "\n\nContinuing pipeline run."
@@ -123,11 +124,11 @@ class ConditionalStepMemory:
         self,
         *,
         exec_params: SimpleNamespace,
-        get_input_fnames: Callable | None,
-        get_output_fnames: Callable | None,
+        get_input_fnames: Callable[..., Any] | None,
+        get_output_fnames: Callable[..., Any] | None,
         require_output: bool,
         func_name: str,
-    ):
+    ) -> None:
         memory_location = exec_params.memory_location
         if memory_location is True:
             use_location = exec_params.deriv_root / exec_params.memory_subdir
@@ -148,8 +149,8 @@ class ConditionalStepMemory:
         self.require_output = require_output
         self.func_name = func_name
 
-    def cache(self, func):
-        def wrapper(*args, **kwargs):
+    def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> None:
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -197,6 +198,7 @@ class ConditionalStepMemory:
                     hashes.append(hash_(k, sidecar))
 
             kwargs["cfg"] = copy.deepcopy(kwargs["cfg"])
+            assert isinstance(kwargs["cfg"], SimpleNamespace), type(kwargs["cfg"])
             kwargs["cfg"].hashes = hashes
             del in_files  # will be modified by func call
 
@@ -204,7 +206,8 @@ class ConditionalStepMemory:
             # call (https://github.com/joblib/joblib/issues/1342), but our hash
             # should be plenty fast so let's not bother for now.
             memorized_func = self.memory.cache(func, ignore=self.ignore)
-            msg = emoji = None
+            msg: str | None = None
+            emoji: str | None = None
             short_circuit = False
             # Used for logging automatically
             subject = kwargs.get("subject", None)  # noqa
@@ -269,6 +272,7 @@ class ConditionalStepMemory:
             del out_files
 
             if msg is not None:
+                assert emoji is not None
                 logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
             if short_circuit:
                 return
@@ -300,7 +304,7 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
+def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
     fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
 
     # Get the script from which the function is called for logging
@@ -319,7 +323,7 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
             if_sheet_exists="replace" if append else None,
         )
         assert isinstance(config, SimpleNamespace), type(config)
-        cf_df = dict()
+        cf_dict = dict()
         for key, val in config.__dict__.items():
             # We need to be careful about functions, json_tricks does not work with them
             if inspect.isfunction(val):
@@ -334,8 +338,8 @@ def save_logs(*, config: SimpleNamespace, logs: list[pd.Series]) -> None:
             # this long, you'll probably get the gist from the first 32k chars)
             if len(val) > 32767:
                 val = val[:32765] + " …"
-            cf_df[key] = val
-        cf_df = pd.DataFrame([cf_df], dtype=object)
+            cf_dict[key] = val
+        cf_df = pd.DataFrame([cf_dict], dtype=object)
         with writer:
             # Config first then the data
             cf_df.to_excel(writer, sheet_name="config", index=False)
@@ -377,7 +381,7 @@ def _update_for_splits(
     return bids_path
 
 
-def _sanitize_callable(val):
+def _sanitize_callable(val: Any) -> Any:
     # Callables are not nicely pickleable, so let's pass a string instead
     if callable(val):
         return "custom"
@@ -390,19 +394,23 @@ def _get_step_path(
 ) -> pathlib.Path:
     if stack is None:
         stack = inspect.stack()
-    paths = list()
+    paths: list[str] = list()
     for frame in stack:
         fname = pathlib.Path(frame.filename)
+        paths.append(frame.filename)
         if "steps" in fname.parts:
             return fname
         else:  # pragma: no cover
             try:
-                return frame.frame.f_locals["__mne_bids_pipeline_step__"]
+                out = frame.frame.f_locals["__mne_bids_pipeline_step__"]
             except KeyError:
                 pass
+            else:
+                assert isinstance(out, pathlib.Path)
+                return out
     else:  # pragma: no cover
-        paths = "\n".join(paths)
-        raise RuntimeError(f"Could not find step path in call stack:\n{paths}")
+        paths_str = "\n".join(paths)
+        raise RuntimeError(f"Could not find step path in call stack:\n{paths_str}")
 
 
 def _short_step_path(step_path: pathlib.Path) -> str:
@@ -415,7 +423,7 @@ def _prep_out_files(
     out_files: dict[str, BIDSPath],
     check_relative: pathlib.Path | None = None,
     bids_only: bool = True,
-):
+) -> OutFilesT:
     if check_relative is None:
         check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
@@ -447,11 +455,12 @@ def _path_to_str_hash(
     *,
     method: Literal["mtime", "hash"],
     kind: str = "in",
-):
+) -> tuple[str, str | float]:
     if isinstance(v, BIDSPath):
         v = v.fpath
     assert isinstance(v, pathlib.Path), f'Bad type {type(v)}: {kind}_files["{k}"] = {v}'
     assert v.exists(), f'missing {kind}_files["{k}"] = {v}'
+    this_hash: str | float = ""
     if method == "mtime":
         this_hash = v.stat().st_mtime
     else:

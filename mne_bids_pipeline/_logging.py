@@ -12,30 +12,27 @@ from .typing import LogKwargsT
 
 
 class _MBPLogger:
-    def __init__(self):
+    def __init__(self) -> None:
         self._level = logging.INFO
 
     # Do lazy instantiation of _console so that pytest's output capture
     # mechanics don't get messed up
     @property
-    def _console(self):
+    def _console(self) -> rich.console.Console:
         try:
-            return self.__console
+            return self.__console  # type: ignore[no-any-return,has-type]
         except AttributeError:
             pass  # need to instantiate it, continue
 
-        force_terminal = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)
-        if force_terminal is not None:
-            force_terminal = force_terminal.lower() in ("true", "1")
-        legacy_windows = os.getenv("MNE_BIDS_PIPELINE_LEGACY_WINDOWS", None)
-        if legacy_windows is not None:
-            legacy_windows = legacy_windows.lower() in ("true", "1")
-        kwargs = dict(
-            soft_wrap=True,
-            force_terminal=force_terminal,
-            legacy_windows=legacy_windows,
-        )
-        kwargs["theme"] = rich.theme.Theme(
+        force_terminal: bool | None = None
+        force_terminal_env = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)
+        if force_terminal_env is not None:
+            force_terminal = force_terminal_env.lower() in ("true", "1")
+        legacy_windows = None
+        legacy_windows_env = os.getenv("MNE_BIDS_PIPELINE_LEGACY_WINDOWS", None)
+        if legacy_windows_env is not None:
+            legacy_windows = legacy_windows_env.lower() in ("true", "1")
+        theme = rich.theme.Theme(
             dict(
                 default="white",
                 # Rule
@@ -50,53 +47,65 @@ class _MBPLogger:
                 error="red",
             )
         )
-        self.__console = rich.console.Console(**kwargs)
+        self.__console = rich.console.Console(
+            soft_wrap=True,
+            force_terminal=force_terminal,
+            legacy_windows=legacy_windows,
+            theme=theme,
+        )
         return self.__console
 
-    def title(self, title):
+    def title(self, title: str) -> None:
         # Align left with ASCTIME offset
         title = f"[title]┌────────┬ {title}[/]"
         self._console.rule(title=title, characters="─", style="title", align="left")
 
-    def end(self, msg=""):
+    def end(self, msg: str = "") -> None:
         self._console.print(f"[title]└────────┴ {msg}[/]")
 
     @property
-    def level(self):
+    def level(self) -> int:
         return self._level
 
     @level.setter
-    def level(self, level):
+    def level(self, level: int) -> None:
         level = int(level)
         self._level = level
 
-    def debug(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def debug(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="debug", msg=msg, **(extra or {}))
 
-    def info(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def info(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="info", msg=msg, **(extra or {}))
 
-    def warning(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def warning(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="warning", msg=msg, **(extra or {}))
 
-    def error(self, msg: str, *, extra: LogKwargsT | None = None) -> None:
+    def error(
+        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+    ) -> None:
         self._log_message(kind="error", msg=msg, **(extra or {}))
 
     def _log_message(
         self,
         kind: str,
         msg: str,
-        subject: str | int | None = None,
-        session: str | int | None = None,
-        run: str | int | None = None,
+        subject: str | None = None,
+        session: str | None = None,
+        run: str | None = None,
         emoji: str = "",
-    ):
+    ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
         # Construct str
-        essr = [x for x in [emoji, subject, session, run] if x]
-        essr = " ".join(essr)
+        essr = " ".join(x for x in [emoji, subject, session, run] if x)
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
@@ -160,7 +169,7 @@ def gen_log_kwargs(
     return kwargs
 
 
-def _linkfile(uri):
+def _linkfile(uri: str) -> str:
     return f"[link=file://{uri}]{uri}[/link]"
 
 

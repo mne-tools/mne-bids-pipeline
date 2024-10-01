@@ -95,7 +95,7 @@ def run_ssp(
     )
     del raw_fnames
 
-    projs = dict()
+    projs: dict[str, list[mne.Projection]] = dict()
     proj_kinds = ("ecg", "eog")
     rate_names = dict(ecg="heart", eog="blink")
     events_fun = dict(ecg=_find_ecg_events, eog=find_eog_events)
@@ -103,9 +103,10 @@ def run_ssp(
     rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
-    ch_name = dict(ecg=None, eog=None)
+    ch_name: dict[str, list[str] | None] = dict(ecg=None, eog=None)
     if cfg.eog_channels:
         ch_name["eog"] = cfg.eog_channels
+        assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
         ch_name["ecg"] = cfg.ssp_ecg_channel
@@ -187,6 +188,7 @@ def run_ssp(
 
     mne.write_proj(out_files["proj"], sum(projs.values(), []), overwrite=True)
     assert len(in_files) == 0, in_files.keys()
+    del projs
 
     # Report
     with _open_report(
@@ -200,10 +202,10 @@ def run_ssp(
             msg = f"Adding {kind.upper()} SSP to report."
             logger.info(**gen_log_kwargs(message=msg))
             proj_epochs = mne.read_epochs(out_files[f"epochs_{kind}"])
-            projs = mne.read_proj(out_files["proj"])
-            projs = [p for p in projs if kind.upper() in p["desc"]]
-            assert len(projs), len(projs)  # should exist if the epochs do
-            picks_trace = None
+            these_projs: list[mne.Projection] = mne.read_proj(out_files["proj"])
+            these_projs = [p for p in these_projs if kind.upper() in p["desc"]]
+            assert len(these_projs), len(these_projs)  # should exist if the epochs do
+            picks_trace: str | list[str] | None = None
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
                     picks_trace = [cfg.ssp_ecg_channel]
@@ -216,7 +218,7 @@ def run_ssp(
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(
-                projs, proj_epochs.average(picks="all"), picks_trace=picks_trace
+                these_projs, proj_epochs.average(picks="all"), picks_trace=picks_trace
             )
             caption = (
                 f"Computed using {len(proj_epochs)} epochs "

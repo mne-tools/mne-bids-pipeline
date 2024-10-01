@@ -249,10 +249,7 @@ def run_epochs(
         msg = "Adding uncleaned epochs to report."
         logger.info(**gen_log_kwargs(message=msg))
         # Add PSD plots for 30s of data or all epochs if we have less available
-        if len(epochs) * (epochs.tmax - epochs.tmin) < 30:
-            psd = True
-        else:
-            psd = 30
+        psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
         report.add_epochs(
             epochs=epochs,
             title="Epochs: before cleaning",

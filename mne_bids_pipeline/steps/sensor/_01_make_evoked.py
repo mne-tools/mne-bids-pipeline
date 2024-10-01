@@ -130,7 +130,7 @@ def run_evoked(
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
 
-            tags = ("evoked", _sanitize_cond_tag(condition))
+            tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
                 title = f"Condition: {condition}"
             else:  # It's a contrast of two conditions.

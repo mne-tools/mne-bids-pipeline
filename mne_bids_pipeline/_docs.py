@@ -94,6 +94,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
     "ch_types",
     "task_is_rest",
     "data_type",
+    "allow_missing_sessions",
 )
 # Eventually we could parse AST to get these, but this is simple enough
 _EXTRA_FUNCS = {
@@ -116,6 +117,7 @@ class _ParseConfigSteps:
             _config_utils.get_fs_subjects_dir,
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
+            _config_utils.get_subjects_sessions,
         ):
             this_list = []
             for attr in ast.walk(ast.parse(inspect.getsource(func))):
@@ -126,6 +128,7 @@ class _ParseConfigSteps:
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
             _MANUAL_KWS[func.__name__] = tuple(this_list)
+        assert "allow_missing_sessions" in _MANUAL_KWS["get_subjects_sessions"]
 
         for module in tqdm(
             sum(_config_utils._get_step_modules().values(), tuple()),

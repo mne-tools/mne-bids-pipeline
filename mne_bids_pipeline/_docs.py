@@ -128,7 +128,6 @@ class _ParseConfigSteps:
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
             _MANUAL_KWS[func.__name__] = tuple(this_list)
-        assert "allow_missing_sessions" in _MANUAL_KWS["get_subjects_sessions"]
 
         for module in tqdm(
             sum(_config_utils._get_step_modules().values(), tuple()),
@@ -147,11 +146,6 @@ class _ParseConfigSteps:
                     for call in ast.walk(func):
                         if not isinstance(call, ast.Call):
                             continue
-                        # TODO this gets the test to pass, but is obviously hacky.
-                        if isinstance(call.func, ast.Name):
-                            if call.func.id == "get_subjects_sessions":
-                                self._add_step_option(step, "allow_missing_sessions")
-                        # end TODO
                         for keyword in call.keywords:
                             if not isinstance(keyword.value, ast.Attribute):
                                 continue
@@ -160,6 +154,18 @@ class _ParseConfigSteps:
                             if keyword.value.attr in ("exec_params",):
                                 continue
                             self._add_step_option(step, keyword.value.attr)
+                        for arg in call.args:
+                            if not isinstance(arg, ast.Name):
+                                continue
+                            if arg.id != "config":
+                                continue
+                            key = call.func.id
+                            # e.g., get_subjects_sessions(config)
+                            if key in _MANUAL_KWS:
+                                for option in _MANUAL_KWS[key]:
+                                    self._add_step_option(step, option)
+                                break
+
                     # Also look for root-level conditionals like use_maxwell_filter
                     # or spatial_filter
                     for cond in ast.iter_child_nodes(func):

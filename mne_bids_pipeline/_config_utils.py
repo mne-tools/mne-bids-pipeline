@@ -142,6 +142,8 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
             entity_key="session",
             ignore_datatypes=_get_ignore_datatypes(config),
         )
+        # use [None] instead of [] like is done in `get_sessions()`
+        valid_sessions_subj = valid_sessions_subj or [None]
         missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
         if missing_sessions and not config.allow_missing_sessions:
             raise RuntimeError(

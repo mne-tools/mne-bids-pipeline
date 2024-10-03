@@ -210,44 +210,43 @@ def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
 @pytest.mark.parametrize("allow_missing_sessions", (False, True))
 def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions):
     """Test the `allow_missing_sessions` config variable."""
-    dataset = "ds001810"
-    # exclude all except 1 session ("ses-anodalpost")
-    exclude = (
-        "ses-anodalpre",
-        "ses-anodaltDCS",
-        "ses-cathodalpost",
-        "ses-cathodalpre",
-        "ses-cathodaltDCS",
+    dataset = "fake"
+    bids_root = tmp_path / dataset
+    bids_root.mkdir()
+    files = tuple(
+        [
+            "dataset_description.json",
+            *[f"participants.{x}" for x in ("json", "tsv")],
+            *[f"sub-01/sub-01_sessions.{x}" for x in ("json", "tsv")],
+            *[
+                f"sub-01/ses-a/eeg/sub-01_ses-a_task-foo_{x}"
+                for x in (
+                    "channels.tsv",
+                    "eeg.eeg",
+                    "eeg.json",
+                    "eeg.vhdr",
+                    "eeg.vmrk",
+                    "events.tsv",
+                )
+            ],
+        ]
     )
-    # subset the dataset by symlinking in a temp dir
-    src_dir = Path(f"~/mne_data/{dataset}").expanduser().resolve()
-    link_dir = tmp_path / dataset
-    link_dir.mkdir()
-    for dirpath, dirnames, filenames in src_dir.walk():
-        if any(excl in dirpath.parts for excl in exclude):
-            continue
-        for dirname in dirnames:
-            if dirname not in exclude:
-                target = (dirpath / dirname).absolute()
-                link = link_dir / target.relative_to(src_dir)
-                link.mkdir()
-        for fname in filenames:
-            target = (dirpath / fname).absolute()
-            link = link_dir / target.relative_to(src_dir)
-            link.symlink_to(target)
+    for _file in files:
+        path = bids_root / _file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
     # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
     config = dict(
-        bids_root=f'"{link_dir}"',
+        bids_root=f'"{bids_root}"',
         deriv_root=f'"{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"',
         interactive=False,
         subjects=["01"],
-        sessions=["anodalpost", "anodalpre"],
+        sessions=["a", "b"],
         ch_types=["eeg"],
-        conditions=["61450", "61511"],
+        conditions=["zzz"],
         allow_missing_sessions=allow_missing_sessions,
     )
-    config_fname = "config_ds001810_missing_session.py"
-    config_path = tmp_path / config_fname
+    config_path = tmp_path / "fake_config_missing_session.py"
     with open(config_path, "w") as fid:
         for key, val in config.items():
             fid.write(f"{key} = {val}\n")
@@ -256,7 +255,7 @@ def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions)
         nullcontext()
         if allow_missing_sessions
         else pytest.raises(
-            RuntimeError, match=r"Subject 01 is missing session \('anodalpre',\)"
+            RuntimeError, match=r"Subject 01 is missing session \('b',\)"
         )
     )
     # run

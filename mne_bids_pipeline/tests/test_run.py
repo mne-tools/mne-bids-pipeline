@@ -220,7 +220,7 @@ def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions)
         "ses-cathodaltDCS",
     )
     # subset the dataset by symlinking in a temp dir
-    src_dir = Path(f"~/mne_data/{dataset}").expanduser()
+    src_dir = Path(f"~/mne_data/{dataset}").expanduser().resolve()
     link_dir = tmp_path / dataset
     link_dir.mkdir()
     for dirpath, dirnames, filenames in src_dir.walk():

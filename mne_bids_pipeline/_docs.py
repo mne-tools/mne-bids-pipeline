@@ -106,6 +106,10 @@ _EXTRA_FUNCS = {
 
 class _ParseConfigSteps:
     def __init__(self, force_empty=None):
+        """Build a mapping from config options to tuples of steps that use each option.
+
+        The mapping is stored in `self.steps`.
+        """
         self._force_empty = _FORCE_EMPTY if force_empty is None else force_empty
         self.steps = defaultdict(list)
         # Add a few helper functions

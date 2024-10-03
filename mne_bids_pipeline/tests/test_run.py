@@ -212,51 +212,42 @@ def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions)
     """Test the `allow_missing_sessions` config variable."""
     dataset = "fake"
     bids_root = tmp_path / dataset
-    bids_root.mkdir()
-    files = tuple(
-        [
-            "dataset_description.json",
-            *[f"participants.{x}" for x in ("json", "tsv")],
-            *[f"sub-01/sub-01_sessions.{x}" for x in ("json", "tsv")],
-            *[
-                f"sub-01/ses-a/eeg/sub-01_ses-a_task-foo_{x}"
-                for x in (
-                    "channels.tsv",
-                    "eeg.eeg",
-                    "eeg.json",
-                    "eeg.vhdr",
-                    "eeg.vmrk",
-                    "events.tsv",
-                )
-            ],
-        ]
+    files = (
+        "dataset_description.json",
+        *(f"participants.{x}" for x in ("json", "tsv")),
+        *(f"sub-1/sub-1_sessions.{x}" for x in ("json", "tsv")),
+        *(
+            f"sub-1/ses-a/eeg/sub-1_ses-a_task-foo_{x}.tsv"
+            for x in ("channels", "events")
+        ),
+        *(
+            f"sub-1/ses-a/eeg/sub-1_ses-a_task-foo_eeg.{x}"
+            for x in ("eeg", "json", "vhdr", "vmrk")
+        ),
     )
     for _file in files:
         path = bids_root / _file
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch()
     # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
-    config = dict(
-        bids_root=f'"{bids_root}"',
-        deriv_root=f'"{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"',
-        interactive=False,
-        subjects=["01"],
-        sessions=["a", "b"],
-        ch_types=["eeg"],
-        conditions=["zzz"],
-        allow_missing_sessions=allow_missing_sessions,
-    )
+    config = f"""
+bids_root = "{bids_root}"
+deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
+interactive = False
+subjects = ["1"]
+sessions = ["a", "b"]
+ch_types = ["eeg"]
+conditions = ["zzz"]
+allow_missing_sessions = {allow_missing_sessions}
+"""
     config_path = tmp_path / "fake_config_missing_session.py"
     with open(config_path, "w") as fid:
-        for key, val in config.items():
-            fid.write(f"{key} = {val}\n")
+        fid.write(config)
     # set up the context handler
     context = (
         nullcontext()
         if allow_missing_sessions
-        else pytest.raises(
-            RuntimeError, match=r"Subject 01 is missing session \('b',\)"
-        )
+        else pytest.raises(RuntimeError, match=r"Subject 1 is missing session \('b',\)")
     )
     # run
     command = [

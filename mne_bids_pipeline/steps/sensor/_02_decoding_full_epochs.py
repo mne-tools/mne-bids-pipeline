@@ -26,8 +26,7 @@ from mne_bids_pipeline._config_utils import (
     _restrict_analyze_channels,
     get_decoding_contrasts,
     get_eeg_reference,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import LogReg, _decoding_preproc_steps
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -280,8 +279,8 @@ def main(*, config: SimpleNamespace) -> None:
                 condition2=cond_2,
                 session=session,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
             for (cond_1, cond_2) in get_decoding_contrasts(config)
         )
     save_logs(config=config, logs=logs)

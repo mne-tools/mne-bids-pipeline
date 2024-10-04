@@ -94,6 +94,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
     "ch_types",
     "task_is_rest",
     "data_type",
+    "allow_missing_sessions",
 )
 # Eventually we could parse AST to get these, but this is simple enough
 _EXTRA_FUNCS = {
@@ -105,6 +106,10 @@ _EXTRA_FUNCS = {
 
 class _ParseConfigSteps:
     def __init__(self, force_empty=None):
+        """Build a mapping from config options to tuples of steps that use each option.
+
+        The mapping is stored in `self.steps`.
+        """
         self._force_empty = _FORCE_EMPTY if force_empty is None else force_empty
         self.steps = defaultdict(list)
         # Add a few helper functions
@@ -116,6 +121,7 @@ class _ParseConfigSteps:
             _config_utils.get_fs_subjects_dir,
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
+            _config_utils.get_subjects_sessions,
         ):
             this_list = []
             for attr in ast.walk(ast.parse(inspect.getsource(func))):
@@ -152,6 +158,18 @@ class _ParseConfigSteps:
                             if keyword.value.attr in ("exec_params",):
                                 continue
                             self._add_step_option(step, keyword.value.attr)
+                        for arg in call.args:
+                            if not isinstance(arg, ast.Name):
+                                continue
+                            if arg.id != "config":
+                                continue
+                            key = call.func.id
+                            # e.g., get_subjects_sessions(config)
+                            if key in _MANUAL_KWS:
+                                for option in _MANUAL_KWS[key]:
+                                    self._add_step_option(step, option)
+                                break
+
                     # Also look for root-level conditionals like use_maxwell_filter
                     # or spatial_filter
                     for cond in ast.iter_child_nodes(func):

@@ -18,8 +18,7 @@ from mne_bids_pipeline._config_utils import (
     _restrict_analyze_channels,
     get_decoding_contrasts,
     get_eeg_reference,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import (
     LogReg,
@@ -554,8 +553,8 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 contrast=contrast,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
             for contrast in get_decoding_contrasts(config)
         )
         save_logs(logs=logs, config=config)

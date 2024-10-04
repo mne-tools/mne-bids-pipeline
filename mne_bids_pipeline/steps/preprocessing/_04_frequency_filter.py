@@ -23,7 +23,7 @@ import numpy as np
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_sessions, get_subjects
+from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -328,8 +328,8 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
             for run, task in get_runs_tasks(
                 config=config,
                 subject=subject,

@@ -14,8 +14,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _restrict_analyze_channels,
     get_eeg_reference,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -200,7 +199,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
         )
     save_logs(config=config, logs=logs)

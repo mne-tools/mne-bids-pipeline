@@ -132,6 +132,29 @@ def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
         return sessions
 
 
+def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
+    subj_sessions = dict()
+    cfg_sessions = get_sessions(config)
+    for subject in get_subjects(config):
+        # Only traverse through the current subject's directory
+        valid_sessions_subj = _get_entity_vals_cached(
+            config.bids_root / f"sub-{subject}",
+            entity_key="session",
+            ignore_datatypes=_get_ignore_datatypes(config),
+        )
+        # use [None] instead of [] like is done in `get_sessions()`
+        valid_sessions_subj = valid_sessions_subj or [None]
+        missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
+        if missing_sessions and not config.allow_missing_sessions:
+            raise RuntimeError(
+                f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                f"{tuple(sorted(missing_sessions))}, and "
+                "`config.allow_missing_sessions` is False"
+            )
+        subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
+    return subj_sessions
+
+
 def get_runs_all_subjects(
     config: SimpleNamespace,
 ) -> dict[str, list[None] | list[str]]:

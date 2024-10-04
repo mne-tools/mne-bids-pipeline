@@ -17,8 +17,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
     get_runs,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -285,7 +284,7 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
         )
     save_logs(config=config, logs=logs)

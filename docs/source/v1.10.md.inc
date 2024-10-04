@@ -3,7 +3,7 @@
 ### :new: New features & enhancements
 
 - It is now possible to use separate MRIs for each session within a subject, as in longitudinal studies. This is achieved by creating separate "subject" folders for each subject-session combination, with the naming convention `sub-XXX_ses-YYY`, in the freesurfer `SUBJECTS_DIR`. (#987 by @drammock)
-- New boolean config option `allow_missing_sessions` allows the pipeline to continue when not all sessions are present for all subjects. (#1000 by @drammock)
+- New config option [`allow_missing_sessions`][mne_bids_pipeline._config. allow_missing_sessions] allows to continue when not all sessions are present for all subjects. (#1000 by @drammock)
 
 [//]: # (### :warning: Behavior changes)
 

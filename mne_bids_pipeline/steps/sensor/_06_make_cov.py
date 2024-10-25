@@ -140,7 +140,11 @@ def compute_cov_from_raw(
     logger.info(**gen_log_kwargs(message=msg))
 
     raw_noise = mne.io.read_raw_fif(fname_raw, preload=True)
-    cov = mne.compute_raw_covariance(raw_noise, method="shrunk", rank="info")
+    cov = mne.compute_raw_covariance(
+        raw_noise,
+        method=cfg.noise_cov_method,
+        rank="info",
+    )
     return cov
 
 

@@ -1,9 +1,13 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 
 
-def plot_auto_scores(auto_scores, *, ch_types) -> list[Figure]:
+def plot_auto_scores(
+    auto_scores: dict[str, Any], *, ch_types: list[str]
+) -> list[Figure]:
     # Plot scores of automated bad channel detection.
     import matplotlib.pyplot as plt
     import seaborn as sns

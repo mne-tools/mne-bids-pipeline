@@ -10,7 +10,7 @@ from .tests.datasets import DATASET_OPTIONS
 DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
 
 
-def _download_via_openneuro(*, ds_name: str, ds_path: Path):
+def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:
     import openneuro
 
     options = DATASET_OPTIONS[ds_name]
@@ -25,7 +25,7 @@ def _download_via_openneuro(*, ds_name: str, ds_path: Path):
     )
 
 
-def _download_from_web(*, ds_name: str, ds_path: Path):
+def _download_from_web(*, ds_name: str, ds_path: Path) -> None:
     """Retrieve Zip archives from a web URL."""
     import pooch
 
@@ -55,7 +55,7 @@ def _download_from_web(*, ds_name: str, ds_path: Path):
     (path / f"{ds_name}.zip").unlink()
 
 
-def _download_via_mne(*, ds_name: str, ds_path: Path):
+def _download_via_mne(*, ds_name: str, ds_path: Path) -> None:
     assert ds_path.stem == ds_name, ds_path
     getattr(mne.datasets, DATASET_OPTIONS[ds_name]["mne"]).data_path(
         ds_path.parent,
@@ -63,7 +63,7 @@ def _download_via_mne(*, ds_name: str, ds_path: Path):
     )
 
 
-def _download(*, ds_name: str, ds_path: Path):
+def _download(*, ds_name: str, ds_path: Path) -> None:
     options = DATASET_OPTIONS[ds_name]
     openneuro_name = options.get("openneuro", "")
     web_url = options.get("web", "")
@@ -81,7 +81,7 @@ def _download(*, ds_name: str, ds_path: Path):
     download_func(ds_name=ds_name, ds_path=ds_path)
 
 
-def main(dataset):
+def main(dataset: str | None) -> None:
     """Download the testing data."""
     # Save everything 'MNE_DATA' dir ... defaults to ~/mne_data
     mne_data_dir = mne.get_config(key="MNE_DATA", default=False)

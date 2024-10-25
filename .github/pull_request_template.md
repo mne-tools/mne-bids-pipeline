@@ -1,3 +1,3 @@
 ### Before merging …
 
-- [ ] Changelog has been updated (`docs/source/changes.md`)
+- [ ] Changelog has been updated (`docs/source/vX.Y.md.inc`)

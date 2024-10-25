@@ -73,7 +73,7 @@ window.
     Enabling interactive mode deactivates parallel processing.
 """
 
-sessions: list | Literal["all"] = "all"
+sessions: list[str] | Literal["all"] = "all"
 """
 The sessions to process. If `'all'`, will process all sessions found in the
 BIDS dataset.
@@ -95,7 +95,7 @@ task_is_rest: bool = False
 Whether the task should be treated as resting-state data.
 """
 
-runs: Sequence | Literal["all"] = "all"
+runs: Sequence[str] | Literal["all"] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
@@ -407,7 +407,7 @@ preprocessing stage itself, nor to the source analysis stage.
     ```
 """
 
-reader_extra_params: dict = {}
+reader_extra_params: dict[str, Any] = {}
 """
 Parameters to be passed to `read_raw_bids()` calls when importing raw data.
 
@@ -891,7 +891,7 @@ can be used for resampling raw data. `1` means no decimation.
 
 # ## Epoching
 
-rename_events: dict = dict()
+rename_events: dict[str, str] = dict()
 """
 A dictionary specifying which events in the BIDS dataset to rename upon
 loading, and before processing begins.
@@ -1812,14 +1812,14 @@ Baseline mode to use for the time-frequency analysis. Can be chosen among:
     ```
 """
 
-time_frequency_crop: dict | None = None
+time_frequency_crop: dict[str, float] | None = None
 """
 Period and frequency range to crop the time-frequency analysis to.
 If `None`, no cropping.
 
 ???+ example "Example"
     ```python
-    time_frequency_crop = dict(tmin=-0.3, tmax=0.5, fmin=5, fmax=20)
+    time_frequency_crop = dict(tmin=-0.3, tmax=0.5, fmin=5., fmax=20.)
     ```
 """
 
@@ -2038,7 +2038,7 @@ For volume or mixed source spaces, choose `1.0`.
     version of MNE-BIDS-Pipeline.
 """
 
-depth: Annotated[float, Interval(ge=0, le=1)] | dict = 0.8
+depth: Annotated[float, Interval(ge=0, le=1)] | dict[str, Any] = 0.8
 """
 If a number, it acts as the depth weighting exponent to use
 (must be between `0` and`1`), with`0` meaning no depth weighting is performed.
@@ -2216,7 +2216,7 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
-report_add_epochs_image_kwargs: dict | None = None
+report_add_epochs_image_kwargs: dict[str, Any] | None = None
 """
 Specifies the limits for the color scales of the epochs_image in the report.
 If `None`, it defaults to the current default in MNE-Python.

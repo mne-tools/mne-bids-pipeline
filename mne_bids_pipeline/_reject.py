@@ -36,16 +36,16 @@ def _get_reject(
 
         msg = "Generating rejection thresholds using autoreject …"
         logger.info(**gen_log_kwargs(message=msg))
-        reject = autoreject.get_rejection_threshold(
+        reject_out: dict[str, float] = autoreject.get_rejection_threshold(
             epochs=epochs,
             ch_types=ch_types_autoreject,
             verbose=False,
         )
-        return reject
+        return reject_out
 
     # Only keep thresholds for channel types of interest
     reject = reject.copy()
-    ch_types_to_remove = list()
+    ch_types_to_remove: list[str] = list()
     if "meg" not in ch_types:
         ch_types_to_remove.extend(("mag", "grad"))
     if "eeg" not in ch_types:

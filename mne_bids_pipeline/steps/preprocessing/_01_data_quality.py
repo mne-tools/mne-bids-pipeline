@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import mne
 import pandas as pd
+from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _do_mf_autobad,
@@ -39,22 +40,26 @@ def get_input_fnames_data_quality(
     task: str | None,
 ) -> dict:
     """Get paths of files required by assess_data_quality function."""
-    kwargs = dict(
+    in_files: dict[str, BIDSPath] = _get_run_rest_noise_path(
+        run=run,
+        task=task,
+        kind="orig",
+        mf_reference_run=cfg.mf_reference_run,
         cfg=cfg,
         subject=subject,
         session=session,
         add_bads=False,
     )
-    in_files = _get_run_rest_noise_path(
-        run=run,
-        task=task,
-        kind="orig",
-        mf_reference_run=cfg.mf_reference_run,
-        **kwargs,
-    )
     # When doing autobad for the noise run, we also need the reference run
     if _do_mf_autobad(cfg=cfg) and run is None and task == "noise":
-        in_files.update(_get_mf_reference_run_path(**kwargs))
+        in_files.update(
+            _get_mf_reference_run_path(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                add_bads=False,
+            )
+        )
     return in_files
 
 

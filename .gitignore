@@ -19,3 +19,4 @@ build/
 .hypothesis/
 .coverage*
 junit-results.xml
+.cache/

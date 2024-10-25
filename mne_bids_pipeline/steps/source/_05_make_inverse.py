@@ -144,7 +144,10 @@ def run_inverse(
             for condition in conditions:
                 msg = f"Rendering inverse solution for {condition}"
                 logger.info(**gen_log_kwargs(message=msg))
-                tags = ("source-estimate", _sanitize_cond_tag(condition))
+                tags: tuple[str, ...] = (
+                    "source-estimate",
+                    _sanitize_cond_tag(condition),
+                )
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
                 report.add_stc(

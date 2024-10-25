@@ -22,11 +22,13 @@ def test_options_documented():
     with open(root_path / "_config.py") as fid:
         contents = fid.read()
     contents = ast.parse(contents)
-    in_config = [
+    assert isinstance(contents, ast.Module), type(contents)
+    in_config_list = [
         item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
     ]
-    assert len(set(in_config)) == len(in_config)
-    in_config = set(in_config)
+    assert len(set(in_config_list)) == len(in_config_list)
+    in_config = set(in_config_list)
+    del in_config_list
     # ensure we clean our namespace correctly
     config = _get_default_config()
     config_names = set(d for d in dir(config) if not d.startswith("_"))
@@ -39,7 +41,7 @@ def test_options_documented():
         sys.path.pop()
     main()
     assert settings_path.is_dir()
-    in_doc = dict()
+    in_doc: dict[str, set[str]] = dict()
     key = "        - "
     for dirpath, _, fnames in os.walk(settings_path):
         for fname in fnames:
@@ -156,7 +158,7 @@ def test_datasets_in_doc():
         assert n_found == count, f"{cp} ({n_found} != {count})"
 
     # 3. Read examples from docs (being careful about tags we can't read)
-    class SafeLoaderIgnoreUnknown(yaml.SafeLoader):
+    class SafeLoaderIgnoreUnknown(yaml.SafeLoader):  # type: ignore[misc]
         def ignore_unknown(self, node):
             return None
 

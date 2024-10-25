@@ -58,3 +58,4 @@
 
 - Use GitHub's `dependabot` service to automatically keep GitHub Actions up-to-date. (#893 by @hoechenberger)
 - Clean up some strings that our autoformatter failed to correctly merge. (#965 by @drammock)
+- Type hints are now checked using `mypy`. (#995 by @larsoner)

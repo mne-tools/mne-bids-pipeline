@@ -3,7 +3,7 @@
 import copy
 import functools
 import pathlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
 
@@ -31,6 +31,7 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
         )
 
     if not config.subjects_dir:
+        assert isinstance(config.bids_root, pathlib.Path)
         return config.bids_root / "derivatives" / "freesurfer" / "subjects"
     else:
         return pathlib.Path(config.subjects_dir).expanduser().resolve()
@@ -42,6 +43,7 @@ def get_fs_subject(
     subjects_dir = get_fs_subjects_dir(config)
 
     if config.use_template_mri is not None:
+        assert isinstance(config.use_template_mri, str), type(config.use_template_mri)
         return config.use_template_mri
 
     if session is not None:
@@ -53,38 +55,41 @@ def get_fs_subject(
 
 
 @functools.cache
-def _get_entity_vals_cached(*args, **kwargs) -> list[str]:
-    return mne_bids.get_entity_vals(*args, **kwargs)
+def _get_entity_vals_cached(
+    *args: list[Any],
+    **kwargs: dict[str, Any],
+) -> tuple[str, ...]:
+    return tuple(str(x) for x in mne_bids.get_entity_vals(*args, **kwargs))
 
 
 def get_datatype(config: SimpleNamespace) -> Literal["meg", "eeg"]:
     # Content of ch_types should be sanitized already, so we don't need any
     # extra sanity checks here.
-    if config.data_type is not None:
-        return config.data_type
-    elif config.data_type is None and config.ch_types == ["eeg"]:
-        return "eeg"
-    elif config.data_type is None and any(
-        [t in ["meg", "mag", "grad"] for t in config.ch_types]
-    ):
+    if config.data_type == "meg":
         return "meg"
-    else:
-        raise RuntimeError(
-            "This probably shouldn't happen, got "
-            f"config.data_type={repr(config.data_type)} and "
-            f"config.ch_types={repr(config.ch_types)} "
-            "but could not determine the datatype. Please contact "
-            "the MNE-BIDS-pipeline developers. Thank you."
-        )
+    if config.data_type == "eeg":
+        return "eeg"
+    if config.data_type is None:
+        if config.ch_types == ["eeg"]:
+            return "eeg"
+        if any(t in ["meg", "mag", "grad"] for t in config.ch_types):
+            return "meg"
+    raise RuntimeError(
+        "This probably shouldn't happen, got "
+        f"config.data_type={repr(config.data_type)} and "
+        f"config.ch_types={repr(config.ch_types)} "
+        "but could not determine the datatype. Please contact "
+        "the MNE-BIDS-pipeline developers. Thank you."
+    )
 
 
 @functools.cache
-def _get_datatypes_cached(root):
-    return mne_bids.get_datatypes(root=root)
+def _get_datatypes_cached(root: pathlib.Path) -> tuple[str, ...]:
+    return tuple(mne_bids.get_datatypes(root=root))
 
 
-def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str]:
-    _all_datatypes: list[str] = _get_datatypes_cached(root=config.bids_root)
+def _get_ignore_datatypes(config: SimpleNamespace) -> tuple[str, ...]:
+    _all_datatypes = _get_datatypes_cached(root=config.bids_root)
     _ignore_datatypes = set(_all_datatypes) - set([get_datatype(config)])
     return tuple(sorted(_ignore_datatypes))
 
@@ -116,7 +121,15 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
     return subjects
 
 
-def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
+def get_sessions(config: SimpleNamespace) -> tuple[None] | tuple[str, ...]:
+    sessions = _get_sessions(config)
+    if not sessions:
+        return (None,)
+    else:
+        return sessions
+
+
+def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=config.bids_root,
@@ -126,15 +139,12 @@ def get_sessions(config: SimpleNamespace) -> list[None] | list[str]:
     if sessions == "all":
         sessions = _all_sessions
 
-    if not sessions:
-        return [None]
-    else:
-        return sessions
+    return tuple(str(x) for x in sessions)
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
-    subj_sessions = dict()
-    cfg_sessions = get_sessions(config)
+def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list[None]]:
+    subj_sessions: dict[str, list[str] | list[None]] = dict()
+    cfg_sessions = _get_sessions(config)
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
         valid_sessions_subj = _get_entity_vals_cached(
@@ -142,8 +152,6 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
             entity_key="session",
             ignore_datatypes=_get_ignore_datatypes(config),
         )
-        # use [None] instead of [] like is done in `get_sessions()`
-        valid_sessions_subj = valid_sessions_subj or [None]
         missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
         if missing_sessions and not config.allow_missing_sessions:
             raise RuntimeError(
@@ -152,12 +160,14 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
                 "`config.allow_missing_sessions` is False"
             )
         subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
+        if subj_sessions[subject] == []:
+            subj_sessions[subject] = [None]
     return subj_sessions
 
 
 def get_runs_all_subjects(
     config: SimpleNamespace,
-) -> dict[str, list[None] | list[str]]:
+) -> dict[str, tuple[None] | tuple[str, ...]]:
     """Give the mapping between subjects and their runs.
 
     Returns
@@ -167,26 +177,24 @@ def get_runs_all_subjects(
     (and not for each subject present in the bids_path).
     """
     # Use caching under the hood for speed
-    return copy.deepcopy(
-        _get_runs_all_subjects_cached(
-            bids_root=config.bids_root,
-            data_type=config.data_type,
-            ch_types=tuple(config.ch_types),
-            subjects=tuple(config.subjects) if config.subjects != "all" else "all",
-            exclude_subjects=tuple(config.exclude_subjects),
-            exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
-        )
+    return _get_runs_all_subjects_cached(
+        bids_root=config.bids_root,
+        data_type=config.data_type,
+        ch_types=tuple(config.ch_types),
+        subjects=tuple(config.subjects) if config.subjects != "all" else "all",
+        exclude_subjects=tuple(config.exclude_subjects),
+        exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
     )
 
 
 @functools.cache
 def _get_runs_all_subjects_cached(
     **config_dict: dict[str, Any],
-) -> dict[str, list[None] | list[str]]:
+) -> dict[str, tuple[None] | tuple[str, ...]]:
     config = SimpleNamespace(**config_dict)
     # Sometimes we check list equivalence for ch_types, so convert it back
     config.ch_types = list(config.ch_types)
-    subj_runs = dict()
+    subj_runs: dict[str, tuple[None] | tuple[str, ...]] = dict()
     for subject in get_subjects(config):
         # Only traverse through the current subject's directory
         valid_runs_subj = _get_entity_vals_cached(
@@ -197,19 +205,19 @@ def _get_runs_all_subjects_cached(
 
         # If we don't have any `run` entities, just set it to None, as we
         # commonly do when creating a BIDSPath.
-        if not valid_runs_subj:
-            valid_runs_subj = [None]
-
-        if subject in (config.exclude_runs or {}):
-            valid_runs_subj = [
-                r for r in valid_runs_subj if r not in config.exclude_runs[subject]
-            ]
-        subj_runs[subject] = valid_runs_subj
+        if valid_runs_subj:
+            if subject in (config.exclude_runs or {}):
+                valid_runs_subj = tuple(
+                    r for r in valid_runs_subj if r not in config.exclude_runs[subject]
+                )
+            subj_runs[subject] = valid_runs_subj
+        else:
+            subj_runs[subject] = (None,)
 
     return subj_runs
 
 
-def get_intersect_run(config: SimpleNamespace) -> list[str]:
+def get_intersect_run(config: SimpleNamespace) -> list[str | None]:
     """Return the intersection of all the runs of all subjects."""
     subj_runs = get_runs_all_subjects(config)
     # Do not use something like:
@@ -217,7 +225,7 @@ def get_intersect_run(config: SimpleNamespace) -> list[str]:
     # as it will not preserve order. Instead just be explicit and preserve order.
     # We could use "sorted", but it's probably better to use the order provided by
     # the user (if they want to put `runs=["02", "01"]` etc. it's better to use "02")
-    all_runs = list()
+    all_runs: list[str | None] = list()
     for runs in subj_runs.values():
         for run in runs:
             if run not in all_runs:
@@ -279,7 +287,10 @@ def get_runs(
             raise ValueError(
                 f"Invalid run. It can be a subset of {valid_runs} but got {runs}"
             )
-    return runs
+    runs_out = list(runs)
+    if runs_out != [None]:
+        runs_out = list(str(x) for x in runs_out)
+    return runs_out
 
 
 def get_runs_tasks(
@@ -287,40 +298,50 @@ def get_runs_tasks(
     config: SimpleNamespace,
     subject: str,
     session: str | None,
-    which: tuple[str] = ("runs", "noise", "rest"),
-) -> list[tuple[str]]:
+    which: tuple[str, ...] = ("runs", "noise", "rest"),
+) -> tuple[tuple[str | None, str | None], ...]:
     """Get (run, task) tuples for all runs plus (maybe) rest."""
     from ._import_data import _get_noise_path, _get_rest_path
 
     assert isinstance(which, tuple)
     assert all(isinstance(inc, str) for inc in which)
     assert all(inc in ("runs", "noise", "rest") for inc in which)
-    runs = list()
-    tasks = list()
+    runs: list[str | None] = list()
+    tasks: list[str | None] = list()
     if "runs" in which:
         runs.extend(get_runs(config=config, subject=subject))
         tasks.extend([get_task(config=config)] * len(runs))
-    kwargs = dict(
-        cfg=config,
-        subject=subject,
-        session=session,
-        kind="orig",
-        add_bads=False,
-    )
-    if "rest" in which and _get_rest_path(**kwargs):
-        runs.append(None)
-        tasks.append("rest")
+    if "rest" in which:
+        rest_path = _get_rest_path(
+            cfg=config,
+            subject=subject,
+            session=session,
+            kind="orig",
+            add_bads=False,
+        )
+        if rest_path:
+            runs.append(None)
+            tasks.append("rest")
     if "noise" in which:
         mf_reference_run = get_mf_reference_run(config=config)
-        if _get_noise_path(mf_reference_run=mf_reference_run, **kwargs):
+        noise_path = _get_noise_path(
+            mf_reference_run=mf_reference_run,
+            cfg=config,
+            subject=subject,
+            session=session,
+            kind="orig",
+            add_bads=False,
+        )
+        if noise_path:
             runs.append(None)
             tasks.append("noise")
     return tuple(zip(runs, tasks))
 
 
-def get_mf_reference_run(config: SimpleNamespace) -> str:
+def get_mf_reference_run(config: SimpleNamespace) -> str | None:
     # Retrieve to run identifier (number, name) of the reference run
     if config.mf_reference_run is not None:
+        assert isinstance(config.mf_reference_run, str), type(config.mf_reference_run)
         return config.mf_reference_run
     # Use the first run
     inter_runs = get_intersect_run(config)
@@ -333,19 +354,19 @@ def get_mf_reference_run(config: SimpleNamespace) -> str:
             f"dataset only contains the following runs: {inter_runs}"
         )
         raise ValueError(msg)
-    if inter_runs:
-        return inter_runs[0]
-    else:
+    if not inter_runs:
         raise ValueError(
             f"The intersection of runs by subjects is empty. "
             f"Check the list of runs: "
             f"{get_runs_all_subjects(config)}"
         )
+    return inter_runs[0]
 
 
 def get_task(config: SimpleNamespace) -> str | None:
     task = config.task
     if task:
+        assert isinstance(task, str), type(task)
         return task
     _valid_tasks = _get_entity_vals_cached(
         root=config.bids_root,
@@ -397,7 +418,7 @@ def sanitize_cond_name(cond: str) -> str:
 
 
 def get_mf_cal_fname(
-    *, config: SimpleNamespace, subject: str, session: str
+    *, config: SimpleNamespace, subject: str, session: str | None
 ) -> pathlib.Path:
     if config.mf_cal_fname is None:
         bids_path = BIDSPath(
@@ -421,11 +442,12 @@ def get_mf_cal_fname(
                 f"file at {str(mf_cal_fpath)}."
             )
 
+    assert isinstance(mf_cal_fpath, pathlib.Path), type(mf_cal_fpath)
     return mf_cal_fpath
 
 
 def get_mf_ctc_fname(
-    *, config: SimpleNamespace, subject: str, session: str
+    *, config: SimpleNamespace, subject: str, session: str | None
 ) -> pathlib.Path:
     if config.mf_ctc_fname is None:
         mf_ctc_fpath = BIDSPath(
@@ -445,6 +467,7 @@ def get_mf_ctc_fname(
                 f"file at {str(mf_ctc_fpath)}."
             )
 
+    assert isinstance(mf_ctc_fpath, pathlib.Path), type(mf_ctc_fpath)
     return mf_ctc_fpath
 
 
@@ -474,9 +497,10 @@ def _restrict_analyze_channels(
     return inst
 
 
-def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float], str]:
+def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float, ...] | None, str]:
+    conductivity: tuple[float, ...] | None = None  # should never be used
     if cfg.fs_subject in ("fsaverage", cfg.use_template_mri):
-        conductivity = None  # should never be used
+        pass
         tag = "5120-5120-5120"
     elif "eeg" in cfg.ch_types:
         conductivity = (0.3, 0.006, 0.3)
@@ -594,14 +618,16 @@ def get_eeg_reference(
     config: SimpleNamespace,
 ) -> Literal["average"] | Iterable[str]:
     if config.eeg_reference == "average":
-        return config.eeg_reference
+        return "average"
     elif isinstance(config.eeg_reference, str):
         return [config.eeg_reference]
     else:
+        assert isinstance(config.eeg_reference, Iterable)
+        assert all(isinstance(x, str) for x in config.eeg_reference)
         return config.eeg_reference
 
 
-def _validate_contrasts(contrasts: SimpleNamespace) -> None:
+def _validate_contrasts(contrasts: list[tuple[str, str] | dict[str, Any]]) -> None:
     for contrast in contrasts:
         if isinstance(contrast, tuple):
             if len(contrast) != 2:
@@ -618,7 +644,7 @@ def _validate_contrasts(contrasts: SimpleNamespace) -> None:
             raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
-def _get_step_modules() -> dict[str, tuple[ModuleType]]:
+def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     from .steps import freesurfer, init, preprocessing, sensor, source
 
     INIT_STEPS = init._STEPS
@@ -647,7 +673,7 @@ def _get_step_modules() -> dict[str, tuple[ModuleType]]:
     return STEP_MODULES
 
 
-def _bids_kwargs(*, config: SimpleNamespace) -> dict:
+def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, Any]:
     """Get the standard BIDS config entries."""
     return dict(
         proc=config.proc,
@@ -662,11 +688,11 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict:
 
 
 def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
-    return cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg
+    return bool(cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg)
 
 
 # Adapted from MNE-Python
-def _pl(x, *, non_pl="", pl="s"):
+def _pl(x: int | np.generic | Sized, *, non_pl: str = "", pl: str = "s") -> str:
     """Determine if plural should be used."""
     len_x = x if isinstance(x, int | np.generic) else len(x)
     return non_pl if len_x == 1 else pl

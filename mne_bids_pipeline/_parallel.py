@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
 import joblib
 from mne.utils import logger as mne_logger
@@ -27,7 +27,7 @@ def get_n_jobs(*, exec_params: SimpleNamespace, log_override: bool = False) -> i
         if log_override and n_jobs != orig_n_jobs:
             msg = f"Overriding n_jobs: {orig_n_jobs}→{n_jobs}"
             logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-    return n_jobs
+    return int(n_jobs)
 
 
 dask_client = None
@@ -67,13 +67,12 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
             "distributed.worker.memory.spill": False,
         }
     )
-    client = Client(  # noqa: F841
+    client = Client(  # type: ignore[no-untyped-call]
         memory_limit=exec_params.dask_worker_memory_limit,
         n_workers=n_workers,
         threads_per_worker=1,
         name="mne-bids-pipeline",
     )
-    client.auto_restart = False  # don't restart killed workers
 
     dashboard_url = client.dashboard_link
     msg = f"Dask client dashboard: [link={dashboard_url}]{dashboard_url}[/link]"
@@ -92,11 +91,12 @@ def get_parallel_backend_name(
     *,
     exec_params: SimpleNamespace,
 ) -> Literal["dask", "loky"]:
+    backend: Literal["dask", "loky"] = "loky"
     if (
         exec_params.parallel_backend == "loky"
         or get_n_jobs(exec_params=exec_params) == 1
     ):
-        backend = "loky"
+        pass
     elif exec_params.parallel_backend == "dask":
         # Disable interactive plotting backend
         import matplotlib
@@ -129,7 +129,11 @@ def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backen
     return joblib.parallel_backend(backend, **kwargs)
 
 
-def parallel_func(func: Callable, *, exec_params: SimpleNamespace):
+def parallel_func(
+    func: Callable[..., Any],
+    *,
+    exec_params: SimpleNamespace,
+) -> tuple[Callable[..., Any], Callable[..., Any]]:
     if (
         get_parallel_backend_name(exec_params=exec_params) == "loky"
         and get_n_jobs(exec_params=exec_params) == 1
@@ -141,7 +145,7 @@ def parallel_func(func: Callable, *, exec_params: SimpleNamespace):
 
         parallel = Parallel()
 
-        def run_verbose(*args, verbose=mne_logger.level, **kwargs):
+        def run_verbose(*args, verbose=mne_logger.level, **kwargs):  # type: ignore
             with use_log_level(verbose=verbose):
                 return func(*args, **kwargs)
 

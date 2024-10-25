@@ -3,6 +3,8 @@ import inspect
 import re
 from collections import defaultdict
 from pathlib import Path
+from types import FunctionType
+from typing import Any
 
 from tqdm import tqdm
 
@@ -101,19 +103,25 @@ _EXTRA_FUNCS = {
     "_bids_kwargs": ("get_task",),
     "_import_data_kwargs": ("get_mf_reference_run",),
     "get_runs": ("get_runs_all_subjects",),
+    "get_sessions": ("_get_sessions",),
 }
 
 
 class _ParseConfigSteps:
-    def __init__(self, force_empty=None):
+    def __init__(self, force_empty: tuple[str, ...] | None = None) -> None:
         """Build a mapping from config options to tuples of steps that use each option.
 
         The mapping is stored in `self.steps`.
         """
         self._force_empty = _FORCE_EMPTY if force_empty is None else force_empty
-        self.steps = defaultdict(list)
+        steps: dict[str, Any] = defaultdict(list)
+
+        def _add_step_option(step: str, option: str) -> None:
+            if step not in steps[option]:
+                steps[option].append(step)
+
         # Add a few helper functions
-        for func in (
+        for func_extra in (
             _config_utils.get_eeg_reference,
             _config_utils.get_all_contrasts,
             _config_utils.get_decoding_contrasts,
@@ -123,15 +131,16 @@ class _ParseConfigSteps:
             _config_utils.get_mf_ctc_fname,
             _config_utils.get_subjects_sessions,
         ):
-            this_list = []
-            for attr in ast.walk(ast.parse(inspect.getsource(func))):
+            this_list: list[str] = []
+            assert isinstance(func_extra, FunctionType)
+            for attr in ast.walk(ast.parse(inspect.getsource(func_extra))):
                 if not isinstance(attr, ast.Attribute):
                     continue
                 if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
                     continue
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
-            _MANUAL_KWS[func.__name__] = tuple(this_list)
+            _MANUAL_KWS[func_extra.__name__] = tuple(this_list)
 
         for module in tqdm(
             sum(_config_utils._get_step_modules().values(), tuple()),
@@ -153,21 +162,23 @@ class _ParseConfigSteps:
                         for keyword in call.keywords:
                             if not isinstance(keyword.value, ast.Attribute):
                                 continue
+                            assert isinstance(keyword.value.value, ast.Name)
                             if keyword.value.value.id != "config":
                                 continue
                             if keyword.value.attr in ("exec_params",):
                                 continue
-                            self._add_step_option(step, keyword.value.attr)
+                            _add_step_option(step, keyword.value.attr)
                         for arg in call.args:
                             if not isinstance(arg, ast.Name):
                                 continue
                             if arg.id != "config":
                                 continue
+                            assert isinstance(call.func, ast.Name)
                             key = call.func.id
                             # e.g., get_subjects_sessions(config)
                             if key in _MANUAL_KWS:
                                 for option in _MANUAL_KWS[key]:
-                                    self._add_step_option(step, option)
+                                    _add_step_option(step, option)
                                 break
 
                     # Also look for root-level conditionals like use_maxwell_filter
@@ -183,9 +194,10 @@ class _ParseConfigSteps:
                         for attr in ast.walk(cond.test):
                             if not isinstance(attr, ast.Attribute):
                                 continue
+                            assert isinstance(attr.value, ast.Name)
                             if attr.value.id != "config":
                                 continue
-                            self._add_step_option(step, attr.attr)
+                            _add_step_option(step, attr.attr)
                 # Now look at get_config* functions
                 if not func.name.startswith("get_config"):
                     continue
@@ -193,6 +205,7 @@ class _ParseConfigSteps:
                 for call in ast.walk(func):
                     if not isinstance(call, ast.Call):
                         continue
+                    assert isinstance(call.func, ast.Name)
                     if call.func.id != "SimpleNamespace":
                         continue
                     break
@@ -201,16 +214,18 @@ class _ParseConfigSteps:
                 assert call.args == []
                 for keyword in call.keywords:
                     if isinstance(keyword.value, ast.Call):
+                        assert isinstance(keyword.value.func, ast.Name)
                         key = keyword.value.func.id
                         if key in _MANUAL_KWS:
                             for option in _MANUAL_KWS[key]:
-                                self._add_step_option(step, option)
+                                _add_step_option(step, option)
                             continue
                         if keyword.value.func.id == "_sanitize_callable":
                             assert len(keyword.value.args) == 1
                             assert isinstance(keyword.value.args[0], ast.Attribute)
+                            assert isinstance(keyword.value.args[0].value, ast.Name)
                             assert keyword.value.args[0].value.id == "config"
-                            self._add_step_option(step, keyword.value.args[0].attr)
+                            _add_step_option(step, keyword.value.args[0].attr)
                             continue
                         if key not in (
                             "_bids_kwargs",
@@ -231,21 +246,25 @@ class _ParseConfigSteps:
                         for func_name in _EXTRA_FUNCS.get(key, ()):
                             funcs.append(getattr(_config_utils, func_name))
                         for fi, func in enumerate(funcs):
+                            assert isinstance(func, FunctionType), func
                             source = inspect.getsource(func)
                             assert "config: SimpleNamespace" in source, key
                             if fi == 0:
                                 for func_name in _EXTRA_FUNCS.get(key, ()):
                                     assert f"{func_name}(" in source, (key, func_name)
                             attrs = _CONFIG_RE.findall(source)
-                            assert len(attrs), f"No config.* found in source of {key}"
+                            if key != "get_sessions":  # pure wrapper
+                                assert len(
+                                    attrs
+                                ), f"No config.* found in source of {key}"
                             for attr in attrs:
-                                self._add_step_option(step, attr)
+                                _add_step_option(step, attr)
                         continue
                     if isinstance(keyword.value, ast.Name):
                         key = f"{where}:{keyword.value.id}"
                         if key in _MANUAL_KWS:
                             for option in _MANUAL_KWS[f"{where}:{keyword.value.id}"]:
-                                self._add_step_option(step, option)
+                                _add_step_option(step, option)
                             continue
                         raise RuntimeError(f"{where} cannot handle Name {key=}")
                     if isinstance(keyword.value, ast.IfExp):  # conditional
@@ -258,21 +277,18 @@ class _ParseConfigSteps:
                     option = keyword.value.attr
                     if option in _IGNORE_OPTIONS:
                         continue
+                    assert isinstance(keyword.value.value, ast.Name)
                     assert keyword.value.value.id == "config", f"{where} {keyword.value.value.id}"  # noqa: E501  # fmt: skip
-                    self._add_step_option(step, option)
+                    _add_step_option(step, option)
             if step in _NO_CONFIG:
                 assert not found, f"Found unexpected get_config* in {step}"
             else:
                 assert found, f"Could not find get_config* in {step}"
         for key in self._force_empty:
-            self.steps[key] = list()
-        for key, val in self.steps.items():
+            steps[key] = list()
+        for key, val in steps.items():
             assert len(val) == len(set(val)), f"{key} {val}"
-        self.steps = {k: tuple(v) for k, v in self.steps.items()}  # no defaultdict
+        self.steps: dict[str, tuple[str, ...]] = {k: tuple(v) for k, v in steps.items()}
 
-    def _add_step_option(self, step, option):
-        if step not in self.steps[option]:
-            self.steps[option].append(step)
-
-    def __call__(self, option: str) -> list[str]:
+    def __call__(self, option: str) -> tuple[str, ...]:
         return self.steps[option]

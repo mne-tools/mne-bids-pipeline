@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 from collections.abc import Collection
+from contextlib import nullcontext
 from pathlib import Path
 from typing import TypedDict
 
@@ -204,3 +205,61 @@ def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
     with capsys.disabled():
         print()
         main()
+
+
+@pytest.mark.parametrize("allow_missing_sessions", (False, True))
+def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions):
+    """Test the `allow_missing_sessions` config variable."""
+    dataset = "fake"
+    bids_root = tmp_path / dataset
+    files = (
+        "dataset_description.json",
+        *(f"participants.{x}" for x in ("json", "tsv")),
+        *(f"sub-1/sub-1_sessions.{x}" for x in ("json", "tsv")),
+        *(
+            f"sub-1/ses-a/eeg/sub-1_ses-a_task-foo_{x}.tsv"
+            for x in ("channels", "events")
+        ),
+        *(
+            f"sub-1/ses-a/eeg/sub-1_ses-a_task-foo_eeg.{x}"
+            for x in ("eeg", "json", "vhdr", "vmrk")
+        ),
+    )
+    for _file in files:
+        path = bids_root / _file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
+    config = f"""
+bids_root = "{bids_root}"
+deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
+interactive = False
+subjects = ["1"]
+sessions = ["a", "b"]
+ch_types = ["eeg"]
+conditions = ["zzz"]
+allow_missing_sessions = {allow_missing_sessions}
+"""
+    config_path = tmp_path / "fake_config_missing_session.py"
+    with open(config_path, "w") as fid:
+        fid.write(config)
+    # set up the context handler
+    context = (
+        nullcontext()
+        if allow_missing_sessions
+        else pytest.raises(RuntimeError, match=r"Subject 1 is missing session \('b',\)")
+    )
+    # run
+    command = [
+        "mne_bids_pipeline",
+        str(config_path),
+        "--steps=init/_01_init_derivatives_dir",
+    ]
+    if "--pdb" in sys.argv:
+        command.append("--n_jobs=1")
+    monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING", "true")
+    monkeypatch.setattr(sys, "argv", command)
+    with capsys.disabled():
+        print()
+        with context:
+            main()

@@ -11,8 +11,7 @@ import mne
 from mne_bids_pipeline._config_utils import (
     _proj_path,
     get_runs_tasks,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -183,8 +182,8 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
         )
         # Raw
         parallel, run_func = parallel_func(
@@ -202,8 +201,8 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
             for run, task in get_runs_tasks(
                 config=config,
                 subject=subject,

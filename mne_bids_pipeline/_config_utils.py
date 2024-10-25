@@ -122,6 +122,14 @@ def get_subjects(config: SimpleNamespace) -> list[str]:
 
 
 def get_sessions(config: SimpleNamespace) -> tuple[None] | tuple[str, ...]:
+    sessions = _get_sessions(config)
+    if not sessions:
+        return (None,)
+    else:
+        return sessions
+
+
+def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     sessions = copy.deepcopy(config.sessions)
     _all_sessions = _get_entity_vals_cached(
         root=config.bids_root,
@@ -131,10 +139,30 @@ def get_sessions(config: SimpleNamespace) -> tuple[None] | tuple[str, ...]:
     if sessions == "all":
         sessions = _all_sessions
 
-    if not sessions:
-        return (None,)
-    else:
-        return tuple(str(x) for x in sessions)
+    return tuple(str(x) for x in sessions)
+
+
+def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list[None]]:
+    subj_sessions: dict[str, list[str] | list[None]] = dict()
+    cfg_sessions = _get_sessions(config)
+    for subject in get_subjects(config):
+        # Only traverse through the current subject's directory
+        valid_sessions_subj = _get_entity_vals_cached(
+            config.bids_root / f"sub-{subject}",
+            entity_key="session",
+            ignore_datatypes=_get_ignore_datatypes(config),
+        )
+        missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
+        if missing_sessions and not config.allow_missing_sessions:
+            raise RuntimeError(
+                f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                f"{tuple(sorted(missing_sessions))}, and "
+                "`config.allow_missing_sessions` is False"
+            )
+        subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
+        if subj_sessions[subject] == []:
+            subj_sessions[subject] = [None]
+    return subj_sessions
 
 
 def get_runs_all_subjects(

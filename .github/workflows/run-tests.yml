@@ -3,7 +3,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
   cancel-in-progress: true
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   check-doc:
@@ -16,9 +20,9 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - run: pip install --upgrade pip
-    - run: pip install -ve .[tests] codespell tomli
+    - run: pip install -ve .[tests] codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
     - run: make codespell-error
     - run: pytest mne_bids_pipeline -m "not dataset_test"
     - uses: codecov/codecov-action@v4
@@ -31,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash -el {0}
+        shell: bash -e {0}
     strategy:
       matrix:
         include:
@@ -49,8 +53,8 @@ jobs:
           pyvista: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"  # no "multidict" wheels on 3.12 yet
-      - run: pip install -ve .[tests]
+          python-version: "3.12"
+      - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
       - uses: actions/cache@v4
         with:
           key: ds001971

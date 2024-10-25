@@ -12,8 +12,7 @@ from mne_bids_pipeline._config_utils import (
     get_mf_cal_fname,
     get_mf_ctc_fname,
     get_runs_tasks,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import (
     _bads_path,
@@ -354,8 +353,8 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, sessions in get_subjects_sessions(config).items()
+            for session in sessions
             for run, task in get_runs_tasks(
                 config=config,
                 subject=subject,

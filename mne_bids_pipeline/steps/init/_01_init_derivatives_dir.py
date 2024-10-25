@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from mne_bids.config import BIDS_VERSION
 from mne_bids.utils import _write_json
 
-from mne_bids_pipeline._config_utils import _bids_kwargs, get_sessions, get_subjects
+from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run
 from mne_bids_pipeline.typing import OutFilesT
@@ -76,8 +76,8 @@ def main(*, config):
     init_dataset(cfg=get_config(config=config), exec_params=config.exec_params)
     # Don't bother with parallelization here as I/O operations are generally
     # not well parallelized (and this should be very fast anyway)
-    for subject in get_subjects(config):
-        for session in get_sessions(config):
+    for subject, sessions in get_subjects_sessions(config).items():
+        for session in sessions:
             init_subject_dirs(
                 cfg=get_config(
                     config=config,

@@ -240,6 +240,8 @@ class _ParseConfigSteps:
                         # Get the source and regex for config values
                         if key == "_import_data_kwargs":
                             funcs = [getattr(_import_data, key)]
+                        elif key == "get_sessions":  # wrapper now
+                            funcs = [getattr(_config_utils, "_get_sessions")]
                         else:
                             funcs = [getattr(_config_utils, key)]
                         for func_name in _EXTRA_FUNCS.get(key, ()):

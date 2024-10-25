@@ -103,6 +103,7 @@ _EXTRA_FUNCS = {
     "_bids_kwargs": ("get_task",),
     "_import_data_kwargs": ("get_mf_reference_run",),
     "get_runs": ("get_runs_all_subjects",),
+    "get_sessions": ("_get_sessions",),
 }
 
 
@@ -240,8 +241,6 @@ class _ParseConfigSteps:
                         # Get the source and regex for config values
                         if key == "_import_data_kwargs":
                             funcs = [getattr(_import_data, key)]
-                        elif key == "get_sessions":  # wrapper now
-                            funcs = [getattr(_config_utils, "_get_sessions")]
                         else:
                             funcs = [getattr(_config_utils, key)]
                         for func_name in _EXTRA_FUNCS.get(key, ()):
@@ -254,7 +253,10 @@ class _ParseConfigSteps:
                                 for func_name in _EXTRA_FUNCS.get(key, ()):
                                     assert f"{func_name}(" in source, (key, func_name)
                             attrs = _CONFIG_RE.findall(source)
-                            assert len(attrs), f"No config.* found in source of {key}"
+                            if key != "get_sessions":  # pure wrapper
+                                assert len(
+                                    attrs
+                                ), f"No config.* found in source of {key}"
                             for attr in attrs:
                                 _add_step_option(step, attr)
                         continue

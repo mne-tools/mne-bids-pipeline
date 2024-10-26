@@ -59,6 +59,7 @@ def test_all_functions_return(module_name):
                 return_values[i] = None
         assert len(return_values), f"Function does not return anything: {what}"
         for r in return_values:
-            assert (
-                isinstance(r, ast.Call) and r.func.id == "_prep_out_files"
-            ), f"Function does _prep_out_files: {what}"
+            what = f"Function does _prep_out_files: {what}"
+            assert isinstance(r, ast.Call), what
+            assert isinstance(r.func, ast.Name), what
+            assert r.func.id == "_prep_out_files", what

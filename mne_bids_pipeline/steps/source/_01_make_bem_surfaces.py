@@ -42,12 +42,12 @@ def get_input_fnames_make_bem_surfaces(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
-    in_files = dict()
+) -> dict[str, Path]:
+    in_files: dict[str, Path] = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
     in_files["t1"] = mri_dir / "T1.mgz"
     if mri_images == "FLASH":
-        flash_fnames = sorted(glob.glob(str(flash_dir / "mef*_*.mgz")))
+        flash_fnames = sorted(Path(p) for p in glob.glob(str(flash_dir / "mef*_*.mgz")))
         # We could check for existence here, but make_flash_bem does it later
         for fname in flash_fnames:
             in_files[fname.stem] = fname
@@ -62,6 +62,7 @@ def get_output_fnames_make_bem_surfaces(
 ) -> dict:
     out_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
+    assert conductivity is not None
     n_layers = len(conductivity)
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "bem"
     for surf in ("inner_skull", "outer_skull", "outer_skin")[:n_layers]:

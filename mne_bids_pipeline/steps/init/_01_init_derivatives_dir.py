@@ -3,7 +3,6 @@
 Initialize the derivatives directory.
 """
 
-from pathlib import Path
 from types import SimpleNamespace
 
 from mne_bids.config import BIDS_VERSION
@@ -12,10 +11,11 @@ from mne_bids.utils import _write_json
 from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run
+from mne_bids_pipeline.typing import OutFilesT
 
 
 @failsafe_run()
-def init_dataset(cfg: SimpleNamespace, exec_params: SimpleNamespace) -> dict[str, Path]:
+def init_dataset(cfg: SimpleNamespace, exec_params: SimpleNamespace) -> OutFilesT:
     """Prepare the pipeline directory in /derivatives."""
     out_files = dict()
     out_files["json"] = cfg.deriv_root / "dataset_description.json"

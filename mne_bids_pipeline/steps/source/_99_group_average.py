@@ -33,10 +33,11 @@ def _stc_path(
     morphed: bool,
 ) -> BIDSPath:
     cond_str = sanitize_cond_name(condition)
-    suffix = [cond_str, cfg.inverse_method, "hemi"]
+    suffix_list = [cond_str, cfg.inverse_method, "hemi"]
     if morphed:
-        suffix.insert(2, "morph2fsaverage")
-    suffix = "+".join(suffix)
+        suffix_list.insert(2, "morph2fsaverage")
+    suffix = "+".join(suffix_list)
+    del suffix_list
     return BIDSPath(
         subject=subject,
         session=session,
@@ -170,7 +171,7 @@ def run_average(
             msg = f"Rendering inverse solution for {condition}"
             logger.info(**gen_log_kwargs(message=msg))
             cond_str = sanitize_cond_name(condition)
-            tags = ("source-estimate", cond_str)
+            tags: tuple[str, ...] = ("source-estimate", cond_str)
             if condition in cfg.conditions:
                 title = f"Average (source): {condition}"
             else:  # It's a contrast of two conditions.

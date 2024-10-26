@@ -40,6 +40,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import RunKindT, RunTypeT
 
 
 def get_input_fnames_frequency_filter(
@@ -51,7 +52,7 @@ def get_input_fnames_frequency_filter(
     task: str | None,
 ) -> dict:
     """Get paths of files required by filter_data function."""
-    kind = "sss" if cfg.use_maxwell_filter else "orig"
+    kind: RunKindT = "sss" if cfg.use_maxwell_filter else "orig"
     return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
@@ -72,7 +73,7 @@ def notch_filter(
     freqs: float | Iterable[float] | None,
     trans_bandwidth: float | Literal["auto"],
     notch_widths: float | Iterable[float] | None,
-    run_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: RunTypeT,
     picks: np.ndarray | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
@@ -105,7 +106,7 @@ def bandpass_filter(
     h_freq: float | None,
     l_trans_bandwidth: float | Literal["auto"],
     h_trans_bandwidth: float | Literal["auto"],
-    run_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: RunTypeT,
     picks: np.ndarray | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
@@ -140,7 +141,7 @@ def resample(
     run: str,
     task: str | None,
     sfreq: float,
-    run_type: Literal["experimental", "empty-room", "resting-state"],
+    run_type: RunTypeT,
 ) -> None:
     if not sfreq:
         return

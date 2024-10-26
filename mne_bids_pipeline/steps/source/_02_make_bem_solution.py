@@ -28,6 +28,7 @@ def get_input_fnames_make_bem_solution(
 ) -> dict:
     in_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
+    assert conductivity is not None
     n_layers = len(conductivity)
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "bem"
     for surf in ("inner_skull", "outer_skull", "outer_skin")[:n_layers]:

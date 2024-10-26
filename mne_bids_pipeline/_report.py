@@ -1,18 +1,22 @@
 import contextlib
-import re
 import traceback
+from collections.abc import Generator
 from functools import lru_cache
 from io import StringIO
 from textwrap import indent
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
+import matplotlib.axes
+import matplotlib.figure
+import matplotlib.image
 import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
 from filelock import FileLock
 from mne.io import BaseRaw
+from mne.report.report import _df_bootstrap_table
 from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
@@ -21,6 +25,7 @@ from scipy.io import loadmat
 from ._config_utils import get_all_contrasts
 from ._decoding import _handle_csp_args
 from ._logging import _linkfile, gen_log_kwargs, logger
+from .typing import FloatArrayT
 
 
 @contextlib.contextmanager
@@ -34,7 +39,7 @@ def _open_report(
     task: str | None = None,
     fname_report: BIDSPath | None = None,
     name: str = "report",
-):
+) -> Generator[mne.Report, None, None]:
     if fname_report is None:
         fname_report = BIDSPath(
             subject=subject,
@@ -131,10 +136,10 @@ def _open_report(
 
 def _plot_full_epochs_decoding_scores(
     contrast_names: list[str],
-    scores: list[np.ndarray],
+    scores: list[FloatArrayT],
     metric: str,
     kind: Literal["single-subject", "grand-average"] = "single-subject",
-):
+) -> tuple[matplotlib.figure.Figure, str, pd.DataFrame]:
     """Plot cross-validation results from full-epochs decoding."""
     import matplotlib.pyplot as plt  # nested import to help joblib
     import seaborn as sns
@@ -184,7 +189,7 @@ def _plot_full_epochs_decoding_scores(
         )
 
         # And now add the mean CV score on top.
-        def _plot_mean_cv_score(x, **kwargs):
+        def _plot_mean_cv_score(x: FloatArrayT, **kwargs: dict[str, Any]) -> None:
             plt.plot(x.mean(), **kwargs)
 
         g.map(
@@ -214,12 +219,12 @@ def _plot_full_epochs_decoding_scores(
 
 def _plot_time_by_time_decoding_scores(
     *,
-    times: np.ndarray,
-    cross_val_scores: np.ndarray,
+    times: FloatArrayT,
+    cross_val_scores: FloatArrayT,
     metric: str,
     time_generalization: bool,
     decim: int,
-):
+) -> matplotlib.figure.Figure:
     """Plot cross-validation results from time-by-time decoding."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -258,7 +263,13 @@ def _plot_time_by_time_decoding_scores(
     return fig
 
 
-def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
+def _label_time_by_time(
+    ax: matplotlib.axes.Axes,
+    *,
+    decim: int,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+) -> None:
     extra = ""
     if decim > 1:
         extra = f" (decim={decim})"
@@ -268,7 +279,9 @@ def _label_time_by_time(ax, *, decim, xlabel=None, ylabel=None):
         ax.set_ylabel(f"{ylabel}{extra}")
 
 
-def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
+def _plot_time_by_time_decoding_scores_gavg(
+    *, cfg: SimpleNamespace, decoding_data: dict[str, Any]
+) -> matplotlib.figure.Figure:
     """Plot the grand-averaged decoding scores."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -357,7 +370,9 @@ def _plot_time_by_time_decoding_scores_gavg(*, cfg, decoding_data):
     return fig
 
 
-def plot_time_by_time_decoding_t_values(decoding_data):
+def plot_time_by_time_decoding_t_values(
+    decoding_data: dict[str, Any],
+) -> matplotlib.figure.Figure:
     """Plot the t-values used to form clusters for the permutation test."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -400,8 +415,10 @@ def plot_time_by_time_decoding_t_values(decoding_data):
 
 
 def _plot_decoding_time_generalization(
-    decoding_data, metric: str, kind: Literal["single-subject", "grand-average"]
-):
+    decoding_data: dict[str, Any],
+    metric: str,
+    kind: Literal["single-subject", "grand-average"],
+) -> matplotlib.figure.Figure:
     """Plot time generalization matrix."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -468,7 +485,11 @@ def _contrasts_to_names(contrasts: list[list[str]]) -> list[str]:
 
 
 def add_event_counts(
-    *, cfg, subject: str | None, session: str | None, report: mne.Report
+    *,
+    cfg: SimpleNamespace,
+    subject: str | None,
+    session: str | None,
+    report: mne.Report,
 ) -> None:
     try:
         df_events = count_events(BIDSPath(root=cfg.bids_root, session=session))
@@ -530,40 +551,40 @@ div.accordion-body pre.my-0 code {
 # We make a lot of calls to this function and it takes > 1 sec generally
 # to run, so run it just once (it shouldn't meaningfully change anyway)
 @lru_cache(maxsize=1)
-def _cached_sys_info():
+def _cached_sys_info() -> str:
     with StringIO() as f:
         mne.sys_info(f)
         return f.getvalue()
 
 
-def _all_conditions(*, cfg):
+def _all_conditions(*, cfg: SimpleNamespace) -> list[str]:
     if isinstance(cfg.conditions, dict):
         conditions = list(cfg.conditions.keys())
     else:
-        conditions = cfg.conditions.copy()
+        conditions = list(cfg.conditions)
     all_contrasts = get_all_contrasts(cfg)
     conditions.extend([contrast["name"] for contrast in all_contrasts])
     return conditions
 
 
-def _sanitize_cond_tag(cond):
+def _sanitize_cond_tag(cond: str) -> str:
     return str(cond).lower().replace(" ", "-")
 
 
 def _imshow_tf(
-    vals,
-    ax,
+    vals: np.ndarray,
+    ax: matplotlib.axes.Axes,
     *,
-    tmin,
-    tmax,
-    fmin,
-    fmax,
-    vmin,
-    vmax,
-    cmap="RdBu_r",
-    mask=None,
-    cmap_masked=None,
-):
+    tmin: np.ndarray,
+    tmax: np.ndarray,
+    fmin: np.ndarray,
+    fmax: np.ndarray,
+    vmin: float,
+    vmax: float,
+    cmap: str = "RdBu_r",
+    mask: np.ndarray | None = None,
+    cmap_masked: Any | None = None,
+) -> matplotlib.image.AxesImage:
     """Plot CSP TF decoding scores."""
     # XXX Add support for more metrics
     assert len(vals) == len(tmin) == len(tmax) == len(fmin) == len(fmax)
@@ -590,13 +611,13 @@ def add_csp_grand_average(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: str,
+    session: str | None,
     report: mne.Report,
     cond_1: str,
     cond_2: str,
     fname_csp_freq_results: BIDSPath,
     fname_csp_cluster_results: pd.DataFrame | None,
-):
+) -> None:
     """Add CSP decoding results to the grand average report."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -615,7 +636,7 @@ def add_csp_grand_average(
     freq_bin_starts = list()
     freq_bin_widths = list()
     decoding_scores = list()
-    error_bars = list()
+    error_bars_list = list()
     csp_freq_results = pd.read_excel(fname_csp_freq_results, sheet_name="CSP Frequency")
     for freq_range_name, freq_bins in freq_name_to_bins_map.items():
         results = csp_freq_results.loc[
@@ -631,10 +652,10 @@ def add_csp_grand_average(
             cis_upper = results["mean_ci_upper"][bi]
             error_bars_lower = decoding_scores[-1] - cis_lower
             error_bars_upper = cis_upper - decoding_scores[-1]
-            error_bars.append(np.stack([error_bars_lower, error_bars_upper]))
-            assert len(error_bars[-1]) == 2  # lower, upper
+            error_bars_list.append(np.stack([error_bars_lower, error_bars_upper]))
+            assert len(error_bars_list[-1]) == 2  # lower, upper
             del cis_lower, cis_upper, error_bars_lower, error_bars_upper
-    error_bars = np.array(error_bars, float).T
+    error_bars = np.array(error_bars_list, float).T
 
     if cfg.decoding_metric == "roc_auc":
         metric = "ROC AUC"
@@ -826,7 +847,7 @@ def add_csp_grand_average(
 
 
 @contextlib.contextmanager
-def _agg_backend():
+def _agg_backend() -> Generator[None, None, None]:
     import matplotlib
 
     backend = matplotlib.get_backend()
@@ -848,9 +869,9 @@ def _add_raw(
     bids_path_in: BIDSPath,
     raw: BaseRaw,
     title: str,
-    tags: tuple = (),
+    tags: tuple[str, ...] = (),
     extra_html: str | None = None,
-):
+) -> None:
     if bids_path_in.run is not None:
         title += f", run {bids_path_in.run}"
     elif bids_path_in.task in ("noise", "rest"):
@@ -887,7 +908,7 @@ def _render_bem(
     report: mne.report.Report,
     subject: str,
     session: str | None,
-):
+) -> None:
     logger.info(**gen_log_kwargs(message="Rendering MRI slices with BEM contours."))
     report.add_bem(
         subject=cfg.fs_subject,
@@ -898,65 +919,3 @@ def _render_bem(
         replace=True,
         n_jobs=1,  # prevent automatic parallelization
     )
-
-
-# Copied from mne/report/report.py
-
-try:
-    from mne.report.report import _df_bootstrap_table
-except ImportError:  # MNE < 1.7
-
-    def _df_bootstrap_table(*, df, data_id):
-        html = df.to_html(
-            border=0,
-            index=False,
-            show_dimensions=True,
-            justify="unset",
-            float_format=lambda x: f"{x:.3f}",
-            classes="table table-hover table-striped table-sm table-responsive small",
-            na_rep="",
-        )
-        htmls = html.split("\n")
-        header_pattern = "<th>(.*)</th>"
-
-        for idx, html in enumerate(htmls):
-            if "<table" in html:
-                htmls[idx] = html.replace(
-                    "<table",
-                    "<table "
-                    'id="mytable" '
-                    'data-toggle="table" '
-                    f'data-unique-id="{data_id}" '
-                    'data-search="true" '  # search / filter
-                    'data-search-highlight="true" '
-                    'data-show-columns="true" '  # show/hide columns
-                    'data-show-toggle="true" '  # allow card view
-                    'data-show-columns-toggle-all="true" '
-                    'data-click-to-select="true" '
-                    'data-show-copy-rows="true" '
-                    'data-show-export="true" '  # export to a file
-                    'data-export-types="[csv]" '
-                    'data-export-options=\'{"fileName": "metadata"}\' '
-                    'data-icon-size="sm" '
-                    'data-height="400"',
-                )
-                continue
-            elif "<tr" in html:
-                # Add checkbox for row selection
-                htmls[idx] = (
-                    f"{html}\n" f'<th data-field="state" data-checkbox="true"></th>'
-                )
-                continue
-
-            col_headers = re.findall(pattern=header_pattern, string=html)
-            if col_headers:
-                # Make columns sortable
-                assert len(col_headers) == 1
-                col_header = col_headers[0]
-                htmls[idx] = html.replace(
-                    "<th>",
-                    f'<th data-field="{col_header.lower()}" ' f'data-sortable="true">',
-                )
-
-        html = "\n".join(htmls)
-        return html

@@ -341,6 +341,20 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"but got shape {destination.shape}"
             )
 
+# From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
+    # MNE-ICALabel
+    if config.ica_use_icalabel:
+        if config.ica_l_freq != 1.0 or config.h_freq != 100.0:
+            raise ValueError(
+                f"When using MNE-ICALabel, you must set ica_l_freq=1 and h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and h_freq={config.h_freq}"
+            )
+
+        if config.eeg_reference != "average":
+            raise ValueError(
+                f'When using MNE-ICALabel, you must set eeg_reference="average", but '
+                f"got: eeg_reference={config.eeg_reference}"
+            )
 
 def _default_factory(key: str, val: Any) -> Any:
     # convert a default to a default factory if needed, having an explicit
@@ -350,6 +364,8 @@ def _default_factory(key: str, val: Any) -> Any:
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
+        #["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"], # icalabel_include
+        ["brain","other"]
     ]
 
     def default_factory() -> Any:

@@ -75,11 +75,15 @@ if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]
-elif task == "N170":  # test autoreject local before ICA
+elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     spatial_filter = "ica"
+    ica_algorithm = "picard-extended_infomax"
+    ica_use_icalabel = True
+    ica_l_freq = 1
+    h_freq = 100
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
-    autoreject_n_interpolate = [2, 4]
+    autoreject_n_interpolate = [12] # only for testing!
 else:
     spatial_filter = "ica"
     ica_reject = dict(eeg=350e-6, eog=500e-6)

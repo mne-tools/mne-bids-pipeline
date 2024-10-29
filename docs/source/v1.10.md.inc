@@ -22,6 +22,8 @@
     1. Emptyroom files that lack cHPI channels will now be processed (for line noise only) instead of raising an error.
     2. cHPI filtering is now performed before movement compensation.
 
+- Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
+
 ### :books: Documentation
 
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)

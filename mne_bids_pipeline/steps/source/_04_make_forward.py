@@ -81,7 +81,12 @@ def _prepare_trans_subject(
     logger.info(**gen_log_kwargs(message=msg))
 
     trans = get_head_mri_trans(
-        bids_path.copy().update(run=cfg.runs[0], root=cfg.bids_root, extension=None),
+        bids_path.copy().update(
+            run=cfg.runs[0],
+            root=cfg.bids_root,
+            processing=cfg.proc,
+            extension=None,
+        ),
         t1_bids_path=cfg.t1_bids_path,
         fs_subject=cfg.fs_subject,
         fs_subjects_dir=cfg.fs_subjects_dir,
@@ -138,6 +143,9 @@ def run_forward(
     session: str | None,
     in_files: dict,
 ) -> dict:
+    # Do not use processing=cfg.proc here because the forward could actually be
+    # influenced by previous steps (e.g., Maxwell filtering), so just make sure we
+    # use cfg.proc when figuring out the head<->MRI transform
     bids_path = BIDSPath(
         subject=subject,
         session=session,

@@ -132,42 +132,29 @@ convention = "numpy"
 [tool.mypy]
 ignore_errors = false
 scripts_are_modules = true
-# strict = true
+strict = true
 ignore_missing_imports = true
-modules = ["mne_bids_pipeline"]
+modules = ["mne_bids_pipeline", "docs.source"]
+
+[[tool.mypy.overrides]]
+module = ["mne_bids_pipeline.steps.*"]
 disable_error_code = [
-    "import-untyped",
+  "type-arg",  # TODO: Fix ~100 Missing type parameters for generic type
 ]
 
-# TODO: Add these
 [[tool.mypy.overrides]]
-module = [
-  "mne_bids_pipeline.steps.*",
-  "mne_bids_pipeline.tests.*",
-  "docs.source.examples.*",
-]
+module = ["mne_bids_pipeline.tests.*"]
 disable_error_code = [
-  "assignment",
-  "no-untyped-call",
-  "no-untyped-def",
-  "union-attr",
-  "type-arg",
-  "no-any-return",
+  "misc",  # Untyped decorator makes function "test_all_functions_return" untyped
 ]
 
 [[tool.mypy.overrides]]
 module = ["mne_bids_pipeline.steps.freesurfer.contrib.*"]
-ignore_errors = true
+ignore_errors = true  # not our code, don't validate
 
 [[tool.mypy.overrides]]
 module = ['mne_bids_pipeline.tests.configs.*']
-# Ignare: Need type annotation for "plot_psd_for_runs" [var-annotated]
 disable_error_code = [
-  "var-annotated",
-]
-
-[[tool.mypy.overrides]]
-module = ["mne_bids_pipeline.tests.configs.config_ERP_CORE"]
-disable_error_code = [
-  "assignment",
+  "assignment",  # Incompatible types in assignment
+  "var-annotated",  # Need type annotation for "plot_psd_for_runs"
 ]

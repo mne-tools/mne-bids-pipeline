@@ -8,6 +8,8 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 from mne.utils import run_subprocess
 
@@ -22,7 +24,13 @@ from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 
 
-def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> None:
+def run_recon(
+    root_dir: Path,
+    subject: str,
+    fs_bids_app: Any,
+    subjects_dir: Path,
+    session: str | None = None,
+) -> None:
     subj_dir = subjects_dir / f"sub-{subject}"
     sub_ses = f"Subject {subject}"
     if session is not None:
@@ -70,11 +78,13 @@ def run_recon(root_dir, subject, fs_bids_app, subjects_dir, session=None) -> Non
     run_subprocess(cmd, env=env, verbose=logger.level)
 
 
-def _has_session_specific_anat(subject, session, subjects_dir):
+def _has_session_specific_anat(
+    subject: str, session: str | None, subjects_dir: Path
+) -> bool:
     return (subjects_dir / f"sub-{subject}_ses-{session}").exists()
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run freesurfer recon-all command on BIDS dataset.
 
     The script allows to run the freesurfer recon-all

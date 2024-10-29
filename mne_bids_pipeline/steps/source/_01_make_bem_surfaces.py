@@ -23,7 +23,7 @@ from mne_bids_pipeline._report import _open_report, _render_bem
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 
 
-def _get_bem_params(cfg: SimpleNamespace):
+def _get_bem_params(cfg: SimpleNamespace) -> tuple[str, Path, Path]:
     mri_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "mri"
     flash_dir = mri_dir / "flash" / "parameter_maps"
     if cfg.bem_mri_images == "FLASH" and not flash_dir.exists():

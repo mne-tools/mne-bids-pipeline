@@ -12,7 +12,7 @@ FLAT_MODULES = {x.__name__: x for x in sum(_get_step_modules().values(), ())}
 
 
 @pytest.mark.parametrize("module_name", list(FLAT_MODULES))
-def test_all_functions_return(module_name):
+def test_all_functions_return(module_name: str) -> None:
     """Test that all functions decorated with failsafe_run return a dict."""
     # Find the functions within the module that use the failsafe_run decorator
     module = FLAT_MODULES[module_name]
@@ -36,7 +36,7 @@ def test_all_functions_return(module_name):
     assert len(funcs) != 0, f"No failsafe_runs functions found in {module_name}"
 
     # Adapted from numpydoc RT01 validation
-    def get_returns_not_on_nested_functions(node):
+    def get_returns_not_on_nested_functions(node: ast.AST) -> list[ast.Return]:
         returns = [node] if isinstance(node, ast.Return) else []
         for child in ast.iter_child_nodes(node):
             # Ignore nested functions and its subtrees.

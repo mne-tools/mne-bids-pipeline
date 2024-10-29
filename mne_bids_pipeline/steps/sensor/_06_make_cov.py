@@ -195,7 +195,7 @@ def retrieve_custom_cov(
     return cov
 
 
-def _get_cov_type(cfg):
+def _get_cov_type(cfg: SimpleNamespace) -> str:
     if cfg.noise_cov == "custom":
         return "custom"
     elif cfg.noise_cov == "rest":
@@ -216,7 +216,7 @@ def run_covariance(
     subject: str,
     session: str | None = None,
     in_files: dict,
-) -> dict:
+) -> dict[str, BIDSPath]:
     import matplotlib.pyplot as plt
 
     out_files = dict()

@@ -16,15 +16,17 @@ from mne_bids_pipeline.tests.test_run import TEST_SUITE
 root_path = Path(__file__).parent.parent
 
 
-def test_options_documented():
+def test_options_documented() -> None:
     """Test that all options are suitably documented."""
     # use ast to parse _config.py for assignments
     with open(root_path / "_config.py") as fid:
-        contents = fid.read()
-    contents = ast.parse(contents)
+        contents_str = fid.read()
+    contents = ast.parse(contents_str)
     assert isinstance(contents, ast.Module), type(contents)
     in_config_list = [
-        item.target.id for item in contents.body if isinstance(item, ast.AnnAssign)
+        item.target.id
+        for item in contents.body
+        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name)
     ]
     assert len(set(in_config_list)) == len(in_config_list)
     in_config = set(in_config_list)
@@ -70,7 +72,7 @@ def test_options_documented():
     assert in_config.difference(in_doc_all) == set(), f"Values missing from {what}"
 
 
-def test_config_options_used():
+def test_config_options_used() -> None:
     """Test that all config options are used somewhere."""
     config = _get_default_config()
     config_names = set(d for d in dir(config) if not d.startswith("__"))
@@ -87,7 +89,7 @@ def test_config_options_used():
         assert val, f"No steps for {key}"
 
 
-def test_datasets_in_doc():
+def test_datasets_in_doc() -> None:
     """Test that all datasets in tests are in the doc."""
     # There are four things to keep in sync:
     #
@@ -102,12 +104,12 @@ def test_datasets_in_doc():
     with open(root_path.parent / ".circleci" / "config.yml") as fid:
         circle_yaml_src = fid.read()
     circle_yaml = yaml.safe_load(circle_yaml_src)
-    caches = [job[6:] for job in circle_yaml["jobs"] if job.startswith("cache_")]
-    assert len(caches) == len(set(caches))
-    caches = set(caches)
-    tests = [job[5:] for job in circle_yaml["jobs"] if job.startswith("test_")]
-    assert len(tests) == len(set(tests))
-    tests = set(tests)
+    caches_list = [job[6:] for job in circle_yaml["jobs"] if job.startswith("cache_")]
+    caches = set(caches_list)
+    assert len(caches_list) == len(caches)
+    tests_list = [job[5:] for job in circle_yaml["jobs"] if job.startswith("test_")]
+    assert len(tests_list) == len(set(tests_list))
+    tests = set(tests_list)
     # Rather than going circle_yaml['workflows']['commit']['jobs'] and
     # make sure everything is consistent there (too much work), let's at least
     # check that we get the correct number using `.count`.
@@ -158,12 +160,14 @@ def test_datasets_in_doc():
         assert n_found == count, f"{cp} ({n_found} != {count})"
 
     # 3. Read examples from docs (being careful about tags we can't read)
-    class SafeLoaderIgnoreUnknown(yaml.SafeLoader):  # type: ignore[misc]
-        def ignore_unknown(self, node):
+    class SafeLoaderIgnoreUnknown(yaml.SafeLoader):
+        def ignore_unknown(self, node: yaml.Node) -> None:
             return None
 
     SafeLoaderIgnoreUnknown.add_constructor(
-        None, SafeLoaderIgnoreUnknown.ignore_unknown
+        # PyYAML stubs have an error -- this can be None but mypy says it can't
+        None,  # type: ignore
+        SafeLoaderIgnoreUnknown.ignore_unknown,
     )
 
     with open(root_path.parent / "docs" / "mkdocs.yml") as fid:
@@ -175,12 +179,14 @@ def test_datasets_in_doc():
     examples = set(examples)
 
     # 4. DATASET_OPTIONS
-    dataset_names = list(DATASET_OPTIONS)
-    assert len(dataset_names) == len(set(dataset_names))
+    dataset_names_list = list(DATASET_OPTIONS)
+    dataset_names = set(dataset_names_list)
+    assert len(dataset_names_list) == len(dataset_names)
 
     # 5. TEST_SUITE
-    test_names = list(TEST_SUITE)
-    assert len(test_names) == len(set(test_names))
+    test_names_list = list(TEST_SUITE)
+    test_names = set(test_names_list)
+    assert len(test_names_list) == len(test_names)
 
     # Some have been split into multiple test runs, so trim down to the same
     # set as caches

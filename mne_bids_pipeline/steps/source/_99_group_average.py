@@ -140,7 +140,7 @@ def run_average(
     subject: str,
     session: str | None,
     in_files: dict,
-):
+) -> dict[str, BIDSPath]:
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)

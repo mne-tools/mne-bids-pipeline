@@ -673,7 +673,7 @@ def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     return STEP_MODULES
 
 
-def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, Any]:
+def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
     """Get the standard BIDS config entries."""
     return dict(
         proc=config.proc,

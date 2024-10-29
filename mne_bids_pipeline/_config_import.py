@@ -368,7 +368,7 @@ def _default_factory(key: str, val: Any) -> Any:
                 else:
                     assert typ is list
                     default_factory = partial(typ, allowlist[idx])  # type: ignore
-            return field(default_factory=default_factory)  # type: ignore
+            return field(default_factory=default_factory)
     return val
 
 

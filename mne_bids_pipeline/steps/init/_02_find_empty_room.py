@@ -105,7 +105,7 @@ def find_empty_room(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         **_bids_kwargs(config=config),
@@ -113,7 +113,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run find_empty_room."""
     if not config.process_empty_room:
         msg = "Skipping, process_empty_room is set to False …"

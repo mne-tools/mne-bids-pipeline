@@ -97,7 +97,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run BEM solution calculation."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"

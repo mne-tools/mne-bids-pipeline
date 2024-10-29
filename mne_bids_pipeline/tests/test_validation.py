@@ -1,11 +1,13 @@
 """Test the pipeline configuration import validator."""
 
+from pathlib import Path
+
 import pytest
 
 from mne_bids_pipeline._config_import import _import_config
 
 
-def test_validation(tmp_path, capsys):
+def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     """Test that misspellings are caught by our config import validator."""
     config_path = tmp_path / "config.py"
     bad_text = ""

@@ -3,6 +3,7 @@
 Set up source space for forward and inverse computation.
 """
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import mne
@@ -18,7 +19,9 @@ from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 
 
-def get_input_fnames_setup_source_space(*, cfg, subject):
+def get_input_fnames_setup_source_space(
+    *, cfg: SimpleNamespace, subject: str
+) -> dict[str, Path]:
     in_files = dict()
     surf_path = cfg.fs_subjects_dir / cfg.fs_subject / "surf"
     for hemi in ("lh", "rh"):
@@ -27,7 +30,9 @@ def get_input_fnames_setup_source_space(*, cfg, subject):
     return in_files
 
 
-def get_output_fnames_setup_source_space(*, cfg, subject):
+def get_output_fnames_setup_source_space(
+    *, cfg: SimpleNamespace, subject: str
+) -> dict[str, Path]:
     out_files = dict()
     out_files["src"] = (
         cfg.fs_subjects_dir

@@ -20,7 +20,7 @@ class _MBPLogger:
     @property
     def _console(self) -> rich.console.Console:
         try:
-            return self.__console  # type: ignore[no-any-return,has-type]
+            return self.__console  # type: ignore[has-type]
         except AttributeError:
             pass  # need to instantiate it, continue
 

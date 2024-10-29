@@ -37,7 +37,7 @@ def get_input_fnames_inverse(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-):
+) -> dict[str, BIDSPath]:
     bids_path = BIDSPath(
         subject=subject,
         session=session,

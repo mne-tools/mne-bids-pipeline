@@ -91,7 +91,9 @@ def _prepare_trans_subject(
     return trans
 
 
-def get_input_fnames_forward(*, cfg, subject, session):
+def get_input_fnames_forward(
+    *, cfg: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, BIDSPath]:
     bids_path = BIDSPath(
         subject=subject,
         session=session,

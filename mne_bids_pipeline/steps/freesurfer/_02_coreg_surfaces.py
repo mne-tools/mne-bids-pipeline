@@ -95,7 +95,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     # Ensure we're also processing fsaverage if present
     subjects = get_subjects(config)
     sessions = get_sessions(config)

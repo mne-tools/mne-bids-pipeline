@@ -30,7 +30,7 @@ def _ica_paths(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-):
+) -> dict[str, BIDSPath]:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,

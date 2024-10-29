@@ -83,7 +83,12 @@ def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.
 
 
 def prepare_epochs_and_y(
-    *, epochs: mne.BaseEpochs, contrast: tuple[str, str], cfg, fmin: float, fmax: float
+    *,
+    epochs: mne.BaseEpochs,
+    contrast: tuple[str, str],
+    cfg: SimpleNamespace,
+    fmin: float,
+    fmax: float,
 ) -> tuple[mne.BaseEpochs, np.ndarray]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
     # filtering out the conditions we are not interested in, to ensure here we
@@ -223,7 +228,15 @@ def one_subject_decoding(
     )
     del freq_decoding_table_rows
 
-    def _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin=None, tmax=None):
+    def _fmt_contrast(
+        cond1: str,
+        cond2: str,
+        fmin: float,
+        fmax: float,
+        freq_range_name: str,
+        tmin: float | None = None,
+        tmax: float | None = None,
+    ) -> str:
         msg = (
             f"Contrast: {cond1} – {cond2}, "
             f"{fmin:4.1f}–{fmax:4.1f} Hz ({freq_range_name})"

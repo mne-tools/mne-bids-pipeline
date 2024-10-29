@@ -35,7 +35,7 @@ from mne_bids_pipeline._run import (
 
 def detect_bad_components(
     *,
-    cfg,
+    cfg: SimpleNamespace,
     which: Literal["eog", "ecg"],
     epochs: mne.BaseEpochs | None,
     ica: mne.preprocessing.ICA,

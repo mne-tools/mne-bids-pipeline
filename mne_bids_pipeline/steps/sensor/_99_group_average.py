@@ -257,7 +257,7 @@ def _decoding_out_fname(
     cond_2: str | None,
     kind: str,
     extension: str = ".mat",
-):
+) -> BIDSPath:
     if cond_1 is None:
         assert cond_2 is None
         processing = ""
@@ -741,7 +741,7 @@ def average_csp_decoding(
     cond_1: str,
     cond_2: str,
     in_files: dict,
-):
+) -> dict[str, BIDSPath]:
     msg = f"Summarizing CSP results: {cond_1} - {cond_2}."
     logger.info(**gen_log_kwargs(message=msg))
     in_files.pop("epochs")
@@ -973,7 +973,7 @@ def _average_csp_time_freq(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subjects=get_subjects(config),

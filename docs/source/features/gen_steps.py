@@ -184,13 +184,16 @@ flowchart TD"""
                 overview_lines.append(a_b)
                 continue
             assert isinstance(a_b, tuple), type(a_b)
-            a_b = list(a_b)  # allow modification
-            for ii, idx in enumerate(a_b):
+            a_b_list: list[str] = list(a_b)  # allow modification
+            del a_b
+            for ii, idx in enumerate(a_b_list):
                 assert idx in title_map, (dir_header, idx, sorted(title_map))
                 if idx not in mapped:
                     mapped.add(idx)
-                    a_b[ii] = f'{idx}["{title_map[idx]}"]'
-            overview_lines.append(f"    {chr_pre}{a_b[0]} --> {chr_pre}{a_b[1]}")
+                    a_b_list[ii] = f'{idx}["{title_map[idx]}"]'
+            overview_lines.append(
+                f"    {chr_pre}{a_b_list[0]} --> {chr_pre}{a_b_list[1]}"
+            )
         all_steps_list: list[str] = list()
         for a_b in manual_order[dir_header]:
             if not isinstance(a_b, str):

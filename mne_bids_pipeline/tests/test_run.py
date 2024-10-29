@@ -6,7 +6,7 @@ import sys
 from collections.abc import Collection
 from contextlib import nullcontext
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import pytest
 
@@ -139,7 +139,7 @@ _n_jobs = {
 
 
 @pytest.fixture()
-def dataset_test(request):
+def dataset_test(request: pytest.FixtureRequest) -> None:
     """Provide a defined context for our dataset tests."""
     # There is probably a cleaner way to get this param, but this works for now
     capsys = request.getfixturevalue("capsys")
@@ -157,7 +157,13 @@ def dataset_test(request):
 
 @pytest.mark.dataset_test
 @pytest.mark.parametrize("dataset", list(TEST_SUITE))
-def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
+def test_run(
+    dataset: str,
+    monkeypatch: pytest.MonkeyPatch,
+    dataset_test: Any,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture,
+) -> None:
     """Test running a dataset."""
     test_options = TEST_SUITE[dataset]
     config = test_options.get("config", f"config_{dataset}.py")
@@ -208,7 +214,12 @@ def test_run(dataset, monkeypatch, dataset_test, capsys, tmp_path):
 
 
 @pytest.mark.parametrize("allow_missing_sessions", (False, True))
-def test_missing_sessions(tmp_path, monkeypatch, capsys, allow_missing_sessions):
+def test_missing_sessions(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture,
+    allow_missing_sessions: bool,
+) -> None:
     """Test the `allow_missing_sessions` config variable."""
     dataset = "fake"
     bids_root = tmp_path / dataset

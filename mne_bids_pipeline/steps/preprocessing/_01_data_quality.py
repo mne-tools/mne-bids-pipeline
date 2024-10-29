@@ -107,6 +107,9 @@ def assess_data_quality(
         )
     preexisting_bads = sorted(raw.info["bads"])
 
+    auto_scores: dict | None = None
+    auto_noisy_chs: list[str] | None = None
+    auto_flat_chs: list[str] | None = None
     if _do_mf_autobad(cfg=cfg):
         (
             auto_noisy_chs,
@@ -126,8 +129,6 @@ def assess_data_quality(
         raw.info["bads"] = bads
         del bads
         logger.info(**gen_log_kwargs(message=msg))
-    else:
-        auto_scores = auto_noisy_chs = auto_flat_chs = None
     del key
 
     # Always output the scores and bads TSV
@@ -241,7 +242,7 @@ def _find_bads_maxwell(
     session: str | None,
     run: str | None,
     task: str | None,
-):
+) -> tuple[list[str], list[str], dict]:
     if cfg.find_flat_channels_meg:
         if cfg.find_noisy_channels_meg:
             msg = "Finding flat channels and noisy channels using Maxwell filtering."

@@ -60,7 +60,7 @@ def init_subject_dirs(
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         PIPELINE_NAME=config.PIPELINE_NAME,
@@ -71,7 +71,7 @@ def get_config(
     return cfg
 
 
-def main(*, config):
+def main(*, config: SimpleNamespace) -> None:
     """Initialize the output directories."""
     init_dataset(cfg=get_config(config=config), exec_params=config.exec_params)
     # Don't bother with parallelization here as I/O operations are generally

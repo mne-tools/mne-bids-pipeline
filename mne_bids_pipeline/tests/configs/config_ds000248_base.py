@@ -1,6 +1,7 @@
 """MNE Sample Data: M/EEG combined processing."""
 
 import mne
+import mne_bids
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_base"
@@ -21,7 +22,7 @@ find_noisy_channels_meg = True
 use_maxwell_filter = True
 
 
-def noise_cov(bp):
+def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:
     """Estimate the noise covariance."""
     # Use pre-stimulus period as noise source
     bp = bp.copy().update(suffix="epo")
@@ -46,7 +47,7 @@ recreate_bem = True
 n_jobs = 2
 
 
-def mri_t1_path_generator(bids_path):
+def mri_t1_path_generator(bids_path: mne_bids.BIDSPath) -> mne_bids.BIDSPath:
     """Return the path to a T1 image."""
     # don't really do any modifications – just for testing!
     return bids_path

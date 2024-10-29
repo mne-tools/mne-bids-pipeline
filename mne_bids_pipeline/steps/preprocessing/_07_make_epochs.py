@@ -11,6 +11,7 @@ import inspect
 from types import SimpleNamespace
 
 import mne
+import numpy as np
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
@@ -275,7 +276,9 @@ def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict:
 
 
 # TODO: ideally we wouldn't need this anymore and could refactor the code above
-def _get_events(cfg, subject, session):
+def _get_events(
+    cfg: SimpleNamespace, subject: str, session: str | None
+) -> tuple[np.ndarray, dict, float, int]:
     raws_filt = []
     raw_fname = BIDSPath(
         subject=subject,
@@ -307,7 +310,7 @@ def _get_events(cfg, subject, session):
 
 def get_config(
     *,
-    config,
+    config: SimpleNamespace,
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
@@ -337,7 +340,7 @@ def get_config(
     return cfg
 
 
-def main(*, config) -> None:
+def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(run_epochs, exec_params=config.exec_params)

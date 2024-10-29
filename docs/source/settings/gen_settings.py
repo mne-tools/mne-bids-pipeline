@@ -122,12 +122,13 @@ assign_re = re.compile(
 )
 
 
-def main():
+def main() -> None:
     """Parse the configuration and generate the markdown documentation."""
     print(f"Parsing {config_path} to generate settings .md files.")
     # max file-level depth is 2 even though we have 3 subsection levels
-    levels = [None, None]
-    current_path, current_lines = None, list()
+    levels = ["", ""]
+    current_path: Path | None = None
+    current_lines: list[str] = list()
     text = config_path.read_text("utf-8")
     lines = text.splitlines()
     lines += ["# #"]  # add a dummy line to trigger the last write

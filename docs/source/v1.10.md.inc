@@ -16,9 +16,7 @@
 ### :bug: Bug fixes
 
 - Empty room matching is now done for all sessions (previously only for the first session) for each subject. (#976 by @drammock)
-
 - [`noise_cov_method`][mne_bids_pipeline._config.noise_cov_method] is now properly used for noise covariance estimation from raw data (#1010 by @larsoner)
-
 - When running the pipeline with [`mf_filter_chpi`][mne_bids_pipeline._config.mf_filter_chpi] enabled (#977 by @drammock and @larsoner):
 
     1. Emptyroom files that lack cHPI channels will now be processed (for line noise only) instead of raising an error.
@@ -33,6 +31,7 @@
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
+- Enable strict type checking via mypy (#995, #1013 by @larsoner)
 
 ### :medical_symbol: Code health and infrastructure
 

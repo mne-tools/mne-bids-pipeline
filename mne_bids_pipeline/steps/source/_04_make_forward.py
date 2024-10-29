@@ -84,7 +84,7 @@ def _prepare_trans_subject(
         bids_path.copy().update(
             run=cfg.runs[0],
             root=cfg.bids_root,
-            proc=cfg.proc,
+            processing=cfg.proc,
             extension=None,
         ),
         t1_bids_path=cfg.t1_bids_path,

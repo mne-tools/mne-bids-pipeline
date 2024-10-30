@@ -33,7 +33,7 @@
 ### :medical_symbol: Code health
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
-- Enable strict type checking via mypy (#995, #1013 by @larsoner)
+- Enable strict type checking via mypy (#995, #1013, #1016 by @larsoner)
 
 ### :medical_symbol: Code health and infrastructure
 

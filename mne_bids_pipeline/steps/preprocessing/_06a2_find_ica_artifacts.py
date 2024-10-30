@@ -31,6 +31,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def detect_bad_components(
@@ -91,7 +92,7 @@ def get_input_fnames_find_ica_artifacts(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -126,8 +127,8 @@ def find_ica_artifacts(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Run ICA."""
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)

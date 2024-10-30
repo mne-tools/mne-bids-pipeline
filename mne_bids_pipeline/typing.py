@@ -11,6 +11,7 @@ else:
 
 import mne
 import numpy as np
+from mne_bids import BIDSPath
 from numpy.typing import ArrayLike
 from pydantic import PlainValidator
 
@@ -32,6 +33,9 @@ __all__ = [
 
 FloatArrayT: TypeAlias = np.ndarray[Any, np.dtype[np.float64]]
 OutFilesT = dict[str, tuple[str, str | float]]
+InFilesT = dict[str, BIDSPath]  # Only BIDSPath
+InFilesPathT = dict[str, BIDSPath | pathlib.Path]  # allow generic Path as well
+AutoScoresT = dict[str, np.ndarray]
 
 
 class ArbitraryContrast(TypedDict):

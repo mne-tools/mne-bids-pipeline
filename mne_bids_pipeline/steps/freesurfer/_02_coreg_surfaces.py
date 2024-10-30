@@ -19,11 +19,12 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run
+from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
 
 
-def _get_scalp_in_files(cfg: SimpleNamespace) -> dict[str, Path]:
+def _get_scalp_in_files(cfg: SimpleNamespace) -> InFilesPathT:
     subject_path = Path(cfg.fs_subjects_dir) / cfg.fs_subject
     seghead = subject_path / "surf" / "lh.seghead"
     in_files = dict()
@@ -38,11 +39,13 @@ def get_input_fnames_coreg_surfaces(
     *,
     cfg: SimpleNamespace,
     subject: str,
-) -> dict:
+) -> InFilesPathT:
     return _get_scalp_in_files(cfg)
 
 
-def get_output_fnames_coreg_surfaces(*, cfg: SimpleNamespace, subject: str) -> dict:
+def get_output_fnames_coreg_surfaces(
+    *, cfg: SimpleNamespace, subject: str
+) -> InFilesPathT:
     out_files = dict()
     subject_path = Path(cfg.fs_subjects_dir) / cfg.fs_subject
     out_files["seghead"] = subject_path / "surf" / "lh.seghead"
@@ -61,8 +64,8 @@ def make_coreg_surfaces(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesPathT,
+) -> OutFilesT:
     """Create head surfaces for use with MNE-Python coregistration tools."""
     msg = "Creating scalp surfaces for coregistration"
     logger.info(**gen_log_kwargs(message=msg))

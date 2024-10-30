@@ -19,7 +19,7 @@ from ._config_utils import (
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from .typing import PathLike, RunKindT, RunTypeT
+from .typing import InFilesT, PathLike, RunKindT, RunTypeT
 
 
 def make_epochs(
@@ -565,7 +565,7 @@ def _get_run_path(
     add_bads: bool | None = None,
     allow_missing: bool = False,
     key: str | None = None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
@@ -593,7 +593,7 @@ def _get_rest_path(
     session: str | None,
     kind: RunKindT,
     add_bads: bool | None = None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     if not (cfg.process_rest and not cfg.task_is_rest):
         return dict()
     return _get_run_path(
@@ -616,7 +616,7 @@ def _get_noise_path(
     kind: RunKindT,
     mf_reference_run: str | None,
     add_bads: bool | None = None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
     if kind != "orig":
@@ -664,7 +664,7 @@ def _get_run_rest_noise_path(
     kind: RunKindT,
     mf_reference_run: str | None,
     add_bads: bool | None = None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     if run is None and task in ("noise", "rest"):
         if task == "noise":
             path = _get_noise_path(
@@ -703,7 +703,7 @@ def _get_mf_reference_run_path(
     subject: str,
     session: str | None,
     add_bads: bool | None = None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     return _get_run_path(
         cfg=cfg,
         subject=subject,
@@ -732,7 +732,7 @@ def _path_dict(
     key: str | None = None,
     subject: str,
     session: str | None,
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     if add_bads is None:
         add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()

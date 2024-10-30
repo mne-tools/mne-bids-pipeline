@@ -39,6 +39,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.ndarray:
@@ -116,7 +117,7 @@ def get_input_fnames_csp(
     subject: str,
     session: str | None,
     contrast: tuple[str],
-) -> dict:
+) -> InFilesT:
     proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
@@ -147,8 +148,8 @@ def one_subject_decoding(
     subject: str,
     session: str,
     contrast: tuple[str, str],
-    in_files: dict[str, BIDSPath],
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Run one subject.
 
     There are two steps in this function:

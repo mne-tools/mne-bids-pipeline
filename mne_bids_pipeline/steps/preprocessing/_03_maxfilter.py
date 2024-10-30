@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 import mne
 import numpy as np
-from mne_bids import BIDSPath, read_raw_bids
+from mne_bids import read_raw_bids
 
 from mne_bids_pipeline._config_utils import (
     _pl,
@@ -46,6 +46,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 # %% eSSS
@@ -54,7 +55,7 @@ def get_input_fnames_esss(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = _get_run_rest_noise_path(
         run=None,
         task="noise",
@@ -83,8 +84,8 @@ def compute_esss_proj(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     run, task = None, "noise"
@@ -191,7 +192,7 @@ def get_input_fnames_maxwell_filter(
     session: str | None,
     run: str | None,
     task: str | None,
-) -> dict:
+) -> InFilesT:
     """Get paths of files required by maxwell_filter function."""
     in_files = _get_run_rest_noise_path(
         run=run,
@@ -288,8 +289,8 @@ def run_maxwell_filter(
     session: str | None,
     run: str | None,
     task: str | None,
-    in_files: dict[str, BIDSPath],
-) -> dict[str, BIDSPath]:
+    in_files: InFilesT,
+) -> OutFilesT:
     if cfg.proc and "sss" in cfg.proc and cfg.use_maxwell_filter:
         raise ValueError(
             f"You cannot set use_maxwell_filter to True "

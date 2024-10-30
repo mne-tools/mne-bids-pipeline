@@ -26,6 +26,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_time_frequency(
@@ -33,7 +34,7 @@ def get_input_fnames_time_frequency(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -64,8 +65,8 @@ def run_time_frequency(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     epochs_path = in_files.pop("epochs")

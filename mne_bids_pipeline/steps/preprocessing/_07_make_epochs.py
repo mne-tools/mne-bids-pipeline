@@ -9,6 +9,7 @@ To save space, the epoch data can be decimated.
 
 import inspect
 from types import SimpleNamespace
+from typing import Any
 
 import mne
 import numpy as np
@@ -31,6 +32,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_epochs(
@@ -38,7 +40,7 @@ def get_input_fnames_epochs(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     """Get paths of files required by filter_data function."""
     # Construct the basenames of the files we wish to load, and of the empty-
     # room recording we wish to save.
@@ -79,8 +81,8 @@ def run_epochs(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Extract epochs for one subject."""
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     bids_path_in = raw_fnames[0].copy().update(processing=None, run=None, split=None)
@@ -267,7 +269,7 @@ def run_epochs(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
-def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict:
+def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict[str, dict[str, Any]]:
     arg_spec = inspect.getfullargspec(mne.Report.add_epochs)
     kwargs = dict()
     if cfg.report_add_epochs_image_kwargs and "image_kwargs" in arg_spec.kwonlyargs:
@@ -278,7 +280,7 @@ def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict:
 # TODO: ideally we wouldn't need this anymore and could refactor the code above
 def _get_events(
     cfg: SimpleNamespace, subject: str, session: str | None
-) -> tuple[np.ndarray, dict, float, int]:
+) -> tuple[np.ndarray, dict[str, int], float, int]:
     raws_filt = []
     raw_fname = BIDSPath(
         subject=subject,

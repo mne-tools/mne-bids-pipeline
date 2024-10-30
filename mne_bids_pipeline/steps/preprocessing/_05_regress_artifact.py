@@ -21,6 +21,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_regress_artifact(
@@ -30,7 +31,7 @@ def get_input_fnames_regress_artifact(
     session: str | None,
     run: str,
     task: str | None,
-) -> dict:
+) -> InFilesT:
     """Get paths of files required by regress_artifact function."""
     out = _get_run_rest_noise_path(
         cfg=cfg,
@@ -56,8 +57,8 @@ def run_regress_artifact(
     session: str | None,
     run: str,
     task: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     model = EOGRegression(proj=False, **cfg.regress_artifact)
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"

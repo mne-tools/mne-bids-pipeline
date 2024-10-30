@@ -29,6 +29,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> np.ndarray:
@@ -41,7 +42,7 @@ def get_input_fnames_run_ssp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -73,8 +74,8 @@ def run_ssp(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     # compute SSP on all runs of raw

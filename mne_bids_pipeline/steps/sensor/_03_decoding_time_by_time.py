@@ -51,6 +51,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_time_decoding(
@@ -60,7 +61,7 @@ def get_input_fnames_time_decoding(
     session: str | None,
     condition1: str,
     condition2: str,
-) -> dict:
+) -> InFilesT:
     proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
@@ -94,8 +95,8 @@ def run_time_decoding(
     session: str | None,
     condition1: str,
     condition2: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     if cfg.decoding_time_generalization:

@@ -40,7 +40,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import RunKindT, RunTypeT
+from mne_bids_pipeline.typing import InFilesT, OutFilesT, RunKindT, RunTypeT
 
 
 def get_input_fnames_frequency_filter(
@@ -50,7 +50,7 @@ def get_input_fnames_frequency_filter(
     session: str | None,
     run: str,
     task: str | None,
-) -> dict:
+) -> InFilesT:
     """Get paths of files required by filter_data function."""
     kind: RunKindT = "sss" if cfg.use_maxwell_filter else "orig"
     return _get_run_rest_noise_path(
@@ -162,8 +162,8 @@ def filter_data(
     session: str | None,
     run: str,
     task: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Filter data from a single subject."""
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"

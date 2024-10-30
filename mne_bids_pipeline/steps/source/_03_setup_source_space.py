@@ -3,7 +3,6 @@
 Set up source space for forward and inverse computation.
 """
 
-from pathlib import Path
 from types import SimpleNamespace
 
 import mne
@@ -17,11 +16,12 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
 def get_input_fnames_setup_source_space(
     *, cfg: SimpleNamespace, subject: str
-) -> dict[str, Path]:
+) -> InFilesPathT:
     in_files = dict()
     surf_path = cfg.fs_subjects_dir / cfg.fs_subject / "surf"
     for hemi in ("lh", "rh"):
@@ -32,7 +32,7 @@ def get_input_fnames_setup_source_space(
 
 def get_output_fnames_setup_source_space(
     *, cfg: SimpleNamespace, subject: str
-) -> dict[str, Path]:
+) -> InFilesPathT:
     out_files = dict()
     out_files["src"] = (
         cfg.fs_subjects_dir
@@ -52,8 +52,8 @@ def run_setup_source_space(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesPathT,
+) -> OutFilesT:
     msg = f"Creating source space with spacing {repr(cfg.spacing)}"
     logger.info(**gen_log_kwargs(message=msg, subject=subject))
     src = mne.setup_source_space(

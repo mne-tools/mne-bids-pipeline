@@ -34,6 +34,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_run_ica(
@@ -41,7 +42,7 @@ def get_input_fnames_run_ica(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -73,8 +74,8 @@ def run_ica(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Run ICA."""
     import matplotlib.pyplot as plt
 

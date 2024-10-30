@@ -14,6 +14,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_head_pos(
@@ -23,7 +24,7 @@ def get_input_fnames_head_pos(
     session: str | None,
     run: str | None,
     task: str | None,
-) -> dict:
+) -> InFilesT:
     """Get paths of files required by run_head_pos function."""
     return _get_run_rest_noise_path(
         cfg=cfg,
@@ -47,8 +48,8 @@ def run_head_pos(
     session: str | None,
     run: str | None,
     task: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     in_key = f"raw_task-{task}_run-{run}"

@@ -31,12 +31,12 @@ jobs:
   caching:
     name: 'Caching on ${{ matrix.os }}'
     timeout-minutes: 30
-    continue-on-error: true
     runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -e {0}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -76,4 +76,4 @@ jobs:
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
         timeout-minutes: 1
       - uses: codecov/codecov-action@v4
-        if: success()
+        if: success() || failure()

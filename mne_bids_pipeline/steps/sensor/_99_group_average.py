@@ -383,9 +383,10 @@ def average_time_by_time_decoding(
         # performing a 1-sample test (i.e., test against 0)!
         idx = np.where(times >= 0)[0]
 
-        cluster_permutation_scores: FloatArrayT = mean_scores[:, idx] - 0.5
         if cfg.decoding_time_generalization:
-            cluster_permutation_scores = mean_scores[:, idx]
+            cluster_permutation_scores = mean_scores[:, idx, idx] - 0.5
+        else:
+            cluster_permutation_scores = mean_scores[:, idx] - 0.5
 
         cluster_permutation_times = times[idx]
         if cfg.cluster_forming_t_threshold is None:

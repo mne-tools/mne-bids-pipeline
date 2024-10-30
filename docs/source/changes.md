@@ -1,4 +1,4 @@
-{% include-markdown "./dev.inc" %}
+{% include-markdown "./dev.md.inc" %}
 
 {% include-markdown "./v1.9.md.inc" %}
 

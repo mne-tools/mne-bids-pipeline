@@ -132,6 +132,11 @@ convention = "numpy"
 [tool.mypy]
 ignore_errors = false
 scripts_are_modules = true
+disable_error_code = [
+  # For libraries like matplotlib that we don't have types for
+  "import-not-found",
+  "import-untyped",
+]
 strict = true
 modules = ["mne_bids_pipeline", "docs.source"]
 

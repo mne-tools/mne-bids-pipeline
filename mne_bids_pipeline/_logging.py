@@ -14,15 +14,14 @@ from .typing import LogKwargsT
 class _MBPLogger:
     def __init__(self) -> None:
         self._level = logging.INFO
+        self.__console: rich.console.Console | None = None
 
     # Do lazy instantiation of _console so that pytest's output capture
     # mechanics don't get messed up
     @property
     def _console(self) -> rich.console.Console:
-        try:
-            return self.__console  # type: ignore[has-type]
-        except AttributeError:
-            pass  # need to instantiate it, continue
+        if isinstance(self.__console, rich.console.Console):
+            return self.__console
 
         force_terminal: bool | None = None
         force_terminal_env = os.getenv("MNE_BIDS_PIPELINE_FORCE_TERMINAL", None)

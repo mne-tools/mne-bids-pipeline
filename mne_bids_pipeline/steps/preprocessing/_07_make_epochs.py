@@ -12,7 +12,6 @@ from types import SimpleNamespace
 from typing import Any
 
 import mne
-import numpy as np
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
@@ -32,7 +31,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT
+from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT
 
 
 def get_input_fnames_epochs(
@@ -280,7 +279,7 @@ def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict[str, dict[str, Any]]:
 # TODO: ideally we wouldn't need this anymore and could refactor the code above
 def _get_events(
     cfg: SimpleNamespace, subject: str, session: str | None
-) -> tuple[np.ndarray, dict[str, int], float, int]:
+) -> tuple[IntArrayT, dict[str, int], float, int]:
     raws_filt = []
     raw_fname = BIDSPath(
         subject=subject,

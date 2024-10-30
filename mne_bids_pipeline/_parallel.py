@@ -67,7 +67,7 @@ def setup_dask_client(*, exec_params: SimpleNamespace) -> None:
             "distributed.worker.memory.spill": False,
         }
     )
-    client = Client(
+    client = Client(  # type: ignore[no-untyped-call]
         memory_limit=exec_params.dask_worker_memory_limit,
         n_workers=n_workers,
         threads_per_worker=1,

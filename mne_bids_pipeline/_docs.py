@@ -149,6 +149,7 @@ class _ParseConfigSteps:
             step = "/".join(module.__name__.split(".")[-2:])
             found = False  # found at least one?
             # Walk the module file for "get_config*" functions (can be multiple!)
+            assert module.__file__ is not None
             for func in ast.walk(ast.parse(Path(module.__file__).read_text("utf-8"))):
                 if not isinstance(func, ast.FunctionDef):
                     continue

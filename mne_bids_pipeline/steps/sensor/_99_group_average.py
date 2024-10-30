@@ -44,7 +44,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT, TypedDict
+from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT, TypedDict
 
 
 def get_input_fnames_average_evokeds(
@@ -185,17 +185,17 @@ def average_evokeds(
 
 
 class ClusterAcrossTime(TypedDict):
-    times: np.ndarray
+    times: FloatArrayT
     p_value: float
 
 
 def _decoding_cluster_permutation_test(
-    scores: np.ndarray,
-    times: np.ndarray,
+    scores: FloatArrayT,
+    times: FloatArrayT,
     cluster_forming_t_threshold: float | None,
     n_permutations: int,
     random_seed: int,
-) -> tuple[np.ndarray, list[ClusterAcrossTime], int]:
+) -> tuple[FloatArrayT, list[ClusterAcrossTime], int]:
     """Perform a cluster permutation test on decoding scores.
 
     The clusters are formed across time points.
@@ -361,7 +361,7 @@ def average_time_by_time_decoding(
     }
 
     # Extract mean CV scores from all subjects.
-    mean_scores = np.empty((n_subjects, *time_points_shape))
+    mean_scores: FloatArrayT = np.empty((n_subjects, *time_points_shape))
 
     # Remaining in_files are all decoding data
     assert len(in_files) == n_subjects, list(in_files.keys())
@@ -383,10 +383,9 @@ def average_time_by_time_decoding(
         # performing a 1-sample test (i.e., test against 0)!
         idx = np.where(times >= 0)[0]
 
+        cluster_permutation_scores: FloatArrayT = mean_scores[:, idx] - 0.5
         if cfg.decoding_time_generalization:
-            cluster_permutation_scores = mean_scores[:, idx, idx] - 0.5
-        else:
-            cluster_permutation_scores = mean_scores[:, idx] - 0.5
+            cluster_permutation_scores = mean_scores[:, idx]
 
         cluster_permutation_times = times[idx]
         if cfg.cluster_forming_t_threshold is None:

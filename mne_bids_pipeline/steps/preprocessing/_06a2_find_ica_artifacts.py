@@ -31,7 +31,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT
+from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT
 
 
 def detect_bad_components(
@@ -43,7 +43,7 @@ def detect_bad_components(
     ch_names: list[str] | None,
     subject: str,
     session: str | None,
-) -> tuple[list[int], np.ndarray]:
+) -> tuple[list[int], FloatArrayT]:
     artifact = which.upper()
     if epochs is None:
         msg = (
@@ -156,7 +156,7 @@ def find_ica_artifacts(
     # ECG component detection
     epochs_ecg = None
     ecg_ics: list[int] = []
-    ecg_scores = np.zeros(0)
+    ecg_scores: FloatArrayT = np.zeros(0)
     for ri, raw_fname in enumerate(raw_fnames):
         # Have the channels needed to make ECG epochs
         raw = mne.io.read_raw(raw_fname, preload=False)

@@ -34,7 +34,9 @@ def _handle_csp_args(
         decoding_csp_times, (None, list, tuple, np.ndarray), "decoding_csp_times"
     )
     if decoding_csp_times is None:
-        decoding_csp_times = np.linspace(max(0, epochs_tmin), epochs_tmax, num=6)
+        decoding_csp_times = np.linspace(
+            max(0, epochs_tmin), epochs_tmax, num=6, dtype=float
+        )
     else:
         decoding_csp_times = np.array(decoding_csp_times, float)
     assert isinstance(decoding_csp_times, np.ndarray)

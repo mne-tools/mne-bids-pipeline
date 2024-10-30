@@ -40,7 +40,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT, RunKindT, RunTypeT
+from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
 
 def get_input_fnames_frequency_filter(
@@ -74,7 +74,7 @@ def notch_filter(
     trans_bandwidth: float | Literal["auto"],
     notch_widths: float | Iterable[float] | None,
     run_type: RunTypeT,
-    picks: np.ndarray | None,
+    picks: IntArrayT | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if freqs is None:
@@ -107,7 +107,7 @@ def bandpass_filter(
     l_trans_bandwidth: float | Literal["auto"],
     h_trans_bandwidth: float | Literal["auto"],
     run_type: RunTypeT,
-    picks: np.ndarray | None,
+    picks: IntArrayT | None,
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:

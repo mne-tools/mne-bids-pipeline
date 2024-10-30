@@ -31,11 +31,12 @@ __all__ = [
 ]
 
 
-FloatArrayT: TypeAlias = np.ndarray[Any, np.dtype[np.float64]]
-OutFilesT = dict[str, tuple[str, str | float]]
-InFilesT = dict[str, BIDSPath]  # Only BIDSPath
-InFilesPathT = dict[str, BIDSPath | pathlib.Path]  # allow generic Path as well
-AutoScoresT = dict[str, np.ndarray]
+ShapeT: TypeAlias = tuple[int, ...] | tuple[int]
+IntArrayT: TypeAlias = np.ndarray[ShapeT, np.dtype[np.integer[Any]]]
+FloatArrayT: TypeAlias = np.ndarray[ShapeT, np.dtype[np.floating[Any]]]
+OutFilesT: TypeAlias = dict[str, tuple[str, str | float]]
+InFilesT: TypeAlias = dict[str, BIDSPath]  # Only BIDSPath
+InFilesPathT: TypeAlias = dict[str, BIDSPath | pathlib.Path]  # allow generic Path too
 
 
 class ArbitraryContrast(TypedDict):

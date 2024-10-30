@@ -39,10 +39,10 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT
+from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT
 
 
-def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.ndarray:
+def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> IntArrayT:
     """Return the projection of the events_id on a boolean vector.
 
     This projection is useful in the case of hierarchical events:
@@ -58,7 +58,7 @@ def _prepare_labels(*, epochs: mne.BaseEpochs, contrast: tuple[str, str]) -> np.
     epochs_cond_1 = epochs[contrast[1]]
     event_codes_condition_1 = set(epochs_cond_1.events[:, 2])
 
-    y = epochs.events[:, 2].copy()
+    y: IntArrayT = epochs.events[:, 2].copy()
     for i in range(len(y)):
         if y[i] in event_codes_condition_0 and y[i] in event_codes_condition_1:
             msg = (
@@ -90,7 +90,7 @@ def prepare_epochs_and_y(
     cfg: SimpleNamespace,
     fmin: float,
     fmax: float,
-) -> tuple[mne.BaseEpochs, np.ndarray]:
+) -> tuple[mne.BaseEpochs, IntArrayT]:
     """Band-pass between, sub-select the desired epochs, and prepare y."""
     # filtering out the conditions we are not interested in, to ensure here we
     # have a valid partition between the condition of the contrast.

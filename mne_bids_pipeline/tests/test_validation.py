@@ -7,7 +7,7 @@ import pytest
 from mne_bids_pipeline._config_import import _import_config
 
 
-def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Test that misspellings are caught by our config import validator."""
     config_path = tmp_path / "config.py"
     bad_text = ""

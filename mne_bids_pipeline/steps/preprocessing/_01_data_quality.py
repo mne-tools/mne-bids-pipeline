@@ -28,7 +28,7 @@ from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 from mne_bids_pipeline._viz import plot_auto_scores
-from mne_bids_pipeline.typing import AutoScoresT, InFilesT, OutFilesT
+from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT
 
 
 def get_input_fnames_data_quality(
@@ -107,7 +107,7 @@ def assess_data_quality(
         )
     preexisting_bads = sorted(raw.info["bads"])
 
-    auto_scores: AutoScoresT | None = None
+    auto_scores: dict[str, FloatArrayT] | None = None
     auto_noisy_chs: list[str] | None = None
     auto_flat_chs: list[str] | None = None
     if _do_mf_autobad(cfg=cfg):
@@ -242,7 +242,7 @@ def _find_bads_maxwell(
     session: str | None,
     run: str | None,
     task: str | None,
-) -> tuple[list[str], list[str], AutoScoresT]:
+) -> tuple[list[str], list[str], dict[str, FloatArrayT]]:
     if cfg.find_flat_channels_meg:
         if cfg.find_noisy_channels_meg:
             msg = "Finding flat channels and noisy channels using Maxwell filtering."

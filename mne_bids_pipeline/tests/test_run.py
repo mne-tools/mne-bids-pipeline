@@ -162,7 +162,7 @@ def test_run(
     monkeypatch: pytest.MonkeyPatch,
     dataset_test: Any,
     tmp_path: Path,
-    capsys: pytest.CaptureFixture,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Test running a dataset."""
     test_options = TEST_SUITE[dataset]
@@ -217,7 +217,7 @@ def test_run(
 def test_missing_sessions(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    capsys: pytest.CaptureFixture,
+    capsys: pytest.CaptureFixture[str],
     allow_missing_sessions: bool,
 ) -> None:
     """Test the `allow_missing_sessions` config variable."""

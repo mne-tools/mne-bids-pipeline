@@ -133,7 +133,6 @@ convention = "numpy"
 ignore_errors = false
 scripts_are_modules = true
 strict = true
-ignore_missing_imports = true
 modules = ["mne_bids_pipeline", "docs.source"]
 
 [[tool.mypy.overrides]]

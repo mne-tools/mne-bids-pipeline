@@ -44,15 +44,15 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import TypedDict
+from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT, TypedDict
 
 
 def get_input_fnames_average_evokeds(
     *,
     cfg: SimpleNamespace,
     subject: str,
-    session: dict | None,
-) -> dict:
+    session: str | None,
+) -> InFilesT:
     in_files = dict()
     for this_subject in cfg.subjects:
         in_files[f"evoked-{this_subject}"] = BIDSPath(
@@ -81,8 +81,8 @@ def average_evokeds(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
     conditions = _all_conditions(cfg=cfg)
@@ -185,17 +185,17 @@ def average_evokeds(
 
 
 class ClusterAcrossTime(TypedDict):
-    times: np.ndarray
+    times: FloatArrayT
     p_value: float
 
 
 def _decoding_cluster_permutation_test(
-    scores: np.ndarray,
-    times: np.ndarray,
+    scores: FloatArrayT,
+    times: FloatArrayT,
     cluster_forming_t_threshold: float | None,
     n_permutations: int,
     random_seed: int,
-) -> tuple[np.ndarray, list[ClusterAcrossTime], int]:
+) -> tuple[FloatArrayT, list[ClusterAcrossTime], int]:
     """Perform a cluster permutation test on decoding scores.
 
     The clusters are formed across time points.
@@ -228,7 +228,7 @@ def _get_epochs_in_files(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = dict()
     in_files["epochs"] = BIDSPath(
         subject=cfg.subjects[0],
@@ -295,7 +295,7 @@ def _get_input_fnames_decoding(
     cond_2: str,
     kind: str,
     extension: str = ".mat",
-) -> dict:
+) -> InFilesT:
     in_files = _get_epochs_in_files(cfg=cfg, subject=subject, session=session)
     for this_subject in cfg.subjects:
         in_files[f"scores-{this_subject}"] = _decoding_out_fname(
@@ -324,8 +324,8 @@ def average_time_by_time_decoding(
     session: str | None,
     cond_1: str,
     cond_2: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     logger.info(**gen_log_kwargs(message="Averaging time-by-time decoding results"))
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
@@ -361,7 +361,7 @@ def average_time_by_time_decoding(
     }
 
     # Extract mean CV scores from all subjects.
-    mean_scores = np.empty((n_subjects, *time_points_shape))
+    mean_scores: FloatArrayT = np.empty((n_subjects, *time_points_shape))
 
     # Remaining in_files are all decoding data
     assert len(in_files) == n_subjects, list(in_files.keys())
@@ -566,8 +566,8 @@ def average_full_epochs_decoding(
     session: str | None,
     cond_1: str,
     cond_2: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     n_subjects = len(cfg.subjects)
     in_files.pop("epochs")  # not used but okay to include
 
@@ -640,7 +640,7 @@ def get_input_files_average_full_epochs_report(
     subject: str,
     session: str | None,
     decoding_contrasts: list[list[str]],
-) -> dict:
+) -> InFilesT:
     in_files = dict()
     for contrast in decoding_contrasts:
         in_files[f"decoding-full-epochs-{contrast}"] = _decoding_out_fname(
@@ -664,8 +664,8 @@ def average_full_epochs_report(
     subject: str,
     session: str | None,
     decoding_contrasts: list[list[str]],
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Add decoding results to the grand average report."""
     out_files = dict()
     out_files["cluster"] = _decoding_out_fname(
@@ -740,8 +740,8 @@ def average_csp_decoding(
     session: str | None,
     cond_1: str,
     cond_2: str,
-    in_files: dict,
-) -> dict[str, BIDSPath]:
+    in_files: InFilesT,
+) -> OutFilesT:
     msg = f"Summarizing CSP results: {cond_1} - {cond_2}."
     logger.info(**gen_log_kwargs(message=msg))
     in_files.pop("epochs")

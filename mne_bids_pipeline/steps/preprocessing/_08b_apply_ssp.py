@@ -23,6 +23,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_apply_ssp_epochs(
@@ -30,7 +31,7 @@ def get_input_fnames_apply_ssp_epochs(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = dict()
     in_files["proj"] = _proj_path(cfg=cfg, subject=subject, session=session)
     in_files["epochs"] = in_files["proj"].copy().update(suffix="epo", check=False)
@@ -47,8 +48,8 @@ def apply_ssp_epochs(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     out_files = dict()
     out_files["epochs"] = (
         in_files["epochs"].copy().update(processing="ssp", split=None, check=False)
@@ -84,7 +85,7 @@ def get_input_fnames_apply_ssp_raw(
     session: str | None,
     run: str,
     task: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
@@ -110,8 +111,8 @@ def apply_ssp_raw(
     session: str | None,
     run: str,
     task: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     projs = mne.read_proj(in_files.pop("proj"))
     in_key = list(in_files.keys())[0]
     assert in_key.startswith("raw"), in_key

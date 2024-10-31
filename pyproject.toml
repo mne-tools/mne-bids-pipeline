@@ -132,25 +132,23 @@ convention = "numpy"
 [tool.mypy]
 ignore_errors = false
 scripts_are_modules = true
+disable_error_code = [
+  # For libraries like matplotlib that we don't have types for
+  "import-not-found",
+  "import-untyped",
+]
 strict = true
-ignore_missing_imports = true
 modules = ["mne_bids_pipeline", "docs.source"]
 
 [[tool.mypy.overrides]]
-module = ["mne_bids_pipeline.steps.*"]
-disable_error_code = [
-  "type-arg",  # TODO: Fix ~100 Missing type parameters for generic type
-]
+module = ["mne_bids_pipeline.steps.freesurfer.contrib.*"]
+ignore_errors = true  # not our code, don't validate
 
 [[tool.mypy.overrides]]
 module = ["mne_bids_pipeline.tests.*"]
 disable_error_code = [
   "misc",  # Untyped decorator makes function "test_all_functions_return" untyped
 ]
-
-[[tool.mypy.overrides]]
-module = ["mne_bids_pipeline.steps.freesurfer.contrib.*"]
-ignore_errors = true  # not our code, don't validate
 
 [[tool.mypy.overrides]]
 module = ['mne_bids_pipeline.tests.configs.*']

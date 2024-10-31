@@ -18,6 +18,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
 def get_input_fnames_make_bem_solution(
@@ -25,7 +26,7 @@ def get_input_fnames_make_bem_solution(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None = None,
-) -> dict:
+) -> InFilesPathT:
     in_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
     assert conductivity is not None
@@ -41,7 +42,7 @@ def get_output_fnames_make_bem_solution(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None = None,
-) -> dict:
+) -> InFilesPathT:
     out_files = dict()
     bem_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "bem"
     _, tag = _get_bem_conductivity(cfg)
@@ -59,9 +60,9 @@ def make_bem_solution(
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
-    in_files: dict,
+    in_files: InFilesPathT,
     session: str | None = None,
-) -> dict:
+) -> OutFilesT:
     msg = "Calculating BEM solution"
     logger.info(**gen_log_kwargs(message=msg, subject=subject, session=session))
     conductivity, _ = _get_bem_conductivity(cfg)

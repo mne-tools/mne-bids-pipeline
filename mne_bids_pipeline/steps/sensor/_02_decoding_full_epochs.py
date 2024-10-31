@@ -43,6 +43,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_epochs_decoding(
@@ -52,7 +53,7 @@ def get_input_fnames_epochs_decoding(
     session: str | None,
     condition1: str,
     condition2: str,
-) -> dict:
+) -> InFilesT:
     proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
@@ -86,8 +87,8 @@ def run_epochs_decoding(
     session: str | None,
     condition1: str,
     condition2: str,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     msg = f"Contrasting conditions: {condition1} – {condition2}"

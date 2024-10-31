@@ -26,6 +26,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 from ._07_make_epochs import _add_epochs_image_kwargs
 
@@ -35,7 +36,7 @@ def get_input_fnames_drop_ptp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -65,8 +66,8 @@ def drop_ptp(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     out_files = dict()

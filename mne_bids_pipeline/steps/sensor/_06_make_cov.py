@@ -26,6 +26,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_cov(
@@ -33,7 +34,7 @@ def get_input_fnames_cov(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
     fname_epochs = BIDSPath(
@@ -97,8 +98,8 @@ def compute_cov_from_epochs(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-    out_files: dict,
+    in_files: InFilesT,
+    out_files: InFilesT,
 ) -> mne.Covariance:
     epo_fname = in_files.pop("epochs")
 
@@ -127,8 +128,8 @@ def compute_cov_from_raw(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-    out_files: dict,
+    in_files: InFilesT,
+    out_files: InFilesT,
 ) -> mne.Covariance:
     fname_raw = in_files.pop("raw")
     run_msg = "resting-state" if fname_raw.task == "rest" else "empty-room"
@@ -154,8 +155,8 @@ def retrieve_custom_cov(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-    out_files: dict,
+    in_files: InFilesT,
+    out_files: InFilesT,
 ) -> mne.Covariance:
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
@@ -215,8 +216,8 @@ def run_covariance(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None = None,
-    in_files: dict,
-) -> dict[str, BIDSPath]:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     out_files = dict()

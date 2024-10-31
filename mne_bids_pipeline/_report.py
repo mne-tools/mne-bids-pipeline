@@ -572,17 +572,17 @@ def _sanitize_cond_tag(cond: str) -> str:
 
 
 def _imshow_tf(
-    vals: np.ndarray,
+    vals: FloatArrayT,
     ax: matplotlib.axes.Axes,
     *,
-    tmin: np.ndarray,
-    tmax: np.ndarray,
-    fmin: np.ndarray,
-    fmax: np.ndarray,
+    tmin: FloatArrayT,
+    tmax: FloatArrayT,
+    fmin: FloatArrayT,
+    fmax: FloatArrayT,
     vmin: float,
     vmax: float,
     cmap: str = "RdBu_r",
-    mask: np.ndarray | None = None,
+    mask: FloatArrayT | None = None,
     cmap_masked: Any | None = None,
 ) -> matplotlib.image.AxesImage:
     """Plot CSP TF decoding scores."""

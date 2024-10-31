@@ -22,6 +22,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _all_conditions, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def _stc_path(
@@ -60,7 +61,7 @@ def get_input_fnames_morph_stc(
     subject: str,
     fs_subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = dict()
     for condition in _all_conditions(cfg=cfg):
         in_files[f"original-{condition}"] = _stc_path(
@@ -83,8 +84,8 @@ def morph_stc(
     subject: str,
     fs_subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     out_files = dict()
     for condition in _all_conditions(cfg=cfg):
         fname_stc = in_files.pop(f"original-{condition}")
@@ -115,7 +116,7 @@ def get_input_fnames_run_average(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     in_files = dict()
     assert subject == "average"
     for condition in _all_conditions(cfg=cfg):
@@ -139,8 +140,8 @@ def run_average(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict[str, BIDSPath]:
+    in_files: InFilesT,
+) -> OutFilesT:
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)

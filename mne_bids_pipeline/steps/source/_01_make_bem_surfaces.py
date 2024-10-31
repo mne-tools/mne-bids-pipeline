@@ -21,6 +21,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report, _render_bem
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
 def _get_bem_params(cfg: SimpleNamespace) -> tuple[str, Path, Path]:
@@ -42,8 +43,8 @@ def get_input_fnames_make_bem_surfaces(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict[str, Path]:
-    in_files: dict[str, Path] = dict()
+) -> InFilesPathT:
+    in_files = dict()
     mri_images, mri_dir, flash_dir = _get_bem_params(cfg)
     in_files["t1"] = mri_dir / "T1.mgz"
     if mri_images == "FLASH":
@@ -59,7 +60,7 @@ def get_output_fnames_make_bem_surfaces(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesPathT:
     out_files = dict()
     conductivity, _ = _get_bem_conductivity(cfg)
     assert conductivity is not None
@@ -80,8 +81,8 @@ def make_bem_surfaces(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesPathT,
+) -> OutFilesT:
     mri_images, _, _ = _get_bem_params(cfg)
     in_files.clear()  # assume we use everything we add
     if mri_images == "FLASH":

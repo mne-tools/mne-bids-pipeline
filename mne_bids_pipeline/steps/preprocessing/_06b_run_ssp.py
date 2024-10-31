@@ -7,7 +7,6 @@ These are often also referred to as PCA vectors.
 from types import SimpleNamespace
 
 import mne
-import numpy as np
 from mne import compute_proj_epochs, compute_proj_evoked
 from mne.preprocessing import find_ecg_events, find_eog_events
 from mne_bids import BIDSPath
@@ -29,11 +28,13 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT
 
 
-def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> np.ndarray:
+def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> IntArrayT:
     """Wrap find_ecg_events to use the same defaults as create_ecg_events."""
-    return find_ecg_events(raw, ch_name=ch_name, l_freq=8, h_freq=16)[0]
+    out: IntArrayT = find_ecg_events(raw, ch_name=ch_name, l_freq=8, h_freq=16)[0]
+    return out
 
 
 def get_input_fnames_run_ssp(
@@ -41,7 +42,7 @@ def get_input_fnames_run_ssp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -73,8 +74,8 @@ def run_ssp(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     import matplotlib.pyplot as plt
 
     # compute SSP on all runs of raw

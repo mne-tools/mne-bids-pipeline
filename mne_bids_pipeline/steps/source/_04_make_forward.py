@@ -28,6 +28,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def _prepare_trans_template(
@@ -98,7 +99,7 @@ def _prepare_trans_subject(
 
 def get_input_fnames_forward(
     *, cfg: SimpleNamespace, subject: str, session: str | None
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     bids_path = BIDSPath(
         subject=subject,
         session=session,
@@ -141,8 +142,8 @@ def run_forward(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     # Do not use processing=cfg.proc here because the forward could actually be
     # influenced by previous steps (e.g., Maxwell filtering), so just make sure we
     # use cfg.proc when figuring out the head<->MRI transform

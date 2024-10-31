@@ -21,7 +21,7 @@ from mne_bids import BIDSPath
 
 from ._config_utils import get_task
 from ._logging import _is_testing, gen_log_kwargs, logger
-from .typing import OutFilesT
+from .typing import InFilesT, OutFilesT
 
 
 def failsafe_run(
@@ -347,7 +347,7 @@ def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
 
 
 def _update_for_splits(
-    files_dict: dict[str, BIDSPath] | BIDSPath,
+    files_dict: InFilesT | BIDSPath,
     key: str | None,
     *,
     single: bool = False,
@@ -420,7 +420,7 @@ def _short_step_path(step_path: pathlib.Path) -> str:
 def _prep_out_files(
     *,
     exec_params: SimpleNamespace,
-    out_files: dict[str, BIDSPath],
+    out_files: InFilesT,
     check_relative: pathlib.Path | None = None,
     bids_only: bool = True,
 ) -> OutFilesT:

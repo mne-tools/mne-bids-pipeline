@@ -138,9 +138,9 @@ def main() -> None:
         line = line.rstrip()
         if line.startswith("# #"):  # a new (sub)section / file
             this_def = line[2:]
-            this_level = this_def.split()[0]
-            assert this_level.count("#") == len(this_level), this_level
-            this_level = this_level.count("#") - 1
+            this_level_str = this_def.split()[0]
+            assert this_level_str.count("#") == len(this_level_str), this_level_str
+            this_level: int = this_level_str.count("#") - 1
             if this_level == 2:
                 # flatten preprocessing/filtering/filter to preprocessing/filter
                 # for example

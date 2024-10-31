@@ -23,6 +23,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_evoked(
@@ -30,7 +31,7 @@ def get_input_fnames_evoked(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -61,8 +62,8 @@ def run_evoked(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     out_files = dict()
     out_files["evoked"] = (
         in_files["epochs"]

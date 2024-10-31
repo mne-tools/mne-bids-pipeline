@@ -31,6 +31,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT
 
 
 def detect_bad_components(
@@ -42,7 +43,7 @@ def detect_bad_components(
     ch_names: list[str] | None,
     subject: str,
     session: str | None,
-) -> tuple[list[int], np.ndarray]:
+) -> tuple[list[int], FloatArrayT]:
     artifact = which.upper()
     if epochs is None:
         msg = (
@@ -91,7 +92,7 @@ def get_input_fnames_find_ica_artifacts(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> dict:
+) -> InFilesT:
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -126,8 +127,8 @@ def find_ica_artifacts(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: dict,
-) -> dict:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Run ICA."""
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
@@ -155,7 +156,7 @@ def find_ica_artifacts(
     # ECG component detection
     epochs_ecg = None
     ecg_ics: list[int] = []
-    ecg_scores = np.zeros(0)
+    ecg_scores: FloatArrayT = np.zeros(0)
     for ri, raw_fname in enumerate(raw_fnames):
         # Have the channels needed to make ECG epochs
         raw = mne.io.read_raw(raw_fname, preload=False)

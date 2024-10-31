@@ -20,11 +20,12 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_find_empty_room(
     *, subject: str, session: str | None, run: str | None, cfg: SimpleNamespace
-) -> dict[str, BIDSPath]:
+) -> InFilesT:
     """Get paths of files required by find_empty_room function."""
     bids_path_in = BIDSPath(
         subject=subject,
@@ -39,7 +40,7 @@ def get_input_fnames_find_empty_room(
         root=cfg.bids_root,
         check=False,
     )
-    in_files: dict[str, BIDSPath] = dict()
+    in_files: InFilesT = dict()
     in_files[f"raw_run-{run}"] = bids_path_in
     _update_for_splits(in_files, f"raw_run-{run}", single=True)
     if hasattr(bids_path_in, "find_matching_sidecar"):
@@ -68,8 +69,8 @@ def find_empty_room(
     subject: str,
     session: str | None,
     run: str | None,
-    in_files: dict[str, BIDSPath],
-) -> dict[str, BIDSPath]:
+    in_files: InFilesT,
+) -> OutFilesT:
     raw_path = in_files.pop(f"raw_run-{run}")
     in_files.pop("sidecar", None)
     try:

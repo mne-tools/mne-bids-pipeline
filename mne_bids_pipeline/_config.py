@@ -1400,7 +1400,6 @@ false-alarm rate increases dramatically.
 """
 
 
-
 # From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
 ica_use_icalabel: bool = False
 """
@@ -1415,7 +1414,20 @@ EEG data.
     ```
 """
 
-icalabel_include: Annotated[Sequence[Literal["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]], Len(1, 7)] = ["brain","other"]
+icalabel_include: Annotated[
+    Sequence[
+        Literal[
+            "brain",
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise",
+            "other",
+        ]
+    ],
+    Len(1, 7),
+] = ["brain", "other"]
 """
 Which independent components (ICs) to keep based on the labels given by ICLabel.
 Possible labels are "brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other".

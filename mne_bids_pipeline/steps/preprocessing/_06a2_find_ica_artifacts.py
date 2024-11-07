@@ -10,15 +10,14 @@ run the apply_ica step.
 from types import SimpleNamespace
 from typing import Literal
 
+import matplotlib.pyplot as plt
 import mne
+import mne_icalabel
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne.viz import plot_ica_components
 from mne_bids import BIDSPath
-from mne_icalabel import label_components
-import mne_icalabel
-import matplotlib.pyplot as plt
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
@@ -265,7 +264,6 @@ def find_ica_artifacts(
                 subject=subject,
                 session=session,
             )
-    
 
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
@@ -274,10 +272,14 @@ def find_ica_artifacts(
         icalabel_prob = []
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
-        
-        label_results = mne_icalabel.label_components(inst=epochs, ica=ica, method="iclabel")
-        for idx, (label,prob) in enumerate(zip(label_results["labels"],label_results["y_pred_proba"])):
-            #icalabel_include = ["brain", "other"]
+
+        label_results = mne_icalabel.label_components(
+            inst=epochs, ica=ica, method="iclabel"
+        )
+        for idx, (label, prob) in enumerate(
+            zip(label_results["labels"], label_results["y_pred_proba"])
+        ):
+            # icalabel_include = ["brain", "other"]
             print(label)
             print(prob)
 
@@ -318,23 +320,23 @@ def find_ica_artifacts(
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
-            tsv_data.loc[
-                row_idx, "status_description"
-            ] = f"Auto-detected {label} (MNE-ICALabel)"
+            tsv_data.loc[row_idx, "status_description"] = (
+                f"Auto-detected {label} (MNE-ICALabel)"
+            )
     if cfg.ica_use_ecg_detection:
         for component in ecg_ics:
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
-            tsv_data.loc[
-                row_idx, "status_description"
-            ] = "Auto-detected ECG artifact (MNE)"
+            tsv_data.loc[row_idx, "status_description"] = (
+                "Auto-detected ECG artifact (MNE)"
+            )
     if cfg.ica_use_eog_detection:
         for component in eog_ics:
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
-            tsv_data.loc[
-                row_idx, "status_description"
-            ] = "Auto-detected EOG artifact (MNE)"
+            tsv_data.loc[row_idx, "status_description"] = (
+                "Auto-detected EOG artifact (MNE)"
+            )
 
     tsv_data.to_csv(out_files_components, sep="\t", index=False)
 
@@ -385,11 +387,18 @@ def find_ica_artifacts(
                 ica=ica,
                 picks=ic,
             )
-            excluded_IC_figure.axes[0].text(0, -0.15, f"Label: {label} \n Probability: {prob:.3f}", ha="center", fontsize=8, bbox={"facecolor":"orange", "alpha":0.5, "pad":5})
+            excluded_IC_figure.axes[0].text(
+                0,
+                -0.15,
+                f"Label: {label} \n Probability: {prob:.3f}",
+                ha="center",
+                fontsize=8,
+                bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
+            )
 
             report.add_figure(
                 fig=excluded_IC_figure,
-                title = f'ICA{ic:03}',
+                title=f"ICA{ic:03}",
                 replace=True,
             )
             plt.close(excluded_IC_figure)
@@ -414,12 +423,12 @@ def get_config(
         task_is_rest=config.task_is_rest,
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,
-        ica_use_eog_detection = config.ica_use_eog_detection,
+        ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
-        ica_use_ecg_detection = config.ica_use_ecg_detection,
+        ica_use_ecg_detection=config.ica_use_ecg_detection,
         ica_ecg_threshold=config.ica_ecg_threshold,
         ica_use_icalabel=config.ica_use_icalabel,
-        icalabel_include = config.icalabel_include,
+        icalabel_include=config.icalabel_include,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

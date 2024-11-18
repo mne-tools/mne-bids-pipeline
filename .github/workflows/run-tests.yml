@@ -25,7 +25,7 @@ jobs:
     - run: pip install -ve .[tests] codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
     - run: make codespell-error
     - run: pytest mne_bids_pipeline -m "not dataset_test"
-    - uses: codecov/codecov-action@v4
+    - uses: codecov/codecov-action@v5
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
@@ -75,5 +75,5 @@ jobs:
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
       - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
         timeout-minutes: 1
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: success() || failure()

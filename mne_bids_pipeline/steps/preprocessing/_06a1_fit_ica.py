@@ -79,6 +79,14 @@ def run_ica(
     """Run ICA."""
     import matplotlib.pyplot as plt
 
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
+        # on data flltered between 1 and 100 Hz.
+        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_l_freq == 1.0
+        assert cfg.h_freq == 100.0
+        assert cfg.eeg_reference == "average"
+
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
@@ -164,7 +172,18 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
+        if cfg.ica_use_icalabel:
+            assert cfg.eeg_reference == "average"
+            projection = False  # Avg. ref. needs to be applied for MNE-ICALabel
+        elif cfg.eeg_reference == "average":
+            projection = True
+        else:
+            projection = False
+
+        if not projection:
+            msg = "Applying average reference to EEG epochs used for ICA fitting."
+            logger.info(**gen_log_kwargs(message=msg))
+
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
     ar_reject_log = ar_n_interpolate_ = None
@@ -338,10 +357,12 @@ def get_config(
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
         ica_reject=config.ica_reject,
+        ica_use_icalabel=config.ica_use_icalabel,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
         l_freq=config.l_freq,
+        h_freq=config.h_freq,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,

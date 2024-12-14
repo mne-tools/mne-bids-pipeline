@@ -76,6 +76,7 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:__array__ implementation doesn't accept.*:DeprecationWarning
     # Seaborn
     ignore:.*bool was deprecated in Matplotlib.*:DeprecationWarning
+    ignore:.*bool will be deprecated.*:PendingDeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

@@ -850,6 +850,17 @@ notch_widths: float | Sequence[float] | None = None
 Specifies the width of each stop band. `None` uses the MNE default.
 """
 
+zapline_fline: float | None = None
+"""
+Specifies frequency to remove using Zapline filtering
+"""
+
+zapline_iter: bool = False
+"""
+Specifies if the iterative version of the Zapline algorithm should be run
+"""
+
+
 # ### Resampling
 #
 # If you have acquired data with a very high sampling frequency (e.g. 2 kHz)

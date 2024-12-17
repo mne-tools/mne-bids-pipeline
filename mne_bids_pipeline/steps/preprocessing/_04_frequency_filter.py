@@ -42,6 +42,7 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
+from meegkit import dss
 
 def get_input_fnames_frequency_filter(
     *,
@@ -63,6 +64,35 @@ def get_input_fnames_frequency_filter(
         mf_reference_run=cfg.mf_reference_run,
     )
 
+def zapline(
+    raw: mne.io.BaseRaw, 
+    subject: str,
+    session: str | None,
+    run: str,
+    task: str | None,  
+    fline: float, 
+    iter : bool
+) -> None:
+    "Uses Zapline to filter? data"
+    if fline is None:
+        msg = f"Not applying Zapline filter to data."
+    else:
+        msg = f"Zapline filtering data at with Fline {fline} Hz."
+
+    logger.info(**gen_log_kwargs(message=msg))
+
+    if fline is None:
+        return
+
+    sfreq = raw.info['sfreq']
+    data = raw.get_data().T #shape = (n_samples, n_channels, n_trials)
+    if iter:
+        out, iterations = dss.dss_line_iter(data, fline, sfreq)
+        print(f"Removed {iterations} components")
+    else:
+        out, _ = dss.dss_line(data, fline, sfreq)
+    out_mne = mne.io.RawArray(out.T, verbose=True, info=raw.info)
+    return out_mne
 
 def notch_filter(
     raw: mne.io.BaseRaw,
@@ -218,6 +248,15 @@ def filter_data(
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
+    zapline(
+        raw=raw,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
+        fline=cfg.zapline_fline,
+        iter=cfg.zapline_iter,
+    )
     notch_filter(
         raw=raw,
         subject=subject,
@@ -301,6 +340,8 @@ def get_config(
         l_freq=config.l_freq,
         h_freq=config.h_freq,
         notch_freq=config.notch_freq,
+        zapline_fline=config.zapline_fline,
+        zapline_iter=config.zapline_iter,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
         notch_trans_bandwidth=config.notch_trans_bandwidth,

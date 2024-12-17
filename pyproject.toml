@@ -49,6 +49,7 @@ dependencies = [
   "mne[hdf5] >=1.7",
   "mne-bids[full]",
   "filelock",
+  "meegkit"
 ]
 dynamic = ["version"]
 

@@ -20,6 +20,7 @@ from typing import Literal
 
 import mne
 import numpy as np
+from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
@@ -42,7 +43,6 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
-from meegkit import dss
 
 def get_input_fnames_frequency_filter(
     *,
@@ -64,18 +64,19 @@ def get_input_fnames_frequency_filter(
         mf_reference_run=cfg.mf_reference_run,
     )
 
+
 def zapline(
-    raw: mne.io.BaseRaw, 
+    raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
     run: str,
-    task: str | None,  
-    fline: float, 
-    iter : bool
+    task: str | None,
+    fline: float,
+    iter: bool,
 ) -> None:
-    "Uses Zapline to filter? data"
+    """Uses Zapline to filter? data"""
     if fline is None:
-        msg = f"Not applying Zapline filter to data."
+        msg = "Not applying Zapline filter to data."
     else:
         msg = f"Zapline filtering data at with Fline {fline} Hz."
 
@@ -84,8 +85,8 @@ def zapline(
     if fline is None:
         return
 
-    sfreq = raw.info['sfreq']
-    data = raw.get_data().T #shape = (n_samples, n_channels, n_trials)
+    sfreq = raw.info["sfreq"]
+    data = raw.get_data().T  # shape = (n_samples, n_channels, n_trials)
     if iter:
         out, iterations = dss.dss_line_iter(data, fline, sfreq)
         print(f"Removed {iterations} components")
@@ -93,6 +94,7 @@ def zapline(
         out, _ = dss.dss_line(data, fline, sfreq)
     out_mne = mne.io.RawArray(out.T, verbose=True, info=raw.info)
     return out_mne
+
 
 def notch_filter(
     raw: mne.io.BaseRaw,

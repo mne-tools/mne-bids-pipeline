@@ -146,7 +146,7 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
     subj_sessions: dict[str, list[str]] = dict()
     cfg_sessions = _get_sessions(config)
     # find which tasks to ignore when deciding if a subj has data for a session
-    if config.task is None:
+    if config.task == "":
         ignore_tasks = None
     else:
         all_tasks = _get_entity_vals_cached(

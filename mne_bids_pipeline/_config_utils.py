@@ -142,14 +142,27 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     return tuple(str(x) for x in sessions)
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list[None]]:
-    subj_sessions: dict[str, list[str] | list[None]] = dict()
+def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
+    subj_sessions: dict[str, list[str]] = dict()
     cfg_sessions = _get_sessions(config)
+    # find which tasks to ignore when deciding if a subj has data for a session
+    if config.task is None:
+        ignore_tasks = None
+    else:
+        all_tasks = _get_entity_vals_cached(
+            root=config.bids_root,
+            entity_key="task",
+            ignore_datatypes=_get_ignore_datatypes(config),
+        )
+        ignore_tasks = tuple(set(all_tasks) - set([config.task]))
     for subject in get_subjects(config):
-        # Only traverse through the current subject's directory
+        # Check current subject's directory for available sessions
         valid_sessions_subj = _get_entity_vals_cached(
             config.bids_root / f"sub-{subject}",
             entity_key="session",
+            ignore_tasks=ignore_tasks,
+            ignore_acquisitions=("calibration", "crosstalk"),
+            ignore_suffixes=("scans", "coordsystem"),
             ignore_datatypes=_get_ignore_datatypes(config),
         )
         missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
@@ -159,9 +172,9 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list
                 f"{tuple(sorted(missing_sessions))}, and "
                 "`config.allow_missing_sessions` is False"
             )
-        subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
-        if subj_sessions[subject] == []:
-            subj_sessions[subject] = [None]
+        keep_sessions = sorted(set(cfg_sessions) & set(valid_sessions_subj))
+        if len(keep_sessions):
+            subj_sessions[subject] = keep_sessions
     return subj_sessions
 
 

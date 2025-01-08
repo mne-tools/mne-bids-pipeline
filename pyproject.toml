@@ -103,6 +103,9 @@ exclude = [
   "ignore_words.txt",
 ]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.codespell]
 skip = "docs/site/*,*.html,steps/freesurfer/contrib/*"
 ignore-words = "ignore_words.txt"

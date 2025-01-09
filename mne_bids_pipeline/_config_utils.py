@@ -142,9 +142,11 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     return tuple(str(x) for x in sessions)
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
-    subj_sessions: dict[str, list[str]] = dict()
-    cfg_sessions = _get_sessions(config)
+def get_subjects_sessions(
+    config: SimpleNamespace,
+) -> dict[str, tuple[None] | tuple[str, ...]]:
+    subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
+    cfg_sessions = get_sessions(config)
     # find which tasks to ignore when deciding if a subj has data for a session
     if config.task == "":
         ignore_tasks = None
@@ -165,14 +167,20 @@ def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str]]:
             ignore_suffixes=("scans", "coordsystem"),
             ignore_datatypes=_get_ignore_datatypes(config),
         )
-        missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
-        if missing_sessions and not config.allow_missing_sessions:
-            raise RuntimeError(
-                f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{tuple(sorted(missing_sessions))}, and "
-                "`config.allow_missing_sessions` is False"
+        # handle datasets that don't have (named) sessions
+        if cfg_sessions == (None,):
+            assert valid_sessions_subj == (), valid_sessions_subj
+            keep_sessions = cfg_sessions
+        else:
+            missing_sessions = tuple(
+                sorted(set(cfg_sessions) - set(valid_sessions_subj))  # type: ignore
             )
-        keep_sessions = sorted(set(cfg_sessions) & set(valid_sessions_subj))
+            if missing_sessions and not config.allow_missing_sessions:
+                raise RuntimeError(
+                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
+                )
+            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))  # type: ignore
         if len(keep_sessions):
             subj_sessions[subject] = keep_sessions
     return subj_sessions

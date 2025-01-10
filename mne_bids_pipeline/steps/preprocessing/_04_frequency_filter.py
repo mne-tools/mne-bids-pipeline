@@ -43,6 +43,7 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
+
 def get_input_fnames_frequency_filter(
     *,
     cfg: SimpleNamespace,
@@ -93,6 +94,7 @@ def zapline(
         out, _ = dss.dss_line(data, fline, sfreq)
     raw = mne.io.RawArray(out.T, verbose=True, info=raw.info)
     return raw
+
 
 def notch_filter(
     raw: mne.io.BaseRaw,

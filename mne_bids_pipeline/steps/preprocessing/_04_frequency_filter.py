@@ -43,8 +43,6 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
-from meegkit import dss
-
 def get_input_fnames_frequency_filter(
     *,
     cfg: SimpleNamespace,

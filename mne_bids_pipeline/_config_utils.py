@@ -145,42 +145,42 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
 def get_subjects_sessions(
     config: SimpleNamespace,
 ) -> dict[str, tuple[None] | tuple[str, ...]]:
-    subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
-    cfg_sessions = get_sessions(config)
+    subjects = get_subjects(config)
+    cfg_sessions = _get_sessions(config)
+    # easy case first: datasets that don't have (named) sessions
+    if not cfg_sessions:
+        return {subj: (None,) for subj in subjects}
+
     # find which tasks to ignore when deciding if a subj has data for a session
+    ignore_datatypes = _get_ignore_datatypes(config)
     if config.task == "":
         ignore_tasks = None
     else:
         all_tasks = _get_entity_vals_cached(
             root=config.bids_root,
             entity_key="task",
-            ignore_datatypes=_get_ignore_datatypes(config),
+            ignore_datatypes=ignore_datatypes,
         )
         ignore_tasks = tuple(set(all_tasks) - set([config.task]))
-    for subject in get_subjects(config):
-        # Check current subject's directory for available sessions
+
+    # loop over subjs and check for available sessions
+    subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
+    for subject in subjects:
         valid_sessions_subj = _get_entity_vals_cached(
             config.bids_root / f"sub-{subject}",
             entity_key="session",
             ignore_tasks=ignore_tasks,
             ignore_acquisitions=("calibration", "crosstalk"),
             ignore_suffixes=("scans", "coordsystem"),
-            ignore_datatypes=_get_ignore_datatypes(config),
+            ignore_datatypes=ignore_datatypes,
         )
-        # handle datasets that don't have (named) sessions
-        if cfg_sessions == (None,):
-            assert valid_sessions_subj == (), valid_sessions_subj
-            keep_sessions = cfg_sessions
-        else:
-            missing_sessions = tuple(
-                sorted(set(cfg_sessions) - set(valid_sessions_subj))  # type: ignore
+        missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
+        if missing_sessions and not config.allow_missing_sessions:
+            raise RuntimeError(
+                f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                f"{missing_sessions}, and `config.allow_missing_sessions` is False"
             )
-            if missing_sessions and not config.allow_missing_sessions:
-                raise RuntimeError(
-                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
-                )
-            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))  # type: ignore
+        keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
         if len(keep_sessions):
             subj_sessions[subject] = keep_sessions
     return subj_sessions

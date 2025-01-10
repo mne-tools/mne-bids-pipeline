@@ -43,6 +43,7 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT, RunKindT, RunTypeT
 
+from meegkit import dss
 
 def get_input_fnames_frequency_filter(
     *,
@@ -83,7 +84,7 @@ def zapline(
     logger.info(**gen_log_kwargs(message=msg))
 
     if fline is None:
-        return
+        return raw
 
     sfreq = raw.info["sfreq"]
     data = raw.get_data().T  # shape = (n_samples, n_channels, n_trials)
@@ -92,9 +93,8 @@ def zapline(
         print(f"Removed {iterations} components")
     else:
         out, _ = dss.dss_line(data, fline, sfreq)
-    out_mne = mne.io.RawArray(out.T, verbose=True, info=raw.info)
-    return out_mne
-
+    raw = mne.io.RawArray(out.T, verbose=True, info=raw.info)
+    return raw
 
 def notch_filter(
     raw: mne.io.BaseRaw,
@@ -250,7 +250,7 @@ def filter_data(
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
-    zapline(
+    raw = zapline(
         raw=raw,
         subject=subject,
         session=session,

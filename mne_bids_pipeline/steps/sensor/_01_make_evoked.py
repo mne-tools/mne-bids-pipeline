@@ -76,9 +76,9 @@ def run_evoked(
         )
     )
 
-    msg = f'Input: {in_files["epochs"].basename}'
+    msg = f"Input: {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["evoked"].basename}'
+    msg = f"Output: {out_files['evoked'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)

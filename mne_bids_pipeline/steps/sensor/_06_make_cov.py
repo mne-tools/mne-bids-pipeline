@@ -137,7 +137,7 @@ def compute_cov_from_raw(
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Input:  {fname_raw.basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["cov"].basename}'
+    msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     raw_noise = mne.io.read_raw_fif(fname_raw, preload=True)
@@ -188,7 +188,7 @@ def retrieve_custom_cov(
 
     msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["cov"].basename}'
+    msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     cov = config.noise_cov(evoked_bids_path)

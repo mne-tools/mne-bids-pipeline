@@ -201,7 +201,7 @@ def test_run(
     # Run the tests.
     steps = test_options.get("steps", ("preprocessing", "sensor"))
     task = test_options.get("task", None)
-    command = ["mne_bids_pipeline", str(config_path), f'--steps={",".join(steps)}']
+    command = ["mne_bids_pipeline", str(config_path), f"--steps={','.join(steps)}"]
     if task:
         command.append(f"--task={task}")
     if "--pdb" in sys.argv:

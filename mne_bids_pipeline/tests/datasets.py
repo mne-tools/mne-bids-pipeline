@@ -16,6 +16,7 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     exclude: list[str]  # []
     hash: str  # ""
     processor: str  # ""
+    processor: str  # ""
 
 
 DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {

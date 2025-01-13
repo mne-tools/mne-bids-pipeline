@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import pytest
+from mne_bids import BIDSPath, get_bids_path_from_fname
 
+from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
 
@@ -278,3 +280,98 @@ allow_missing_sessions = {allow_missing_sessions}
         print()
         with context:
             main()
+
+
+def test_session_specific_mri(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test of (faked) session-specific MRIs."""
+    dataset = "MNE-funloc-data"
+    test_options = TEST_SUITE[dataset]
+    config = test_options.get("config", f"config_{dataset}.py")
+    config_path = BIDS_PIPELINE_DIR / "tests" / "configs" / config
+    config_obj = _import_config(config_path=config_path)
+    # copy the dataset to a tmpdir, and in the destination location (a tmpdir) make it
+    # seem like there's only one subj with different MRIs for different sessions
+    new_bids_path = BIDSPath(root=tmp_path / dataset, subject="01", session="a")
+    # sub-01/* → sub-01/ses-a/* ;  sub-02/* → sub-01/ses-b/*
+    for src_subj, dst_sess in (("01", "a"), ("02", "b")):
+        src_dir = config_obj.bids_root / f"sub-{src_subj}"
+        dst_dir = new_bids_path.root / "sub-01" / f"ses-{dst_sess}"
+        for root, dirs, files in src_dir.walk():
+            offset = root.relative_to(src_dir)
+            for _dir in dirs:
+                (dst_dir / offset / _dir).mkdir(parents=True)
+            for _file in files:
+                bp = get_bids_path_from_fname(root / _file)
+                bp.update(root=new_bids_path.root, subject="01", session=dst_sess)
+                # rewrite scans.tsv files to have correct filenames in it
+                if _file.endswith("scans.tsv"):
+                    lines = [
+                        line.replace(f"sub-{src_subj}", f"sub-01_ses-{dst_sess}")
+                        for line in (root / _file).read_text().split("\n")
+                    ]
+                    (dst_dir / offset / bp.basename).write_text("\n".join(lines))
+                # for all other files, a simple copy suffices
+                else:
+                    shutil.copyfile(
+                        src=root / _file, dst=dst_dir / offset / bp.basename
+                    )
+    # emptyroom
+    src_dir = config_obj.bids_root / "sub-emptyroom"
+    dst_dir = new_bids_path.root / "sub-emptyroom"
+    shutil.copytree(src=src_dir, dst=dst_dir)
+    # root-level files (dataset description, etc)
+    src_dir = config_obj.bids_root
+    dst_dir = new_bids_path.root
+    files = [f for f in src_dir.iterdir() if f.is_file()]
+    for _file in files:
+        shutil.copyfile(src=_file, dst=dst_dir / _file.name)
+    # now move derivatives (freesurfer files)
+    src_dir = config_obj.bids_root / "derivatives" / "freesurfer" / "subjects"
+    dst_dir = new_bids_path.root / "derivatives" / "freesurfer" / "subjects"
+    dst_dir.mkdir(parents=True)
+    freesurfer_subject_mapping = dict(sub01="sub-01_ses-a", sub02="sub-01_ses-b")
+    for walk_root, dirs, files in src_dir.walk():
+        # change "root" so that in later steps of the walk when we're inside a subject's
+        # dir, the "offset" (folders between dst_dir and filename) will be correct
+        new_root = walk_root
+        if "sub01" in walk_root.parts or "sub02" in walk_root.parts:
+            new_root = Path(
+                *[freesurfer_subject_mapping.get(p, p) for p in new_root.parts]
+            )
+        offset = new_root.relative_to(src_dir)
+        # the actual subject dirs need their names changed
+        for _dir in dirs:
+            _dir = freesurfer_subject_mapping.get(_dir, _dir)
+            (dst_dir / offset / _dir).mkdir()
+        # for filenames that contain the subject identifier (e.g. BEM files), we need to
+        # change the filename too, not just parent folder name
+        for _file in files:
+            dst_file = _file
+            fs_sub = dst_file[:5]
+            if fs_sub in freesurfer_subject_mapping:
+                dst_file = dst_file.replace(fs_sub, freesurfer_subject_mapping[fs_sub])
+            shutil.copyfile(src=walk_root / _file, dst=dst_dir / offset / dst_file)
+    # print_dir_tree(new_bids_path.root)  # for debugging
+    # update config so that `subjects_dir` also points to the tempdir
+    extra_config = f"""
+subjects_dir = "{new_bids_path.root / "derivatives" / "freesurfer" / "subjects"}"
+"""
+    extra_path = tmp_path / "extra_config.py"
+    extra_path.write_text(extra_config)
+    monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", str(extra_path))
+    # Run the tests.
+    steps = test_options.get("steps", ())
+    command = ["mne_bids_pipeline", str(config_path), f"--steps={','.join(steps)}"]
+    # hack in the new bids_root
+    command.append(f"--root-dir={new_bids_path.root}")
+    if "--pdb" in sys.argv:
+        command.append("--n_jobs=1")
+    monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING", "true")
+    monkeypatch.setattr(sys, "argv", command)
+    with capsys.disabled():
+        print()
+        main()

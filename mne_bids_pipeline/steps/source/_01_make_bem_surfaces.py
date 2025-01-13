@@ -12,10 +12,10 @@ import mne
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_bem_conductivity,
+    _has_session_specific_anat,
     get_fs_subject,
     get_fs_subjects_dir,
-    get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -154,6 +154,16 @@ def main(*, config: SimpleNamespace) -> None:
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
         return
 
+    # check for session-specific MRIs within subject, and handle accordingly
+    subjects_dir = Path(get_fs_subjects_dir(config))
+    subj_sess = list()
+    for _subj, sessions in get_subjects_sessions(config).items():
+        for sess in sessions:
+            _sess = (
+                sess if _has_session_specific_anat(_subj, sess, subjects_dir) else None
+            )
+            subj_sess.append((_subj, _sess))
+
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
             make_bem_surfaces, exec_params=config.exec_params
@@ -170,7 +180,6 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 force_run=config.recreate_bem,
             )
-            for subject in get_subjects(config)
-            for session in get_sessions(config)
+            for subject, session in subj_sess
         )
     save_logs(config=config, logs=logs)

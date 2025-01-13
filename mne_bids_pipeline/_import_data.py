@@ -467,6 +467,7 @@ def import_er_data(
         raw_ref.info["bads"] = bads
         raw_ref.info._check_consistency()
     raw_ref.pick_types(meg=True, exclude=[])
+    raw_er.pick_types(meg=True, exclude=[])
 
     if prepare_maxwell_filter:
         # We need to include any automatically found bad channels, if relevant.

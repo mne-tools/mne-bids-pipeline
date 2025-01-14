@@ -164,8 +164,7 @@ def average_evokeds(
                 title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
             else:  # It's a contrast of two conditions.
                 title = (
-                    f"Average (sensor) contrast: {condition}, "
-                    f"N = {len(cfg.subjects)}"
+                    f"Average (sensor) contrast: {condition}, N = {len(cfg.subjects)}"
                 )
                 tags = tags + ("contrast",)
 
@@ -483,7 +482,7 @@ def average_time_by_time_decoding(
             decoding_data=decoding_data,
         )
         caption = (
-            f'Based on N={decoding_data["N"].squeeze()} '
+            f"Based on N={decoding_data['N'].squeeze()} "
             f"subjects. Standard error and confidence interval "
             f"of the mean were bootstrapped with {cfg.n_boot} "
             f"resamples. CI must not be used for statistical inference here, "
@@ -494,7 +493,7 @@ def average_time_by_time_decoding(
                 f" Time periods with decoding performance significantly above "
                 f"chance, if any, were derived with a one-tailed "
                 f"cluster-based permutation test "
-                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f"({decoding_data['cluster_n_permutations'].squeeze()} "
                 f"permutations) and are highlighted in yellow."
             )
             title = f"Decoding over time: {cond_1} vs. {cond_2}"
@@ -536,7 +535,7 @@ def average_time_by_time_decoding(
                 f"Time generalization (generalization across time, GAT): "
                 f"each classifier is trained on each time point, and tested "
                 f"on all other time points. The results were averaged across "
-                f'N={decoding_data["N"].item()} subjects.'
+                f"N={decoding_data['N'].item()} subjects."
             )
             title = f"Time generalization: {cond_1} vs. {cond_2}"
             report.add_figure(

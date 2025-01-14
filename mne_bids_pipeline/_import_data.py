@@ -192,7 +192,7 @@ def _rename_events_func(
         msg = (
             f"You requested to rename the following events, but "
             f"they are not present in the BIDS input data:\n"
-            f'{", ".join(sorted(list(events_not_in_raw)))}'
+            f"{', '.join(sorted(list(events_not_in_raw)))}"
         )
         if cfg.on_rename_missing_events == "warn":
             logger.warning(**gen_log_kwargs(message=msg))
@@ -262,7 +262,7 @@ def _drop_channels_func(
     Modifies ``raw`` in-place.
     """
     if cfg.drop_channels:
-        msg = f'Dropping channels: {", ".join(cfg.drop_channels)}'
+        msg = f"Dropping channels: {', '.join(cfg.drop_channels)}"
         logger.info(**gen_log_kwargs(message=msg))
         raw.drop_channels(cfg.drop_channels, on_missing="warn")
 
@@ -496,10 +496,7 @@ def _find_breaks_func(
     if not cfg.find_breaks:
         return
 
-    msg = (
-        f"Finding breaks with a minimum duration of "
-        f"{cfg.min_break_duration} seconds."
-    )
+    msg = f"Finding breaks with a minimum duration of {cfg.min_break_duration} seconds."
     logger.info(**gen_log_kwargs(message=msg))
 
     break_annots = mne.preprocessing.annotate_break(
@@ -511,7 +508,7 @@ def _find_breaks_func(
 
     msg = (
         f"Found and annotated "
-        f'{len(break_annots) if break_annots else "no"} break periods.'
+        f"{len(break_annots) if break_annots else 'no'} break periods."
     )
     logger.info(**gen_log_kwargs(message=msg))
 

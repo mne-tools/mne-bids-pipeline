@@ -249,8 +249,7 @@ def run_time_decoding(
                 "epochs",
                 "contrast",
                 "decoding",
-                f"{_sanitize_cond_tag(contrast[0])}–"
-                f"{_sanitize_cond_tag(contrast[1])}",
+                f"{_sanitize_cond_tag(contrast[0])}–{_sanitize_cond_tag(contrast[1])}",
             )
 
             processing = f"{a_vs_b}+TimeByTime+{cfg.decoding_metric}"

@@ -112,7 +112,7 @@ def run_ica(
             if cfg.ica_l_freq is None:
                 msg = (
                     f"Not applying high-pass filter (data is already filtered, "
-                    f'cutoff: {raw.info["highpass"]} Hz).'
+                    f"cutoff: {raw.info['highpass']} Hz)."
                 )
                 logger.info(**gen_log_kwargs(message=msg))
             else:

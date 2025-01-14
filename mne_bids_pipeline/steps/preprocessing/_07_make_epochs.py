@@ -189,9 +189,7 @@ def run_epochs(
         with epochs.info._unlock():
             epochs.info["proc_history"] = smallest_rank_info["proc_history"]
             rank_epochs_new = mne.compute_rank(epochs, rank="info")["meg"]
-            msg = (
-                f'The MEG rank of the "{cfg.task}" epochs is now: ' f"{rank_epochs_new}"
-            )
+            msg = f'The MEG rank of the "{cfg.task}" epochs is now: {rank_epochs_new}'
             logger.warning(**gen_log_kwargs(message=msg))
 
     # Set an EEG reference
@@ -207,8 +205,7 @@ def run_epochs(
     )
     logger.info(**gen_log_kwargs(message=msg))
     msg = (
-        f"Selected {len(epochs)} epochs via metadata query: "
-        f"{cfg.epochs_metadata_query}"
+        f"Selected {len(epochs)} epochs via metadata query: {cfg.epochs_metadata_query}"
     )
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Writing {len(epochs)} epochs to disk."

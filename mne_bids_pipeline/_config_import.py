@@ -228,8 +228,7 @@ def _update_with_user_config(
         config.n_jobs = 1
         if log and config.parallel_backend != "loky":
             msg = (
-                'Setting config.parallel_backend="loky" because '
-                'config.on_error="debug"'
+                'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.parallel_backend = "loky"

@@ -84,10 +84,10 @@ def run_ssp(
     out_files = dict(proj=_proj_path(cfg=cfg, subject=subject, session=session))
     msg = (
         f"Input{_pl(raw_fnames)} ({len(raw_fnames)}): "
-        f'{raw_fnames[0].basename}{_pl(raw_fnames, pl=" ...")}'
+        f"{raw_fnames[0].basename}{_pl(raw_fnames, pl=' ...')}"
     )
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["proj"].basename}'
+    msg = f"Output: {out_files['proj'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     raw = mne.concatenate_raws(

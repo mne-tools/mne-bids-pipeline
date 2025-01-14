@@ -221,7 +221,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
 
     assert sum(key in options for key in ("openneuro", "web", "mne")) == 1
     if "openneuro" in options:
-        url = f'https://openneuro.org/datasets/{options["openneuro"]}'
+        url = f"https://openneuro.org/datasets/{options['openneuro']}"
     elif "web" in options:
         url = options["web"]
     else:
@@ -238,7 +238,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"    Run in your terminal:\n"
             f"    ```shell\n"
             f"    openneuro-py download \\\n"
-            f'                 --dataset={options["openneuro"]} \\\n'
+            f"                 --dataset={options['openneuro']} \\\n"
         )
         for count, include in enumerate(options["include"], start=1):
             download_str += f"                 --include={include}"

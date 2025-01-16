@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from mne_bids_pipeline._config_import import _import_config
+from mne_bids_pipeline._config_import import ConfigError, _import_config
 
 
 def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -48,6 +48,11 @@ def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _import_config(config_path=config_path)
     msg, err = capsys.readouterr()
     assert msg == err == ""  # no new message
+    # maxfilter extra kwargs
+    bad_text = working_text + "mf_extra_kws = {'calibration': 'x', 'head_pos': False}\n"
+    config_path.write_text(bad_text)
+    with pytest.raises(ConfigError, match="contains keys calibration, head_pos that"):
+        _import_config(config_path=config_path)
     # old values
     bad_text = working_text
     bad_text += "debug = True\n"

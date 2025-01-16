@@ -769,7 +769,13 @@ mf_filter_chpi: bool | None = None
 Use mne.chpi.filter_chpi after Maxwell filtering. Can be None to use
 the same value as [`mf_mc`][mne_bids_pipeline._config.mf_mc].
 Only used when [`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter]
-"""  # noqa: E501
+"""
+
+mf_extra_kws: dict[str, Any] = {}
+"""
+A dictionary of extra kwargs to pass to `mne.preprocessing.maxwell_filter`. If kwargs
+are passed here that have dedicated config settings already, an error will be raised.
+"""
 
 # ## Filtering & resampling
 

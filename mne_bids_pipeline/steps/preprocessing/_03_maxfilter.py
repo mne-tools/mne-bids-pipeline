@@ -378,6 +378,12 @@ def run_maxwell_filter(
         head_pos=head_pos,
         extended_proj=extended_proj,
     )
+    if duplicates := (set(cfg.mf_extra_kws) & set(mf_kws)):
+        raise RuntimeError(
+            f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
+            "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
+        )
+    mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
     if not (run is None and task == "noise"):
@@ -592,6 +598,7 @@ def get_config_maxwell_filter(
         mf_mc_rotation_velocity_limit=config.mf_mc_rotation_velocity_limit,
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
+        mf_extra_kws=config.mf_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

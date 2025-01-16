@@ -378,11 +378,6 @@ def run_maxwell_filter(
         head_pos=head_pos,
         extended_proj=extended_proj,
     )
-    if duplicates := (set(cfg.mf_extra_kws) & set(mf_kws)):
-        raise RuntimeError(
-            f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
-            "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
-        )
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))

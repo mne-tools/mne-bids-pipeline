@@ -18,6 +18,10 @@ from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
 
+class ConfigError(ValueError):
+    pass
+
+
 def _import_config(
     *,
     config_path: PathLike | None,
@@ -248,7 +252,23 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         and len(set(config.ch_types).intersection(("meg", "grad", "mag"))) == 0
     ):
         raise ValueError("Cannot use Maxwell filter without MEG channels.")
-
+    mf_reserved_kwargs = (
+        "raw",
+        "calibration",
+        "cross_talk",
+        "st_duration",
+        "st_correlation",
+        "origin",
+        "coord_frame",
+        "destination",
+        "head_pos",
+        "extended_proj",
+    )
+    if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):
+        raise ConfigError(
+            f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
+            "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
+        )
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":

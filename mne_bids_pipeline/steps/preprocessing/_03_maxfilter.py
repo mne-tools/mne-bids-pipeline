@@ -378,6 +378,8 @@ def run_maxwell_filter(
         head_pos=head_pos,
         extended_proj=extended_proj,
     )
+    # If the mf_kws keys above change, we need to modify our list
+    # of illegal keys in _config_import.py
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))

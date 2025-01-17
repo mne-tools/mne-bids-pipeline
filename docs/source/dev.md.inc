@@ -24,6 +24,7 @@
     2. cHPI filtering is now performed before movement compensation.
 
 - Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
+- Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
 
 ### :books: Documentation
 

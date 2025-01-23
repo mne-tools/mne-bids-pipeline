@@ -644,7 +644,7 @@ options or specifying the origin manually.
     ```
 """
 
-mf_destination: Literal["reference_run"] | FloatArrayLike = "reference_run"
+mf_destination: Literal["reference_run", "twa"] | FloatArrayLike = "reference_run"
 """
 Despite all possible care to avoid movements in the MEG, the participant
 will likely slowly drift down from the Dewar or slightly shift the head
@@ -666,6 +666,9 @@ account, we are realigning all data to a single position. For this, you can:
    from mne.transforms import translation
    mf_destination = translation(z=0.04)
    ```
+3. Compute the time-weighted average head position for each run, and use that as the
+   destination coordinates for each run. This will result in a device-to-head
+   transformation that differs between runs within each subject.
 """
 
 mf_int_order: int = 8

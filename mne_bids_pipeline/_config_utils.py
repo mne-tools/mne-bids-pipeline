@@ -4,6 +4,7 @@ import copy
 import functools
 import pathlib
 from collections.abc import Iterable, Sized
+from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
 
@@ -142,26 +143,52 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     return tuple(str(x) for x in sessions)
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list[None]]:
-    subj_sessions: dict[str, list[str] | list[None]] = dict()
+def get_subjects_sessions(
+    config: SimpleNamespace,
+) -> dict[str, tuple[None] | tuple[str, ...]]:
+    subjects = get_subjects(config)
     cfg_sessions = _get_sessions(config)
-    for subject in get_subjects(config):
-        # Only traverse through the current subject's directory
+    # easy case first: datasets that don't have (named) sessions
+    if not cfg_sessions:
+        return {subj: (None,) for subj in subjects}
+
+    # find which tasks to ignore when deciding if a subj has data for a session
+    ignore_datatypes = _get_ignore_datatypes(config)
+    if config.task == "":
+        ignore_tasks = None
+    else:
+        all_tasks = _get_entity_vals_cached(
+            root=config.bids_root,
+            entity_key="task",
+            ignore_datatypes=ignore_datatypes,
+        )
+        ignore_tasks = tuple(set(all_tasks) - set([config.task]))
+
+    # loop over subjs and check for available sessions
+    subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
+    kwargs = (
+        dict(ignore_suffixes=("scans", "coordsystem"))
+        if "ignore_suffixes" in signature(mne_bids.get_entity_vals).parameters
+        else dict()
+    )
+    for subject in subjects:
         valid_sessions_subj = _get_entity_vals_cached(
             config.bids_root / f"sub-{subject}",
             entity_key="session",
-            ignore_datatypes=_get_ignore_datatypes(config),
+            ignore_tasks=ignore_tasks,
+            ignore_acquisitions=("calibration", "crosstalk"),
+            ignore_datatypes=ignore_datatypes,
+            **kwargs,
         )
-        missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
+        missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
         if missing_sessions and not config.allow_missing_sessions:
             raise RuntimeError(
                 f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{tuple(sorted(missing_sessions))}, and "
-                "`config.allow_missing_sessions` is False"
+                f"{missing_sessions}, and `config.allow_missing_sessions` is False"
             )
-        subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
-        if subj_sessions[subject] == []:
-            subj_sessions[subject] = [None]
+        keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
+        if len(keep_sessions):
+            subj_sessions[subject] = keep_sessions
     return subj_sessions
 
 

@@ -350,10 +350,8 @@ def run_maxwell_filter(
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
         elif destination == "twa_hp":
-            assert head_pos is not None, (
-                "cannot compute time-weighted average head position without movement "
-                "compensation. Please set `mf_mc=True` in your config file."
-            )
+            # TODO this is oversimplified, need to do all runs simultaneously (The func
+            # accepts list of raw and list of head_pos, we just need to get them).
             destination = mne.preprocessing.compute_average_dev_head_t(raw, head_pos)
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination

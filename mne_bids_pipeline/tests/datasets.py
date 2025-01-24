@@ -15,6 +15,7 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     include: list[str]  # []
     exclude: list[str]  # []
     hash: str  # ""
+    processor: str  # ""
 
 
 DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
@@ -117,5 +118,10 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     },
     "MNE-phantom-KIT-data": {
         "mne": "phantom_kit",
+    },
+    "MNE-funloc-data": {
+        "web": "https://osf.io/d6bs9/download?version=1",
+        "hash": "sha256:d2668fe85c191f0d5dd60b38346993c3d871acc067fea4800ebc683652dc5dd8",  # noqa: E501
+        "processor": "untar",
     },
 }

@@ -47,7 +47,7 @@ dependencies = [
   "openpyxl",
   "autoreject",
   "mne[hdf5] >=1.7",
-  "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@41ce36a4dc938e85a2f6a32ed3eeb88c732bfbae",
+  "mne-bids[full]",
   "filelock",
 ]
 dynamic = ["version"]

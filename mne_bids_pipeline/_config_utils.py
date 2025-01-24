@@ -4,6 +4,7 @@ import copy
 import functools
 import pathlib
 from collections.abc import Iterable, Sized
+from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
 
@@ -165,14 +166,19 @@ def get_subjects_sessions(
 
     # loop over subjs and check for available sessions
     subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
+    kwargs = (
+        dict(ignore_suffixes=("scans", "coordsystem"))
+        if "ignore_suffixes" in signature(mne_bids.get_entity_vals).parameters
+        else dict()
+    )
     for subject in subjects:
         valid_sessions_subj = _get_entity_vals_cached(
             config.bids_root / f"sub-{subject}",
             entity_key="session",
             ignore_tasks=ignore_tasks,
             ignore_acquisitions=("calibration", "crosstalk"),
-            ignore_suffixes=("scans", "coordsystem"),
             ignore_datatypes=ignore_datatypes,
+            **kwargs,
         )
         missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
         if missing_sessions and not config.allow_missing_sessions:

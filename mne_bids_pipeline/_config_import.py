@@ -6,12 +6,14 @@ import os
 import pathlib
 from dataclasses import field
 from functools import partial
+from inspect import signature
 from types import SimpleNamespace
 from typing import Any
 
 import matplotlib
 import mne
 import numpy as np
+from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from ._logging import gen_log_kwargs, logger
@@ -322,6 +324,16 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             'recordings by setting noise_cov = "emptyroom", but you did not '
             "enable empty-room data processing. "
             "Please set process_empty_room = True"
+        )
+
+    if (
+        config.allow_missing_sessions
+        and "ignore_suffixes" not in signature(get_entity_vals).parameters
+    ):
+        raise ConfigError(
+            "You've requested to `allow_missing_sessions`, but this functionality "
+            "requires a newer version of `mne_bids` than you have available. Please "
+            "update MNE-BIDS (or if on the latest version, install the dev version)."
         )
 
     bl = config.baseline

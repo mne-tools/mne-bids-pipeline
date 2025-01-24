@@ -4,12 +4,7 @@ from pathlib import Path
 
 data_root = Path("~/mne_data").expanduser().resolve()
 bids_root = data_root / "MNE-funloc-data"
-deriv_root = (
-    data_root
-    / "derivatives"
-    / "mne-bids-pipeline"
-    / "MNE-funloc-data-with-session-specific-MRI"
-)
+deriv_root = data_root / "derivatives" / "mne-bids-pipeline" / "MNE-funloc-data"
 subjects_dir = bids_root / "derivatives" / "freesurfer" / "subjects"
 task = "funloc"
 ch_types = ["meg", "eeg"]

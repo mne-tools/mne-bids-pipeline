@@ -7,7 +7,7 @@ from pathlib import Path
 from mne_bids_pipeline._config_utils import _get_step_modules
 
 autogen_header = f"""\
-[//]: # (AUTO-GENERATED, TO CHANGE EDIT {'/'.join(Path(__file__).parts[-4:])})
+[//]: # (AUTO-GENERATED, TO CHANGE EDIT {"/".join(Path(__file__).parts[-4:])})
 """
 
 steps_pre = f"""\

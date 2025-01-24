@@ -27,7 +27,7 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
         # avoid an error message when a user doesn't intend to run the source
         # analysis steps anyway.
         raise ValueError(
-            'When specifying a "deriv_root", you must also supply a ' '"subjects_dir".'
+            'When specifying a "deriv_root", you must also supply a "subjects_dir".'
         )
 
     if not config.subjects_dir:
@@ -484,8 +484,7 @@ def get_mf_ctc_fname(
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
             raise ValueError(
-                f"Could not find Maxwell Filter cross-talk "
-                f"file at {str(mf_ctc_fpath)}."
+                f"Could not find Maxwell Filter cross-talk file at {str(mf_ctc_fpath)}."
             )
 
     assert isinstance(mf_ctc_fpath, pathlib.Path), type(mf_ctc_fpath)

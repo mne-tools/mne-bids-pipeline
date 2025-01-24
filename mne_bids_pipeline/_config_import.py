@@ -18,6 +18,10 @@ from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
 
+class ConfigError(ValueError):
+    pass
+
+
 def _import_config(
     *,
     config_path: PathLike | None,
@@ -54,11 +58,13 @@ def _import_config(
     if extra_config:
         msg = f"With testing config: {extra_config}"
         logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-        _update_config_from_path(
-            config=config,
-            config_path=extra_config,
+        extra_names = _update_config_from_path(
+            config=config, config_path=extra_config, include_private=True
         )
-        extra_exec_params_keys = ("_n_jobs",)
+        # Update valid_extra_names as needed if test configs in tests/test_run.py change
+        valid_extra_names = set(("_n_jobs", "_raw_split_size", "_epochs_split_size"))
+        assert set(extra_names) - valid_extra_names == set(), extra_names
+        extra_exec_params_keys = tuple(set(["_n_jobs"]) & set(extra_names))
     keep_names.extend(extra_exec_params_keys)
 
     # Check it
@@ -135,6 +141,7 @@ def _update_config_from_path(
     *,
     config: SimpleNamespace,
     config_path: PathLike,
+    include_private: bool = False,
 ) -> list[str]:
     user_names = list()
     config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
@@ -152,7 +159,7 @@ def _update_config_from_path(
         if not key.startswith("__"):
             # don't validate private vars, but do add to config
             # (e.g., so that our hidden _raw_split_size is included)
-            if not key.startswith("_"):
+            if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
             logger.debug(f"Overwriting: {key} -> {val}")
@@ -228,8 +235,7 @@ def _update_with_user_config(
         config.n_jobs = 1
         if log and config.parallel_backend != "loky":
             msg = (
-                'Setting config.parallel_backend="loky" because '
-                'config.on_error="debug"'
+                'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.parallel_backend = "loky"
@@ -249,7 +255,23 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         and len(set(config.ch_types).intersection(("meg", "grad", "mag"))) == 0
     ):
         raise ValueError("Cannot use Maxwell filter without MEG channels.")
-
+    mf_reserved_kwargs = (
+        "raw",
+        "calibration",
+        "cross_talk",
+        "st_duration",
+        "st_correlation",
+        "origin",
+        "coord_frame",
+        "destination",
+        "head_pos",
+        "extended_proj",
+    )
+    if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):
+        raise ConfigError(
+            f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
+            "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
+        )
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":

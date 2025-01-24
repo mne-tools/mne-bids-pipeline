@@ -32,11 +32,9 @@
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 - Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
 
-### :medical_symbol: Code health
+### :medical_symbol: Code health and infrastructure
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
 - Enable strict type checking via mypy (#995, #1013, #1016 by @larsoner)
-
-### :medical_symbol: Code health and infrastructure
-
 - Improve logging messages in maxwell filtering steps. (#893 by @drammock)
+- Validate extra config params passed in during testing. (#1044 by @drammock)

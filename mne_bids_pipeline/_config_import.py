@@ -58,11 +58,13 @@ def _import_config(
     if extra_config:
         msg = f"With testing config: {extra_config}"
         logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-        _update_config_from_path(
-            config=config,
-            config_path=extra_config,
+        extra_names = _update_config_from_path(
+            config=config, config_path=extra_config, include_private=True
         )
-        extra_exec_params_keys = ("_n_jobs",)
+        # Update valid_extra_names as needed if test configs in tests/test_run.py change
+        valid_extra_names = set(("_n_jobs", "_raw_split_size", "_epochs_split_size"))
+        assert set(extra_names) - valid_extra_names == set(), extra_names
+        extra_exec_params_keys = tuple(set(["_n_jobs"]) & set(extra_names))
     keep_names.extend(extra_exec_params_keys)
 
     # Check it
@@ -139,6 +141,7 @@ def _update_config_from_path(
     *,
     config: SimpleNamespace,
     config_path: PathLike,
+    include_private: bool = False,
 ) -> list[str]:
     user_names = list()
     config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
@@ -156,7 +159,7 @@ def _update_config_from_path(
         if not key.startswith("__"):
             # don't validate private vars, but do add to config
             # (e.g., so that our hidden _raw_split_size is included)
-            if not key.startswith("_"):
+            if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
             logger.debug(f"Overwriting: {key} -> {val}")

@@ -262,7 +262,7 @@ allow_missing_sessions = {allow_missing_sessions}
     context = (
         nullcontext()
         if allow_missing_sessions
-        else pytest.raises(RuntimeError, match=r"Subject 1 is missing session \('b',\)")
+        else pytest.raises(RuntimeError, match=r"Subject 1 is missing session \['b'\]")
     )
     # run
     command = [

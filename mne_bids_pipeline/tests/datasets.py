@@ -120,8 +120,8 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "mne": "phantom_kit",
     },
     "MNE-funloc-data": {
-        "web": "https://osf.io/d6bs9/download?version=1",
-        "hash": "sha256:d2668fe85c191f0d5dd60b38346993c3d871acc067fea4800ebc683652dc5dd8",  # noqa: E501
+        "web": "https://osf.io/345aw/download?version=1",
+        "hash": "sha256:77529e08563d9a69b4bd360ddfa0d8437f98352f04a89ea45c875051761b8389",  # noqa: E501
         "processor": "untar",
     },
 }

@@ -27,12 +27,12 @@ epochs_decim = 5  # 1000 -> 200 Hz
 baseline = (None, 0)
 conditions = [
     "auditory/standard",
-    "auditory/deviant",
+    # "auditory/deviant",
     "visual/standard",
-    "visual/deviant",
+    # "visual/deviant",
 ]
 decode = False
 decoding_time_generalization = False
 
 # contrasts
-contrasts = [("auditory", "visual")]
+# contrasts = [("auditory", "visual")]

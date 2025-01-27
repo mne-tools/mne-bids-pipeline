@@ -136,7 +136,7 @@ _n_jobs = {
         "config": "config_MNE_phantom_KIT_data.py",
     },
     "MNE-funloc-data": {
-        "config": "config_funloc.py",
+        "config": "config_MNE_funloc_data.py",
         "steps": ["init", "preprocessing", "sensor", "source"],
     },
 }

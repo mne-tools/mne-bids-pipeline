@@ -304,7 +304,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-MNE-funloc-data-2
+            - data-cache-MNE-funloc-data-3
       - bash_env
       - run:
           name: Get MNE-funloc-data
@@ -312,7 +312,7 @@ jobs:
             $DOWNLOAD_DATA MNE-funloc-data
       - codecov/upload
       - save_cache:
-          key: data-cache-MNE-funloc-data-2
+          key: data-cache-MNE-funloc-data-3
           paths:
             - ~/mne_data/MNE-funloc-data
 
@@ -811,7 +811,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-MNE-funloc-data-2
+            - data-cache-MNE-funloc-data-3
       - run:
           name: test MNE-funloc-data
           command: $RUN_TESTS MNE-funloc-data

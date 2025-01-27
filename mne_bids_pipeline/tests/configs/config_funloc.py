@@ -15,6 +15,7 @@ l_freq = None
 h_freq = 50.0
 # maxfilter
 use_maxwell_filter: bool = True
+crop_runs = (40, 190)
 mf_st_duration = 60.0
 # SSP
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)

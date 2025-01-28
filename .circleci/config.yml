@@ -297,6 +297,25 @@ jobs:
           paths:
             - ~/mne_data/eeg_matchingpennies
 
+  cache_MNE-funloc-data:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-MNE-funloc-data-5
+      - bash_env
+      - run:
+          name: Get MNE-funloc-data
+          command: |
+            $DOWNLOAD_DATA MNE-funloc-data
+      - codecov/upload
+      - save_cache:
+          key: data-cache-MNE-funloc-data-5
+          paths:
+            - ~/mne_data/MNE-funloc-data
+
   cache_MNE-phantom-KIT-data:
     <<: *imageconfig
     steps:
@@ -784,6 +803,33 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
 
+  test_MNE-funloc-data:
+    <<: *imageconfig
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/
+      - bash_env
+      - restore_cache:
+          keys:
+            - data-cache-MNE-funloc-data-5
+      - run:
+          name: test MNE-funloc-data
+          command: $RUN_TESTS MNE-funloc-data
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/MNE-funloc-data
+          destination: reports/MNE-funloc-data
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/MNE-funloc-data/*/*/*.html
+
   test_MNE-phantom-KIT-data:
     <<: *imageconfig
     steps:
@@ -1244,6 +1290,15 @@ workflows:
             - cache_eeg_matchingpennies
           <<: *filter_tags
 
+      - cache_MNE-funloc-data:
+          requires:
+            - setup_env
+          <<: *filter_tags
+      - test_MNE-funloc-data:
+          requires:
+            - cache_MNE-funloc-data
+          <<: *filter_tags
+
       - cache_MNE-phantom-KIT-data:
           requires:
             - setup_env
@@ -1304,6 +1359,7 @@ workflows:
             - test_ds003392
             - test_ds004229
             - test_eeg_matchingpennies
+            - test_MNE-funloc-data
             - test_MNE-phantom-KIT-data
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN

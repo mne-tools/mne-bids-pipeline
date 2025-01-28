@@ -2,12 +2,26 @@
 
 import argparse
 from pathlib import Path
+from warnings import filterwarnings
 
 import mne
 
 from .tests.datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
+
+
+# TODO this can be removed when https://github.com/fatiando/pooch/pull/458 is merged and
+# we pin to a version of pooch that includes that commit
+filterwarnings(
+    action="ignore",
+    message=(
+        "Python 3.14 will, by default, filter extracted tar archives and reject files "
+        "or modify their metadata. Use the filter argument to control this behavior."
+    ),
+    category=DeprecationWarning,
+    module="tarfile",
+)
 
 
 def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:
@@ -26,7 +40,7 @@ def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:
 
 
 def _download_from_web(*, ds_name: str, ds_path: Path) -> None:
-    """Retrieve Zip archives from a web URL."""
+    """Retrieve `.zip` or `.tar.gz` archives from a web URL."""
     import pooch
 
     options = DATASET_OPTIONS[ds_name]
@@ -43,16 +57,18 @@ def _download_from_web(*, ds_name: str, ds_path: Path) -> None:
 
     ds_path.mkdir(parents=True, exist_ok=True)
     path = ds_path.parent.resolve(strict=True)
-    fname = f"{ds_name}.zip"
+    ext = "tar.gz" if options.get("processor") == "untar" else "zip"
+    processor = pooch.Untar if options.get("processor") == "untar" else pooch.Unzip
+    fname = f"{ds_name}.{ext}"
     pooch.retrieve(
         url=url,
         path=path,
         fname=fname,
-        processor=pooch.Unzip(extract_dir="."),  # relative to path
+        processor=processor(extract_dir="."),  # relative to path
         progressbar=True,
         known_hash=known_hash,
     )
-    (path / f"{ds_name}.zip").unlink()
+    (path / f"{ds_name}.{ext}").unlink()
 
 
 def _download_via_mne(*, ds_name: str, ds_path: Path) -> None:

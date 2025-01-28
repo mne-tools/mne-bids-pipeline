@@ -38,3 +38,4 @@
 - Enable strict type checking via mypy (#995, #1013, #1016 by @larsoner)
 - Improve logging messages in maxwell filtering steps. (#893 by @drammock)
 - Validate extra config params passed in during testing. (#1044 by @drammock)
+- New testing/example dataset "funloc" added. (#1045 by @drammock)

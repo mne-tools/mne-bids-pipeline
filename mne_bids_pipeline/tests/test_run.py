@@ -358,8 +358,9 @@ def test_session_specific_mri(
     # print_dir_tree(new_bids_path.root)  # for debugging
     # update config so that `subjects_dir` and `deriv_root` also point to the tempdir
     extra_config = f"""
+from pathlib import Path
 subjects_dir = "{new_bids_path.root / "derivatives" / "freesurfer" / "subjects"}"
-deriv_root = "{new_bids_path.root / "derivatives" / "mne-bids-pipeline" / "MNE-funloc-data"}"
+deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" / "MNE-funloc-data"
 """  # noqa E501
     extra_path = tmp_path / "extra_config.py"
     extra_path.write_text(extra_config)

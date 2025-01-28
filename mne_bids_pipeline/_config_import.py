@@ -71,6 +71,7 @@ def _import_config(
                 "_epochs_split_size",
                 "subjects_dir",  # test_session_specific_mri
                 "deriv_root",  # test_session_specific_mri
+                "Path",  # test_session_specific_mri
             )
         )
         assert set(extra_names) - valid_extra_names == set(), extra_names

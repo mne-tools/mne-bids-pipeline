@@ -347,13 +347,14 @@ def test_session_specific_mri(
         for _dir in dirs:
             _dir = freesurfer_subject_mapping.get(_dir, _dir)
             (dst_dir / offset / _dir).mkdir()
-        # for filenames that contain the subject identifier (e.g. BEM files), we need to
-        # change the filename too, not just parent folder name
+        # for filenames that contain the subject identifier (BEM files, morph maps),
+        # we need to change the filename too, not just parent folder name
         for _file in files:
             dst_file = _file
-            fs_sub = dst_file[:5]
-            if fs_sub in freesurfer_subject_mapping:
-                dst_file = dst_file.replace(fs_sub, freesurfer_subject_mapping[fs_sub])
+            for subj in freesurfer_subject_mapping:
+                if subj in dst_file:
+                    dst_file = dst_file.replace(subj, freesurfer_subject_mapping[subj])
+                    break
             shutil.copyfile(src=walk_root / _file, dst=dst_dir / offset / dst_file)
     # print_dir_tree(new_bids_path.root)  # for debugging
     # update config so that `subjects_dir` and `deriv_root` also point to the tempdir

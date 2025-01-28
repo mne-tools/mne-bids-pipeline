@@ -356,10 +356,11 @@ def test_session_specific_mri(
                 dst_file = dst_file.replace(fs_sub, freesurfer_subject_mapping[fs_sub])
             shutil.copyfile(src=walk_root / _file, dst=dst_dir / offset / dst_file)
     # print_dir_tree(new_bids_path.root)  # for debugging
-    # update config so that `subjects_dir` also points to the tempdir
+    # update config so that `subjects_dir` and `deriv_root` also point to the tempdir
     extra_config = f"""
 subjects_dir = "{new_bids_path.root / "derivatives" / "freesurfer" / "subjects"}"
-"""
+deriv_root = "{new_bids_path.root / "derivatives" / "mne-bids-pipeline" / "MNE-funloc-data"}"
+"""  # noqa E501
     extra_path = tmp_path / "extra_config.py"
     extra_path.write_text(extra_config)
     monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", str(extra_path))

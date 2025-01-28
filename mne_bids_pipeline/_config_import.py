@@ -65,7 +65,13 @@ def _import_config(
         )
         # Update valid_extra_names as needed if test configs in tests/test_run.py change
         valid_extra_names = set(
-            ("_n_jobs", "_raw_split_size", "_epochs_split_size", "subjects_dir")
+            (
+                "_n_jobs",
+                "_raw_split_size",
+                "_epochs_split_size",
+                "subjects_dir",  # test_session_specific_mri
+                "deriv_root",  # test_session_specific_mri
+            )
         )
         assert set(extra_names) - valid_extra_names == set(), extra_names
         extra_exec_params_keys = tuple(set(["_n_jobs"]) & set(extra_names))

@@ -333,12 +333,12 @@ def test_session_specific_mri(
     src_dir = config_obj.bids_root / "derivatives" / "freesurfer" / "subjects"
     dst_dir = new_bids_path.root / "derivatives" / "freesurfer" / "subjects"
     dst_dir.mkdir(parents=True)
-    freesurfer_subject_mapping = dict(sub01="sub-01_ses-a", sub02="sub-01_ses-b")
+    freesurfer_subject_mapping = {"sub-01": "sub-01_ses-a", "sub-02": "sub-01_ses-b"}
     for walk_root, dirs, files in src_dir.walk():
         # change "root" so that in later steps of the walk when we're inside a subject's
         # dir, the "offset" (folders between dst_dir and filename) will be correct
         new_root = walk_root
-        if "sub01" in walk_root.parts or "sub02" in walk_root.parts:
+        if "sub-01" in walk_root.parts or "sub-02" in walk_root.parts:
             new_root = Path(
                 *[freesurfer_subject_mapping.get(p, p) for p in new_root.parts]
             )

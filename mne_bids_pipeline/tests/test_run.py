@@ -1,6 +1,7 @@
 """Download test data and run a test suite."""
 
 import os
+import re
 import shutil
 import sys
 from collections.abc import Collection
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import pytest
+from h5io import read_hdf5
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from mne_bids_pipeline._config_import import _import_config
@@ -382,3 +384,29 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
     with capsys.disabled():
         print()
         main()
+    # check some things that are indicative of different MRIs being used in each session
+    results = list()
+    for sess in ("a", "b"):
+        fname = (
+            new_bids_path.root
+            / "derivatives"
+            / "mne-bids-pipeline"
+            / "MNE-funloc-data"
+            / "sub-01"
+            / f"ses-{sess}"
+            / "meg"
+            / f"sub-01_ses-{sess}_task-funloc_report.h5"
+        )
+        report = read_hdf5(fname, title="mnepython")
+        coregs = next(
+            filter(lambda x: x["dom_id"] == "Sensor_alignment", report["_content"])
+        )
+        pattern = re.compile(
+            r"Average distance from (?P<npts>\d+) digitized points to head: "
+            r"(?P<dist>\d+(?:\.\d+)?) mm"
+        )
+        result = pattern.search(coregs["html"])
+        assert result is not None
+        assert float(result.group("dist")) < 3
+        results.append(result.groups())
+    assert results[0] != results[1]  # different npts and/or different mean distance

@@ -300,18 +300,18 @@ def test_session_specific_mri(
     for src_subj, dst_sess in (("01", "a"), ("02", "b")):
         src_dir = config_obj.bids_root / f"sub-{src_subj}"
         dst_dir = new_bids_path.root / "sub-01" / f"ses-{dst_sess}"
-        for root, dirs, files in src_dir.walk():
-            offset = root.relative_to(src_dir)
+        for walk_root, dirs, files in src_dir.walk():
+            offset = walk_root.relative_to(src_dir)
             for _dir in dirs:
                 (dst_dir / offset / _dir).mkdir(parents=True)
             for _file in files:
-                bp = get_bids_path_from_fname(root / _file)
+                bp = get_bids_path_from_fname(walk_root / _file)
                 bp.update(root=new_bids_path.root, subject="01", session=dst_sess)
                 # rewrite scans.tsv files to have correct filenames in it
                 if _file.endswith("scans.tsv"):
                     lines = [
                         line.replace(f"sub-{src_subj}", f"sub-01_ses-{dst_sess}")
-                        for line in (root / _file).read_text().split("\n")
+                        for line in (walk_root / _file).read_text().split("\n")
                     ]
                     (dst_dir / offset / bp.basename).write_text("\n".join(lines))
                 # For all other files, a simple copy suffices; rewriting
@@ -319,7 +319,7 @@ def test_session_specific_mri(
                 # overwrites it with the value in `participants.tsv` anyway.
                 else:
                     shutil.copyfile(
-                        src=root / _file, dst=dst_dir / offset / bp.basename
+                        src=walk_root / _file, dst=dst_dir / offset / bp.basename
                     )
     # emptyroom
     src_dir = config_obj.bids_root / "sub-emptyroom"

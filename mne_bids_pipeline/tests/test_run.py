@@ -293,7 +293,7 @@ def test_session_specific_mri(
     config = test_options.get("config", f"config_{dataset}.py")
     config_path = BIDS_PIPELINE_DIR / "tests" / "configs" / config
     config_obj = _import_config(config_path=config_path)
-    # copy the dataset to a tmpdir, and in the destination location (a tmpdir) make it
+    # copy the dataset to a tmpdir, and in the destination location make it
     # seem like there's only one subj with different MRIs for different sessions
     new_bids_path = BIDSPath(root=tmp_path / dataset, subject="01", session="a")
     # sub-01/* → sub-01/ses-a/* ;  sub-02/* → sub-01/ses-b/*
@@ -333,7 +333,7 @@ def test_session_specific_mri(
         # in theory we should rewrite `participants.tsv` to remove the `sub-02` line,
         # but in practice it will just get ignored so we won't bother.
         shutil.copyfile(src=_file, dst=dst_dir / _file.name)
-    # now move derivatives (freesurfer files)
+    # derivatives (freesurfer files)
     src_dir = config_obj.bids_root / "derivatives" / "freesurfer" / "subjects"
     dst_dir = new_bids_path.root / "derivatives" / "freesurfer" / "subjects"
     dst_dir.mkdir(parents=True)

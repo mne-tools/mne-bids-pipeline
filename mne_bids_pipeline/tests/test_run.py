@@ -314,7 +314,9 @@ def test_session_specific_mri(
                         for line in (root / _file).read_text().split("\n")
                     ]
                     (dst_dir / offset / bp.basename).write_text("\n".join(lines))
-                # for all other files, a simple copy suffices
+                # For all other files, a simple copy suffices; rewriting
+                # `raw.info["subject_info"]["his_id"]` is not necessary because MNE-BIDS
+                # overwrites it with the value in `participants.tsv` anyway.
                 else:
                     shutil.copyfile(
                         src=root / _file, dst=dst_dir / offset / bp.basename
@@ -328,6 +330,8 @@ def test_session_specific_mri(
     dst_dir = new_bids_path.root
     files = [f for f in src_dir.iterdir() if f.is_file()]
     for _file in files:
+        # in theory we should rewrite `participants.tsv` to remove the `sub-02` line,
+        # but in practice it will just get ignored so we won't bother.
         shutil.copyfile(src=_file, dst=dst_dir / _file.name)
     # now move derivatives (freesurfer files)
     src_dir = config_obj.bids_root / "derivatives" / "freesurfer" / "subjects"

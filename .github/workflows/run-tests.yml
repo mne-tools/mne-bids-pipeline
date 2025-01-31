@@ -95,7 +95,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+      - run: pip install -ve .[tests] pyvistaqt --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
       - uses: actions/cache@v4
         with:
           key: MNE-funloc-data

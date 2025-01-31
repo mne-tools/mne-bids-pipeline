@@ -363,7 +363,6 @@ def test_session_specific_mri(
                     dst_file = dst_file.replace(subj, freesurfer_subject_mapping[subj])
                     break
             shutil.copyfile(src=walk_root / _file, dst=dst_dir / offset / dst_file)
-    # print_dir_tree(new_bids_path.root)  # for debugging
     # update config so that `subjects_dir` and `deriv_root` also point to the tempdir
     extra_config = f"""
 from pathlib import Path
@@ -408,6 +407,6 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
         )
         result = pattern.search(coregs["html"])
         assert result is not None
-        assert float(result.group("dist")) < 3
+        assert float(result.group("dist")) < 3  # fit between pts and outer_skin < 3 mm
         results.append(result.groups())
     assert results[0] != results[1]  # different npts and/or different mean distance

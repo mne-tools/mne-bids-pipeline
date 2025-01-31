@@ -284,6 +284,7 @@ allow_missing_sessions = {allow_missing_sessions}
             main()
 
 
+@pytest.mark.dataset_test
 def test_session_specific_mri(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -91,7 +91,7 @@ jobs:
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
-          pyvista: true
+          pyvista: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

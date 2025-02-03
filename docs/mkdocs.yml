@@ -136,8 +136,6 @@ plugins:
     - search
     - macros
     - privacy # https://squidfunk.github.io/mkdocs-material/plugins/privacy/
-    - tags:
-        tags_file: tags.md
     - include-markdown
     - exclude:
         glob:

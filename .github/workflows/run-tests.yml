@@ -77,3 +77,30 @@ jobs:
         timeout-minutes: 1
       - uses: codecov/codecov-action@v5
         if: success() || failure()
+  non-doc-dataset-tests:
+    name: 'Non-doc dataset tests'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -e {0}
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@main
+        with:
+          qt: true
+          pyvista: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
+      - uses: actions/cache@v4
+        with:
+          key: MNE-funloc-data
+          path: ~/mne_data/MNE-funloc-data
+        id: MNE-funloc-data-cache
+      - run: python -m mne_bids_pipeline._download MNE-funloc-data
+        if: steps.MNE-funloc-data-cache.outputs.cache-hit != 'true'
+      - run: pytest --cov-append -k test_session_specific_mri mne_bids_pipeline/

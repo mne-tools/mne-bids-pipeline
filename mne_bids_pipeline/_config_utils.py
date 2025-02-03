@@ -55,6 +55,12 @@ def get_fs_subject(
         return f"sub-{subject}"
 
 
+def _has_session_specific_anat(
+    subject: str, session: str | None, subjects_dir: pathlib.Path
+) -> bool:
+    return (subjects_dir / f"sub-{subject}_ses-{session}").exists()
+
+
 @functools.cache
 def _get_entity_vals_cached(
     *args: list[Any],

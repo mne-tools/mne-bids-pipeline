@@ -121,6 +121,7 @@ nav:
         - examples/ds000248_no_mri.md
         - examples/ds003104.md
         - examples/eeg_matchingpennies.md
+        - examples/MNE-funloc-data.md
         - examples/MNE-phantom-KIT-data.md
         - examples/ds001810.md
         - examples/ds000117.md
@@ -135,8 +136,6 @@ plugins:
     - search
     - macros
     - privacy # https://squidfunk.github.io/mkdocs-material/plugins/privacy/
-    - tags:
-        tags_file: tags.md
     - include-markdown
     - exclude:
         glob:

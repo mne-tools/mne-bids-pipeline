@@ -299,7 +299,7 @@ def run_maxwell_filter(
         )
     if isinstance(cfg.mf_destination, str):
         destination = cfg.mf_destination
-        assert destination == "reference_run"
+        assert destination in ("reference_run", "twa")
     else:
         destination_array = np.array(cfg.mf_destination, float)
         assert destination_array.shape == (4, 4)
@@ -340,9 +340,19 @@ def run_maxwell_filter(
         verbose=cfg.read_raw_bids_verbose,
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
+    # load head pos
+    if cfg.mf_mc:
+        head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
+    else:
+        head_pos = None
+    # triage string-valued destinations
     if isinstance(destination, str):
-        assert destination == "reference_run"
-        destination = raw.info["dev_head_t"]
+        if destination == "reference_run":
+            destination = raw.info["dev_head_t"]
+        elif destination == "twa_hp":
+            # TODO this is oversimplified, need to do all runs simultaneously (The func
+            # accepts list of raw and list of head_pos, we just need to get them).
+            destination = mne.preprocessing.compute_average_dev_head_t(raw, head_pos)
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 
@@ -354,10 +364,7 @@ def run_maxwell_filter(
     else:
         apply_msg += "SSS"
     if cfg.mf_mc:
-        extra.append("MC")
-        head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
-    else:
-        head_pos = None
+        extra.append("MC")  # head_pos already loaded above
     if cfg.mf_esss:
         extra.append("eSSS")
         extended_proj = mne.read_proj(in_files.pop("esss_basis"))

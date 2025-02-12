@@ -51,6 +51,7 @@ dependencies = [
   "mne-icalabel",
   "onnxruntime",  # for mne-icalabel
   "filelock",
+  "meegkit"
 ]
 dynamic = ["version"]
 

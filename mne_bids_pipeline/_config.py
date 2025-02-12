@@ -1382,10 +1382,20 @@ it is to run but the less data you have to compute a good ICA. Set to
 `1` or `None` to not perform any decimation.
 """
 
+ica_use_ecg_detection: bool = True
+"""
+Whether to use the MNE ECG detection on the ICA components.
+"""
+
 ica_ecg_threshold: float = 0.1
 """
 The cross-trial phase statistics (CTPS) threshold parameter used for detecting
 ECG-related ICs.
+"""
+
+ica_use_eog_detection: bool = True
+"""
+Whether to use the MNE EOG detection on the ICA components.
 """
 
 ica_eog_threshold: float = 3.0
@@ -1393,6 +1403,28 @@ ica_eog_threshold: float = 3.0
 The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
+"""
+
+
+
+# From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
+ica_use_icalabel: bool = False
+"""
+Whether to use MNE-ICALabel to automatically label ICA components. Only available for
+EEG data.
+!!! info
+    Using MNE-ICALabel mandates that you also set:
+    ```python
+    eeg_reference = "average"
+    ica_l_freq = 1
+    h_freq = 100
+    ```
+"""
+
+icalabel_include: Annotated[Sequence[Literal["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]], Len(1, 7)] = ["brain","other"]
+"""
+Which independent components (ICs) to keep based on the labels given by ICLabel.
+Possible labels are "brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other".
 """
 
 # ### Amplitude-based artifact rejection

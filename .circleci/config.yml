@@ -779,6 +779,7 @@ jobs:
 
   test_eeg_matchingpennies:
     <<: *imageconfig
+    resource_class: large  # memory for zapline
     steps:
       - attach_workspace:
           at: ~/

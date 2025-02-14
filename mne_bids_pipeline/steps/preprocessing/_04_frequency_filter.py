@@ -72,28 +72,20 @@ def zapline(
     run: str,
     task: str | None,
     fline: float,
-    iter: bool,
+    iter_: bool,
 ) -> None:
-    """Uses Zapline to filter? data"""
-    if fline is None:
-        msg = "Not applying Zapline filter to data."
-    else:
-        msg = f"Zapline filtering data at with Fline {fline} Hz."
-
-    logger.info(**gen_log_kwargs(message=msg))
-
+    """Use Zapline to remove line frequencies."""
     if fline is None:
         return raw
 
+    msg = f"Zapline filtering data at with {fline=} Hz."
+    logger.info(**gen_log_kwargs(message=msg))
     sfreq = raw.info["sfreq"]
-    data = raw.get_data().T  # shape = (n_samples, n_channels, n_trials)
-    if iter:
-        out, iterations = dss.dss_line_iter(data, fline, sfreq)
-        print(f"Removed {iterations} components")
-    else:
-        out, _ = dss.dss_line(data, fline, sfreq)
-    raw = mne.io.RawArray(out.T, verbose=True, info=raw.info)
-    return raw
+    picks = mne.pick_types(raw.info, meg=True, eeg=True)
+    data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
+    func = dss.dss_line_iter if iter_ else dss.dss_line
+    out, _ = func(data, fline, sfreq)
+    raw._data[picks] = out.T
 
 
 def notch_filter(
@@ -250,14 +242,14 @@ def filter_data(
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
-    raw = zapline(
+    zapline(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
         task=task,
         fline=cfg.zapline_fline,
-        iter=cfg.zapline_iter,
+        iter_=cfg.zapline_iter,
     )
     notch_filter(
         raw=raw,

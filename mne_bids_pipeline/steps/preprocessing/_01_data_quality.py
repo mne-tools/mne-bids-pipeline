@@ -275,8 +275,7 @@ def _find_bads_maxwell(
     if cfg.find_flat_channels_meg:
         if auto_flat_chs:
             msg = (
-                f"Found {len(auto_flat_chs)} flat channels: "
-                f'{", ".join(auto_flat_chs)}'
+                f"Found {len(auto_flat_chs)} flat channels: {', '.join(auto_flat_chs)}"
             )
         else:
             msg = "Found no flat channels."
@@ -289,7 +288,7 @@ def _find_bads_maxwell(
             msg = (
                 f"Found {len(auto_noisy_chs)} noisy "
                 f"channel{_pl(auto_noisy_chs)}: "
-                f'{", ".join(auto_noisy_chs)}'
+                f"{', '.join(auto_noisy_chs)}"
             )
         else:
             msg = "Found no noisy channels."

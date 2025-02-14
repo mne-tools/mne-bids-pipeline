@@ -76,7 +76,7 @@ def _open_report(
             raise exc.__class__(
                 f"Could not open {name} HDF5 file:\n{fname_report}, "
                 "Perhaps you need to delete it? Got error:\n\n"
-                f'{indent(traceback.format_exc(), "    ")}'
+                f"{indent(traceback.format_exc(), '    ')}"
             ) from None
         try:
             yield report
@@ -354,7 +354,7 @@ def _plot_time_by_time_decoding_scores_gavg(
     ax.text(
         0.05,
         0.05,
-        s=f'$N$={decoding_data["N"].squeeze()}',
+        s=f"$N$={decoding_data['N'].squeeze()}",
         fontsize="x-large",
         horizontalalignment="left",
         verticalalignment="bottom",
@@ -389,7 +389,7 @@ def plot_time_by_time_decoding_t_values(
     ax.text(
         0.05,
         0.05,
-        s=f'$N$={decoding_data["N"].squeeze()}',
+        s=f"$N$={decoding_data['N'].squeeze()}",
         fontsize="x-large",
         horizontalalignment="left",
         verticalalignment="bottom",

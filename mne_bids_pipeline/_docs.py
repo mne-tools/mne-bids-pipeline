@@ -255,9 +255,9 @@ class _ParseConfigSteps:
                                     assert f"{func_name}(" in source, (key, func_name)
                             attrs = _CONFIG_RE.findall(source)
                             if key != "get_sessions":  # pure wrapper
-                                assert len(
-                                    attrs
-                                ), f"No config.* found in source of {key}"
+                                assert len(attrs), (
+                                    f"No config.* found in source of {key}"
+                                )
                             for attr in attrs:
                                 _add_step_option(step, attr)
                         continue

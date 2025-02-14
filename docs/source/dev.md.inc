@@ -4,6 +4,7 @@
 
 - It is now possible to use separate MRIs for each session within a subject, as in longitudinal studies. This is achieved by creating separate "subject" folders for each subject-session combination, with the naming convention `sub-XXX_ses-YYY`, in the freesurfer `SUBJECTS_DIR`. (#987 by @drammock)
 - New config option [`allow_missing_sessions`][mne_bids_pipeline._config.allow_missing_sessions] allows to continue when not all sessions are present for all subjects. (#1000 by @drammock)
+- New config option [`mf_extra_kws`][mne_bids_pipeline._config.mf_extra_kws] passes additional keyword arguments to `mne.preprocessing.maxwell_filter`. (#1038 by @drammock)
 
 [//]: # (### :warning: Behavior changes)
 
@@ -23,6 +24,7 @@
     2. cHPI filtering is now performed before movement compensation.
 
 - Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
+- Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
 
 ### :books: Documentation
 
@@ -30,11 +32,11 @@
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 - Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
 
-### :medical_symbol: Code health
+### :medical_symbol: Code health and infrastructure
 
 - Switch from using relative to using absolute imports (#969 by @hoechenberger)
 - Enable strict type checking via mypy (#995, #1013, #1016 by @larsoner)
-
-### :medical_symbol: Code health and infrastructure
-
 - Improve logging messages in maxwell filtering steps. (#893 by @drammock)
+- Validate extra config params passed in during testing. (#1044 by @drammock)
+- New testing/example dataset "funloc" added. (#1045 by @drammock)
+- Better testing of session-specific MRIs. (#1039 by @drammock)

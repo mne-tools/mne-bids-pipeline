@@ -218,7 +218,7 @@ def find_ica_artifacts(
     # EOG component detection
     epochs_eog = None
     eog_ics: list[int] = []
-    eog_scores = np.zeros(0)
+    eog_scores: FloatArrayT = np.zeros(0)
     for ri, raw_fname in enumerate(raw_fnames):
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
         if cfg.eog_channels:

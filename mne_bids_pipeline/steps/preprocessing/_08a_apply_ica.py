@@ -132,17 +132,17 @@ def apply_ica_epochs(
     ica = _read_ica_and_exclude(in_files)
 
     # Load epochs.
-    msg = f'Input: {in_files["epochs"].basename}'
+    msg = f"Input: {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["epochs"].basename}'
+    msg = f"Output: {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
 
     # Now actually reject the components.
     msg = (
-        f'Rejecting ICs with the following indices: '
-        f'{", ".join([str(i) for i in ica.exclude])}'
+        f"Rejecting ICs with the following indices: "
+        f"{', '.join([str(i) for i in ica.exclude])}"
     )
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!

@@ -14,6 +14,7 @@ from typing import Any
 from mne.utils import run_subprocess
 
 from mne_bids_pipeline._config_utils import (
+    _has_session_specific_anat,
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
@@ -76,12 +77,6 @@ def run_recon(
         cmd += [f"--session_label={session}"]
     logger.debug("Running: " + " ".join(cmd))
     run_subprocess(cmd, env=env, verbose=logger.level)
-
-
-def _has_session_specific_anat(
-    subject: str, session: str | None, subjects_dir: Path
-) -> bool:
-    return (subjects_dir / f"sub-{subject}_ses-{session}").exists()
 
 
 def main(*, config: SimpleNamespace) -> None:

@@ -79,9 +79,9 @@ def drop_ptp(
             split=None,
         )
     )
-    msg = f'Input:  {in_files["epochs"].basename}'
+    msg = f"Input:  {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Output: {out_files["epochs"].basename}'
+    msg = f"Output: {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
     # Get rejection parameters and drop bad epochs

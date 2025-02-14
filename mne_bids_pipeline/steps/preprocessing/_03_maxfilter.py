@@ -378,6 +378,9 @@ def run_maxwell_filter(
         head_pos=head_pos,
         extended_proj=extended_proj,
     )
+    # If the mf_kws keys above change, we need to modify our list
+    # of illegal keys in _config_import.py
+    mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
     if not (run is None and task == "noise"):
@@ -592,6 +595,7 @@ def get_config_maxwell_filter(
         mf_mc_rotation_velocity_limit=config.mf_mc_rotation_velocity_limit,
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
+        mf_extra_kws=config.mf_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

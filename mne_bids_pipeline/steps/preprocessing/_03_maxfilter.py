@@ -306,7 +306,7 @@ def get_twa_head_pos(
     )
     raw_fnames = [bp.fpath for bp in raw_bidspaths]
     raws = [
-        mne.io.read_raw_fif(fname, allow_maxshield=True, verbose=False, preload=False)
+        mne.io.read_raw_fif(fname, allow_maxshield=True, verbose="ERROR", preload=False)
         for fname in raw_fnames
     ]
     # also need headpos files from all runs

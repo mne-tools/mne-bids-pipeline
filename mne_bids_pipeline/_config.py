@@ -858,14 +858,14 @@ Specifies the width of each stop band. `None` uses the MNE default.
 
 zapline_fline: float | None = None
 """
-Specifies frequency to remove using Zapline filtering
+Specifies frequency to remove using Zapline filtering. If None, zapline will not
+be used.
 """
 
 zapline_iter: bool = False
 """
-Specifies if the iterative version of the Zapline algorithm should be run
+Specifies if the iterative version of the Zapline algorithm should be run.
 """
-
 
 # ### Resampling
 #

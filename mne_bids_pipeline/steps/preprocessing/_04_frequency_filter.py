@@ -76,7 +76,7 @@ def zapline(
 ) -> None:
     """Use Zapline to remove line frequencies."""
     if fline is None:
-        return raw
+        return
 
     msg = f"Zapline filtering data at with {fline=} Hz."
     logger.info(**gen_log_kwargs(message=msg))

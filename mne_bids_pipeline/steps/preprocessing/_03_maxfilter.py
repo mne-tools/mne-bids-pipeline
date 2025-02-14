@@ -288,7 +288,7 @@ def get_twa_head_pos(
     """
     # check for subject-level `destination.fif` in derivatives folder
     dest_path = head_pos_path.copy().update(
-        description="twahp", suffix="destination", extension=".fif"
+        description="twa", suffix="destination", extension=".fif", run=None
     )
     if dest_path.fpath.exists():
         return mne.read_trans(dest_path.fpath)

@@ -295,7 +295,7 @@ def get_twa_head_pos(
 
     # need raw files from all runs
     raw_bidspaths = find_matching_paths(
-        root=config.root,
+        root=config.bids_root,
         subjects=head_pos_path.subject,
         sessions=head_pos_path.session,
         tasks=config.task or None,  # default config.task is "" (not None)
@@ -398,7 +398,7 @@ def run_maxwell_filter(
     if isinstance(destination, str):
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
-        elif destination == "twa_hp":
+        elif destination == "twa":
             destination = get_twa_head_pos(config=cfg, head_pos_path=head_pos_path)
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination

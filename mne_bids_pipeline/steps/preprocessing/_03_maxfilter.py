@@ -281,9 +281,10 @@ def get_input_fnames_maxwell_filter(
 def get_twa_head_pos(
     config: SimpleNamespace, head_pos_path: BIDSPath
 ) -> mne.transforms.Transform:
-    """Compute time-weighted average head position within subjs/sess, across tasks/runs.
+    """Compute (or load) time-weighted average head position.
 
     To be used as destination for movement compensation.
+    Computes within subjects/sessions, across tasks/runs.
     """
     # check for subject-level `destination.fif` in derivatives folder
     dest_path = head_pos_path.copy().update(

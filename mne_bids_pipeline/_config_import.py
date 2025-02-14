@@ -286,8 +286,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         )
     # if `destination="twa"` make sure `mf_mc=True`
     if (
-        isinstance(config.destination, str)
-        and config.destination == "twa"
+        isinstance(config.mf_destination, str)
+        and config.mf_destination == "twa"
         and not config.mf_mc
     ):
         raise ConfigError(

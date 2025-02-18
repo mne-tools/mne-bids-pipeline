@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 import mne
 import numpy as np
-from mne_bids import BIDSPath, find_matching_paths, read_raw_bids
+from mne_bids import read_raw_bids
 
 from mne_bids_pipeline._config_utils import (
     _pl,
@@ -220,7 +220,7 @@ def get_input_fnames_maxwell_filter(
             subject=subject,
             session=session,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
-        in_files[f"{in_key}-pos"] = path.update(
+        in_files[f"{in_key}-pos"] = path.copy().update(
             suffix="headpos",
             extension=".txt",
             root=cfg.deriv_root,
@@ -228,6 +228,16 @@ def get_input_fnames_maxwell_filter(
             task=pos_task,
             run=pos_run,
         )
+        if isinstance(cfg.mf_destination, str) and cfg.mf_destination == "twa":
+            in_files[f"{in_key}-twa"] = path.update(
+                description="twa",
+                suffix="destination",
+                extension=".fif",
+                root=cfg.deriv_root,
+                check=False,
+                task=pos_task,
+                run=None,
+            )
 
     if cfg.mf_esss:
         in_files["esss_basis"] = (
@@ -276,54 +286,6 @@ def get_input_fnames_maxwell_filter(
     in_files["mf_cal_fname"] = cfg.mf_cal_fname
     in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
     return in_files
-
-
-def get_twa_head_pos(
-    config: SimpleNamespace, head_pos_path: BIDSPath
-) -> mne.transforms.Transform:
-    """Compute (or load) time-weighted average head position.
-
-    To be used as destination for movement compensation.
-    Computes within subjects/sessions, across tasks/runs.
-    """
-    # check for subject-level `destination.fif` in derivatives folder
-    dest_path = head_pos_path.copy().update(
-        description="twa", suffix="destination", extension=".fif", run=None
-    )
-    if dest_path.fpath.exists():
-        return mne.read_trans(dest_path.fpath)
-
-    # need raw files from all runs
-    raw_bidspaths = find_matching_paths(
-        root=config.bids_root,
-        subjects=head_pos_path.subject,
-        sessions=head_pos_path.session,
-        tasks=config.task or None,  # default config.task is "" (not None)
-        suffixes="meg",
-        check=True,
-        ignore_json=True,
-        ignore_nosub=True,
-    )
-    raw_fnames = [bp.fpath for bp in raw_bidspaths]
-    raws = [
-        mne.io.read_raw_fif(fname, allow_maxshield=True, verbose="ERROR", preload=False)
-        for fname in raw_fnames
-    ]
-    # also need headpos files from all runs
-    head_pos_bidspaths = find_matching_paths(
-        root=head_pos_path.root,
-        subjects=head_pos_path.subject,
-        sessions=head_pos_path.session,
-        tasks=config.task or None,  # default config.task is "" (not None)
-        suffixes="headpos",
-        extensions=".txt",
-        check=False,
-    )
-    head_poses = [mne.chpi.read_head_pos(bp.fpath) for bp in head_pos_bidspaths]
-    # compute time-weighted average head position, save it to disk, and return it
-    destination = mne.preprocessing.compute_average_dev_head_t(raws, head_poses)
-    mne.write_trans(fname=dest_path.fpath, trans=destination)
-    return destination
 
 
 @failsafe_run(
@@ -389,9 +351,8 @@ def run_maxwell_filter(
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
     # load head pos
-    head_pos_path = in_files.pop(f"{in_key}-pos")
     if cfg.mf_mc:
-        head_pos = mne.chpi.read_head_pos(head_pos_path)
+        head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
     else:
         head_pos = None
     # triage string-valued destinations
@@ -399,7 +360,7 @@ def run_maxwell_filter(
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
         elif destination == "twa":
-            destination = get_twa_head_pos(config=cfg, head_pos_path=head_pos_path)
+            destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 

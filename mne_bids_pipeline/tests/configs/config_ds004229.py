@@ -19,6 +19,7 @@ mf_destination = mne.transforms.translation(  # rotate backward and move up
     z=0.055,
 ) @ mne.transforms.rotation(x=np.deg2rad(-15))
 mf_mc = True
+mf_destination = "twa"
 mf_st_duration = 10
 mf_int_order = 6  # lower for smaller heads
 mf_mc_t_step_min = 0.5  # just for speed!

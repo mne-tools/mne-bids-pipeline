@@ -291,7 +291,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         and not config.mf_mc
     ):
         raise ConfigError(
-            "cannot compute time-weighted average head position (`destination='twa'`) "
+            "cannot compute time-weighted average head position (mf_destination='twa') "
             "without movement compensation. Please set `mf_mc=True` in your config."
         )
 

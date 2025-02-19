@@ -201,6 +201,12 @@ def run_forward(
     fwd = mne.make_forward_solution(
         info, trans=trans, src=src, bem=bem, mindist=cfg.mindist
     )
+    if fwd["src"]._subject != cfg.fs_subject:
+        raise RuntimeError(
+            f"subject in the SourceSpace ({fwd['src']._subject}) does not match "
+            f"expected subject ({cfg.fs_subject}). This should not happen and probably "
+            f"indicates an error in the SourceSpace loaded from ({str(src)})."
+        )
     out_files = dict()
     out_files["trans"] = bids_path.copy().update(suffix="trans")
     out_files["forward"] = bids_path.copy().update(suffix="fwd")

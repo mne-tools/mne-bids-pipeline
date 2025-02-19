@@ -71,7 +71,7 @@ def zapline(
     session: str | None,
     run: str,
     task: str | None,
-    fline: float,
+    fline: float | None,
     iter_: bool,
 ) -> None:
     """Use Zapline to remove line frequencies."""

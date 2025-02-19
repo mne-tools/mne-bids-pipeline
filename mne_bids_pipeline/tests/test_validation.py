@@ -48,6 +48,11 @@ def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _import_config(config_path=config_path)
     msg, err = capsys.readouterr()
     assert msg == err == ""  # no new message
+    # TWA headpos without movement compensation
+    bad_text = working_text + "mf_destination = 'twa'\n"
+    config_path.write_text(bad_text)
+    with pytest.raises(ConfigError, match="cannot compute time-weighted average head"):
+        _import_config(config_path=config_path)
     # maxfilter extra kwargs
     bad_text = working_text + "mf_extra_kws = {'calibration': 'x', 'head_pos': False}\n"
     config_path.write_text(bad_text)

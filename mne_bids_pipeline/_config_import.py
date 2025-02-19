@@ -278,11 +278,23 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         "head_pos",
         "extended_proj",
     )
+    # check `mf_extra_kws` for things that shouldn't be in there
     if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):
         raise ConfigError(
             f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
         )
+    # if `destination="twa"` make sure `mf_mc=True`
+    if (
+        isinstance(config.mf_destination, str)
+        and config.mf_destination == "twa"
+        and not config.mf_mc
+    ):
+        raise ConfigError(
+            "cannot compute time-weighted average head position (mf_destination='twa') "
+            "without movement compensation. Please set `mf_mc=True` in your config."
+        )
+
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":

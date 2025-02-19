@@ -27,7 +27,7 @@ else
 fi
 
 SECONDS=0
-EMPH=$(tput setaf 2 bold)
+EMPH=$(tput setaf 5 bold)
 RESET=$(tput sgr0)
 pytest mne_bids_pipeline --junit-xml=test-results/junit-results.xml -k ${DS_RUN}
 # Add emphasis and echo

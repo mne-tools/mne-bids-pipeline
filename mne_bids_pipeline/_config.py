@@ -661,11 +661,11 @@ account, we are realigning all data to a single position. For this, you can:
    transform. This will result in a device-to-head transformation that is
    the same across all subjects.
 
-   ???+ example "A Standardized Position"
-   ```python
-   from mne.transforms import translation
-   mf_destination = translation(z=0.04)
-   ```
+    ???+ example "A Standardized Position"
+        ```python
+        from mne.transforms import translation
+        mf_destination = translation(z=0.04)
+        ```
 3. Compute the time-weighted average head position across all runs in a session,
    and use that as the destination coordinates for each run. This will result in a
    device-to-head transformation that differs between sessions within each subject.

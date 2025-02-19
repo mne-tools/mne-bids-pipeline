@@ -29,7 +29,7 @@ jobs:
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
-    name: 'Caching on ${{ matrix.os }}'
+    name: 'Testing and caching ${{ matrix.dataset }} on ${{ matrix.os }}'
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     defaults:
@@ -38,10 +38,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-          - os: macos-latest
-          - os: windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
     env:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
@@ -57,24 +55,16 @@ jobs:
       - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
       - uses: actions/cache@v4
         with:
-          key: ds001971
-          path: ~/mne_data/ds001971
-        id: ds001971-cache
-      - run: python -m mne_bids_pipeline._download ds001971
-        if: steps.ds001971-cache.outputs.cache-hit != 'true'
-      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/
-      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/  # uses "hash" method
+          key: ${{ matrix.dataset }}
+          path: ~/mne_data/${{ matrix.dataset }}
+        id: dataset-cache
+      - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
+        if: steps.dataset-cache.outputs.cache-hit != 'true'
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
+        name: Run ${{ matrix.dataset }} test from scratch
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         timeout-minutes: 1
-      - uses: actions/cache@v4
-        with:
-          key: ds003392
-          path: ~/mne_data/ds003392
-        id: ds003392-cache
-      - run: python -m mne_bids_pipeline._download ds003392
-        if: steps.ds003392-cache.outputs.cache-hit != 'true'
-      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
-      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
-        timeout-minutes: 1
+        name: Rerun ${{ matrix.dataset }} test to check all steps cached
       - uses: codecov/codecov-action@v5
         if: success() || failure()
   non-doc-dataset-tests:

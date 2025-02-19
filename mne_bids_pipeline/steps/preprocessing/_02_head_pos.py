@@ -148,7 +148,6 @@ def get_input_fnames_twa_head_pos(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    run: str | None = None,
     task: str | None,
 ) -> dict[str, BIDSPath | list[BIDSPath]]:
     """Get paths of files required by compute_twa_head_pos function."""

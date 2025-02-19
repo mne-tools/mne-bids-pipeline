@@ -27,11 +27,11 @@ else
 fi
 
 SECONDS=0
-EMPH=$(tput setaf 5)
-RESET=$(tput sgr0)
+EMPH="\e[35m\e[1m"  # bold magenta foreground
+RESET="\e[0m"
 pytest mne_bids_pipeline --junit-xml=test-results/junit-results.xml -k ${DS_RUN}
 # Add emphasis and echo
-echo "${EMPH}Clean test runtime: ${SECONDS} seconds${RESET}"
+echo -e "${EMPH}Clean test runtime: ${SECONDS} seconds${RESET}"
 echo
 
 # rerun test (check caching)!

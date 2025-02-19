@@ -27,26 +27,32 @@ else
 fi
 
 SECONDS=0
+EMPH=$(tput setaf 2 bold)
+RESET=$(tput sgr0)
 pytest mne_bids_pipeline --junit-xml=test-results/junit-results.xml -k ${DS_RUN}
-echo "Runtime: ${SECONDS} seconds"
+# Add emphasis and echo
+echo "${EMPH}Clean test runtime: ${SECONDS} seconds${RESET}"
+echo
 
 # rerun test (check caching)!
 SECONDS=0
 RERUN_LIMIT=60
 if [[ "$RERUN_TEST" == "false" ]]; then
-  echo "Skipping rerun test"
+  echo "${EMPH}Skipping cache rerun test${RESET}"
   RUN_TIME=0
 else
   pytest mne_bids_pipeline --cov-append -k $DS_RUN
   RUN_TIME=$SECONDS
-  echo "Runtime: ${RUN_TIME} seconds (should be <= $RERUN_LIMIT)"
+  echo "${EMPH}Cached test runtime: ${RUN_TIME} seconds (should be <= $RERUN_LIMIT)${RESET}"
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
 if [[ "$COPY_FILES" == "false" ]]; then
-  echo "Not copying files"
+  echo "${EMPH}Not copying files${RESET}"
   exit 0
 fi
+echo
+echo "${EMPH}Copying files${RESET}"
 mkdir -p ~/reports/${DS}
 # these should always exist
 cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/

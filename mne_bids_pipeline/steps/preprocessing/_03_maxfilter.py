@@ -238,7 +238,6 @@ def get_input_fnames_maxwell_filter(
                 task=pos_task,
                 run=None,
             )
-
     if cfg.mf_esss:
         in_files["esss_basis"] = (
             in_files[in_key]
@@ -350,11 +349,6 @@ def run_maxwell_filter(
         verbose=cfg.read_raw_bids_verbose,
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
-    # load head pos
-    if cfg.mf_mc:
-        head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
-    else:
-        head_pos = None
     # triage string-valued destinations
     if isinstance(destination, str):
         if destination == "reference_run":
@@ -372,7 +366,10 @@ def run_maxwell_filter(
     else:
         apply_msg += "SSS"
     if cfg.mf_mc:
-        extra.append("MC")  # head_pos already loaded above
+        extra.append("MC")
+        head_pos = mne.chpi.read_head_pos(in_files.pop(f"{in_key}-pos"))
+    else:
+        head_pos = None
     if cfg.mf_esss:
         extra.append("eSSS")
         extended_proj = mne.read_proj(in_files.pop("esss_basis"))

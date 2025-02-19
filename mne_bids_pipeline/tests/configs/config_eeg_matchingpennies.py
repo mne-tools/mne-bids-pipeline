@@ -13,3 +13,8 @@ contrasts = [("raised-left", "raised-right")]
 decode = True
 
 interpolate_bads_grand_average = False
+
+l_freq = None
+h_freq = 100
+zapline_fline = 50
+zapline_iter = False

@@ -20,6 +20,7 @@ from typing import Literal
 
 import mne
 import numpy as np
+from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
@@ -62,6 +63,29 @@ def get_input_fnames_frequency_filter(
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
     )
+
+
+def zapline(
+    raw: mne.io.BaseRaw,
+    subject: str,
+    session: str | None,
+    run: str,
+    task: str | None,
+    fline: float | None,
+    iter_: bool,
+) -> None:
+    """Use Zapline to remove line frequencies."""
+    if fline is None:
+        return
+
+    msg = f"Zapline filtering data at with {fline=} Hz."
+    logger.info(**gen_log_kwargs(message=msg))
+    sfreq = raw.info["sfreq"]
+    picks = mne.pick_types(raw.info, meg=True, eeg=True)
+    data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
+    func = dss.dss_line_iter if iter_ else dss.dss_line
+    out, _ = func(data, fline, sfreq)
+    raw._data[picks] = out.T
 
 
 def notch_filter(
@@ -218,6 +242,15 @@ def filter_data(
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
+    zapline(
+        raw=raw,
+        subject=subject,
+        session=session,
+        run=run,
+        task=task,
+        fline=cfg.zapline_fline,
+        iter_=cfg.zapline_iter,
+    )
     notch_filter(
         raw=raw,
         subject=subject,
@@ -301,6 +334,8 @@ def get_config(
         l_freq=config.l_freq,
         h_freq=config.h_freq,
         notch_freq=config.notch_freq,
+        zapline_fline=config.zapline_fline,
+        zapline_iter=config.zapline_iter,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
         notch_trans_bandwidth=config.notch_trans_bandwidth,

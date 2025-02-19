@@ -38,21 +38,21 @@ echo
 SECONDS=0
 RERUN_LIMIT=60
 if [[ "$RERUN_TEST" == "false" ]]; then
-  echo "${EMPH}Skipping cache rerun test${RESET}"
+  echo -e "${EMPH}Skipping cache rerun test${RESET}"
   RUN_TIME=0
 else
   pytest mne_bids_pipeline --cov-append -k $DS_RUN
   RUN_TIME=$SECONDS
-  echo "${EMPH}Cached test runtime: ${RUN_TIME} seconds (should be <= $RERUN_LIMIT)${RESET}"
+  echo -e "${EMPH}Cached test runtime: ${RUN_TIME} seconds (should be <= $RERUN_LIMIT)${RESET}"
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
 if [[ "$COPY_FILES" == "false" ]]; then
-  echo "${EMPH}Not copying files${RESET}"
+  echo -e "${EMPH}Not copying files${RESET}"
   exit 0
 fi
 echo
-echo "${EMPH}Copying files${RESET}"
+echo -e "${EMPH}Copying files${RESET}"
 mkdir -p ~/reports/${DS}
 # these should always exist
 cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/

@@ -220,7 +220,7 @@ def get_input_fnames_maxwell_filter(
             subject=subject,
             session=session,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
-        in_files[f"{in_key}-pos"] = path.update(
+        in_files[f"{in_key}-pos"] = path.copy().update(
             suffix="headpos",
             extension=".txt",
             root=cfg.deriv_root,
@@ -228,7 +228,16 @@ def get_input_fnames_maxwell_filter(
             task=pos_task,
             run=pos_run,
         )
-
+        if isinstance(cfg.mf_destination, str) and cfg.mf_destination == "twa":
+            in_files[f"{in_key}-twa"] = path.update(
+                description="twa",
+                suffix="destination",
+                extension=".fif",
+                root=cfg.deriv_root,
+                check=False,
+                task=pos_task,
+                run=None,
+            )
     if cfg.mf_esss:
         in_files["esss_basis"] = (
             in_files[in_key]

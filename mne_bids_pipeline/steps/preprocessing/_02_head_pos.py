@@ -155,9 +155,10 @@ def get_input_fnames_twa_head_pos(
     in_files: dict[str, BIDSPath] = dict()
     # can't use `_get_run_path()` here because we don't loop over runs/tasks.
     # But any run will do, as long as the file exists:
-    run, _ = get_runs_tasks(
+    runs_tasks = get_runs_tasks(
         config=cfg, subject=subject, session=session, which=("runs",)
-    )[0]
+    )
+    run = next(filter(lambda run_task: run_task[1] == task, runs_tasks))[0]
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
         subject=subject,

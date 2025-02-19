@@ -148,7 +148,7 @@ def get_input_fnames_twa_head_pos(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    run: str | None,
+    run: str | None = None,
     task: str | None,
 ) -> dict[str, BIDSPath | list[BIDSPath]]:
     """Get paths of files required by compute_twa_head_pos function."""
@@ -191,7 +191,6 @@ def compute_twa_head_pos(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | list[str] | None,
-    run: str | None,
     task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
@@ -314,7 +313,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
                 task=config.task or None,  # default task is ""
-                run=None,
             )
             for subject, sessions in get_subjects_sessions(config).items()
             for session in sessions

@@ -463,10 +463,8 @@ def get_mf_cal_fname(
         ).match()[0]
         mf_cal_fpath = bids_path.meg_calibration_fpath
         if mf_cal_fpath is None:
-            raise ValueError(
-                "Could not determine Maxwell Filter Calibration file from BIDS "
-                f"definition for file {bids_path}."
-            )
+            msg = "WARNING: Could not determine Maxwell Filter Calibration file from BIDS. Set to None."
+            logger.info(**gen_log_kwargs(message=msg))
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
@@ -491,7 +489,8 @@ def get_mf_ctc_fname(
             root=config.bids_root,
         ).meg_crosstalk_fpath
         if mf_ctc_fpath is None:
-            raise ValueError("Could not find Maxwell Filter cross-talk file.")
+            msg = "WARNING: Could not find Maxwell Filter cross-talk file. Set to None."
+            logger.info(**gen_log_kwargs(message=msg))
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():

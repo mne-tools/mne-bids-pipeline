@@ -28,6 +28,7 @@
 
 - Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
 - Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
+- `mf_ctc_fname` and `mf_cal_fname` can now be set to `None` (#1057 by @harrisonritz)
 
 ### :books: Documentation
 

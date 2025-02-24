@@ -281,6 +281,13 @@ def get_input_fnames_maxwell_filter(
         )
         _update_for_splits(in_files, key, single=True)
 
+        # set calibration and crosstalk files (if provided)
+        if cfg.mf_cal_fname is not None:  
+            in_files["mf_cal_fname"] = cfg.mf_cal_fname
+        if cfg.mf_ctc_fname is not None:
+            in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+
+
     return in_files
 
 
@@ -377,8 +384,8 @@ def run_maxwell_filter(
     apply_msg += " to"
 
     mf_kws = dict(
-        calibration=cfg.mf_cal_fname,
-        cross_talk=cfg.mf_ctc_fname,
+        calibration=in_files.pop("mf_cal_fname", None),
+        cross_talk=in_files.pop("mf_ctc_fname", None),
         st_duration=cfg.mf_st_duration,
         st_correlation=cfg.mf_st_correlation,
         origin=cfg.mf_head_origin,

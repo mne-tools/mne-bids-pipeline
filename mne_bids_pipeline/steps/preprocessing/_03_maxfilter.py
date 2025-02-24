@@ -281,11 +281,11 @@ def get_input_fnames_maxwell_filter(
         )
         _update_for_splits(in_files, key, single=True)
 
-        # set calibration and crosstalk files (if provided)
-        if cfg.mf_cal_fname is not None:
-            in_files["mf_cal_fname"] = cfg.mf_cal_fname
-        if cfg.mf_ctc_fname is not None:
-            in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+    # set calibration and crosstalk files (if provided)
+    if cfg.mf_cal_fname is not None:
+        in_files["mf_cal_fname"] = cfg.mf_cal_fname
+    if cfg.mf_ctc_fname is not None:
+        in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
 
     return in_files
 

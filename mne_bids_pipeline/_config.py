@@ -704,6 +704,13 @@ location is used.
     ```
 """  # noqa : E501
 
+mf_cal_missing: Literal["ignore", "warn", "raise"] = "raise"
+"""
+How to handle the situation where the Maxwell Filter calibration file is
+missing. Possible options are to ignore the missing file, issue a warning,
+or raise an error.
+"""
+
 mf_ctc_fname: str | None = None
 """
 Path to the Maxwell Filter cross-talk file. If `None`, the recommended
@@ -718,6 +725,13 @@ location is used.
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
 """  # noqa : E501
+
+mf_ctc_missing: Literal["ignore", "warn", "raise"] = "raise"
+"""
+How to handle the situation where the Maxwell Filter cross-talk file is
+missing. Possible options are to ignore the missing file, issue a warning,
+or raise an error.
+"""
 
 mf_esss: int = 0
 """

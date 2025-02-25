@@ -464,13 +464,13 @@ def get_mf_cal_fname(
         if len(bids_path) > 0:
             mf_cal_fpath = bids_path[0].meg_calibration_fpath
         else:
-            if config.mf_cal_missing == 'raise':
+            if config.mf_cal_missing == "raise":
                 raise ValueError(
                     "Could not determine Maxwell Filter cross-talk file from BIDS."
                 )
             else:
                 mf_cal_fpath = None
-                if  config.mf_cal_missing == 'warn':
+                if config.mf_cal_missing == "warn":
                     msg = (
                         "WARNING: Could not find Maxwell Filter cross-talk file "
                         "from BIDS. Set to None."
@@ -479,20 +479,19 @@ def get_mf_cal_fname(
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
-            if config.mf_cal_missing == 'raise':
+            if config.mf_cal_missing == "raise":
                 raise ValueError(
                     f"Could not find Maxwell Filter Calibration "
                     f"file at {str(config.mf_cal_fname)}."
-                    )
+                )
             else:
                 mf_cal_fpath = None
-                if config.mf_cal_missing == 'warn':
+                if config.mf_cal_missing == "warn":
                     msg = (
                         "WARNING: Could not find Maxwell Filter calibration file "
                         f"at {str(config.mf_cal_fname)}. Set to None."
                     )
                     logger.info(**gen_log_kwargs(message=msg))
-            
 
     assert isinstance(mf_cal_fpath, pathlib.Path | None), type(mf_cal_fpath)
     return mf_cal_fpath
@@ -512,13 +511,13 @@ def get_mf_ctc_fname(
         if len(bids_path) > 0:
             mf_ctc_fpath = bids_path[0].meg_crosstalk_fpath
         else:
-            if config.mf_ctc_missing == 'raise':
+            if config.mf_ctc_missing == "raise":
                 raise ValueError(
                     "Could not determine Maxwell Filter cross-talk file from BIDS."
                 )
             else:
                 mf_ctc_fpath = None
-                if  config.mf_ctc_missing == 'warn':
+                if config.mf_ctc_missing == "warn":
                     msg = (
                         "WARNING: Could not find Maxwell Filter cross-talk file "
                         "from BIDS. Set to None."
@@ -528,20 +527,19 @@ def get_mf_ctc_fname(
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
-            if config.mf_ctc_missing == 'raise':
+            if config.mf_ctc_missing == "raise":
                 raise ValueError(
                     f"Could not find Maxwell Filter cross-talk file "
                     f"at {str(config.mf_ctc_fname)}."
-                    )
+                )
             else:
                 mf_ctc_fpath = None
-                if config.mf_ctc_missing == 'warn':
+                if config.mf_ctc_missing == "warn":
                     msg = (
                         "WARNING: Could not find Maxwell Filter cross-talk file "
                         f"at {str(config.mf_ctc_fname)}. Set to None."
                     )
                     logger.info(**gen_log_kwargs(message=msg))
-            
 
     assert isinstance(mf_ctc_fpath, pathlib.Path | None), type(mf_ctc_fpath)
     return mf_ctc_fpath

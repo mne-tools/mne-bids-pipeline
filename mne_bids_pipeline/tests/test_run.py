@@ -90,7 +90,7 @@ _n_jobs = {}
     },
     "ds000248_mf": {
         "stage": ("preprocessing"),
-        },
+    },
     "ds001810": {
         "steps": ("preprocessing", "preprocessing", "sensor"),
     },

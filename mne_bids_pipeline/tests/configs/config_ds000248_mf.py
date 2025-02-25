@@ -25,9 +25,10 @@ use_maxwell_filter = True
 mf_cal_fname = None
 mf_cal_missing = "warn"
 
-mf_ctc_fname =  f"{bids_root}/wrong_ctc.fif"
+mf_ctc_fname = f"{bids_root}/wrong_ctc.fif"
 mf_ctc_missing = "warn"
 # -----------------------------------------------------------------------------
+
 
 def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:
     """Estimate the noise covariance."""

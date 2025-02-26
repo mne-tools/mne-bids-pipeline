@@ -1,8 +1,5 @@
 """MNE Sample Data: M/EEG combined processing."""
 
-import mne
-import mne_bids
-
 n_jobs = 2
 
 bids_root = "~/mne_data/ds000248"

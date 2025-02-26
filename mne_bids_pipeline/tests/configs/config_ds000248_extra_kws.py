@@ -19,7 +19,7 @@ ch_types = ["meg", "eeg"]
 mf_reference_run = "01"
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
-use_maxwell_filter = False
+use_maxwell_filter = True
 
 mf_cal_missing = "warn"
 mf_ctc_missing = "warn"
@@ -30,13 +30,18 @@ find_bad_channels_extra_kws = {
     "ignore_ref": True,
     }
 
-bandpass_extra_kws = {
-    "fir_window": "blackman",
+mf_extra_kws = {
+    "ignore_ref": True,
     }
 
 notch_extra_kws = {
     "method": "spectrum_fit",
     }
+
+bandpass_extra_kws = {
+    "fir_window": "blackman",
+    }
+
 # ---------------------------------------------------------------
 
 

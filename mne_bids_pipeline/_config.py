@@ -706,9 +706,9 @@ location is used.
 
 mf_cal_missing: Literal["ignore", "warn", "raise"] = "raise"
 """
-How to handle the situation where the Maxwell Filter calibration file is
-missing. Possible options are to ignore the missing file, issue a warning,
-or raise an error.
+How to handle the situation where the MEG device's fine calibration file is missing.
+Possible options are to ignore the missing file (as may be appropriate for OPM data),
+issue a warning, or raise an error.
 """
 
 mf_ctc_fname: str | None = None
@@ -728,9 +728,9 @@ location is used.
 
 mf_ctc_missing: Literal["ignore", "warn", "raise"] = "raise"
 """
-How to handle the situation where the Maxwell Filter cross-talk file is
-missing. Possible options are to ignore the missing file, issue a warning,
-or raise an error.
+How to handle the situation where the MEG device's cross-talk file is missing. Possible
+options are to ignore the missing file (as may be appropriate for OPM data), issue a
+warning, or raise an error (appropriate for data from Electa/Neuromag/MEGIN systems).
 """
 
 mf_esss: int = 0

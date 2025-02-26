@@ -452,7 +452,8 @@ def sanitize_cond_name(cond: str) -> str:
 
 def get_mf_cal_fname(
     *, config: SimpleNamespace, subject: str, session: str | None
-) -> pathlib.Path:
+) -> pathlib.Path | None:
+    msg = "Could not find Maxwell Filter calibration file {where}."
     if config.mf_cal_fname is None:
         bids_path = BIDSPath(
             subject=subject,
@@ -460,46 +461,71 @@ def get_mf_cal_fname(
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).match()[0]
-        mf_cal_fpath = bids_path.meg_calibration_fpath
-        if mf_cal_fpath is None:
-            raise ValueError(
-                "Could not determine Maxwell Filter Calibration file from BIDS "
-                f"definition for file {bids_path}."
-            )
+        ).match()
+        if len(bids_path) > 0:
+            mf_cal_fpath = bids_path[0].meg_calibration_fpath
+        else:
+            msg = msg.format(where=f"from BIDSPath {bids_path}")
+            if config.mf_cal_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_cal_fpath = None
+                if config.mf_cal_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
-            raise ValueError(
-                f"Could not find Maxwell Filter Calibration "
-                f"file at {str(mf_cal_fpath)}."
-            )
+            msg = msg.format(where=f"at {str(config.mf_cal_fname)}")
+            if config.mf_cal_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_cal_fpath = None
+                if config.mf_cal_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
 
-    assert isinstance(mf_cal_fpath, pathlib.Path), type(mf_cal_fpath)
+    assert isinstance(mf_cal_fpath, pathlib.Path | None), type(mf_cal_fpath)
     return mf_cal_fpath
 
 
 def get_mf_ctc_fname(
     *, config: SimpleNamespace, subject: str, session: str | None
-) -> pathlib.Path:
+) -> pathlib.Path | None:
+    msg = "Could not find Maxwell Filter cross-talk file {where}."
     if config.mf_ctc_fname is None:
-        mf_ctc_fpath = BIDSPath(
+        bids_path = BIDSPath(
             subject=subject,
             session=session,
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).meg_crosstalk_fpath
-        if mf_ctc_fpath is None:
-            raise ValueError("Could not find Maxwell Filter cross-talk file.")
+        ).match()
+        if len(bids_path) > 0:
+            mf_ctc_fpath = bids_path[0].meg_crosstalk_fpath
+        else:
+            msg = msg.format(where=f"from BIDSPath {bids_path}")
+            if config.mf_ctc_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_ctc_fpath = None
+                if config.mf_ctc_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
+
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
-            raise ValueError(
-                f"Could not find Maxwell Filter cross-talk file at {str(mf_ctc_fpath)}."
-            )
+            msg = msg.format(where=f"at {str(config.mf_ctc_fname)}")
+            if config.mf_ctc_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_ctc_fpath = None
+                if config.mf_ctc_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
 
-    assert isinstance(mf_ctc_fpath, pathlib.Path), type(mf_ctc_fpath)
+    assert isinstance(mf_ctc_fpath, pathlib.Path | None), type(mf_ctc_fpath)
     return mf_ctc_fpath
 
 

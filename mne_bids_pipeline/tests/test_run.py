@@ -92,7 +92,7 @@ _n_jobs = {}
         "steps": ("preprocessing"),
     },
     "ds000248_extra_kws": {
-        "stage": ("preprocessing"),
+        "steps": ("preprocessing"),
     },
     "ds001810": {
         "steps": ("preprocessing", "preprocessing", "sensor"),

@@ -28,22 +28,21 @@ mf_ctc_missing = "warn"
 # Extra keyword arguments for find_bad_channels ------------------
 find_bad_channels_extra_kws = {
     "ignore_ref": True,
-    }
+}
 
 mf_extra_kws = {
     "ignore_ref": True,
-    }
+}
 
 notch_extra_kws = {
     "method": "spectrum_fit",
-    }
+}
 
 bandpass_extra_kws = {
     "fir_window": "blackman",
-    }
+}
 
 # ---------------------------------------------------------------
-
 
 
 def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:

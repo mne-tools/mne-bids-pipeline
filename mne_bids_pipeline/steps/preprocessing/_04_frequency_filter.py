@@ -120,7 +120,7 @@ def notch_filter(
         notch_widths=notch_widths,
         n_jobs=1,
         picks=picks,
-        **notch_extra_kws
+        **notch_extra_kws,
     )
 
 
@@ -160,7 +160,7 @@ def bandpass_filter(
         h_trans_bandwidth=h_trans_bandwidth,
         n_jobs=1,
         picks=picks,
-        **bandpass_extra_kws
+        **bandpass_extra_kws,
     )
 
 

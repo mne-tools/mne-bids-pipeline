@@ -99,16 +99,19 @@ def notch_filter(
     notch_widths: float | Iterable[float] | None,
     run_type: RunTypeT,
     picks: IntArrayT | None,
+    notch_extra_kws: dict[str, any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
-    if freqs is None:
+    if freqs is None and (notch_extra_kws.get("method") != "spectrum_fit"):
         msg = f"Not applying notch filter to {run_type} data."
+    elif notch_extra_kws.get("method") == "spectrum_fit":
+        msg = f"Applying notch filter to {run_type} data with spectrum fitting."
     else:
         msg = f"Notch filtering {run_type} data at {freqs} Hz."
 
     logger.info(**gen_log_kwargs(message=msg))
 
-    if freqs is None:
+    if (freqs is None) and (notch_extra_kws.get("method") != "spectrum_fit"):
         return
 
     raw.notch_filter(
@@ -117,6 +120,7 @@ def notch_filter(
         notch_widths=notch_widths,
         n_jobs=1,
         picks=picks,
+        **notch_extra_kws
     )
 
 
@@ -132,6 +136,7 @@ def bandpass_filter(
     h_trans_bandwidth: float | Literal["auto"],
     run_type: RunTypeT,
     picks: IntArrayT | None,
+    bandpass_extra_kws: dict[str, any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -155,6 +160,7 @@ def bandpass_filter(
         h_trans_bandwidth=h_trans_bandwidth,
         n_jobs=1,
         picks=picks,
+        **bandpass_extra_kws
     )
 
 
@@ -262,6 +268,7 @@ def filter_data(
         notch_widths=cfg.notch_widths,
         run_type=run_type,
         picks=picks,
+        notch_extra_kws=cfg.notch_extra_kws,
     )
     bandpass_filter(
         raw=raw,
@@ -275,6 +282,7 @@ def filter_data(
         l_trans_bandwidth=cfg.l_trans_bandwidth,
         run_type=run_type,
         picks=picks,
+        bandpass_extra_kws=cfg.bandpass_extra_kws,
     )
     resample(
         raw=raw,
@@ -342,6 +350,8 @@ def get_config(
         notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
         regress_artifact=config.regress_artifact,
+        notch_extra_kws=config.notch_extra_kws,
+        bandpass_extra_kws=config.bandpass_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

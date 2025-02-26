@@ -7,6 +7,7 @@
 - New config option [`mf_extra_kws`][mne_bids_pipeline._config.mf_extra_kws] passes additional keyword arguments to `mne.preprocessing.maxwell_filter`. (#1038 by @drammock)
 - New value `"twa"` for config option [`mf_destination`][mne_bids_pipeline._config.mf_destination], to use the time-weighted average head position across runs as the destination position. (#1043 and #1055 by @drammock)
 - New config option [`mf_cal_missing`][mne_bids_pipeline._config.mf_cal_missing] and [`mf_ctc_missing`][mne_bids_pipeline._config.mf_ctc_missing] for handling missing calibration and cross-talk files ['raise', 'warn', 'ignore'] (#1057 by @harrisonritz)
+- Added `find_bad_channels_extra_kws`, `notch_extra_kws`, and `bandpass_extra_kws` to pass additional keyword arguments to `mne.preprocessing.find_bad_channels_maxwell`, `mne.filter.notch_filter`, and `mne.filter.filter_data` (#xxxx by @harrisonritz)
 
 ### :warning: Behavior changes
 

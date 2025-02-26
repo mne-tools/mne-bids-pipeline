@@ -573,6 +573,16 @@ find_noisy_channels_meg: bool = False
 Auto-detect "noisy" channels and mark them as bad.
 """
 
+
+find_bad_channels_extra_kws: dict[str, Any] = {}
+
+"""
+A dictionary of extra kwargs to pass to `mne.preprocessing.find_bad_channels_maxwell`
+. If kwargs are passed here that have dedicated config settings already, an error 
+will be raised.
+"""
+
+
 # %%
 # ## Maxwell filter
 
@@ -882,6 +892,18 @@ be used.
 zapline_iter: bool = False
 """
 Specifies if the iterative version of the Zapline algorithm should be run.
+"""
+
+notch_extra_kws: dict[str, Any] = {}
+"""
+A dictionary of extra kwargs to pass to `mne.filter.notch_filter`. If kwargs
+are passed here that have dedicated config settings already, an error will be raised.
+"""
+
+bandpass_extra_kws: dict[str, Any] = {}
+"""
+A dictionary of extra kwargs to pass to `mne.filter.filter_data`. If kwargs
+are passed here that have dedicated config settings already, an error will be raised.
 """
 
 # ### Resampling

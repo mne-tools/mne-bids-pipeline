@@ -99,7 +99,7 @@ def notch_filter(
     notch_widths: float | Iterable[float] | None,
     run_type: RunTypeT,
     picks: IntArrayT | None,
-    notch_extra_kws: dict[str, Any],
+    notch_extra_kws: dict[str, any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if freqs is None and (notch_extra_kws.get("method") != "spectrum_fit"):
@@ -136,7 +136,7 @@ def bandpass_filter(
     h_trans_bandwidth: float | Literal["auto"],
     run_type: RunTypeT,
     picks: IntArrayT | None,
-    bandpass_extra_kws: dict[str, Any],
+    bandpass_extra_kws: dict[str, any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:

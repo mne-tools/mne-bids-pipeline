@@ -7,7 +7,7 @@
 - New config option [`mf_extra_kws`][mne_bids_pipeline._config.mf_extra_kws] passes additional keyword arguments to `mne.preprocessing.maxwell_filter`. (#1038 by @drammock)
 - New value `"twa"` for config option [`mf_destination`][mne_bids_pipeline._config.mf_destination], to use the time-weighted average head position across runs as the destination position. (#1043 and #1055 by @drammock)
 - New config options [`mf_cal_missing`][mne_bids_pipeline._config.mf_cal_missing] and [`mf_ctc_missing`][mne_bids_pipeline._config.mf_ctc_missing] for handling missing calibration and cross-talk files (#1057 by @harrisonritz)
-- New config options `find_bad_channels_extra_kws`, `notch_extra_kws`, and `bandpass_extra_kws` to pass additional keyword arguments to `mne.preprocessing.find_bad_channels_maxwell`, `mne.filter.notch_filter`, and `mne.filter.filter_data` (#xxxx by @harrisonritz)
+- New config options `find_bad_channels_extra_kws`, `notch_extra_kws`, and `bandpass_extra_kws` to pass additional keyword arguments to `mne.preprocessing.find_bad_channels_maxwell`, `mne.filter.notch_filter`, and `mne.filter.filter_data` (#1061 by @harrisonritz)
 
 ### :warning: Behavior changes
 
@@ -30,7 +30,7 @@
 
 - Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
 - Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
-- Fix bug where only having mag sensors would crash compute_rank in maxwell filtering (#xxxx by @harrisonritz)
+- Fix bug where only having mag sensors would crash compute_rank in maxwell filtering (#1061 by @harrisonritz)
 
 
 ### :books: Documentation

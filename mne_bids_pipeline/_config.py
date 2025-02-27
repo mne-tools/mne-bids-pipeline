@@ -580,6 +580,8 @@ find_bad_channels_extra_kws: dict[str, Any] = {}
 A dictionary of extra kwargs to pass to `mne.preprocessing.find_bad_channels_maxwell`
 . If kwargs are passed here that have dedicated config settings already, an error 
 will be raised.
+For full documentation of the bad channel detection:
+https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell
 """
 
 
@@ -802,6 +804,8 @@ mf_extra_kws: dict[str, Any] = {}
 """
 A dictionary of extra kwargs to pass to `mne.preprocessing.maxwell_filter`. If kwargs
 are passed here that have dedicated config settings already, an error will be raised.
+For full documentation of the Maxwell filter:
+https://mne.tools/stable/generated/mne.preprocessing.maxwell_filter
 """
 
 # ## Filtering & resampling
@@ -898,12 +902,16 @@ notch_extra_kws: dict[str, Any] = {}
 """
 A dictionary of extra kwargs to pass to `mne.filter.notch_filter`. If kwargs
 are passed here that have dedicated config settings already, an error will be raised.
+For full documentation of the notch filter:
+https://mne.tools/stable/generated/mne.filter.notch_filter.
 """
 
 bandpass_extra_kws: dict[str, Any] = {}
 """
 A dictionary of extra kwargs to pass to `mne.filter.filter_data`. If kwargs
 are passed here that have dedicated config settings already, an error will be raised.
+For full documatation of the bandpass filter:
+https://mne.tools/stable/generated/mne.filter.filter_data
 """
 
 # ### Resampling

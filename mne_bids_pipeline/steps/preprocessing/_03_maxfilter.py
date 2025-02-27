@@ -468,7 +468,13 @@ def run_maxwell_filter(
 
         bids_path_ref_sss = in_files.pop("raw_ref_run_sss")
         raw_exp = mne.io.read_raw_fif(bids_path_ref_sss)
-        type_sel = set(cfg.ch_types).intersection({"mag", "meg"}).pop()
+        if "grad" in raw_exp:
+            if "mag" in raw_exp:
+                type_sel = "meg"
+            else:
+                type_sel = "grad"
+        else:
+            type_sel = "mag"
         rank_exp = mne.compute_rank(raw_exp, rank="info")[type_sel]
         rank_noise = mne.compute_rank(raw_sss, rank="info")[type_sel]
         del raw_exp

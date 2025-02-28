@@ -7,6 +7,7 @@
 - New config option [`mf_extra_kws`][mne_bids_pipeline._config.mf_extra_kws] passes additional keyword arguments to `mne.preprocessing.maxwell_filter`. (#1038 by @drammock)
 - New value `"twa"` for config option [`mf_destination`][mne_bids_pipeline._config.mf_destination], to use the time-weighted average head position across runs as the destination position. (#1043 and #1055 by @drammock)
 - New config options [`mf_cal_missing`][mne_bids_pipeline._config.mf_cal_missing] and [`mf_ctc_missing`][mne_bids_pipeline._config.mf_ctc_missing] for handling missing calibration and cross-talk files (#1057 by @harrisonritz)
+- Config option [`ssp_ecg_channel`][mne_bids_pipeline._config.ssp_ecg_channel] now allows dict values, for setting a different channel name for each subject/session (#1062 by @drammock)
 
 ### :warning: Behavior changes
 

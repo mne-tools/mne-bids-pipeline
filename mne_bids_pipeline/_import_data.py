@@ -795,6 +795,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         # automatic add_bads
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         find_flat_channels_meg=config.find_flat_channels_meg,
+        find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,

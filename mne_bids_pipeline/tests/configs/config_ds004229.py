@@ -31,6 +31,24 @@ mf_esss = 8
 mf_esss_reject = {"grad": 10000e-13, "mag": 40000e-15}
 ch_types = ["meg"]
 
+# test extra kws
+find_bad_channels_extra_kws = {
+    "ignore_ref": True,
+}
+mf_extra_kws = {
+    "ignore_ref": True,
+}
+notch_extra_kws = {
+    "method": "spectrum_fit",
+}
+bandpass_extra_kws = {
+    "fir_window": "blackman",
+}
+
+mf_cal_missing = "warn"
+mf_ctc_missing = "warn"
+
+
 l_freq = None
 h_freq = 40.0
 

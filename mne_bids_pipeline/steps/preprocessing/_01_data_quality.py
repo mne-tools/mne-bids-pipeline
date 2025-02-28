@@ -282,6 +282,7 @@ def _find_bads_maxwell(
         coord_frame="head",
         return_scores=True,
         h_freq=None,  # we filtered manually above
+        **cfg.find_bad_channels_extra_kws,
     )
     del raw_filt
 
@@ -345,6 +346,7 @@ def get_config(
         # detection
         # find_flat_channels_meg=config.find_flat_channels_meg,
         # find_noisy_channels_meg=config.find_noisy_channels_meg,
+        # find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
         **extra_kwargs,
     )

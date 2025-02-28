@@ -412,6 +412,16 @@ def get_task(config: SimpleNamespace) -> str | None:
         return _valid_tasks[0]
 
 
+def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
+    if isinstance(config.ssp_ecg_channel, str):
+        return config.ssp_ecg_channel
+    for key in (f"sub-{subject}", f"sub-{subject}_ses-{session}"):
+        if val := config.ssp_ecg_channel.get(key):
+            assert isinstance(val, str)  # mypy
+            return val
+    return ""  # mypy
+
+
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.

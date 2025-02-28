@@ -1279,10 +1279,14 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_ecg_channel: str | None = None
+ssp_ecg_channel: str | dict[str, str] | None = None
 """
 Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
-is not reliable.
+is not reliable. If `str`, the same channel will be used for all subjects.
+If `dict`, possibly different channels will be used for each subject/session.
+Dict values must be channel names, and dict keys must have the form `"sub-X"` (to use
+the same channel for each session within a subject) or `"sub-X_ses-Y"` (to use possibly
+different channels for each session of a given subject).
 """
 
 ica_reject: dict[str, float] | Literal["autoreject_local"] | None = None

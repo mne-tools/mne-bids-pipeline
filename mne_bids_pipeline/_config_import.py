@@ -4,6 +4,7 @@ import difflib
 import importlib.util
 import os
 import pathlib
+import re
 from dataclasses import field
 from functools import partial
 from inspect import signature
@@ -16,6 +17,7 @@ import numpy as np
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from ._config_utils import get_subjects_sessions
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
@@ -294,6 +296,31 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "cannot compute time-weighted average head position (mf_destination='twa') "
             "without movement compensation. Please set `mf_mc=True` in your config."
         )
+    # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
+    if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
+        pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
+        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        if mismatch := (set(config.ssp_ecg_channel) - matches):
+            raise ConfigError(
+                "Malformed keys in ssp_ecg_channel dict:\n  "
+                f"{'\n  '.join(sorted(mismatch))}"
+            )
+        # also make sure there are values for all subjects/sessions:
+        missing = list()
+        subjects_sessions = get_subjects_sessions(config)
+        for sub, sessions in subjects_sessions.items():
+            for ses in sessions:
+                if (
+                    config.ssp_ecg_channel.get(f"sub-{sub}") is None
+                    and config.ssp_ecg_channel.get(f"sub-{sub}_ses-{ses}") is None
+                ):
+                    missing.append(
+                        f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
+                    )
+        if missing:
+            raise ConfigError(
+                f"Missing entries in ssp_ecg_channel:\n  {'\n  '.join(missing)}"
+            )
 
     reject = config.reject
     ica_reject = config.ica_reject

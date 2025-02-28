@@ -1,6 +1,7 @@
 """Test the pipeline configuration import validator."""
 
 from pathlib import Path
+from shutil import rmtree
 
 import pytest
 
@@ -57,6 +58,30 @@ def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     bad_text = working_text + "mf_extra_kws = {'calibration': 'x', 'head_pos': False}\n"
     config_path.write_text(bad_text)
     with pytest.raises(ConfigError, match="contains keys calibration, head_pos that"):
+        _import_config(config_path=config_path)
+    # ecg_channel_dict key validation (all subjects have channels specified)
+    try:
+        # these must exist for dict check to work
+        for sub in ("01", "02"):
+            (tmp_path / f"sub-{sub}" / "eeg").mkdir(parents=True)
+            (tmp_path / f"sub-{sub}" / "eeg" / f"sub-{sub}_eeg.fif").touch()
+        # now test the config import
+        bad_text = (
+            working_text + "subjects = ['01', '02']\n"
+            "ssp_ecg_channel = {'sub-01': 'MEG0111'}\n"  # no entry for sub-02
+        )
+        config_path.write_text(bad_text)
+        with pytest.raises(ConfigError, match="Missing entries in ssp_ecg_channel.*"):
+            _import_config(config_path=config_path)
+    # clean up
+    finally:
+        for sub in ("01", "02"):
+            rmtree(tmp_path / f"sub-{sub}")
+
+    # ecg_channel_dict key validation (keys in dict are well-formed)
+    bad_text = working_text + "ssp_ecg_channel = {'sub-0_1': 'MEG0111'}\n"  # underscore
+    config_path.write_text(bad_text)
+    with pytest.raises(ConfigError, match="Malformed keys in ssp_ecg_channel dict:.*"):
         _import_config(config_path=config_path)
     # old values
     bad_text = working_text

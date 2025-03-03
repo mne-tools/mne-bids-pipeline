@@ -578,7 +578,7 @@ find_bad_channels_extra_kws: dict[str, Any] = {}
 
 """
 A dictionary of extra kwargs to pass to `mne.preprocessing.find_bad_channels_maxwell`
-. If kwargs are passed here that have dedicated config settings already, an error 
+. If kwargs are passed here that have dedicated config settings already, an error
 will be raised.
 For full documentation of the bad channel detection:
 https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell

@@ -45,9 +45,6 @@ bandpass_extra_kws = {
     "fir_window": "blackman",
 }
 
-mf_cal_missing = "warn"
-mf_ctc_missing = "warn"
-
 
 l_freq = None
 h_freq = 40.0

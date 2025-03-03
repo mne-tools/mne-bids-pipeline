@@ -1,5 +1,9 @@
 """hMT+ Localizer."""
 
+import os
+
+from mne_bids import BIDSPath
+
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
 
@@ -12,6 +16,37 @@ find_noisy_channels_meg = False
 use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
+
+mf_cal_missing = "warn"
+mf_ctc_missing = "warn"
+
+
+# Remove meg_calibration_fpath
+calibration_path = BIDSPath(
+    subject=subjects[0],
+    suffix="meg",
+    datatype="meg",
+    root=bids_root,
+).meg_calibration_fpath
+try:
+    os.remove(calibration_path)
+    print(f"File '{calibration_path}' successfully removed.")
+except FileNotFoundError:
+    print(f"File '{calibration_path}' not found.")
+
+# Remove meg_crosstalk_fpath
+crosstalk_path = BIDSPath(
+    subject=subjects[0],
+    suffix="meg",
+    datatype="meg",
+    root=bids_root,
+).meg_crosstalk_fpath
+try:
+    os.remove(crosstalk_path)
+    print(f"File '{crosstalk_path}' successfully removed.")
+except FileNotFoundError:
+    print(f"File '{crosstalk_path}' not found.")
+
 
 l_freq = 1.0
 h_freq = 40.0

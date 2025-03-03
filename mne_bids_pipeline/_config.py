@@ -578,7 +578,8 @@ Auto-detect "noisy" channels and mark them as bad.
 
 use_maxwell_filter: bool = False
 """
-Whether or not to use Maxwell filtering to preprocess the data.
+Whether or not to use [Maxwell filtering][mne.preprocessing.maxwell_filter] to
+preprocess the data.
 
 !!! warning
     If the data were recorded with internal active compensation (MaxShield),

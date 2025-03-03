@@ -61,8 +61,8 @@ jobs:
       - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
         if: steps.dataset-cache.outputs.cache-hit != 'true'
       - run: |
-          rm ~/mne_data/ds003392/sub-01/meg/sub-01_acq-calibration_meg.dat
-          rm ~/mne_data/ds003392/sub-01/meg/sub-01_acq-crosstalk_meg.fif
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-calibration_meg.dat
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-crosstalk_meg.fif
         if: matrix.dataset == 'ds003392'
         name: Remove cross-talk and cal files from ds003392
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/

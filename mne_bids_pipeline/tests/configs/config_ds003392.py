@@ -31,8 +31,12 @@ calibration_path = BIDSPath(
 try:
     os.remove(calibration_path)
     print(f"File '{calibration_path}' successfully removed.")
-except FileNotFoundError:
-    print(f"File '{calibration_path}' not found.")
+except Exception as e:
+    if calibration_path is None:
+        print("Calibration file not found.")
+    else:
+        print(f"Calibration file '{calibration_path}' did not load: {e}.")
+
 
 # Remove meg_crosstalk_fpath
 crosstalk_path = BIDSPath(
@@ -44,8 +48,11 @@ crosstalk_path = BIDSPath(
 try:
     os.remove(crosstalk_path)
     print(f"File '{crosstalk_path}' successfully removed.")
-except FileNotFoundError:
-    print(f"File '{crosstalk_path}' not found.")
+except Exception as e:
+    if crosstalk_path is None:
+        print("Crosstalk file not found.")
+    else:
+        print(f"Crosstalk file '{crosstalk_path}' did not load: {e}.")
 
 
 l_freq = 1.0

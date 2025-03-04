@@ -22,6 +22,7 @@ from mne_bids_pipeline._config_utils import (
     get_eeg_reference,
     get_sessions,
     get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import _handle_csp_args
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -54,7 +55,13 @@ def get_input_fnames_average_evokeds(
     session: str | None,
 ) -> InFilesT:
     in_files = dict()
-    for this_subject in cfg.subjects:
+    sub_ses = get_subjects_sessions(cfg)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if cfg.allow_missing_sessions
+        else cfg.subjects
+    )
+    for this_subject in subjects:
         in_files[f"evoked-{this_subject}"] = BIDSPath(
             subject=this_subject,
             session=session,
@@ -976,6 +983,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         contrasts=config.contrasts,

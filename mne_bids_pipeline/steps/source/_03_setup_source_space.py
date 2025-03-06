@@ -114,7 +114,7 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
             )
-            for subject, sessions in sub_ses
+            for subject, sessions in sub_ses.items()
             for session in sessions
         )
     save_logs(config=config, logs=logs)

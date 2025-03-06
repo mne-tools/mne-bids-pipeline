@@ -13,6 +13,9 @@ use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
 
+mf_cal_missing = "warn"
+mf_ctc_missing = "warn"
+
 l_freq = 1.0
 h_freq = 40.0
 raw_resample_sfreq = 250

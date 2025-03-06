@@ -119,8 +119,14 @@ def get_input_fnames_run_average(
 ) -> InFilesT:
     in_files = dict()
     assert subject == "average"
+    sub_ses = get_subjects_sessions(cfg)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if cfg.allow_missing_sessions
+        else cfg.subjects
+    )
     for condition in _all_conditions(cfg=cfg):
-        for this_subject in cfg.subjects:
+        for this_subject in subjects:
             in_files[f"{this_subject}-{condition}"] = _stc_path(
                 cfg=cfg,
                 subject=this_subject,
@@ -145,11 +151,17 @@ def run_average(
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)
+    sub_ses = get_subjects_sessions(cfg)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if cfg.allow_missing_sessions
+        else cfg.subjects
+    )
     for condition in conditions:
         stc = np.array(
             [
                 mne.read_source_estimate(in_files.pop(f"{this_subject}-{condition}"))
-                for this_subject in cfg.subjects
+                for this_subject in subjects
             ]
         ).mean(axis=0)
         out_files[condition] = _stc_path(
@@ -205,6 +217,7 @@ def get_config(
         subjects=get_subjects(config=config),
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,

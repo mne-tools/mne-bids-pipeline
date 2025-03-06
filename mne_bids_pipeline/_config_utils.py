@@ -412,6 +412,16 @@ def get_task(config: SimpleNamespace) -> str | None:
         return _valid_tasks[0]
 
 
+def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
+    if isinstance(config.ssp_ecg_channel, str):
+        return config.ssp_ecg_channel
+    for key in (f"sub-{subject}", f"sub-{subject}_ses-{session}"):
+        if val := config.ssp_ecg_channel.get(key):
+            assert isinstance(val, str)  # mypy
+            return val
+    return ""  # mypy
+
+
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
@@ -461,18 +471,18 @@ def get_mf_cal_fname(
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).match()
-        if len(bids_path) > 0:
-            mf_cal_fpath = bids_path[0].meg_calibration_fpath
-        else:
+        )
+        bids_match = bids_path.match()
+        mf_cal_fpath = None
+        if len(bids_match) > 0:
+            mf_cal_fpath = bids_match[0].meg_calibration_fpath
+        if mf_cal_fpath is None:
             msg = msg.format(where=f"from BIDSPath {bids_path}")
             if config.mf_cal_missing == "raise":
                 raise ValueError(msg)
-            else:
-                mf_cal_fpath = None
-                if config.mf_cal_missing == "warn":
-                    msg = f"WARNING: {msg} Set to None."
-                    logger.info(**gen_log_kwargs(message=msg))
+            elif config.mf_cal_missing == "warn":
+                msg = f"WARNING: {msg} Set to None."
+                logger.info(**gen_log_kwargs(message=msg))
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
@@ -500,18 +510,18 @@ def get_mf_ctc_fname(
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).match()
-        if len(bids_path) > 0:
-            mf_ctc_fpath = bids_path[0].meg_crosstalk_fpath
-        else:
+        )
+        bids_match = bids_path.match()
+        mf_ctc_fpath = None
+        if len(bids_match) > 0:
+            mf_ctc_fpath = bids_match[0].meg_crosstalk_fpath
+        if mf_ctc_fpath is None:
             msg = msg.format(where=f"from BIDSPath {bids_path}")
             if config.mf_ctc_missing == "raise":
                 raise ValueError(msg)
-            else:
-                mf_ctc_fpath = None
-                if config.mf_ctc_missing == "warn":
-                    msg = f"WARNING: {msg} Set to None."
-                    logger.info(**gen_log_kwargs(message=msg))
+            elif config.mf_ctc_missing == "warn":
+                msg = f"WARNING: {msg} Set to None."
+                logger.info(**gen_log_kwargs(message=msg))
 
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()

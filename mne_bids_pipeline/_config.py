@@ -573,6 +573,18 @@ find_noisy_channels_meg: bool = False
 Auto-detect "noisy" channels and mark them as bad.
 """
 
+
+find_bad_channels_extra_kws: dict[str, Any] = {}
+
+"""
+A dictionary of extra kwargs to pass to `mne.preprocessing.find_bad_channels_maxwell`
+. If kwargs are passed here that have dedicated config settings already, an error
+will be raised.
+For full documentation of the bad channel detection:
+https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell
+"""
+
+
 # %%
 # ## Maxwell filter
 
@@ -792,6 +804,8 @@ mf_extra_kws: dict[str, Any] = {}
 """
 A dictionary of extra kwargs to pass to `mne.preprocessing.maxwell_filter`. If kwargs
 are passed here that have dedicated config settings already, an error will be raised.
+For full documentation of the Maxwell filter:
+https://mne.tools/stable/generated/mne.preprocessing.maxwell_filter
 """
 
 # ## Filtering & resampling
@@ -882,6 +896,22 @@ be used.
 zapline_iter: bool = False
 """
 Specifies if the iterative version of the Zapline algorithm should be run.
+"""
+
+notch_extra_kws: dict[str, Any] = {}
+"""
+A dictionary of extra kwargs to pass to `mne.filter.notch_filter`. If kwargs
+are passed here that have dedicated config settings already, an error will be raised.
+For full documentation of the notch filter:
+https://mne.tools/stable/generated/mne.filter.notch_filter.
+"""
+
+bandpass_extra_kws: dict[str, Any] = {}
+"""
+A dictionary of extra kwargs to pass to `mne.filter.filter_data`. If kwargs
+are passed here that have dedicated config settings already, an error will be raised.
+For full documatation of the bandpass filter:
+https://mne.tools/stable/generated/mne.filter.filter_data
 """
 
 # ### Resampling
@@ -1279,10 +1309,14 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_ecg_channel: str | None = None
+ssp_ecg_channel: str | dict[str, str] | None = None
 """
 Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
-is not reliable.
+is not reliable. If `str`, the same channel will be used for all subjects.
+If `dict`, possibly different channels will be used for each subject/session.
+Dict values must be channel names, and dict keys must have the form `"sub-X"` (to use
+the same channel for each session within a subject) or `"sub-X_ses-Y"` (to use possibly
+different channels for each session of a given subject).
 """
 
 ica_reject: dict[str, float] | Literal["autoreject_local"] | None = None

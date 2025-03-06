@@ -211,6 +211,7 @@ def get_config(
         subjects=get_subjects(config=config),
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,

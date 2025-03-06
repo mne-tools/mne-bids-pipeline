@@ -119,8 +119,14 @@ def get_input_fnames_run_average(
 ) -> InFilesT:
     in_files = dict()
     assert subject == "average"
+    sub_ses = get_subjects_sessions(cfg)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if cfg.allow_missing_sessions
+        else cfg.subjects
+    )
     for condition in _all_conditions(cfg=cfg):
-        for this_subject in cfg.subjects:
+        for this_subject in subjects:
             in_files[f"{this_subject}-{condition}"] = _stc_path(
                 cfg=cfg,
                 subject=this_subject,

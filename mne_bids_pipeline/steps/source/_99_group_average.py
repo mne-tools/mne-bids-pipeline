@@ -151,11 +151,17 @@ def run_average(
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)
+    sub_ses = get_subjects_sessions(cfg)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if cfg.allow_missing_sessions
+        else cfg.subjects
+    )
     for condition in conditions:
         stc = np.array(
             [
                 mne.read_source_estimate(in_files.pop(f"{this_subject}-{condition}"))
-                for this_subject in cfg.subjects
+                for this_subject in subjects
             ]
         ).mean(axis=0)
         out_files[condition] = _stc_path(

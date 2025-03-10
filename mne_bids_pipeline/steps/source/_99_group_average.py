@@ -15,6 +15,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
+    get_subjects_given_session,
     get_subjects_sessions,
     sanitize_cond_name,
 )
@@ -119,12 +120,8 @@ def get_input_fnames_run_average(
 ) -> InFilesT:
     in_files = dict()
     assert subject == "average"
-    sub_ses = get_subjects_sessions(cfg)
-    subjects = (
-        tuple(sub for sub, ses in sub_ses.items() if session in ses)
-        if cfg.allow_missing_sessions
-        else cfg.subjects
-    )
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in _all_conditions(cfg=cfg):
         for this_subject in subjects:
             in_files[f"{this_subject}-{condition}"] = _stc_path(
@@ -151,12 +148,8 @@ def run_average(
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)
-    sub_ses = get_subjects_sessions(cfg)
-    subjects = (
-        tuple(sub for sub, ses in sub_ses.items() if session in ses)
-        if cfg.allow_missing_sessions
-        else cfg.subjects
-    )
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in conditions:
         stc = np.array(
             [

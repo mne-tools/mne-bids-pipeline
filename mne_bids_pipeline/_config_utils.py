@@ -203,6 +203,19 @@ def get_subjects_sessions(
     return subj_sessions
 
 
+def get_subjects_given_session(
+    config: SimpleNamespace, session: str | None
+) -> tuple[str, ...]:
+    """Get the subjects who actually have data for a given session."""
+    sub_ses = get_subjects_sessions(config)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if config.allow_missing_sessions
+        else config.subjects
+    )
+    return subjects
+
+
 def get_runs_all_subjects(
     config: SimpleNamespace,
 ) -> dict[str, tuple[None] | tuple[str, ...]]:

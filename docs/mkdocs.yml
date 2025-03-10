@@ -162,6 +162,8 @@ plugins:
                     line_length: 88  # Black's default
                     show_bases: false
                     docstring_style: numpy
+                inventories:
+                    - https://mne.tools/dev/objects.inv
     - mike:
         canonical_version: stable
 markdown_extensions:

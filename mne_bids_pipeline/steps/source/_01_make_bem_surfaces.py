@@ -156,6 +156,7 @@ def main(*, config: SimpleNamespace) -> None:
 
     # check for session-specific MRIs within subject, and handle accordingly
     subjects_dir = Path(get_fs_subjects_dir(config))
+    # TODO this block looks awkward / possibly creates redundant entries?
     subj_sess = list()
     for _subj, sessions in get_subjects_sessions(config).items():
         for sess in sessions:

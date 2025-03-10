@@ -89,7 +89,7 @@ def average_evokeds(
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
     conditions = _all_conditions(cfg=cfg)
-    evokeds_nested: list[list[mne.Evked]] = [list() for _ in range(len(conditions))]
+    evokeds_nested: list[list[mne.Evoked]] = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
     for key in keys:

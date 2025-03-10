@@ -231,7 +231,6 @@ def main(*, config: SimpleNamespace) -> None:
     cfg = get_config(config=config)
     exec_params = config.exec_params
     all_sessions = get_sessions(config)
-    subjects_sessions = get_subjects_sessions(config)
 
     logs = list()
     with get_parallel_backend(exec_params):
@@ -244,7 +243,7 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
-            for subject, sessions in subjects_sessions.items()
+            for subject, sessions in get_subjects_sessions(config).items()
             for session in sessions
         )
     logs += [

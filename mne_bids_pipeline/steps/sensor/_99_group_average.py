@@ -232,9 +232,10 @@ def _get_epochs_in_files(
     session: str | None,
 ) -> InFilesT:
     in_files = dict()
+    # here we just need one subject's worth of Epochs, to get the time domain. But we
+    # still must be careful that the subject actually has data for the requested session
     in_files["epochs"] = BIDSPath(
-        # TODO subject ignored here & cfg.subjects[0] might not have data for `session`
-        subject=cfg.subjects[0],
+        subject=get_subjects_given_session(cfg, session)[0],
         session=session,
         task=cfg.task,
         acquisition=cfg.acq,
@@ -299,8 +300,7 @@ def _get_input_fnames_decoding(
     kind: str,
     extension: str = ".mat",
 ) -> InFilesT:
-    # TODO subject will get ignored here is that ok? ↓↓↓↓↓↓↓
-    in_files = _get_epochs_in_files(cfg=cfg, subject=subject, session=session)
+    in_files = _get_epochs_in_files(cfg=cfg, subject="ignored", session=session)
     for this_subject in cfg.subjects:
         in_files[f"scores-{this_subject}"] = _decoding_out_fname(
             cfg=cfg,

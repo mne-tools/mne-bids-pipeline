@@ -186,13 +186,18 @@ def get_subjects_sessions(
             ignore_datatypes=ignore_datatypes,
             **kwargs,
         )
-        missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
-        if missing_sessions and not config.allow_missing_sessions:
-            raise RuntimeError(
-                f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{missing_sessions}, and `config.allow_missing_sessions` is False"
-            )
-        keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
+        # if valid_sessions_subj is empty, assume the dataset just doesn't have
+        # `session` subfolders
+        if not valid_sessions_subj:
+            keep_sessions = cfg_sessions  # AKA (None,)
+        else:
+            missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
+            if missing_sessions and not config.allow_missing_sessions:
+                raise RuntimeError(
+                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
+                )
+            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
         if len(keep_sessions):
             subj_sessions[subject] = keep_sessions
     return subj_sessions

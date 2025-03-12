@@ -92,8 +92,11 @@ def average_evokeds(
     evokeds_nested: list[list[mne.Evoked]] = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
+    subjects_in_grand_avg = list()
     for key in keys:
-        if not key.startswith("evoked-"):
+        if key.startswith("evoked-"):
+            subjects_in_grand_avg.append(key.replace("evoked-", ""))
+        else:
             continue
         fname_in = in_files.pop(key)
         these_evokeds = mne.read_evokeds(fname_in)
@@ -161,14 +164,16 @@ def average_evokeds(
         else:
             msg = "No evoked conditions or contrasts found."
         logger.info(**gen_log_kwargs(message=msg))
+        # construct the common part of the titles
+        _title = f"N = {len(subjects_in_grand_avg)}"
+        if n_missing := (len(cfg.subjects) - len(subjects_in_grand_avg)):
+            _title += f"{n_missing} subjects excluded due to missing session data"
         for condition, evoked in zip(conditions, evokeds):
             tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
+                title = f"Average (sensor): {condition}, {_title}"
             else:  # It's a contrast of two conditions.
-                title = (
-                    f"Average (sensor) contrast: {condition}, N = {len(cfg.subjects)}"
-                )
+                title = f"Average (sensor) contrast: {condition}, {_title}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(

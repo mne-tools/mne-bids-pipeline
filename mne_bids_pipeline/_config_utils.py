@@ -213,6 +213,7 @@ def get_subjects_given_session(
         if config.allow_missing_sessions
         else config.subjects
     )
+    assert not isinstance(subjects, str), subjects  # make sure it's not "all"
     return subjects
 
 

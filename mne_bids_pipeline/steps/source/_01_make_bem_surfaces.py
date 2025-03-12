@@ -154,15 +154,16 @@ def main(*, config: SimpleNamespace) -> None:
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
         return
 
-    # check for session-specific MRIs within subject, and handle accordingly
+    # check for session-specific MRIs within subject, and add entries to `subj_sess` for
+    # each combination of subject+session that has its own MRI
     subjects_dir = Path(get_fs_subjects_dir(config))
-    subj_sess = list()
+    subj_sess = set()
     for _subj, sessions in get_subjects_sessions(config).items():
         for sess in sessions:
             _sess = (
                 sess if _has_session_specific_anat(_subj, sess, subjects_dir) else None
             )
-            subj_sess.append((_subj, _sess))
+            subj_sess.add((_subj, _sess))
 
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
@@ -180,6 +181,6 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 force_run=config.recreate_bem,
             )
-            for subject, session in subj_sess
+            for subject, session in sorted(subj_sess)
         )
     save_logs(config=config, logs=logs)

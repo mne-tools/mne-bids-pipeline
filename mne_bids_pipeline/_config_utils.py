@@ -186,16 +186,35 @@ def get_subjects_sessions(
             ignore_datatypes=ignore_datatypes,
             **kwargs,
         )
-        missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
-        if missing_sessions and not config.allow_missing_sessions:
-            raise RuntimeError(
-                f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{missing_sessions}, and `config.allow_missing_sessions` is False"
-            )
-        keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
+        # if valid_sessions_subj is empty, assume the dataset just doesn't have
+        # `session` subfolders
+        if not valid_sessions_subj:
+            keep_sessions = cfg_sessions  # AKA (None,)
+        else:
+            missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
+            if missing_sessions and not config.allow_missing_sessions:
+                raise RuntimeError(
+                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
+                )
+            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
         if len(keep_sessions):
             subj_sessions[subject] = keep_sessions
     return subj_sessions
+
+
+def get_subjects_given_session(
+    config: SimpleNamespace, session: str | None
+) -> tuple[str, ...]:
+    """Get the subjects who actually have data for a given session."""
+    sub_ses = get_subjects_sessions(config)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if config.allow_missing_sessions
+        else config.subjects
+    )
+    assert not isinstance(subjects, str), subjects  # make sure it's not "all"
+    return subjects
 
 
 def get_runs_all_subjects(

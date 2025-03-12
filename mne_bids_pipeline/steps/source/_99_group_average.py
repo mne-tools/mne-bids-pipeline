@@ -15,6 +15,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
+    get_subjects_given_session,
     get_subjects_sessions,
     sanitize_cond_name,
 )
@@ -119,8 +120,10 @@ def get_input_fnames_run_average(
 ) -> InFilesT:
     in_files = dict()
     assert subject == "average"
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in _all_conditions(cfg=cfg):
-        for this_subject in cfg.subjects:
+        for this_subject in subjects:
             in_files[f"{this_subject}-{condition}"] = _stc_path(
                 cfg=cfg,
                 subject=this_subject,
@@ -145,11 +148,13 @@ def run_average(
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in conditions:
         stc = np.array(
             [
                 mne.read_source_estimate(in_files.pop(f"{this_subject}-{condition}"))
-                for this_subject in cfg.subjects
+                for this_subject in subjects
             ]
         ).mean(axis=0)
         out_files[condition] = _stc_path(
@@ -205,6 +210,7 @@ def get_config(
         subjects=get_subjects(config=config),
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
@@ -225,7 +231,6 @@ def main(*, config: SimpleNamespace) -> None:
     cfg = get_config(config=config)
     exec_params = config.exec_params
     all_sessions = get_sessions(config)
-    subjects_sessions = get_subjects_sessions(config)
 
     logs = list()
     with get_parallel_backend(exec_params):
@@ -238,7 +243,7 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
-            for subject, sessions in subjects_sessions.items()
+            for subject, sessions in get_subjects_sessions(config).items()
             for session in sessions
         )
     logs += [

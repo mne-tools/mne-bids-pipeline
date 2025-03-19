@@ -118,7 +118,7 @@ def run_epochs_decoding(
     # around https://github.com/mne-tools/mne-python/issues/12153
     epochs.crop(cfg.decoding_epochs_tmin, cfg.decoding_epochs_tmax)
     # omit bad channels and reference MEG sensors
-    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
+    epochs.pick(["meg", "eeg"], exclude=["bads", "ref_meg"])
     pre_steps = _decoding_preproc_steps(
         subject=subject,
         session=session,

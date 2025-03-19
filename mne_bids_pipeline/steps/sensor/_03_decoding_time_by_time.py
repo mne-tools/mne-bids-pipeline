@@ -130,7 +130,9 @@ def run_time_decoding(
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
-    pick_idx = mne.pick_types(epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads")
+    pick_idx = mne.pick_types(
+        epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"
+    )
     epochs.pick(pick_idx)
     # We can't use the full rank here because the number of samples can just be the
     # number of epochs (which can be fewer than the number of channels)

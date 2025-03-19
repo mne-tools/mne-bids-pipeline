@@ -313,7 +313,7 @@ Can also be `None` if you do not want to create bipolar channels.
     ```
 """
 
-eeg_reference: Literal["average"] | str | Sequence["str"] = "average"
+eeg_reference: Literal["average"] | str | Sequence[str] = "average"
 """
 The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
@@ -385,7 +385,7 @@ doesn't contain coordinates for some channels.
     ```
 """
 
-analyze_channels: Literal["all", "ch_types"] | Annotated[Sequence["str"], MinLen(1)] = (
+analyze_channels: Literal["all", "ch_types"] | Annotated[Sequence[str], MinLen(1)] = (
     "ch_types"
 )
 """

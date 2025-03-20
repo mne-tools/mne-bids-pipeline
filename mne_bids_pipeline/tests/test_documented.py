@@ -6,9 +6,11 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
-from mne_bids_pipeline._config_import import _get_default_config
+from mne_bids_pipeline._config_import import _get_default_config, _import_config
+from mne_bids_pipeline._config_template import create_template_config
 from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
@@ -38,7 +40,7 @@ def test_options_documented() -> None:
     settings_path = root_path.parent / "docs" / "source" / "settings"
     sys.path.append(str(settings_path))
     try:
-        from gen_settings import main
+        from gen_settings import main  # pyright: ignore [reportMissingImports]
     finally:
         sys.path.pop()
     main()
@@ -209,3 +211,15 @@ def test_datasets_in_doc() -> None:
     assert tests == examples, "CircleCI tests != docs/mkdocs.yml Examples"
     assert tests == dataset_names, "CircleCI tests != tests/datasets.py"
     assert tests == test_names, "CircleCI tests != tests/test_run.py"
+
+
+def test_config_template_valid(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure our config template is syntactically valid (importable)."""
+    fpath = tmp_path / "foo.py"
+    create_template_config(fpath)
+    monkeypatch.setenv("BIDS_ROOT", str(tmp_path))
+    # we need check=False because (at least):
+    #   - `ch_types` fails pydantic validation (its default is `[]` but its annotation
+    #     requires length > 0)
+    #   - `conditions` cannot be None unless `task_is_rest = True` (defaults to False)
+    _import_config(config_path=fpath, check=False, log=False)

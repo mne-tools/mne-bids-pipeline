@@ -178,18 +178,25 @@ def get_subjects_sessions(
         else dict()
     )
     for subject in subjects:
+        subj_folder = config.bids_root / f"sub-{subject}"
         valid_sessions_subj = _get_entity_vals_cached(
-            config.bids_root / f"sub-{subject}",
+            subj_folder,
             entity_key="session",
             ignore_tasks=ignore_tasks,
             ignore_acquisitions=("calibration", "crosstalk"),
             ignore_datatypes=ignore_datatypes,
             **kwargs,
         )
-        # if valid_sessions_subj is empty, assume the dataset just doesn't have
-        # `session` subfolders
+        # if valid_sessions_subj is empty, it might be because the dataset just doesn't
+        # have `session` subfolders, or it might be that none of the sessions in config
+        # are available for this subject.
         if not valid_sessions_subj:
-            keep_sessions = cfg_sessions  # AKA (None,)
+            if has_session_folders := any(
+                [x.name.startswith("ses") for x in subj_folder.iterdir()]
+            ):
+                keep_sessions = ()
+            else:
+                keep_sessions = cfg_sessions  # AKA (None,)
         else:
             missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
             if missing_sessions and not config.allow_missing_sessions:

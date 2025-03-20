@@ -187,16 +187,15 @@ def get_subjects_sessions(
             ignore_datatypes=ignore_datatypes,
             **kwargs,
         )
+        keep_sessions: tuple[str, ...]
         # if valid_sessions_subj is empty, it might be because the dataset just doesn't
         # have `session` subfolders, or it might be that none of the sessions in config
         # are available for this subject.
         if not valid_sessions_subj:
-            if has_session_folders := any(
-                [x.name.startswith("ses") for x in subj_folder.iterdir()]
-            ):
-                keep_sessions = ()
+            if any([x.name.startswith("ses") for x in subj_folder.iterdir()]):
+                keep_sessions = ()  # has `ses-*` folders, just not the ones we want
             else:
-                keep_sessions = cfg_sessions  # AKA (None,)
+                keep_sessions = cfg_sessions  # doesn't have `ses-*` folders
         else:
             missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
             if missing_sessions and not config.allow_missing_sessions:

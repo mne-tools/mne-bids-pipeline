@@ -62,20 +62,35 @@ def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     # ecg_channel_dict key validation (all subjects have channels specified)
     try:
         # these must exist for dict check to work
-        for sub in ("01", "02"):
-            (tmp_path / f"sub-{sub}" / "eeg").mkdir(parents=True)
-            (tmp_path / f"sub-{sub}" / "eeg" / f"sub-{sub}_eeg.fif").touch()
-        # now test the config import
+        for sub, ses in {"1": "a", "2": "b"}.items():
+            _dir = tmp_path / f"sub-{sub}" / f"ses-{ses}" / "eeg"
+            _dir.mkdir(parents=True)
+            (_dir / f"sub-{sub}_ses-{ses}_eeg.fif").touch()
+    except Exception:
+        raise
+    else:
+        # test the config import when sessions = "all"  (default)
         bad_text = (
-            working_text + "subjects = ['01', '02']\n"
-            "ssp_ecg_channel = {'sub-01': 'MEG0111'}\n"  # no entry for sub-02
+            working_text + "subjects = ['1', '2']\n"
+            "allow_missing_sessions = True\n"
+            "ssp_ecg_channel = {'sub-1': 'MEG0111'}\n"
+        )  # OK to omit session from sub-1, but entry for sub-2 is missing
+        config_path.write_text(bad_text)
+        with pytest.raises(ConfigError, match=r"Missing entries.*\n  sub-2_ses-b"):
+            _import_config(config_path=config_path)
+        # test when single session specified in config
+        bad_text = (
+            working_text + "subjects = ['1', '2']\n"
+            "sessions = ['a']\n"
+            "allow_missing_sessions = True\n"
+            "ssp_ecg_channel = {'sub-1_ses-b': 'MEG0111'}\n"  # no entry for sub-1_ses-a
         )
         config_path.write_text(bad_text)
-        with pytest.raises(ConfigError, match="Missing entries in ssp_ecg_channel.*"):
+        with pytest.raises(ConfigError, match=r"Missing entries.*\n  sub-1_ses-a"):
             _import_config(config_path=config_path)
     # clean up
     finally:
-        for sub in ("01", "02"):
+        for sub in ("1", "2"):
             rmtree(tmp_path / f"sub-{sub}")
 
     # ecg_channel_dict key validation (keys in dict are well-formed)

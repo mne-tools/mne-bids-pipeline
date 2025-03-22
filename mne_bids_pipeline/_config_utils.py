@@ -178,24 +178,49 @@ def get_subjects_sessions(
         else dict()
     )
     for subject in subjects:
+        subj_folder = config.bids_root / f"sub-{subject}"
         valid_sessions_subj = _get_entity_vals_cached(
-            config.bids_root / f"sub-{subject}",
+            subj_folder,
             entity_key="session",
             ignore_tasks=ignore_tasks,
             ignore_acquisitions=("calibration", "crosstalk"),
             ignore_datatypes=ignore_datatypes,
             **kwargs,
         )
-        missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
-        if missing_sessions and not config.allow_missing_sessions:
-            raise RuntimeError(
-                f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{missing_sessions}, and `config.allow_missing_sessions` is False"
-            )
-        keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
+        keep_sessions: tuple[str, ...]
+        # if valid_sessions_subj is empty, it might be because the dataset just doesn't
+        # have `session` subfolders, or it might be that none of the sessions in config
+        # are available for this subject.
+        if not valid_sessions_subj:
+            if any([x.name.startswith("ses") for x in subj_folder.iterdir()]):
+                keep_sessions = ()  # has `ses-*` folders, just not the ones we want
+            else:
+                keep_sessions = cfg_sessions  # doesn't have `ses-*` folders
+        else:
+            missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
+            if missing_sessions and not config.allow_missing_sessions:
+                raise RuntimeError(
+                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
+                )
+            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
         if len(keep_sessions):
             subj_sessions[subject] = keep_sessions
     return subj_sessions
+
+
+def get_subjects_given_session(
+    config: SimpleNamespace, session: str | None
+) -> tuple[str, ...]:
+    """Get the subjects who actually have data for a given session."""
+    sub_ses = get_subjects_sessions(config)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if config.allow_missing_sessions
+        else config.subjects
+    )
+    assert not isinstance(subjects, str), subjects  # make sure it's not "all"
+    return subjects
 
 
 def get_runs_all_subjects(

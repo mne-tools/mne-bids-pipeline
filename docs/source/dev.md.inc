@@ -48,4 +48,4 @@
 - Improve logging messages in maxwell filtering steps. (#893 by @drammock)
 - Validate extra config params passed in during testing. (#1044 by @drammock)
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
-- Better testing of session-specific MRIs. (#1039 by @drammock)
+- Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)

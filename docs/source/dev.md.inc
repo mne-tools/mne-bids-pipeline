@@ -32,7 +32,7 @@
 - Fix bug where the `config.proc` parameter was not used properly during forward model creation (#1014 by @larsoner)
 - Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
 - Fix bug where only having mag sensors would crash compute_rank in maxwell filtering (#1061 by @harrisonritz)
-- Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)
+- Improvements to template config file generation (#1074 by @drammock)
 
 
 ### :books: Documentation
@@ -49,3 +49,4 @@
 - Validate extra config params passed in during testing. (#1044 by @drammock)
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
 - Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)
+- Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)

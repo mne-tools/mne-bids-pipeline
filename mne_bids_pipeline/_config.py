@@ -313,7 +313,7 @@ Can also be `None` if you do not want to create bipolar channels.
     ```
 """
 
-eeg_reference: Literal["average"] | str | Sequence["str"] = "average"
+eeg_reference: Literal["average"] | str | Sequence[str] = "average"
 """
 The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
@@ -385,7 +385,7 @@ doesn't contain coordinates for some channels.
     ```
 """
 
-analyze_channels: Literal["all", "ch_types"] | Annotated[Sequence["str"], MinLen(1)] = (
+analyze_channels: Literal["all", "ch_types"] | Annotated[Sequence[str], MinLen(1)] = (
     "ch_types"
 )
 """
@@ -715,7 +715,7 @@ location is used.
     ```python
     mf_cal_fname = '/path/to/your/file/calibration_cal.dat'
     ```
-"""  # noqa : E501
+"""
 
 mf_cal_missing: Literal["ignore", "warn", "raise"] = "raise"
 """
@@ -737,7 +737,7 @@ location is used.
     ```python
     mf_ctc_fname = '/path/to/your/file/crosstalk_ct.fif'
     ```
-"""  # noqa : E501
+"""
 
 mf_ctc_missing: Literal["ignore", "warn", "raise"] = "raise"
 """
@@ -1069,7 +1069,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```python
     epochs_metadata_query = ['response_missing.isna()']
     ```
-"""  # noqa: E501
+"""
 
 conditions: Sequence[str] | dict[str, str] | None = None
 """
@@ -1085,7 +1085,8 @@ Passing a dictionary allows to assign a name to map a complex condition name
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
-[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is not `True`, we will raise an error.
+[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is not `True`, we will raise an
+error.
 
 ???+ example "Example"
     Specifying conditions as lists of strings:
@@ -1102,7 +1103,7 @@ processing resting-state data. If left as `None` and
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
-"""  # noqa : E501
+"""
 
 epochs_tmin: float = -0.2
 """
@@ -1200,9 +1201,12 @@ Artifact regression is applied before SSP or ICA.
     miscellaneous channels, you could do:
 
     ```python
-    regress_artifact = {"picks": "meg", "picks_artifact": ["MISC 001", "MISC 002", "MISC 003"]}
+    regress_artifact = {
+        "picks": "meg",
+        "picks_artifact": ["MISC 001", "MISC 002", "MISC 003"]
+    }
     ```
-"""  # noqa: E501
+"""
 
 spatial_filter: Literal["ssp", "ica"] | None = None
 """
@@ -1492,7 +1496,8 @@ will generate a dictionary with (hopefully!) optimal thresholds for each
 channel type.
 
 If `"autoreject_local"`, use "local" `autoreject` to detect (and potentially repair) bad
-channels in each epoch. Use [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]
+channels in each epoch.
+Use [`autoreject_n_interpolate`][mne_bids_pipeline._config.autoreject_n_interpolate]
 to control how many channels are allowed to be bad before an epoch gets dropped.
 
 ???+ example "Example"
@@ -1503,7 +1508,7 @@ to control how many channels are allowed to be bad before an epoch gets dropped.
     reject = "autoreject_global"  # find global (per channel type) PTP thresholds
     reject = "autoreject_local"  # find local (per channel) thresholds and repair epochs
     ```
-"""  # noqa: E501
+"""
 
 reject_tmin: float | None = None
 """
@@ -1694,7 +1699,7 @@ on **all** time points.
 
 Because each classifier is trained and tested on **all** time points, this
 procedure may take a significant amount of time.
-"""  # noqa: E501
+"""
 
 decoding_time_generalization_decim: int = 1
 """

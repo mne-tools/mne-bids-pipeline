@@ -1147,7 +1147,7 @@ Carry out eyelink syncing if True
 
 remove_blink_saccades: bool = True
 """
-Apparently not implemented?
+Currently not implemented
 """
 
 sync_eventtype_regex: str = ""
@@ -1166,7 +1166,7 @@ Regular expression which will be used to select events in the eye-tracking file 
 
 ???+ example "Example"
     ```python
-    sync_eventtype_regex_et = ".*_grab_this" # select all events with some text, immediately followed by "_grab_this"
+    sync_eventtype_regex_et = ".*_grab_that" # select all events with some text, immediately followed by "_grab_that"
     ```
 """
 sync_heog_ch: tuple[str, str] | str | None = None

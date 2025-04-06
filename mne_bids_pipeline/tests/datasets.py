@@ -27,6 +27,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         # original dataset: "osf": "9f5w7"
         "web": "https://osf.io/3zk6n/download?version=2",
         "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
+        "fsaverage": False,  # avoid autodetection via config import (which fails)
     },
     "eeg_matchingpennies": {
         "web": "https://osf.io/download/8rbfk?version=1",

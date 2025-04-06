@@ -17,6 +17,7 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     hash: str  # ""
     processor: str  # ""
     fsaverage: bool  # False
+    config_path_extra: str  # ""
 
 
 # We can autodetect the need for fsaverage for openneuro datasets based on
@@ -67,6 +68,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
             "derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz",
             "derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz",
         ],
+        "config_path_extra": "_base",  # not just config_ds000248.py
     },
     "ds000117": {
         "openneuro": "ds000117",

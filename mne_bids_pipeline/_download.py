@@ -127,7 +127,7 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
                     if ii == n_try:
                         raise
                     else:
-                        pass
+                        print("Failed and will retry, got:\n{exc}")
                 else:
                     break
 

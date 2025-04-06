@@ -1,15 +1,14 @@
 """Download test data."""
 
 import argparse
-from types import SimpleNamespace
 from pathlib import Path
 from warnings import filterwarnings
 
 import mne
 
-from .tests.datasets import DATASET_OPTIONS
 from ._config_import import _import_config
 from ._config_utils import get_fs_subjects_dir
+from .tests.datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
 
@@ -101,7 +100,9 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
 
     # and fsaverage if needed
     config_path = (
-        Path(__file__).parent / "tests" / "configs"
+        Path(__file__).parent
+        / "tests"
+        / "configs"
         / f"config_{ds_name.replace('-', '_')}.py"
     )
     if config_path.is_file():

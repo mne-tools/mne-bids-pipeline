@@ -110,8 +110,8 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
             "derivatives/freesurfer/subjects" in key
             for key in options.get("include", [])
         )
-        cfg = _import_config(config_path=config_path)
         if has_subjects_dir or options.get("fsaverage"):
+            cfg = _import_config(config_path=config_path)
             subjects_dir = get_fs_subjects_dir(config=cfg)
             n_try = 3
             for ii in range(n_try):  # osf.io fails sometimes

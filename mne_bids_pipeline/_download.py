@@ -114,16 +114,17 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
         if has_subjects_dir or options.get("fsaverage"):
             cfg = _import_config(config_path=config_path)
             subjects_dir = get_fs_subjects_dir(config=cfg)
-            print(f"Checking fsaverage in {subjects_dir} ...")
             n_try = 5
-            for ii in range(n_try):  # osf.io fails sometimes
+            for ii in range(1, n_try + 1):  # osf.io fails sometimes
+                write_extra = f" (attempt #{ii})" if ii > 1 else ""
+                print(f"Checking fsaverage in {subjects_dir} ...{write_extra}")
                 try:
                     mne.datasets.fetch_fsaverage(
                         subjects_dir=subjects_dir,
                         verbose=True,
                     )
                 except Exception:  # pragma: no cover
-                    if ii == n_try - 1:
+                    if ii == n_try:
                         raise
                     else:
                         pass

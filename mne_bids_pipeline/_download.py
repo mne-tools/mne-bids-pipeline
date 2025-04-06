@@ -115,7 +115,7 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
             cfg = _import_config(config_path=config_path)
             subjects_dir = get_fs_subjects_dir(config=cfg)
             print(f"Checking fsaverage in {subjects_dir} ...")
-            n_try = 3
+            n_try = 5
             for ii in range(n_try):  # osf.io fails sometimes
                 try:
                     mne.datasets.fetch_fsaverage(

@@ -16,13 +16,19 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
     exclude: list[str]  # []
     hash: str  # ""
     processor: str  # ""
+    fsaverage: bool  # False
+    config_path_extra: str  # ""
 
 
+# We can autodetect the need for fsaverage for openneuro datasets based on
+# "derivatives/freesurfer/subjects" being in the include list, but for osf.io we
+# need to manually mark it with fsaverage=True
 DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
         # original dataset: "osf": "9f5w7"
         "web": "https://osf.io/3zk6n/download?version=2",
         "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
+        "fsaverage": False,  # avoid autodetection via config import (which fails)
     },
     "eeg_matchingpennies": {
         "web": "https://osf.io/download/8rbfk?version=1",
@@ -53,21 +59,22 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "openneuro": "ds000248",
         "include": ["sub-01", "sub-emptyroom", "derivatives/freesurfer/subjects"],
         "exclude": [
-            "derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2005s+aseg.mgz",  # noqa: E501
+            "derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2005s+aseg.mgz",
             "derivatives/freesurfer/subjects/fsaverage/mri/aparc+aseg.mgz",
-            "derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2009s+aseg.mgz",  # noqa: E501
-            "derivatives/freesurfer/subjects/fsaverage/xhemi/mri/aparc+aseg.mgz",  # noqa: E501
+            "derivatives/freesurfer/subjects/fsaverage/mri/aparc.a2009s+aseg.mgz",
+            "derivatives/freesurfer/subjects/fsaverage/xhemi/mri/aparc+aseg.mgz",
             "derivatives/freesurfer/subjects/sub-01/mri/aparc+aseg.mgz",
-            "derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz",  # noqa: E501
-            "derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz",  # noqa: E501
+            "derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz",
+            "derivatives/freesurfer/subjects/sub-01/mri/aparc.DKTatlas+aseg.mgz",
             "derivatives/freesurfer/subjects/sub-01/mri/aparc.a2009s+aseg.mgz",
         ],
+        "config_path_extra": "_base",  # not just config_ds000248.py
     },
     "ds000117": {
         "openneuro": "ds000117",
         "include": [
-            "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*",  # noqa: E501
-            "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*",  # noqa: E501
+            "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*",
+            "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*",
             "sub-01/ses-meg/meg/sub-01_ses-meg_headshape.pos",
             "sub-01/ses-meg/*.tsv",
             "sub-01/ses-meg/*.json",
@@ -123,5 +130,6 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "web": "https://osf.io/upj3h/download?version=1",
         "hash": "sha256:67dbd38f7207db5c93c540d9c7c92ec2ac09ee1bd1b5d5e5cdd8866c08ec4858",  # noqa: E501
         "processor": "untar",
+        "fsaverage": True,
     },
 }

@@ -77,6 +77,8 @@ def pytest_configure(config: pytest.Config) -> None:
     # Seaborn
     ignore:.*bool was deprecated in Matplotlib.*:DeprecationWarning
     ignore:.*bool will be deprecated.*:PendingDeprecationWarning
+    # sklearn
+    ignore:.*Liblinear failed to converge.*:
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

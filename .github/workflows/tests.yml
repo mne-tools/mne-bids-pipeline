@@ -29,7 +29,7 @@ jobs:
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
-    name: 'Testing and caching ${{ matrix.dataset }} on ${{ matrix.os }}'
+    name: 'Testing and caching ${{ matrix.dataset }} on ${{ matrix.os }} py${{ matrix.python }}'
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     defaults:
@@ -40,6 +40,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
         dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
+        python: ["3.12"]
+        include:
+          - os: ubuntu-latest
+            dataset: ds001971
+            python: "3.10"
+          - os: ubuntu-latest
+            dataset: ds003392
+            python: "3.13"
     env:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
@@ -51,7 +59,7 @@ jobs:
           pyvista: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "${{ matrix.python }}"
       - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
       - uses: actions/cache@v4
         with:

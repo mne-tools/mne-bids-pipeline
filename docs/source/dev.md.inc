@@ -31,8 +31,7 @@
 
 - Fix bug where the ``config.proc`` parameter was not used properly during forward model creation (#1014 by @larsoner)
 - Fix bug where emptyroom recordings containing EEG channels would crash the pipeline during maxwell filtering (#1040 by @drammock)
-- Fix bug where only having mag sensors would crash compute_rank in maxwell filtering (#1061 by @harrisonritz)
-- Fix bug where only having mag sensors would crash compute_rank in _07_make_epochs (#1069 by @harrisonritz)
+- Fix bug where only having mag sensors would crash compute_rank during maxwell filtering or epoching (#1061 and #1069 by @harrisonritz)
 
 ### :books: Documentation
 

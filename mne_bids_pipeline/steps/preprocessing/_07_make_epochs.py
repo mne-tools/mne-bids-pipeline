@@ -150,7 +150,14 @@ def run_epochs(
         if cfg.use_maxwell_filter:
             # Keep track of the info corresponding to the run with the smallest
             # data rank.
-            new_rank = mne.compute_rank(epochs, rank="info")["meg"]
+            if "grad" in epochs:
+                if "mag" in epochs:
+                    type_sel = "meg"
+                else:
+                    type_sel = "grad"
+            else:
+                type_sel = "mag"
+            new_rank = mne.compute_rank(epochs, rank="info")[type_sel]
             if (smallest_rank is None) or (new_rank < smallest_rank):
                 smallest_rank = new_rank
                 smallest_rank_info = epochs.info.copy()
@@ -163,7 +170,7 @@ def run_epochs(
 
     if cfg.use_maxwell_filter and cfg.noise_cov == "rest":
         raw_rest_filt = mne.io.read_raw(in_files.pop("raw_rest"))
-        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")["meg"]
+        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")[type_sel]
         if rank_rest < smallest_rank:
             msg = (
                 f"The MEG rank of the resting state data ({rank_rest}) is "
@@ -188,7 +195,7 @@ def run_epochs(
         assert epochs.info["ch_names"] == smallest_rank_info["ch_names"]
         with epochs.info._unlock():
             epochs.info["proc_history"] = smallest_rank_info["proc_history"]
-            rank_epochs_new = mne.compute_rank(epochs, rank="info")["meg"]
+            rank_epochs_new = mne.compute_rank(epochs, rank="info")[type_sel]
             msg = f'The MEG rank of the "{cfg.task}" epochs is now: {rank_epochs_new}'
             logger.warning(**gen_log_kwargs(message=msg))
 

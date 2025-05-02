@@ -995,6 +995,18 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
+epochs_custom_metadata: "pandas.DataFrame" | None = None
+"""
+Pandas DataFrame containing custom metadata to be used for epochs
+creation. This DataFram will be joined with the metadata
+generated from the events file. 
+
+
+If `None`, don't use custom metadata.
+
+"""
+
+
 epochs_metadata_tmin: float | str | list[str] | None = None
 """
 The beginning of the time window used for epochs metadata generation. This setting

@@ -3,6 +3,7 @@
 from collections.abc import Callable, Sequence
 from typing import Annotated, Any, Literal
 
+import pandas as pd
 from annotated_types import Ge, Interval, Len, MinLen
 from mne import Covariance
 from mne_bids import BIDSPath
@@ -995,11 +996,11 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
-epochs_custom_metadata: "pandas.DataFrame" | None = None
+epochs_custom_metadata: "pd.DataFrame" = "pd.DataFrame()"
 """
 Pandas DataFrame containing custom metadata to be used for epochs
 creation. This DataFram will be joined with the metadata
-generated from the events file. 
+generated from the events file.
 
 
 If `None`, don't use custom metadata.

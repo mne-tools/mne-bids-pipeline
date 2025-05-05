@@ -3,7 +3,6 @@
 from collections.abc import Callable, Sequence
 from typing import Annotated, Any, Literal
 
-import pandas as pd
 from annotated_types import Ge, Interval, Len, MinLen
 from mne import Covariance
 from mne_bids import BIDSPath
@@ -996,14 +995,16 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
-epochs_custom_metadata: "pd.DataFrame" = "pd.DataFrame()"
+epochs_custom_metadata: dict[str, Any] = dict()
 """
-Pandas DataFrame containing custom metadata to be used for epochs
-creation. This DataFram will be joined with the metadata
-generated from the events file.
+Dict containing custom metadata for each epoch. This Dict will be converted to
+a pandas DataFrame, so should probably be generated from a DataFrame (e.g.,
+`pd.DataFrame.to_dict`, with one cell for each column). The custom metadata
+will be joined with the metadata generated from the events file. The number of
+rows in the custom metadata must match the number of rows in the events metadata
+(after filtered by `conditions`).
 
-
-If `None`, don't use custom metadata.
+If empty, don't use custom metadata.
 
 """
 

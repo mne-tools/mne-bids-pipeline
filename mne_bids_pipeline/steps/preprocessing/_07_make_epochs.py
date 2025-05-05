@@ -125,7 +125,7 @@ def run_epochs(
             conditions=cfg.conditions,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
-            custom_metadata=cfg.custom_metadata,
+            custom_metadata=cfg.epochs_custom_metadata,
             metadata_tmin=cfg.epochs_metadata_tmin,
             metadata_tmax=cfg.epochs_metadata_tmax,
             metadata_keep_first=cfg.epochs_metadata_keep_first,

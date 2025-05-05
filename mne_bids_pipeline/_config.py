@@ -997,15 +997,19 @@ this to `'merge'`.
 
 epochs_custom_metadata: dict[str, Any] = dict()
 """
-Dict containing custom metadata for each epoch. This Dict will be converted to
-a pandas DataFrame, so should probably be generated from a DataFrame (e.g.,
-`pd.DataFrame.to_dict`, with one cell for each column). The custom metadata
-will be joined with the metadata generated from the events file. The number of
-rows in the custom metadata must match the number of rows in the events metadata
-(after filtered by `conditions`).
+`Dict` containing custom metadata. This `Dict` will be converted to a pandas DataFrame,
+with one key-value pair for each column. The custom metadata will be horizontally joined
+with the metadata generated from the events file. The number of rows in the custom
+metadata must match the number of rows in the events metadata (after filtering by
+`conditions`).
 
 If empty, don't use custom metadata.
 
+???+ info
+    You can generate the metadata `Dict` from a pandas `DataFrame`:
+    ```python
+    metadata_dict = metadata_dataframe.replace({np.nan: None}).to_dict()
+    ```
 """
 
 

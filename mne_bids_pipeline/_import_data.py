@@ -32,7 +32,7 @@ def make_epochs(
     conditions: Iterable[str] | dict[str, str],
     tmin: float,
     tmax: float,
-    custom_metadata: dict[str, Any] | None,
+    custom_metadata: pd.DataFrame | None,
     metadata_tmin: float | None,
     metadata_tmax: float | None,
     metadata_keep_first: Iterable[str] | None,
@@ -108,18 +108,16 @@ def make_epochs(
         )
 
         # If custom_metadata is provided, merge it with the generated metadata
-        if custom_metadata is not None and len(custom_metadata) > 0:
-            custom_df = pd.DataFrame.from_dict(custom_metadata)
-
+        if custom_metadata is not None and not custom_metadata.empty:
             # Check if we have the same number of rows
-            if len(metadata) != len(custom_df):
+            if len(metadata) != len(custom_metadata):
                 msg = (
                     f"Generated metadata has {len(metadata)} rows, but custom "
-                    f"metadata has {len(custom_df)} rows. Cannot merge."
+                    f"metadata has {len(custom_metadata)} rows. Cannot merge."
                 )
                 raise ValueError(msg)
             # Merge the two DataFrames
-            metadata = metadata.join(custom_df, how="left")
+            metadata = metadata.join(custom_metadata, how="left")
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage

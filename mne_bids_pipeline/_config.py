@@ -996,8 +996,7 @@ this to `'merge'`.
     April 1st, 2021.
 """
 
-# epochs_custom_metadata: dict[str, Any] = dict()
-epochs_custom_metadata: pd.DataFrame = pd.DataFrame()
+epochs_custom_metadata: pd.DataFrame | dict[str, Any] | None = None
 
 """
 Pandas `DataFrame` containing custom metadata. The custom metadata will be
@@ -1005,7 +1004,14 @@ horizontally joined with the metadata generated from `events.tsv`.
 The number of rows in the custom metadata must match the number of rows in
 the events metadata (after filtering by `conditions`).
 
-If empty, don't use custom metadata.
+The metadata can also be formatted as a `dict`, with keys being the `subject`,
+`session`, and/or `task`, and the values being a `DataFrame`. e.g.:
+```python
+epochs_custom_metadata = {'sub-01': {'ses-01': {'task-taskA': my_DataFrame}}}
+epochs_custom_metadata = {'ses-01': my_DataFrame1, 'ses-02': my_DataFrame2}
+```
+
+If None, don't use custom metadata.
 """
 
 

@@ -32,7 +32,7 @@ def make_epochs(
     conditions: Iterable[str] | dict[str, str],
     tmin: float,
     tmax: float,
-    custom_metadata: pd.DataFrame | None,
+    custom_metadata: pd.DataFrame | dict[str, Any] | None,
     metadata_tmin: float | None,
     metadata_tmax: float | None,
     metadata_keep_first: Iterable[str] | None,
@@ -108,16 +108,56 @@ def make_epochs(
         )
 
         # If custom_metadata is provided, merge it with the generated metadata
-        if custom_metadata is not None and not custom_metadata.empty:
-            # Check if we have the same number of rows
-            if len(metadata) != len(custom_metadata):
+        if custom_metadata is not None:
+            if isinstance(
+                custom_metadata, dict
+            ):  # parse custom_metadata['sub-x']['ses-y']['task-z']
+                custom_dict = custom_metadata
+                for _ in range(3):  # loop to allow for mis-ordered keys
+                    if (
+                        isinstance(custom_dict, dict)
+                        and "subj-" + subject in custom_dict
+                    ):
+                        custom_dict = custom_dict["subj-" + subject]
+                    if (
+                        isinstance(custom_dict, dict)
+                        and session is not None
+                        and "ses-" + session in custom_dict
+                    ):
+                        custom_dict = custom_dict["ses-" + session]
+                    if isinstance(custom_dict, dict) and "task-" + task in custom_dict:
+                        custom_dict = custom_dict["task-" + task]
+                    if isinstance(custom_dict, pd.DataFrame):
+                        custom_df = custom_dict
+                        break
+                if not isinstance(custom_dict, pd.DataFrame):
+                    msg = (
+                        f"Custom metadata not found for subject {subject} / "
+                        f"session {session} / task {task}.\n"
+                    )
+                    raise ValueError(msg)
+            elif isinstance(custom_metadata, pd.DataFrame):  # parse DataFrame
+                custom_df = custom_metadata
+            else:
                 msg = (
-                    f"Generated metadata has {len(metadata)} rows, but custom "
-                    f"metadata has {len(custom_metadata)} rows. Cannot merge."
+                    f"Custom metadata not found for subject {subject} / "
+                    f"session {session} / task {task}.\n"
                 )
                 raise ValueError(msg)
-            # Merge the two DataFrames
-            metadata = metadata.join(custom_metadata, how="left")
+
+            # Check if the custom metadata DataFrame has the same number of rows
+            if len(metadata) != len(custom_df):
+                msg = (
+                    f"Event metadata has {len(metadata)} rows, but custom "
+                    f"metadata has {len(custom_df)} rows. Cannot safely join."
+                )
+                raise ValueError(msg)
+
+            # Merge the event and custom DataFrames
+            metadata = metadata.join(custom_df, how="left")
+            # Logging   # Logging
+            msg = "Including custom metadata in epochs."
+            logger.info(**gen_log_kwargs(message=msg))
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage

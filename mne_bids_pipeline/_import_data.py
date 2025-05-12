@@ -154,7 +154,7 @@ def make_epochs(
                 raise ValueError(msg)
 
             # Merge the event and custom DataFrames
-            metadata = metadata.join(custom_df, how="left")
+            metadata = metadata.join(custom_df, how="right")
             # Logging   # Logging
             msg = "Including custom metadata in epochs."
             logger.info(**gen_log_kwargs(message=msg))

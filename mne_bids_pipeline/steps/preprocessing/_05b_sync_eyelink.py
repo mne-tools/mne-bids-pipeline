@@ -28,7 +28,12 @@ def _check_HEOG_ET_vars(cfg):
     else:
         heog_ch = cfg.sync_heog_ch
     
-    return heog_ch, bipolar
+    if isinstance(cfg.sync_et_ch, tuple):
+        et_ch = list(cfg.sync_et_ch)
+    else:
+        et_ch = [cfg.sync_et_ch]
+    
+    return heog_ch, et_ch, bipolar
 
 def _mark_calibration_as_bad(raw):
     # marks recalibration beginnings and ends as one bad segment
@@ -159,7 +164,7 @@ def sync_eyelink(
             import subprocess
             subprocess.run(["edf2asc", et_edf_fname]) # TODO: Still needs to be tested
 
-        raw_et = mne.io.read_raw_eyelink(et_fname,find_overlaps=True)
+        raw_et = mne.io.read_raw_eyelink(et_fname, find_overlaps=True)
 
         # If the user did not specify a regular expression for the eye-tracking sync events, it is assumed that it's
         # identical to the regex for the EEG sync events
@@ -236,17 +241,19 @@ def sync_eyelink(
     else:
         # return _prep_out_files(exec_params=exec_params, out_files=out_files)
         # calculate cross correlation of HEOG with ET
-        heog_ch, bipolar = _check_HEOG_ET_vars(cfg)
+        heog_ch, et_ch, bipolar = _check_HEOG_ET_vars(cfg)
         if bipolar:
             # create bipolar HEOG
             raw = mne.set_bipolar_reference(raw, *cfg.sync_heog_ch, ch_name=heog_ch, drop_refs=False)
-
         raw.filter(l_freq=cfg.sync_heog_highpass, h_freq=cfg.sync_heog_lowpass, picks=heog_ch) # get rid of drift and high freq noise
         _mark_calibration_as_bad(raw)
         # extract HEOG and ET as arrays
-        eye_arrays = raw.get_data(picks=[heog_ch, cfg.sync_et_ch], reject_by_annotation="omit")
+        heog_array = raw.get_data(picks=[heog_ch], reject_by_annotation="omit")
+        et_array = raw.get_data(picks=et_ch, reject_by_annotation="omit")
+        if len(et_array) > 1:
+            et_array = et_array.mean(axis=0, keepdims=True)
         # cross correlate them
-        corr = correlate(eye_arrays[0,], eye_arrays[1,], mode="same") / eye_arrays.shape[1]
+        corr = correlate(heog_array[0], et_array[0], mode="same") / heog_array.shape[1]
         # plot cross correlation
         # figure out how much we plot
         midpoint = len(corr) // 2
@@ -259,7 +266,7 @@ def sync_eyelink(
             x_range = y_range - midpoint
         # plot
         axes[0,0].plot(x_range, corr[y_range], color="black")
-        axes[0,0].axvline(linestyle="--")
+        axes[0,0].axvline(linestyle="--", alpha=0.3)
         axes[0,0].set_title("Cross correlation HEOG and ET")
         axes[0,0].set_xlabel("Samples")
         axes[0,0].set_ylabel("X correlation")
@@ -271,7 +278,8 @@ def sync_eyelink(
     # regression between synced events
     # we assume here that these annotations are sequential pairs of the same event in raw and et. otherwise this will break
     raw_onsets = [annot["onset"] for annot in raw.annotations if re.match(cfg.sync_eventtype_regex, annot["description"])]
-    et_onsets = [annot["onset"] for annot in raw.annotations if re.match("ET_"+cfg.sync_eventtype_regex, annot["description"])]
+    et_onsets = [annot["onset"] for annot in raw.annotations if re.match("ET_"+cfg.sync_eventtype_regex_et, annot["description"])]
+ 
     if len(raw_onsets) != len(et_onsets):
         raise ValueError(f"Lengths of raw {len(raw_onsets)} and ET {len(et_onsets)} onsets do not match.")
     # regress and plot

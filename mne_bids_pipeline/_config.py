@@ -1181,15 +1181,15 @@ The HEOG channel(s) to use for assessing synchronisation by means of cross corre
     ```
 """
 
-sync_et_ch: str | None = None
+sync_et_ch: tuple[str, str] | str | None = ("xpos_left", "xpos_right")
 """
 The ET channel to use for assessing synchronisation by means of cross correlation
 
 ???+ example "Example"
     ```python
 
-    sync_heog_ch = "xpos_left" # use the xpos_left channel
-    sync_heog_ch = None # skip HEOG cross correlation
+    sync_et_ch = "xpos_left" # use the xpos_left channel
+    sync_et_ch = None # skip HEOG cross correlation
     ```
 """
 

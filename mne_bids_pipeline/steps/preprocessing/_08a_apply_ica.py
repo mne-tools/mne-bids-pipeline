@@ -92,17 +92,6 @@ def get_input_fnames_apply_ica_raw(
     run: str,
     task: str | None,
 ) -> InFilesT:
-    # this loads the raw file for filtered data; undesired if we did eyelink_sync or any other step inbetween
-    # in_files = _get_run_rest_noise_path(
-    #     cfg=cfg,
-    #     subject=subject,
-    #     session=session,
-    #     run=run,
-    #     task=task,
-    #     kind="filt",
-    #     mf_reference_run=cfg.mf_reference_run,
-    # )
-    # do this instead
     bids_basename = BIDSPath(
         subject=subject,
         session=session,

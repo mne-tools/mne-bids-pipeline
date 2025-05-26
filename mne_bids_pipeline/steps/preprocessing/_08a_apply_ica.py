@@ -92,15 +92,25 @@ def get_input_fnames_apply_ica_raw(
     run: str,
     task: str | None,
 ) -> InFilesT:
-    in_files = _get_run_rest_noise_path(
-        cfg=cfg,
+    bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        run=run,
-        task=task,
-        kind="filt",
-        mf_reference_run=cfg.mf_reference_run,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+        extension=".fif",
     )
+    in_files = dict()
+    for run in cfg.runs:
+        key = f"raw_run-{run}"
+        in_files[key] = bids_basename.copy().update(
+            run=run, processing=cfg.processing, suffix="raw"
+        )
+        _update_for_splits(in_files, key, single=True)
     assert len(in_files)
     in_files.update(_ica_paths(cfg=cfg, subject=subject, session=session))
     return in_files

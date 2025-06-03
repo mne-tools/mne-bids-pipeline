@@ -356,6 +356,7 @@ def _update_for_splits(
     if not isinstance(files_dict, dict):  # fake it
         assert key is None
         files_dict, key = dict(x=files_dict), "x"
+    assert isinstance(key, str), type(key)
     bids_path = files_dict[key]
     if bids_path.fpath.exists():
         return bids_path  # no modifications needed

@@ -457,7 +457,7 @@ def run_maxwell_filter(
     msg = (
         "Maxwell Filtering"
         f" (internal order: {mf_kws['int_order']},"
-        f" external order: {mf_kws['ext_order']}),"
+        f" external order: {mf_kws['ext_order']})"
     )
     logger.info(**gen_log_kwargs(message=msg))
 

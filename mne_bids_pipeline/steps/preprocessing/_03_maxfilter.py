@@ -453,7 +453,7 @@ def run_maxwell_filter(
             t_window=cfg.mf_mc_t_window,
             allow_line_only=(task == "noise"),
         )
-    
+
     msg = (
         "Maxwell Filtering"
         f" (internal order: {mf_kws['int_order']},"

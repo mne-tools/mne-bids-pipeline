@@ -20,6 +20,8 @@ process_empty_room = True
 mf_reference_run = "02"
 mf_cal_fname = bids_root + "/derivatives/meg_derivatives/sss_cal.dat"
 mf_ctc_fname = bids_root + "/derivatives/meg_derivatives/ct_sparse.fif"
+mf_int_order = 7
+mf_ext_order = 4
 
 reject = {"grad": 4000e-13, "mag": 4e-12}
 conditions = ["Famous", "Unfamiliar", "Scrambled"]

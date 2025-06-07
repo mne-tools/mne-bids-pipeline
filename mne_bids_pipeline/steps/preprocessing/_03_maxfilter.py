@@ -392,6 +392,8 @@ def run_maxwell_filter(
         destination=destination,
         head_pos=head_pos,
         extended_proj=extended_proj,
+        int_order=cfg.mf_int_order,
+        ext_order=cfg.mf_ext_order,
     )
     # If the mf_kws keys above change, we need to modify our list
     # of illegal keys in _config_import.py
@@ -451,8 +453,14 @@ def run_maxwell_filter(
             t_window=cfg.mf_mc_t_window,
             allow_line_only=(task == "noise"),
         )
+    
+    msg = (
+        "Maxwell Filtering"
+        f" (internal order: {mf_kws['int_order']},"
+        f" external order: {mf_kws['ext_order']}),"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
 
-    logger.info(**gen_log_kwargs(message="Maxwell filtering"))
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()
@@ -613,6 +621,7 @@ def get_config_maxwell_filter(
         mf_filter_chpi=config.mf_filter_chpi,
         mf_destination=config.mf_destination,
         mf_int_order=config.mf_int_order,
+        mf_ext_order=config.mf_ext_order,
         mf_mc_t_window=config.mf_mc_t_window,
         mf_mc_rotation_velocity_limit=config.mf_mc_rotation_velocity_limit,
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,

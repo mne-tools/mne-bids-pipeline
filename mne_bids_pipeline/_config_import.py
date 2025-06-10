@@ -279,6 +279,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         "destination",
         "head_pos",
         "extended_proj",
+        "int_order",
+        "ext_order",
     )
     # check `mf_extra_kws` for things that shouldn't be in there
     if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):

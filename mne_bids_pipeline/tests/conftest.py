@@ -80,6 +80,8 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:.*bool will be deprecated.*:PendingDeprecationWarning
     # sklearn
     ignore:.*Liblinear failed to converge.*:
+    # json-tricks
+    ignore:json-tricks.*numpy scalar serialization.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

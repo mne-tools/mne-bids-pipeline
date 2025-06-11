@@ -3,6 +3,7 @@
 from collections.abc import Callable, Sequence
 from typing import Annotated, Any, Literal
 
+import pandas as pd
 from annotated_types import Ge, Interval, Len, MinLen
 from mne import Covariance
 from mne_bids import BIDSPath
@@ -1001,6 +1002,25 @@ this to `'merge'`.
     The `'merge'` option is entirely untested in the MNE BIDS Pipeline as of
     April 1st, 2021.
 """
+
+epochs_custom_metadata: pd.DataFrame | dict[str, Any] | None = None
+
+"""
+Pandas `DataFrame` containing custom metadata. The custom metadata will be
+horizontally joined with the metadata generated from `events.tsv`.
+The number of rows in the custom metadata must match the number of rows in
+the events metadata (after filtering by `conditions`).
+
+The metadata can also be formatted as a `dict`, with keys being the `subject`,
+`session`, and/or `task`, and the values being a `DataFrame`. e.g.:
+```python
+epochs_custom_metadata = {'sub-01': {'ses-01': {'task-taskA': my_DataFrame}}}
+epochs_custom_metadata = {'ses-01': my_DataFrame1, 'ses-02': my_DataFrame2}
+```
+
+If None, don't use custom metadata.
+"""
+
 
 epochs_metadata_tmin: float | str | list[str] | None = None
 """

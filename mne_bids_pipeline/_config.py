@@ -687,9 +687,16 @@ account, we are realigning all data to a single position. For this, you can:
 
 mf_int_order: int = 8
 """
-Internal order for the Maxwell basis. Can be set to something lower (e.g., 6
-or higher for datasets where lower or higher spatial complexity, respectively,
-is expected.
+Internal order for the Maxwell basis. Can increase or decrease for datasets where
+neural signals with higher or lower spatial complexity are expected.
+Per MNE, the default values are appropriate for most use cases.
+"""
+
+mf_ext_order: int = 3
+"""
+External order for the Maxwell basis. Can increase or decrease for datasets where
+environmental artifacts with higher or lower spatial complexity are expected.
+Per MNE, the default values are appropriate for most use cases.
 """
 
 mf_reference_run: str | None = None

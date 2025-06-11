@@ -1,0 +1,17 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/base:current-22.04
+    steps:
+      - run: echo "no-op"
+
+workflows:
+  build_and_test:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /.*/

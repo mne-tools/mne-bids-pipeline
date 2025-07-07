@@ -568,7 +568,7 @@ def _all_conditions(*, cfg: SimpleNamespace) -> list[str]:
 
 
 def _sanitize_cond_tag(cond: str) -> str:
-    return str(cond).lower().replace(" ", "-")
+    return str(cond).lower().replace("'", "").replace('"', "").replace(" ", "-")
 
 
 def _imshow_tf(

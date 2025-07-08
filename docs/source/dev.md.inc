@@ -35,6 +35,7 @@
 - Fix bug where only having mag sensors would crash compute_rank during maxwell filtering or epoching (#1061 and #1069 by @harrisonritz)
 - Improvements to template config file generation (#1074 by @drammock)
 - Fix bug where `mf_int_order` wasn't passed to `maxwell_filter`. Added config option for `mf_ext_order`. (#1092 by @harrisonritz)
+- Sanitize report tags that contain `"` or `'`, e.g., for certain metadata contrasts (#1097 by @harrisonritz)
 
 ### :books: Documentation
 

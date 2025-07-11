@@ -78,6 +78,14 @@ def run_ica(
 ) -> OutFilesT:
     """Run ICA."""
     import matplotlib.pyplot as plt
+    
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
+        # on data flltered between 1 and 100 Hz.
+        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_l_freq == 1.0
+        assert cfg.h_freq == 100.0
+        assert cfg.eeg_reference == "average"
 
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     out_files = dict()
@@ -330,10 +338,13 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        
         conditions=config.conditions,
         runs=get_runs(config=config, subject=subject),
         task_is_rest=config.task_is_rest,
         ica_l_freq=config.ica_l_freq,
+        h_freq = config.h_freq,
+        ica_use_icalabel = config.ica_use_icalabel,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,

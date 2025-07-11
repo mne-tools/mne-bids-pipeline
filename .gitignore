@@ -20,3 +20,4 @@ build/
 .coverage*
 junit-results.xml
 .cache/
+test/

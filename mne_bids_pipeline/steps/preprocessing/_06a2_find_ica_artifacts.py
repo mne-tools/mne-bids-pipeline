@@ -271,6 +271,7 @@ def find_ica_artifacts(
         icalabel_ics = []
         icalabel_labels = []
         icalabel_prob = []
+        icalabel_report = []
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -280,14 +281,14 @@ def find_ica_artifacts(
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
-            # icalabel_include = ["brain", "other"]
-            print(label)
-            print(prob)
 
             if label not in cfg.ica_icalabel_include:
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_prob.append(prob)
+                icalabel_report.append((label,prob,True))
+            else:
+                icalabel_report.append((label,prob,False))
 
         msg = (
             f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
@@ -382,26 +383,55 @@ def find_ica_artifacts(
         
         
         )
-        for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
-            excluded_IC_figure = plot_ica_components(
-                ica=ica,
-                picks=ic,
-            )
-            excluded_IC_figure.axes[0].text(
-                0,
-                -0.15,
-                f"Label: {label} \n Probability: {prob:.3f}",
-                ha="center",
-                fontsize=8,
-                bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
+        table_html = """
+        <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+        <tr>
+        <th>Component</th>
+        <th>Label</th>
+        <th>Probability</th>
+        <th>Exclude</th>
+        </tr>
+        </thead>
+        <tbody>
+        """
+
+        for idx, (label, prob, exclude) in enumerate(icalabel_report):
+            component_id = f"ICA{idx:03d}"
+            row_color = "background-color:#fdd;" if exclude else "background-color:#dfd;"
+            table_html += (
+                f"<tr style='{row_color}'><td>{component_id}</td><td>{label}</td>"
+                f"<td>{prob:.2f}</td><td>{'Yes' if exclude else 'No'}</td></tr>\n"
             )
 
+        table_html += "</tbody></table>"
+        report.add_html(title="ICAlabel: report", html=table_html)
+
+        label_map = {}
+        for i, (label, _, _) in enumerate(icalabel_report):
+            label_map.setdefault(label, []).append(i)
+
+        for label, indices in label_map.items():
+            fig, axes = plt.subplots((len(indices)+3)//4, 4, figsize=(16, 3*((len(indices)+3)//4)))
+            axes = axes.flatten()
+            for j, ic in enumerate(indices):
+                prob = icalabel_report[ic][1]
+                ica.plot_components(picks=ic, axes=[axes[j]], show=False)
+                axes[j].text(0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f}",
+                            ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
+                            bbox=dict(facecolor="orange", alpha=0.5, pad=4))
+            for ax in axes[len(indices):]: fig.delaxes(ax)
+            fig.tight_layout()
+            
+            status = "excluded" if icalabel_report[indices[0]][2] else "included"
             report.add_figure(
-                fig=excluded_IC_figure,
-                title=f"ICA{ic:03}",
-                replace=True,
+                fig=fig,
+                title=f"{label} components - ({status})",
+                section="ICAlabel: components",
+                tags=[label.replace(" ", "_").replace("-", "_")]
             )
-            plt.close(excluded_IC_figure)
+            plt.close(fig)
+
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))

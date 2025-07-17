@@ -426,10 +426,10 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"but got shape {destination.shape}"
             )
     if config.ica_use_icalabel:
-        if config.ica_l_freq != 1.0 or config.h_freq != 100.0:
+        if config.ica_l_freq != 1.0 or config.ica_h_freq != 100.0:
             raise ValueError(
-                f"When using MNE-ICALabel, you must set ica_l_freq=1 and h_freq=100, "
-                f"but got: ica_l_freq={config.ica_l_freq} and h_freq={config.h_freq}"
+                f"When using MNE-ICALabel, you must set ica_l_freq=1 and ica_h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and ica_h_freq={config.ica_h_freq}"
             )
 
         if config.eeg_reference != "average":

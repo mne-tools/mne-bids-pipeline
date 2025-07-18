@@ -39,10 +39,10 @@ def _mark_calibration_as_bad(raw):
     # marks recalibration beginnings and ends as one bad segment
     cur_idx = None
     cur_start_time = 0.
+    last_status = None
     for annot in raw.annotations:
-        calib_match = re.match(".* Recalibration (start|end) \\| (\\d*)", annot["description"])
+        calib_match = re.match(".* Recalibration (start|end) \\| (.*)", annot["description"])
         if not calib_match: continue
-        
         calib_status, calib_idx = calib_match.group(1), calib_match.group(2)
         if calib_idx  == cur_idx and calib_status == "end":
             duration = annot["onset"] - cur_start_time
@@ -51,8 +51,11 @@ def _mark_calibration_as_bad(raw):
         elif calib_status == "start" and cur_idx is None:
             cur_idx = calib_idx
             cur_start_time = annot["onset"]
+        elif calib_status == last_status:
+            logger.info(**gen_log_kwargs(message=f"Encountered apparent duplicate calibration event - skipping"))
         elif calib_status == "start" and cur_idx is not None:
             raise ValueError(f"Annotation {annot["description"]} could not be assigned membership")
+        last_status = calib_status
         
     return raw
         

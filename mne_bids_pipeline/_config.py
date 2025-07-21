@@ -1150,6 +1150,28 @@ remove_blink_saccades: bool = True
 Currently not implemented
 """
 
+et_has_run: bool = False
+"""
+Specify whether `run` is included in the eye-tracking data file name.
+
+???+ example "Example"
+    ``` python
+    et_has_run = False  # Case with only one run and run is omitted in the file name.
+    et_has_run = True  # Case with multiple runs. Run specification from EEG data is used.
+    ```
+"""
+
+et_has_task: bool = False
+"""
+Specify whether `task` is included in the eye-tracking data file name.
+
+???+ example "Example"
+    ``` python
+    et_has_task = False  # Case with only one task and task is omitted in the file name.
+    et_has_task = True  # Case with multiple tasks. Task specification from EEG data is used.
+    ```
+"""
+
 sync_eventtype_regex: str = ""
 """
 Regular expression which will be used to select events in the EEG file for synchronisation 

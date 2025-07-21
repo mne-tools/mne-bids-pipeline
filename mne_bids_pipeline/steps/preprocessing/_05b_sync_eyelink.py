@@ -67,6 +67,13 @@ def get_input_fnames_sync_eyelink(
     subject: str,
     session: str | None,
 ) -> dict:
+    
+    # Get from config file whether `task` is specified in the et file name
+    if cfg.et_has_task == True:
+        et_task = cfg.task
+    else:
+        et_task = None
+
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
@@ -83,7 +90,7 @@ def get_input_fnames_sync_eyelink(
     et_bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=et_task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         datatype="beh",
@@ -93,11 +100,10 @@ def get_input_fnames_sync_eyelink(
         extension=".asc",
     )
 
-
     et_edf_bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=et_task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         datatype="beh",
@@ -117,16 +123,20 @@ def get_input_fnames_sync_eyelink(
 
 
         key = f"et_run-{run}"
-        in_files[key] = et_bids_basename.copy().update(
-            run=run
-        )
-        _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
+        in_files[key] = et_bids_basename.copy()
+
+        if cfg.et_has_run:
+            in_files[key].update(run=run)
+
+        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
 
         key = f"et_edf_run-{run}"
-        in_files[key] = et_edf_bids_basename.copy().update(
-            run=run
-        )
-        _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
+        in_files[key] = et_edf_bids_basename.copy()
+
+        if cfg.et_has_run:
+            in_files[key].update(run=run)
+
+        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
     
     return in_files
 
@@ -341,6 +351,8 @@ def get_config(
     cfg = SimpleNamespace(
         runs=get_runs(config=config, subject=subject),
         remove_blink_saccades   = config.remove_blink_saccades,
+        et_has_run = config.et_has_run,
+        et_has_task = config.et_has_task,
         sync_eventtype_regex    = config.sync_eventtype_regex,
         sync_eventtype_regex_et = config.sync_eventtype_regex_et,
         sync_heog_ch = config.sync_heog_ch,

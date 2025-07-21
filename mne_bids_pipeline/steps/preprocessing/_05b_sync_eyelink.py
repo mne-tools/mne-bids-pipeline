@@ -35,13 +35,13 @@ def _check_HEOG_ET_vars(cfg):
     
     return heog_ch, et_ch, bipolar
 
-def _mark_calibration_as_bad(raw):
+def _mark_calibration_as_bad(raw, cfg):
     # marks recalibration beginnings and ends as one bad segment
     cur_idx = None
     cur_start_time = 0.
     last_status = None
     for annot in raw.annotations:
-        calib_match = re.match(".* Recalibration (start|end) \\| (.*)", annot["description"])
+        calib_match = re.match(cfg.sync_calibration_string, annot["description"])
         if not calib_match: continue
         calib_status, calib_idx = calib_match.group(1), calib_match.group(2)
         if calib_idx  == cur_idx and calib_status == "end":
@@ -52,9 +52,10 @@ def _mark_calibration_as_bad(raw):
             cur_idx = calib_idx
             cur_start_time = annot["onset"]
         elif calib_status == last_status:
-            logger.info(**gen_log_kwargs(message=f"Encountered apparent duplicate calibration event - skipping"))
+            logger.info(**gen_log_kwargs(message=f"Encountered apparent duplicate calibration event ({calib_status}, {calib_idx}) - skipping"))
         elif calib_status == "start" and cur_idx is not None:
-            raise ValueError(f"Annotation {annot["description"]} could not be assigned membership")
+            raise ValueError(f"Annotation {annot["description"]} could not be assigned membership"
+                             f"")
         last_status = calib_status
         
     return raw
@@ -249,7 +250,7 @@ def sync_eyelink(
             # create bipolar HEOG
             raw = mne.set_bipolar_reference(raw, *cfg.sync_heog_ch, ch_name=heog_ch, drop_refs=False)
         raw.filter(l_freq=cfg.sync_heog_highpass, h_freq=cfg.sync_heog_lowpass, picks=heog_ch) # get rid of drift and high freq noise
-        _mark_calibration_as_bad(raw)
+        _mark_calibration_as_bad(raw, cfg)
         # extract HEOG and ET as arrays
         heog_array = raw.get_data(picks=[heog_ch], reject_by_annotation="omit")
         et_array = raw.get_data(picks=et_ch, reject_by_annotation="omit")
@@ -347,6 +348,7 @@ def get_config(
         sync_heog_highpass = config.sync_heog_highpass,
         sync_heog_lowpass = config.sync_heog_lowpass,
         sync_plot_samps = config.sync_plot_samps,
+        sync_calibration_string = config.sync_calibration_string,
         processing= "filt" if config.regress_artifact is None else "regress",
         _raw_split_size=config._raw_split_size,
 

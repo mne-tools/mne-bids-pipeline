@@ -1216,6 +1216,11 @@ When displaying HEOG-ET cross-correlation, constrict plotting to sync_plot_samps
     ```
 """
 
+sync_calibration_string: str | None = ".* Recalibration (start|end) \\| (.*)"
+"""
+Regular expression used for searching for calibration events
+"""
+
 # ### SSP, ICA, and artifact regression
 
 regress_artifact: dict[str, Any] | None = None

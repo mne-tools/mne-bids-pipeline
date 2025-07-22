@@ -186,9 +186,7 @@ def sync_eyelink(
             logger.info(**gen_log_kwargs(message=f"Converting {et_fname} file to `.asc` using edf2asc."))
             import subprocess
             subprocess.run(["edf2asc", et_fname]) # TODO: Still needs to be tested
-            print(et_fname.fpath)
             et_fname.update(extension='.asc')
-            print(et_fname.fpath)
 
         raw_et = mne.io.read_raw_eyelink(et_fname, find_overlaps=True)
 

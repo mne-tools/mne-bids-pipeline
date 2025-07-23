@@ -163,6 +163,8 @@ def find_ica_artifacts(
         for ri, raw_fname in enumerate(raw_fnames):
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
+            if cfg.ica_use_icalabel:
+                raw.set_eeg_reference("average", projection=True).apply_proj()
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -225,6 +227,8 @@ def find_ica_artifacts(
     if cfg.ica_use_eog_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
+            if cfg.ica_use_icalabel:
+                raw.set_eeg_reference("average", projection=True).apply_proj()
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -274,9 +278,8 @@ def find_ica_artifacts(
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
-        label_results = mne_icalabel.label_components(
-            inst=epochs, ica=ica, method="iclabel"
-        )
+        label_results = mne_icalabel.label_components(inst=epochs, ica=ica, method="iclabel")
+        print(label_results["labels"])
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
@@ -290,8 +293,6 @@ def find_ica_artifacts(
             f"in {len(epochs)} epochs: {icalabel_labels}"
         )
         logger.info(**gen_log_kwargs(message=msg))
-    else:
-        icalabel_ics = []
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
@@ -313,7 +314,6 @@ def find_ica_artifacts(
     )
 
     if cfg.ica_use_icalabel:
-        assert len(icalabel_ics) == len(icalabel_labels)
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
@@ -396,7 +396,7 @@ def find_ica_artifacts(
                 figs.append(fig)
             report.add_figure(
                 fig=figs,
-                title="ICA: icalabel components",
+                title="ICA components from icalabel",
                 section=section,
                 replace=True,
             )

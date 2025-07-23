@@ -113,10 +113,6 @@ def run_ica(
         # Sanity check – make sure we're using the correct data!
         if cfg.raw_resample_sfreq is not None:
             assert np.allclose(raw.info["sfreq"], cfg.raw_resample_sfreq)
-        if cfg.l_freq is not None:
-            assert np.allclose(raw.info["highpass"], cfg.l_freq)
-        if cfg.h_freq is not None:
-            assert np.allclose(raw.info["lowpass"], cfg.h_freq)
 
         if idx == 0:
             # We have to do some gymnastics here to permit for example 128 Hz-sampled
@@ -195,19 +191,14 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        if cfg.ica_use_icalabel:
-            assert cfg.eeg_reference == "average"
-            projection = False  # Avg. ref. needs to be applied for MNE-ICALabel
-        elif cfg.eeg_reference == "average":
-            projection = True
-        else:
-            projection = False
-
+        projection = True if cfg.eeg_reference == "average" else False
         if not projection:
             msg = "Applying average reference to EEG epochs used for ICA fitting."
             logger.info(**gen_log_kwargs(message=msg))
 
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
+        if cfg.ica_use_icalabel:
+            epochs.apply_proj()  # Apply the reference projection
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -385,8 +376,6 @@ def get_config(
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
-        h_freq=config.h_freq,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,

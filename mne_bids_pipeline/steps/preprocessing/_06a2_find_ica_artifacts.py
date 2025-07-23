@@ -265,12 +265,12 @@ def find_ica_artifacts(
             )
 
     # Run MNE-ICALabel if requested.
+    icalabel_ics = []
+    icalabel_labels = []
+    icalabel_prob = []
     if cfg.ica_use_icalabel:
         import mne_icalabel
 
-        icalabel_ics = []
-        icalabel_labels = []
-        icalabel_prob = []
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -355,7 +355,7 @@ def find_ica_artifacts(
 
     del artifact_name, artifact_evoked
 
-    title = "ICA: components"
+    section = "ICA: components"
     tags = ("ica",)
     with _open_report(
         cfg=cfg,
@@ -364,10 +364,10 @@ def find_ica_artifacts(
         session=session,
         task=cfg.task,
     ) as report:
-        logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
+        logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
         report.add_ica(
             ica=ica,
-            title=title,
+            title=section,
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
@@ -379,26 +379,29 @@ def find_ica_artifacts(
         )
 
         # Add a plot for each excluded IC together with the given label and the probability
-        figs = list()
-        for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
-            fig = plot_ica_components(ica=ica, picks=ic)
-            fig.axes[0].text(
-                0,
-                -0.15,
-                f"Label: {label} \n Probability: {prob:.3f}",
-                ha="center",
-                fontsize=8,
-                bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
+        if cfg.ica_use_icalabel and len(icalabel_ics):
+            msg = "Adding icalabel components to report."
+            logger.info(**gen_log_kwargs(message=msg))
+            figs = list()
+            for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
+                fig = plot_ica_components(ica=ica, picks=ic)
+                fig.axes[0].text(
+                    0,
+                    -0.15,
+                    f"Label: {label} \n Probability: {prob:.3f}",
+                    ha="center",
+                    fontsize=8,
+                    bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
+                )
+                figs.append(fig)
+            report.add_figure(
+                fig=figs,
+                title="ICA: icalabel components",
+                section=section,
+                replace=True,
             )
-            figs.append(fig)
-        report.add_figure(
-            fig=figs,
-            title="ICA: components slider",
-            section=title,
-            replace=True,
-        )
-        for fig in figs:
-            plt.close(fig)
+            for fig in figs:
+                plt.close(fig)
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))

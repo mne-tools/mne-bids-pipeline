@@ -115,21 +115,40 @@ def run_ica(
             assert np.allclose(raw.info["sfreq"], cfg.raw_resample_sfreq)
         if cfg.l_freq is not None:
             assert np.allclose(raw.info["highpass"], cfg.l_freq)
+        if cfg.h_freq is not None:
+            assert np.allclose(raw.info["lowpass"], cfg.h_freq)
 
         if idx == 0:
-            msg = ""
-            if cfg.ica_l_freq is not None and cfg.ica_h_freq is not None:
+            # We have to do some gymnastics here to permit for example 128 Hz-sampled
+            # data to be used with mne-icalabel, which wants data low-pass filtered
+            # at 100 Hz
+            h_freq = cfg.ica_h_freq
+            nyq = raw.info["sfreq"] / 2.
+            if h_freq is not None and h_freq >= nyq:
                 msg = (
-                    f"Applying band-pass filter with {cfg.ica_l_freq}-"
-                    f"{cfg.ica_h_freq} Hz cutoffs"
+                    f"Low-pass filter cutoff {h_freq} Hz is higher "
+                    f"than Nyquist {nyq} Hz"
+                )
+                if cfg.ica_use_icalabel:
+                    msg += ", setting to None for compatibility with MNE-ICALabel."
+                    logger.warning(**gen_log_kwargs(message=msg))
+                    h_freq = None
+                else:
+                    raise ValueError(msg)
+            msg = ""
+            if cfg.ica_l_freq is not None and h_freq is not None:
+                msg = (
+                    f"Applying band-pass filter with {cfg.ica_l_freq}-{h_freq} "
+                    "Hz cutoffs"
                 )
             elif cfg.ica_l_freq is not None:
                 msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
-            elif cfg.ica_h_freq is not None:
-                msg = f"Applying low-pass filter with {cfg.ica_h_freq} Hz cutoff"
-            if cfg.ica_l_freq is not None or cfg.ica_h_freq is not None:
+            elif h_freq is not None:
+                msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
+            if cfg.ica_l_freq is not None or h_freq is not None:
                 logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=cfg.ica_h_freq, n_jobs=1)
+                raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
+            del nyq, h_freq
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()
@@ -355,6 +374,7 @@ def get_config(
         conditions=config.conditions,
         runs=get_runs(config=config, subject=subject),
         task_is_rest=config.task_is_rest,
+        ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,

@@ -123,7 +123,7 @@ def run_ica(
             # data to be used with mne-icalabel, which wants data low-pass filtered
             # at 100 Hz
             h_freq = cfg.ica_h_freq
-            nyq = raw.info["sfreq"] / 2.
+            nyq = raw.info["sfreq"] / 2.0
             if h_freq is not None and h_freq >= nyq:
                 msg = (
                     f"Low-pass filter cutoff {h_freq} Hz is higher "

@@ -1517,6 +1517,7 @@ EEG data.
     ica_l_freq = 1
     ica_h_freq = 100
     ```
+    It will also apply the average reference to the data before running or applying ICA.
 
 !!! info
     Using this requires `mne-icalabel` package, which in turn will require you to

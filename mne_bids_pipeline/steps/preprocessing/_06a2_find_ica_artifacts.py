@@ -281,7 +281,6 @@ def find_ica_artifacts(
         label_results = mne_icalabel.label_components(
             inst=epochs, ica=ica, method="iclabel"
         )
-        print(label_results["labels"])
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):

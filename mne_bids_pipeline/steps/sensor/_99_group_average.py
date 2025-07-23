@@ -22,6 +22,7 @@ from mne_bids_pipeline._config_utils import (
     get_eeg_reference,
     get_sessions,
     get_subjects,
+    get_subjects_given_session,
 )
 from mne_bids_pipeline._decoding import _handle_csp_args
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -54,7 +55,9 @@ def get_input_fnames_average_evokeds(
     session: str | None,
 ) -> InFilesT:
     in_files = dict()
-    for this_subject in cfg.subjects:
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
+    for this_subject in subjects:
         in_files[f"evoked-{this_subject}"] = BIDSPath(
             subject=this_subject,
             session=session,
@@ -86,11 +89,14 @@ def average_evokeds(
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
     conditions = _all_conditions(cfg=cfg)
-    evokeds_nested: list[list[mne.Evked]] = [list() for _ in range(len(conditions))]
+    evokeds_nested: list[list[mne.Evoked]] = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
+    subjects_in_grand_avg = list()
     for key in keys:
-        if not key.startswith("evoked-"):
+        if key.startswith("evoked-"):
+            subjects_in_grand_avg.append(key.replace("evoked-", ""))
+        else:
             continue
         fname_in = in_files.pop(key)
         these_evokeds = mne.read_evokeds(fname_in)
@@ -158,15 +164,16 @@ def average_evokeds(
         else:
             msg = "No evoked conditions or contrasts found."
         logger.info(**gen_log_kwargs(message=msg))
+        # construct the common part of the titles
+        _title = f"N = {len(subjects_in_grand_avg)}"
+        if n_missing := (len(cfg.subjects) - len(subjects_in_grand_avg)):
+            _title += f"{n_missing} subjects excluded due to missing session data"
         for condition, evoked in zip(conditions, evokeds):
             tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
             if condition in cfg.conditions:
-                title = f"Average (sensor): {condition}, N = {len(cfg.subjects)}"
+                title = f"Average (sensor): {condition}, {_title}"
             else:  # It's a contrast of two conditions.
-                title = (
-                    f"Average (sensor) contrast: {condition}, "
-                    f"N = {len(cfg.subjects)}"
-                )
+                title = f"Average (sensor) contrast: {condition}, {_title}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(
@@ -230,8 +237,10 @@ def _get_epochs_in_files(
     session: str | None,
 ) -> InFilesT:
     in_files = dict()
+    # here we just need one subject's worth of Epochs, to get the time domain. But we
+    # still must be careful that the subject actually has data for the requested session
     in_files["epochs"] = BIDSPath(
-        subject=cfg.subjects[0],
+        subject=get_subjects_given_session(cfg, session)[0],
         session=session,
         task=cfg.task,
         acquisition=cfg.acq,
@@ -296,7 +305,7 @@ def _get_input_fnames_decoding(
     kind: str,
     extension: str = ".mat",
 ) -> InFilesT:
-    in_files = _get_epochs_in_files(cfg=cfg, subject=subject, session=session)
+    in_files = _get_epochs_in_files(cfg=cfg, subject="ignored", session=session)
     for this_subject in cfg.subjects:
         in_files[f"scores-{this_subject}"] = _decoding_out_fname(
             cfg=cfg,
@@ -483,7 +492,7 @@ def average_time_by_time_decoding(
             decoding_data=decoding_data,
         )
         caption = (
-            f'Based on N={decoding_data["N"].squeeze()} '
+            f"Based on N={decoding_data['N'].squeeze()} "
             f"subjects. Standard error and confidence interval "
             f"of the mean were bootstrapped with {cfg.n_boot} "
             f"resamples. CI must not be used for statistical inference here, "
@@ -494,7 +503,7 @@ def average_time_by_time_decoding(
                 f" Time periods with decoding performance significantly above "
                 f"chance, if any, were derived with a one-tailed "
                 f"cluster-based permutation test "
-                f'({decoding_data["cluster_n_permutations"].squeeze()} '
+                f"({decoding_data['cluster_n_permutations'].squeeze()} "
                 f"permutations) and are highlighted in yellow."
             )
             title = f"Decoding over time: {cond_1} vs. {cond_2}"
@@ -536,7 +545,7 @@ def average_time_by_time_decoding(
                 f"Time generalization (generalization across time, GAT): "
                 f"each classifier is trained on each time point, and tested "
                 f"on all other time points. The results were averaged across "
-                f'N={decoding_data["N"].item()} subjects.'
+                f"N={decoding_data['N'].item()} subjects."
             )
             title = f"Time generalization: {cond_1} vs. {cond_2}"
             report.add_figure(
@@ -977,6 +986,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         contrasts=config.contrasts,

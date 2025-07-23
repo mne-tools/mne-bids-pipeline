@@ -120,7 +120,7 @@ def run_ica(
             if cfg.ica_l_freq is None:
                 msg = (
                     f"Not applying high-pass filter (data is already filtered, "
-                    f'cutoff: {raw.info["highpass"]} Hz).'
+                    f"cutoff: {raw.info['highpass']} Hz)."
                 )
                 logger.info(**gen_log_kwargs(message=msg))
             else:
@@ -146,6 +146,7 @@ def run_ica(
             event_id=event_id,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
+            custom_metadata=cfg.epochs_custom_metadata,
             metadata_tmin=cfg.epochs_metadata_tmin,
             metadata_tmax=cfg.epochs_metadata_tmax,
             metadata_keep_first=cfg.epochs_metadata_keep_first,
@@ -368,6 +369,7 @@ def get_config(
         event_repeated=config.event_repeated,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
+        epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,

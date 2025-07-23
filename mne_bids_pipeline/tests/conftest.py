@@ -43,6 +43,7 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:use_inf_as_na option is deprecated.*:FutureWarning
     # Dask distributed with jsonschema 4.18
     ignore:jsonschema\.RefResolver is deprecated.*:DeprecationWarning
+    ignore:.*apply_async.*is deprecated.*:DeprecationWarning
     # seaborn->pandas
     ignore:is_categorical_dtype is deprecated.*:FutureWarning
     ignore:use_inf_as_na option is deprecated.*:FutureWarning
@@ -76,6 +77,11 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:__array__ implementation doesn't accept.*:DeprecationWarning
     # Seaborn
     ignore:.*bool was deprecated in Matplotlib.*:DeprecationWarning
+    ignore:.*bool will be deprecated.*:PendingDeprecationWarning
+    # sklearn
+    ignore:.*Liblinear failed to converge.*:
+    # json-tricks
+    ignore:json-tricks.*numpy scalar serialization.*:UserWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

@@ -56,7 +56,7 @@ def apply_ssp_epochs(
     )
     msg = f"Input epochs: {in_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f'Input SSP:    {in_files["proj"].basename}'
+    msg = f"Input SSP:    {in_files['proj'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output:       {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))

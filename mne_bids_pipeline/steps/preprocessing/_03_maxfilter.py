@@ -220,7 +220,7 @@ def get_input_fnames_maxwell_filter(
             subject=subject,
             session=session,
         )[f"raw_task-{pos_task}_run-{pos_run}"]
-        in_files[f"{in_key}-pos"] = path.update(
+        in_files[f"{in_key}-pos"] = path.copy().update(
             suffix="headpos",
             extension=".txt",
             root=cfg.deriv_root,
@@ -228,7 +228,16 @@ def get_input_fnames_maxwell_filter(
             task=pos_task,
             run=pos_run,
         )
-
+        if isinstance(cfg.mf_destination, str) and cfg.mf_destination == "twa":
+            in_files[f"{in_key}-twa"] = path.update(
+                description="twa",
+                suffix="destination",
+                extension=".fif",
+                root=cfg.deriv_root,
+                check=False,
+                task=pos_task,
+                run=None,
+            )
     if cfg.mf_esss:
         in_files["esss_basis"] = (
             in_files[in_key]
@@ -272,9 +281,12 @@ def get_input_fnames_maxwell_filter(
         )
         _update_for_splits(in_files, key, single=True)
 
-    # standard files
-    in_files["mf_cal_fname"] = cfg.mf_cal_fname
-    in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+    # set calibration and crosstalk files (if provided)
+    if cfg.mf_cal_fname is not None:
+        in_files["mf_cal_fname"] = cfg.mf_cal_fname
+    if cfg.mf_ctc_fname is not None:
+        in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+
     return in_files
 
 
@@ -299,7 +311,7 @@ def run_maxwell_filter(
         )
     if isinstance(cfg.mf_destination, str):
         destination = cfg.mf_destination
-        assert destination == "reference_run"
+        assert destination in ("reference_run", "twa")
     else:
         destination_array = np.array(cfg.mf_destination, float)
         assert destination_array.shape == (4, 4)
@@ -340,9 +352,12 @@ def run_maxwell_filter(
         verbose=cfg.read_raw_bids_verbose,
     )
     bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
+    # triage string-valued destinations
     if isinstance(destination, str):
-        assert destination == "reference_run"
-        destination = raw.info["dev_head_t"]
+        if destination == "reference_run":
+            destination = raw.info["dev_head_t"]
+        elif destination == "twa":
+            destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 
@@ -368,8 +383,8 @@ def run_maxwell_filter(
     apply_msg += " to"
 
     mf_kws = dict(
-        calibration=in_files.pop("mf_cal_fname"),
-        cross_talk=in_files.pop("mf_ctc_fname"),
+        calibration=in_files.pop("mf_cal_fname", None),
+        cross_talk=in_files.pop("mf_ctc_fname", None),
         st_duration=cfg.mf_st_duration,
         st_correlation=cfg.mf_st_correlation,
         origin=cfg.mf_head_origin,
@@ -377,7 +392,12 @@ def run_maxwell_filter(
         destination=destination,
         head_pos=head_pos,
         extended_proj=extended_proj,
+        int_order=cfg.mf_int_order,
+        ext_order=cfg.mf_ext_order,
     )
+    # If the mf_kws keys above change, we need to modify our list
+    # of illegal keys in _config_import.py
+    mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
     if not (run is None and task == "noise"):
@@ -434,7 +454,13 @@ def run_maxwell_filter(
             allow_line_only=(task == "noise"),
         )
 
-    logger.info(**gen_log_kwargs(message="Maxwell filtering"))
+    msg = (
+        "Maxwell Filtering"
+        f" (internal order: {mf_kws['int_order']},"
+        f" external order: {mf_kws['ext_order']})"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()
@@ -450,8 +476,15 @@ def run_maxwell_filter(
 
         bids_path_ref_sss = in_files.pop("raw_ref_run_sss")
         raw_exp = mne.io.read_raw_fif(bids_path_ref_sss)
-        rank_exp = mne.compute_rank(raw_exp, rank="info")["meg"]
-        rank_noise = mne.compute_rank(raw_sss, rank="info")["meg"]
+        if "grad" in raw_exp:
+            if "mag" in raw_exp:
+                type_sel = "meg"
+            else:
+                type_sel = "grad"
+        else:
+            type_sel = "mag"
+        rank_exp = mne.compute_rank(raw_exp, rank="info")[type_sel]
+        rank_noise = mne.compute_rank(raw_sss, rank="info")[type_sel]
         del raw_exp
 
         if task == "rest":
@@ -588,10 +621,12 @@ def get_config_maxwell_filter(
         mf_filter_chpi=config.mf_filter_chpi,
         mf_destination=config.mf_destination,
         mf_int_order=config.mf_int_order,
+        mf_ext_order=config.mf_ext_order,
         mf_mc_t_window=config.mf_mc_t_window,
         mf_mc_rotation_velocity_limit=config.mf_mc_rotation_velocity_limit,
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
+        mf_extra_kws=config.mf_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg

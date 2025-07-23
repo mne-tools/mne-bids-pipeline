@@ -1,0 +1,109 @@
+name: Checks
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  check-doc:
+    name: Doc consistency and codespell
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - run: pip install --upgrade pip
+    - run: pip install -ve .[tests] "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+    - run: make codespell-error
+    - run: pytest mne_bids_pipeline -m "not dataset_test"
+    - uses: codecov/codecov-action@v5
+      if: success()
+      name: 'Upload coverage to CodeCov'
+  caching:
+    name: 'Testing and caching ${{ matrix.dataset }} on ${{ matrix.os }} py${{ matrix.python }}'
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -e {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
+        python: ["3.12"]
+        include:
+          - os: ubuntu-latest
+            dataset: ds001971
+            python: "3.10"
+          - os: ubuntu-latest
+            dataset: ds003392
+            python: "3.13"
+    env:
+      MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
+      PYTHONIOENCODING: 'utf8'  # for Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@main
+        with:
+          qt: true
+          pyvista: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python }}"
+      - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+      - uses: actions/cache@v4
+        with:
+          key: ${{ matrix.dataset }}
+          path: ~/mne_data/${{ matrix.dataset }}
+        id: dataset-cache
+      - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
+        if: steps.dataset-cache.outputs.cache-hit != 'true'
+      - run: |
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-calibration_meg.dat
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-crosstalk_meg.fif
+        if: matrix.dataset == 'ds003392'
+        name: Remove cross-talk and cal files from ds003392
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
+        name: Run ${{ matrix.dataset }} test from scratch
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
+        timeout-minutes: 1
+        name: Rerun ${{ matrix.dataset }} test to check all steps cached
+      - uses: codecov/codecov-action@v5
+        if: success() || failure()
+  non-doc-dataset-tests:
+    name: 'Non-doc dataset tests'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -e {0}
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pyvista/setup-headless-display-action@main
+        with:
+          qt: true
+          pyvista: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
+      - uses: actions/cache@v4
+        with:
+          key: MNE-funloc-data
+          path: ~/mne_data/MNE-funloc-data
+        id: MNE-funloc-data-cache
+      - run: python -m mne_bids_pipeline._download MNE-funloc-data
+        if: steps.MNE-funloc-data-cache.outputs.cache-hit != 'true'
+      - run: pytest --cov-append -k test_session_specific_mri mne_bids_pipeline/

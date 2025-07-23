@@ -4,18 +4,26 @@ import difflib
 import importlib.util
 import os
 import pathlib
+import re
 from dataclasses import field
 from functools import partial
+from inspect import signature
 from types import SimpleNamespace
 from typing import Any
 
 import matplotlib
 import mne
 import numpy as np
+from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from ._config_utils import get_subjects_sessions
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
+
+
+class ConfigError(ValueError):
+    pass
 
 
 def _import_config(
@@ -54,11 +62,22 @@ def _import_config(
     if extra_config:
         msg = f"With testing config: {extra_config}"
         logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-        _update_config_from_path(
-            config=config,
-            config_path=extra_config,
+        extra_names = _update_config_from_path(
+            config=config, config_path=extra_config, include_private=True
         )
-        extra_exec_params_keys = ("_n_jobs",)
+        # Update valid_extra_names as needed if test configs in tests/test_run.py change
+        valid_extra_names = set(
+            (
+                "_n_jobs",
+                "_raw_split_size",
+                "_epochs_split_size",
+                "subjects_dir",  # test_session_specific_mri
+                "deriv_root",  # test_session_specific_mri
+                "Path",  # test_session_specific_mri
+            )
+        )
+        assert set(extra_names) - valid_extra_names == set(), extra_names
+        extra_exec_params_keys = tuple(set(["_n_jobs"]) & set(extra_names))
     keep_names.extend(extra_exec_params_keys)
 
     # Check it
@@ -135,6 +154,7 @@ def _update_config_from_path(
     *,
     config: SimpleNamespace,
     config_path: PathLike,
+    include_private: bool = False,
 ) -> list[str]:
     user_names = list()
     config_path = pathlib.Path(config_path).expanduser().resolve(strict=True)
@@ -152,7 +172,7 @@ def _update_config_from_path(
         if not key.startswith("__"):
             # don't validate private vars, but do add to config
             # (e.g., so that our hidden _raw_split_size is included)
-            if not key.startswith("_"):
+            if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
             logger.debug(f"Overwriting: {key} -> {val}")
@@ -228,8 +248,7 @@ def _update_with_user_config(
         config.n_jobs = 1
         if log and config.parallel_backend != "loky":
             msg = (
-                'Setting config.parallel_backend="loky" because '
-                'config.on_error="debug"'
+                'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.parallel_backend = "loky"
@@ -249,6 +268,62 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         and len(set(config.ch_types).intersection(("meg", "grad", "mag"))) == 0
     ):
         raise ValueError("Cannot use Maxwell filter without MEG channels.")
+    mf_reserved_kwargs = (
+        "raw",
+        "calibration",
+        "cross_talk",
+        "st_duration",
+        "st_correlation",
+        "origin",
+        "coord_frame",
+        "destination",
+        "head_pos",
+        "extended_proj",
+        "int_order",
+        "ext_order",
+    )
+    # check `mf_extra_kws` for things that shouldn't be in there
+    if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):
+        raise ConfigError(
+            f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
+            "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
+        )
+    # if `destination="twa"` make sure `mf_mc=True`
+    if (
+        isinstance(config.mf_destination, str)
+        and config.mf_destination == "twa"
+        and not config.mf_mc
+    ):
+        raise ConfigError(
+            "cannot compute time-weighted average head position (mf_destination='twa') "
+            "without movement compensation. Please set `mf_mc=True` in your config."
+        )
+    # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
+    if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
+        pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
+        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        newline_indent = "\n  "
+        if mismatch := (set(config.ssp_ecg_channel) - matches):
+            raise ConfigError(
+                "Malformed keys in ssp_ecg_channel dict:\n  "
+                f"{newline_indent.join(sorted(mismatch))}"
+            )
+        # also make sure there are values for all subjects/sessions:
+        missing = list()
+        subjects_sessions = get_subjects_sessions(config)
+        for sub, sessions in subjects_sessions.items():
+            for ses in sessions:
+                if (
+                    config.ssp_ecg_channel.get(f"sub-{sub}") is None
+                    and config.ssp_ecg_channel.get(f"sub-{sub}_ses-{ses}") is None
+                ):
+                    missing.append(
+                        f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
+                    )
+        if missing:
+            raise ConfigError(
+                f"Missing entries in ssp_ecg_channel:\n  {newline_indent.join(missing)}"
+            )
 
     reject = config.reject
     ica_reject = config.ica_reject
@@ -300,6 +375,16 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             'recordings by setting noise_cov = "emptyroom", but you did not '
             "enable empty-room data processing. "
             "Please set process_empty_room = True"
+        )
+
+    if (
+        config.allow_missing_sessions
+        and "ignore_suffixes" not in signature(get_entity_vals).parameters
+    ):
+        raise ConfigError(
+            "You've requested to `allow_missing_sessions`, but this functionality "
+            "requires a newer version of `mne_bids` than you have available. Please "
+            "update MNE-BIDS (or if on the latest version, install the dev version)."
         )
 
     bl = config.baseline
@@ -384,7 +469,7 @@ def _default_factory(key: str, val: Any) -> Any:
                     default_factory = partial(typ, **allowlist[idx])  # type: ignore
                 else:
                     assert typ is list
-                    default_factory = partial(typ, allowlist[idx])  # type: ignore
+                    default_factory = partial(typ, allowlist[idx])
             return field(default_factory=default_factory)
     return val
 

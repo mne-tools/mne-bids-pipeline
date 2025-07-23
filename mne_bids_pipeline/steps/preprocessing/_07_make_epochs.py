@@ -125,6 +125,7 @@ def run_epochs(
             conditions=cfg.conditions,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
+            custom_metadata=cfg.epochs_custom_metadata,
             metadata_tmin=cfg.epochs_metadata_tmin,
             metadata_tmax=cfg.epochs_metadata_tmax,
             metadata_keep_first=cfg.epochs_metadata_keep_first,
@@ -150,7 +151,14 @@ def run_epochs(
         if cfg.use_maxwell_filter:
             # Keep track of the info corresponding to the run with the smallest
             # data rank.
-            new_rank = mne.compute_rank(epochs, rank="info")["meg"]
+            if "grad" in epochs:
+                if "mag" in epochs:
+                    type_sel = "meg"
+                else:
+                    type_sel = "grad"
+            else:
+                type_sel = "mag"
+            new_rank = mne.compute_rank(epochs, rank="info")[type_sel]
             if (smallest_rank is None) or (new_rank < smallest_rank):
                 smallest_rank = new_rank
                 smallest_rank_info = epochs.info.copy()
@@ -163,7 +171,7 @@ def run_epochs(
 
     if cfg.use_maxwell_filter and cfg.noise_cov == "rest":
         raw_rest_filt = mne.io.read_raw(in_files.pop("raw_rest"))
-        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")["meg"]
+        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")[type_sel]
         if rank_rest < smallest_rank:
             msg = (
                 f"The MEG rank of the resting state data ({rank_rest}) is "
@@ -188,10 +196,8 @@ def run_epochs(
         assert epochs.info["ch_names"] == smallest_rank_info["ch_names"]
         with epochs.info._unlock():
             epochs.info["proc_history"] = smallest_rank_info["proc_history"]
-            rank_epochs_new = mne.compute_rank(epochs, rank="info")["meg"]
-            msg = (
-                f'The MEG rank of the "{cfg.task}" epochs is now: ' f"{rank_epochs_new}"
-            )
+            rank_epochs_new = mne.compute_rank(epochs, rank="info")[type_sel]
+            msg = f'The MEG rank of the "{cfg.task}" epochs is now: {rank_epochs_new}'
             logger.warning(**gen_log_kwargs(message=msg))
 
     # Set an EEG reference
@@ -207,8 +213,7 @@ def run_epochs(
     )
     logger.info(**gen_log_kwargs(message=msg))
     msg = (
-        f"Selected {len(epochs)} epochs via metadata query: "
-        f"{cfg.epochs_metadata_query}"
+        f"Selected {len(epochs)} epochs via metadata query: {cfg.epochs_metadata_query}"
     )
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Writing {len(epochs)} epochs to disk."
@@ -320,6 +325,7 @@ def get_config(
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
+        epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,

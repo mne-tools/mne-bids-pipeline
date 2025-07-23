@@ -60,6 +60,14 @@ def get_input_fnames_data_quality(
                 add_bads=False,
             )
         )
+
+    # set calibration and crosstalk files (if provided)
+    if _do_mf_autobad(cfg=cfg):
+        if cfg.mf_cal_fname is not None:
+            in_files["mf_cal_fname"] = cfg.mf_cal_fname
+        if cfg.mf_ctc_fname is not None:
+            in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+
     return in_files
 
 
@@ -88,6 +96,7 @@ def assess_data_quality(
         bids_path_ref_in = None
     msg, _ = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
+
     if run is None and task == "noise":
         raw = import_er_data(
             cfg=cfg,
@@ -111,6 +120,10 @@ def assess_data_quality(
     auto_noisy_chs: list[str] | None = None
     auto_flat_chs: list[str] | None = None
     if _do_mf_autobad(cfg=cfg):
+        # use calibration and crosstalk files (if provided)
+        cfg.mf_cal_fname = in_files.pop("mf_cal_fname", None)
+        cfg.mf_ctc_fname = in_files.pop("mf_ctc_fname", None)
+
         (
             auto_noisy_chs,
             auto_flat_chs,
@@ -269,14 +282,14 @@ def _find_bads_maxwell(
         coord_frame="head",
         return_scores=True,
         h_freq=None,  # we filtered manually above
+        **cfg.find_bad_channels_extra_kws,
     )
     del raw_filt
 
     if cfg.find_flat_channels_meg:
         if auto_flat_chs:
             msg = (
-                f"Found {len(auto_flat_chs)} flat channels: "
-                f'{", ".join(auto_flat_chs)}'
+                f"Found {len(auto_flat_chs)} flat channels: {', '.join(auto_flat_chs)}"
             )
         else:
             msg = "Found no flat channels."
@@ -289,7 +302,7 @@ def _find_bads_maxwell(
             msg = (
                 f"Found {len(auto_noisy_chs)} noisy "
                 f"channel{_pl(auto_noisy_chs)}: "
-                f'{", ".join(auto_noisy_chs)}'
+                f"{', '.join(auto_noisy_chs)}"
             )
         else:
             msg = "Found no noisy channels."
@@ -333,6 +346,7 @@ def get_config(
         # detection
         # find_flat_channels_meg=config.find_flat_channels_meg,
         # find_noisy_channels_meg=config.find_noisy_channels_meg,
+        # find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
         **extra_kwargs,
     )

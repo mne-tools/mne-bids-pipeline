@@ -4,6 +4,7 @@ import copy
 import functools
 import pathlib
 from collections.abc import Iterable, Sized
+from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
 
@@ -27,7 +28,7 @@ def get_fs_subjects_dir(config: SimpleNamespace) -> pathlib.Path:
         # avoid an error message when a user doesn't intend to run the source
         # analysis steps anyway.
         raise ValueError(
-            'When specifying a "deriv_root", you must also supply a ' '"subjects_dir".'
+            'When specifying a "deriv_root", you must also supply a "subjects_dir".'
         )
 
     if not config.subjects_dir:
@@ -52,6 +53,12 @@ def get_fs_subject(
         return subject
     else:
         return f"sub-{subject}"
+
+
+def _has_session_specific_anat(
+    subject: str, session: str | None, subjects_dir: pathlib.Path
+) -> bool:
+    return (subjects_dir / f"sub-{subject}_ses-{session}").exists()
 
 
 @functools.cache
@@ -142,27 +149,78 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     return tuple(str(x) for x in sessions)
 
 
-def get_subjects_sessions(config: SimpleNamespace) -> dict[str, list[str] | list[None]]:
-    subj_sessions: dict[str, list[str] | list[None]] = dict()
+def get_subjects_sessions(
+    config: SimpleNamespace,
+) -> dict[str, tuple[None] | tuple[str, ...]]:
+    subjects = get_subjects(config)
     cfg_sessions = _get_sessions(config)
-    for subject in get_subjects(config):
-        # Only traverse through the current subject's directory
-        valid_sessions_subj = _get_entity_vals_cached(
-            config.bids_root / f"sub-{subject}",
-            entity_key="session",
-            ignore_datatypes=_get_ignore_datatypes(config),
+    # easy case first: datasets that don't have (named) sessions
+    if not cfg_sessions:
+        return {subj: (None,) for subj in subjects}
+
+    # find which tasks to ignore when deciding if a subj has data for a session
+    ignore_datatypes = _get_ignore_datatypes(config)
+    if config.task == "":
+        ignore_tasks = None
+    else:
+        all_tasks = _get_entity_vals_cached(
+            root=config.bids_root,
+            entity_key="task",
+            ignore_datatypes=ignore_datatypes,
         )
-        missing_sessions = set(cfg_sessions) - set(valid_sessions_subj)
-        if missing_sessions and not config.allow_missing_sessions:
-            raise RuntimeError(
-                f"Subject {subject} is missing session{_pl(missing_sessions)} "
-                f"{tuple(sorted(missing_sessions))}, and "
-                "`config.allow_missing_sessions` is False"
-            )
-        subj_sessions[subject] = sorted(set(cfg_sessions) & set(valid_sessions_subj))
-        if subj_sessions[subject] == []:
-            subj_sessions[subject] = [None]
+        ignore_tasks = tuple(set(all_tasks) - set([config.task]))
+
+    # loop over subjs and check for available sessions
+    subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
+    kwargs = (
+        dict(ignore_suffixes=("scans", "coordsystem"))
+        if "ignore_suffixes" in signature(mne_bids.get_entity_vals).parameters
+        else dict()
+    )
+    for subject in subjects:
+        subj_folder = config.bids_root / f"sub-{subject}"
+        valid_sessions_subj = _get_entity_vals_cached(
+            subj_folder,
+            entity_key="session",
+            ignore_tasks=ignore_tasks,
+            ignore_acquisitions=("calibration", "crosstalk"),
+            ignore_datatypes=ignore_datatypes,
+            **kwargs,
+        )
+        keep_sessions: tuple[str, ...]
+        # if valid_sessions_subj is empty, it might be because the dataset just doesn't
+        # have `session` subfolders, or it might be that none of the sessions in config
+        # are available for this subject.
+        if not valid_sessions_subj:
+            if any([x.name.startswith("ses") for x in subj_folder.iterdir()]):
+                keep_sessions = ()  # has `ses-*` folders, just not the ones we want
+            else:
+                keep_sessions = cfg_sessions  # doesn't have `ses-*` folders
+        else:
+            missing_sessions = sorted(set(cfg_sessions) - set(valid_sessions_subj))
+            if missing_sessions and not config.allow_missing_sessions:
+                raise RuntimeError(
+                    f"Subject {subject} is missing session{_pl(missing_sessions)} "
+                    f"{missing_sessions}, and `config.allow_missing_sessions` is False"
+                )
+            keep_sessions = tuple(sorted(set(cfg_sessions) & set(valid_sessions_subj)))
+        if len(keep_sessions):
+            subj_sessions[subject] = keep_sessions
     return subj_sessions
+
+
+def get_subjects_given_session(
+    config: SimpleNamespace, session: str | None
+) -> tuple[str, ...]:
+    """Get the subjects who actually have data for a given session."""
+    sub_ses = get_subjects_sessions(config)
+    subjects = (
+        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        if config.allow_missing_sessions
+        else config.subjects
+    )
+    assert not isinstance(subjects, str), subjects  # make sure it's not "all"
+    return subjects
 
 
 def get_runs_all_subjects(
@@ -379,6 +437,16 @@ def get_task(config: SimpleNamespace) -> str | None:
         return _valid_tasks[0]
 
 
+def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
+    if isinstance(config.ssp_ecg_channel, str):
+        return config.ssp_ecg_channel
+    for key in (f"sub-{subject}", f"sub-{subject}_ses-{session}"):
+        if val := config.ssp_ecg_channel.get(key):
+            assert isinstance(val, str)  # mypy
+            return val
+    return ""  # mypy
+
+
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:
     # Return names of the channels of the channel types we wish to analyze.
     # We also include channels marked as "bad" here.
@@ -419,7 +487,8 @@ def sanitize_cond_name(cond: str) -> str:
 
 def get_mf_cal_fname(
     *, config: SimpleNamespace, subject: str, session: str | None
-) -> pathlib.Path:
+) -> pathlib.Path | None:
+    msg = "Could not find Maxwell Filter calibration file {where}."
     if config.mf_cal_fname is None:
         bids_path = BIDSPath(
             subject=subject,
@@ -427,47 +496,71 @@ def get_mf_cal_fname(
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).match()[0]
-        mf_cal_fpath = bids_path.meg_calibration_fpath
+        )
+        bids_match = bids_path.match()
+        mf_cal_fpath = None
+        if len(bids_match) > 0:
+            mf_cal_fpath = bids_match[0].meg_calibration_fpath
         if mf_cal_fpath is None:
-            raise ValueError(
-                "Could not determine Maxwell Filter Calibration file from BIDS "
-                f"definition for file {bids_path}."
-            )
+            msg = msg.format(where=f"from BIDSPath {bids_path}")
+            if config.mf_cal_missing == "raise":
+                raise ValueError(msg)
+            elif config.mf_cal_missing == "warn":
+                msg = f"WARNING: {msg} Set to None."
+                logger.info(**gen_log_kwargs(message=msg))
     else:
         mf_cal_fpath = pathlib.Path(config.mf_cal_fname).expanduser().absolute()
         if not mf_cal_fpath.exists():
-            raise ValueError(
-                f"Could not find Maxwell Filter Calibration "
-                f"file at {str(mf_cal_fpath)}."
-            )
+            msg = msg.format(where=f"at {str(config.mf_cal_fname)}")
+            if config.mf_cal_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_cal_fpath = None
+                if config.mf_cal_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
 
-    assert isinstance(mf_cal_fpath, pathlib.Path), type(mf_cal_fpath)
+    assert isinstance(mf_cal_fpath, pathlib.Path | None), type(mf_cal_fpath)
     return mf_cal_fpath
 
 
 def get_mf_ctc_fname(
     *, config: SimpleNamespace, subject: str, session: str | None
-) -> pathlib.Path:
+) -> pathlib.Path | None:
+    msg = "Could not find Maxwell Filter cross-talk file {where}."
     if config.mf_ctc_fname is None:
-        mf_ctc_fpath = BIDSPath(
+        bids_path = BIDSPath(
             subject=subject,
             session=session,
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
-        ).meg_crosstalk_fpath
+        )
+        bids_match = bids_path.match()
+        mf_ctc_fpath = None
+        if len(bids_match) > 0:
+            mf_ctc_fpath = bids_match[0].meg_crosstalk_fpath
         if mf_ctc_fpath is None:
-            raise ValueError("Could not find Maxwell Filter cross-talk file.")
+            msg = msg.format(where=f"from BIDSPath {bids_path}")
+            if config.mf_ctc_missing == "raise":
+                raise ValueError(msg)
+            elif config.mf_ctc_missing == "warn":
+                msg = f"WARNING: {msg} Set to None."
+                logger.info(**gen_log_kwargs(message=msg))
+
     else:
         mf_ctc_fpath = pathlib.Path(config.mf_ctc_fname).expanduser().absolute()
         if not mf_ctc_fpath.exists():
-            raise ValueError(
-                f"Could not find Maxwell Filter cross-talk "
-                f"file at {str(mf_ctc_fpath)}."
-            )
+            msg = msg.format(where=f"at {str(config.mf_ctc_fname)}")
+            if config.mf_ctc_missing == "raise":
+                raise ValueError(msg)
+            else:
+                mf_ctc_fpath = None
+                if config.mf_ctc_missing == "warn":
+                    msg = f"WARNING: {msg} Set to None."
+                    logger.info(**gen_log_kwargs(message=msg))
 
-    assert isinstance(mf_ctc_fpath, pathlib.Path), type(mf_ctc_fpath)
+    assert isinstance(mf_ctc_fpath, pathlib.Path | None), type(mf_ctc_fpath)
     return mf_ctc_fpath
 
 

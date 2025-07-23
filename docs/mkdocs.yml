@@ -121,6 +121,7 @@ nav:
         - examples/ds000248_no_mri.md
         - examples/ds003104.md
         - examples/eeg_matchingpennies.md
+        - examples/MNE-funloc-data.md
         - examples/MNE-phantom-KIT-data.md
         - examples/ds001810.md
         - examples/ds000117.md
@@ -135,8 +136,6 @@ plugins:
     - search
     - macros
     - privacy # https://squidfunk.github.io/mkdocs-material/plugins/privacy/
-    - tags:
-        tags_file: tags.md
     - include-markdown
     - exclude:
         glob:
@@ -163,6 +162,8 @@ plugins:
                     line_length: 88  # Black's default
                     show_bases: false
                     docstring_style: numpy
+                inventories:
+                    - https://mne.tools/dev/objects.inv
     - mike:
         canonical_version: stable
 markdown_extensions:

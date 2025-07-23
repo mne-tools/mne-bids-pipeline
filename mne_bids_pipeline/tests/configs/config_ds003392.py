@@ -10,7 +10,11 @@ task = "localizer"
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
 use_maxwell_filter = True
+mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
+
+mf_cal_missing = "warn"
+mf_ctc_missing = "warn"
 
 l_freq = 1.0
 h_freq = 40.0

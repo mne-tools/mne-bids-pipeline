@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   browser-tools: circleci/browser-tools@1.2
-  codecov: codecov/codecov@3.2.4
+  codecov: codecov/codecov@5.3.0
 
 # Aliases to reuse
 _imageconfig: &imageconfig
@@ -48,7 +48,8 @@ jobs:
           name: Get Python running
           command: |
             pip install --upgrade --progress-bar off pip
-            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ https://api.github.com/repos/mne-tools/mne-bids/zipball/main" numba
+            # TODO: Restore https://api.github.com/repos/mne-tools/mne-bids/zipball/main pending https://github.com/mne-tools/mne-bids/pull/1349/files#r1885104885
+            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" numba
             pip install -ve .[tests]
             pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
       - run:
@@ -295,6 +296,25 @@ jobs:
           key: data-cache-eeg_matchingpennies-1
           paths:
             - ~/mne_data/eeg_matchingpennies
+
+  cache_MNE-funloc-data:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys:
+            - data-cache-MNE-funloc-data-5
+      - bash_env
+      - run:
+          name: Get MNE-funloc-data
+          command: |
+            $DOWNLOAD_DATA MNE-funloc-data
+      - codecov/upload
+      - save_cache:
+          key: data-cache-MNE-funloc-data-5
+          paths:
+            - ~/mne_data/MNE-funloc-data
 
   cache_MNE-phantom-KIT-data:
     <<: *imageconfig
@@ -759,6 +779,7 @@ jobs:
 
   test_eeg_matchingpennies:
     <<: *imageconfig
+    resource_class: large  # memory for zapline
     steps:
       - attach_workspace:
           at: ~/
@@ -782,6 +803,33 @@ jobs:
           root: ~/
           paths:
             - mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies/*/*/*.html
+
+  test_MNE-funloc-data:
+    <<: *imageconfig
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/
+      - bash_env
+      - restore_cache:
+          keys:
+            - data-cache-MNE-funloc-data-5
+      - run:
+          name: test MNE-funloc-data
+          command: $RUN_TESTS MNE-funloc-data
+      - codecov/upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/MNE-funloc-data
+          destination: reports/MNE-funloc-data
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/MNE-funloc-data/*/*/*.html
 
   test_MNE-phantom-KIT-data:
     <<: *imageconfig
@@ -1243,6 +1291,15 @@ workflows:
             - cache_eeg_matchingpennies
           <<: *filter_tags
 
+      - cache_MNE-funloc-data:
+          requires:
+            - setup_env
+          <<: *filter_tags
+      - test_MNE-funloc-data:
+          requires:
+            - cache_MNE-funloc-data
+          <<: *filter_tags
+
       - cache_MNE-phantom-KIT-data:
           requires:
             - setup_env
@@ -1303,6 +1360,7 @@ workflows:
             - test_ds003392
             - test_ds004229
             - test_eeg_matchingpennies
+            - test_MNE-funloc-data
             - test_MNE-phantom-KIT-data
             - test_ERP_CORE_N400
             - test_ERP_CORE_ERN

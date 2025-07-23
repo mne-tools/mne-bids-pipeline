@@ -80,7 +80,7 @@ elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     ica_algorithm = "picard-extended_infomax"
     ica_use_icalabel = True
     ica_l_freq = 1
-    h_freq = 100
+    ica_h_freq = 100
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
     autoreject_n_interpolate = [12]  # only for testing!

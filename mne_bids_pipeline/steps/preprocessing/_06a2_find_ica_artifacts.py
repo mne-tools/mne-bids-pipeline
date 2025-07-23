@@ -12,7 +12,6 @@ from typing import Literal
 
 import matplotlib.pyplot as plt
 import mne
-import mne_icalabel
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
@@ -267,6 +266,8 @@ def find_ica_artifacts(
 
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
+        import mne_icalabel
+
         icalabel_ics = []
         icalabel_labels = []
         icalabel_prob = []
@@ -279,18 +280,14 @@ def find_ica_artifacts(
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
-            # icalabel_include = ["brain", "other"]
-            print(label)
-            print(prob)
-
-            if label not in cfg.icalabel_include:
+            if label not in cfg.ica_icalabel_include:
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_prob.append(prob)
 
         msg = (
             f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
-            f"in {len(epochs)} epochs."
+            f"in {len(epochs)} epochs: {icalabel_labels}"
         )
         logger.info(**gen_log_kwargs(message=msg))
     else:
@@ -359,6 +356,7 @@ def find_ica_artifacts(
     del artifact_name, artifact_evoked
 
     title = "ICA: components"
+    tags = ("ica",)
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
@@ -377,17 +375,14 @@ def find_ica_artifacts(
             eog_scores=eog_scores if len(eog_scores) else None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
-            tags=("ica",),  # the default but be explicit
+            tags=tags,  # the default but be explicit
         )
 
         # Add a plot for each excluded IC together with the given label and the probability
-        # TODO: Improve this plot e.g. combine all figures in one plot
+        figs = list()
         for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
-            excluded_IC_figure = plot_ica_components(
-                ica=ica,
-                picks=ic,
-            )
-            excluded_IC_figure.axes[0].text(
+            fig = plot_ica_components(ica=ica, picks=ic)
+            fig.axes[0].text(
                 0,
                 -0.15,
                 f"Label: {label} \n Probability: {prob:.3f}",
@@ -395,13 +390,15 @@ def find_ica_artifacts(
                 fontsize=8,
                 bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
             )
-
-            report.add_figure(
-                fig=excluded_IC_figure,
-                title=f"ICA{ic:03}",
-                replace=True,
-            )
-            plt.close(excluded_IC_figure)
+            figs.append(fig)
+        report.add_figure(
+            fig=figs,
+            title="ICA: components slider",
+            section=title,
+            replace=True,
+        )
+        for fig in figs:
+            plt.close(fig)
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))
@@ -428,7 +425,7 @@ def get_config(
         ica_use_ecg_detection=config.ica_use_ecg_detection,
         ica_ecg_threshold=config.ica_ecg_threshold,
         ica_use_icalabel=config.ica_use_icalabel,
-        icalabel_include=config.icalabel_include,
+        ica_icalabel_include=config.ica_icalabel_include,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

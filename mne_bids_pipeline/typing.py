@@ -2,7 +2,7 @@
 
 import pathlib
 import sys
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, Hashable, Literal, Sequence, TypeAlias, TypeVar
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
@@ -13,7 +13,8 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 from numpy.typing import ArrayLike
-from pydantic import PlainValidator
+from pydantic import PlainValidator, AfterValidator, Field
+from pydantic_core import PydanticCustomError
 
 PathLike = str | pathlib.Path
 
@@ -81,4 +82,19 @@ def assert_dig_montage(val: mne.channels.DigMontage) -> mne.channels.DigMontage:
 DigMontageType = Annotated[
     mne.channels.DigMontage,
     PlainValidator(assert_dig_montage),
+]
+
+T = TypeVar('T', bound=Hashable)
+
+
+def _validate_unique_sequence(v: Sequence[T]) -> Sequence[T]:
+    if len(v) != len(set(v)):
+        raise PydanticCustomError('unique_sequence', 'Sequence items must be unique')
+    return v
+
+
+UniqueSequence = Annotated[
+    Sequence[T],
+    AfterValidator(_validate_unique_sequence),
+    Field(json_schema_extra={'uniqueItems': True})
 ]

@@ -2,6 +2,7 @@
 
 ### :new: New features & enhancements
 
+- Support for using `mne-icalabel` to automatically label ICA components. This requires the `mne-icalabel` package to be installed. (#1018 and #812 by @jschepers, @behinger, @hoechenberger, and @larsoner)
 - It is now possible to use separate MRIs for each session within a subject, as in longitudinal studies. This is achieved by creating separate "subject" folders for each subject-session combination, with the naming convention `sub-XXX_ses-YYY`, in the freesurfer `SUBJECTS_DIR`. (#987 by @drammock)
 - New config option [`allow_missing_sessions`][mne_bids_pipeline._config.allow_missing_sessions] allows to continue when not all sessions are present for all subjects. (#1000 by @drammock)
 - New config option [`mf_extra_kws`][mne_bids_pipeline._config.mf_extra_kws] passes additional keyword arguments to `mne.preprocessing.maxwell_filter`. (#1038 by @drammock)

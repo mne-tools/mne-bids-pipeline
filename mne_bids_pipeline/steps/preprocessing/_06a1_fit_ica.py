@@ -84,7 +84,7 @@ def run_ica(
         # on data flltered between 1 and 100 Hz.
         assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
         assert cfg.ica_l_freq == 1.0
-        assert cfg.h_freq == 100.0
+        assert cfg.ica_h_freq == 100.0
         assert cfg.eeg_reference == "average"
 
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
@@ -117,16 +117,19 @@ def run_ica(
             assert np.allclose(raw.info["highpass"], cfg.l_freq)
 
         if idx == 0:
-            if cfg.ica_l_freq is None:
+            msg = ""
+            if cfg.ica_l_freq is not None and cfg.ica_h_freq is not None:
                 msg = (
-                    f"Not applying high-pass filter (data is already filtered, "
-                    f"cutoff: {raw.info['highpass']} Hz)."
+                    f"Applying band-pass filter with {cfg.ica_l_freq}-"
+                    f"{cfg.ica_h_freq} Hz cutoffs"
                 )
+            elif cfg.ica_l_freq is not None:
+                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
+            elif cfg.ica_h_freq is not None:
+                msg = f"Applying low-pass filter with {cfg.ica_h_freq} Hz cutoff"
+            if cfg.ica_l_freq is not None or cfg.ica_h_freq is not None:
                 logger.info(**gen_log_kwargs(message=msg))
-            else:
-                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …"
-                logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
+                raw.filter(l_freq=cfg.ica_l_freq, h_freq=cfg.ica_h_freq, n_jobs=1)
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()

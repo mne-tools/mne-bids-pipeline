@@ -429,16 +429,22 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
     # MNE-ICALabel
     if config.ica_use_icalabel:
-        if config.ica_l_freq != 1.0 or config.h_freq != 100.0:
+        pre = "When using MNE-ICALabel, you must set"
+        if config.ica_l_freq != 1.0 or config.ica_h_freq != 100.0:
             raise ValueError(
-                f"When using MNE-ICALabel, you must set ica_l_freq=1 and h_freq=100, "
-                f"but got: ica_l_freq={config.ica_l_freq} and h_freq={config.h_freq}"
+                f"{pre} ica_l_freq=1 and h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and "
+                f"ica_h_freq={config.ica_h_freq}"
             )
-
         if config.eeg_reference != "average":
             raise ValueError(
-                f'When using MNE-ICALabel, you must set eeg_reference="average", but '
-                f"got: eeg_reference={config.eeg_reference}"
+                f'{pre} eeg_reference="average", but got: '
+                f"eeg_reference={config.eeg_reference}"
+            )
+        if config.ica_algorithm not in ("picard-extended_infomax", "extended_infomax"):
+            raise ValueError(
+                f'{pre} ica_algorithm="picard-extended_infomax" or "extended_infomax", '
+                f"but got: ica_algorithm={repr(config.ica_algorithm)}"
             )
 
 
@@ -450,8 +456,7 @@ def _default_factory(key: str, val: Any) -> Any:
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
-        # ["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"], # icalabel_include
-        ["brain", "other"],
+        ("brain", "other"),  # ica_icalabel_include
     ]
 
     def default_factory() -> Any:

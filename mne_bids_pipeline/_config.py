@@ -1539,8 +1539,12 @@ ica_icalabel_include: Annotated[
 ] = ("brain", "other")
 """
 Which independent components (ICs) to keep based on the labels given by ICLabel.
-Possible labels are "brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other".
-"""
+Possible labels are:
+
+```
+["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
+```
+"""  # noqa: E501
 
 # ### Amplitude-based artifact rejection
 #

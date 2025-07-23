@@ -278,7 +278,9 @@ def find_ica_artifacts(
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
-        label_results = mne_icalabel.label_components(inst=epochs, ica=ica, method="iclabel")
+        label_results = mne_icalabel.label_components(
+            inst=epochs, ica=ica, method="iclabel"
+        )
         print(label_results["labels"])
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
@@ -378,7 +380,7 @@ def find_ica_artifacts(
             tags=tags,  # the default but be explicit
         )
 
-        # Add a plot for each excluded IC together with the given label and the probability
+        # Add a plot for each excluded IC together with the given label and the prob
         if cfg.ica_use_icalabel and len(icalabel_ics):
             msg = "Adding icalabel components to report."
             logger.info(**gen_log_kwargs(message=msg))

@@ -1081,7 +1081,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -ve .[docs]
+            pip install -ve .[docs] onnxruntime
       - run:
           name: Build documentation
           command: |

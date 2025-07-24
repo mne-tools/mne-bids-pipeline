@@ -144,7 +144,7 @@ def get_input_fnames_sync_eyelink(
 
         key = f"et_run-{run}"
         in_files[key] = et_bids_basename_temp
-
+  
     return in_files
 
 

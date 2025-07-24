@@ -87,7 +87,7 @@ def get_input_fnames_sync_eyelink(
         extension=".fif",
     )
 
-    et_bids_basename = BIDSPath(
+    et_asc_bids_basename = BIDSPath(
         subject=subject,
         session=session,
         task=et_task,
@@ -121,23 +121,30 @@ def get_input_fnames_sync_eyelink(
         )
         _update_for_splits(in_files, key, single=True)
 
+        et_bids_basename_temp = et_asc_bids_basename.copy()
+
+        if cfg.et_has_run:
+            et_bids_basename_temp.update(run=run)
+
+        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
+
+        if not os.path.isfile(et_bids_basename_temp):
+            logger.info(**gen_log_kwargs(message=f"Couldn't find {et_bids_basename_temp} file. If edf file exists, edf2asc will be called."))
+
+            et_bids_basename_temp = et_edf_bids_basename.copy()
+
+            if cfg.et_has_run:
+                et_bids_basename_temp.update(run=run)
+
+            # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
+
+            if not os.path.isfile(et_bids_basename_temp):
+                logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename_temp} file, one of both needs to exist for ET sync."))
+                raise FileNotFoundError(f"For run {run}, could neither find .asc or .edf eye-tracking file. Please double-check the file names.")
 
         key = f"et_run-{run}"
-        in_files[key] = et_bids_basename.copy()
-
-        if cfg.et_has_run:
-            in_files[key].update(run=run)
-
-        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
-
-        key = f"et_edf_run-{run}"
-        in_files[key] = et_edf_bids_basename.copy()
-
-        if cfg.et_has_run:
-            in_files[key].update(run=run)
-
-        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
-    
+        in_files[key] = et_bids_basename_temp
+  
     return in_files
 
 
@@ -153,30 +160,33 @@ def sync_eyelink(
     session: str | None,
     in_files: dict,
 ) -> dict:
+    
     """Run Sync for Eyelink."""
     import matplotlib.pyplot as plt
     from scipy.signal import correlate
 
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     et_fnames = [in_files.pop(f"et_run-{run}") for run in cfg.runs]
-    et_edf_fnames = [in_files.pop(f"et_edf_run-{run}") for run in cfg.runs]
     
-    logger.info(**gen_log_kwargs(message=f"et_fnames {et_fnames}"))
+    logger.info(**gen_log_kwargs(message=f"Found the following eye-tracking files: {et_fnames}"))
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
     out_files["eyelink"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
     del bids_basename
     
-    for idx, (run, raw_fname,et_fname,et_edf_fname) in enumerate(zip(cfg.runs, raw_fnames,et_fnames,et_edf_fnames)):
-        msg = f"Syncing eyelink data (fake for now) {raw_fname.basename}"
+    for idx, (run, raw_fname,et_fname) in enumerate(zip(cfg.runs, raw_fnames,et_fnames)):
+        msg = f"Syncing Eyelink ({et_fname.basename}) and EEG data ({raw_fname.basename})."
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
-        if not os.path.isfile(et_fname):
-            logger.info(**gen_log_kwargs(message=f"Couldn't find {et_fname} file, trying to call edf2asc."))
-            if not os.path.isfile(et_edf_fname):
-                logger.error(**gen_log_kwargs(message=f"Also didn't find {et_edf_fname} file, one of both need to exist for ET sync."))
+
+        et_format = et_fname.extension
+
+        if not et_format == '.asc':
+            assert et_format == '.edf', "ET file is neither an `.asc` nor an `.edf`. This should not have happened."
+            logger.info(**gen_log_kwargs(message=f"Converting {et_fname} file to `.asc` using edf2asc."))
             import subprocess
-            subprocess.run(["edf2asc", et_edf_fname]) # TODO: Still needs to be tested
+            subprocess.run(["edf2asc", et_fname]) # TODO: Still needs to be tested
+            et_fname.update(extension='.asc')
 
         raw_et = mne.io.read_raw_eyelink(et_fname, find_overlaps=True)
 

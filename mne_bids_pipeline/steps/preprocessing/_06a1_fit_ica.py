@@ -358,15 +358,12 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        
         conditions=config.conditions,
         runs=get_runs(config=config, subject=subject),
         task_is_rest=config.task_is_rest,
         ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,
         h_freq = config.h_freq,
-        ica_use_icalabel = config.ica_use_icalabel,
-        ica_h_freq = config.ica_h_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,

@@ -1487,11 +1487,6 @@ ica_use_ecg_detection: bool = True
 Whether to use the MNE ECG detection on the ICA components.
 """
 
-ica_use_ecg_detection: bool = True
-"""
-Whether to use the MNE ECG detection on the ICA components.
-"""
-
 ica_ecg_threshold: float = 0.1
 """
 The cross-trial phase statistics (CTPS) threshold parameter used for detecting
@@ -1550,7 +1545,22 @@ Possible labels are:
 ```
 ["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
 ```
-"""  # noqa: E501
+"""
+
+ica_exclusion_thresholds: dict[str, float] = {
+    "brain": 0.8,
+    "muscle artifact": 0.8,
+    "eye blink": 0.8,
+    "heart beat": 0.8,
+    "line noise": 0.8,
+    "channel noise": 0.8,
+    "other": 0.8,
+}
+"""
+ICLabel class probability thresholds for excluding components.
+You can set single values like {"eye blink": 0.7,"brain": 0.8} with the remaining values being the default.
+"""
+  # noqa: E501
 
 # ### Amplitude-based artifact rejection
 #

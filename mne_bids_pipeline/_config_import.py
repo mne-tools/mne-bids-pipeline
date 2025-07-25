@@ -425,23 +425,6 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 "config.mf_destination, if array-like, must have shape (4, 4) "
                 f"but got shape {destination.shape}"
             )
-    if config.ica_use_icalabel:
-        if config.ica_l_freq != 1.0 or config.ica_h_freq != 100.0:
-            raise ValueError(
-                f"When using MNE-ICALabel, you must set ica_l_freq=1 and ica_h_freq=100, "
-                f"but got: ica_l_freq={config.ica_l_freq} and ica_h_freq={config.ica_h_freq}"
-            )
-
-        if config.eeg_reference != "average":
-            raise ValueError(
-                f'When using MNE-ICALabel, you must set eeg_reference="average", but '
-                f"got: eeg_reference={config.eeg_reference}"
-            )
-        if config.ica_algorithm not in ["picard-extended_infomax", "extended_infomax"]:
-            raise ValueError(
-                f'When using MNE-ICALabel, you must set ica_algorithm="picard-extended_infomax" or ica_algorithm="extended_infomax", but '
-                f"got: ica_algorithm={config.ica_algorithm}"
-            )
 
     # From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
     # MNE-ICALabel
@@ -474,6 +457,15 @@ def _default_factory(key: str, val: Any) -> Any:
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
         ("brain", "other"),  # ica_icalabel_include
+        {
+            "brain": 0.8,
+            "muscle artifact": 0.8,
+            "eye blink": 0.8,
+            "heart beat": 0.8,
+            "line noise": 0.8,
+            "channel noise": 0.8,
+            "other": 0.8,
+        },  #ica_exclusion_thresholds
     ]
 
     def default_factory() -> Any:

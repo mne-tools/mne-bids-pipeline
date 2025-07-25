@@ -11,13 +11,10 @@ from types import SimpleNamespace
 from typing import Literal
 
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 import mne
-import mne_icalabel
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
-from mne.viz import plot_ica_components
 from mne.viz import plot_ica_components
 from mne_bids import BIDSPath
 
@@ -230,6 +227,8 @@ def find_ica_artifacts(
     if cfg.ica_use_eog_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
+            if cfg.ica_use_icalabel:
+                raw.set_eeg_reference("average", projection=True).apply_proj()
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -270,6 +269,8 @@ def find_ica_artifacts(
             )
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
+        import mne_icalabel
+        
         icalabel_ics = []
         icalabel_labels = []
         icalabel_prob = []
@@ -280,17 +281,20 @@ def find_ica_artifacts(
         label_results = mne_icalabel.label_components(
             inst=epochs, ica=ica, method="iclabel"
         )
+
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
+            threshold = cfg.ica_exclusion_thresholds.get(label, 0.8)
 
-            if label not in cfg.ica_icalabel_include:
+            if label not in cfg.ica_icalabel_include and prob >= threshold:
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_prob.append(prob)
-                icalabel_report.append((label,prob,True))
+                icalabel_report.append((label, prob, True))
             else:
-                icalabel_report.append((label,prob,False))
+                icalabel_report.append((label, prob, False))
+
 
         msg = (
             f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
@@ -299,35 +303,6 @@ def find_ica_artifacts(
         logger.info(**gen_log_kwargs(message=msg))
     else:
         icalabel_ics = []
-
-    ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
-
-    # Run MNE-ICALabel if requested.
-    icalabel_ics = []
-    icalabel_labels = []
-    icalabel_prob = []
-    if cfg.ica_use_icalabel:
-        import mne_icalabel
-
-        msg = "Performing automated artifact detection (MNE-ICALabel) …"
-        logger.info(**gen_log_kwargs(message=msg))
-
-        label_results = mne_icalabel.label_components(
-            inst=epochs, ica=ica, method="iclabel"
-        )
-        for idx, (label, prob) in enumerate(
-            zip(label_results["labels"], label_results["y_pred_proba"])
-        ):
-            if label not in cfg.ica_icalabel_include:
-                icalabel_ics.append(idx)
-                icalabel_labels.append(label)
-                icalabel_prob.append(prob)
-
-        msg = (
-            f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
-            f"in {len(epochs)} epochs: {icalabel_labels}"
-        )
-        logger.info(**gen_log_kwargs(message=msg))
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
@@ -443,25 +418,29 @@ def find_ica_artifacts(
             label_map.setdefault(label, []).append(i)
 
         for label, indices in label_map.items():
-            fig, axes = plt.subplots((len(indices)+3)//4, 4, figsize=(16, 3*((len(indices)+3)//4)))
+            fig, axes = plt.subplots((len(indices) + 3) // 4, 4, figsize=(16, 3 * ((len(indices) + 3) // 4)))
             axes = axes.flatten()
             for j, ic in enumerate(indices):
                 prob = icalabel_report[ic][1]
+                status = "excluded" if ic in ica.exclude else "included"
                 ica.plot_components(picks=ic, axes=[axes[j]], show=False)
-                axes[j].text(0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f}",
-                            ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
-                            bbox=dict(facecolor="orange", alpha=0.5, pad=4))
-            for ax in axes[len(indices):]: fig.delaxes(ax)
+                axes[j].text(
+                    0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
+                    ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
+                    bbox=dict(facecolor="orange", alpha=0.5, pad=4)
+                )
+            for ax in axes[len(indices):]:
+                fig.delaxes(ax)
             fig.tight_layout()
-            
-            status = "excluded" if icalabel_report[indices[0]][2] else "included"
+
             report.add_figure(
                 fig=fig,
-                title=f"{label} components - ({status})",
+                title=f"{label} components",
                 section="ICAlabel: components",
                 tags=[label.replace(" ", "_").replace("-", "_")]
             )
             plt.close(fig)
+
 
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
@@ -485,15 +464,12 @@ def get_config(
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,
         ica_use_eog_detection=config.ica_use_eog_detection,
-        ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
-        ica_use_ecg_detection=config.ica_use_ecg_detection,
         ica_use_ecg_detection=config.ica_use_ecg_detection,
         ica_ecg_threshold=config.ica_ecg_threshold,
         ica_use_icalabel=config.ica_use_icalabel,
         ica_icalabel_include=config.ica_icalabel_include,
-        ica_use_icalabel=config.ica_use_icalabel,
-        ica_icalabel_include=config.ica_icalabel_include,
+        ica_exclusion_thresholds=config.ica_exclusion_thresholds,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

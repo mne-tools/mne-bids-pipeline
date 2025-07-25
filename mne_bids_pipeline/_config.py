@@ -1433,12 +1433,7 @@ Set to `None` to not apply an additional high-pass filter.
 
 ica_h_freq: float | None = None
 """
-<<<<<<< HEAD
-The high-frequency cut-off in the lowpass filtering step.
-Keep it `None` if no lowpass filtering should be applied.
-=======
 The cutoff frequency of the low-pass filter to apply before running ICA.
->>>>>>> jsfork/merge_ic_label
 """
 
 ica_max_iterations: int = 500
@@ -1492,14 +1487,15 @@ ica_use_ecg_detection: bool = True
 Whether to use the MNE ECG detection on the ICA components.
 """
 
+ica_use_ecg_detection: bool = True
+"""
+Whether to use the MNE ECG detection on the ICA components.
+"""
+
 ica_ecg_threshold: float = 0.1
 """
 The cross-trial phase statistics (CTPS) threshold parameter used for detecting
 ECG-related ICs.
-"""
-ica_use_eog_detection: bool = True
-"""
-Whether to use the MNE EOG detection on the ICA components.
 """
 
 ica_use_eog_detection: bool = True
@@ -1513,36 +1509,6 @@ The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
-# From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
-ica_use_icalabel: bool = False
-"""
-Whether to use MNE-ICALabel to automatically label ICA components. Only available for
-EEG data.
-!!! info
-    Using MNE-ICALabel mandates that you also set:
-    ```python
-    eeg_reference = "average"
-    ica_l_freq = 1
-    h_freq = 100   ```
-"""
-
-ica_icalabel_include: Annotated[Sequence[
-        Literal[
-            "brain",
-            "muscle artifact",
-            "eye blink",
-            "heart beat",
-            "line noise",
-            "channel noise",
-            "other",
-        ]
-    ],
-    Len(1, 7),] = ["brain", "other"]
-"""
-Which independent components (ICs) to keep based on the labels given by ICLabel.
-Possible labels are "brain", ("muscle artifact", "eye blink", "heart beat", "line noise", "channel noise",) "other".
-"""
-
 
 ica_use_icalabel: bool = False
 """

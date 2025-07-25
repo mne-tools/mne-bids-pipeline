@@ -78,14 +78,6 @@ def run_ica(
 ) -> OutFilesT:
     """Run ICA."""
     import matplotlib.pyplot as plt
-    
-    if cfg.ica_use_icalabel:
-        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
-        # on data flltered between 1 and 100 Hz.
-        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
-        assert cfg.ica_l_freq == 1.0
-        assert cfg.ica_h_freq == 100.0
-        assert cfg.eeg_reference == "average"
 
     if cfg.ica_use_icalabel:
         # The ICALabel network was trained on extended-Infomax ICA decompositions fit
@@ -123,16 +115,12 @@ def run_ica(
             assert np.allclose(raw.info["sfreq"], cfg.raw_resample_sfreq)
 
         if idx == 0:
-<<<<<<< HEAD
-            if cfg.ica_l_freq is None and cfg.ica_h_freq is None:
-=======
             # We have to do some gymnastics here to permit for example 128 Hz-sampled
             # data to be used with mne-icalabel, which wants data low-pass filtered
             # at 100 Hz
             h_freq = cfg.ica_h_freq
             nyq = raw.info["sfreq"] / 2.0
             if h_freq is not None and h_freq >= nyq:
->>>>>>> jsfork/merge_ic_label
                 msg = (
                     f"Low-pass filter cutoff {h_freq} Hz is higher "
                     f"than Nyquist {nyq} Hz"
@@ -155,22 +143,8 @@ def run_ica(
                 msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
             if cfg.ica_l_freq is not None or h_freq is not None:
                 logger.info(**gen_log_kwargs(message=msg))
-<<<<<<< HEAD
-            else:
-                if cfg.ica_h_freq is None:
-                    msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …"
-                elif cfg.ica_l_freq is None:
-                    msg = f"Applying low-pass filter with {cfg.ica_h_freq} Hz cutoff …"
-                else:
-                    msg = f"Applying band-pass filter with {cfg.ica_l_freq} Hz to {cfg.ica_h_freq} Hz band …"
-                    
-                logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=cfg.ica_h_freq, n_jobs=1)
-                    
-=======
                 raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
             del nyq, h_freq
->>>>>>> jsfork/merge_ic_label
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()

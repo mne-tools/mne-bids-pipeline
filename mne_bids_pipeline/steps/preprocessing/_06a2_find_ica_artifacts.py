@@ -11,11 +11,13 @@ from types import SimpleNamespace
 from typing import Literal
 
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import mne
 import mne_icalabel
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
+from mne.viz import plot_ica_components
 from mne.viz import plot_ica_components
 from mne_bids import BIDSPath
 
@@ -160,20 +162,12 @@ def find_ica_artifacts(
     epochs_ecg = None
     ecg_ics: list[int] = []
     ecg_scores: FloatArrayT = np.zeros(0)
-<<<<<<< HEAD
-
-
-=======
->>>>>>> jsfork/merge_ic_label
     if cfg.ica_use_ecg_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
-<<<<<<< HEAD
-=======
             if cfg.ica_use_icalabel:
                 raw.set_eeg_reference("average", projection=True).apply_proj()
->>>>>>> jsfork/merge_ic_label
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -190,44 +184,44 @@ def find_ica_artifacts(
                 msg = "Creating ECG epochs …"
                 logger.info(**gen_log_kwargs(message=msg))
 
-            # We want to extract a total of 5 min of data for ECG epochs generation
-            # (across all runs)
-            total_ecg_dur = 5 * 60
-            ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
-            t_mid = (raw.times[-1] + raw.times[0]) / 2
-            raw = raw.crop(
-                tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
-                tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
-            ).load_data()
+                # We want to extract a total of 5 min of data for ECG epochs generation
+                # (across all runs)
+                total_ecg_dur = 5 * 60
+                ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
+                t_mid = (raw.times[-1] + raw.times[0]) / 2
+                raw = raw.crop(
+                    tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
+                    tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
+                ).load_data()
 
-            these_ecg_epochs = create_ecg_epochs(
-                raw,
-                baseline=(None, -0.2),
-                tmin=-0.5,
-                tmax=0.5,
-            )
-            del raw  # Free memory
-            if len(these_ecg_epochs):
-                if epochs.reject is not None:
-                    these_ecg_epochs.drop_bad(reject=epochs.reject)
+                these_ecg_epochs = create_ecg_epochs(
+                    raw,
+                    baseline=(None, -0.2),
+                    tmin=-0.5,
+                    tmax=0.5,
+                )
+                del raw  # Free memory
                 if len(these_ecg_epochs):
-                    if epochs_ecg is None:
-                        epochs_ecg = these_ecg_epochs
-                    else:
-                        epochs_ecg = mne.concatenate_epochs(
-                            [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
-                        )
-            del these_ecg_epochs
-        else:  # did not break so had usable channels
-            ecg_ics, ecg_scores = detect_bad_components(
-                cfg=cfg,
-                which="ecg",
-                epochs=epochs_ecg,
-                ica=ica,
-                ch_names=None,  # we currently don't allow for custom channels
-                subject=subject,
-                session=session,
-            )
+                    if epochs.reject is not None:
+                        these_ecg_epochs.drop_bad(reject=epochs.reject)
+                    if len(these_ecg_epochs):
+                        if epochs_ecg is None:
+                            epochs_ecg = these_ecg_epochs
+                        else:
+                            epochs_ecg = mne.concatenate_epochs(
+                                [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
+                            )
+                del these_ecg_epochs
+            else:  # did not break so had usable channels
+                ecg_ics, ecg_scores = detect_bad_components(
+                    cfg=cfg,
+                    which="ecg",
+                    epochs=epochs_ecg,
+                    ica=ica,
+                    ch_names=None,  # we currently don't allow for custom channels
+                    subject=subject,
+                    session=session,
+                )
 
     # EOG component detection
     epochs_eog = None
@@ -236,11 +230,6 @@ def find_ica_artifacts(
     if cfg.ica_use_eog_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
-<<<<<<< HEAD
-=======
-            if cfg.ica_use_icalabel:
-                raw.set_eeg_reference("average", projection=True).apply_proj()
->>>>>>> jsfork/merge_ic_label
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -279,23 +268,12 @@ def find_ica_artifacts(
                 subject=subject,
                 session=session,
             )
-<<<<<<< HEAD
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
         icalabel_ics = []
         icalabel_labels = []
         icalabel_prob = []
         icalabel_report = []
-=======
-
-    # Run MNE-ICALabel if requested.
-    icalabel_ics = []
-    icalabel_labels = []
-    icalabel_prob = []
-    if cfg.ica_use_icalabel:
-        import mne_icalabel
-
->>>>>>> jsfork/merge_ic_label
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -305,15 +283,11 @@ def find_ica_artifacts(
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
-<<<<<<< HEAD
 
-=======
->>>>>>> jsfork/merge_ic_label
             if label not in cfg.ica_icalabel_include:
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_prob.append(prob)
-<<<<<<< HEAD
                 icalabel_report.append((label,prob,True))
             else:
                 icalabel_report.append((label,prob,False))
@@ -325,14 +299,35 @@ def find_ica_artifacts(
         logger.info(**gen_log_kwargs(message=msg))
     else:
         icalabel_ics = []
-=======
+
+    ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
+
+    # Run MNE-ICALabel if requested.
+    icalabel_ics = []
+    icalabel_labels = []
+    icalabel_prob = []
+    if cfg.ica_use_icalabel:
+        import mne_icalabel
+
+        msg = "Performing automated artifact detection (MNE-ICALabel) …"
+        logger.info(**gen_log_kwargs(message=msg))
+
+        label_results = mne_icalabel.label_components(
+            inst=epochs, ica=ica, method="iclabel"
+        )
+        for idx, (label, prob) in enumerate(
+            zip(label_results["labels"], label_results["y_pred_proba"])
+        ):
+            if label not in cfg.ica_icalabel_include:
+                icalabel_ics.append(idx)
+                icalabel_labels.append(label)
+                icalabel_prob.append(prob)
 
         msg = (
             f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
             f"in {len(epochs)} epochs: {icalabel_labels}"
         )
         logger.info(**gen_log_kwargs(message=msg))
->>>>>>> jsfork/merge_ic_label
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
@@ -354,10 +349,6 @@ def find_ica_artifacts(
     )
 
     if cfg.ica_use_icalabel:
-<<<<<<< HEAD
-        assert len(icalabel_ics) == len(icalabel_labels)
-=======
->>>>>>> jsfork/merge_ic_label
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
@@ -419,13 +410,9 @@ def find_ica_artifacts(
             eog_scores=eog_scores if len(eog_scores) else None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
-<<<<<<< HEAD
             tags=("ica",),  # the default but be explicit
         
         
-=======
-            tags=tags,  # the default but be explicit
->>>>>>> jsfork/merge_ic_label
         )
         table_html = """
         <table border="1" cellspacing="0" cellpadding="5">
@@ -477,31 +464,6 @@ def find_ica_artifacts(
             plt.close(fig)
 
 
-        # Add a plot for each excluded IC together with the given label and the prob
-        if cfg.ica_use_icalabel and len(icalabel_ics):
-            msg = "Adding icalabel components to report."
-            logger.info(**gen_log_kwargs(message=msg))
-            figs = list()
-            for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
-                fig = plot_ica_components(ica=ica, picks=ic)
-                fig.axes[0].text(
-                    0,
-                    -0.15,
-                    f"Label: {label} \n Probability: {prob:.3f}",
-                    ha="center",
-                    fontsize=8,
-                    bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
-                )
-                figs.append(fig)
-            report.add_figure(
-                fig=figs,
-                title="ICA components from icalabel",
-                section=section,
-                replace=True,
-            )
-            for fig in figs:
-                plt.close(fig)
-
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))
     logger.info(**gen_log_kwargs(message=str(out_files_components), emoji="🛑"))
@@ -523,9 +485,13 @@ def get_config(
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,
         ica_use_eog_detection=config.ica_use_eog_detection,
+        ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,
+        ica_use_ecg_detection=config.ica_use_ecg_detection,
         ica_ecg_threshold=config.ica_ecg_threshold,
+        ica_use_icalabel=config.ica_use_icalabel,
+        ica_icalabel_include=config.ica_icalabel_include,
         ica_use_icalabel=config.ica_use_icalabel,
         ica_icalabel_include=config.ica_icalabel_include,
         autoreject_n_interpolate=config.autoreject_n_interpolate,

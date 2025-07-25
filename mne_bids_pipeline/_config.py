@@ -1434,7 +1434,6 @@ ica_h_freq: float | None = None
 """
 The high-frequency cut-off in the lowpass filtering step.
 Keep it `None` if no lowpass filtering should be applied.
-Default set to 100 for ICA_label
 """
 
 ica_max_iterations: int = 500

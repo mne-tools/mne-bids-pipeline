@@ -13,6 +13,7 @@ from mne_bids_pipeline.typing import (
     DigMontageType,
     FloatArrayLike,
     PathLike,
+    UniqueSequence,
 )
 
 # %%
@@ -1432,8 +1433,12 @@ Set to `None` to not apply an additional high-pass filter.
 
 ica_h_freq: float | None = None
 """
+<<<<<<< HEAD
 The high-frequency cut-off in the lowpass filtering step.
 Keep it `None` if no lowpass filtering should be applied.
+=======
+The cutoff frequency of the low-pass filter to apply before running ICA.
+>>>>>>> jsfork/merge_ic_label
 """
 
 ica_max_iterations: int = 500
@@ -1497,6 +1502,11 @@ ica_use_eog_detection: bool = True
 Whether to use the MNE EOG detection on the ICA components.
 """
 
+ica_use_eog_detection: bool = True
+"""
+Whether to use the MNE EOG detection on the ICA components.
+"""
+
 ica_eog_threshold: float = 3.0
 """
 The threshold to use during automated EOG classification. Lower values mean
@@ -1533,6 +1543,48 @@ Which independent components (ICs) to keep based on the labels given by ICLabel.
 Possible labels are "brain", ("muscle artifact", "eye blink", "heart beat", "line noise", "channel noise",) "other".
 """
 
+
+ica_use_icalabel: bool = False
+"""
+Whether to use MNE-ICALabel to automatically label ICA components. Only available for
+EEG data.
+
+!!! info
+    Using MNE-ICALabel mandates that you also set:
+    ```python
+    eeg_reference = "average"
+    ica_l_freq = 1
+    ica_h_freq = 100
+    ```
+    It will also apply the average reference to the data before running or applying ICA.
+
+!!! info
+    Using this requires `mne-icalabel` package, which in turn will require you to
+    install a suitable runtime (`onnxruntime` or `pytorch`).
+"""
+
+ica_icalabel_include: Annotated[
+    UniqueSequence[
+        Literal[
+            "brain",
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise",
+            "other",
+        ]
+    ],
+    Len(1, 7),
+] = ("brain", "other")
+"""
+Which independent components (ICs) to keep based on the labels given by ICLabel.
+Possible labels are:
+
+```
+["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
+```
+"""  # noqa: E501
 
 # ### Amplitude-based artifact rejection
 #

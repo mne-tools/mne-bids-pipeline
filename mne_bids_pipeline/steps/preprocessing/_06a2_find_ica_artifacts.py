@@ -160,12 +160,20 @@ def find_ica_artifacts(
     epochs_ecg = None
     ecg_ics: list[int] = []
     ecg_scores: FloatArrayT = np.zeros(0)
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> jsfork/merge_ic_label
     if cfg.ica_use_ecg_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
+<<<<<<< HEAD
+=======
+            if cfg.ica_use_icalabel:
+                raw.set_eeg_reference("average", projection=True).apply_proj()
+>>>>>>> jsfork/merge_ic_label
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -228,6 +236,11 @@ def find_ica_artifacts(
     if cfg.ica_use_eog_detection:
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
+<<<<<<< HEAD
+=======
+            if cfg.ica_use_icalabel:
+                raw.set_eeg_reference("average", projection=True).apply_proj()
+>>>>>>> jsfork/merge_ic_label
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -266,12 +279,23 @@ def find_ica_artifacts(
                 subject=subject,
                 session=session,
             )
+<<<<<<< HEAD
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
         icalabel_ics = []
         icalabel_labels = []
         icalabel_prob = []
         icalabel_report = []
+=======
+
+    # Run MNE-ICALabel if requested.
+    icalabel_ics = []
+    icalabel_labels = []
+    icalabel_prob = []
+    if cfg.ica_use_icalabel:
+        import mne_icalabel
+
+>>>>>>> jsfork/merge_ic_label
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
@@ -281,11 +305,15 @@ def find_ica_artifacts(
         for idx, (label, prob) in enumerate(
             zip(label_results["labels"], label_results["y_pred_proba"])
         ):
+<<<<<<< HEAD
 
+=======
+>>>>>>> jsfork/merge_ic_label
             if label not in cfg.ica_icalabel_include:
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_prob.append(prob)
+<<<<<<< HEAD
                 icalabel_report.append((label,prob,True))
             else:
                 icalabel_report.append((label,prob,False))
@@ -297,6 +325,14 @@ def find_ica_artifacts(
         logger.info(**gen_log_kwargs(message=msg))
     else:
         icalabel_ics = []
+=======
+
+        msg = (
+            f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
+            f"in {len(epochs)} epochs: {icalabel_labels}"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
+>>>>>>> jsfork/merge_ic_label
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
 
@@ -318,7 +354,10 @@ def find_ica_artifacts(
     )
 
     if cfg.ica_use_icalabel:
+<<<<<<< HEAD
         assert len(icalabel_ics) == len(icalabel_labels)
+=======
+>>>>>>> jsfork/merge_ic_label
         for component, label in zip(icalabel_ics, icalabel_labels):
             row_idx = tsv_data["component"] == component
             tsv_data.loc[row_idx, "status"] = "bad"
@@ -360,7 +399,8 @@ def find_ica_artifacts(
 
     del artifact_name, artifact_evoked
 
-    title = "ICA: components"
+    section = "ICA: components"
+    tags = ("ica",)
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
@@ -368,10 +408,10 @@ def find_ica_artifacts(
         session=session,
         task=cfg.task,
     ) as report:
-        logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
+        logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
         report.add_ica(
             ica=ica,
-            title=title,
+            title=section,
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
@@ -379,9 +419,13 @@ def find_ica_artifacts(
             eog_scores=eog_scores if len(eog_scores) else None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
+<<<<<<< HEAD
             tags=("ica",),  # the default but be explicit
         
         
+=======
+            tags=tags,  # the default but be explicit
+>>>>>>> jsfork/merge_ic_label
         )
         table_html = """
         <table border="1" cellspacing="0" cellpadding="5">
@@ -432,6 +476,31 @@ def find_ica_artifacts(
             )
             plt.close(fig)
 
+
+        # Add a plot for each excluded IC together with the given label and the prob
+        if cfg.ica_use_icalabel and len(icalabel_ics):
+            msg = "Adding icalabel components to report."
+            logger.info(**gen_log_kwargs(message=msg))
+            figs = list()
+            for ic, label, prob in zip(icalabel_ics, icalabel_labels, icalabel_prob):
+                fig = plot_ica_components(ica=ica, picks=ic)
+                fig.axes[0].text(
+                    0,
+                    -0.15,
+                    f"Label: {label} \n Probability: {prob:.3f}",
+                    ha="center",
+                    fontsize=8,
+                    bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5},
+                )
+                figs.append(fig)
+            report.add_figure(
+                fig=figs,
+                title="ICA components from icalabel",
+                section=section,
+                replace=True,
+            )
+            for fig in figs:
+                plt.close(fig)
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))

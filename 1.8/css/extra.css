@@ -1,0 +1,109 @@
+/* Justify text */
+p {
+  text-align: justify;
+  word-break: break-word;  /* Chrome */
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  -o-hyphens: auto;
+  hyphens: auto;
+}
+
+/* Larger font in tables */
+.md-typeset table td,
+.md-typeset table th {
+  font-size: 0.7rem;
+  padding: .5em 1.25em !important;
+}
+
+/* Larger font in code, example, info, warning blocks */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 0.8rem;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-size: 0.7rem;
+}
+
+/* Make parameter names bold, but leave their type with normal font weight */
+.doc-heading code {
+  font-weight: bold;
+}
+
+.doc-heading code span {
+  font-weight: normal;
+}
+
+
+/* Styles suggested by mkdocstrings */
+/* Indentation. */
+div.doc-contents:not(.first) {
+  padding-left: 25px;
+  border-left: 4px solid rgba(230, 230, 230);
+  margin-bottom: 80px;
+}
+
+/* Don't capitalize names. */
+h5.doc-heading {
+  text-transform: none !important;
+}
+
+/* Don't use vertical space on hidden ToC entries. */
+.hidden-toc::before {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Don't show permalink of hidden ToC entries. */
+.hidden-toc a.headerlink {
+  display: none;
+}
+
+/* Avoid breaking parameters name, etc. in table cells. */
+td code {
+  word-break: normal !important;
+}
+
+/* For pieces of Markdown rendered in table cells. */
+td p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* The "View Report" buttons. */
+.report-button {
+  text-align: center;
+  width: 70%;
+  min-width: 200px;
+}
+
+/* Hide "module-attribute" annotation. */
+.doc-label-module-attribute {
+  display: none;
+}
+
+/* Make the currently active tab name bold. */
+.md-tabs__link--active {
+  font-weight: 600;
+}
+
+.tabbed-set {
+  /* border-width: 5px;
+  border-color: black; */
+  /* border-style: none none none dotted; */
+  padding-left: 0.5rem;
+  border-left: 6px solid var(--md-code-bg-color);
+}
+
+/* Add a bit more margin above the buttons. */
+.md-button {
+  margin-top: 1rem !important;
+}
+
+/* Ensure the link in the "You're not viewing the latest stable version" banner is
+  readable in both dark and light theme. */
+:root {
+  --md-typeset-a-color: var(--md-default-fg-color);
+}

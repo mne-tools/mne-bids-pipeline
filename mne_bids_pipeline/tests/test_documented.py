@@ -66,7 +66,7 @@ def test_options_documented() -> None:
                         why = f"Duplicate docs in {fname} and {other} for {val}"
                         assert val not in in_doc[other], why
                     in_doc[fname].add(val)
-    what = "docs/source/settings doc"
+    what = "docs/source/settings/*.md docs created by gen_settings.py"
     in_doc_all = set()
     for vals in in_doc.values():
         in_doc_all.update(vals)

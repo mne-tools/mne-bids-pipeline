@@ -13,6 +13,7 @@ from mne_bids_pipeline.typing import (
     DigMontageType,
     FloatArrayLike,
     PathLike,
+    UniqueSequence,
 )
 
 # %%
@@ -1430,6 +1431,11 @@ Set to `None` to not apply an additional high-pass filter.
     us so we can discuss.
 """
 
+ica_h_freq: float | None = None
+"""
+The cutoff frequency of the low-pass filter to apply before running ICA.
+"""
+
 ica_max_iterations: int = 500
 """
 Maximum number of iterations to decompose the data into independent
@@ -1476,10 +1482,20 @@ it is to run but the less data you have to compute a good ICA. Set to
 `1` or `None` to not perform any decimation.
 """
 
+ica_use_ecg_detection: bool = True
+"""
+Whether to use the MNE ECG detection on the ICA components.
+"""
+
 ica_ecg_threshold: float = 0.1
 """
 The cross-trial phase statistics (CTPS) threshold parameter used for detecting
 ECG-related ICs.
+"""
+
+ica_use_eog_detection: bool = True
+"""
+Whether to use the MNE EOG detection on the ICA components.
 """
 
 ica_eog_threshold: float = 3.0
@@ -1488,6 +1504,48 @@ The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
+
+ica_use_icalabel: bool = False
+"""
+Whether to use MNE-ICALabel to automatically label ICA components. Only available for
+EEG data.
+
+!!! info
+    Using MNE-ICALabel mandates that you also set:
+    ```python
+    eeg_reference = "average"
+    ica_l_freq = 1
+    ica_h_freq = 100
+    ```
+    It will also apply the average reference to the data before running or applying ICA.
+
+!!! info
+    Using this requires `mne-icalabel` package, which in turn will require you to
+    install a suitable runtime (`onnxruntime` or `pytorch`).
+"""
+
+ica_icalabel_include: Annotated[
+    UniqueSequence[
+        Literal[
+            "brain",
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise",
+            "other",
+        ]
+    ],
+    Len(1, 7),
+] = ("brain", "other")
+"""
+Which independent components (ICs) to keep based on the labels given by ICLabel.
+Possible labels are:
+
+```
+["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
+```
+"""  # noqa: E501
 
 # ### Amplitude-based artifact rejection
 #

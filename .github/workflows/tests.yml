@@ -18,7 +18,7 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v5
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     - run: pip install --upgrade pip
@@ -57,7 +57,7 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "${{ matrix.python }}"
       - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
@@ -95,7 +95,7 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"

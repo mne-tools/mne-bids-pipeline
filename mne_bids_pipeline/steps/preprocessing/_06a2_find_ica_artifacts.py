@@ -404,7 +404,7 @@ def find_ica_artifacts(
 
         for idx, (label, prob, exclude) in enumerate(icalabel_report):
             component_id = f"ICA{idx:03d}"
-            row_color = "background-color:#fdd;" if exclude else "background-color:#dfd;"
+            row_color = "background-color:red;" if exclude else "background-color:blue;"
             table_html += (
                 f"<tr style='{row_color}'><td>{component_id}</td><td>{label}</td>"
                 f"<td>{prob:.2f}</td><td>{'Yes' if exclude else 'No'}</td></tr>\n"
@@ -423,11 +423,12 @@ def find_ica_artifacts(
             for j, ic in enumerate(indices):
                 prob = icalabel_report[ic][1]
                 status = "excluded" if ic in ica.exclude else "included"
+                fcolor = "red" if ic in ica.exclude else "blue"
                 ica.plot_components(picks=ic, axes=[axes[j]], show=False)
                 axes[j].text(
                     0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
                     ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
-                    bbox=dict(facecolor="orange", alpha=0.5, pad=4)
+                    bbox=dict(facecolor=fcolor, alpha=0.5, pad=4)
                 )
             for ax in axes[len(indices):]:
                 fig.delaxes(ax)

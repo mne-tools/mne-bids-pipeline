@@ -328,7 +328,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":
-        if config.ica_l_freq < 1:
+        effective_ica_l_freq = max([config.ica_l_freq or 0.0, config.l_freq or 0.0])
+        if effective_ica_l_freq < 1:
             raise ValueError(
                 "You requested to high-pass filter the data before ICA with "
                 f"ica_l_freq={config.ica_l_freq} Hz. Please increase this "

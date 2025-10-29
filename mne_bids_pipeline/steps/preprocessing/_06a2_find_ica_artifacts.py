@@ -427,7 +427,7 @@ def find_ica_artifacts(
         <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
         """ + "".join(f"<th>{cls}</th>" for cls in icalabel_classes) + "</tr></thead><tbody>"
         for _, row in icalabel_df.iterrows():
-            bg_color = "#ff6b6b" if row.Excluded else "#4da3ff"
+            bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
             text_color = "color:black;"
             prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
             icalabel_prob_table_html += (
@@ -456,7 +456,7 @@ def find_ica_artifacts(
                 axes[j].text(
                     0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
                     ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
-                    bbox=dict(facecolor=fcolor, alpha=0.5, pad=4)
+                    bbox=dict(facecolor=fcolor, alpha=0.3, pad=4)
                 )
             for ax in axes[len(indices):]:
                 fig.delaxes(ax)

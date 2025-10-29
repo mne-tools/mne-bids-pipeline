@@ -467,6 +467,15 @@ def _default_factory(key: str, val: Any) -> Any:
             "channel noise": 0.8,
             "other": 0.8,
         },  #ica_exclusion_thresholds
+        {
+            "brain": 0.3,
+            "muscle artifact": 0.3,
+            "eye blink": 0.3,
+            "heart beat": 0.3,
+            "line noise": 0.3,
+            "channel noise": 0.3,
+            "other": 0.3,
+        },  #ica_class_thresholds
     ]
 
     def default_factory() -> Any:

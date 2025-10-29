@@ -1545,6 +1545,7 @@ Possible labels are:
 ```
 ["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
 ```
+Default behaviour: keeps all components except those with a label other then specified IF they meet the default exclusion threshold of 0.8
 """
 
 ica_exclusion_thresholds: dict[str, float] = {
@@ -1557,9 +1558,30 @@ ica_exclusion_thresholds: dict[str, float] = {
     "other": 0.8,
 }
 """
-ICLabel class probability thresholds for excluding components.
+ICLabel class minimum probability thresholds for excluding components.
 You can set single values like {"eye blink": 0.7,"brain": 0.8} with the remaining values being the default.
+
+Each component gets a probability distribution over all classes e.g.  [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0] (order as in the dict)
+Flags components to be dropped IF they meet any of the exclusion thresholds of classes not in ica_icalabel_include
 """
+
+ica_class_thresholds: dict[str, float] = {
+    "brain": 0.3,
+    "muscle artifact": 0.3,
+    "eye blink": 0.3,
+    "heart beat": 0.3,
+    "line noise": 0.3,
+    "channel noise": 0.3,
+    "other": 0.3,
+}
+"""
+ICLabel class minimum probability thresholds for considering components member of a class (like "brain", etc).
+You can set single values like {"eye blink": 0.3,"brain": 0.3} with the remaining values being the default.
+
+Each component gets a probability distribution over all classes e.g. [0.7, 0.1, 0.1, 0, 0, 0, 0] (order as in the dict)
+Makes sure components are kept IF they meet any of the class thresholds of classes in ica_icalabel_include
+"""
+
   # noqa: E501
 
 # ### Amplitude-based artifact rejection

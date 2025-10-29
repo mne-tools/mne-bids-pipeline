@@ -269,30 +269,52 @@ def find_ica_artifacts(
             )
     # Run MNE-ICALabel if requested.
     if cfg.ica_use_icalabel:
-        import mne_icalabel
-        
+        from mne_icalabel.iclabel import iclabel_label_components
+
         icalabel_ics = []
         icalabel_labels = []
-        icalabel_prob = []
         icalabel_report = []
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
-        label_results = mne_icalabel.label_components(
-            inst=epochs, ica=ica, method="iclabel"
-        )
+        icalabel_class_probabilities = iclabel_label_components(inst=epochs, ica=ica, inplace=False)
 
-        for idx, (label, prob) in enumerate(
-            zip(label_results["labels"], label_results["y_pred_proba"])
-        ):
-            threshold = cfg.ica_exclusion_thresholds.get(label, 0.8)
+        icalabel_classes = [
+            "brain",
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise",
+            "other",
+        ]
 
-            if label not in cfg.ica_icalabel_include and prob >= threshold:
+        icalabel_component_labels = [icalabel_classes[i] for i in icalabel_class_probabilities.argmax(axis=1)]
+        icalabel_max_probabilities = icalabel_class_probabilities.max(axis=1)
+
+        
+        #logic for exclusion of components - look at each component
+        for idx, (label, prob) in enumerate(zip(icalabel_component_labels, icalabel_max_probabilities)):
+            #get its probability table over all classes e.g. [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
+            probs = dict(zip(icalabel_classes, icalabel_class_probabilities[idx]))
+            
+            exclude = any(#ONLY
+                #IF the component looked at does have a probability higher then the exclusion_threshold in any of the NOT included classes
+                cls not in cfg.ica_icalabel_include and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
+                for cls, p in probs.items()
+            ) and not any(#AND
+                #IF the component looked at does NOT have a probability higher then the class_threshold in any of the included classes
+                cls in cfg.ica_icalabel_include and p >= cfg.ica_class_thresholds.get(cls, 0.3)
+                for cls, p in probs.items()
+            )
+
+            if exclude:
+                #THEN exclude that component
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
-                icalabel_prob.append(prob)
                 icalabel_report.append((label, prob, True))
             else:
+                #ELSE keep it
                 icalabel_report.append((label, prob, False))
 
 
@@ -301,10 +323,17 @@ def find_ica_artifacts(
             f"in {len(epochs)} epochs."
         )
         logger.info(**gen_log_kwargs(message=msg))
+        icalabel_df = pd.DataFrame(
+            icalabel_class_probabilities, columns=icalabel_classes
+        )
     else:
         icalabel_ics = []
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
+    icalabel_df["Component"] = [f"ICA{i:03d}" for i in range(len(icalabel_component_labels))]
+    icalabel_df["PredictedLabel"] = icalabel_component_labels
+    icalabel_df["MaxProbability"] = icalabel_max_probabilities
+    icalabel_df["Excluded"] = [i in ica.exclude for i in range(len(icalabel_component_labels))]
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -389,35 +418,34 @@ def find_ica_artifacts(
         
         
         )
-        table_html = """
-        <table border="1" cellspacing="0" cellpadding="5">
+
+        icalabel_prob_table_html = """
+        <table border="1" cellspacing="0" cellpadding="5" 
+            style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
         <thead>
-        <tr>
-        <th>Component</th>
-        <th>Label</th>
-        <th>Probability</th>
-        <th>Exclude</th>
-        </tr>
-        </thead>
-        <tbody>
-        """
-
-        for idx, (label, prob, exclude) in enumerate(icalabel_report):
-            component_id = f"ICA{idx:03d}"
-            row_color = "background-color:red;" if exclude else "background-color:blue;"
-            table_html += (
-                f"<tr style='{row_color}'><td>{component_id}</td><td>{label}</td>"
-                f"<td>{prob:.2f}</td><td>{'Yes' if exclude else 'No'}</td></tr>\n"
+        <tr style="background-color:#eee;">
+        <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
+        """ + "".join(f"<th>{cls}</th>" for cls in icalabel_classes) + "</tr></thead><tbody>"
+        for _, row in icalabel_df.iterrows():
+            bg_color = "#ff6b6b" if row.Excluded else "#4da3ff"
+            text_color = "color:black;"
+            prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
+            icalabel_prob_table_html += (
+                f"<tr style='background-color:{bg_color};{text_color}'>"
+                f"<td>{row.Component}</td>"
+                f"<td>{row.PredictedLabel}</td>"
+                f"<td>{row.MaxProbability:.2f}</td>"
+                f"<td>{'Yes' if row.Excluded else 'No'}</td>"
+                f"{prob_cells}</tr>\n"
             )
+        icalabel_prob_table_html += "</tbody></table>"
+        report.add_html(title="ICALabel: report", html=icalabel_prob_table_html)
 
-        table_html += "</tbody></table>"
-        report.add_html(title="ICAlabel: report", html=table_html)
-
-        label_map = {}
+        icalabel_map = {}
         for i, (label, _, _) in enumerate(icalabel_report):
-            label_map.setdefault(label, []).append(i)
+            icalabel_map.setdefault(label, []).append(i)
 
-        for label, indices in label_map.items():
+        for label, indices in icalabel_map.items():
             fig, axes = plt.subplots((len(indices) + 3) // 4, 4, figsize=(16, 3 * ((len(indices) + 3) // 4)))
             axes = axes.flatten()
             for j, ic in enumerate(indices):
@@ -471,6 +499,7 @@ def get_config(
         ica_use_icalabel=config.ica_use_icalabel,
         ica_icalabel_include=config.ica_icalabel_include,
         ica_exclusion_thresholds=config.ica_exclusion_thresholds,
+        ica_class_thresholds=config.ica_class_thresholds,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,

@@ -47,7 +47,9 @@ def get_fs_subject(
         assert isinstance(config.use_template_mri, str), type(config.use_template_mri)
         return config.use_template_mri
 
-    if session is not None:
+    if session is not None and _has_session_specific_anat(
+        subject, session, subjects_dir
+    ):
         return f"sub-{subject}_ses-{session}"
     elif (pathlib.Path(subjects_dir) / subject).exists():
         return subject

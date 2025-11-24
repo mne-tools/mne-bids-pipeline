@@ -4,6 +4,8 @@ import os.path
 import re
 import numpy as np
 from mne_bids import BIDSPath
+import pandas as pd
+from numpy.polynomial.polynomial import Polynomial
 
 from ..._config_utils import (
     _bids_kwargs,
@@ -167,12 +169,21 @@ def sync_eyelink(
 
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     et_fnames = [in_files.pop(f"et_run-{run}") for run in cfg.runs]
-    
     logger.info(**gen_log_kwargs(message=f"Found the following eye-tracking files: {et_fnames}"))
     out_files = dict()
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
-    out_files["eyelink"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
+    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None) #TODO: Do we need to remove the run here?
+    out_files["eyelink_eeg"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
     del bids_basename
+
+    logger.info(**gen_log_kwargs(message=f"Create `beh` folder for eye-tracking events."))
+    out_dir_beh = cfg.deriv_root / f"sub-{subject}"
+    if session is not None:
+        out_dir_beh /= f"ses-{session}"
+
+    out_dir_beh /= "beh"
+    out_dir_beh.mkdir(exist_ok=True, parents=True) # TODO: Check whether the parameter settings make sense or if there is a danger that something could be accidentally overwritten
+
+    out_files["eyelink_et_events"] = et_fnames[0].copy().update(root=cfg.deriv_root, suffix="et_events", extension=".tsv")
     
     for idx, (run, raw_fname,et_fname) in enumerate(zip(cfg.runs, raw_fnames,et_fnames)):
         msg = f"Syncing Eyelink ({et_fname.basename}) and EEG data ({raw_fname.basename})."
@@ -188,7 +199,7 @@ def sync_eyelink(
             subprocess.run(["edf2asc", et_fname]) # TODO: Still needs to be tested
             et_fname.update(extension='.asc')
 
-        raw_et = mne.io.read_raw_eyelink(et_fname, find_overlaps=True)
+        raw_et = mne.io.read_raw_eyelink(et_fname, find_overlaps=False) # TODO: Make find_overlaps optional
 
         # If the user did not specify a regular expression for the eye-tracking sync events, it is assumed that it's
         # identical to the regex for the EEG sync events
@@ -208,6 +219,7 @@ def sync_eyelink(
             # Set all nan values in the eye-tracking data to 0 (to make resampling possible)
             # TODO: Decide whether this is a good approach or whether interpolation (e.g. of blinks) is useful
             # TODO: Decide about setting the values (e.g. for blinks) back to nan after synchronising the signals
+            # TODO: Tip: With `mne.preprocessing.annotate_nan` you could get the timings comparatively easy, and then after `realign_raw` put nans on top.
             np.nan_to_num(raw_et._data, copy=False, nan=0.0)
             logger.info(**gen_log_kwargs(message=f"The eye-tracking data contained nan values. They were replaced with zeros."))
 
@@ -218,14 +230,12 @@ def sync_eyelink(
 
         # Add ET data to EEG
         raw.add_channels([raw_et], force_update_info=True)
-        raw._raw_extras.append(raw_et._raw_extras)
 
         # Also add ET annotations to EEG
         # first mark et sync event descriptions so we can differentiate them later
-        for idx, desc in enumerate(raw_et.annotations.description):
-            if re.search(cfg.sync_eventtype_regex_et, desc):
-                raw_et.annotations.description[idx] =  "ET_" + desc
-        raw.set_annotations(mne.annotations._combine_annotations(raw.annotations, 
+        # TODO: For now all ET events will be marked with ET and added to the EEG annotations, maybe later filter for certain events only
+        raw_et.annotations.description = map(lambda desc: "ET_" + desc, raw_et.annotations.description)
+        raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,
                                                                  raw_et.annotations,
                                                                  0,
                                                                  raw.first_samp,
@@ -235,14 +245,64 @@ def sync_eyelink(
         msg = f"Saving synced data to disk."
         logger.info(**gen_log_kwargs(message=msg))
         raw.save(
-            out_files["eyelink"],
+            out_files["eyelink_eeg"],
             overwrite=True,
             split_naming="bids", # TODO: Find out if we need to add this or not
             split_size=cfg._raw_split_size, # ???
         )
         # no idea what the split stuff is...
-        _update_for_splits(out_files, "eyelink") # TODO: Find out if we need to add this or not
+        _update_for_splits(out_files, "eyelink_eeg") # TODO: Find out if we need to add this or not
 
+        # Extract and concatenate eye-tracking event data frames
+        et_dfs = raw_et._raw_extras[0]["dfs"]
+        df_list = [] # List to collect extracted data frames before concatenation
+
+        # Extract fixations, saccades and blinks data frames
+        for df_name, trial_type in zip(["fixations", "saccades", "blinks"], ["fixation", "saccade", "blink"]):
+            df = et_dfs[df_name]
+            df["trial_type"] = trial_type
+            df_list.append(df)
+
+        et_combined_df = pd.concat(df_list, ignore_index=True)
+        et_combined_df.rename(columns={"time":"onset"}, inplace=True)
+        et_combined_df.sort_values(by="onset", inplace=True, ignore_index=True)
+        et_combined_df = et_combined_df[ # Adapt column order
+            [
+                "onset", # needs to be first (BIDS convention)
+                "duration",
+                "end_time",
+                "trial_type",
+                "eye",
+                "fix_avg_x",
+                "fix_avg_y",
+                "fix_avg_pupil_size",
+                "sacc_start_x",
+                "sacc_start_y",
+                "sacc_end_x",
+                "sacc_end_y",
+                "sacc_visual_angle",
+                "peak_velocity"
+            ]
+        ] 
+
+        # Synchronize eye-tracking events with EEG data
+
+        # Recalculate regression coefficients (because the realign_raw function does not output them)
+        # Code snippet from `mne.preprocessing.realign_raw` function:
+        # https://github.com/mne-tools/mne-python/blob/b44c46ae7f9b6ffc5318b5d64f12906c1f2d875c/mne/preprocessing/realign.py#L69-L71
+        poly = Polynomial.fit(x=et_sync_times, y=sync_times, deg=1)
+        converted = poly.convert(domain=(-1, 1))
+        [zero_ord, first_ord] = converted.coef
+        # print(zero_ord, first_ord)
+
+        # Synchronize time stamps of ET events
+        et_combined_df["onset"] = (et_combined_df["onset"] * first_ord + zero_ord)
+        et_combined_df["end_time"] = (et_combined_df["end_time"] * first_ord + zero_ord)
+        # TODO: Do we also need to "synchronize"/adapt the duration column?
+
+        msg = f"Saving synced eye-tracking events to disk."
+        logger.info(**gen_log_kwargs(message=msg))
+        et_combined_df.to_csv(out_files["eyelink_et_events"], sep="\t", index=False)
 
     # Add to report
     fig, axes = plt.subplots(2, 2, figsize=(19.2, 19.2))
@@ -301,7 +361,7 @@ def sync_eyelink(
     
     # regression between synced events
     # we assume here that these annotations are sequential pairs of the same event in raw and et. otherwise this will break
-    raw_onsets = [annot["onset"] for annot in raw.annotations if re.match(cfg.sync_eventtype_regex, annot["description"])]
+    raw_onsets = [annot["onset"] for annot in raw.annotations if re.match("^(?!.*ET_)"+cfg.sync_eventtype_regex, annot["description"])]
     et_onsets = [annot["onset"] for annot in raw.annotations if re.match("ET_"+cfg.sync_eventtype_regex_et, annot["description"])]
  
     if len(raw_onsets) != len(et_onsets):

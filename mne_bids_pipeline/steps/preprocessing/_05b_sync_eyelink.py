@@ -234,7 +234,7 @@ def sync_eyelink(
         # Also add ET annotations to EEG
         # first mark et sync event descriptions so we can differentiate them later
         # TODO: For now all ET events will be marked with ET and added to the EEG annotations, maybe later filter for certain events only
-        raw_et.annotations.description = map(lambda desc: "ET_" + desc, raw_et.annotations.description)
+        raw_et.annotations.description = np.array(list(map(lambda desc: "ET_" + desc, raw_et.annotations.description)))
         raw.set_annotations(mne.annotations._combine_annotations(raw.annotations,
                                                                  raw_et.annotations,
                                                                  0,

@@ -175,6 +175,7 @@ def sync_eyelink(
     out_files["eyelink_eeg"] = bids_basename.copy().update(processing="eyelink", suffix="raw")
     del bids_basename
 
+    # Ideally, this would be done in one of the previous steps where all folders are created (in `_01_init_derivatives_dir.py`). 
     logger.info(**gen_log_kwargs(message=f"Create `beh` folder for eye-tracking events."))
     out_dir_beh = cfg.deriv_root / f"sub-{subject}"
     if session is not None:
@@ -298,7 +299,7 @@ def sync_eyelink(
         # Synchronize time stamps of ET events
         et_combined_df["onset"] = (et_combined_df["onset"] * first_ord + zero_ord)
         et_combined_df["end_time"] = (et_combined_df["end_time"] * first_ord + zero_ord)
-        # TODO: Do we also need to "synchronize"/adapt the duration column?
+        # TODO: To be super correct, we would need to recalculate duration column as well - but typically the slope is so close to "1" that this would typically result in <1ms differences
 
         msg = f"Saving synced eye-tracking events to disk."
         logger.info(**gen_log_kwargs(message=msg))

@@ -190,7 +190,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - bash_env
       - run:
           name: Get ds000248
@@ -198,7 +198,7 @@ jobs:
             $DOWNLOAD_DATA ds000248
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000248-6
+          key: data-cache-ds000248-4
           paths:
             - ~/mne_data/ds000248
 
@@ -521,7 +521,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test ds000248_base
           # Forces rerunning (cov and FLASH BEM) so don't check
@@ -550,7 +550,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test ds000248_ica
           command: $RUN_TESTS ds000248_ica
@@ -577,7 +577,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test BEM from FLASH
           command: $RUN_TESTS -r ds000248_FLASH_BEM
@@ -603,7 +603,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
@@ -630,7 +630,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test head surface creation for MNE coregistration
           command: $RUN_TESTS -c -r ds000248_coreg_surfaces
@@ -649,7 +649,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-6
+            - data-cache-ds000248-4
       - run:
           name: test ds000248_no_mri
           command: $RUN_TESTS ds000248_no_mri

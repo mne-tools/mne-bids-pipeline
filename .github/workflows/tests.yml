@@ -17,7 +17,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
@@ -52,7 +52,7 @@ jobs:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true

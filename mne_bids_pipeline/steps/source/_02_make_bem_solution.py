@@ -101,12 +101,12 @@ def main(*, config: SimpleNamespace) -> None:
     """Run BEM solution calculation."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if config.use_template_mri is not None:
         msg = "Skipping, BEM solution computation not needed for MRI template …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))

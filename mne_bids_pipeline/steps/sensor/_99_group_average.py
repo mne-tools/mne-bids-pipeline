@@ -1030,9 +1030,10 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
+    subject = "average"
     if config.task_is_rest:
         msg = 'Skipping, task is "rest" …'
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
     cfg = get_config(
         config=config,
@@ -1040,9 +1041,8 @@ def main(*, config: SimpleNamespace) -> None:
     exec_params = config.exec_params
     if hasattr(exec_params.overrides, "subjects"):
         msg = "Skipping, --subjects is set …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
-    subject = "average"
     sessions = get_sessions(config=config)
     if cfg.decode or cfg.decoding_csp:
         decoding_contrasts = get_decoding_contrasts(config=cfg)

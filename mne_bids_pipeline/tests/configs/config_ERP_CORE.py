@@ -75,8 +75,12 @@ if task == "N400":  # test autoreject local without ICA
     spatial_filter = None
     reject = "autoreject_local"
     autoreject_n_interpolate = [2, 4]
-elif task == "N170":  # test autoreject local before ICA
+elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     spatial_filter = "ica"
+    ica_algorithm = "picard-extended_infomax"
+    ica_use_icalabel = True
+    ica_h_freq = 100
+    ica_l_freq = 1
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
     autoreject_n_interpolate = [2, 4]
@@ -293,7 +297,6 @@ elif task == "N170":
         "O2",
     ]
 
-    ica_n_components = 30 - 1
     for i in range(1, 180 + 1):
         orig_name = f"stimulus/{i}"
 
@@ -316,6 +319,7 @@ elif task == "N170":
     conditions = ["stimulus/face/normal", "stimulus/car/normal"]
     contrasts = [("stimulus/face/normal", "stimulus/car/normal")]
 elif task == "P3":
+    ica_n_components = 30 - 1  # 29 channels
     rename_events = {
         "response/201": "response/correct",
         "response/202": "response/incorrect",

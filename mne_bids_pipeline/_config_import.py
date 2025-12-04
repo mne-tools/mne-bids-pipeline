@@ -120,6 +120,10 @@ def _import_config(
     ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    override_keys = ("subjects",)
+    exec_params.overrides = SimpleNamespace(
+        **{k: getattr(overrides, k) for k in override_keys if hasattr(overrides, k)}
+    )
     for k in keys:
         if k not in in_both:
             delattr(config, k)

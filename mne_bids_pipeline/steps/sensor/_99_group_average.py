@@ -1031,13 +1031,17 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     if config.task_is_rest:
-        msg = '    … skipping: for "rest" task.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, task is "rest" …'
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
     cfg = get_config(
         config=config,
     )
     exec_params = config.exec_params
+    if hasattr(exec_params.overrides, "subjects"):
+        msg = "Skipping, --subjects is set …"
+        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        return
     subject = "average"
     sessions = get_sessions(config=config)
     if cfg.decode or cfg.decoding_csp:

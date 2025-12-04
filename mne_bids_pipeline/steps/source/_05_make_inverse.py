@@ -193,7 +193,7 @@ def main(*, config: SimpleNamespace) -> None:
     """Run inv."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     with get_parallel_backend(config.exec_params):

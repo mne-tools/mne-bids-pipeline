@@ -261,13 +261,12 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:
-        msg = "No contrasts specified; not performing decoding."
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        msg = "Skipping, no contrasts specified …"
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if not config.decode:
-        msg = "No decoding requested by user."
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     with get_parallel_backend(config.exec_params):

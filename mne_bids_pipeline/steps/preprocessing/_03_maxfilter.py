@@ -635,8 +635,7 @@ def get_config_maxwell_filter(
 def main(*, config: SimpleNamespace) -> None:
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     with get_parallel_backend(config.exec_params):

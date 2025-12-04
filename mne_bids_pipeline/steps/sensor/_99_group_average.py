@@ -105,6 +105,8 @@ def average_evokeds(
 
     evokeds: list[mne.Evoked] = list()
     for these_evokeds in evokeds_nested:
+        if not these_evokeds:  # empty
+            continue
         evokeds.append(
             mne.grand_average(
                 these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
@@ -129,6 +131,11 @@ def average_evokeds(
         root=cfg.deriv_root,
         check=False,
     )
+    # short-circuit, writing a dummy file (can be needed when no data present for a
+    # given missing run)
+    if not evokeds:
+        fname_out.fpath.write_bytes(b"")
+        return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
     if not fname_out.fpath.parent.exists():
         os.makedirs(fname_out.fpath.parent)

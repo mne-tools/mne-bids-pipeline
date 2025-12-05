@@ -1,4 +1,5 @@
 import argparse
+import logging
 import pathlib
 import time
 from textwrap import dedent
@@ -12,6 +13,11 @@ from ._config_utils import _get_step_modules
 from ._logging import gen_log_kwargs, logger
 from ._parallel import get_parallel_backend
 from ._run import _short_step_path
+
+_LOGGING_OPTIONS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+}
 
 
 def main() -> None:
@@ -106,12 +112,22 @@ def main() -> None:
         action="store_true",
         help="Disable caching of intermediate results.",
     )
+    parser.add_argument(
+        "--logger-level",
+        dest="logger_level",
+        default="info",
+        help=f"Set the logger level ({', '.join(_LOGGING_OPTIONS)}). Default is info.",
+        metavar="LEVEL",
+        choices=tuple(_LOGGING_OPTIONS),
+    )
     options = parser.parse_args()
 
     if options.create_config is not None:
         target_path = pathlib.Path(options.create_config)
         create_template_config(target_path=target_path, overwrite=False)
         return
+
+    logger.level = _LOGGING_OPTIONS[options.logger_level]
 
     config = options.config
     config_switch = options.config_switch
@@ -183,6 +199,7 @@ def main() -> None:
         overrides.on_error = on_error
     if not cache:
         overrides.memory_location = False
+    overrides.logger_level = logger.level
 
     step_modules: list[ModuleType] = []
     STEP_MODULES = _get_step_modules()

@@ -16,6 +16,7 @@ from tqdm import tqdm
 import mne_bids_pipeline
 import mne_bids_pipeline.tests.datasets
 from mne_bids_pipeline._config_import import _import_config
+from mne_bids_pipeline._logging import _log_context
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS, DATASET_OPTIONS_T
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
@@ -52,12 +53,11 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict[str, bool]:
     if example_config_path.stem == "config_ERP_CORE":
         tasks[:] = ["N400", "ERN", "LRP", "MMN", "N2pc", "N170", "P3"]
     for task in tasks:
-        with _task_context(task):
+        with _task_context(task), _log_context(logging.ERROR):
             config = _import_config(
                 config_path=example_config_path,
                 overrides=None,
                 check=False,
-                log=False,
             )
         ch_types = [c.upper() for c in config.ch_types]
         funcs["MEG processing"] = "MEG" in ch_types

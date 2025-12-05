@@ -228,10 +228,17 @@ class _ParseConfigSteps:
                             assert keyword.value.args[0].value.id == "config"
                             _add_step_option(step, keyword.value.args[0].attr)
                             continue
+                        # Allowlist of function names that we ignore when deciding
+                        # which config options are used. Things like `_bids_kwargs`
+                        # for example are used in every func and use lots of config
+                        # values, so they would just add unnecessary noise (people
+                        # will understand that changing something like "runs" will
+                        # affect many steps).
                         if key not in (
                             "_bids_kwargs",
                             "_import_data_kwargs",
                             "get_runs",
+                            "get_runs_tasks",
                             "get_subjects",
                             "get_sessions",
                         ):
@@ -254,7 +261,11 @@ class _ParseConfigSteps:
                                 for func_name in _EXTRA_FUNCS.get(key, ()):
                                     assert f"{func_name}(" in source, (key, func_name)
                             attrs = _CONFIG_RE.findall(source)
-                            if key != "get_sessions":  # pure wrapper
+                            # pure wrappers
+                            if key not in (
+                                "get_sessions",
+                                "get_runs_tasks",
+                            ):
                                 assert len(attrs), (
                                     f"No config.* found in source of {key}"
                                 )

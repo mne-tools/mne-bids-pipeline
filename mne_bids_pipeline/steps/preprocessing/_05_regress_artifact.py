@@ -139,8 +139,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run artifact regression."""
     if config.regress_artifact is None:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     with get_parallel_backend(config.exec_params):

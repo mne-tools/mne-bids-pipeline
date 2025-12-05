@@ -368,8 +368,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run ICA."""
     if config.spatial_filter != "ica":
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     with get_parallel_backend(config.exec_params):

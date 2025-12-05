@@ -37,6 +37,7 @@
 - Fix bug where `mf_int_order` wasn't passed to `maxwell_filter`. Added config option for `mf_ext_order`. (#1092 by @harrisonritz)
 - Sanitize report tags that contain `"` or `'`, e.g., for certain metadata contrasts (#1097 by @harrisonritz)
 - `sub-average` is no longer run when ``--subject`` is passed to the pipeline command line interface, allowing easier and more correct single-subject iteration (#1133 by @larsoner)
+- Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 
 ### :books: Documentation
 

@@ -109,6 +109,9 @@ def compute_esss_proj(
             f"Computing eSSS basis with {cfg.mf_esss} component{_pl(cfg.mf_esss)}"
         )
     )
+    raw_noise.filter(
+        l_freq=27.5, l_trans_bandwidth=2.5, h_freq=32.5, h_trans_bandwidth=2.5
+    )
     projs = mne.compute_proj_raw(
         raw_noise,
         n_grad=cfg.mf_esss,
@@ -116,6 +119,10 @@ def compute_esss_proj(
         reject=cfg.mf_esss_reject,
         meg="combined",
     )
+    msg = "Got variance explained of: " + ", ".join(
+        f"{p['explained_var'] * 100:.1f}%" for p in projs
+    )
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files["esss_basis"] = bids_path_in.copy().update(
         subject=subject,  # need these in the case of an empty room match

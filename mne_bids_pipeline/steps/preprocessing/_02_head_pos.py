@@ -154,9 +154,7 @@ def get_input_fnames_twa_head_pos(
     in_files: dict[str, BIDSPath] = dict()
     # can't use `_get_run_path()` here because we don't loop over runs/tasks.
     # But any run will do, as long as the file exists:
-    runs_tasks = get_runs_tasks(
-        config=cfg, subject=subject, session=session, which=("runs",)
-    )
+    runs_tasks = cfg.runs_tasks
     run = next(filter(lambda run_task: run_task[1] == task, runs_tasks))[0]
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
@@ -254,7 +252,7 @@ def compute_twa_head_pos(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
-def get_config(
+def get_config_head_pos(
     *,
     config: SimpleNamespace,
     subject: str,
@@ -270,6 +268,26 @@ def get_config(
     return cfg
 
 
+def get_config_twa(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
+        runs_tasks=get_runs_tasks(
+            config=config,
+            subject=subject,
+            session=session,
+            which=("runs",),
+        ),
+        mf_mc=config.mf_mc,
+        mf_destination=config.mf_destination,
+        **_import_data_kwargs(config=config, subject=subject),
+    )
+    return cfg
+
+
 def main(*, config: SimpleNamespace) -> None:
     """Run head position estimation."""
     if not config.use_maxwell_filter or not config.mf_mc:
@@ -280,7 +298,9 @@ def main(*, config: SimpleNamespace) -> None:
         parallel, run_func = parallel_func(run_head_pos, exec_params=config.exec_params)
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject, session=session),
+                cfg=get_config_head_pos(
+                    config=config, subject=subject, session=session
+                ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
@@ -303,7 +323,7 @@ def main(*, config: SimpleNamespace) -> None:
         )
         more_logs = parallel(
             run_func(
-                cfg=config,
+                cfg=get_config_twa(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,

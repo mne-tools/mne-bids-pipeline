@@ -117,8 +117,8 @@ def assess_data_quality(
     preexisting_bads = sorted(raw.info["bads"])
 
     auto_scores: dict[str, FloatArrayT] | None = None
-    auto_noisy_chs: list[str] | None = None
-    auto_flat_chs: list[str] | None = None
+    auto_noisy_chs: list[str] = []
+    auto_flat_chs: list[str] = []
     if _do_mf_autobad(cfg=cfg):
         # use calibration and crosstalk files (if provided)
         cfg.mf_cal_fname = in_files.pop("mf_cal_fname", None)
@@ -221,14 +221,36 @@ def assess_data_quality(
             title=f"Raw ({kind})",
             tags=("data-quality",),
         )
+
+        tags = ("raw", "data-quality", f"run-{run}")
+        text_html = (
+            '<p class="mb-0">Bad channels marked in original data:</p>\n'
+            f"{_chs_html(preexisting_bads)}"
+        )
+        text_kwargs = dict(
+            title=f"Bad channels: {run}",
+            section="Data quality",
+            tags=tags,
+            replace=True,
+        )
         title = f"Bad channel detection: {run}"
         if cfg.find_noisy_channels_meg:
             assert auto_scores is not None
             msg = "Adding noisy channel detection to report"
             logger.info(**gen_log_kwargs(message=msg))
+            if cfg.find_noisy_channels_meg:
+                text_html += (
+                    '<hr>\n<p class="mb-0">Automatically detected noisy channels:</p>\n'
+                    f"{_chs_html(auto_noisy_chs)}"
+                )
+            if cfg.find_flat_channels_meg:
+                text_html += (
+                    '<hr>\n<p class="mb-0">Automatically detected flat channels:</p>\n'
+                    f"{_chs_html(auto_flat_chs)}"
+                )
+            report.add_html(text_html, **text_kwargs)
             figs = plot_auto_scores(auto_scores, ch_types=cfg.ch_types)
             captions = [f"Run {run}"] * len(figs)
-            tags = ("raw", "data-quality", f"run-{run}")
             report.add_figure(
                 fig=figs,
                 caption=captions,
@@ -241,6 +263,7 @@ def assess_data_quality(
                 plt.close(fig)
         else:
             report.remove(title=title)
+            report.add_html(text_html, **text_kwargs)
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
@@ -378,3 +401,21 @@ def main(*, config: SimpleNamespace) -> None:
         )
 
     save_logs(config=config, logs=logs)
+
+
+def _chs_html(chs: list[str]) -> str:
+    """Generate HTML representation of channel list."""
+    if not chs:
+        return "<p><em>None</em></p>"
+    else:
+        # making it a badge decreases text size, so we bump it back up by making
+        # it h5
+        return (
+            "<h5>\n"
+            + "\n".join(
+                '  <span class="badge bg-secondary rounded-pill float-none me-1">'
+                + f'<code class="badge">{ch}</code></span>'
+                for ch in chs
+            )
+            + "\n</h5>"
+        )

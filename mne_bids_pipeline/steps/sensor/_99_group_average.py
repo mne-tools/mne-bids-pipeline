@@ -1040,7 +1040,7 @@ def main(*, config: SimpleNamespace) -> None:
     )
     exec_params = config.exec_params
     if hasattr(exec_params.overrides, "subjects"):
-        msg = "Skipping, --subjects is set …"
+        msg = "Skipping, --subject is set …"
         logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
     sessions = get_sessions(config=config)

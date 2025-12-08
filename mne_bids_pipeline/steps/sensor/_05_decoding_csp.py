@@ -556,14 +556,13 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run all subjects decoding in parallel."""
-    if not config.contrasts or not config.decoding_csp:
-        if not config.contrasts:
-            msg = "No contrasts specified. "
-        else:
-            msg = "No CSP analysis requested. "
+    if not config.contrasts:
+        msg = "Skipping, no contrasts specified …"
+        logger.info(**gen_log_kwargs(message=msg))
+        return
 
-        msg += "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+    if not config.decoding_csp:
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     with get_parallel_backend(config.exec_params):

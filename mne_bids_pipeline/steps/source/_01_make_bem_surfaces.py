@@ -167,7 +167,7 @@ def main(*, config: SimpleNamespace) -> None:
 
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            make_bem_surfaces, exec_params=config.exec_params
+            make_bem_surfaces, exec_params=config.exec_params, n_iter=len(subj_sess)
         )
         logs = parallel(
             run_func(

@@ -104,10 +104,12 @@ def main(*, config: SimpleNamespace) -> None:
     sessions = get_sessions(config)
     if (Path(get_fs_subjects_dir(config)) / "fsaverage").exists():
         subjects.append("fsaverage")
-
+    ss = [(subject, session) for subject in subjects for session in sessions]
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            make_coreg_surfaces, exec_params=config.exec_params
+            make_coreg_surfaces,
+            exec_params=config.exec_params,
+            n_iter=len(ss),
         )
 
         parallel(
@@ -121,6 +123,5 @@ def main(*, config: SimpleNamespace) -> None:
                 force_run=config.recreate_scalp_surface,
                 subject=subject,
             )
-            for subject in subjects
-            for session in sessions
+            for subject, session in ss
         )

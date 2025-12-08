@@ -1077,8 +1077,15 @@ def main(*, config: SimpleNamespace) -> None:
                 for session in sessions
             ]
             # Time-by-time
+            sc = [
+                (session, contrast)
+                for session in sessions
+                for contrast in decoding_contrasts
+            ]
             parallel, run_func = parallel_func(
-                average_time_by_time_decoding, exec_params=exec_params
+                average_time_by_time_decoding,
+                exec_params=exec_params,
+                n_iter=len(sc),
             )
             logs += parallel(
                 run_func(
@@ -1089,14 +1096,13 @@ def main(*, config: SimpleNamespace) -> None:
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                 )
-                for session in sessions
-                for contrast in decoding_contrasts
+                for session, contrast in sc
             )
 
         # 3. CSP
         if cfg.decoding_csp and decoding_contrasts:
             parallel, run_func = parallel_func(
-                average_csp_decoding, exec_params=exec_params
+                average_csp_decoding, exec_params=exec_params, n_iter=len(sc)
             )
             logs += parallel(
                 run_func(
@@ -1107,8 +1113,7 @@ def main(*, config: SimpleNamespace) -> None:
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                 )
-                for contrast in get_decoding_contrasts(config=cfg)
-                for session in sessions
+                for session, contrast in sc
             )
 
     save_logs(config=config, logs=logs)

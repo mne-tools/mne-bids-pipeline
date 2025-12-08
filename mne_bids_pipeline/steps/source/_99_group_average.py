@@ -11,12 +11,12 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
     get_subjects_given_session,
-    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -233,8 +233,11 @@ def main(*, config: SimpleNamespace) -> None:
     all_sessions = get_sessions(config)
 
     logs = list()
+    ss = _get_ss(config=config)
     with get_parallel_backend(exec_params):
-        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
+        parallel, run_func = parallel_func(
+            morph_stc, exec_params=exec_params, n_iter=len(ss)
+        )
         logs += parallel(
             run_func(
                 cfg=cfg,
@@ -243,8 +246,7 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     logs += [
         run_average(

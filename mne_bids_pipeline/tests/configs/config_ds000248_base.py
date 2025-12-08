@@ -34,6 +34,7 @@ def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:
 
 
 spatial_filter = "ssp"
+clean_raw = False
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=1)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 ssp_meg = "combined"

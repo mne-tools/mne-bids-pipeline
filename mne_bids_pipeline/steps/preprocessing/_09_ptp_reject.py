@@ -15,7 +15,7 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 
-from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _bids_kwargs, _get_ss
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._reject import _get_reject
@@ -261,9 +261,11 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
-    parallel, run_func = parallel_func(drop_ptp, exec_params=config.exec_params)
-
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            drop_ptp, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -273,7 +275,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

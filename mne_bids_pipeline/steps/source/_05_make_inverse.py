@@ -15,10 +15,10 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
     get_noise_cov_bids_path,
-    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -196,8 +196,11 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_inverse, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_inverse, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -209,7 +212,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

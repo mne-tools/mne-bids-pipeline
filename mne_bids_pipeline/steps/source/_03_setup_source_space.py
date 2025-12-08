@@ -100,9 +100,15 @@ def main(*, config: SimpleNamespace) -> None:
     else:
         sub_ses = get_subjects_sessions(config=config)
 
+    ss = [
+        (subject, session)
+        for subject, sessions in sub_ses.items()
+        for session in sessions
+    ]
+    del sub_ses
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_setup_source_space, exec_params=config.exec_params
+            run_setup_source_space, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -114,7 +120,6 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
             )
-            for subject, sessions in sub_ses.items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

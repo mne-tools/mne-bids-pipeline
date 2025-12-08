@@ -133,7 +133,7 @@ def average_evokeds(
     )
     # short-circuit, writing a dummy file (can be needed when no data present for a
     # given missing run)
-    fname_verbose = fname_out.fpath.with_suffix(".IS_INTENTIONALLY_EMPTY.txt")
+    fname_verbose = fname_out.fpath.with_suffix(".fif.IS_INTENTIONALLY_EMPTY.txt")
     if not evokeds:
         fname_out.fpath.write_bytes(b"")
         fname_verbose.write_text("No evoked data present for any subject.\n", "utf-8")

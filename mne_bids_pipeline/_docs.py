@@ -157,6 +157,7 @@ class _ParseConfigSteps:
                 # Also look at config.* args in main(), e.g. config.recreate_bem
                 # and config.recreate_scalp_surface
                 if func.name == "main":
+                    # Look at all function calls in main()
                     for call in ast.walk(func):
                         if not isinstance(call, ast.Call):
                             continue
@@ -184,21 +185,29 @@ class _ParseConfigSteps:
 
                     # Also look for root-level conditionals like use_maxwell_filter
                     # or spatial_filter
-                    for cond in ast.iter_child_nodes(func):
-                        # is a conditional
+                    for cond in ast.walk(func):
+                        # is a conditional in main()
                         if not isinstance(cond, ast.If):
                             continue
-                        # has a return statement
-                        if not any(isinstance(c, ast.Return) for c in ast.walk(cond)):
-                            continue
-                        # look at all attributes in the conditional
-                        for attr in ast.walk(cond.test):
-                            if not isinstance(attr, ast.Attribute):
-                                continue
-                            assert isinstance(attr.value, ast.Name)
-                            if attr.value.id != "config":
-                                continue
-                            _add_step_option(step, attr.attr)
+                        # has a `return` inside it
+                        if any(isinstance(c, ast.Return) for c in ast.walk(cond)):
+                            for attr in ast.walk(cond.test):
+                                if not isinstance(attr, ast.Attribute):
+                                    continue
+                                assert isinstance(attr.value, ast.Name)
+                                if attr.value.id != "config":
+                                    continue
+                                _add_step_option(step, attr.attr)
+                        else:
+                            # Could be something that nests a call like
+                            # if config.clean_raw:
+                            #     process_raw(...)
+                            if isinstance(cond.test, ast.Attribute):
+                                assert isinstance(cond.test.value, ast.Name)
+                                if cond.test.value.id == "config":
+                                    _add_step_option(step, cond.test.attr)
+                            # if "_08b_apply_ssp" in where:
+
                 # Now look at get_config* functions
                 if not func.name.startswith("get_config"):
                     continue

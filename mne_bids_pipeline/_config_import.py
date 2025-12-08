@@ -187,7 +187,9 @@ def _update_config_from_path(
                 or key in ("Annotated", "Path", "PathLike", "Literal", "FloatArrayLike")
             ):
                 # Spacing here to match "Overriding" messages
-                msg = f"Assigning  {key} = {repr(val)[:100]}"
+                rep = repr(val).replace("\n", " ")
+                rep = rep[:100] + "…" if len(rep) > 100 else rep
+                msg = f"Assigning  {key} = {rep}"
                 logger.debug(**gen_log_kwargs(message=msg, emoji="📝"))
             setattr(config, key, val)
     return user_names

@@ -5,6 +5,7 @@ import importlib.util
 import os
 import pathlib
 import re
+import types
 from dataclasses import field
 from functools import partial
 from inspect import signature
@@ -31,7 +32,6 @@ def _import_config(
     config_path: PathLike | None,
     overrides: SimpleNamespace | None = None,
     check: bool = True,
-    log: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
@@ -54,7 +54,6 @@ def _import_config(
         config=config,
         config_path=config_path,
         overrides=overrides,
-        log=log,
     )
 
     extra_exec_params_keys: tuple[str, ...] = ()
@@ -86,7 +85,6 @@ def _import_config(
         _check_misspellings_removals(
             valid_names=valid_names,
             user_names=user_names,
-            log=log,
             config_validation=config.config_validation,
         )
 
@@ -179,7 +177,20 @@ def _update_config_from_path(
             if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
-            logger.debug(f"Overwriting: {key} -> {val}")
+            # Don't log about class types like ArbirtaryContrast, Ge, Path, etc.
+            if not (
+                isinstance(val, type)
+                or isinstance(val, types.ModuleType)
+                # there would be a way to detect if something is a type annotation but
+                # I couldn't figure it out easily. This is debug level anyway so
+                # hopefully not too bad to just maintain a blocklist here.
+                or key in ("Annotated", "Path", "PathLike", "Literal", "FloatArrayLike")
+            ):
+                # Spacing here to match "Overriding" messages
+                rep = repr(val).replace("\n", " ")
+                rep = rep[:100] + "…" if len(rep) > 100 else rep
+                msg = f"Assigning  {key} = {rep}"
+                logger.debug(**gen_log_kwargs(message=msg, emoji="📝"))
             setattr(config, key, val)
     return user_names
 
@@ -189,7 +200,6 @@ def _update_with_user_config(
     config: SimpleNamespace,  # modified in-place
     config_path: PathLike | None,
     overrides: SimpleNamespace | None,
-    log: bool = False,
 ) -> list[str]:
     # 1. Basics and hidden vars
     from . import __version__
@@ -216,9 +226,8 @@ def _update_with_user_config(
     for name in dir(overrides):
         if not name.startswith("__"):
             val = getattr(overrides, name)
-            if log:
-                msg = f"Overriding config.{name} = {repr(val)}"
-                logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+            msg = f"Overriding config.{name} = {repr(val)}"
+            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
             setattr(config, name, val)
 
     # 4. Env vars and other triaging
@@ -239,18 +248,18 @@ def _update_with_user_config(
     # 5. Consistency
     log_kwargs = dict(emoji="override")
     if config.interactive:
-        if log and config.on_error != "debug":
+        if config.on_error != "debug":
             msg = 'Setting config.on_error="debug" because of interactive mode'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.on_error = "debug"
     else:
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
-        if log and config.n_jobs != 1:
+        if config.n_jobs != 1:
             msg = 'Setting config.n_jobs=1 because config.on_error="debug"'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.n_jobs = 1
-        if log and config.parallel_backend != "loky":
+        if config.parallel_backend != "loky":
             msg = (
                 'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
@@ -530,7 +539,6 @@ def _check_misspellings_removals(
     *,
     valid_names: list[str],
     user_names: list[str],
-    log: bool,
     config_validation: str,
 ) -> None:
     # for each name in the user names, check if it's in the valid names but
@@ -547,7 +555,7 @@ def _check_misspellings_removals(
                     "the variable to reduce ambiguity and avoid this message, "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
-                _handle_config_error(this_msg, log, config_validation)
+                _handle_config_error(this_msg, config_validation)
             if user_name in _REMOVED_NAMES:
                 new = _REMOVED_NAMES[user_name]["new_name"]
                 if new not in user_names:
@@ -558,16 +566,14 @@ def _check_misspellings_removals(
                         f"{msg} this variable has been removed as a valid "
                         f"config option, {instead}."
                     )
-                    _handle_config_error(this_msg, log, config_validation)
+                    _handle_config_error(this_msg, config_validation)
 
 
 def _handle_config_error(
     msg: str,
-    log: bool,
     config_validation: str,
 ) -> None:
     if config_validation == "raise":
         raise ValueError(msg)
-    elif config_validation == "warn":
-        if log:
-            logger.warning(**gen_log_kwargs(message=msg, emoji="🛟"))
+    logger_call = logger.warning if config_validation == "warn" else logger.debug
+    logger_call(**gen_log_kwargs(message=msg, emoji="🛟"))

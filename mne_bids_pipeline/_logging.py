@@ -1,9 +1,11 @@
 """Logging."""
 
+import contextlib
 import datetime
 import inspect
 import logging
 import os
+from collections.abc import Generator
 
 import rich.console
 import rich.theme
@@ -183,3 +185,14 @@ def _linkfile(uri: str) -> str:
 
 def _is_testing() -> bool:
     return os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true"
+
+
+@contextlib.contextmanager
+def _log_context(level: int) -> Generator[None, None, None]:
+    """Set logging level temporarily."""
+    old_level = logger.level
+    logger.level = level
+    try:
+        yield
+    finally:
+        logger.level = old_level

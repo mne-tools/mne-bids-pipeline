@@ -116,6 +116,10 @@ def compute_esss_proj(
         reject=cfg.mf_esss_reject,
         meg="combined",
     )
+    msg = "Got variance explained of: " + ", ".join(
+        f"{p['explained_var'] * 100:.1f}%" for p in projs
+    )
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files["esss_basis"] = bids_path_in.copy().update(
         subject=subject,  # need these in the case of an empty room match

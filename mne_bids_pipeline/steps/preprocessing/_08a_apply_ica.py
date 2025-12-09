@@ -12,7 +12,7 @@ import pandas as pd
 from mne.preprocessing import read_ica
 from mne_bids import BIDSPath
 
-from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt
+from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt, _limit_which_clean
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -260,7 +260,8 @@ def main(*, config: SimpleNamespace) -> None:
         return
 
     ss = _get_ss(config=config)
-    ssrt = _get_ssrt(config=config, which="limited")
+    which = _limit_which_clean(config=config)
+    ssrt = _get_ssrt(config=config, which=which)
     with get_parallel_backend(config.exec_params):
         # Epochs
         parallel, run_func = parallel_func(

@@ -451,18 +451,10 @@ def _get_ss(
 def _get_ssrt(
     *,
     config: SimpleNamespace,
-    which: tuple[str, ...] | None | Literal["limited"] = None,
+    which: tuple[str, ...] | None = None,
 ) -> list[tuple[str, str | None, str | None, str | None]]:
     kwargs = dict()
     if which is not None:
-        if which == "limited":
-            which = ()
-            if config.process_raw_clean:
-                which += ("runs",)
-            if config.process_empty_room:
-                which += ("noise",)
-            if config.process_rest:
-                which += ("rest",)
         kwargs["which"] = which
     return [
         (subject, session, run, task)
@@ -474,6 +466,17 @@ def _get_ssrt(
             **kwargs,
         )
     ]
+
+
+def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
+    which: tuple[str, ...] = ()
+    if config.process_raw_clean:
+        which += ("runs",)
+    if config.process_empty_room:
+        which += ("noise",)
+    if config.process_rest:
+        which += ("rest",)
+    return which
 
 
 def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:

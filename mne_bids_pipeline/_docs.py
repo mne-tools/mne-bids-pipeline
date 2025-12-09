@@ -130,6 +130,7 @@ class _ParseConfigSteps:
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
             _config_utils.get_subjects_sessions,
+            _config_utils._limit_which_clean,
         ):
             this_list: list[str] = []
             assert isinstance(func_extra, FunctionType)
@@ -161,6 +162,9 @@ class _ParseConfigSteps:
                     for call in ast.walk(func):
                         if not isinstance(call, ast.Call):
                             continue
+                        if not isinstance(call.func, ast.Name):
+                            continue
+                        key = call.func.id
                         for keyword in call.keywords:
                             if not isinstance(keyword.value, ast.Attribute):
                                 continue
@@ -170,22 +174,13 @@ class _ParseConfigSteps:
                             if keyword.value.attr in ("exec_params",):
                                 continue
                             _add_step_option(step, keyword.value.attr)
-                        for arg in call.args:
-                            if not isinstance(arg, ast.Name):
-                                continue
-                            if arg.id != "config":
-                                continue
-                            assert isinstance(call.func, ast.Name)
-                            key = call.func.id
-                            # e.g., get_subjects_sessions(config)
-                            if key in _MANUAL_KWS:
-                                for option in _MANUAL_KWS[key]:
-                                    _add_step_option(step, option)
-                                break
+                        if key in _MANUAL_KWS:
+                            for option in _MANUAL_KWS[key]:
+                                _add_step_option(step, option)
 
                     # Also look for conditionals like use_maxwell_filter or
-                    # spatial_filter (could be nested, e.g., in a context manager)
-                    for cond in ast.walk(func):
+                    # spatial_filter
+                    for cond in ast.iter_child_nodes(func):
                         # is a conditional in main()
                         if not isinstance(cond, ast.If):
                             continue
@@ -273,7 +268,7 @@ class _ParseConfigSteps:
                     if isinstance(keyword.value, ast.Name):
                         key = f"{where}:{keyword.value.id}"
                         if key in _MANUAL_KWS:
-                            for option in _MANUAL_KWS[f"{where}:{keyword.value.id}"]:
+                            for option in _MANUAL_KWS[key]:
                                 _add_step_option(step, option)
                             continue
                         raise RuntimeError(f"{where} cannot handle Name {key=}")

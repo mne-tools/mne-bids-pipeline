@@ -133,9 +133,12 @@ def average_evokeds(
     )
     # short-circuit, writing a dummy file (can be needed when no data present for a
     # given missing run)
+    fname_verbose = fname_out.fpath.with_suffix(".fif.IS_INTENTIONALLY_EMPTY.txt")
     if not evokeds:
         fname_out.fpath.write_bytes(b"")
+        fname_verbose.write_text("No evoked data present for any subject.\n", "utf-8")
         return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    fname_verbose.unlink(missing_ok=True)  # should remove if previously written
 
     if not fname_out.fpath.parent.exists():
         os.makedirs(fname_out.fpath.parent)
@@ -1040,7 +1043,7 @@ def main(*, config: SimpleNamespace) -> None:
     )
     exec_params = config.exec_params
     if hasattr(exec_params.overrides, "subjects"):
-        msg = "Skipping, --subjects is set …"
+        msg = "Skipping, --subject is set …"
         logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
     sessions = get_sessions(config=config)

@@ -234,7 +234,7 @@ def main(*, config: SimpleNamespace) -> None:
     all_sessions = get_sessions(config)
 
     if hasattr(exec_params.overrides, "subjects"):
-        msg = "Skipping, --subjects is set …"
+        msg = "Skipping, --subject is set …"
         logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
         return
 

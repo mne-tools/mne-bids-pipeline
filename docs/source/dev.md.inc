@@ -10,7 +10,7 @@
 - New config options [`find_bad_channels_extra_kws`][mne_bids_pipeline._config.find_bad_channels_extra_kws], [`notch_extra_kws`][mne_bids_pipeline._config.notch_extra_kws], and [`bandpass_extra_kws`][mne_bids_pipeline._config.bandpass_extra_kws] to pass additional keyword arguments to `mne.preprocessing.find_bad_channels_maxwell`, `mne.filter.notch_filter`, and `mne.filter.filter_data` respectively (#1061 by @harrisonritz)
 - Config option [`ssp_ecg_channel`][mne_bids_pipeline._config.ssp_ecg_channel] now allows dict values, for setting a different channel name for each subject/session (#1062 by @drammock)
 - New config option [`epochs_custom_metadata`][mne_bids_pipeline._config.epochs_custom_metadata] allows for custom metadata when creating epochs. (#1088 by @harrisonritz)
-- New config option [`clean_raw`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
+- New config option [`process_raw_clean`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
 
 ### :warning: Behavior changes

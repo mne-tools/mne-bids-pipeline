@@ -23,7 +23,6 @@ crop_runs = (0, 180)
 
 # Artifact correction.
 spatial_filter = "ica"
-clean_raw = False
 ica_algorithm = "picard-extended_infomax"
 ica_max_iterations = 1000
 ica_l_freq = 1.0

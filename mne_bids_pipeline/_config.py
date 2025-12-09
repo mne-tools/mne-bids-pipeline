@@ -1262,7 +1262,7 @@ ways using the configuration options you can find below.
     ICA fitting – this file will need to be updated!
 """
 
-clean_raw: bool = True
+process_raw_clean: bool = True
 """
 Whether to apply the spatial filter to the raw data to produce `_proc-clean_raw.fif`
 files. If `False`, only the epochs will be cleaned, which can save on processing time,

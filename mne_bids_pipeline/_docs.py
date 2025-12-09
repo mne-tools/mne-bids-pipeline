@@ -200,7 +200,7 @@ class _ParseConfigSteps:
                                 _add_step_option(step, attr.attr)
                         else:
                             # Could be something that nests a call like
-                            # if config.clean_raw:
+                            # if config.process_raw_clean:
                             #     process_raw(...)
                             if isinstance(cond.test, ast.Attribute):
                                 assert isinstance(cond.test.value, ast.Name)

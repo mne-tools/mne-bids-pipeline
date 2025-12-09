@@ -85,7 +85,7 @@ else:
     ica_reject = dict(eeg=350e-6, eog=500e-6)
     reject = "autoreject_global"
 
-clean_raw = False
+process_raw_clean = False
 
 # These settings are only used for the cases where spatial_filter="ica"
 ica_max_iterations = 1000

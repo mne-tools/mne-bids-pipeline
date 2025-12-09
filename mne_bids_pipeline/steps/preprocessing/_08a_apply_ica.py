@@ -279,7 +279,7 @@ def main(*, config: SimpleNamespace) -> None:
             for subject, session in ss
         )
         # Raw
-        if config.clean_raw:
+        if config.process_raw_clean:
             parallel, run_func = parallel_func(
                 apply_ica_raw, exec_params=config.exec_params, n_iter=len(ssrt)
             )

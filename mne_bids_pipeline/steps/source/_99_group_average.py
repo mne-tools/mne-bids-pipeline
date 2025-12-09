@@ -222,15 +222,21 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
+    average_subj = "average"
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(config))
     cfg = get_config(config=config)
     exec_params = config.exec_params
     all_sessions = get_sessions(config)
+
+    if hasattr(exec_params.overrides, "subjects"):
+        msg = "Skipping, --subject is set …"
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
+        return
 
     logs = list()
     ss = _get_ss(config=config)
@@ -253,7 +259,7 @@ def main(*, config: SimpleNamespace) -> None:
             cfg=cfg,
             exec_params=exec_params,
             session=session,
-            subject="average",
+            subject=average_subj,
         )
         for session in all_sessions
     ]

@@ -273,8 +273,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run SSP."""
     if config.spatial_filter != "ssp":
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     ss = _get_ss(config=config)

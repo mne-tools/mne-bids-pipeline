@@ -116,20 +116,28 @@ logger = _MBPLogger()
 
 
 def gen_log_kwargs(
-    message: str,
+    message: str,  # special shortcut value: SKIP
     *,
     subject: str | int | None = None,
     session: str | int | None = None,
     run: str | int | None = None,
     task: str | None = None,
-    emoji: str = "⏳️",
+    emoji: str | None = None,
 ) -> LogKwargsT:
     # Try to figure these out
     assert isinstance(message, str), type(message)
+    default_subject = None
+    if message == "SKIP":
+        message = "Skipping, not requested …"
+    default_emoji = "skip" if message.startswith("Skipping") else "hourglass"
+    if emoji is None:
+        emoji = default_emoji
+    if emoji == "skip":
+        default_subject = "*"
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
     if subject is None:
-        subject = up_locals.get("subject", None)
+        subject = up_locals.get("subject", default_subject)
     if session is None:
         session = up_locals.get("session", None)
     if run is None:
@@ -150,8 +158,9 @@ def gen_log_kwargs(
     # Choose some to be our standards
     emoji = dict(
         cache="✅",
-        skip="⏩",
+        hourglass="⏳️",
         override="❌",
+        skip="⏩",
     ).get(emoji, emoji)
     extra = {"emoji": emoji}
     if subject:

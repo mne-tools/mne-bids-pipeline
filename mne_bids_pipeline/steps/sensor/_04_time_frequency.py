@@ -183,8 +183,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     ss = _get_ss(config=config)

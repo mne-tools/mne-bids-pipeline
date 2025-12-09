@@ -325,7 +325,7 @@ def main(*, config: SimpleNamespace) -> None:
     """Run cov."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     # Note that we're using config.noise_cov here and not adding it to
@@ -333,7 +333,7 @@ def main(*, config: SimpleNamespace) -> None:
 
     if config.noise_cov == "ad-hoc":
         msg = "Skipping, using ad-hoc diagonal covariance …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     ss = _get_ss(config=config)

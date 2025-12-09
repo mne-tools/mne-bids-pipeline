@@ -197,17 +197,14 @@ def compute_twa_head_pos(
     # logging
     want_mc = cfg.mf_mc
     dest_is_twa = isinstance(cfg.mf_destination, str) and cfg.mf_destination == "twa"
-    msg = "Skipping computation of time-weighted average head position"
+    msg = "Skipping, "
     if not want_mc:
-        msg += " (no movement compensation requested)"
-        kwargs = dict(emoji="skip")
+        msg += " no movement compensation requested …"
     elif not dest_is_twa:
-        msg += ' (mf_destination is not "twa")'
-        kwargs = dict(emoji="skip")
+        msg += ' mf_destination is not "twa" …'
     else:
         msg = "Computing time-weighted average head position"
-        kwargs = dict()
-    logger.info(**gen_log_kwargs(message=msg, **kwargs))
+    logger.info(**gen_log_kwargs(message=msg))
     # maybe bail early
     if not want_mc and not dest_is_twa:
         return _prep_out_files(exec_params=exec_params, out_files=dict())
@@ -276,8 +273,7 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run head position estimation."""
     if not config.use_maxwell_filter or not config.mf_mc:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     ss = _get_ss(config=config)

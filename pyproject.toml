@@ -48,6 +48,7 @@ dependencies = [
   "autoreject",
   "mne[hdf5] >=1.7",
   "mne-bids[full]",
+  "mne-icalabel",
   "filelock",
   "meegkit"
 ]

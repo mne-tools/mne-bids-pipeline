@@ -24,7 +24,7 @@ from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -359,9 +359,11 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run filter."""
+    ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(filter_data, exec_params=config.exec_params)
-
+        parallel, run_func = parallel_func(
+            filter_data, exec_params=config.exec_params, n_iter=len(ssrt)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -374,13 +376,6 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
-
     save_logs(config=config, logs=logs)

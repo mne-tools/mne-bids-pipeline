@@ -9,9 +9,10 @@ from types import SimpleNamespace
 import mne
 
 from mne_bids_pipeline._config_utils import (
+    _get_ss,
+    _get_ssrt,
+    _limit_which_clean,
     _proj_path,
-    get_runs_tasks,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -167,10 +168,13 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
+    which = _limit_which_clean(config=config)
+    ssrt = _get_ssrt(config=config, which=which)
     with get_parallel_backend(config.exec_params):
         # Epochs
         parallel, run_func = parallel_func(
-            apply_ssp_epochs, exec_params=config.exec_params
+            apply_ssp_epochs, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -182,12 +186,11 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
         # Raw
         parallel, run_func = parallel_func(
-            apply_ssp_raw, exec_params=config.exec_params
+            apply_ssp_raw, exec_params=config.exec_params, n_iter=len(ssrt)
         )
         logs += parallel(
             run_func(
@@ -201,12 +204,6 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
     save_logs(config=config, logs=logs)

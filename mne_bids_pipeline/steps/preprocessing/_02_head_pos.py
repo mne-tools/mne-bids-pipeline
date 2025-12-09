@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import mne
 from mne_bids import BIDSPath, find_matching_paths
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt, get_runs_tasks
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
     _get_run_rest_noise_path,
@@ -276,8 +276,14 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
+    ssrt = _get_ssrt(config=config, which=("runs", "rest"))
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_head_pos, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_head_pos,
+            exec_params=config.exec_params,
+            n_iter=len(ssrt),
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject, session=session),
@@ -287,19 +293,14 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-                which=("runs", "rest"),
-            )
+            for subject, session, run, task in ssrt
         )
         # compute time-weighted average head position
         # within subject+session+task, across runs
         parallel, run_func = parallel_func(
-            compute_twa_head_pos, exec_params=config.exec_params
+            compute_twa_head_pos,
+            exec_params=config.exec_params,
+            n_iter=len(ss),
         )
         more_logs = parallel(
             run_func(
@@ -309,8 +310,7 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 task=config.task or None,  # default task is ""
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
 
     save_logs(config=config, logs=logs + more_logs)

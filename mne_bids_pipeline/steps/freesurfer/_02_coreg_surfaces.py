@@ -11,10 +11,10 @@ from types import SimpleNamespace
 import mne.bem
 
 from mne_bids_pipeline._config_utils import (
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
-    get_subjects,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -100,14 +100,15 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     # Ensure we're also processing fsaverage if present
-    subjects = get_subjects(config)
+    ss = _get_ss(config=config)
     sessions = get_sessions(config)
     if (Path(get_fs_subjects_dir(config)) / "fsaverage").exists():
-        subjects.append("fsaverage")
-
+        ss += [("fsaverage", session) for session in sessions]
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            make_coreg_surfaces, exec_params=config.exec_params
+            make_coreg_surfaces,
+            exec_params=config.exec_params,
+            n_iter=len(ss),
         )
 
         parallel(
@@ -121,6 +122,5 @@ def main(*, config: SimpleNamespace) -> None:
                 force_run=config.recreate_scalp_surface,
                 subject=subject,
             )
-            for subject in subjects
-            for session in sessions
+            for subject, session in ss
         )

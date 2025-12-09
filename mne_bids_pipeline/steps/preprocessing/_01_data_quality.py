@@ -7,11 +7,10 @@ import pandas as pd
 
 from mne_bids_pipeline._config_utils import (
     _do_mf_autobad,
+    _get_ssrt,
     _pl,
     get_mf_cal_fname,
     get_mf_ctc_fname,
-    get_runs_tasks,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import (
     _bads_path,
@@ -378,9 +377,12 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run assess_data_quality."""
+    ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            assess_data_quality, exec_params=config.exec_params
+            assess_data_quality,
+            exec_params=config.exec_params,
+            n_iter=len(ssrt),
         )
         logs = parallel(
             run_func(
@@ -391,13 +393,7 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
 
     save_logs(config=config, logs=logs)

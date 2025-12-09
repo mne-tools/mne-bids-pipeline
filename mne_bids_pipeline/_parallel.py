@@ -133,10 +133,10 @@ def parallel_func(
     func: Callable[..., Any],
     *,
     exec_params: SimpleNamespace,
+    n_iter: int,
 ) -> tuple[Callable[..., Any], Callable[..., Any]]:
-    if (
-        get_parallel_backend_name(exec_params=exec_params) == "loky"
-        and get_n_jobs(exec_params=exec_params) == 1
+    if get_parallel_backend_name(exec_params=exec_params) == "loky" and (
+        n_iter <= 1 or get_n_jobs(exec_params=exec_params) == 1
     ):
         my_func = func
         parallel = list

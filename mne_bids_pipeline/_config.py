@@ -1262,6 +1262,14 @@ ways using the configuration options you can find below.
     ICA fitting – this file will need to be updated!
 """
 
+process_raw_clean: bool = True
+"""
+Whether to apply the spatial filter to the raw data to produce `_proc-clean_raw.fif`
+files. If `False`, only the epochs will be cleaned, which can save on processing time,
+disk space, and report length. Regardless of this setting, necessary intermediate
+processed raw files like `_proc-filt_raw.fif` and similar files will be saved to disk.
+"""
+
 min_ecg_epochs: Annotated[int, Ge(1)] = 5
 """
 Minimal number of ECG epochs needed to compute SSP projectors.

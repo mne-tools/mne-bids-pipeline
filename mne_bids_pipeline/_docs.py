@@ -184,7 +184,7 @@ class _ParseConfigSteps:
                         # is a conditional in main()
                         if not isinstance(cond, ast.If):
                             continue
-                        # has a `return` inside it
+                        # has a return statement somewhere inside it
                         if not any(isinstance(c, ast.Return) for c in ast.walk(cond)):
                             continue
                         for attr in ast.walk(cond.test):
@@ -195,7 +195,7 @@ class _ParseConfigSteps:
                                 continue
                             _add_step_option(step, attr.attr)
 
-                # Now look at get_config* functions
+                # Now look at get_config* functions anywhere in the file
                 if not func.name.startswith("get_config"):
                     continue
                 found = True

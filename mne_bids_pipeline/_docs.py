@@ -178,30 +178,22 @@ class _ParseConfigSteps:
                             for option in _MANUAL_KWS[key]:
                                 _add_step_option(step, option)
 
-                    # Also look for conditionals like use_maxwell_filter or
-                    # spatial_filter
+                    # Also look for root-level conditionals like use_maxwell_filter
+                    # or spatial_filter
                     for cond in ast.iter_child_nodes(func):
                         # is a conditional in main()
                         if not isinstance(cond, ast.If):
                             continue
                         # has a `return` inside it
-                        if any(isinstance(c, ast.Return) for c in ast.walk(cond)):
-                            for attr in ast.walk(cond.test):
-                                if not isinstance(attr, ast.Attribute):
-                                    continue
-                                assert isinstance(attr.value, ast.Name)
-                                if attr.value.id != "config":
-                                    continue
-                                _add_step_option(step, attr.attr)
-                        else:
-                            # Could be something that nests a call like
-                            # if config.process_raw_clean:
-                            #     process_raw(...)
-                            if isinstance(cond.test, ast.Attribute):
-                                assert isinstance(cond.test.value, ast.Name)
-                                if cond.test.value.id == "config":
-                                    _add_step_option(step, cond.test.attr)
-                            # if "_08b_apply_ssp" in where:
+                        if not any(isinstance(c, ast.Return) for c in ast.walk(cond)):
+                            continue
+                        for attr in ast.walk(cond.test):
+                            if not isinstance(attr, ast.Attribute):
+                                continue
+                            assert isinstance(attr.value, ast.Name)
+                            if attr.value.id != "config":
+                                continue
+                            _add_step_option(step, attr.attr)
 
                 # Now look at get_config* functions
                 if not func.name.startswith("get_config"):

@@ -122,7 +122,7 @@ assign_re = re.compile(
 )
 
 
-def main(*, do_print: bool = False) -> None:
+def main() -> None:
     """Parse the configuration and generate the markdown documentation."""
     print(f"Parsing {config_path} to generate settings .md files.")
     # max file-level depth is 2 even though we have 3 subsection levels
@@ -153,8 +153,6 @@ def main(*, do_print: bool = False) -> None:
                 assert current_path is not None, levels
                 if current_lines[0] == "":  # this happens with tags
                     current_lines = current_lines[1:]
-                if do_print:
-                    print(f"Writing: {current_path}")
                 current_path.write_text("\n".join(current_lines + [""]), "utf-8")
             have_params = False
             if this_level == 0:

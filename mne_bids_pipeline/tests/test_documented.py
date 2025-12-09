@@ -43,7 +43,7 @@ def test_options_documented() -> None:
         from gen_settings import main  # pyright: ignore [reportMissingImports]
     finally:
         sys.path.pop()
-    main(do_print=True)
+    main()
     assert settings_path.is_dir()
     in_doc: dict[str, set[str]] = dict()
     key = "        - "

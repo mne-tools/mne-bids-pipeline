@@ -7,7 +7,7 @@ import matplotlib.transforms
 import mne
 import numpy as np
 import pandas as pd
-from mne.decoding import CSP
+from mne.decoding import CSP, LinearModel
 from mne_bids import BIDSPath
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
@@ -179,6 +179,10 @@ def one_subject_decoding(
         epochs=epochs,
     )
 
+    # Create output directory if it doesn't already exist
+    output_dir = bids_path.fpath.parent / "CSD_output"
+    output_dir.mkdir(exist_ok=True)
+
     # Classifier
     csp = CSP(
         n_components=4,  # XXX revisit
@@ -187,10 +191,12 @@ def one_subject_decoding(
     clf = make_pipeline(
         *preproc_steps,
         csp,
-        LogReg(
-            solver="liblinear",  # much faster than the default
-            random_state=cfg.random_state,
-            n_jobs=1,
+        LinearModel(
+            LogReg(
+                solver="liblinear",  # much faster than the default
+                random_state=cfg.random_state,
+                n_jobs=1,
+            )
         ),
     )
     cv = StratifiedKFold(
@@ -265,6 +271,7 @@ def one_subject_decoding(
         epochs_filt, y = prepare_epochs_and_y(
             epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
         )
+
         # Get the data for all time points
         X = epochs_filt.get_data()
 
@@ -280,6 +287,21 @@ def one_subject_decoding(
         freq_decoding_table.loc[idx, "mean_crossval_score"] = cv_scores.mean()
         freq_decoding_table.at[idx, "scores"] = cv_scores
         del fmin, fmax, cond1, cond2, freq_range_name
+
+        # COEFS
+        clf.fit(X, y)
+        weights_csp = mne.decoding.get_coef(clf, "patterns_", inverse_transform=True)
+
+        # PATTERNS
+        csp.fit_transform(X, y)
+        sensor_pattern_csp = csp.patterns_
+
+        # save weights and patterns
+        csp_patterns_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_patterns"
+        csp_weights_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_weights"
+
+        np.save(op.join(output_dir, csp_patterns_fname), sensor_pattern_csp)
+        np.save(op.join(output_dir, csp_weights_fname), weights_csp)
 
     # Loop over times x frequencies
     #
@@ -335,6 +357,7 @@ def one_subject_decoding(
         # Crop data to the time window of interest
         if tmax is not None:  # avoid warnings about outside the interval
             tmax = min(tmax, epochs_filt.times[-1])
+
         X = epochs_filt.crop(tmin, tmax).get_data()
         del epochs_filt
         cv_scores = cross_val_score(
@@ -353,6 +376,21 @@ def one_subject_decoding(
         msg += f": {cfg.decoding_metric}={score:0.3f}"
         logger.info(**gen_log_kwargs(msg))
         del tmin, tmax, fmin, fmax, cond1, cond2, freq_range_name
+
+        # COEFS
+        clf.fit(X, y)
+        weights_csp = mne.decoding.get_coef(clf, "patterns_", inverse_transform=True)
+
+        # PATTERNS
+        csp.fit_transform(X, y)
+        sensor_pattern_csp = csp.patterns_
+
+        # save weights and patterns
+        csp_patterns_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_{str(tmin)}_{str(tmax)}_s_patterns"
+        csp_weights_fname = f"{cond1}_{cond2}_{str(fmin)}_{str(fmax)}_Hz_{str(tmin)}_{str(tmax)}_s_patterns"
+
+        np.save(op.join(output_dir, csp_patterns_fname), sensor_pattern_csp)
+        np.save(op.join(output_dir, csp_weights_fname), weights_csp)
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f"{condition1}+{condition2}".replace(op.sep, "")

@@ -451,10 +451,18 @@ def _get_ss(
 def _get_ssrt(
     *,
     config: SimpleNamespace,
-    which: tuple[str, ...] | None = None,
+    which: tuple[str, ...] | None | Literal["limited"] = None,
 ) -> list[tuple[str, str | None, str | None, str | None]]:
     kwargs = dict()
     if which is not None:
+        if which == "limited":
+            which = ()
+            if config.process_raw_clean:
+                which += ("runs",)
+            if config.process_empty_room:
+                which += ("noise",)
+            if config.process_rest:
+                which += ("rest",)
         kwargs["which"] = which
     return [
         (subject, session, run, task)

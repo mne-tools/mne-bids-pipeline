@@ -378,10 +378,10 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "Please set process_empty_room = True"
         )
 
-    if config.noise_cov in ("raw", "emptyroom") and not config.process_raw_clean:
+    if config.noise_cov == "raw" and not config.process_raw_clean:
         raise ValueError(
             "You requested noise covariance estimation from raw data by "
-            f"setting noise_cov = {repr(config.noise_cov)}, but you did not enable"
+            '"setting noise_cov = "raw", but you did not enable '
             "writing cleaned raw data. Please set process_raw_clean = True"
         )
 

@@ -169,7 +169,7 @@ def main(*, config: SimpleNamespace) -> None:
         return
 
     ss = _get_ss(config=config)
-    ssrt = _get_ssrt(config=config)
+    ssrt = _get_ssrt(config=config, which="limited")
     with get_parallel_backend(config.exec_params):
         # Epochs
         parallel, run_func = parallel_func(
@@ -188,22 +188,21 @@ def main(*, config: SimpleNamespace) -> None:
             for subject, session in ss
         )
         # Raw
-        if config.process_raw_clean:
-            parallel, run_func = parallel_func(
-                apply_ssp_raw, exec_params=config.exec_params, n_iter=len(ssrt)
-            )
-            logs += parallel(
-                run_func(
-                    cfg=get_config(
-                        config=config,
-                        subject=subject,
-                    ),
-                    exec_params=config.exec_params,
+        parallel, run_func = parallel_func(
+            apply_ssp_raw, exec_params=config.exec_params, n_iter=len(ssrt)
+        )
+        logs += parallel(
+            run_func(
+                cfg=get_config(
+                    config=config,
                     subject=subject,
-                    session=session,
-                    run=run,
-                    task=task,
-                )
-                for subject, session, run, task in ssrt
+                ),
+                exec_params=config.exec_params,
+                subject=subject,
+                session=session,
+                run=run,
+                task=task,
             )
+            for subject, session, run, task in ssrt
+        )
     save_logs(config=config, logs=logs)

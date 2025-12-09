@@ -330,10 +330,11 @@ def find_ica_artifacts(
         icalabel_ics = []
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
-    icalabel_df["Component"] = [f"ICA{i:03d}" for i in range(len(icalabel_component_labels))]
-    icalabel_df["PredictedLabel"] = icalabel_component_labels
-    icalabel_df["MaxProbability"] = icalabel_max_probabilities
-    icalabel_df["Excluded"] = [i in ica.exclude for i in range(len(icalabel_component_labels))]
+    if cfg.ica_use_icalabel:
+        icalabel_df["Component"] = [f"ICA{i:03d}" for i in range(len(icalabel_component_labels))]
+        icalabel_df["PredictedLabel"] = icalabel_component_labels
+        icalabel_df["MaxProbability"] = icalabel_max_probabilities
+        icalabel_df["Excluded"] = [i in ica.exclude for i in range(len(icalabel_component_labels))]
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -419,56 +420,57 @@ def find_ica_artifacts(
         
         )
 
-        icalabel_prob_table_html = """
-        <table border="1" cellspacing="0" cellpadding="5" 
-            style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
-        <thead>
-        <tr style="background-color:#eee;">
-        <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
-        """ + "".join(f"<th>{cls}</th>" for cls in icalabel_classes) + "</tr></thead><tbody>"
-        for _, row in icalabel_df.iterrows():
-            bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
-            text_color = "color:black;"
-            prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
-            icalabel_prob_table_html += (
-                f"<tr style='background-color:{bg_color};{text_color}'>"
-                f"<td>{row.Component}</td>"
-                f"<td>{row.PredictedLabel}</td>"
-                f"<td>{row.MaxProbability:.2f}</td>"
-                f"<td>{'Yes' if row.Excluded else 'No'}</td>"
-                f"{prob_cells}</tr>\n"
-            )
-        icalabel_prob_table_html += "</tbody></table>"
-        report.add_html(title="ICALabel: report", html=icalabel_prob_table_html)
-
-        icalabel_map = {}
-        for i, (label, _, _) in enumerate(icalabel_report):
-            icalabel_map.setdefault(label, []).append(i)
-
-        for label, indices in icalabel_map.items():
-            fig, axes = plt.subplots((len(indices) + 3) // 4, 4, figsize=(16, 3 * ((len(indices) + 3) // 4)))
-            axes = axes.flatten()
-            for j, ic in enumerate(indices):
-                prob = icalabel_report[ic][1]
-                status = "excluded" if ic in ica.exclude else "included"
-                fcolor = "red" if ic in ica.exclude else "blue"
-                ica.plot_components(picks=ic, axes=[axes[j]], show=False)
-                axes[j].text(
-                    0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
-                    ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
-                    bbox=dict(facecolor=fcolor, alpha=0.3, pad=4)
+        if cfg.ica_use_icalabel:
+            icalabel_prob_table_html = """
+            <table border="1" cellspacing="0" cellpadding="5" 
+                style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
+            <thead>
+            <tr style="background-color:#eee;">
+            <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
+            """ + "".join(f"<th>{cls}</th>" for cls in icalabel_classes) + "</tr></thead><tbody>"
+            for _, row in icalabel_df.iterrows():
+                bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
+                text_color = "color:black;"
+                prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
+                icalabel_prob_table_html += (
+                    f"<tr style='background-color:{bg_color};{text_color}'>"
+                    f"<td>{row.Component}</td>"
+                    f"<td>{row.PredictedLabel}</td>"
+                    f"<td>{row.MaxProbability:.2f}</td>"
+                    f"<td>{'Yes' if row.Excluded else 'No'}</td>"
+                    f"{prob_cells}</tr>\n"
                 )
-            for ax in axes[len(indices):]:
-                fig.delaxes(ax)
-            fig.tight_layout()
+            icalabel_prob_table_html += "</tbody></table>"
+            report.add_html(title="ICALabel: report", html=icalabel_prob_table_html)
 
-            report.add_figure(
-                fig=fig,
-                title=f"{label} components",
-                section="ICAlabel: components",
-                tags=[label.replace(" ", "_").replace("-", "_")]
-            )
-            plt.close(fig)
+            icalabel_map = {}
+            for i, (label, _, _) in enumerate(icalabel_report):
+                icalabel_map.setdefault(label, []).append(i)
+
+            for label, indices in icalabel_map.items():
+                fig, axes = plt.subplots((len(indices) + 3) // 4, 4, figsize=(16, 3 * ((len(indices) + 3) // 4)))
+                axes = axes.flatten()
+                for j, ic in enumerate(indices):
+                    prob = icalabel_report[ic][1]
+                    status = "excluded" if ic in ica.exclude else "included"
+                    fcolor = "red" if ic in ica.exclude else "blue"
+                    ica.plot_components(picks=ic, axes=[axes[j]], show=False)
+                    axes[j].text(
+                        0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
+                        ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
+                        bbox=dict(facecolor=fcolor, alpha=0.3, pad=4)
+                    )
+                for ax in axes[len(indices):]:
+                    fig.delaxes(ax)
+                fig.tight_layout()
+
+                report.add_figure(
+                    fig=fig,
+                    title=f"{label} components",
+                    section="ICAlabel: components",
+                    tags=[label.replace(" ", "_").replace("-", "_")]
+                )
+                plt.close(fig)
 
 
 

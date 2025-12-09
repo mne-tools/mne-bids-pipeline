@@ -2,6 +2,7 @@
 
 import pathlib
 import sys
+from collections.abc import Sequence
 from typing import Annotated, Any, Literal, TypeAlias
 
 if sys.version_info < (3, 12):
@@ -37,6 +38,8 @@ FloatArrayT: TypeAlias = np.ndarray[ShapeT, np.dtype[np.floating[Any]]]
 OutFilesT: TypeAlias = dict[str, tuple[str, str | float]]
 InFilesT: TypeAlias = dict[str, BIDSPath]  # Only BIDSPath
 InFilesPathT: TypeAlias = dict[str, BIDSPath | pathlib.Path]  # allow generic Path too
+BaselineTypeT: TypeAlias = tuple[float | None, float | None]
+RunsTypeT: TypeAlias = Sequence[str] | Literal["all"]
 
 
 class ArbitraryContrast(TypedDict):

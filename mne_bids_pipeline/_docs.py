@@ -202,6 +202,8 @@ class _ParseConfigSteps:
                 for call in ast.walk(func):
                     if not isinstance(call, ast.Call):
                         continue
+                    # We want named functions, not things like class attributes
+                    # (i.e., my_func() not my_dict.items())
                     assert isinstance(call.func, ast.Name)
                     if call.func.id != "SimpleNamespace":
                         continue

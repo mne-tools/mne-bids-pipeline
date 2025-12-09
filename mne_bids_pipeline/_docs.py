@@ -183,8 +183,8 @@ class _ParseConfigSteps:
                                     _add_step_option(step, option)
                                 break
 
-                    # Also look for root-level conditionals like use_maxwell_filter
-                    # or spatial_filter
+                    # Also look for conditionals like use_maxwell_filter or
+                    # spatial_filter (could be nested, e.g., in a context manager)
                     for cond in ast.walk(func):
                         # is a conditional in main()
                         if not isinstance(cond, ast.If):

@@ -10,9 +10,11 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline.typing import (
     ArbitraryContrast,
+    BaselineTypeT,
     DigMontageType,
     FloatArrayLike,
     PathLike,
+    RunsTypeT,
 )
 
 # %%
@@ -86,9 +88,9 @@ Whether to continue processing the dataset if some combinations of `subjects` an
 `sessions` are missing.
 """
 
-task: str = ""
+task: str | Sequence[str] = ""
 """
-The task to process.
+The task(s) to process.
 """
 
 task_is_rest: bool = False
@@ -96,10 +98,11 @@ task_is_rest: bool = False
 Whether the task should be treated as resting-state data.
 """
 
-runs: Sequence[str] | Literal["all"] = "all"
+runs: RunsTypeT | dict[str, RunsTypeT] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
+Can be a dict mapping tasks to runs to process as well.
 """
 
 exclude_runs: dict[str, list[str]] | None = None
@@ -1132,9 +1135,10 @@ error.
                   'incorrect': 'response/incorrect'}
 """
 
-epochs_tmin: float = -0.2
+epochs_tmin: float | dict[str, float] = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmin values.
 
 ???+ example "Example"
     ```python
@@ -1145,6 +1149,8 @@ The beginning of an epoch, relative to the respective event, in seconds.
 epochs_tmax: float = 0.5
 """
 The end of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmax values.
+
 ???+ example "Example"
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
@@ -1162,10 +1168,11 @@ Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
-baseline: tuple[float | None, float | None] | None = (None, 0)
+baseline: BaselineTypeT | dict[str, BaselineTypeT] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
 if `None`, no baseline correction is applied.
+Can be a dict mapping task names to baseline values.
 
 ???+ example "Example"
     ```python
@@ -1605,8 +1612,10 @@ If a dictionary, must contain the following keys:
 - `name`: a custom name of the contrast
 - `conditions`: the conditions to contrast
 - `weights`: the weights associated with each condition.
+- `task`: must be present if there are multiple tasks in the dataset
 
 Pass an empty list to avoid calculation of any contrasts.
+A dictionary must be used if multiple tasks are present in the dataset.
 
 For the contrasts to be computed, the appropriate conditions must have been
 epoched, and therefore the conditions should either match or be subsets of

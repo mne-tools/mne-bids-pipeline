@@ -534,6 +534,9 @@ _REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     ),
 }
 
+# False alarms
+_IGNORED_SIMILAR_NAMES = {"BaselineTypeT"}
+
 
 def _check_misspellings_removals(
     *,
@@ -547,8 +550,13 @@ def _check_misspellings_removals(
         if user_name not in valid_names:
             # find the closest match
             closest_match = difflib.get_close_matches(user_name, valid_names, n=1)
+            other = closest_match[0] if closest_match else None
             msg = f"Found a variable named {repr(user_name)} in your custom config,"
-            if closest_match and closest_match[0] not in user_names:
+            if (
+                closest_match
+                and other not in user_names
+                and user_name not in _IGNORED_SIMILAR_NAMES
+            ):
                 this_msg = (
                     f"{msg} did you mean {repr(closest_match[0])}? "
                     "If so, please correct the error. If not, please rename "

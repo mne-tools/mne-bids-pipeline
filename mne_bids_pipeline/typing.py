@@ -38,7 +38,7 @@ FloatArrayT: TypeAlias = np.ndarray[ShapeT, np.dtype[np.floating[Any]]]
 OutFilesT: TypeAlias = dict[str, tuple[str, str | float]]
 InFilesT: TypeAlias = dict[str, BIDSPath]  # Only BIDSPath
 InFilesPathT: TypeAlias = dict[str, BIDSPath | pathlib.Path]  # allow generic Path too
-BaselineTypeT: TypeAlias = tuple[float | None, float | None]
+BaselineTypeT: TypeAlias = tuple[float | None, float | None] | None
 RunsTypeT: TypeAlias = Sequence[str] | Literal["all"]
 
 

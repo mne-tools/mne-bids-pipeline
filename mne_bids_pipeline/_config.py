@@ -11,6 +11,7 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline.typing import (
     ArbitraryContrast,
     BaselineTypeT,
+    ConditionsTypeT,
     DigMontageType,
     FloatArrayLike,
     PathLike,
@@ -1101,7 +1102,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """
 
-conditions: Sequence[str] | dict[str, str] | None = None
+conditions: ConditionsTypeT | dict[str, ConditionsTypeT] | None = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1112,6 +1113,10 @@ for more information.
 
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
+
+Passing a dictionary whose values are dictionaries or sequences themselves allows to
+specify conditions per task (first has ``task`` keys, second level has desired
+condition name keys).
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
@@ -1133,6 +1138,13 @@ error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
+    Pass a per-task dictionary:
+    ```python
+    conditions = {
+        "localizer": ['stimulus/left', 'stimulus/right'],
+        "main_task": ['target/left', 'target/right']
+    }
+    ```
 """
 
 epochs_tmin: float | dict[str, float] = -0.2

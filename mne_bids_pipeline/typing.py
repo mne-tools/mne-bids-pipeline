@@ -40,6 +40,7 @@ InFilesT: TypeAlias = dict[str, BIDSPath]  # Only BIDSPath
 InFilesPathT: TypeAlias = dict[str, BIDSPath | pathlib.Path]  # allow generic Path too
 BaselineTypeT: TypeAlias = tuple[float | None, float | None] | None
 RunsTypeT: TypeAlias = Sequence[str] | Literal["all"]
+ConditionsTypeT: TypeAlias = Sequence[str] | dict[str, str]
 
 
 class ArbitraryContrast(TypedDict):

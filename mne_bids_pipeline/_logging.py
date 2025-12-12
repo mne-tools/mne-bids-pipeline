@@ -100,13 +100,14 @@ class _MBPLogger:
         subject: str | None = None,
         session: str | None = None,
         run: str | None = None,
+        task: str | None = None,
         emoji: str = "",
     ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
         # Construct str
-        essr = " ".join(x for x in [emoji, subject, session, run] if x)
+        essr = " ".join(x for x in [emoji, subject, session, task, run] if x)
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
@@ -171,6 +172,8 @@ def gen_log_kwargs(
         extra["session"] = session
     if run:
         extra["run"] = run
+    if task and task != "run":
+        extra["task"] = task
 
     kwargs: LogKwargsT = {
         "msg": message,

@@ -17,7 +17,7 @@ from mne_bids_pipeline._config_utils import (
     _meg_in_ch_types,
     get_fs_subject,
     get_fs_subjects_dir,
-    get_runs,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -81,9 +81,11 @@ def _prepare_trans_subject(
     msg = "Computing head ↔ MRI transform from matched fiducials"
     logger.info(**gen_log_kwargs(message=msg))
 
+    run, task = cfg.runs_tasks[0]
     trans = get_head_mri_trans(
         bids_path.copy().update(
-            run=cfg.runs[0],
+            run=run,
+            task=task,
             root=cfg.bids_root,
             processing=cfg.proc,
             extension=None,
@@ -268,7 +270,7 @@ def get_config(
         )
 
     cfg = SimpleNamespace(
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,

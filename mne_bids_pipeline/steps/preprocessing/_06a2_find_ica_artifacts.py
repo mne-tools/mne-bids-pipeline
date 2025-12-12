@@ -20,7 +20,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     get_eeg_reference,
-    get_runs,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -346,7 +346,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
         task_is_rest=config.task_is_rest,
         ica_l_freq=config.ica_l_freq,
         ica_reject=config.ica_reject,

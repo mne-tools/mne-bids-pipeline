@@ -14,7 +14,7 @@ import numpy as np
 from mne_bids import BIDSPath
 
 from ._logging import gen_log_kwargs, logger
-from .typing import ArbitraryContrast
+from .typing import ArbitraryContrast, BaselineTypeT
 
 try:
     _set_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
@@ -149,6 +149,28 @@ def _get_sessions(config: SimpleNamespace) -> tuple[str, ...]:
     return tuple(str(x) for x in sessions)
 
 
+def _get_task_float(val: dict[str, float] | float, task: str | None) -> float:
+    """Get the float value for a task."""
+    if isinstance(val, dict):
+        assert task is not None
+        task_float = val[task]
+    else:
+        task_float = val
+    return task_float
+
+
+def _get_task_baseline(
+    baseline: BaselineTypeT | dict[str, BaselineTypeT], task: str | None
+) -> BaselineTypeT:
+    """Get the baseline value for a task."""
+    if isinstance(baseline, dict):
+        assert task is not None
+        task_baseline = baseline[task]
+    else:
+        task_baseline = baseline
+    return task_baseline
+
+
 def get_subjects_sessions(
     config: SimpleNamespace,
 ) -> dict[str, tuple[None] | tuple[str, ...]]:
@@ -160,6 +182,7 @@ def get_subjects_sessions(
 
     # find which tasks to ignore when deciding if a subj has data for a session
     ignore_datatypes = _get_ignore_datatypes(config)
+    tasks = get_tasks(config=config)
     if config.task == "":
         ignore_tasks = None
     else:
@@ -168,7 +191,7 @@ def get_subjects_sessions(
             entity_key="task",
             ignore_datatypes=ignore_datatypes,
         )
-        ignore_tasks = tuple(set(all_tasks) - set([config.task]))
+        ignore_tasks = tuple(set(all_tasks) - set(tasks))
 
     # loop over subjs and check for available sessions
     subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
@@ -225,6 +248,7 @@ def get_subjects_given_session(
 
 def get_runs_all_subjects(
     config: SimpleNamespace,
+    task: str | None = None,
 ) -> dict[str, tuple[None] | tuple[str, ...]]:
     """Give the mapping between subjects and their runs.
 
@@ -234,6 +258,10 @@ def get_runs_all_subjects(
     for each subject asked in the configuration file
     (and not for each subject present in the bids_path).
     """
+    tasks = get_tasks(config=config)
+    ignore_tasks: tuple[str, ...] | None = None
+    if task is not None and len(tasks) > 1:
+        ignore_tasks = tuple(t for t in tasks if t != task and t is not None)
     # Use caching under the hood for speed
     return _get_runs_all_subjects_cached(
         bids_root=config.bids_root,
@@ -242,11 +270,13 @@ def get_runs_all_subjects(
         subjects=tuple(config.subjects) if config.subjects != "all" else "all",
         exclude_subjects=tuple(config.exclude_subjects),
         exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
+        ignore_tasks=ignore_tasks,
     )
 
 
 @functools.cache
 def _get_runs_all_subjects_cached(
+    ignore_tasks: tuple[str, ...] | None = None,
     **config_dict: dict[str, Any],
 ) -> dict[str, tuple[None] | tuple[str, ...]]:
     config = SimpleNamespace(**config_dict)
@@ -259,6 +289,7 @@ def _get_runs_all_subjects_cached(
             config.bids_root / f"sub-{subject}",
             entity_key="run",
             ignore_datatypes=_get_ignore_datatypes(config),
+            ignore_tasks=ignore_tasks,
         )
 
         # If we don't have any `run` entities, just set it to None, as we
@@ -277,7 +308,7 @@ def _get_runs_all_subjects_cached(
 
 def get_intersect_run(config: SimpleNamespace) -> list[str | None]:
     """Return the intersection of all the runs of all subjects."""
-    subj_runs = get_runs_all_subjects(config)
+    subj_runs = get_runs_all_subjects(config, task=None)
     # Do not use something like:
     # list(set.intersection(*map(set, subj_runs.values())))
     # as it will not preserve order. Instead just be explicit and preserve order.
@@ -291,13 +322,14 @@ def get_intersect_run(config: SimpleNamespace) -> list[str | None]:
     return all_runs
 
 
-def get_runs(
+def _get_runs_for_task(
     *,
     config: SimpleNamespace,
     subject: str,
+    task: str | None,
     verbose: bool = False,
-) -> list[str] | list[None]:
-    """Return a list of runs in the BIDS input data.
+) -> list[str | None]:
+    """Return a list of runs for a given task in the BIDS input data.
 
     Parameters
     ----------
@@ -314,8 +346,7 @@ def get_runs(
     if subject == "average":  # Used when creating the report
         return [None]
 
-    runs = copy.deepcopy(config.runs)
-    subj_runs = get_runs_all_subjects(config=config)
+    subj_runs = get_runs_all_subjects(config=config, task=task)
     valid_runs = subj_runs[subject]
 
     if len(get_subjects(config)) > 1:
@@ -334,20 +365,23 @@ def get_runs(
             )
             logger.info(**gen_log_kwargs(message=msg))
 
-    if runs == "all":
-        runs = list(valid_runs)
-
-    if not runs:
-        runs = [None]
+    runs_out: list[str | None] = list()
+    if config.runs == "all":
+        runs_out[:] = valid_runs
+    elif isinstance(config.runs, dict):
+        runs_out[:] = config.runs[task]
     else:
-        inclusion = set(runs).issubset(set(valid_runs))
+        assert isinstance(config.runs, list)
+        runs_out[:] = config.runs
+
+    if not runs_out:
+        runs_out[:] = [None]
+    else:
+        inclusion = set(runs_out).issubset(set(valid_runs))
         if not inclusion:
             raise ValueError(
-                f"Invalid run. It can be a subset of {valid_runs} but got {runs}"
+                f"Invalid run. It can be a subset of {valid_runs} but got {runs_out}"
             )
-    runs_out = list(runs)
-    if runs_out != [None]:
-        runs_out = list(str(x) for x in runs_out)
     return runs_out
 
 
@@ -358,17 +392,23 @@ def get_runs_tasks(
     session: str | None,
     which: tuple[str, ...] = ("runs", "noise", "rest"),
 ) -> tuple[tuple[str | None, str | None], ...]:
-    """Get (run, task) tuples for all runs plus (maybe) rest."""
+    """Get (run, task) tuples for all requested tasks and runs plus (maybe) rest."""
     from ._import_data import _get_noise_path, _get_rest_path
 
     assert isinstance(which, tuple)
     assert all(isinstance(inc, str) for inc in which)
     assert all(inc in ("runs", "noise", "rest") for inc in which)
-    runs: list[str | None] = list()
-    tasks: list[str | None] = list()
+    runs_tasks: list[tuple[str | None, str | None]] = list()
     if "runs" in which:
-        runs.extend(get_runs(config=config, subject=subject))
-        tasks.extend([get_task(config=config)] * len(runs))
+        for task in get_tasks(config=config):
+            runs_tasks += [
+                (run, task)
+                for run in _get_runs_for_task(
+                    config=config,
+                    subject=subject,
+                    task=task,
+                )
+            ]
     if "rest" in which:
         rest_path = _get_rest_path(
             cfg=config,
@@ -378,8 +418,7 @@ def get_runs_tasks(
             add_bads=False,
         )
         if rest_path:
-            runs.append(None)
-            tasks.append("rest")
+            runs_tasks.append((None, "rest"))
     if "noise" in which:
         mf_reference_run = get_mf_reference_run(config=config)
         noise_path = _get_noise_path(
@@ -391,9 +430,8 @@ def get_runs_tasks(
             add_bads=False,
         )
         if noise_path:
-            runs.append(None)
-            tasks.append("noise")
-    return tuple(zip(runs, tasks))
+            runs_tasks.append((None, "noise"))
+    return tuple(runs_tasks)
 
 
 def get_mf_reference_run(config: SimpleNamespace) -> str | None:
@@ -416,25 +454,34 @@ def get_mf_reference_run(config: SimpleNamespace) -> str | None:
         raise ValueError(
             f"The intersection of runs by subjects is empty. "
             f"Check the list of runs: "
-            f"{get_runs_all_subjects(config)}"
+            f"{get_runs_all_subjects(config, task=None)}"
         )
     return inter_runs[0]
 
 
-def get_task(config: SimpleNamespace) -> str | None:
-    task = config.task
-    if task:
-        assert isinstance(task, str), type(task)
-        return task
+def get_tasks(config: SimpleNamespace) -> list[str | None]:
     _valid_tasks = _get_entity_vals_cached(
         root=config.bids_root,
         entity_key="task",
         ignore_datatypes=_get_ignore_datatypes(config),
     )
-    if not _valid_tasks:
-        return None
+    tasks: list[str | None] = list()
+    if config.task:
+        if isinstance(config.task, str):
+            tasks.append(config.task)
+        else:
+            tasks.extend(config.task)
+        if set(tasks) - set(_valid_tasks):
+            raise ValueError(
+                "The following requested tasks were not found in the dataset: "
+                f"{set(tasks) - set(_valid_tasks)}"
+            )
     else:
-        return _valid_tasks[0]
+        if not _valid_tasks:
+            tasks.append(None)
+        else:
+            tasks.extend(_valid_tasks)
+    return tasks
 
 
 def _get_ss(
@@ -445,6 +492,17 @@ def _get_ss(
         (subject, session)
         for subject, sessions in get_subjects_sessions(config).items()
         for session in sessions
+    ]
+
+
+def _get_sst(
+    *,
+    config: SimpleNamespace,
+) -> list[tuple[str, str | None, str | None]]:
+    return [
+        (subject, session, task)
+        for subject, session in _get_ss(config=config)
+        for task in get_tasks(config=config)
     ]
 
 
@@ -709,6 +767,7 @@ def get_all_contrasts(config: SimpleNamespace) -> Iterable[ArbitraryContrast]:
                     name=(contrast[0] + "+" + contrast[1]),
                     conditions=list(contrast),
                     weights=[1, -1],
+                    task=config.task,
                 )
             )
         else:
@@ -812,7 +871,6 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
     """Get the standard BIDS config entries."""
     return dict(
         proc=config.proc,
-        task=get_task(config),
         datatype=get_datatype(config),
         acq=config.acq,
         rec=config.rec,

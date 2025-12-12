@@ -44,10 +44,10 @@ def _open_report(
         fname_report = BIDSPath(
             subject=subject,
             session=session,
-            # Report is across all runs, but for logging purposes it's helpful
+            # Report is across all runs and tasks, but for logging purposes it's helpful
             # to pass the run and task for gen_log_kwargs
             run=None,
-            task=cfg.task,
+            task=None,
             acquisition=cfg.acq,
             recording=cfg.rec,
             space=cfg.space,
@@ -473,8 +473,6 @@ def _gen_empty_report(
     title = f"sub-{subject}"
     if session is not None:
         title += f", ses-{session}"
-    if cfg.task is not None:
-        title += f", task-{cfg.task}"
 
     report = mne.Report(title=title, raw_psd=True, verbose=False)
     return report

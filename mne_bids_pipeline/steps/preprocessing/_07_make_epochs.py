@@ -16,9 +16,9 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
-    _get_ss,
+    _get_runs_for_task,
+    _get_sst,
     get_eeg_reference,
-    get_runs,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -39,6 +39,7 @@ def get_input_fnames_epochs(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None = None,
 ) -> InFilesT:
     """Get paths of files required by filter_data function."""
     # Construct the basenames of the files we wish to load, and of the empty-
@@ -48,7 +49,7 @@ def get_input_fnames_epochs(
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -80,6 +81,7 @@ def run_epochs(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None = None,
     in_files: InFilesT,
 ) -> OutFilesT:
     """Extract epochs for one subject."""
@@ -119,7 +121,7 @@ def run_epochs(
         epochs = make_epochs(
             subject=subject,
             session=session,
-            task=cfg.task,
+            task=task,
             raw=raw,
             event_id=event_id,
             conditions=cfg.conditions,
@@ -283,13 +285,13 @@ def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict[str, dict[str, Any]]:
 
 # TODO: ideally we wouldn't need this anymore and could refactor the code above
 def _get_events(
-    cfg: SimpleNamespace, subject: str, session: str | None
+    cfg: SimpleNamespace, subject: str, session: str | None, task: str | None = None
 ) -> tuple[IntArrayT, dict[str, int], float, int]:
     raws_filt = []
     raw_fname = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -318,6 +320,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    task: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         use_maxwell_filter=config.use_maxwell_filter,
@@ -340,7 +343,7 @@ def get_config(
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
-        runs=get_runs(config=config, subject=subject),
+        runs=_get_runs_for_task(config=config, subject=subject, task=task),
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
@@ -349,21 +352,23 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
-    ss = _get_ss(config=config)
+    sst = _get_sst(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_epochs, exec_params=config.exec_params, n_iter=len(ss)
+            run_epochs, exec_params=config.exec_params, n_iter=len(sst)
         )
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    task=task,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
-            for subject, session in ss
+            for subject, session, task in sst
         )
     save_logs(config=config, logs=logs)

@@ -13,8 +13,7 @@ from ._config_utils import (
     _pl,
     get_datatype,
     get_mf_reference_run,
-    get_runs,
-    get_task,
+    get_tasks,
 )
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
@@ -24,7 +23,7 @@ from .typing import InFilesT, PathLike, RunKindT, RunTypeT
 
 def make_epochs(
     *,
-    task: str,
+    task: str | None,
     subject: str,
     session: str | None,
     raw: mne.io.BaseRaw,
@@ -125,7 +124,11 @@ def make_epochs(
                         and "ses-" + session in custom_dict
                     ):
                         custom_dict = custom_dict["ses-" + session]
-                    if isinstance(custom_dict, dict) and "task-" + task in custom_dict:
+                    if (
+                        isinstance(custom_dict, dict)
+                        and task is not None
+                        and "task-" + task in custom_dict
+                    ):
                         custom_dict = custom_dict["task-" + task]
                     if isinstance(custom_dict, pd.DataFrame):
                         custom_df = custom_dict
@@ -687,7 +690,7 @@ def _get_noise_path(
             subject=subject,
             session=session,
             run=mf_reference_run,
-            task=get_task(config=cfg),
+            task=get_tasks(config=cfg)[0],
             kind=kind,
         )
         raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
@@ -876,7 +879,6 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         # args used for all runs that process raw (reporting / writing)
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
-        runs=get_runs(config=config, subject=subject),  # XXX needs to accept session!
         **_bids_kwargs(config=config),
     )
 

@@ -10,6 +10,7 @@ from mne_bids_pipeline._config_utils import (
     get_datatype,
     get_mf_reference_run,
     get_subjects_sessions,
+    get_tasks,
 )
 from mne_bids_pipeline._import_data import _empty_room_match_path
 from mne_bids_pipeline._io import _write_json
@@ -27,11 +28,12 @@ def get_input_fnames_find_empty_room(
     *, subject: str, session: str | None, run: str | None, cfg: SimpleNamespace
 ) -> InFilesT:
     """Get paths of files required by find_empty_room function."""
+    # This must match the logic of _import_data.py
     bids_path_in = BIDSPath(
         subject=subject,
         run=run,
         session=session,
-        task=cfg.task,
+        task=get_tasks(config=cfg)[0],
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -109,6 +111,8 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        data_type=get_datatype(config),
+        task=config.task,
         **_bids_kwargs(config=config),
     )
     return cfg

@@ -1158,7 +1158,7 @@ Can be a dict mapping task names to tmin values.
     ```
 """
 
-epochs_tmax: float = 0.5
+epochs_tmax: float | dict[str, float] = 0.5
 """
 The end of an epoch, relative to the respective event, in seconds.
 Can be a dict mapping task names to tmax values.

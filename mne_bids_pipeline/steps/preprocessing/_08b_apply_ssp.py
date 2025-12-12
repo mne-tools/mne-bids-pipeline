@@ -32,10 +32,13 @@ def get_input_fnames_apply_ssp_epochs(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     in_files = dict()
     in_files["proj"] = _proj_path(cfg=cfg, subject=subject, session=session)
-    in_files["epochs"] = in_files["proj"].copy().update(suffix="epo", check=False)
+    in_files["epochs"] = (
+        in_files["proj"].copy().update(suffix="epo", check=False, task=task)
+    )
     _update_for_splits(in_files, "epochs", single=True)
     return in_files
 
@@ -49,6 +52,7 @@ def apply_ssp_epochs(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     out_files = dict()

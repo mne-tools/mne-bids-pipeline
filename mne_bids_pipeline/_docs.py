@@ -100,7 +100,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
 )
 # Eventually we could parse AST to get these, but this is simple enough
 _EXTRA_FUNCS = {
-    "_bids_kwargs": ("get_task",),
+    "_bids_kwargs": ("get_tasks",),
     "_import_data_kwargs": ("get_mf_reference_run",),
     "get_runs": ("get_runs_all_subjects",),
     "get_sessions": ("_get_sessions",),

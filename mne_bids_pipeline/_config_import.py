@@ -328,7 +328,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":
-        if config.ica_l_freq < 1:
+        effective_ica_l_freq = max([config.ica_l_freq or 0.0, config.l_freq or 0.0])
+        if effective_ica_l_freq < 1:
             raise ValueError(
                 "You requested to high-pass filter the data before ICA with "
                 f"ica_l_freq={config.ica_l_freq} Hz. Please increase this "
@@ -457,6 +458,24 @@ def _default_factory(key: str, val: Any) -> Any:
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
         ("brain", "other"),  # ica_icalabel_include
+        {
+            "brain": 0.8,
+            "muscle artifact": 0.8,
+            "eye blink": 0.8,
+            "heart beat": 0.8,
+            "line noise": 0.8,
+            "channel noise": 0.8,
+            "other": 0.8,
+        },  #ica_exclusion_thresholds
+        {
+            "brain": 0.3,
+            "muscle artifact": 0.3,
+            "eye blink": 0.3,
+            "heart beat": 0.3,
+            "line noise": 0.3,
+            "channel noise": 0.3,
+            "other": 0.3,
+        },  #ica_class_thresholds
     ]
 
     def default_factory() -> Any:

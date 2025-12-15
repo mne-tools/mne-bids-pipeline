@@ -26,7 +26,7 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
 DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
         # original dataset: "osf": "9f5w7"
-        "web": "https://osf.io/3zk6n/download?version=2",
+        "web": "https://osf.io/download/3zk6n?version=2",
         "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
         "fsaverage": False,  # avoid autodetection via config import (which fails)
     },
@@ -127,7 +127,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "mne": "phantom_kit",
     },
     "MNE-funloc-data": {
-        "web": "https://osf.io/upj3h/download?version=1",
+        "web": "https://osf.io/download/upj3h?version=1",
         "hash": "sha256:67dbd38f7207db5c93c540d9c7c92ec2ac09ee1bd1b5d5e5cdd8866c08ec4858",  # noqa: E501
         "processor": "untar",
         "fsaverage": True,

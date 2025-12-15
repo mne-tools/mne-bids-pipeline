@@ -15,7 +15,6 @@ import mne
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
-from mne.viz import plot_ica_components
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
@@ -277,7 +276,9 @@ def find_ica_artifacts(
         msg = "Performing automated artifact detection (MNE-ICALabel) …"
         logger.info(**gen_log_kwargs(message=msg))
 
-        icalabel_class_probabilities = iclabel_label_components(inst=epochs, ica=ica, inplace=False)
+        icalabel_class_probabilities = iclabel_label_components(
+            inst=epochs, ica=ica, inplace=False
+        )
 
         icalabel_classes = [
             "brain",
@@ -289,34 +290,38 @@ def find_ica_artifacts(
             "other",
         ]
 
-        icalabel_component_labels = [icalabel_classes[i] for i in icalabel_class_probabilities.argmax(axis=1)]
+        icalabel_component_labels = [
+            icalabel_classes[i] for i in icalabel_class_probabilities.argmax(axis=1)
+        ]
         icalabel_max_probabilities = icalabel_class_probabilities.max(axis=1)
 
-        
-        #logic for exclusion of components - look at each component
-        for idx, (label, prob) in enumerate(zip(icalabel_component_labels, icalabel_max_probabilities)):
-            #get its probability table over all classes e.g. [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
+        # logic for exclusion of components - look at each component
+        for idx, (label, prob) in enumerate(
+            zip(icalabel_component_labels, icalabel_max_probabilities)
+        ):
+            # get its probability table over all classes e.g. [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
             probs = dict(zip(icalabel_classes, icalabel_class_probabilities[idx]))
-            
-            exclude = any(#ONLY
-                #IF the component looked at does have a probability higher then the exclusion_threshold in any of the NOT included classes
-                cls not in cfg.ica_icalabel_include and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
+
+            exclude = any(  # ONLY
+                # IF the component looked at does have a probability higher then the exclusion_threshold in any of the NOT included classes
+                cls not in cfg.ica_icalabel_include
+                and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
                 for cls, p in probs.items()
-            ) and not any(#AND
-                #IF the component looked at does NOT have a probability higher then the class_threshold in any of the included classes
-                cls in cfg.ica_icalabel_include and p >= cfg.ica_class_thresholds.get(cls, 0.3)
+            ) and not any(  # AND
+                # IF the component looked at does NOT have a probability higher then the class_threshold in any of the included classes
+                cls in cfg.ica_icalabel_include
+                and p >= cfg.ica_class_thresholds.get(cls, 0.3)
                 for cls, p in probs.items()
             )
 
             if exclude:
-                #THEN exclude that component
+                # THEN exclude that component
                 icalabel_ics.append(idx)
                 icalabel_labels.append(label)
                 icalabel_report.append((label, prob, True))
             else:
-                #ELSE keep it
+                # ELSE keep it
                 icalabel_report.append((label, prob, False))
-
 
         msg = (
             f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
@@ -331,10 +336,14 @@ def find_ica_artifacts(
 
     ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
     if cfg.ica_use_icalabel:
-        icalabel_df["Component"] = [f"ICA{i:03d}" for i in range(len(icalabel_component_labels))]
+        icalabel_df["Component"] = [
+            f"ICA{i:03d}" for i in range(len(icalabel_component_labels))
+        ]
         icalabel_df["PredictedLabel"] = icalabel_component_labels
         icalabel_df["MaxProbability"] = icalabel_max_probabilities
-        icalabel_df["Excluded"] = [i in ica.exclude for i in range(len(icalabel_component_labels))]
+        icalabel_df["Excluded"] = [
+            i in ica.exclude for i in range(len(icalabel_component_labels))
+        ]
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -416,18 +425,20 @@ def find_ica_artifacts(
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
             tags=("ica",),  # the default but be explicit
-        
-        
         )
 
         if cfg.ica_use_icalabel:
-            icalabel_prob_table_html = """
+            icalabel_prob_table_html = (
+                """
             <table border="1" cellspacing="0" cellpadding="5" 
                 style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
             <thead>
             <tr style="background-color:#eee;">
             <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
-            """ + "".join(f"<th>{cls}</th>" for cls in icalabel_classes) + "</tr></thead><tbody>"
+            """
+                + "".join(f"<th>{cls}</th>" for cls in icalabel_classes)
+                + "</tr></thead><tbody>"
+            )
             for _, row in icalabel_df.iterrows():
                 bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
                 text_color = "color:black;"
@@ -448,7 +459,11 @@ def find_ica_artifacts(
                 icalabel_map.setdefault(label, []).append(i)
 
             for label, indices in icalabel_map.items():
-                fig, axes = plt.subplots((len(indices) + 3) // 4, 4, figsize=(16, 3 * ((len(indices) + 3) // 4)))
+                fig, axes = plt.subplots(
+                    (len(indices) + 3) // 4,
+                    4,
+                    figsize=(16, 3 * ((len(indices) + 3) // 4)),
+                )
                 axes = axes.flatten()
                 for j, ic in enumerate(indices):
                     prob = icalabel_report[ic][1]
@@ -456,11 +471,16 @@ def find_ica_artifacts(
                     fcolor = "red" if ic in ica.exclude else "blue"
                     ica.plot_components(picks=ic, axes=[axes[j]], show=False)
                     axes[j].text(
-                        0.5, -0.15, f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
-                        ha="center", va="top", fontsize=8, transform=axes[j].transAxes,
-                        bbox=dict(facecolor=fcolor, alpha=0.3, pad=4)
+                        0.5,
+                        -0.15,
+                        f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
+                        ha="center",
+                        va="top",
+                        fontsize=8,
+                        transform=axes[j].transAxes,
+                        bbox=dict(facecolor=fcolor, alpha=0.3, pad=4),
                     )
-                for ax in axes[len(indices):]:
+                for ax in axes[len(indices) :]:
                     fig.delaxes(ax)
                 fig.tight_layout()
 
@@ -468,11 +488,9 @@ def find_ica_artifacts(
                     fig=fig,
                     title=f"{label} components",
                     section="ICAlabel: components",
-                    tags=[label.replace(" ", "_").replace("-", "_")]
+                    tags=[label.replace(" ", "_").replace("-", "_")],
                 )
                 plt.close(fig)
-
-
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))

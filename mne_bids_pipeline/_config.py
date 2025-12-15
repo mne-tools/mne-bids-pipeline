@@ -1582,7 +1582,7 @@ Each component gets a probability distribution over all classes e.g. [0.7, 0.1, 
 Makes sure components are kept IF they meet any of the class thresholds of classes in ica_icalabel_include
 """
 
-  # noqa: E501
+# noqa: E501
 
 # ### Amplitude-based artifact rejection
 #

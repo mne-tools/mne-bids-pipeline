@@ -10,7 +10,6 @@ run the apply_ica step.
 from types import SimpleNamespace
 from typing import Literal
 
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import pandas as pd
@@ -485,6 +484,8 @@ def _add_report_icalabel(
     subject: str | None = None,
     session: str | None = None,
 ) -> None:
+    import matplotlib.pyplot as plt
+
     section = "ICALabel: components"
     logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
 

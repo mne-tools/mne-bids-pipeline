@@ -486,7 +486,7 @@ def _add_report_icalabel(
 ) -> None:
     import matplotlib.pyplot as plt
 
-    section = "ICALabel: components"
+    section = "ICA: ICALabel components"
     logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
 
     icalabel_prob_table_html = (

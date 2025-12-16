@@ -15,6 +15,7 @@ import mne
 import numpy as np
 import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
+from mne.utils import _pl
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
@@ -266,87 +267,26 @@ def find_ica_artifacts(
                 subject=subject,
                 session=session,
             )
+
     # Run MNE-ICALabel if requested.
+    exclude: list[int] = ecg_ics + eog_ics
     if cfg.ica_use_icalabel:
-        from mne_icalabel.iclabel import iclabel_label_components
-
-        icalabel_ics = []
-        icalabel_labels = []
-        icalabel_report = []
-        msg = "Performing automated artifact detection (MNE-ICALabel) …"
-        logger.info(**gen_log_kwargs(message=msg))
-
-        icalabel_class_probabilities = iclabel_label_components(
-            inst=epochs, ica=ica, inplace=False
+        icalabel_ics, icalabel_df, icalabel_labels, icalabel_report = _run_icalabel(
+            cfg=cfg,
+            ica=ica,
+            epochs=epochs,
+            exclude=exclude,
+            subject=subject,
+            session=session,
         )
-
-        icalabel_classes = [
-            "brain",
-            "muscle artifact",
-            "eye blink",
-            "heart beat",
-            "line noise",
-            "channel noise",
-            "other",
-        ]
-
-        icalabel_component_labels = [
-            icalabel_classes[i] for i in icalabel_class_probabilities.argmax(axis=1)
-        ]
-        icalabel_max_probabilities = icalabel_class_probabilities.max(axis=1)
-
-        # logic for exclusion of components - look at each component
-        for idx, (label, prob) in enumerate(
-            zip(icalabel_component_labels, icalabel_max_probabilities)
-        ):
-            # get its probability table over all classes e.g.
-            # [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
-            probs = dict(zip(icalabel_classes, icalabel_class_probabilities[idx]))
-
-            exclude = any(  # ONLY
-                # IF the component looked at does have a probability higher than the
-                # exclusion_threshold in any of the NOT included classes
-                cls not in cfg.ica_icalabel_include
-                and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
-                for cls, p in probs.items()
-            ) and not any(  # AND
-                # IF the component looked at does NOT have a probability higher than the
-                # class_threshold in any of the included classes
-                cls in cfg.ica_icalabel_include
-                and p >= cfg.ica_class_thresholds.get(cls, 0.3)
-                for cls, p in probs.items()
-            )
-
-            if exclude:
-                # THEN exclude that component
-                icalabel_ics.append(idx)
-                icalabel_labels.append(label)
-                icalabel_report.append((label, prob, True))
-            else:
-                # ELSE keep it
-                icalabel_report.append((label, prob, False))
-
-        msg = (
-            f"Detected {len(icalabel_ics)} artifact-related independent component(s) "
-            f"in {len(epochs)} epochs."
-        )
-        logger.info(**gen_log_kwargs(message=msg))
-        icalabel_df = pd.DataFrame(
-            icalabel_class_probabilities, columns=icalabel_classes
-        )
+        exclude += icalabel_ics
     else:
         icalabel_ics = []
+        icalabel_df = pd.DataFrame()
+        icalabel_labels = []
+        icalabel_report = []
 
-    ica.exclude = sorted(set(ecg_ics + eog_ics + icalabel_ics))
-    if cfg.ica_use_icalabel:
-        icalabel_df["Component"] = [
-            f"ICA{i:03d}" for i in range(len(icalabel_component_labels))
-        ]
-        icalabel_df["PredictedLabel"] = icalabel_component_labels
-        icalabel_df["MaxProbability"] = icalabel_max_probabilities
-        icalabel_df["Excluded"] = [
-            i in ica.exclude for i in range(len(icalabel_component_labels))
-        ]
+    ica.exclude = sorted(set(exclude))
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.
@@ -436,8 +376,9 @@ def find_ica_artifacts(
                 ica=ica,
                 icalabel_report=icalabel_report,
                 icalabel_df=icalabel_df,
-                icalabel_classes=icalabel_classes,
                 tags=tags,
+                subject=subject,
+                session=session,
             )
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
@@ -448,16 +389,104 @@ def find_ica_artifacts(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
+_ICALABEL_CLASSES = [
+    "brain",
+    "muscle artifact",
+    "eye blink",
+    "heart beat",
+    "line noise",
+    "channel noise",
+    "other",
+]
+
+
+def _run_icalabel(
+    *,
+    cfg: SimpleNamespace,
+    ica: mne.preprocessing.ICA,
+    epochs: mne.BaseEpochs,
+    exclude: list[int],
+    subject: str,
+    session: str | None,
+) -> tuple[list[int], pd.DataFrame, list[str], list[tuple[str, float, bool]]]:
+    from mne_icalabel.iclabel import iclabel_label_components
+
+    icalabel_ics: list[int] = []
+    icalabel_labels: list[str] = []
+    icalabel_report: list[tuple[str, float, bool]] = []
+    msg = "Performing automated artifact detection (MNE-ICALabel) …"
+    logger.info(**gen_log_kwargs(message=msg))
+
+    icalabel_class_probabilities = iclabel_label_components(
+        inst=epochs, ica=ica, inplace=False
+    )
+    icalabel_component_labels = [
+        _ICALABEL_CLASSES[i] for i in icalabel_class_probabilities.argmax(axis=1)
+    ]
+    icalabel_max_probabilities = icalabel_class_probabilities.max(axis=1)
+
+    # logic for exclusion of components - look at each component
+    for idx, (label, prob) in enumerate(
+        zip(icalabel_component_labels, icalabel_max_probabilities)
+    ):
+        # get its probability table over all classes e.g.
+        # [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
+        probs = dict(zip(_ICALABEL_CLASSES, icalabel_class_probabilities[idx]))
+
+        exclude_component = any(  # ONLY
+            # IF the component looked at does have a probability higher than the
+            # exclusion_threshold in any of the NOT included classes
+            cls not in cfg.ica_icalabel_include
+            and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
+            for cls, p in probs.items()
+        ) and not any(  # AND
+            # IF the component looked at does NOT have a probability higher than the
+            # class_threshold in any of the included classes
+            cls in cfg.ica_icalabel_include
+            and p >= cfg.ica_class_thresholds.get(cls, 0.3)
+            for cls, p in probs.items()
+        )
+
+        if exclude_component:
+            # THEN exclude that component
+            icalabel_ics.append(idx)
+            icalabel_labels.append(label)
+            icalabel_report.append((label, prob, True))
+        else:
+            # ELSE keep it
+            icalabel_report.append((label, prob, False))
+
+    msg = (
+        f"Detected {len(icalabel_ics)} artifact-related independent "
+        f"component{_pl(icalabel_ics)} in {len(epochs)} epochs."
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+    icalabel_df = pd.DataFrame(icalabel_class_probabilities, columns=_ICALABEL_CLASSES)
+
+    icalabel_df["Component"] = [
+        f"ICA{i:03d}" for i in range(len(icalabel_component_labels))
+    ]
+    icalabel_df["PredictedLabel"] = icalabel_component_labels
+    icalabel_df["MaxProbability"] = icalabel_max_probabilities
+    icalabel_df["Excluded"] = [
+        i in ica.exclude for i in range(len(icalabel_component_labels))
+    ]
+    return icalabel_ics, icalabel_df, icalabel_labels, icalabel_report
+
+
 def _add_report_icalabel(
     *,
     report: mne.Report,
     ica: mne.preprocessing.ICA,
     icalabel_report: list[tuple[str, float, bool]],
     icalabel_df: pd.DataFrame,
-    icalabel_classes: list[str],
     tags: tuple[str, ...],
+    subject: str | None = None,
+    session: str | None = None,
 ) -> None:
     section = "ICALabel: components"
+    logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
+
     icalabel_prob_table_html = (
         """
     <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
@@ -465,13 +494,13 @@ def _add_report_icalabel(
     <tr style="background-color:#eee;">
     <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
     """  # noqa: E501
-        + "".join(f"<th>{cls}</th>" for cls in icalabel_classes)
+        + "".join(f"<th>{cls}</th>" for cls in _ICALABEL_CLASSES)
         + "</tr></thead><tbody>"
     )
     for _, row in icalabel_df.iterrows():
         bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
         text_color = "color:black;"
-        prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
+        prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in _ICALABEL_CLASSES)
         icalabel_prob_table_html += (
             f"<tr style='background-color:{bg_color};{text_color}'>"
             f"<td>{row.Component}</td>"
@@ -493,8 +522,6 @@ def _add_report_icalabel(
         icalabel_map.setdefault(label, []).append(i)
 
     for label, indices in icalabel_map.items():
-        icalabel_title = f"ICALabel: {label} components"
-        logger.info(**gen_log_kwargs(message=f'Adding "{icalabel_title}" to report.'))
         n_col = 4
         n_row = (len(indices) - 1) // n_col + 1
         fig, axes = plt.subplots(
@@ -523,7 +550,7 @@ def _add_report_icalabel(
             fig.delaxes(ax)
         report.add_figure(
             fig=fig,
-            title=icalabel_title,
+            title=f"ICALabel: {label} components",
             section=section,
             tags=tags + (label.replace(" ", "_").replace("-", "_"),),
         )

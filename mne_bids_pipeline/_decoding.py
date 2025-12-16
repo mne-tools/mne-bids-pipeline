@@ -3,7 +3,7 @@ from typing import Any
 import mne
 import numpy as np
 from joblib import parallel_backend
-from mne.utils import _validate_type
+from mne.utils import _validate_type, check_version
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
@@ -13,9 +13,20 @@ from .typing import FloatArrayT
 
 
 class LogReg(LogisticRegression):  # type: ignore[misc]
-    """Hack to avoid a warning with n_jobs != 1 when using dask."""
+    """Logistic Regression with fixed parameters suitable for our internal decoding."""
+
+    def __init__(self, *, random_state: int) -> None:
+        kwargs = dict(
+            random_state=random_state,
+            solver="liblinear",  # much faster than the default
+        )
+        # TODO: Once we require sklearn 1.8 we should drop n_jobs
+        if not check_version("sklearn", "1.8"):
+            kwargs["n_jobs"] = 1
+        super().__init__(**kwargs)
 
     def fit(self, *args, **kwargs):  # type: ignore
+        # Hack to avoid a warning with n_jobs != 1 when using dask
         with parallel_backend("loky"):
             return super().fit(*args, **kwargs)
 

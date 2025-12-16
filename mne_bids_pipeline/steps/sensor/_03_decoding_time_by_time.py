@@ -162,11 +162,7 @@ def run_time_decoding(
         clf = make_pipeline(
             *pre_steps,
             Vectorizer(),
-            LogReg(
-                solver="liblinear",  # much faster than the default
-                random_state=cfg.random_state,
-                n_jobs=1,
-            ),
+            LogReg(random_state=cfg.random_state),
         )
         cv = StratifiedKFold(
             shuffle=True,

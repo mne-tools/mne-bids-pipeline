@@ -15,7 +15,7 @@ from .typing import FloatArrayT
 class LogReg(LogisticRegression):  # type: ignore[misc]
     """Logistic Regression with fixed parameters suitable for our internal decoding."""
 
-    def __init__(self, *, random_state: int) -> None:
+    def __init__(self, *, random_state: int | None) -> None:
         kwargs = dict(
             random_state=random_state,
             solver="liblinear",  # much faster than the default

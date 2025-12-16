@@ -407,7 +407,7 @@ def find_ica_artifacts(
 
     del artifact_name, artifact_evoked
 
-    section = "ICA: components"
+    title = "ICA: components"
     tags = ("ica",)
     with _open_report(
         cfg=cfg,
@@ -416,10 +416,10 @@ def find_ica_artifacts(
         session=session,
         task=cfg.task,
     ) as report:
-        logger.info(**gen_log_kwargs(message=f'Adding "{section}" to report.'))
+        logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
             ica=ica,
-            title=section,
+            title=title,
             inst=epochs,
             ecg_evoked=ecg_evoked,
             eog_evoked=eog_evoked,
@@ -431,6 +431,7 @@ def find_ica_artifacts(
         )
 
         if cfg.ica_use_icalabel:
+            section = "ICALabel: components"
             icalabel_prob_table_html = (
                 """
             <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
@@ -455,7 +456,10 @@ def find_ica_artifacts(
                 )
             icalabel_prob_table_html += "</tbody></table>"
             report.add_html(
-                title="ICALabel: report", html=icalabel_prob_table_html, tags=tags
+                title="ICALabel: report",
+                html=icalabel_prob_table_html,
+                tags=tags,
+                section=section,
             )
 
             icalabel_map: dict[str, list[int]] = {}
@@ -463,10 +467,17 @@ def find_ica_artifacts(
                 icalabel_map.setdefault(label, []).append(i)
 
             for label, indices in icalabel_map.items():
+                icalabel_title = f"ICALabel: {label} components"
+                logger.info(
+                    **gen_log_kwargs(message=f'Adding "{icalabel_title}" to report.')
+                )
+                n_col = 4
+                n_row = (len(indices) - 1) // n_col + 1
                 fig, axes = plt.subplots(
-                    (len(indices) + 3) // 4,
-                    4,
-                    figsize=(16, 3 * ((len(indices) + 3) // 4)),
+                    n_row,
+                    n_col,
+                    figsize=(4 * n_col, 3 * n_row),
+                    layout="constrained",
                 )
                 axes = axes.flatten()
                 for j, ic in enumerate(indices):
@@ -486,12 +497,10 @@ def find_ica_artifacts(
                     )
                 for ax in axes[len(indices) :]:
                     fig.delaxes(ax)
-                fig.tight_layout()
-
                 report.add_figure(
                     fig=fig,
-                    title=f"{label} components",
-                    section="ICAlabel: components",
+                    title=icalabel_title,
+                    section=section,
                     tags=tags + (label.replace(" ", "_").replace("-", "_"),),
                 )
                 plt.close(fig)

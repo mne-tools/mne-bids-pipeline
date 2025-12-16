@@ -447,7 +447,6 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"but got shape {destination.shape}"
             )
 
-    # From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
     # MNE-ICALabel
     if config.ica_use_icalabel:
         pre = "When using MNE-ICALabel, you must set"

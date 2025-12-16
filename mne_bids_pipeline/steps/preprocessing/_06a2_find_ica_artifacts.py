@@ -508,7 +508,7 @@ def _add_report_icalabel(
             f"<tr style='background-color:{bg_color};{text_color}'>"
             f"<td>{row.Component}</td>"
             f"<td>{row.PredictedLabel}</td>"
-            f"<td>{row.MaxProbability:.2f}</td>"
+            f"<td>{row.MaxProbability:.3f}</td>"
             f"<td>{'Yes' if row.Excluded else 'No'}</td>"
             f"{prob_cells}</tr>\n"
         )

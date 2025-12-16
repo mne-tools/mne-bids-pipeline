@@ -431,79 +431,14 @@ def find_ica_artifacts(
         )
 
         if cfg.ica_use_icalabel:
-            section = "ICALabel: components"
-            icalabel_prob_table_html = (
-                """
-            <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
-            <thead>
-            <tr style="background-color:#eee;">
-            <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
-            """  # noqa: E501
-                + "".join(f"<th>{cls}</th>" for cls in icalabel_classes)
-                + "</tr></thead><tbody>"
-            )
-            for _, row in icalabel_df.iterrows():
-                bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
-                text_color = "color:black;"
-                prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
-                icalabel_prob_table_html += (
-                    f"<tr style='background-color:{bg_color};{text_color}'>"
-                    f"<td>{row.Component}</td>"
-                    f"<td>{row.PredictedLabel}</td>"
-                    f"<td>{row.MaxProbability:.2f}</td>"
-                    f"<td>{'Yes' if row.Excluded else 'No'}</td>"
-                    f"{prob_cells}</tr>\n"
-                )
-            icalabel_prob_table_html += "</tbody></table>"
-            report.add_html(
-                title="ICALabel: report",
-                html=icalabel_prob_table_html,
+            _add_report_icalabel(
+                report=report,
+                ica=ica,
+                icalabel_report=icalabel_report,
+                icalabel_df=icalabel_df,
+                icalabel_classes=icalabel_classes,
                 tags=tags,
-                section=section,
             )
-
-            icalabel_map: dict[str, list[int]] = {}
-            for i, (label, _, _) in enumerate(icalabel_report):
-                icalabel_map.setdefault(label, []).append(i)
-
-            for label, indices in icalabel_map.items():
-                icalabel_title = f"ICALabel: {label} components"
-                logger.info(
-                    **gen_log_kwargs(message=f'Adding "{icalabel_title}" to report.')
-                )
-                n_col = 4
-                n_row = (len(indices) - 1) // n_col + 1
-                fig, axes = plt.subplots(
-                    n_row,
-                    n_col,
-                    figsize=(4 * n_col, 3 * n_row),
-                    layout="constrained",
-                )
-                axes = axes.flatten()
-                for j, ic in enumerate(indices):
-                    prob = icalabel_report[ic][1]
-                    status = "excluded" if ic in ica.exclude else "included"
-                    fcolor = "red" if ic in ica.exclude else "blue"
-                    ica.plot_components(picks=ic, axes=[axes[j]], show=False)
-                    axes[j].text(
-                        0.5,
-                        -0.15,
-                        f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
-                        ha="center",
-                        va="top",
-                        fontsize=8,
-                        transform=axes[j].transAxes,
-                        bbox=dict(facecolor=fcolor, alpha=0.3, pad=4),
-                    )
-                for ax in axes[len(indices) :]:
-                    fig.delaxes(ax)
-                report.add_figure(
-                    fig=fig,
-                    title=icalabel_title,
-                    section=section,
-                    tags=tags + (label.replace(" ", "_").replace("-", "_"),),
-                )
-                plt.close(fig)
 
     msg = 'Carefully review the extracted ICs and mark components "bad" in:'
     logger.info(**gen_log_kwargs(message=msg, emoji="🛑"))
@@ -511,6 +446,88 @@ def find_ica_artifacts(
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
+def _add_report_icalabel(
+    *,
+    report: mne.Report,
+    ica: mne.preprocessing.ICA,
+    icalabel_report: list[tuple[str, float, bool]],
+    icalabel_df: pd.DataFrame,
+    icalabel_classes: list[str],
+    tags: tuple[str, ...],
+) -> None:
+    section = "ICALabel: components"
+    icalabel_prob_table_html = (
+        """
+    <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
+    <thead>
+    <tr style="background-color:#eee;">
+    <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
+    """  # noqa: E501
+        + "".join(f"<th>{cls}</th>" for cls in icalabel_classes)
+        + "</tr></thead><tbody>"
+    )
+    for _, row in icalabel_df.iterrows():
+        bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
+        text_color = "color:black;"
+        prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in icalabel_classes)
+        icalabel_prob_table_html += (
+            f"<tr style='background-color:{bg_color};{text_color}'>"
+            f"<td>{row.Component}</td>"
+            f"<td>{row.PredictedLabel}</td>"
+            f"<td>{row.MaxProbability:.2f}</td>"
+            f"<td>{'Yes' if row.Excluded else 'No'}</td>"
+            f"{prob_cells}</tr>\n"
+        )
+    icalabel_prob_table_html += "</tbody></table>"
+    report.add_html(
+        title="ICALabel: report",
+        html=icalabel_prob_table_html,
+        tags=tags,
+        section=section,
+    )
+
+    icalabel_map: dict[str, list[int]] = {}
+    for i, (label, _, _) in enumerate(icalabel_report):
+        icalabel_map.setdefault(label, []).append(i)
+
+    for label, indices in icalabel_map.items():
+        icalabel_title = f"ICALabel: {label} components"
+        logger.info(**gen_log_kwargs(message=f'Adding "{icalabel_title}" to report.'))
+        n_col = 4
+        n_row = (len(indices) - 1) // n_col + 1
+        fig, axes = plt.subplots(
+            n_row,
+            n_col,
+            figsize=(4 * n_col, 3 * n_row),
+            layout="constrained",
+        )
+        axes = axes.flatten()
+        for j, ic in enumerate(indices):
+            prob = icalabel_report[ic][1]
+            status = "excluded" if ic in ica.exclude else "included"
+            fcolor = "red" if ic in ica.exclude else "blue"
+            ica.plot_components(picks=ic, axes=[axes[j]], show=False)
+            axes[j].text(
+                0.5,
+                -0.15,
+                f"ICA{ic:03d} — {label}, {prob:.3f} ({status})",
+                ha="center",
+                va="top",
+                fontsize=8,
+                transform=axes[j].transAxes,
+                bbox=dict(facecolor=fcolor, alpha=0.3, pad=4),
+            )
+        for ax in axes[len(indices) :]:
+            fig.delaxes(ax)
+        report.add_figure(
+            fig=fig,
+            title=icalabel_title,
+            section=section,
+            tags=tags + (label.replace(" ", "_").replace("-", "_"),),
+        )
+        plt.close(fig)
 
 
 def get_config(

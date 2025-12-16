@@ -274,7 +274,7 @@ def find_ica_artifacts(
             cfg=cfg,
             ica=ica,
             epochs=epochs,
-            exclude=exclude,
+            mne_exclude=exclude,
             subject=subject,
             session=session,
         )
@@ -405,7 +405,7 @@ def _run_icalabel(
     cfg: SimpleNamespace,
     ica: mne.preprocessing.ICA,
     epochs: mne.BaseEpochs,
-    exclude: list[int],
+    mne_exclude: list[int],
     subject: str,
     session: str | None,
 ) -> tuple[list[int], pd.DataFrame, list[str], list[tuple[str, float, bool]]]:
@@ -468,8 +468,9 @@ def _run_icalabel(
     ]
     icalabel_df["PredictedLabel"] = icalabel_component_labels
     icalabel_df["MaxProbability"] = icalabel_max_probabilities
+    exclude = mne_exclude + icalabel_ics
     icalabel_df["Excluded"] = [
-        i in ica.exclude for i in range(len(icalabel_component_labels))
+        i in exclude for i in range(len(icalabel_component_labels))
     ]
     return icalabel_ics, icalabel_df, icalabel_labels, icalabel_report
 

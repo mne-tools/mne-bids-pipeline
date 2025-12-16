@@ -503,12 +503,12 @@ def _add_report_icalabel(
     for _, row in icalabel_df.iterrows():
         bg_color = "#FFB3B3" if row.Excluded else "#B3B3FF"
         text_color = "color:black;"
-        prob_cells = "".join(f"<td>{row[c]:.2f}</td>" for c in _ICALABEL_CLASSES)
+        prob_cells = "".join(f"<td>{row[c]:0.3f}</td>" for c in _ICALABEL_CLASSES)
         icalabel_prob_table_html += (
             f"<tr style='background-color:{bg_color};{text_color}'>"
             f"<td>{row.Component}</td>"
             f"<td>{row.PredictedLabel}</td>"
-            f"<td>{row.MaxProbability:.3f}</td>"
+            f"<td>{row.MaxProbability:0.3f}</td>"
             f"<td>{'Yes' if row.Excluded else 'No'}</td>"
             f"{prob_cells}</tr>\n"
         )

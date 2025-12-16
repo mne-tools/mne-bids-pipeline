@@ -79,6 +79,14 @@ def run_ica(
     """Run ICA."""
     import matplotlib.pyplot as plt
 
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
+        # on data flltered between 1 and 100 Hz.
+        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_l_freq == 1.0
+        assert cfg.ica_h_freq == 100.0
+        assert cfg.eeg_reference == "average"
+
     raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
@@ -105,20 +113,38 @@ def run_ica(
         # Sanity check – make sure we're using the correct data!
         if cfg.raw_resample_sfreq is not None:
             assert np.allclose(raw.info["sfreq"], cfg.raw_resample_sfreq)
-        if cfg.l_freq is not None:
-            assert np.allclose(raw.info["highpass"], cfg.l_freq)
 
         if idx == 0:
-            if cfg.ica_l_freq is None:
+            # We have to do some gymnastics here to permit for example 128 Hz-sampled
+            # data to be used with mne-icalabel, which wants data low-pass filtered
+            # at 100 Hz
+            h_freq = cfg.ica_h_freq
+            nyq = raw.info["sfreq"] / 2.0
+            if h_freq is not None and h_freq >= nyq:
                 msg = (
-                    f"Not applying high-pass filter (data is already filtered, "
-                    f"cutoff: {raw.info['highpass']} Hz)."
+                    f"Low-pass filter cutoff {h_freq} Hz is higher "
+                    f"than Nyquist {nyq} Hz"
                 )
+                if cfg.ica_use_icalabel:
+                    msg += ", setting to None for compatibility with MNE-ICALabel."
+                    logger.warning(**gen_log_kwargs(message=msg))
+                    h_freq = None
+                else:
+                    raise ValueError(msg)
+            msg = ""
+            if cfg.ica_l_freq is not None and h_freq is not None:
+                msg = (
+                    f"Applying band-pass filter with {cfg.ica_l_freq}-{h_freq} "
+                    "Hz cutoffs"
+                )
+            elif cfg.ica_l_freq is not None:
+                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
+            elif h_freq is not None:
+                msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
+            if cfg.ica_l_freq is not None or h_freq is not None:
                 logger.info(**gen_log_kwargs(message=msg))
-            else:
-                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …"
-                logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
+                raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
+            del nyq, h_freq
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()
@@ -167,6 +193,8 @@ def run_ica(
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
+        if cfg.ica_use_icalabel:
+            epochs.apply_proj()  # Apply the reference projection
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -333,16 +361,18 @@ def get_config(
         conditions=config.conditions,
         runs=get_runs(config=config, subject=subject),
         task_is_rest=config.task_is_rest,
+        ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,
+        h_freq=config.h_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
         ica_reject=config.ica_reject,
+        ica_use_icalabel=config.ica_use_icalabel,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,

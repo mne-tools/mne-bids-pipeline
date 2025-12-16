@@ -279,14 +279,15 @@ def find_ica_artifacts(
             subject=subject,
             session=session,
         )
-        exclude += icalabel_ics
     else:
         icalabel_ics = []
         icalabel_df = pd.DataFrame()
         icalabel_labels = []
         icalabel_report = []
 
+    exclude += icalabel_ics
     ica.exclude = sorted(set(exclude))
+    del exclude
 
     # Save updated ICA to disk.
     # We also store the automatically identified ECG- and EOG-related ICs.

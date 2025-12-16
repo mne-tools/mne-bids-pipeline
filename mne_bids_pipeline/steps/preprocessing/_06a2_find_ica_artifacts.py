@@ -299,16 +299,19 @@ def find_ica_artifacts(
         for idx, (label, prob) in enumerate(
             zip(icalabel_component_labels, icalabel_max_probabilities)
         ):
-            # get its probability table over all classes e.g. [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
+            # get its probability table over all classes e.g.
+            # [0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]
             probs = dict(zip(icalabel_classes, icalabel_class_probabilities[idx]))
 
             exclude = any(  # ONLY
-                # IF the component looked at does have a probability higher then the exclusion_threshold in any of the NOT included classes
+                # IF the component looked at does have a probability higher than the
+                # exclusion_threshold in any of the NOT included classes
                 cls not in cfg.ica_icalabel_include
                 and p >= cfg.ica_exclusion_thresholds.get(cls, 0.8)
                 for cls, p in probs.items()
             ) and not any(  # AND
-                # IF the component looked at does NOT have a probability higher then the class_threshold in any of the included classes
+                # IF the component looked at does NOT have a probability higher than the
+                # class_threshold in any of the included classes
                 cls in cfg.ica_icalabel_include
                 and p >= cfg.ica_class_thresholds.get(cls, 0.3)
                 for cls, p in probs.items()
@@ -424,18 +427,17 @@ def find_ica_artifacts(
             eog_scores=eog_scores if len(eog_scores) else None,
             replace=True,
             n_jobs=1,  # avoid automatic parallelization
-            tags=("ica",),  # the default but be explicit
+            tags=tags,
         )
 
         if cfg.ica_use_icalabel:
             icalabel_prob_table_html = (
                 """
-            <table border="1" cellspacing="0" cellpadding="5" 
-                style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
+            <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; text-align:center; font-size:13px; width:100%;">
             <thead>
             <tr style="background-color:#eee;">
             <th>Component</th><th>Predicted Label</th><th>Max Prob</th><th>Excluded</th>
-            """
+            """  # noqa: E501
                 + "".join(f"<th>{cls}</th>" for cls in icalabel_classes)
                 + "</tr></thead><tbody>"
             )
@@ -452,9 +454,11 @@ def find_ica_artifacts(
                     f"{prob_cells}</tr>\n"
                 )
             icalabel_prob_table_html += "</tbody></table>"
-            report.add_html(title="ICALabel: report", html=icalabel_prob_table_html)
+            report.add_html(
+                title="ICALabel: report", html=icalabel_prob_table_html, tags=tags
+            )
 
-            icalabel_map = {}
+            icalabel_map: dict[str, list[int]] = {}
             for i, (label, _, _) in enumerate(icalabel_report):
                 icalabel_map.setdefault(label, []).append(i)
 
@@ -488,7 +492,7 @@ def find_ica_artifacts(
                     fig=fig,
                     title=f"{label} components",
                     section="ICAlabel: components",
-                    tags=[label.replace(" ", "_").replace("-", "_")],
+                    tags=tags + (label.replace(" ", "_").replace("-", "_"),),
                 )
                 plt.close(fig)
 

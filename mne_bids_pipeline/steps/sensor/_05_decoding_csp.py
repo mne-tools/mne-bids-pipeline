@@ -15,10 +15,10 @@ from sklearn.pipeline import make_pipeline
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
+    _get_ss,
     _restrict_analyze_channels,
     get_decoding_contrasts,
     get_eeg_reference,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import (
     LogReg,
@@ -556,19 +556,24 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run all subjects decoding in parallel."""
-    if not config.contrasts or not config.decoding_csp:
-        if not config.contrasts:
-            msg = "No contrasts specified. "
-        else:
-            msg = "No CSP analysis requested. "
-
-        msg += "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+    if not config.contrasts:
+        msg = "Skipping, no contrasts specified …"
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
+    if not config.decoding_csp:
+        logger.info(**gen_log_kwargs(message="SKIP"))
+        return
+
+    ss = _get_ss(config=config)
+    ssc = [
+        (subject, session, contrast)
+        for subject, session in ss
+        for contrast in get_decoding_contrasts(config)
+    ]
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            one_subject_decoding, exec_params=config.exec_params
+            one_subject_decoding, exec_params=config.exec_params, n_iter=len(ssc)
         )
         logs = parallel(
             run_func(
@@ -578,8 +583,6 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 contrast=contrast,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for contrast in get_decoding_contrasts(config)
+            for subject, session, contrast in ssc
         )
         save_logs(logs=logs, config=config)

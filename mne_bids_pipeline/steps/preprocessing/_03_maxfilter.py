@@ -23,11 +23,11 @@ import numpy as np
 from mne_bids import read_raw_bids
 
 from mne_bids_pipeline._config_utils import (
+    _get_ss,
+    _get_ssrt,
     _pl,
     get_mf_cal_fname,
     get_mf_ctc_fname,
-    get_runs_tasks,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import (
     _get_mf_reference_run_path,
@@ -116,6 +116,10 @@ def compute_esss_proj(
         reject=cfg.mf_esss_reject,
         meg="combined",
     )
+    msg = "Got variance explained of: " + ", ".join(
+        f"{p['explained_var'] * 100:.1f}%" for p in projs
+    )
+    logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files["esss_basis"] = bids_path_in.copy().update(
         subject=subject,  # need these in the case of an empty room match
@@ -635,16 +639,16 @@ def get_config_maxwell_filter(
 def main(*, config: SimpleNamespace) -> None:
     """Run maxwell_filter."""
     if not config.use_maxwell_filter:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
         logs = list()
         # First step: compute eSSS projectors
         if config.mf_esss:
             parallel, run_func = parallel_func(
-                compute_esss_proj, exec_params=config.exec_params
+                compute_esss_proj, exec_params=config.exec_params, n_iter=len(ss)
             )
             logs += parallel(
                 run_func(
@@ -657,17 +661,17 @@ def main(*, config: SimpleNamespace) -> None:
                     subject=subject,
                     session=session,
                 )
-                for subject, sessions in get_subjects_sessions(config).items()
-                for session in sessions
+                for subject, session in ss
             )
 
         # Second: maxwell_filter
-        parallel, run_func = parallel_func(
-            run_maxwell_filter, exec_params=config.exec_params
-        )
         # We need to guarantee that the reference_run completes before the
         # noise/rest runs are processed, so we split the loops.
         for which in [("runs",), ("noise", "rest")]:
+            ssrt = _get_ssrt(config=config, which=which)
+            parallel, run_func = parallel_func(
+                run_maxwell_filter, exec_params=config.exec_params, n_iter=len(ssrt)
+            )
             logs += parallel(
                 run_func(
                     cfg=get_config_maxwell_filter(
@@ -681,14 +685,7 @@ def main(*, config: SimpleNamespace) -> None:
                     run=run,
                     task=task,
                 )
-                for subject, sessions in get_subjects_sessions(config).items()
-                for session in sessions
-                for run, task in get_runs_tasks(
-                    config=config,
-                    subject=subject,
-                    session=session,
-                    which=which,
-                )
+                for subject, session, run, task in ssrt
             )
 
     save_logs(config=config, logs=logs)

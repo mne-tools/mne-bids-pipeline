@@ -143,12 +143,12 @@ def main(*, config: SimpleNamespace) -> None:
     """Run BEM surface extraction."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if config.use_template_mri is not None:
         msg = "Skipping, BEM surface extraction not needed for MRI template …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
@@ -167,7 +167,7 @@ def main(*, config: SimpleNamespace) -> None:
 
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            make_bem_surfaces, exec_params=config.exec_params
+            make_bem_surfaces, exec_params=config.exec_params, n_iter=len(subj_sess)
         )
         logs = parallel(
             run_func(

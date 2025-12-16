@@ -11,12 +11,12 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
     get_subjects_given_session,
-    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -222,9 +222,10 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
+    average_subj = "average"
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(config))
@@ -232,9 +233,17 @@ def main(*, config: SimpleNamespace) -> None:
     exec_params = config.exec_params
     all_sessions = get_sessions(config)
 
+    if hasattr(exec_params.overrides, "subjects"):
+        msg = "Skipping, --subject is set …"
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
+        return
+
     logs = list()
+    ss = _get_ss(config=config)
     with get_parallel_backend(exec_params):
-        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
+        parallel, run_func = parallel_func(
+            morph_stc, exec_params=exec_params, n_iter=len(ss)
+        )
         logs += parallel(
             run_func(
                 cfg=cfg,
@@ -243,15 +252,14 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     logs += [
         run_average(
             cfg=cfg,
             exec_params=exec_params,
             session=session,
-            subject="average",
+            subject=average_subj,
         )
         for session in all_sessions
     ]

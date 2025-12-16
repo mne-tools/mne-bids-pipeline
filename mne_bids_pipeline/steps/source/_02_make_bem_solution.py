@@ -10,9 +10,9 @@ import mne
 
 from mne_bids_pipeline._config_utils import (
     _get_bem_conductivity,
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -101,20 +101,21 @@ def main(*, config: SimpleNamespace) -> None:
     """Run BEM solution calculation."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if config.use_template_mri is not None:
         msg = "Skipping, BEM solution computation not needed for MRI template …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         if config.use_template_mri == "fsaverage":
             # Ensure we have the BEM
             mne.datasets.fetch_fsaverage(get_fs_subjects_dir(config))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            make_bem_solution, exec_params=config.exec_params
+            make_bem_solution, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -124,7 +125,6 @@ def main(*, config: SimpleNamespace) -> None:
                 session=session,
                 force_run=config.recreate_bem,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

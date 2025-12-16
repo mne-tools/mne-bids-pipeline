@@ -3,6 +3,7 @@
 Covariance matrices are computed and saved.
 """
 
+import logging
 from types import SimpleNamespace
 
 import mne
@@ -11,12 +12,12 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     _restrict_analyze_channels,
     get_eeg_reference,
     get_noise_cov_bids_path,
-    get_subjects_sessions,
 )
-from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._logging import _log_context, gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
 from mne_bids_pipeline._run import (
@@ -160,11 +161,11 @@ def retrieve_custom_cov(
 ) -> mne.Covariance:
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
-    config = _import_config(
-        config_path=exec_params.config_path,
-        check=False,
-        log=False,
-    )
+    with _log_context(logging.CRITICAL):
+        config = _import_config(
+            config_path=exec_params.config_path,
+            check=False,
+        )
     assert cfg.noise_cov == "custom"
     assert callable(config.noise_cov)
     assert in_files == {}, in_files  # unknown
@@ -325,7 +326,7 @@ def main(*, config: SimpleNamespace) -> None:
     """Run cov."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     # Note that we're using config.noise_cov here and not adding it to
@@ -333,12 +334,13 @@ def main(*, config: SimpleNamespace) -> None:
 
     if config.noise_cov == "ad-hoc":
         msg = "Skipping, using ad-hoc diagonal covariance …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_covariance, exec_params=config.exec_params
+            run_covariance, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -347,7 +349,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

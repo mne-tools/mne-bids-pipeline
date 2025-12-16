@@ -17,7 +17,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
@@ -52,7 +52,7 @@ jobs:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
@@ -61,7 +61,7 @@ jobs:
         with:
           python-version: "${{ matrix.python }}"
       - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: ${{ matrix.dataset }}
           path: ~/mne_data/${{ matrix.dataset }}
@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
@@ -99,7 +99,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: MNE-funloc-data
           path: ~/mne_data/MNE-funloc-data

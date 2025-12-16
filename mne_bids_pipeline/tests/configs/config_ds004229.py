@@ -51,6 +51,7 @@ h_freq = 40.0
 
 # SSP and peak-to-peak rejection
 spatial_filter = "ssp"
+process_raw_clean = False
 n_proj_eog = dict(n_mag=0, n_grad=0)
 n_proj_ecg = dict(n_mag=2, n_grad=2)
 ssp_ecg_channel = "MEG0113"  # ECG channel is not hooked up in this dataset

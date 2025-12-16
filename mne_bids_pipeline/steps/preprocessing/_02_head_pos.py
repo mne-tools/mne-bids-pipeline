@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import mne
 from mne_bids import BIDSPath, find_matching_paths
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt, get_runs_tasks
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
     _get_run_rest_noise_path,
@@ -154,9 +154,7 @@ def get_input_fnames_twa_head_pos(
     in_files: dict[str, BIDSPath] = dict()
     # can't use `_get_run_path()` here because we don't loop over runs/tasks.
     # But any run will do, as long as the file exists:
-    runs_tasks = get_runs_tasks(
-        config=cfg, subject=subject, session=session, which=("runs",)
-    )
+    runs_tasks = cfg.runs_tasks
     run = next(filter(lambda run_task: run_task[1] == task, runs_tasks))[0]
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
@@ -197,17 +195,14 @@ def compute_twa_head_pos(
     # logging
     want_mc = cfg.mf_mc
     dest_is_twa = isinstance(cfg.mf_destination, str) and cfg.mf_destination == "twa"
-    msg = "Skipping computation of time-weighted average head position"
+    msg = "Skipping, "
     if not want_mc:
-        msg += " (no movement compensation requested)"
-        kwargs = dict(emoji="skip")
+        msg += " no movement compensation requested …"
     elif not dest_is_twa:
-        msg += ' (mf_destination is not "twa")'
-        kwargs = dict(emoji="skip")
+        msg += ' mf_destination is not "twa" …'
     else:
         msg = "Computing time-weighted average head position"
-        kwargs = dict()
-    logger.info(**gen_log_kwargs(message=msg, **kwargs))
+    logger.info(**gen_log_kwargs(message=msg))
     # maybe bail early
     if not want_mc and not dest_is_twa:
         return _prep_out_files(exec_params=exec_params, out_files=dict())
@@ -257,7 +252,7 @@ def compute_twa_head_pos(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
-def get_config(
+def get_config_head_pos(
     *,
     config: SimpleNamespace,
     subject: str,
@@ -273,48 +268,69 @@ def get_config(
     return cfg
 
 
+def get_config_twa(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
+        runs_tasks=get_runs_tasks(
+            config=config,
+            subject=subject,
+            session=session,
+            which=("runs",),
+        ),
+        mf_mc=config.mf_mc,
+        mf_destination=config.mf_destination,
+        **_import_data_kwargs(config=config, subject=subject),
+    )
+    return cfg
+
+
 def main(*, config: SimpleNamespace) -> None:
     """Run head position estimation."""
     if not config.use_maxwell_filter or not config.mf_mc:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
+    ssrt = _get_ssrt(config=config, which=("runs", "rest"))
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_head_pos, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_head_pos,
+            exec_params=config.exec_params,
+            n_iter=len(ssrt),
+        )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject, session=session),
+                cfg=get_config_head_pos(
+                    config=config, subject=subject, session=session
+                ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-                which=("runs", "rest"),
-            )
+            for subject, session, run, task in ssrt
         )
         # compute time-weighted average head position
         # within subject+session+task, across runs
         parallel, run_func = parallel_func(
-            compute_twa_head_pos, exec_params=config.exec_params
+            compute_twa_head_pos,
+            exec_params=config.exec_params,
+            n_iter=len(ss),
         )
         more_logs = parallel(
             run_func(
-                cfg=config,
+                cfg=get_config_twa(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
                 task=config.task or None,  # default task is ""
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
 
     save_logs(config=config, logs=logs + more_logs)

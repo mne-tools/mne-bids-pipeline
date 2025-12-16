@@ -437,6 +437,48 @@ def get_task(config: SimpleNamespace) -> str | None:
         return _valid_tasks[0]
 
 
+def _get_ss(
+    *,
+    config: SimpleNamespace,
+) -> list[tuple[str, str | None]]:
+    return [
+        (subject, session)
+        for subject, sessions in get_subjects_sessions(config).items()
+        for session in sessions
+    ]
+
+
+def _get_ssrt(
+    *,
+    config: SimpleNamespace,
+    which: tuple[str, ...] | None = None,
+) -> list[tuple[str, str | None, str | None, str | None]]:
+    kwargs = dict()
+    if which is not None:
+        kwargs["which"] = which
+    return [
+        (subject, session, run, task)
+        for subject, session in _get_ss(config=config)
+        for run, task in get_runs_tasks(
+            config=config,
+            subject=subject,
+            session=session,
+            **kwargs,
+        )
+    ]
+
+
+def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
+    which: tuple[str, ...] = ()
+    if config.process_raw_clean:
+        which += ("runs",)
+    if config.process_empty_room:
+        which += ("noise",)
+    if config.process_rest:
+        which += ("rest",)
+    return which
+
+
 def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
     if isinstance(config.ssp_ecg_channel, str):
         return config.ssp_ecg_channel

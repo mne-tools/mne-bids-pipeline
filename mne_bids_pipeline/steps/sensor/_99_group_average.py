@@ -105,6 +105,8 @@ def average_evokeds(
 
     evokeds: list[mne.Evoked] = list()
     for these_evokeds in evokeds_nested:
+        if not these_evokeds:  # empty
+            continue
         evokeds.append(
             mne.grand_average(
                 these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
@@ -129,6 +131,14 @@ def average_evokeds(
         root=cfg.deriv_root,
         check=False,
     )
+    # short-circuit, writing a dummy file (can be needed when no data present for a
+    # given missing run)
+    fname_verbose = fname_out.fpath.with_suffix(".fif.IS_INTENTIONALLY_EMPTY.txt")
+    if not evokeds:
+        fname_out.fpath.write_bytes(b"")
+        fname_verbose.write_text("No evoked data present for any subject.\n", "utf-8")
+        return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    fname_verbose.unlink(missing_ok=True)  # should remove if previously written
 
     if not fname_out.fpath.parent.exists():
         os.makedirs(fname_out.fpath.parent)
@@ -1023,15 +1033,19 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
+    subject = "average"
     if config.task_is_rest:
-        msg = '    … skipping: for "rest" task.'
-        logger.info(**gen_log_kwargs(message=msg))
+        msg = 'Skipping, task is "rest" …'
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
     cfg = get_config(
         config=config,
     )
     exec_params = config.exec_params
-    subject = "average"
+    if hasattr(exec_params.overrides, "subjects"):
+        msg = "Skipping, --subject is set …"
+        logger.info(**gen_log_kwargs(message=msg, subject=subject))
+        return
     sessions = get_sessions(config=config)
     if cfg.decode or cfg.decoding_csp:
         decoding_contrasts = get_decoding_contrasts(config=cfg)
@@ -1077,8 +1091,15 @@ def main(*, config: SimpleNamespace) -> None:
                 for session in sessions
             ]
             # Time-by-time
+            sc = [
+                (session, contrast)
+                for session in sessions
+                for contrast in decoding_contrasts
+            ]
             parallel, run_func = parallel_func(
-                average_time_by_time_decoding, exec_params=exec_params
+                average_time_by_time_decoding,
+                exec_params=exec_params,
+                n_iter=len(sc),
             )
             logs += parallel(
                 run_func(
@@ -1089,14 +1110,13 @@ def main(*, config: SimpleNamespace) -> None:
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                 )
-                for session in sessions
-                for contrast in decoding_contrasts
+                for session, contrast in sc
             )
 
         # 3. CSP
         if cfg.decoding_csp and decoding_contrasts:
             parallel, run_func = parallel_func(
-                average_csp_decoding, exec_params=exec_params
+                average_csp_decoding, exec_params=exec_params, n_iter=len(sc)
             )
             logs += parallel(
                 run_func(
@@ -1107,8 +1127,7 @@ def main(*, config: SimpleNamespace) -> None:
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                 )
-                for contrast in get_decoding_contrasts(config=cfg)
-                for session in sessions
+                for session, contrast in sc
             )
 
     save_logs(config=config, logs=logs)

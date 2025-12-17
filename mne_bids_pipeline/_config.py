@@ -1213,6 +1213,113 @@ End time of the interpolation window in seconds.
     ```
 """
 
+# ## Sync with eyelink
+#
+# These parameters determine how eyelink syncing is performed and reported
+
+sync_eyelink: bool = False
+"""
+Carry out eyelink syncing if True
+"""
+
+remove_blink_saccades: bool = True
+"""
+Currently not implemented
+"""
+
+et_has_run: bool = False
+"""
+Specify whether `run` is included in the eye-tracking data file name.
+
+???+ example "Example"
+    ``` python
+    et_has_run = False  # Case with only one run and run is omitted in the file name.
+    et_has_run = True  # Case with multiple runs. Run specification from EEG data is used.
+    ```
+"""
+
+et_has_task: bool = False
+"""
+Specify whether `task` is included in the eye-tracking data file name.
+
+???+ example "Example"
+    ``` python
+    et_has_task = False  # Case with only one task and task is omitted in the file name.
+    et_has_task = True  # Case with multiple tasks. Task specification from EEG data is used.
+    ```
+"""
+
+sync_eventtype_regex: str = ""
+"""
+Regular expression which will be used to select events in the EEG file for synchronisation 
+
+???+ example "Example"
+    ```python
+    sync_eventtype_regex = ".*_grab_this" # select all events with some text, immediately followed by "_grab_this"
+    ```
+"""
+
+sync_eventtype_regex_et: str = ""
+"""
+Regular expression which will be used to select events in the eye-tracking file for synchronisation 
+
+???+ example "Example"
+    ```python
+    sync_eventtype_regex_et = ".*_grab_that" # select all events with some text, immediately followed by "_grab_that"
+    ```
+"""
+sync_heog_ch: tuple[str, str] | str | None = None
+"""
+The HEOG channel(s) to use for assessing synchronisation by means of cross correlation
+
+???+ example "Example"
+    ```python
+    sync_heog_ch = ["HEOGL", "HEOGR"] # subtract the second channel from the first to make a bipolar HEOG channel
+    sync_heog_ch = "HEOGL" # use the HEOGL channel
+    sync_heog_ch = None # skip HEOG cross correlation
+    ```
+"""
+
+sync_et_ch: tuple[str, str] | str | None = ("xpos_left", "xpos_right")
+"""
+The ET channel to use for assessing synchronisation by means of cross correlation
+
+???+ example "Example"
+    ```python
+
+    sync_et_ch = "xpos_left" # use the xpos_left channel
+    sync_et_ch = None # skip HEOG cross correlation
+    ```
+"""
+
+sync_heog_highpass: float = 0.1
+"""
+High-pass filter to apply to the HEOG channel. Filtered signal will not be saved.
+"""
+
+sync_heog_lowpass: float = 10
+"""
+Low-pass filter to apply to the HEOG channel. Filtered signal will not be saved.
+"""
+
+sync_plot_samps: int | tuple[int, int] | None = None
+"""
+When displaying HEOG-ET cross-correlation, constrict plotting to sync_plot_samps[0] to sync_plot_samps[1] around the midpoint
+
+???+ example "Example"
+    ```python
+
+    sync_plot_samps = 500 # plot -500 to 500 around the midpoint
+    sync_plot_samps = (-300, 500) # plot -300 to 500 around the midpoint
+    sync_plot_samps = None # plot the entire cross correlation
+    ```
+"""
+
+sync_calibration_string: str | None = ".* Recalibration (start|end) \\| (.*)"
+"""
+Regular expression used for searching for calibration events
+"""
+
 # ### SSP, ICA, and artifact regression
 
 regress_artifact: dict[str, Any] | None = None

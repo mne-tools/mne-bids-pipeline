@@ -92,15 +92,25 @@ def get_input_fnames_apply_ica_raw(
     run: str,
     task: str | None,
 ) -> InFilesT:
-    in_files = _get_run_rest_noise_path(
-        cfg=cfg,
+    bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        run=run,
-        task=task,
-        kind="filt",
-        mf_reference_run=cfg.mf_reference_run,
+        task=cfg.task,
+        acquisition=cfg.acq,
+        recording=cfg.rec,
+        space=cfg.space,
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+        extension=".fif",
     )
+    in_files = dict()
+    for run in cfg.runs:
+        key = f"raw_run-{run}"
+        in_files[key] = bids_basename.copy().update(
+            run=run, processing=cfg.processing, suffix="raw"
+        )
+        _update_for_splits(in_files, key, single=True)
     assert len(in_files)
     in_files.update(_ica_paths(cfg=cfg, subject=subject, session=session))
     return in_files
@@ -249,8 +259,8 @@ def get_config(
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
-        ica_use_icalabel=config.ica_use_icalabel,
-        processing="filt" if config.regress_artifact is None else "regress",
+        ica_use_icalabel=config.ica_use_icalabel,        
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),
     )

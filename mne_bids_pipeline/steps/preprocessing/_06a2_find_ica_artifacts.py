@@ -16,6 +16,9 @@ import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne.utils import _pl
 from mne_bids import BIDSPath
+from mne_icalabel import label_components
+import mne_icalabel
+import matplotlib.pyplot as plt
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
@@ -335,6 +338,8 @@ def find_ica_artifacts(
     ecg_evoked = None if epochs_ecg is None else epochs_ecg.average()
     eog_evoked = None if epochs_eog is None else epochs_eog.average()
 
+    
+
     # Save ECG and EOG evokeds to disk.
     for artifact_name, artifact_evoked in zip(("ecg", "eog"), (ecg_evoked, eog_evoked)):
         if artifact_evoked:
@@ -598,7 +603,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
     return cfg

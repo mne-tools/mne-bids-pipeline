@@ -83,7 +83,7 @@ elif task == "N170":  # test autoreject local before ICA, and MNE-ICALabel
     ica_l_freq = 1
     ica_reject = "autoreject_local"
     reject = "autoreject_global"
-    autoreject_n_interpolate = [2, 4]
+    autoreject_n_interpolate = [12] # only for testing!
 else:
     spatial_filter = "ica"
     ica_reject = dict(eeg=350e-6, eog=500e-6)

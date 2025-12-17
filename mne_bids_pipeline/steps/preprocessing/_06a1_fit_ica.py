@@ -191,7 +191,18 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
+        if cfg.ica_use_icalabel:
+            assert cfg.eeg_reference == "average"
+            projection = False  # Avg. ref. needs to be applied for MNE-ICALabel
+        elif cfg.eeg_reference == "average":
+            projection = True
+        else:
+            projection = False
+
+        if not projection:
+            msg = "Applying average reference to EEG epochs used for ICA fitting."
+            logger.info(**gen_log_kwargs(message=msg))
+
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
         if cfg.ica_use_icalabel:
             epochs.apply_proj()  # Apply the reference projection
@@ -291,7 +302,8 @@ def run_ica(
         fit_params=fit_params,
         max_iter=cfg.ica_max_iterations,
     )
-    ica.fit(epochs, decim=cfg.ica_decim)
+    # TODO: This works for our pipeline (exclude eye-tracking data for ICA) but probably not in general
+    ica.fit(epochs.pick(picks="eeg"), decim=cfg.ica_decim)
     explained_var = (
         ica.pca_explained_variance_[: ica.n_components_].sum()
         / ica.pca_explained_variance_.sum()
@@ -388,7 +400,7 @@ def get_config(
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
-        processing="filt" if config.regress_artifact is None else "regress",
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_bids_kwargs(config=config),
     )

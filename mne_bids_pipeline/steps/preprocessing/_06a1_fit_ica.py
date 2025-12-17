@@ -191,18 +191,7 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        if cfg.ica_use_icalabel:
-            assert cfg.eeg_reference == "average"
-            projection = False  # Avg. ref. needs to be applied for MNE-ICALabel
-        elif cfg.eeg_reference == "average":
-            projection = True
-        else:
-            projection = False
-
-        if not projection:
-            msg = "Applying average reference to EEG epochs used for ICA fitting."
-            logger.info(**gen_log_kwargs(message=msg))
-
+        projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
         if cfg.ica_use_icalabel:
             epochs.apply_proj()  # Apply the reference projection

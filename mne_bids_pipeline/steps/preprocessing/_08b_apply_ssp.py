@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import mne
 
 from mne_bids_pipeline._config_utils import (
-    _get_ss,
     _get_ssrt,
+    _get_sst,
     _limit_which_clean,
     _proj_path,
 )
@@ -173,13 +173,13 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
-    ss = _get_ss(config=config)
+    sst = _get_sst(config=config)
     which = _limit_which_clean(config=config)
     ssrt = _get_ssrt(config=config, which=which)
     with get_parallel_backend(config.exec_params):
         # Epochs
         parallel, run_func = parallel_func(
-            apply_ssp_epochs, exec_params=config.exec_params, n_iter=len(ss)
+            apply_ssp_epochs, exec_params=config.exec_params, n_iter=len(sst)
         )
         logs = parallel(
             run_func(
@@ -190,8 +190,9 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
-            for subject, session in ss
+            for subject, session, task in sst
         )
         # Raw
         parallel, run_func = parallel_func(

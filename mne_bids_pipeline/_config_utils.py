@@ -911,7 +911,6 @@ def _proj_path(
     return BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,

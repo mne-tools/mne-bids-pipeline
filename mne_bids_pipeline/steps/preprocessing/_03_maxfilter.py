@@ -214,7 +214,7 @@ def get_input_fnames_maxwell_filter(
     # head positions
     if cfg.mf_mc:
         if run is None and task == "noise":
-            pos_run, pos_task = cfg.mf_reference_run, cfg.task
+            pos_run, pos_task = cfg.mf_reference_run, cfg.mf_reference_task
         else:
             pos_run, pos_task = run, task
         path = _get_run_path(

@@ -17,7 +17,7 @@ from ._config_utils import (
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from .typing import InFilesT, PathLike, RunKindT, RunTypeT
+from .typing import ConditionsTypeT, InFilesT, PathLike, RunKindT, RunTypeT
 
 
 def make_epochs(
@@ -27,7 +27,7 @@ def make_epochs(
     session: str | None,
     raw: mne.io.BaseRaw,
     event_id: dict[str, int] | Literal["auto"] | None,
-    conditions: Iterable[str] | dict[str, str],
+    conditions: ConditionsTypeT | dict[str, ConditionsTypeT],
     tmin: float,
     tmax: float,
     custom_metadata: pd.DataFrame | dict[str, Any] | None,
@@ -75,9 +75,23 @@ def make_epochs(
         #
         # We only keep conditions that will be analyzed.
         if isinstance(conditions, dict):
-            conditions = list(conditions.keys())
+            # Check to see if it's nested or not
+            keys = list(conditions.keys())
+            if isinstance(conditions[keys[0]], str):
+                # Not nested
+                conditions = keys
+            else:
+                assert task is not None, (
+                    "task must be provided when conditions is a dict of dicts"
+                )
+                assert task in conditions, f"Task '{task}' not in conditions keys."
+                assert isinstance(conditions[task], list), type(conditions[task])
+                conditions = list(conditions[task])
         else:
             conditions = list(conditions)  # Ensure we have a list
+        assert isinstance(conditions, list)
+        for cond in conditions:
+            assert isinstance(cond, str), type(cond)
 
         # Handle grouped / hierarchical event names.
         row_event_names = mne.event.match_event_names(
@@ -620,6 +634,8 @@ def _get_run_path(
     allow_missing: bool = False,
     key: str | None = None,
 ) -> InFilesT:
+    assert isinstance(run, str) or run is None
+    assert isinstance(task, str) or task is None
     bids_path_in = _get_bids_path_in(
         cfg=cfg,
         subject=subject,

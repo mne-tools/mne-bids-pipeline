@@ -36,11 +36,12 @@ def get_input_fnames_drop_ptp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -199,7 +200,7 @@ def drop_ptp(
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
     title = "Epochs: after cleaning"
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         if cfg.reject == "autoreject_local":
             caption = (

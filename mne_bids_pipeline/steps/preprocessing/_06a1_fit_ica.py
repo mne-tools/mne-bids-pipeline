@@ -46,7 +46,6 @@ def get_input_fnames_run_ica(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -56,10 +55,10 @@ def get_input_fnames_run_ica(
         extension=".fif",
     )
     in_files = dict()
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -87,7 +86,9 @@ def run_ica(
         assert cfg.ica_h_freq == 100.0
         assert cfg.eeg_reference == "average"
 
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
     out_files = dict()
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
     out_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
@@ -104,7 +105,7 @@ def run_ica(
     event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
 
     epochs = None
-    for idx, (run, raw_fname) in enumerate(zip(cfg.runs, raw_fnames)):
+    for idx, ((run, task), raw_fname) in enumerate(zip(cfg.runs_tasks, raw_fnames)):
         msg = f"Processing raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname, preload=True)
@@ -359,7 +360,9 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
+        runs_tasks=get_runs_tasks(
+            config=config, subject=subject, session=session, which=("runs", "rest")
+        ),
         task_is_rest=config.task_is_rest,
         ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,

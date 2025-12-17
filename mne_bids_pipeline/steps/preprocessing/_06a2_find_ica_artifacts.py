@@ -109,10 +109,10 @@ def get_input_fnames_find_ica_artifacts(
     in_files = dict()
     in_files["epochs"] = bids_basename.copy().update(processing="icafit", suffix="epo")
     _update_for_splits(in_files, "epochs", single=True)
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     in_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
@@ -131,7 +131,9 @@ def find_ica_artifacts(
     in_files: InFilesT,
 ) -> OutFilesT:
     """Run ICA."""
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
     bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
     out_files = dict()
     out_files["ica"] = bids_basename.copy().update(processing="ica", suffix="ica")

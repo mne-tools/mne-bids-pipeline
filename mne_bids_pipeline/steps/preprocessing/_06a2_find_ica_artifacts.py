@@ -16,9 +16,6 @@ import pandas as pd
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne.utils import _pl
 from mne_bids import BIDSPath
-from mne_icalabel import label_components
-import mne_icalabel
-import matplotlib.pyplot as plt
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,

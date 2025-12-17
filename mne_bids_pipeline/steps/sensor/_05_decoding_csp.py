@@ -187,11 +187,7 @@ def one_subject_decoding(
     clf = make_pipeline(
         *preproc_steps,
         csp,
-        LogReg(
-            solver="liblinear",  # much faster than the default
-            random_state=cfg.random_state,
-            n_jobs=1,
-        ),
+        LogReg(random_state=cfg.random_state),
     )
     cv = StratifiedKFold(
         n_splits=cfg.decoding_n_splits,

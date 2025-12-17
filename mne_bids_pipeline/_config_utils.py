@@ -827,8 +827,13 @@ def _validate_contrasts(contrasts: list[tuple[str, str] | dict[str, Any]]) -> No
             if len(contrast) != 2:
                 raise ValueError("Contrasts' tuples MUST be two conditions")
         elif isinstance(contrast, dict):
-            if not _set_keys_arbitrary_contrast.issubset(set(contrast.keys())):
-                raise ValueError(f"Missing key(s) in contrast {contrast}")
+            missing = ", ".join(
+                repr(m) for m in sorted(_set_keys_arbitrary_contrast - set(contrast))
+            )
+            if missing:
+                raise ValueError(
+                    f"Missing key{_pl(missing)} in contrast {contrast}: {missing}"
+                )
             if len(contrast["conditions"]) != len(contrast["weights"]):
                 raise ValueError(
                     f"Contrast {contrast['name']} has an "

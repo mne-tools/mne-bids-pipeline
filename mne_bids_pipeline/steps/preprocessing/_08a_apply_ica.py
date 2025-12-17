@@ -141,6 +141,8 @@ def apply_ica_epochs(
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    if cfg.ica_use_icalabel:
+        epochs.set_eeg_reference("average", projection=True).apply_proj()
 
     # Now actually reject the components.
     msg = (
@@ -215,6 +217,8 @@ def apply_ica_raw(
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    if cfg.ica_use_icalabel:
+        raw.set_eeg_reference("average", projection=True).apply_proj()
     ica.apply(raw)
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
@@ -248,6 +252,7 @@ def get_config(
     cfg = SimpleNamespace(
         baseline=config.baseline,
         ica_reject=config.ica_reject,
+        ica_use_icalabel=config.ica_use_icalabel,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject),

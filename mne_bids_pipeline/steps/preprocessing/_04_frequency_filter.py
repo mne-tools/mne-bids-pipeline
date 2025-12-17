@@ -62,6 +62,7 @@ def get_input_fnames_frequency_filter(
         task=task,
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
 
 

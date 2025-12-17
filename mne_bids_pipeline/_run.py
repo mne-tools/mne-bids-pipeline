@@ -265,7 +265,7 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
-                        msg = "Computation unnecessary (cached) …"
+                        msg = f"Computation unnecessary (cached {func.__name__}(…)) …"
                         emoji = "cache"
             # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface

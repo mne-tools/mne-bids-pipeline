@@ -102,6 +102,7 @@ def get_input_fnames_apply_ica_raw(
         task=task,
         kind="filt",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
     assert len(in_files)
     in_files.update(_ica_paths(cfg=cfg, subject=subject, session=session))

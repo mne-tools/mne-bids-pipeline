@@ -420,9 +420,10 @@ def get_runs_tasks(
         if rest_path:
             runs_tasks.append((None, "rest"))
     if "noise" in which:
-        mf_reference_run = get_mf_reference_run(config=config)
+        mf_reference_run, mf_reference_task = get_mf_reference_run_task(config=config)
         noise_path = _get_noise_path(
             mf_reference_run=mf_reference_run,
+            mf_reference_task=mf_reference_task,
             cfg=config,
             subject=subject,
             session=session,
@@ -434,29 +435,34 @@ def get_runs_tasks(
     return tuple(runs_tasks)
 
 
-def get_mf_reference_run(config: SimpleNamespace) -> str | None:
+def get_mf_reference_run_task(config: SimpleNamespace) -> tuple[str | None, str | None]:
     # Retrieve to run identifier (number, name) of the reference run
+    out_run: str | None
     if config.mf_reference_run is not None:
         assert isinstance(config.mf_reference_run, str), type(config.mf_reference_run)
-        return config.mf_reference_run
-    # Use the first run
-    inter_runs = get_intersect_run(config)
-    mf_ref_error = (config.mf_reference_run is not None) and (
-        config.mf_reference_run not in inter_runs
-    )
-    if mf_ref_error:
-        msg = (
-            f"You set mf_reference_run={config.mf_reference_run}, but your "
-            f"dataset only contains the following runs: {inter_runs}"
+        out_run = config.mf_reference_run
+    else:
+        # Use the first run
+        inter_runs = get_intersect_run(config)
+        mf_ref_error = (config.mf_reference_run is not None) and (
+            config.mf_reference_run not in inter_runs
         )
-        raise ValueError(msg)
-    if not inter_runs:
-        raise ValueError(
-            f"The intersection of runs by subjects is empty. "
-            f"Check the list of runs: "
-            f"{get_runs_all_subjects(config, task=None)}"
-        )
-    return inter_runs[0]
+        if mf_ref_error:
+            msg = (
+                f"You set mf_reference_run={config.mf_reference_run}, but your "
+                f"dataset only contains the following runs: {inter_runs}"
+            )
+            raise ValueError(msg)
+        if not inter_runs:
+            raise ValueError(
+                f"The intersection of runs by subjects is empty. "
+                f"Check the list of runs: "
+                f"{get_runs_all_subjects(config, task=None)}"
+            )
+        out_run = inter_runs[0]
+    # TODO: Add config.mf_reference_task handling here, might not match otherwise
+    out_task = get_tasks(config=config)[0]
+    return out_run, out_task
 
 
 def get_tasks(config: SimpleNamespace) -> list[str | None]:

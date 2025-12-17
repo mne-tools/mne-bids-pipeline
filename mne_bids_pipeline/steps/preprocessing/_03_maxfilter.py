@@ -61,6 +61,7 @@ def get_input_fnames_esss(
         task="noise",
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
@@ -203,6 +204,7 @@ def get_input_fnames_maxwell_filter(
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
@@ -239,7 +241,7 @@ def get_input_fnames_maxwell_filter(
                 extension=".fif",
                 root=cfg.deriv_root,
                 check=False,
-                task=pos_task,
+                task=None,
                 run=None,
             )
     if cfg.mf_esss:

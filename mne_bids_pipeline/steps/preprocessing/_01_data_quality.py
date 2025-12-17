@@ -44,6 +44,7 @@ def get_input_fnames_data_quality(
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,

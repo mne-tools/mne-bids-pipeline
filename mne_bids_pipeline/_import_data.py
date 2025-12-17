@@ -12,8 +12,7 @@ from ._config_utils import (
     _do_mf_autobad,
     _pl,
     get_datatype,
-    get_mf_reference_run,
-    get_tasks,
+    get_mf_reference_run_task,
 )
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
@@ -432,6 +431,7 @@ def import_experimental_data(
     subject = bids_path_in.subject
     session = bids_path_in.session
     run = bids_path_in.run
+    task = bids_path_in.task  # noqa: F841
 
     # 1. _load_data (_crop_data)
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)
@@ -586,7 +586,7 @@ def _get_bids_path_in(
         subject=subject,
         run=run,
         session=session,
-        task=task or cfg.task,
+        task=task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -669,6 +669,7 @@ def _get_noise_path(
     session: str | None,
     kind: RunKindT,
     mf_reference_run: str | None,
+    mf_reference_task: str | None,
     add_bads: bool | None = None,
 ) -> InFilesT:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
@@ -690,7 +691,7 @@ def _get_noise_path(
             subject=subject,
             session=session,
             run=mf_reference_run,
-            task=get_tasks(config=cfg)[0],
+            task=mf_reference_task,
             kind=kind,
         )
         raw_fname = _read_json(_empty_room_match_path(raw_fname, cfg))["fname"]
@@ -717,12 +718,14 @@ def _get_run_rest_noise_path(
     task: str | None,
     kind: RunKindT,
     mf_reference_run: str | None,
+    mf_reference_task: str | None,
     add_bads: bool | None = None,
 ) -> InFilesT:
     if run is None and task in ("noise", "rest"):
         if task == "noise":
             path = _get_noise_path(
                 mf_reference_run=mf_reference_run,
+                mf_reference_task=mf_reference_task,
                 cfg=cfg,
                 subject=subject,
                 session=session,
@@ -763,7 +766,7 @@ def _get_mf_reference_run_path(
         subject=subject,
         session=session,
         run=cfg.mf_reference_run,
-        task=None,
+        task=cfg.mf_reference_task,
         kind="orig",
         add_bads=add_bads,
         key="raw_ref_run",
@@ -839,14 +842,17 @@ def _read_bads_tsv(
 
 def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, Any]:
     """Get config params needed for any raw data loading."""
+    mf_reference_run, mf_reference_task = get_mf_reference_run_task(config=config)
     return dict(
         # import_experimental_data / general
+        task=config.task,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
         # _get_raw_paths, _get_noise_path
         use_maxwell_filter=config.use_maxwell_filter,
-        mf_reference_run=get_mf_reference_run(config=config),
+        mf_reference_run=mf_reference_run,
+        mf_reference_task=mf_reference_task,
         data_type=config.data_type,
         # automatic add_bads
         find_noisy_channels_meg=config.find_noisy_channels_meg,

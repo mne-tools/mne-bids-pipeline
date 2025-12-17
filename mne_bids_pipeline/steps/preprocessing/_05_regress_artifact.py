@@ -41,6 +41,7 @@ def get_input_fnames_regress_artifact(
         task=task,
         kind="filt",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
     assert len(out)
     return out

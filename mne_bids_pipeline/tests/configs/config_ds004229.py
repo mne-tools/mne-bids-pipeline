@@ -19,6 +19,7 @@ mf_destination = mne.transforms.translation(  # rotate backward and move up
     z=0.055,
 ) @ mne.transforms.rotation(x=np.deg2rad(-15))
 mf_mc = True
+mf_destination = "twa"
 mf_st_duration = 10
 mf_int_order = 6  # lower for smaller heads
 mf_mc_t_step_min = 0.5  # just for speed!
@@ -30,11 +31,27 @@ mf_esss = 8
 mf_esss_reject = {"grad": 10000e-13, "mag": 40000e-15}
 ch_types = ["meg"]
 
+# test extra kws
+find_bad_channels_extra_kws = {
+    "ignore_ref": True,
+}
+mf_extra_kws = {
+    "ignore_ref": True,
+}
+notch_extra_kws = {
+    "method": "spectrum_fit",
+}
+bandpass_extra_kws = {
+    "fir_window": "blackman",
+}
+
+
 l_freq = None
 h_freq = 40.0
 
 # SSP and peak-to-peak rejection
 spatial_filter = "ssp"
+process_raw_clean = False
 n_proj_eog = dict(n_mag=0, n_grad=0)
 n_proj_ecg = dict(n_mag=2, n_grad=2)
 ssp_ecg_channel = "MEG0113"  # ECG channel is not hooked up in this dataset

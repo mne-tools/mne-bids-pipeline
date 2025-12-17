@@ -6,6 +6,8 @@ from warnings import filterwarnings
 
 import mne
 
+from ._config_import import _import_config
+from ._config_utils import get_fs_subjects_dir
 from .tests.datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
@@ -95,6 +97,39 @@ def _download(*, ds_name: str, ds_path: Path) -> None:
         download_func = _download_from_web
 
     download_func(ds_name=ds_name, ds_path=ds_path)
+
+    # and fsaverage if needed
+    extra = DATASET_OPTIONS[ds_name].get("config_path_extra", "")
+    config_path = (
+        Path(__file__).parent
+        / "tests"
+        / "configs"
+        / f"config_{ds_name.replace('-', '_')}{extra}.py"
+    )
+    if config_path.is_file():
+        has_subjects_dir = any(
+            "derivatives/freesurfer/subjects" in key
+            for key in options.get("include", [])
+        )
+        if has_subjects_dir or options.get("fsaverage"):
+            cfg = _import_config(config_path=config_path)
+            subjects_dir = get_fs_subjects_dir(config=cfg)
+            n_try = 5
+            for ii in range(1, n_try + 1):  # osf.io fails sometimes
+                write_extra = f" (attempt #{ii})" if ii > 1 else ""
+                print(f"Checking fsaverage in {subjects_dir} ...{write_extra}")
+                try:
+                    mne.datasets.fetch_fsaverage(
+                        subjects_dir=subjects_dir,
+                        verbose=True,
+                    )
+                except Exception:  # pragma: no cover
+                    if ii == n_try:
+                        raise
+                    else:
+                        print("Failed and will retry, got:\n{exc}")
+                else:
+                    break
 
 
 def main(dataset: str | None) -> None:

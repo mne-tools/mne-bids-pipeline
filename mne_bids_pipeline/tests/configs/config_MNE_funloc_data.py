@@ -18,6 +18,9 @@ use_maxwell_filter: bool = True
 crop_runs = (40, 190)
 mf_st_duration = 60.0
 # SSP
+spatial_filter = "ssp"
+process_raw_clean = False
+ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": "MEG0141"}
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 

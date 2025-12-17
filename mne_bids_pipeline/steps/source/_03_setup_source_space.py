@@ -11,7 +11,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
-    get_subjects,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -92,18 +92,23 @@ def main(*, config: SimpleNamespace) -> None:
     """Run forward."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if config.use_template_mri is not None:
-        subjects = [config.use_template_mri]
+        sub_ses = {config.use_template_mri: get_sessions(config=config)}
     else:
-        subjects = get_subjects(config=config)
-    sessions = get_sessions(config=config)
+        sub_ses = get_subjects_sessions(config=config)
 
+    ss = [
+        (subject, session)
+        for subject, sessions in sub_ses.items()
+        for session in sessions
+    ]
+    del sub_ses
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_setup_source_space, exec_params=config.exec_params
+            run_setup_source_space, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -115,7 +120,6 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
             )
-            for subject in subjects
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

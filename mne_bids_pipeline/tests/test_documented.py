@@ -1,15 +1,20 @@
 """Test that all config values are documented."""
 
 import ast
+import logging
 import os
 import re
 import sys
+from collections.abc import Generator
 from pathlib import Path
 
+import pytest
 import yaml
 
-from mne_bids_pipeline._config_import import _get_default_config
+from mne_bids_pipeline._config_import import _get_default_config, _import_config
+from mne_bids_pipeline._config_template import create_template_config
 from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
+from mne_bids_pipeline._logging import _log_context
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
@@ -38,7 +43,7 @@ def test_options_documented() -> None:
     settings_path = root_path.parent / "docs" / "source" / "settings"
     sys.path.append(str(settings_path))
     try:
-        from gen_settings import main
+        from gen_settings import main  # pyright: ignore [reportMissingImports]
     finally:
         sys.path.pop()
     main()
@@ -64,7 +69,7 @@ def test_options_documented() -> None:
                         why = f"Duplicate docs in {fname} and {other} for {val}"
                         assert val not in in_doc[other], why
                     in_doc[fname].add(val)
-    what = "docs/source/settings doc"
+    what = "docs/source/settings/*.md docs created by gen_settings.py"
     in_doc_all = set()
     for vals in in_doc.values():
         in_doc_all.update(vals)
@@ -209,3 +214,48 @@ def test_datasets_in_doc() -> None:
     assert tests == examples, "CircleCI tests != docs/mkdocs.yml Examples"
     assert tests == dataset_names, "CircleCI tests != tests/datasets.py"
     assert tests == test_names, "CircleCI tests != tests/test_run.py"
+
+
+def _replace_config_value_in_file(fpath: Path, config_key: str, new_value: str) -> None:
+    """Assign a value to a config key in a file, and uncomment the line if needed."""
+    lines = fpath.read_text().split("\n")
+    pattern = re.compile(rf"(?:# )?({config_key}: .* = )(?:.*)")
+    for ix, line in enumerate(lines):
+        if pattern.match(line):
+            lines[ix] = pattern.sub(
+                rf"\1{new_value}",
+                line,  # omit comment marker, change default value to `new_value`
+            )
+            break
+    fpath.write_text("\n".join(lines))
+
+
+@pytest.fixture
+def no_log() -> Generator[None, None, None]:
+    """Disable logging."""
+    with _log_context(logging.CRITICAL):
+        yield
+
+
+def test_config_template_valid(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, no_log: None
+) -> None:
+    """Ensure our config template is syntactically valid (importable)."""
+    monkeypatch.setenv("BIDS_ROOT", str(tmp_path))
+    fpath = tmp_path / "foo.py"
+    create_template_config(fpath)
+    # `ch_types` fails pydantic validation (its default is `[]` but its annotation
+    # requires length > 0)
+    with pytest.raises(
+        ValueError, match="ch_types\n  Value should have at least 1 item"
+    ):
+        _import_config(config_path=fpath)
+    # Give `ch_types` a value so pydantic will succeed...
+    _replace_config_value_in_file(fpath, "ch_types", '["meg"]')
+    # ...but now `_check_config` will raise an error that `conditions` cannot be None
+    # unless `task_is_rest = True` (which defaults to False)
+    with pytest.raises(ValueError, match="the `conditions` parameter is empty"):
+        _import_config(config_path=fpath)
+    # give a non-None value for `conditions`, now importing the config should work
+    _replace_config_value_in_file(fpath, "conditions", '["foo"]')
+    _import_config(config_path=fpath)

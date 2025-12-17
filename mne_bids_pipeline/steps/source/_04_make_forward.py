@@ -13,11 +13,11 @@ from mne_bids import BIDSPath, get_head_mri_trans
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_bem_conductivity,
+    _get_ss,
     _meg_in_ch_types,
     get_fs_subject,
     get_fs_subjects_dir,
     get_runs,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -201,6 +201,12 @@ def run_forward(
     fwd = mne.make_forward_solution(
         info, trans=trans, src=src, bem=bem, mindist=cfg.mindist
     )
+    if fwd["src"]._subject != cfg.fs_subject:
+        raise RuntimeError(
+            f"subject in the SourceSpace ({fwd['src']._subject}) does not match "
+            f"expected subject ({cfg.fs_subject}). This should not happen and probably "
+            f"indicates an error in the SourceSpace loaded from ({str(src)})."
+        )
     out_files = dict()
     out_files["trans"] = bids_path.copy().update(suffix="trans")
     out_files["forward"] = bids_path.copy().update(suffix="fwd")
@@ -283,11 +289,14 @@ def main(*, config: SimpleNamespace) -> None:
     """Run forward."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_forward, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_forward, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject, session=session),
@@ -295,7 +304,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

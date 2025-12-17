@@ -16,7 +16,7 @@ If config.interactive = True plots raw data and power spectral density.
 
 from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal
 
 import mne
 import numpy as np
@@ -24,7 +24,7 @@ from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -71,29 +71,21 @@ def zapline(
     session: str | None,
     run: str,
     task: str | None,
-    fline: float,
-    iter: bool,
+    fline: float | None,
+    iter_: bool,
 ) -> None:
-    """Uses Zapline to filter? data"""
+    """Use Zapline to remove line frequencies."""
     if fline is None:
-        msg = "Not applying Zapline filter to data."
-    else:
-        msg = f"Zapline filtering data at with Fline {fline} Hz."
+        return
 
+    msg = f"Zapline filtering data at with {fline=} Hz."
     logger.info(**gen_log_kwargs(message=msg))
-
-    if fline is None:
-        return raw
-
     sfreq = raw.info["sfreq"]
-    data = raw.get_data().T  # shape = (n_samples, n_channels, n_trials)
-    if iter:
-        out, iterations = dss.dss_line_iter(data, fline, sfreq)
-        print(f"Removed {iterations} components")
-    else:
-        out, _ = dss.dss_line(data, fline, sfreq)
-    raw = mne.io.RawArray(out.T, verbose=True, info=raw.info)
-    return raw
+    picks = mne.pick_types(raw.info, meg=True, eeg=True)
+    data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
+    func = dss.dss_line_iter if iter_ else dss.dss_line
+    out, _ = func(data, fline, sfreq)
+    raw._data[picks] = out.T
 
 
 def notch_filter(
@@ -107,16 +99,19 @@ def notch_filter(
     notch_widths: float | Iterable[float] | None,
     run_type: RunTypeT,
     picks: IntArrayT | None,
+    notch_extra_kws: dict[str, Any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
-    if freqs is None:
+    if freqs is None and (notch_extra_kws.get("method") != "spectrum_fit"):
         msg = f"Not applying notch filter to {run_type} data."
+    elif notch_extra_kws.get("method") == "spectrum_fit":
+        msg = f"Applying notch filter to {run_type} data with spectrum fitting."
     else:
         msg = f"Notch filtering {run_type} data at {freqs} Hz."
 
     logger.info(**gen_log_kwargs(message=msg))
 
-    if freqs is None:
+    if (freqs is None) and (notch_extra_kws.get("method") != "spectrum_fit"):
         return
 
     raw.notch_filter(
@@ -125,6 +120,7 @@ def notch_filter(
         notch_widths=notch_widths,
         n_jobs=1,
         picks=picks,
+        **notch_extra_kws,
     )
 
 
@@ -140,6 +136,7 @@ def bandpass_filter(
     h_trans_bandwidth: float | Literal["auto"],
     run_type: RunTypeT,
     picks: IntArrayT | None,
+    bandpass_extra_kws: dict[str, Any],
 ) -> None:
     """Filter data channels (MEG and EEG)."""
     if l_freq is not None and h_freq is None:
@@ -163,6 +160,7 @@ def bandpass_filter(
         h_trans_bandwidth=h_trans_bandwidth,
         n_jobs=1,
         picks=picks,
+        **bandpass_extra_kws,
     )
 
 
@@ -250,14 +248,14 @@ def filter_data(
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
     raw.load_data()
-    raw = zapline(
+    zapline(
         raw=raw,
         subject=subject,
         session=session,
         run=run,
         task=task,
         fline=cfg.zapline_fline,
-        iter=cfg.zapline_iter,
+        iter_=cfg.zapline_iter,
     )
     notch_filter(
         raw=raw,
@@ -270,6 +268,7 @@ def filter_data(
         notch_widths=cfg.notch_widths,
         run_type=run_type,
         picks=picks,
+        notch_extra_kws=cfg.notch_extra_kws,
     )
     bandpass_filter(
         raw=raw,
@@ -283,6 +282,7 @@ def filter_data(
         l_trans_bandwidth=cfg.l_trans_bandwidth,
         run_type=run_type,
         picks=picks,
+        bandpass_extra_kws=cfg.bandpass_extra_kws,
     )
     resample(
         raw=raw,
@@ -350,6 +350,8 @@ def get_config(
         notch_widths=config.notch_widths,
         raw_resample_sfreq=config.raw_resample_sfreq,
         regress_artifact=config.regress_artifact,
+        notch_extra_kws=config.notch_extra_kws,
+        bandpass_extra_kws=config.bandpass_extra_kws,
         **_import_data_kwargs(config=config, subject=subject),
     )
     return cfg
@@ -357,9 +359,11 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run filter."""
+    ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(filter_data, exec_params=config.exec_params)
-
+        parallel, run_func = parallel_func(
+            filter_data, exec_params=config.exec_params, n_iter=len(ssrt)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -372,13 +376,6 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
-
     save_logs(config=config, logs=logs)

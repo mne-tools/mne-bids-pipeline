@@ -16,9 +16,9 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     get_eeg_reference,
     get_runs,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -125,6 +125,7 @@ def run_epochs(
             conditions=cfg.conditions,
             tmin=cfg.epochs_tmin,
             tmax=cfg.epochs_tmax,
+            custom_metadata=cfg.epochs_custom_metadata,
             metadata_tmin=cfg.epochs_metadata_tmin,
             metadata_tmax=cfg.epochs_metadata_tmax,
             metadata_keep_first=cfg.epochs_metadata_keep_first,
@@ -150,7 +151,14 @@ def run_epochs(
         if cfg.use_maxwell_filter:
             # Keep track of the info corresponding to the run with the smallest
             # data rank.
-            new_rank = mne.compute_rank(epochs, rank="info")["meg"]
+            if "grad" in epochs:
+                if "mag" in epochs:
+                    type_sel = "meg"
+                else:
+                    type_sel = "grad"
+            else:
+                type_sel = "mag"
+            new_rank = mne.compute_rank(epochs, rank="info")[type_sel]
             if (smallest_rank is None) or (new_rank < smallest_rank):
                 smallest_rank = new_rank
                 smallest_rank_info = epochs.info.copy()
@@ -163,7 +171,7 @@ def run_epochs(
 
     if cfg.use_maxwell_filter and cfg.noise_cov == "rest":
         raw_rest_filt = mne.io.read_raw(in_files.pop("raw_rest"))
-        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")["meg"]
+        rank_rest = mne.compute_rank(raw_rest_filt, rank="info")[type_sel]
         if rank_rest < smallest_rank:
             msg = (
                 f"The MEG rank of the resting state data ({rank_rest}) is "
@@ -188,7 +196,7 @@ def run_epochs(
         assert epochs.info["ch_names"] == smallest_rank_info["ch_names"]
         with epochs.info._unlock():
             epochs.info["proc_history"] = smallest_rank_info["proc_history"]
-            rank_epochs_new = mne.compute_rank(epochs, rank="info")["meg"]
+            rank_epochs_new = mne.compute_rank(epochs, rank="info")[type_sel]
             msg = f'The MEG rank of the "{cfg.task}" epochs is now: {rank_epochs_new}'
             logger.warning(**gen_log_kwargs(message=msg))
 
@@ -317,6 +325,7 @@ def get_config(
         conditions=config.conditions,
         epochs_tmin=config.epochs_tmin,
         epochs_tmax=config.epochs_tmax,
+        epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,
@@ -340,8 +349,11 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_epochs, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_epochs, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -352,7 +364,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

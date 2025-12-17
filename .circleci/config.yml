@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   browser-tools: circleci/browser-tools@1.2
-  codecov: codecov/codecov@3.2.4
+  codecov: codecov/codecov@5.3.0
 
 # Aliases to reuse
 _imageconfig: &imageconfig
@@ -50,8 +50,7 @@ jobs:
             pip install --upgrade --progress-bar off pip
             # TODO: Restore https://api.github.com/repos/mne-tools/mne-bids/zipball/main pending https://github.com/mne-tools/mne-bids/pull/1349/files#r1885104885
             pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" numba
-            pip install -ve .[tests]
-            pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
+            pip install -ve .[tests] onnxruntime "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
       - run:
           name: Check Qt
           command: |
@@ -190,7 +189,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - bash_env
       - run:
           name: Get ds000248
@@ -198,7 +197,7 @@ jobs:
             $DOWNLOAD_DATA ds000248
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000248-4
+          key: data-cache-ds000248-7
           paths:
             - ~/mne_data/ds000248
 
@@ -521,7 +520,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_base
           # Forces rerunning (cov and FLASH BEM) so don't check
@@ -550,7 +549,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_ica
           command: $RUN_TESTS ds000248_ica
@@ -577,7 +576,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test BEM from FLASH
           command: $RUN_TESTS -r ds000248_FLASH_BEM
@@ -603,7 +602,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
@@ -630,7 +629,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test head surface creation for MNE coregistration
           command: $RUN_TESTS -c -r ds000248_coreg_surfaces
@@ -649,7 +648,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_no_mri
           command: $RUN_TESTS ds000248_no_mri
@@ -779,6 +778,7 @@ jobs:
 
   test_eeg_matchingpennies:
     <<: *imageconfig
+    resource_class: large  # memory for zapline
     steps:
       - attach_workspace:
           at: ~/

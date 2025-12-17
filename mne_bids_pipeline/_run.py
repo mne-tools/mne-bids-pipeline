@@ -199,6 +199,17 @@ class ConditionalStepMemory:
 
             kwargs["cfg"] = copy.deepcopy(kwargs["cfg"])
             assert isinstance(kwargs["cfg"], SimpleNamespace), type(kwargs["cfg"])
+            # make sure we don't pass in a bare/complete `config`.
+            # We should *always* limit it to what is needed for a given step, otherwise
+            # unnecessary cache hits will occur, including those when command-line
+            # arguments are changed (e.g., `--pdb`). If it's not limited, it will have
+            # some entries like this, which we inject ourselves during config import:
+            NON_SPECIFIC_CONFIG_KEY = "PIPELINE_NAME"
+            assert NON_SPECIFIC_CONFIG_KEY not in kwargs["cfg"].__dict__, (
+                "\nInternal error: cfg should be limited to step-specific entries only "
+                f"for:\n\n{self.func_name}\n\nPlease report this to MNE-BIDS-Pipeline "
+                "developers."
+            )
             kwargs["cfg"].hashes = hashes
             del in_files  # will be modified by func call
 
@@ -215,10 +226,13 @@ class ConditionalStepMemory:
             run = kwargs.get("run", None)  # noqa
             task = kwargs.get("task", None)  # noqa
             bad_out_files = False
+            logger_call = logger.info
             try:
                 done = memorized_func.check_call_in_cache(*args, **kwargs)
-            except Exception:
+            except Exception as exc:
                 done = False
+                msg = f"Computation forced because of caching error: {exc}"
+                emoji = "🤷"
             if done:
                 if unknown_inputs:
                     msg = (
@@ -237,16 +251,15 @@ class ConditionalStepMemory:
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
-                            msg = f"Output file missing: {fname}, will recompute …"
-                            emoji = "🧩"
+                            msg = f"Output file missing, will recompute: {fname}"
+                            emoji = "✖️"
                             bad_out_files = True
                             break
                         got_hash = hash_(key, fname, kind="out")[1]
                         if this_hash != got_hash:
                             msg = (
-                                f"Output file {self.memory_file_method} mismatch for "
-                                f"{fname} ({this_hash} != {got_hash}), will "
-                                "recompute …"
+                                f"Output file {self.memory_file_method} mismatch "
+                                f"({this_hash} != {got_hash}), will recompute: {fname}"
                             )
                             emoji = "🚫"
                             bad_out_files = True
@@ -269,11 +282,20 @@ class ConditionalStepMemory:
                     msg = "Computation unnecessary (output files exist) …"
                     emoji = "🔍"
                     short_circuit = True
+            else:
+                # Ensure memorized_func.check_call_in_cache returned False
+                # as opposed to raised an error (which already sets `msg` above)
+                if msg is None:
+                    logger_call = logger.debug
+
+                    msg = "Cached result not found, computing …"
+                    emoji = "🆕"
             del out_files
 
-            if msg is not None:
-                assert emoji is not None
-                logger.info(**gen_log_kwargs(message=msg, emoji=emoji))
+            assert msg is not None
+            assert emoji is not None
+            logger_call(**gen_log_kwargs(message=msg, emoji=emoji))
+            del logger_call
             if short_circuit:
                 return
 
@@ -356,6 +378,7 @@ def _update_for_splits(
     if not isinstance(files_dict, dict):  # fake it
         assert key is None
         files_dict, key = dict(x=files_dict), "x"
+    assert isinstance(key, str), type(key)
     bids_path = files_dict[key]
     if bids_path.fpath.exists():
         return bids_path  # no modifications needed

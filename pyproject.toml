@@ -49,7 +49,6 @@ dependencies = [
   "mne[hdf5] >=1.7",
   "mne-bids[full]",
   "mne-icalabel",
-  "onnxruntime",  # for mne-icalabel
   "filelock",
   "meegkit"
 ]
@@ -129,7 +128,7 @@ ignore = [
   "D104", # Missing docstring in public package
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "mne_bids_pipeline/typing.py" = ["A005"]
 
 [tool.ruff.lint.pydocstyle]

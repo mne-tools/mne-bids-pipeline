@@ -11,11 +11,12 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
     get_subjects,
-    get_subjects_sessions,
+    get_subjects_given_session,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -119,8 +120,10 @@ def get_input_fnames_run_average(
 ) -> InFilesT:
     in_files = dict()
     assert subject == "average"
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in _all_conditions(cfg=cfg):
-        for this_subject in cfg.subjects:
+        for this_subject in subjects:
             in_files[f"{this_subject}-{condition}"] = _stc_path(
                 cfg=cfg,
                 subject=this_subject,
@@ -145,11 +148,13 @@ def run_average(
     assert subject == "average"
     out_files = dict()
     conditions = _all_conditions(cfg=cfg)
+    # for each session, only use subjects who actually have data for that session
+    subjects = get_subjects_given_session(cfg, session)
     for condition in conditions:
         stc = np.array(
             [
                 mne.read_source_estimate(in_files.pop(f"{this_subject}-{condition}"))
-                for this_subject in cfg.subjects
+                for this_subject in subjects
             ]
         ).mean(axis=0)
         out_files[condition] = _stc_path(
@@ -205,6 +210,7 @@ def get_config(
         subjects=get_subjects(config=config),
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
+        allow_missing_sessions=config.allow_missing_sessions,
         use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
@@ -216,20 +222,28 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
+    average_subj = "average"
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
         return
 
     mne.datasets.fetch_fsaverage(subjects_dir=get_fs_subjects_dir(config))
     cfg = get_config(config=config)
     exec_params = config.exec_params
     all_sessions = get_sessions(config)
-    subjects_sessions = get_subjects_sessions(config)
+
+    if hasattr(exec_params.overrides, "subjects"):
+        msg = "Skipping, --subject is set …"
+        logger.info(**gen_log_kwargs(message=msg, subject=average_subj))
+        return
 
     logs = list()
+    ss = _get_ss(config=config)
     with get_parallel_backend(exec_params):
-        parallel, run_func = parallel_func(morph_stc, exec_params=exec_params)
+        parallel, run_func = parallel_func(
+            morph_stc, exec_params=exec_params, n_iter=len(ss)
+        )
         logs += parallel(
             run_func(
                 cfg=cfg,
@@ -238,15 +252,14 @@ def main(*, config: SimpleNamespace) -> None:
                 fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
                 session=session,
             )
-            for subject, sessions in subjects_sessions.items()
-            for session in sessions
+            for subject, session in ss
         )
     logs += [
         run_average(
             cfg=cfg,
             exec_params=exec_params,
             session=session,
-            subject="average",
+            subject=average_subj,
         )
         for session in all_sessions
     ]

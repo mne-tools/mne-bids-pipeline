@@ -17,8 +17,8 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     - run: pip install --upgrade pip
@@ -29,7 +29,7 @@ jobs:
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
-    name: 'Caching on ${{ matrix.os }}'
+    name: 'Testing and caching ${{ matrix.dataset }} on ${{ matrix.os }} py${{ matrix.python }}'
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     defaults:
@@ -38,43 +38,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
+        python: ["3.12"]
         include:
           - os: ubuntu-latest
-          - os: macos-latest
-          - os: windows-latest
+            dataset: ds001971
+            python: "3.10"
+          - os: ubuntu-latest
+            dataset: ds003392
+            python: "3.13"
     env:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "${{ matrix.python }}"
       - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
-          key: ds001971
-          path: ~/mne_data/ds001971
-        id: ds001971-cache
-      - run: python -m mne_bids_pipeline._download ds001971
-        if: steps.ds001971-cache.outputs.cache-hit != 'true'
-      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/
-      - run: pytest --cov-append -k ds001971 mne_bids_pipeline/  # uses "hash" method
+          key: ${{ matrix.dataset }}
+          path: ~/mne_data/${{ matrix.dataset }}
+        id: dataset-cache
+      - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
+        if: steps.dataset-cache.outputs.cache-hit != 'true'
+      - run: |
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-calibration_meg.dat
+          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-crosstalk_meg.fif
+        if: matrix.dataset == 'ds003392'
+        name: Remove cross-talk and cal files from ds003392
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
+        name: Run ${{ matrix.dataset }} test from scratch
+      - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         timeout-minutes: 1
-      - uses: actions/cache@v4
-        with:
-          key: ds003392
-          path: ~/mne_data/ds003392
-        id: ds003392-cache
-      - run: python -m mne_bids_pipeline._download ds003392
-        if: steps.ds003392-cache.outputs.cache-hit != 'true'
-      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/
-      - run: pytest --cov-append -k ds003392 mne_bids_pipeline/  # uses "mtime" method
-        timeout-minutes: 1
+        name: Rerun ${{ matrix.dataset }} test to check all steps cached
       - uses: codecov/codecov-action@v5
         if: success() || failure()
   non-doc-dataset-tests:
@@ -87,16 +90,16 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: MNE-funloc-data
           path: ~/mne_data/MNE-funloc-data

@@ -12,9 +12,9 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     _restrict_analyze_channels,
     get_eeg_reference,
-    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -183,14 +183,14 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run Time-frequency decomposition."""
     if not config.time_frequency_conditions:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
-    parallel, run_func = parallel_func(
-        run_time_frequency, exec_params=config.exec_params
-    )
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
+        parallel, run_func = parallel_func(
+            run_time_frequency, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -200,7 +200,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

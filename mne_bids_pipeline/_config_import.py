@@ -4,6 +4,8 @@ import difflib
 import importlib.util
 import os
 import pathlib
+import re
+import types
 from dataclasses import field
 from functools import partial
 from inspect import signature
@@ -16,6 +18,7 @@ import numpy as np
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from ._config_utils import get_subjects_sessions
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
@@ -29,7 +32,6 @@ def _import_config(
     config_path: PathLike | None,
     overrides: SimpleNamespace | None = None,
     check: bool = True,
-    log: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
@@ -52,7 +54,6 @@ def _import_config(
         config=config,
         config_path=config_path,
         overrides=overrides,
-        log=log,
     )
 
     extra_exec_params_keys: tuple[str, ...] = ()
@@ -84,7 +85,6 @@ def _import_config(
         _check_misspellings_removals(
             valid_names=valid_names,
             user_names=user_names,
-            log=log,
             config_validation=config.config_validation,
         )
 
@@ -118,6 +118,10 @@ def _import_config(
     ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    override_keys = ("subjects",)
+    exec_params.overrides = SimpleNamespace(
+        **{k: getattr(overrides, k) for k in override_keys if hasattr(overrides, k)}
+    )
     for k in keys:
         if k not in in_both:
             delattr(config, k)
@@ -173,7 +177,20 @@ def _update_config_from_path(
             if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
-            logger.debug(f"Overwriting: {key} -> {val}")
+            # Don't log about class types like ArbirtaryContrast, Ge, Path, etc.
+            if not (
+                isinstance(val, type)
+                or isinstance(val, types.ModuleType)
+                # there would be a way to detect if something is a type annotation but
+                # I couldn't figure it out easily. This is debug level anyway so
+                # hopefully not too bad to just maintain a blocklist here.
+                or key in ("Annotated", "Path", "PathLike", "Literal", "FloatArrayLike")
+            ):
+                # Spacing here to match "Overriding" messages
+                rep = repr(val).replace("\n", " ")
+                rep = rep[:100] + "…" if len(rep) > 100 else rep
+                msg = f"Assigning  {key} = {rep}"
+                logger.debug(**gen_log_kwargs(message=msg, emoji="📝"))
             setattr(config, key, val)
     return user_names
 
@@ -183,7 +200,6 @@ def _update_with_user_config(
     config: SimpleNamespace,  # modified in-place
     config_path: PathLike | None,
     overrides: SimpleNamespace | None,
-    log: bool = False,
 ) -> list[str]:
     # 1. Basics and hidden vars
     from . import __version__
@@ -210,9 +226,8 @@ def _update_with_user_config(
     for name in dir(overrides):
         if not name.startswith("__"):
             val = getattr(overrides, name)
-            if log:
-                msg = f"Overriding config.{name} = {repr(val)}"
-                logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+            msg = f"Overriding config.{name} = {repr(val)}"
+            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
             setattr(config, name, val)
 
     # 4. Env vars and other triaging
@@ -233,18 +248,18 @@ def _update_with_user_config(
     # 5. Consistency
     log_kwargs = dict(emoji="override")
     if config.interactive:
-        if log and config.on_error != "debug":
+        if config.on_error != "debug":
             msg = 'Setting config.on_error="debug" because of interactive mode'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.on_error = "debug"
     else:
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
-        if log and config.n_jobs != 1:
+        if config.n_jobs != 1:
             msg = 'Setting config.n_jobs=1 because config.on_error="debug"'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.n_jobs = 1
-        if log and config.parallel_backend != "loky":
+        if config.parallel_backend != "loky":
             msg = (
                 'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
@@ -277,16 +292,57 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         "destination",
         "head_pos",
         "extended_proj",
+        "int_order",
+        "ext_order",
     )
+    # check `mf_extra_kws` for things that shouldn't be in there
     if duplicates := (set(config.mf_extra_kws) & set(mf_reserved_kwargs)):
         raise ConfigError(
             f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
         )
+    # if `destination="twa"` make sure `mf_mc=True`
+    if (
+        isinstance(config.mf_destination, str)
+        and config.mf_destination == "twa"
+        and not config.mf_mc
+    ):
+        raise ConfigError(
+            "cannot compute time-weighted average head position (mf_destination='twa') "
+            "without movement compensation. Please set `mf_mc=True` in your config."
+        )
+    # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
+    if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
+        pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
+        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        newline_indent = "\n  "
+        if mismatch := (set(config.ssp_ecg_channel) - matches):
+            raise ConfigError(
+                "Malformed keys in ssp_ecg_channel dict:\n  "
+                f"{newline_indent.join(sorted(mismatch))}"
+            )
+        # also make sure there are values for all subjects/sessions:
+        missing = list()
+        subjects_sessions = get_subjects_sessions(config)
+        for sub, sessions in subjects_sessions.items():
+            for ses in sessions:
+                if (
+                    config.ssp_ecg_channel.get(f"sub-{sub}") is None
+                    and config.ssp_ecg_channel.get(f"sub-{sub}_ses-{ses}") is None
+                ):
+                    missing.append(
+                        f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
+                    )
+        if missing:
+            raise ConfigError(
+                f"Missing entries in ssp_ecg_channel:\n  {newline_indent.join(missing)}"
+            )
+
     reject = config.reject
     ica_reject = config.ica_reject
     if config.spatial_filter == "ica":
-        if config.ica_l_freq < 1:
+        effective_ica_l_freq = max([config.ica_l_freq or 0.0, config.l_freq or 0.0])
+        if effective_ica_l_freq < 1:
             raise ValueError(
                 "You requested to high-pass filter the data before ICA with "
                 f"ica_l_freq={config.ica_l_freq} Hz. Please increase this "
@@ -333,6 +389,13 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             'recordings by setting noise_cov = "emptyroom", but you did not '
             "enable empty-room data processing. "
             "Please set process_empty_room = True"
+        )
+
+    if config.noise_cov == "raw" and not config.process_raw_clean:
+        raise ValueError(
+            "You requested noise covariance estimation from raw data by "
+            '"setting noise_cov = "raw", but you did not enable '
+            "writing cleaned raw data. Please set process_raw_clean = True"
         )
 
     if (
@@ -384,20 +447,26 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"but got shape {destination.shape}"
             )
 
-# From: https://github.com/mne-tools/mne-bids-pipeline/pull/812
     # MNE-ICALabel
     if config.ica_use_icalabel:
-        if config.ica_l_freq != 1.0 or config.h_freq != 100.0:
+        pre = "When using MNE-ICALabel, you must set"
+        if config.ica_l_freq != 1.0 or config.ica_h_freq != 100.0:
             raise ValueError(
-                f"When using MNE-ICALabel, you must set ica_l_freq=1 and h_freq=100, "
-                f"but got: ica_l_freq={config.ica_l_freq} and h_freq={config.h_freq}"
+                f"{pre} ica_l_freq=1 and h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and "
+                f"ica_h_freq={config.ica_h_freq}"
             )
-
         if config.eeg_reference != "average":
             raise ValueError(
-                f'When using MNE-ICALabel, you must set eeg_reference="average", but '
-                f"got: eeg_reference={config.eeg_reference}"
+                f'{pre} eeg_reference="average", but got: '
+                f"eeg_reference={config.eeg_reference}"
             )
+        if config.ica_algorithm not in ("picard-extended_infomax", "extended_infomax"):
+            raise ValueError(
+                f'{pre} ica_algorithm="picard-extended_infomax" or "extended_infomax", '
+                f"but got: ica_algorithm={repr(config.ica_algorithm)}"
+            )
+
 
 def _default_factory(key: str, val: Any) -> Any:
     # convert a default to a default factory if needed, having an explicit
@@ -407,8 +476,25 @@ def _default_factory(key: str, val: Any) -> Any:
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
-        #["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"], # icalabel_include
-        ["brain","other"]
+        ("brain", "other"),  # ica_icalabel_include
+        {
+            "brain": 0.8,
+            "muscle artifact": 0.8,
+            "eye blink": 0.8,
+            "heart beat": 0.8,
+            "line noise": 0.8,
+            "channel noise": 0.8,
+            "other": 0.8,
+        },  # ica_exclusion_thresholds
+        {
+            "brain": 0.3,
+            "muscle artifact": 0.3,
+            "eye blink": 0.3,
+            "heart beat": 0.3,
+            "line noise": 0.3,
+            "channel noise": 0.3,
+            "other": 0.3,
+        },  # ica_class_thresholds
     ]
 
     def default_factory() -> Any:
@@ -426,7 +512,7 @@ def _default_factory(key: str, val: Any) -> Any:
                     default_factory = partial(typ, **allowlist[idx])  # type: ignore
                 else:
                     assert typ is list
-                    default_factory = partial(typ, allowlist[idx])  # type: ignore
+                    default_factory = partial(typ, allowlist[idx])
             return field(default_factory=default_factory)
     return val
 
@@ -492,7 +578,6 @@ def _check_misspellings_removals(
     *,
     valid_names: list[str],
     user_names: list[str],
-    log: bool,
     config_validation: str,
 ) -> None:
     # for each name in the user names, check if it's in the valid names but
@@ -509,7 +594,7 @@ def _check_misspellings_removals(
                     "the variable to reduce ambiguity and avoid this message, "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
-                _handle_config_error(this_msg, log, config_validation)
+                _handle_config_error(this_msg, config_validation)
             if user_name in _REMOVED_NAMES:
                 new = _REMOVED_NAMES[user_name]["new_name"]
                 if new not in user_names:
@@ -520,16 +605,14 @@ def _check_misspellings_removals(
                         f"{msg} this variable has been removed as a valid "
                         f"config option, {instead}."
                     )
-                    _handle_config_error(this_msg, log, config_validation)
+                    _handle_config_error(this_msg, config_validation)
 
 
 def _handle_config_error(
     msg: str,
-    log: bool,
     config_validation: str,
 ) -> None:
     if config_validation == "raise":
         raise ValueError(msg)
-    elif config_validation == "warn":
-        if log:
-            logger.warning(**gen_log_kwargs(message=msg, emoji="🛟"))
+    logger_call = logger.warning if config_validation == "warn" else logger.debug
+    logger_call(**gen_log_kwargs(message=msg, emoji="🛟"))

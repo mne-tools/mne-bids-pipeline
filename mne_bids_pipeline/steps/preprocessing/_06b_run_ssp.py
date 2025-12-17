@@ -11,12 +11,14 @@ from mne import compute_proj_epochs, compute_proj_evoked
 from mne.preprocessing import find_ecg_events, find_eog_events
 from mne_bids import BIDSPath
 
+from mne_bids_pipeline._config_import import ConfigError
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     _pl,
     _proj_path,
+    get_ecg_channel,
     get_runs,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -103,14 +105,18 @@ def run_ssp(
     rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
-    ch_name: dict[str, list[str] | None] = dict(ecg=None, eog=None)
+    ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
     if cfg.eog_channels:
         ch_name["eog"] = cfg.eog_channels
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
-        ch_name["ecg"] = cfg.ssp_ecg_channel
-        assert ch_name["ecg"] in raw.ch_names, ch_name["ecg"]
+        ch_name["ecg"] = get_ecg_channel(config=cfg, subject=subject, session=session)
+        if ch_name["ecg"] not in raw.ch_names:
+            raise ConfigError(
+                f"SSP ECG channel '{ch_name['ecg']}' not found in data for "
+                f"subject {subject}, session {session}"
+            )
     if cfg.ssp_meg == "auto":
         cfg.ssp_meg = "combined" if cfg.use_maxwell_filter else "separate"
     for kind in proj_kinds:
@@ -208,7 +214,9 @@ def run_ssp(
             picks_trace: str | list[str] | None = None
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
-                    picks_trace = [cfg.ssp_ecg_channel]
+                    picks_trace = [
+                        get_ecg_channel(config=cfg, subject=subject, session=session)
+                    ]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:
@@ -265,12 +273,14 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run SSP."""
     if config.spatial_filter != "ssp":
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_ssp, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_ssp, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
@@ -281,7 +291,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

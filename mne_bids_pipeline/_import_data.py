@@ -32,6 +32,7 @@ def make_epochs(
     conditions: Iterable[str] | dict[str, str],
     tmin: float,
     tmax: float,
+    custom_metadata: pd.DataFrame | dict[str, Any] | None,
     metadata_tmin: float | None,
     metadata_tmax: float | None,
     metadata_keep_first: Iterable[str] | None,
@@ -105,6 +106,58 @@ def make_epochs(
             keep_last=metadata_keep_last,
             sfreq=raw.info["sfreq"],
         )
+
+        # If custom_metadata is provided, merge it with the generated metadata
+        if custom_metadata is not None:
+            if isinstance(
+                custom_metadata, dict
+            ):  # parse custom_metadata['sub-x']['ses-y']['task-z']
+                custom_dict = custom_metadata
+                for _ in range(3):  # loop to allow for mis-ordered keys
+                    if (
+                        isinstance(custom_dict, dict)
+                        and "subj-" + subject in custom_dict
+                    ):
+                        custom_dict = custom_dict["subj-" + subject]
+                    if (
+                        isinstance(custom_dict, dict)
+                        and session is not None
+                        and "ses-" + session in custom_dict
+                    ):
+                        custom_dict = custom_dict["ses-" + session]
+                    if isinstance(custom_dict, dict) and "task-" + task in custom_dict:
+                        custom_dict = custom_dict["task-" + task]
+                    if isinstance(custom_dict, pd.DataFrame):
+                        custom_df = custom_dict
+                        break
+                if not isinstance(custom_dict, pd.DataFrame):
+                    msg = (
+                        f"Custom metadata not found for subject {subject} / "
+                        f"session {session} / task {task}.\n"
+                    )
+                    raise ValueError(msg)
+            elif isinstance(custom_metadata, pd.DataFrame):  # parse DataFrame
+                custom_df = custom_metadata
+            else:
+                msg = (
+                    f"Custom metadata not found for subject {subject} / "
+                    f"session {session} / task {task}.\n"
+                )
+                raise ValueError(msg)
+
+            # Check if the custom metadata DataFrame has the same number of rows
+            if len(metadata) != len(custom_df):
+                msg = (
+                    f"Event metadata has {len(metadata)} rows, but custom "
+                    f"metadata has {len(custom_df)} rows. Cannot safely join."
+                )
+                raise ValueError(msg)
+
+            # Merge the event and custom DataFrames
+            metadata = metadata.join(custom_df, how="right")
+            # Logging   # Logging
+            msg = "Including custom metadata in epochs."
+            logger.info(**gen_log_kwargs(message=msg))
 
     # Epoch the data
     # Do not reject based on peak-to-peak or flatness thresholds at this stage
@@ -466,8 +519,8 @@ def import_er_data(
         )
         raw_ref.info["bads"] = bads
         raw_ref.info._check_consistency()
-    raw_ref.pick_types(meg=True, exclude=[])
-    raw_er.pick_types(meg=True, exclude=[])
+    raw_ref.pick("meg")
+    raw_er.pick("meg")
 
     if prepare_maxwell_filter:
         # We need to include any automatically found bad channels, if relevant.
@@ -795,6 +848,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         # automatic add_bads
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         find_flat_channels_meg=config.find_flat_channels_meg,
+        find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,

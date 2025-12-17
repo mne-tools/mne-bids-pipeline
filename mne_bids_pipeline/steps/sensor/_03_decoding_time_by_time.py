@@ -130,7 +130,10 @@ def run_time_decoding(
     epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
-    epochs.pick_types(meg=True, eeg=True, ref_meg=False, exclude="bads")
+    pick_idx = mne.pick_types(
+        epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"
+    )
+    epochs.pick(pick_idx)
     # We can't use the full rank here because the number of samples can just be the
     # number of epochs (which can be fewer than the number of channels)
     pre_steps = _decoding_preproc_steps(
@@ -159,11 +162,7 @@ def run_time_decoding(
         clf = make_pipeline(
             *pre_steps,
             Vectorizer(),
-            LogReg(
-                solver="liblinear",  # much faster than the default
-                random_state=cfg.random_state,
-                n_jobs=1,
-            ),
+            LogReg(random_state=cfg.random_state),
         )
         cv = StratifiedKFold(
             shuffle=True,
@@ -338,13 +337,12 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run time-by-time decoding."""
     if not config.contrasts:
-        msg = "No contrasts specified; not performing decoding."
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        msg = "Skipping, no contrasts specified …"
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     if not config.decode:
-        msg = "No decoding requested by user."
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
     # Here we go parallel inside the :class:`mne.decoding.SlidingEstimator`

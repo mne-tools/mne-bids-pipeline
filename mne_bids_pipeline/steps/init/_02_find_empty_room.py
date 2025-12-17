@@ -118,11 +118,11 @@ def main(*, config: SimpleNamespace) -> None:
     """Run find_empty_room."""
     if not config.process_empty_room:
         msg = "Skipping, process_empty_room is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
     if get_datatype(config) != "meg":
         msg = "Skipping, empty-room data only relevant for MEG …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
     # This will be I/O bound if the sidecar is not complete, so let's not run
     # in parallel.

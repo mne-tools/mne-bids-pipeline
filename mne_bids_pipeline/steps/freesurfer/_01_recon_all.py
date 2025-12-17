@@ -119,7 +119,11 @@ def main(*, config: SimpleNamespace) -> None:
             subj_sess.append((_subj, session))
 
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_recon, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_recon,
+            exec_params=config.exec_params,
+            n_iter=len(subj_sess),
+        )
         parallel(
             run_func(root_dir, subject, fs_bids_app, subjects_dir, session)
             for subject, session in subj_sess

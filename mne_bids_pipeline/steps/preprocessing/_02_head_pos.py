@@ -105,7 +105,7 @@ def run_head_pos(
     mne.chpi.write_head_pos(out_files[key], head_pos)
 
     # Reporting
-    prefix, extra_tags = _get_prefix_tags(task=task, run=run)
+    prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, run=run)
     tags = ("raw", "chpi", "sss") + extra_tags
     section = "Head position"
 
@@ -122,7 +122,7 @@ def run_head_pos(
         fig = mne.viz.plot_chpi_snr(snr_dict)
         report.add_figure(
             fig=fig,
-            title=f"cHPI SNR: {prefix}",
+            title=f"cHPI SNR{prefix}",
             image_format="svg",
             section=section,
             tags=tags,
@@ -132,7 +132,7 @@ def run_head_pos(
         fig = mne.viz.plot_head_positions(head_pos, mode="traces")
         report.add_figure(
             fig=fig,
-            title=f"Head positions: {prefix}",
+            title=f"Head positions{prefix}",
             image_format="svg",
             section=section,
             tags=tags,

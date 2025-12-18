@@ -23,7 +23,6 @@ from mne_bids_pipeline._config_utils import (
     _get_task_float,
     get_eeg_reference,
     get_runs_tasks,
-    get_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -99,7 +98,7 @@ def get_input_fnames_find_ica_artifacts(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -358,7 +357,7 @@ def find_ica_artifacts(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
     ) as report:
         logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
@@ -570,7 +569,7 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
-    task = get_tasks(config=config)[0]
+    task = config.all_tasks[0]
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),

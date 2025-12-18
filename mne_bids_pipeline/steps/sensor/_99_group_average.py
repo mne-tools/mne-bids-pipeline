@@ -26,7 +26,6 @@ from mne_bids_pipeline._config_utils import (
     get_sessions,
     get_subjects,
     get_subjects_given_session,
-    get_tasks,
 )
 from mne_bids_pipeline._decoding import _handle_csp_args
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -187,12 +186,14 @@ def average_evokeds(
         if n_missing := (len(cfg.subjects) - len(subjects_in_grand_avg)):
             _title += f"{n_missing} subjects excluded due to missing session data"
         for condition, evoked in zip(conditions, evokeds):
-            prefix, extra_tags = _get_prefix_tags(task=task, condition=condition)
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition
+            )
             tags = ("evoked",) + extra_tags
             if condition in cfg.conditions:
-                title = f"Average (sensor): {prefix}, {_title}"
+                title = f"Average (sensor){prefix}, {_title}"
             else:  # It's a contrast of two conditions.
-                title = f"Average (sensor) contrast: {prefix}, {_title}"
+                title = f"Average (sensor) contrast{prefix}, {_title}"
                 tags = tags + ("contrast",)
             report.add_evokeds(
                 evokeds=evoked,
@@ -506,7 +507,7 @@ def average_time_by_time_decoding(
         logger.info(**gen_log_kwargs(message="Adding time-by-time decoding results"))
 
         prefix, extra_tags = _get_prefix_tags(
-            task=task, contrast=(cond_1, cond_2), add_contrast=True
+            cfg=cfg, task=task, contrast=(cond_1, cond_2), add_contrast=True
         )
         tags = ("epochs", "contrast", "decoding") + extra_tags
         decoding_data = loadmat(out_files["mat"])
@@ -552,7 +553,7 @@ def average_time_by_time_decoding(
             )
             report.add_figure(
                 fig=fig,
-                title=f"t-values across time: {prefix}",
+                title=f"t-values across time{prefix}",
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -572,7 +573,7 @@ def average_time_by_time_decoding(
                 f"on all other time points. The results were averaged across "
                 f"N={decoding_data['N'].item()} subjects."
             )
-            title = f"Time generalization: {prefix}"
+            title = f"Time generalization{prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,
@@ -723,7 +724,7 @@ def average_full_epochs_report(
     ) as report:
         import matplotlib.pyplot as plt  # nested import to help joblib
 
-        prefix, extra_tags = _get_prefix_tags(task=task)
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
         logger.info(
             **gen_log_kwargs(message="Adding full-epochs decoding results to report")
         )
@@ -752,7 +753,7 @@ def average_full_epochs_report(
         )
         report.add_figure(
             fig=fig,
-            title=f"Full-epochs decoding {prefix}",
+            title=f"Full-epochs decoding{prefix}",
             section=f"Decoding: full-epochs, N = {len(cfg.subjects)}",
             caption=caption,
             tags=tags,
@@ -1020,8 +1021,8 @@ def get_config(
         subjects=get_subjects(config),
         allow_missing_sessions=config.allow_missing_sessions,
         task_is_rest=config.task_is_rest,
-        conditions=_get_task_conditions_dict(config.conditions, task=task),
-        contrasts=_get_task_contrasts(config.contrasts, task=task),
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
+        contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
         epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
         time_frequency_freq_min=config.time_frequency_freq_min,
@@ -1068,8 +1069,7 @@ def main(*, config: SimpleNamespace) -> None:
 
     # In theory we could make this a tiny bit more efficient by combining the
     # parallelization across tasks, but it's a pain given how get_config works
-    tasks = get_tasks(config=config)
-    for task in tasks:
+    for task in config.all_tasks:
         _run_decoding(config=config, task=task)
 
 

@@ -240,7 +240,7 @@ def run_epochs(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        prefix, extra_tags = _get_prefix_tags(task=task)
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
         if not cfg.task_is_rest:
             msg = "Adding events plot to report."
             logger.info(**gen_log_kwargs(message=msg))
@@ -252,7 +252,7 @@ def run_epochs(
                 event_id=event_id,
                 sfreq=sfreq,
                 first_samp=first_samp,
-                title="Events: {prefix}",
+                title=f"Events{prefix}",
                 tags=("events",) + extra_tags,
                 # caption='Events in filtered continuous data',  # TODO upstr
                 replace=True,
@@ -263,7 +263,7 @@ def run_epochs(
         psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
         report.add_epochs(
             epochs=epochs,
-            title=f"Epochs (before cleaning): {prefix}",
+            title=f"Epochs (before cleaning){prefix}",
             psd=psd,
             drop_log_ignore=(),
             replace=True,

@@ -147,6 +147,17 @@ def gen_log_kwargs(
         run = up_locals.get("run", None)
     if task is None:
         task = up_locals.get("task", None)
+        if task not in ("noise", "rest"):
+            # If task is set but there's only one task, don't show it
+            n_tasks = 2
+            cfg = up_locals.get("cfg", None)
+            if cfg is None:
+                config = up_locals.get("config", None)
+                n_tasks = len(getattr(config, "all_tasks", []))
+            else:
+                n_tasks = len(getattr(cfg, "all_tasks", []))
+            if n_tasks == 1:
+                task = None
 
     # Do some nice formatting
     if subject is not None:

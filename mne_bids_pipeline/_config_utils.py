@@ -172,6 +172,7 @@ def _get_task_baseline(
 
 
 def _get_task_conditions_dict(
+    *,
     conditions: ConditionsTypeT | dict[str, ConditionsTypeT],
     task: str | None,
 ) -> dict[str, str]:
@@ -213,15 +214,12 @@ def get_subjects_sessions(
     # find which tasks to ignore when deciding if a subj has data for a session
     ignore_datatypes = _get_ignore_datatypes(config)
     tasks = get_tasks(config=config)
-    if config.task == "":
-        ignore_tasks = None
-    else:
-        all_tasks = _get_entity_vals_cached(
-            root=config.bids_root,
-            entity_key="task",
-            ignore_datatypes=ignore_datatypes,
-        )
-        ignore_tasks = tuple(set(all_tasks) - set(tasks))
+    all_tasks = _get_entity_vals_cached(
+        root=config.bids_root,
+        entity_key="task",
+        ignore_datatypes=ignore_datatypes,
+    )
+    ignore_tasks = tuple(set(all_tasks) - set(tasks))
 
     # loop over subjs and check for available sessions
     subj_sessions: dict[str, tuple[None] | tuple[str, ...]] = dict()
@@ -496,6 +494,9 @@ def get_mf_reference_run_task(config: SimpleNamespace) -> tuple[str | None, str 
 
 
 def get_tasks(config: SimpleNamespace) -> list[str | None]:
+    # We should only need to compute this once for a given run of the pipeline
+    if hasattr(config, "all_tasks"):
+        return list(config.all_tasks)
     _valid_tasks = _get_entity_vals_cached(
         root=config.bids_root,
         entity_key="task",
@@ -766,7 +767,7 @@ def get_noise_cov_bids_path(
     noise_cov_bp = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=None,
         acquisition=cfg.acq,
         run=None,
         processing="clean",
@@ -794,21 +795,22 @@ def get_noise_cov_bids_path(
 
 
 def _get_task_contrasts(
-    config: SimpleNamespace, *, task: str | None
+    *, contrasts: ContrastSequenceT | dict[str, ContrastSequenceT], task: str | None
 ) -> Iterable[ArbitraryContrast]:
     normalized_contrasts = []
     # contrasts is either a dict[str(task),Sequence] or a Sequence
     use_contrasts: ContrastSequenceT
-    if isinstance(config.contrasts, dict):
-        use_contrasts = config.contrasts.get(task, [])
+    if isinstance(contrasts, dict):
+        assert task is not None
+        use_contrasts = contrasts.get(task, [])
     else:
-        use_contrasts = config.contrasts
-    del config
+        use_contrasts = contrasts
+    del contrasts
     for contrast in use_contrasts:
         if isinstance(contrast, tuple):
             normalized_contrasts.append(
                 ArbitraryContrast(
-                    name=(contrast[0] + "+" + contrast[1]),
+                    name=(contrast[0] + "-" + contrast[1]),
                     conditions=list(contrast),
                     weights=[1, -1],
                 )
@@ -822,7 +824,7 @@ def _get_task_decoding_contrasts(
     config: SimpleNamespace, *, task: str | None
 ) -> Iterable[tuple[str, str]]:
     normalized_contrasts = []
-    for contrast in _get_task_contrasts(config.contrasts, task=task):
+    for contrast in _get_task_contrasts(contrasts=config.contrasts, task=task):
         # If a contrast is an `ArbitraryContrast` and satisfies
         # * has exactly two conditions (`check_len`)
         # * weights sum to 0 (`check_sum`)
@@ -961,6 +963,7 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
         space=config.space,
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
+        all_tasks=config.all_tasks,  # we compute this once and store it for brevity
     )
 
 

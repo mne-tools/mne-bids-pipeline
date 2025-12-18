@@ -31,6 +31,7 @@ def _stc_path(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     condition: str,
     morphed: bool,
 ) -> BIDSPath:
@@ -43,7 +44,7 @@ def _stc_path(
     return BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -70,6 +71,7 @@ def get_input_fnames_morph_stc(
             cfg=cfg,
             subject=subject,
             session=session,
+            task=task,
             condition=condition,
             morphed=False,
         )
@@ -105,6 +107,7 @@ def morph_stc(
             cfg=cfg,
             subject=subject,
             session=session,
+            task=task,
             condition=condition,
             morphed=True,
         )
@@ -131,6 +134,7 @@ def get_input_fnames_run_average(
                 cfg=cfg,
                 subject=this_subject,
                 session=session,
+                task=task,
                 condition=condition,
                 morphed=True,
             )
@@ -165,6 +169,7 @@ def run_average(
             cfg=cfg,
             subject=subject,
             session=session,
+            task=task,
             condition=condition,
             morphed=True,
         )
@@ -178,14 +183,16 @@ def run_average(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         for condition in conditions:
-            prefix, extra_tags = _get_prefix_tags(task=task, condition=condition)
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition
+            )
             msg = f"Rendering inverse solution for {condition}"
             logger.info(**gen_log_kwargs(message=msg))
             tags: tuple[str, ...] = ("source-estimate",) + extra_tags
             if condition in cfg.conditions:
-                title = f"Average (source): {prefix}"
+                title = f"Average (source){prefix}"
             else:  # It's a contrast of two conditions.
-                title = f"Average (source) contrast: {prefix}"
+                title = f"Average (source) contrast{prefix}"
                 tags = tags + ("contrast",)
             tags += extra_tags
             report.add_stc(

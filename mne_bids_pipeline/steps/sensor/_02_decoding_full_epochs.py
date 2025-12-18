@@ -52,6 +52,7 @@ def get_input_fnames_epochs_decoding(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     condition1: str,
     condition2: str,
 ) -> InFilesT:
@@ -59,7 +60,7 @@ def get_input_fnames_epochs_decoding(
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -188,7 +189,7 @@ def run_epochs_decoding(
     ) as report:
         msg = "Adding full-epochs decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
-        prefix, extra_tags = _get_prefix_tags(task=task)
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
 
         all_decoding_scores = []
         all_contrasts = []
@@ -219,7 +220,7 @@ def run_epochs_decoding(
         )
         report.add_figure(
             fig=fig,
-            title=f"Full-epochs decoding {prefix}",
+            title=f"Full-epochs decoding{prefix}",
             caption=caption,
             section="Decoding: full-epochs",
             tags=tags,

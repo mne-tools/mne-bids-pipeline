@@ -196,10 +196,10 @@ def drop_ptp(
     logger.info(**gen_log_kwargs(message=msg))
     # Add PSD plots for 30s of data or all epochs if we have less available
     psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
-    prefix, extra_tags = _get_prefix_tags(task=task)
+    prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
     tags = ("epochs", "clean") + extra_tags
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
-    title = f"Epochs (clean): {prefix}"
+    title = f"Epochs (clean){prefix}"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:

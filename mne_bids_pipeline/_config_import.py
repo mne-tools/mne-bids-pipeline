@@ -132,6 +132,10 @@ def _import_config(
         if k not in in_both:
             delattr(config, k)
     config.exec_params = exec_params
+
+    # And we need these for some steps, too
+    config.all_tasks = get_tasks(config=config)
+
     return config
 
 

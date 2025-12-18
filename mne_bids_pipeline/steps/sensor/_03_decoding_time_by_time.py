@@ -67,7 +67,7 @@ def get_input_fnames_time_decoding(
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -244,7 +244,7 @@ def run_time_decoding(
 
         section = "Decoding: time-by-time"
         for contrast in cfg.contrasts:
-            prefix, extra_tags = _get_prefix_tags(task, contrast=contrast)
+            prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, contrast=contrast)
             cond_1, cond_2 = contrast
             a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
             tags = ("epochs", "contrast", "decoding") + extra_tags
@@ -271,7 +271,7 @@ def run_time_decoding(
                 f"{epoch_counts[cond_1]} × {cond_1} vs. "
                 f"{epoch_counts[cond_2]} × {cond_2}"
             )
-            title = f"Decoding over time: {prefix}"
+            title = f"Decoding over time{prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,

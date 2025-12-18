@@ -10,7 +10,7 @@ from mne_bids.utils import _write_json
 
 from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
-from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._report import _open_report, _report_path
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run
 from mne_bids_pipeline.typing import OutFilesT
 
@@ -58,13 +58,14 @@ def init_subject_dirs(
 
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    with _open_report(
-        cfg=cfg,
-        exec_params=exec_params,
-        subject=subject,
-        session=session,
-    ):
-        pass
+    if not _report_path(cfg=cfg, subject=subject, session=session).fpath.is_file():
+        with _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session,
+        ):
+            pass
 
 
 def get_config(

@@ -131,12 +131,14 @@ def run_evoked(
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
 
-            prefix, extra_tags = _get_prefix_tags(task, condition=condition)
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition
+            )
             tags: tuple[str, ...] = ("evoked",) + extra_tags
             if condition in cfg.conditions:
-                title = f"Condition: {prefix}"
+                title = f"Condition{prefix}"
             else:  # It's a contrast of two conditions.
-                title = f"Contrast: {prefix}"
+                title = f"Contrast{prefix}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(
@@ -171,8 +173,8 @@ def get_config(
     task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        conditions=_get_task_conditions_dict(config.conditions, task=task),
-        contrasts=_get_task_contrasts(config, task=task),
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
+        contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         noise_cov=_sanitize_callable(config.noise_cov),
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),

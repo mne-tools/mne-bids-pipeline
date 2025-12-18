@@ -22,7 +22,6 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
     get_noise_cov_bids_path,
-    get_tasks,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -69,7 +68,7 @@ def get_input_fnames_make_inverse(
                 processing="clean", suffix="raw", task=cfg.noise_cov
             )
         else:
-            source_info_path_update = dict(suffix="ave", task=cfg.first_task)
+            source_info_path_update = dict(suffix="ave", task=cfg.all_tasks[0])
             # XXX is this the right solution also for noise_cov = 'ad-hoc'?
     else:
         source_info_path_update = cfg.source_info_path_update
@@ -92,7 +91,7 @@ def get_input_fnames_apply_inverse_data(
     inverse_path = BIDSPath(
         subject=subject,
         session=session,
-        task=task,
+        task=None,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -105,7 +104,7 @@ def get_input_fnames_apply_inverse_data(
     )
     in_files = dict()
     in_files["inverse"] = inverse_path
-    in_files["inverse"] = inverse_path.copy().update(suffix="ave", task=task)
+    in_files["evoked"] = inverse_path.copy().update(suffix="ave", task=task)
     return in_files
 
 
@@ -158,6 +157,9 @@ def apply_inverse_data(
     in_files: InFilesT,
 ) -> OutFilesT:
     # Apply inverse
+    msg = "Applying inverse to data"
+    logger.info(**gen_log_kwargs(message=msg))
+
     out_files = dict()
     snr = 3.0
     lambda2 = 1.0 / snr**2
@@ -166,7 +168,7 @@ def apply_inverse_data(
     fname_ave = in_files.pop("evoked")
     fname_inv = in_files.pop("inverse")
     evokeds = mne.read_evokeds(fname_ave)
-    inverse_operator = mne.read_inverse_operator(fname_inv)
+    inverse_operator = mne.minimum_norm.read_inverse_operator(fname_inv)
 
     for condition, evoked in zip(conditions, evokeds):
         suffix = f"{sanitize_cond_name(condition)}+{method}+hemi"
@@ -190,11 +192,9 @@ def apply_inverse_data(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        msg = "Adding inverse information to report"
-        logger.info(**gen_log_kwargs(message=msg))
-        prefix, extra_tags = _get_prefix_tags(task=task, condition=condition)
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, condition=condition)
         for condition in conditions:
-            msg = f"Rendering inverse solution for {condition}"
+            msg = f"Rendering inverse solution for {condition=}"
             logger.info(**gen_log_kwargs(message=msg))
             tags = ("source-estimate",) + extra_tags
             if condition not in cfg.conditions:
@@ -202,7 +202,7 @@ def apply_inverse_data(
             tags += extra_tags
             report.add_stc(
                 stc=out_files[condition],
-                title=f"Source: {prefix}",
+                title=f"Source{prefix}",
                 subject=cfg.fs_subject,
                 subjects_dir=cfg.fs_subjects_dir,
                 n_time_points=cfg.report_stc_n_time_points,
@@ -226,7 +226,6 @@ def get_config_make_inverse(
         depth=config.depth,
         inverse_method=config.inverse_method,
         noise_cov=_sanitize_callable(config.noise_cov),
-        first_task=get_tasks(config)[0],
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -241,8 +240,9 @@ def get_config_apply_inverse_data(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ch_types=config.ch_types,
-        conditions=_get_task_conditions_dict(config.conditions, task=task),
-        contrasts=_get_task_contrasts(config.contrasts, task=task),
+        inverse_method=config.inverse_method,
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
+        contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         report_stc_n_time_points=config.report_stc_n_time_points,
         fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),

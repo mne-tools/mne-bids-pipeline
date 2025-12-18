@@ -75,7 +75,7 @@ def make_epochs(
         # Construct metadata
         #
         # We only keep conditions that will be analyzed.
-        conditions_dict = _get_task_conditions_dict(conditions, task=task)
+        conditions_dict = _get_task_conditions_dict(conditions=conditions, task=task)
         conditions = list(conditions_dict.values())
 
         # Handle grouped / hierarchical event names.
@@ -228,6 +228,7 @@ def _rename_events_func(
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
+    task: str | None,
     run: str | None,
 ) -> None:
     """Rename events (actually, annotations descriptions) in ``raw``.
@@ -448,7 +449,9 @@ def import_experimental_data(
         data_is_rest = (cfg.task == "rest") or cfg.task_is_rest
     if not data_is_rest:
         # 6. _rename_events_func
-        _rename_events_func(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
+        _rename_events_func(
+            cfg=cfg, raw=raw, subject=subject, session=session, task=task, run=run
+        )
         # 7. _fix_stim_artifact_func
         _fix_stim_artifact_func(cfg=cfg, raw=raw)
 

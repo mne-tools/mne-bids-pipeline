@@ -14,10 +14,8 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     _restrict_analyze_channels,
-    get_datatype,
     get_eeg_reference,
     get_noise_cov_bids_path,
-    get_tasks,
 )
 from mne_bids_pipeline._logging import _log_context, gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -44,11 +42,10 @@ def get_input_fnames_cov(
 ) -> InFilesT:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
-    tasks = get_tasks(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=tasks[0],
+        task=cfg.all_tasks[0],
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -62,7 +59,7 @@ def get_input_fnames_cov(
     )
     in_files["report_info"] = fname_epochs.copy().update(processing="clean")
     _update_for_splits(in_files, "report_info", single=True)
-    for task in tasks:
+    for task in cfg.all_tasks:
         fname_evoked = fname_epochs.copy().update(
             suffix="ave", processing=None, check=False, task=task
         )
@@ -90,7 +87,7 @@ def get_input_fnames_cov(
         )
     else:
         assert cov_type == "epochs", cov_type
-        for task in tasks:
+        for task in cfg.all_tasks:
             key = f"epochs_task-{task}"
             in_files[key] = fname_epochs.copy().update(task=task)
             _update_for_splits(in_files, key, single=True)
@@ -185,7 +182,7 @@ def retrieve_custom_cov(
     evoked_bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
         acquisition=cfg.acq,
         run=None,
         processing="clean",
@@ -238,7 +235,11 @@ def run_covariance(
     )
     cov_type = _get_cov_type(cfg)
     fname_info = in_files.pop("report_info")
+    fnames_evoked = [
+        in_files.pop(key) for key in list(in_files) if key.startswith("evoked")
+    ]
     if cov_type == "custom":
+        # These are in there, but we don't pass them along
         cov = retrieve_custom_cov(
             cfg=cfg,
             subject=subject,
@@ -282,10 +283,7 @@ def run_covariance(
             title="Noise covariance",
             replace=True,
         )
-        for key in list(in_files):
-            if not key.startswith("evoked"):
-                continue
-            fname_evoked = in_files.pop(key)
+        for fname_evoked in fnames_evoked:
             task = fname_evoked.task
             msg = f"Rendering whitened evoked data for task={task!r}."
             logger.info(**gen_log_kwargs(message=msg))
@@ -295,9 +293,11 @@ def run_covariance(
             section = "Noise covariance"
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
-                prefix, extra_tags = _get_prefix_tags(task, condition=condition)
+                prefix, extra_tags = _get_prefix_tags(
+                    cfg=cfg, task=task, condition=condition
+                )
                 tags = ("evoked", "covariance") + extra_tags
-                title = f"Whitening: {prefix}"
+                title = f"Whitening{prefix}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
                 fig = evoked.plot_white(cov, verbose="error")
@@ -329,7 +329,6 @@ def get_config(
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
-        data_type=get_datatype(config=config),
         **_bids_kwargs(config=config),
     )
     return cfg

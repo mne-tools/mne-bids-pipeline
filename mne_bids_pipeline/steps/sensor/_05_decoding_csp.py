@@ -378,7 +378,7 @@ def one_subject_decoding(
         section = "Decoding: CSP"
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
-            prefix, extra_tags = _get_prefix_tags(task=task, contrast=contrast)
+            prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, contrast=contrast)
             cond_1, cond_2 = contrast
             a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
             tags = ("epochs", "contrast", "decoding", "csp") + extra_tags
@@ -423,7 +423,7 @@ def one_subject_decoding(
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,
             )
-            title = f"CSP decoding: {prefix}"
+            title = f"CSP decoding{prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,

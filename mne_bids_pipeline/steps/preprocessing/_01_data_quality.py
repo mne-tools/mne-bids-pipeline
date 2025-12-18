@@ -213,19 +213,19 @@ def assess_data_quality(
         kind = "original" if not cfg.proc else cfg.proc
         msg = f"Adding {kind} raw data to report"
         logger.info(**gen_log_kwargs(message=msg))
-        prefix, extra_tags = _get_prefix_tags(task=task, run=run)
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, run=run)
         tags = ("raw", "data-quality") + extra_tags
         text_html = (
             '<p class="mb-0">Bad channels marked in original data:</p>\n'
             f"{_chs_html(preexisting_bads)}"
         )
         text_kwargs = dict(
-            title=f"Bad channels: {prefix}",
+            title=f"Bad channels{prefix}",
             section="Data quality",
             tags=tags,
             replace=True,
         )
-        title = f"Bad channel detection: {prefix}"
+        title = f"Bad channel detection{prefix}"
         if cfg.find_noisy_channels_meg:
             assert auto_scores is not None
             msg = "Adding noisy channel detection to report"

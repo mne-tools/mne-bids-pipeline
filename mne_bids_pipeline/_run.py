@@ -19,7 +19,6 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
-from ._config_utils import get_tasks
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesT, OutFilesT
 
@@ -327,7 +326,7 @@ class ConditionalStepMemory:
 
 
 def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
-    all_tasks = "-".join(map(str, get_tasks(config)))
+    all_tasks = "-".join(map(str, config.all_tasks))
     fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 
     # Get the script from which the function is called for logging

@@ -23,7 +23,6 @@ from mne_bids_pipeline._config_utils import (
     _get_task_float,
     get_eeg_reference,
     get_runs_tasks,
-    get_tasks,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -161,7 +160,7 @@ def run_ica(
         these_epochs = make_epochs(
             subject=subject,
             session=session,
-            task=cfg.task,
+            task=cfg.all_tasks[0],
             conditions=cfg.conditions,
             raw=raw,
             event_id=event_id,
@@ -317,7 +316,7 @@ def run_ica(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
     ) as report:
         report.add_epochs(
             epochs=epochs,
@@ -360,7 +359,9 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
-    task = get_tasks(config=config)[0]
+    # TODO: This currently just creates ICA for the first task! We should probably
+    # find some way to concatenate the epochs instances instead
+    task = config.all_tasks[0]
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(

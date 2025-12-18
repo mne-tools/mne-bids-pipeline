@@ -48,8 +48,8 @@ class ArbitraryContrast(TypedDict):
     """Statistical contrast with arbitrary weights."""
 
     name: str
-    conditions: Sequence[str]
-    weights: Sequence[float]
+    conditions: list[str]
+    weights: list[float]
 
 
 ContrastSequenceT: TypeAlias = Sequence[tuple[str, str] | ArbitraryContrast]

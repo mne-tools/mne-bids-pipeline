@@ -239,7 +239,6 @@ def run_covariance(
         in_files.pop(key) for key in list(in_files) if key.startswith("evoked")
     ]
     if cov_type == "custom":
-        # These are in there, but we don't pass them along
         cov = retrieve_custom_cov(
             cfg=cfg,
             subject=subject,

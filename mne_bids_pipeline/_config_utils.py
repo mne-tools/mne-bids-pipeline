@@ -808,9 +808,10 @@ def _get_task_contrasts(
     del contrasts
     for contrast in use_contrasts:
         if isinstance(contrast, tuple):
+            assert len(contrast) == 2
             normalized_contrasts.append(
                 ArbitraryContrast(
-                    name=(contrast[0] + "-" + contrast[1]),
+                    name=f"{contrast[0]}-{contrast[1]}",
                     conditions=list(contrast),
                     weights=[1, -1],
                 )

@@ -333,7 +333,6 @@ def get_config(
         epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
         epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
         epochs_custom_metadata=config.epochs_custom_metadata,
-        # TODO: Need to add these, too?
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,
         epochs_metadata_keep_first=config.epochs_metadata_keep_first,

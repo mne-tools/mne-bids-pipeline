@@ -14,12 +14,18 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     _restrict_analyze_channels,
+    get_datatype,
     get_eeg_reference,
     get_noise_cov_bids_path,
+    get_tasks,
 )
 from mne_bids_pipeline._logging import _log_context, gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
+from mne_bids_pipeline._report import (
+    _all_conditions,
+    _get_prefix_tags,
+    _open_report,
+)
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _sanitize_callable,
@@ -38,10 +44,11 @@ def get_input_fnames_cov(
 ) -> InFilesT:
     cov_type = _get_cov_type(cfg)
     in_files = dict()
+    tasks = get_tasks(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=tasks[0],
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -55,19 +62,21 @@ def get_input_fnames_cov(
     )
     in_files["report_info"] = fname_epochs.copy().update(processing="clean")
     _update_for_splits(in_files, "report_info", single=True)
-    fname_evoked = fname_epochs.copy().update(
-        suffix="ave", processing=None, check=False
-    )
-    if fname_evoked.fpath.exists():
-        in_files["evoked"] = fname_evoked
+    for task in tasks:
+        fname_evoked = fname_epochs.copy().update(
+            suffix="ave", processing=None, check=False, task=task
+        )
+        if fname_evoked.fpath.exists():
+            in_files[f"evoked_task-{task}"] = fname_evoked
     if cov_type == "custom":
         in_files["__unknown_inputs__"] = "custom noise_cov callable"
         return in_files
     if cov_type == "raw":
-        bids_path_raw_noise = BIDSPath(
+        assert cfg.noise_cov in ("rest", "emptyroom"), cfg.noise_cov
+        in_files["raw"] = BIDSPath(
             subject=subject,
             session=session,
-            task=cfg.task,
+            task="rest" if cfg.noise_cov == "rest" else "noise",
             acquisition=cfg.acq,
             run=None,
             recording=cfg.rec,
@@ -79,15 +88,12 @@ def get_input_fnames_cov(
             root=cfg.deriv_root,
             check=False,
         )
-        if cfg.noise_cov == "rest":
-            bids_path_raw_noise.task = "rest"
-        else:
-            bids_path_raw_noise.task = "noise"
-        in_files["raw"] = bids_path_raw_noise
     else:
         assert cov_type == "epochs", cov_type
-        in_files["epochs"] = fname_epochs
-        _update_for_splits(in_files, "epochs", single=True)
+        for task in tasks:
+            key = f"epochs_task-{task}"
+            in_files[key] = fname_epochs.copy().update(task=task)
+            _update_for_splits(in_files, key, single=True)
     return in_files
 
 
@@ -102,23 +108,28 @@ def compute_cov_from_epochs(
     in_files: InFilesT,
     out_files: InFilesT,
 ) -> mne.Covariance:
-    epo_fname = in_files.pop("epochs")
+    epo_fnames = [in_files.pop(key) for key in in_files if key.startswith("epochs")]
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f"Input:  {epo_fname.basename}"
+    inputs = ", ".join(fname.basename for fname in epo_fnames)
+    msg = f"Input:  {inputs}"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
+    all_epochs = []
+    for epo_fname in epo_fnames:
+        all_epochs.append(mne.read_epochs(epo_fname, preload=False))
+        all_epochs[-1].crop(tmin=tmin, tmax=tmax)
+    epochs = (
+        all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
+    )
+    epochs.load_data().apply_baseline()
 
-    epochs = mne.read_epochs(epo_fname, preload=True)
     cov = mne.compute_covariance(
         epochs,
-        tmin=tmin,
-        tmax=tmax,
         method=cfg.noise_cov_method,
         rank="info",
-        verbose="error",  # TODO: not baseline corrected, maybe problematic?
     )
     return cov
 
@@ -227,7 +238,6 @@ def run_covariance(
     )
     cov_type = _get_cov_type(cfg)
     fname_info = in_files.pop("report_info")
-    fname_evoked = in_files.pop("evoked", None)
     if cov_type == "custom":
         cov = retrieve_custom_cov(
             cfg=cfg,
@@ -272,21 +282,22 @@ def run_covariance(
             title="Noise covariance",
             replace=True,
         )
-        if fname_evoked is not None:
-            msg = "Rendering whitened evoked data."
+        for key in list(in_files):
+            if not key.startswith("evoked"):
+                continue
+            fname_evoked = in_files.pop(key)
+            task = fname_evoked.task
+            msg = f"Rendering whitened evoked data for task={task!r}."
             logger.info(**gen_log_kwargs(message=msg))
             all_evoked = mne.read_evokeds(fname_evoked)
-            conditions = _all_conditions(cfg=cfg)
+            conditions = _all_conditions(cfg=cfg, task=task)
             assert len(all_evoked) == len(conditions)
             section = "Noise covariance"
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
-                tags: tuple[str, ...] = (
-                    "evoked",
-                    "covariance",
-                    _sanitize_cond_tag(condition),
-                )
-                title = f"Whitening: {condition}"
+                prefix, extra_tags = _get_prefix_tags(task, condition=condition)
+                tags = ("evoked", "covariance") + extra_tags
+                title = f"Whitening: {prefix}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
                 fig = evoked.plot_white(cov, verbose="error")
@@ -298,6 +309,7 @@ def run_covariance(
                     replace=True,
                 )
                 plt.close(fig)
+            del task
 
     assert len(in_files) == 0, in_files
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
@@ -317,6 +329,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
+        data_type=get_datatype(config=config),
         **_bids_kwargs(config=config),
     )
     return cfg

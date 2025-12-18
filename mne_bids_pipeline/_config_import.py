@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from ._config_utils import (
     _get_task_baseline,
     _get_task_float,
+    _validate_contrasts,
     get_subjects_sessions,
     get_tasks,
 )
@@ -436,6 +437,9 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                     f"but you set baseline={bl} for task {task}"
                 )
         del task, bl, tmin, tmax
+
+    # Contrasts
+    _validate_contrasts(config.contrasts, tasks=config.task)
 
     # check cluster permutation parameters
     if config.cluster_n_permutations < 10 / config.cluster_permutation_p_threshold:

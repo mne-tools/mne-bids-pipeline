@@ -579,7 +579,7 @@ def run_maxwell_filter(
             cfg=cfg,
             report=report,
             bids_path_in=out_files["sss_raw"],
-            title="Raw (maxwell filtered)",
+            title_prefix="Raw (maxwell filtered)",
             tags=("sss",),
             raw=raw_sss,
             extra_html=extra_html,

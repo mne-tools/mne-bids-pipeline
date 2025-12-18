@@ -147,7 +147,7 @@ def apply_ssp_raw(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (clean)",
+            title_prefix="Raw (clean)",
             tags=("clean",),
             raw=raw,
         )

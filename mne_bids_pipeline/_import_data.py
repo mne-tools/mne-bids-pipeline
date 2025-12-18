@@ -10,6 +10,7 @@ from mne_bids import BIDSPath, get_bids_path_from_fname, read_raw_bids
 from ._config_utils import (
     _bids_kwargs,
     _do_mf_autobad,
+    _get_task_conditions_dict,
     _pl,
     get_datatype,
     get_mf_reference_run_task,
@@ -74,24 +75,8 @@ def make_epochs(
         # Construct metadata
         #
         # We only keep conditions that will be analyzed.
-        if isinstance(conditions, dict):
-            # Check to see if it's nested or not
-            keys = list(conditions.keys())
-            if isinstance(conditions[keys[0]], str):
-                # Not nested
-                conditions = keys
-            else:
-                assert task is not None, (
-                    "task must be provided when conditions is a dict of dicts"
-                )
-                assert task in conditions, f"Task '{task}' not in conditions keys."
-                assert isinstance(conditions[task], list), type(conditions[task])
-                conditions = list(conditions[task])
-        else:
-            conditions = list(conditions)  # Ensure we have a list
-        assert isinstance(conditions, list)
-        for cond in conditions:
-            assert isinstance(cond, str), type(cond)
+        conditions_dict = _get_task_conditions_dict(conditions, task=task)
+        conditions = list(conditions_dict.values())
 
         # Handle grouped / hierarchical event names.
         row_event_names = mne.event.match_event_names(

@@ -24,7 +24,7 @@ from mne_bids_pipeline._import_data import (
 from mne_bids_pipeline._io import _write_json
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._report import _add_raw, _open_report
+from mne_bids_pipeline._report import _add_raw, _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 from mne_bids_pipeline._viz import plot_auto_scores
 from mne_bids_pipeline.typing import FloatArrayT, InFilesT, OutFilesT
@@ -213,27 +213,19 @@ def assess_data_quality(
         kind = "original" if not cfg.proc else cfg.proc
         msg = f"Adding {kind} raw data to report"
         logger.info(**gen_log_kwargs(message=msg))
-        _add_raw(
-            cfg=cfg,
-            report=report,
-            bids_path_in=bids_path_in,
-            raw=raw,
-            title=f"Raw ({kind})",
-            tags=("data-quality",),
-        )
-
-        tags = ("raw", "data-quality", f"run-{run}")
+        prefix, extra_tags = _get_prefix_tags(task=task, run=run)
+        tags = ("raw", "data-quality") + extra_tags
         text_html = (
             '<p class="mb-0">Bad channels marked in original data:</p>\n'
             f"{_chs_html(preexisting_bads)}"
         )
         text_kwargs = dict(
-            title=f"Bad channels: {run}",
+            title=f"Bad channels: {prefix}",
             section="Data quality",
             tags=tags,
             replace=True,
         )
-        title = f"Bad channel detection: {run}"
+        title = f"Bad channel detection: {prefix}"
         if cfg.find_noisy_channels_meg:
             assert auto_scores is not None
             msg = "Adding noisy channel detection to report"
@@ -264,6 +256,17 @@ def assess_data_quality(
         else:
             report.remove(title=title)
             report.add_html(text_html, **text_kwargs)
+
+        # Since "Data quality" has its own section, it should be added first, then
+        # each raw will create its own new section due to how _add_raw works
+        _add_raw(
+            cfg=cfg,
+            report=report,
+            bids_path_in=bids_path_in,
+            raw=raw,
+            title_prefix=f"Raw ({kind})",
+            tags=("data-quality",),
+        )
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

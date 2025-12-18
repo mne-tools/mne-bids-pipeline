@@ -50,7 +50,9 @@ class ArbitraryContrast(TypedDict):
     name: str
     conditions: Sequence[str]
     weights: Sequence[float]
-    task: str | None
+
+
+ContrastSequenceT: TypeAlias = Sequence[tuple[str, str] | ArbitraryContrast]
 
 
 class LogKwargsT(TypedDict):

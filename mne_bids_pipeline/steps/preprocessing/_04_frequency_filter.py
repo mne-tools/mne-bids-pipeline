@@ -325,7 +325,7 @@ def filter_data(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (filtered)",
+            title_prefix="Raw (filtered)",
             tags=("filtered",),
             raw=raw,
         )

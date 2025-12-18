@@ -3,7 +3,7 @@
 import copy
 import functools
 import pathlib
-from collections.abc import Iterable, Sized
+from collections.abc import Iterable, Sequence, Sized
 from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
@@ -14,7 +14,7 @@ import numpy as np
 from mne_bids import BIDSPath
 
 from ._logging import gen_log_kwargs, logger
-from .typing import ArbitraryContrast, BaselineTypeT
+from .typing import ArbitraryContrast, BaselineTypeT, ConditionsTypeT, ContrastSequenceT
 
 try:
     _set_keys_arbitrary_contrast = set(ArbitraryContrast.__required_keys__)
@@ -169,6 +169,36 @@ def _get_task_baseline(
     else:
         task_baseline = baseline
     return task_baseline
+
+
+def _get_task_conditions_dict(
+    conditions: ConditionsTypeT | dict[str, ConditionsTypeT],
+    task: str | None,
+) -> dict[str, str]:
+    """Get conditions for the current task as a dict mapping new to old names."""
+    out_conditions: dict[str, str] = dict()
+    if isinstance(conditions, Sequence):
+        for cond in conditions:
+            out_conditions[cond] = cond
+    else:
+        # This somewhat clunky looping (rather than just checking the first item)
+        # is needed to make mypy happy about the nested dicts
+        for key, val in conditions.items():
+            assert isinstance(key, str)
+            # if it's a string, it's a remapping
+            if isinstance(val, str):
+                out_conditions[key] = val
+            else:
+                # otherwise, it's a sequence or a remapping itself, and it's
+                # task-specific
+                if key == task:
+                    if isinstance(val, Sequence):
+                        for cond in val:
+                            out_conditions[cond] = cond
+                    else:
+                        out_conditions.update(val)
+    del task
+    return out_conditions
 
 
 def get_subjects_sessions(
@@ -763,17 +793,24 @@ def get_noise_cov_bids_path(
     return noise_cov_bp
 
 
-def get_all_contrasts(config: SimpleNamespace) -> Iterable[ArbitraryContrast]:
-    _validate_contrasts(config.contrasts)
+def _get_task_contrasts(
+    config: SimpleNamespace, *, task: str | None
+) -> Iterable[ArbitraryContrast]:
     normalized_contrasts = []
-    for contrast in config.contrasts:
+    # contrasts is either a dict[str(task),Sequence] or a Sequence
+    use_contrasts: ContrastSequenceT
+    if isinstance(config.contrasts, dict):
+        use_contrasts = config.contrasts.get(task, [])
+    else:
+        use_contrasts = config.contrasts
+    del config
+    for contrast in use_contrasts:
         if isinstance(contrast, tuple):
             normalized_contrasts.append(
                 ArbitraryContrast(
                     name=(contrast[0] + "+" + contrast[1]),
                     conditions=list(contrast),
                     weights=[1, -1],
-                    task=config.task,
                 )
             )
         else:
@@ -781,23 +818,21 @@ def get_all_contrasts(config: SimpleNamespace) -> Iterable[ArbitraryContrast]:
     return normalized_contrasts
 
 
-def get_decoding_contrasts(config: SimpleNamespace) -> Iterable[tuple[str, str]]:
-    _validate_contrasts(config.contrasts)
+def _get_task_decoding_contrasts(
+    config: SimpleNamespace, *, task: str | None
+) -> Iterable[tuple[str, str]]:
     normalized_contrasts = []
-    for contrast in config.contrasts:
-        if isinstance(contrast, tuple):
-            normalized_contrasts.append(contrast)
-        else:
-            # If a contrast is an `ArbitraryContrast` and satisfies
-            # * has exactly two conditions (`check_len`)
-            # * weights sum to 0 (`check_sum`)
-            # Then the two conditions are used to perform decoding
-            check_len = len(contrast["conditions"]) == 2
-            check_sum = np.isclose(np.sum(contrast["weights"]), 0)
-            if check_len and check_sum:
-                cond_1 = contrast["conditions"][0]
-                cond_2 = contrast["conditions"][1]
-                normalized_contrasts.append((cond_1, cond_2))
+    for contrast in _get_task_contrasts(config.contrasts, task=task):
+        # If a contrast is an `ArbitraryContrast` and satisfies
+        # * has exactly two conditions (`check_len`)
+        # * weights sum to 0 (`check_sum`)
+        # Then the two conditions are used to perform decoding
+        check_len = len(contrast["conditions"]) == 2
+        check_sum = np.isclose(np.sum(contrast["weights"]), 0)
+        if check_len and check_sum:
+            cond_1 = contrast["conditions"][0]
+            cond_2 = contrast["conditions"][1]
+            normalized_contrasts.append((cond_1, cond_2))
     return normalized_contrasts
 
 
@@ -827,26 +862,64 @@ def get_eeg_reference(
         return config.eeg_reference
 
 
-def _validate_contrasts(contrasts: list[tuple[str, str] | dict[str, Any]]) -> None:
-    for contrast in contrasts:
-        if isinstance(contrast, tuple):
-            if len(contrast) != 2:
-                raise ValueError("Contrasts' tuples MUST be two conditions")
-        elif isinstance(contrast, dict):
-            missing = ", ".join(
-                repr(m) for m in sorted(_set_keys_arbitrary_contrast - set(contrast))
+def _validate_contrasts(
+    contrasts: ContrastSequenceT | dict[str, ContrastSequenceT],
+    *,
+    tasks: str | None | list[str],
+) -> None:
+    tasks_list: list[str] | list[None]
+    if tasks is None:
+        tasks_list = [None]
+    elif isinstance(tasks, str):
+        tasks_list = [tasks]
+    else:
+        tasks_list = tasks
+    contrasts_dict: dict[str, ContrastSequenceT]
+    if not isinstance(contrasts, dict):
+        if len(tasks_list) > 1:
+            raise ValueError(
+                f"When multiple tasks are defined via:\nconfig.task={tasks!r}\n"
+                "contrasts must be a dict whose keys are task names and values are "
+                f"sequences of contrasts, but got:\n{contrasts!r}"
             )
-            if missing:
-                raise ValueError(
-                    f"Missing key{_pl(missing)} in contrast {contrast}: {missing}"
+        contrasts_dict = {str(tasks_list[0]): contrasts}
+    else:
+        contrasts_dict = contrasts
+    del contrasts
+    # Now it's always a dict
+    bad_keys = set(contrasts_dict) - set(tasks_list)
+    if bad_keys:
+        raise ValueError(
+            f"config.contrasts has keys {sorted(contrasts_dict)} which do not match "
+            f"the defined tasks {tasks_list} via config.task={tasks!r}."
+        )
+    for task, these_contrasts in contrasts_dict.items():
+        assert isinstance(these_contrasts, Sequence)
+        for ci, contrast in enumerate(these_contrasts):
+            where = f"for contrast for task={task!r} at index {ci}"
+            if isinstance(contrast, tuple):
+                if len(contrast) != 2:
+                    raise ValueError(
+                        "Contrasts' tuples MUST be two conditions, got "
+                        f"{len(contrast)=} {where}"
+                    )
+            elif isinstance(contrast, dict):
+                missing = ", ".join(
+                    repr(m)
+                    for m in sorted(_set_keys_arbitrary_contrast - set(contrast))
                 )
-            if len(contrast["conditions"]) != len(contrast["weights"]):
-                raise ValueError(
-                    f"Contrast {contrast['name']} has an "
-                    f"inconsistent number of conditions/weights"
-                )
-        else:
-            raise ValueError("Contrasts must be tuples or well-formed dicts")
+                if missing:
+                    raise ValueError(
+                        f"Missing key{_pl(missing)} in contrast {contrast} {where}: "
+                        f"{missing}"
+                    )
+                if len(contrast["conditions"]) != len(contrast["weights"]):
+                    raise ValueError(
+                        f"Contrast {contrast['name']} {where} has an "
+                        f"inconsistent number of conditions/weights"
+                    )
+            else:
+                raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
 def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:

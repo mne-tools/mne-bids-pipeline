@@ -123,13 +123,13 @@ class _ParseConfigSteps:
         # Add a few helper functions
         for func_extra in (
             _config_utils.get_eeg_reference,
-            _config_utils.get_all_contrasts,
-            _config_utils.get_decoding_contrasts,
             _config_utils.get_fs_subject,
             _config_utils.get_fs_subjects_dir,
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
             _config_utils.get_subjects_sessions,
+            _config_utils._get_task_contrasts,
+            _config_utils._get_task_decoding_contrasts,
             _config_utils._limit_which_clean,
         ):
             this_list: list[str] = []

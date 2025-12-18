@@ -23,9 +23,9 @@ from sklearn.pipeline import make_pipeline
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
-    _get_ss,
+    _get_sst,
+    _get_task_decoding_contrasts,
     _restrict_analyze_channels,
-    get_decoding_contrasts,
     get_eeg_reference,
 )
 from mne_bids_pipeline._decoding import LogReg, _decoding_preproc_steps
@@ -33,6 +33,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import (
     _contrasts_to_names,
+    _get_prefix_tags,
     _open_report,
     _plot_full_epochs_decoding_scores,
     _sanitize_cond_tag,
@@ -85,6 +86,7 @@ def run_epochs_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     condition1: str,
     condition2: str,
     in_files: InFilesT,
@@ -182,10 +184,11 @@ def run_epochs_decoding(
 
     # Report
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         msg = "Adding full-epochs decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
+        prefix, extra_tags = _get_prefix_tags(task=task)
 
         all_decoding_scores = []
         all_contrasts = []
@@ -209,20 +212,17 @@ def run_epochs_decoding(
             scores=all_decoding_scores,
             metric=cfg.decoding_metric,
         )
+        tags = ("epochs", "contrast", "decoding") + extra_tags
+        tags += tuple(
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
+            for cond_1, cond_2 in cfg.contrasts
+        )
         report.add_figure(
             fig=fig,
-            title="Full-epochs decoding",
+            title=f"Full-epochs decoding {prefix}",
             caption=caption,
             section="Decoding: full-epochs",
-            tags=(
-                "epochs",
-                "contrast",
-                "decoding",
-                *[
-                    f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
-                    for cond_1, cond_2 in cfg.contrasts
-                ],
-            ),
+            tags=tags,
             replace=True,
         )
         # close figure to save memory
@@ -235,10 +235,11 @@ def run_epochs_decoding(
 def get_config(
     *,
     config: SimpleNamespace,
+    task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        contrasts=get_decoding_contrasts(config),
+        contrasts=_get_task_decoding_contrasts(config, task=task),
         decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
@@ -265,25 +266,27 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
-    ss = _get_ss(config=config)
-    sscc = [
-        (subject, session, cond_1, cond_2)
-        for subject, session in ss
-        for cond_1, cond_2 in get_decoding_contrasts(config)
+    sst = _get_sst(config=config)
+    sstcc = [
+        (subject, session, task, cond_1, cond_2)
+        for subject, session, task in sst
+        for cond_1, cond_2 in _get_task_decoding_contrasts(config, task=task)
     ]
+    del sst
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_epochs_decoding, exec_params=config.exec_params, n_iter=len(sscc)
+            run_epochs_decoding, exec_params=config.exec_params, n_iter=len(sstcc)
         )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config),
+                cfg=get_config(config=config, task=task),
                 exec_params=config.exec_params,
                 subject=subject,
                 condition1=cond_1,
                 condition2=cond_2,
                 session=session,
+                task=task,
             )
-            for subject, session, cond_1, cond_2 in sscc
+            for subject, session, task, cond_1, cond_2 in sstcc
         )
     save_logs(config=config, logs=logs)

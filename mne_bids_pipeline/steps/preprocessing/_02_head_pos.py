@@ -15,7 +15,7 @@ from mne_bids_pipeline._import_data import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
@@ -105,9 +105,9 @@ def run_head_pos(
     mne.chpi.write_head_pos(out_files[key], head_pos)
 
     # Reporting
-    tags = ("raw", f"run-{bids_path_in.run}", "chpi", "sss")
+    prefix, extra_tags = _get_prefix_tags(task=task, run=run)
+    tags = ("raw", "chpi", "sss") + extra_tags
     section = "Head position"
-    title = f"run {bids_path_in.run}"
 
     with _open_report(
         cfg=cfg,
@@ -122,7 +122,7 @@ def run_head_pos(
         fig = mne.viz.plot_chpi_snr(snr_dict)
         report.add_figure(
             fig=fig,
-            title=f"cHPI SNR: {title}",
+            title=f"cHPI SNR: {prefix}",
             image_format="svg",
             section=section,
             tags=tags,
@@ -132,7 +132,7 @@ def run_head_pos(
         fig = mne.viz.plot_head_positions(head_pos, mode="traces")
         report.add_figure(
             fig=fig,
-            title=f"Head positions: {title}",
+            title=f"Head positions: {prefix}",
             image_format="svg",
             section=section,
             tags=tags,

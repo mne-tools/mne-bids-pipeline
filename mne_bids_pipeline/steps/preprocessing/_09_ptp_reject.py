@@ -19,7 +19,7 @@ from mne_bids_pipeline._config_utils import _bids_kwargs, _get_sst
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._reject import _get_reject
-from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _update_for_splits,
@@ -196,9 +196,10 @@ def drop_ptp(
     logger.info(**gen_log_kwargs(message=msg))
     # Add PSD plots for 30s of data or all epochs if we have less available
     psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
-    tags = ("epochs", "clean")
+    prefix, extra_tags = _get_prefix_tags(task=task)
+    tags = ("epochs", "clean") + extra_tags
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
-    title = "Epochs: after cleaning"
+    title = f"Epochs (clean): {prefix}"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:

@@ -102,10 +102,11 @@ def _prepare_trans_subject(
 def get_input_fnames_forward(
     *, cfg: SimpleNamespace, subject: str, session: str | None
 ) -> InFilesT:
+    task = cfg.runs_tasks[0][1]
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -124,7 +125,7 @@ def get_input_fnames_forward(
                 processing="clean", suffix="raw", task=cfg.noise_cov
             )
         else:
-            source_info_path_update = dict(suffix="ave")
+            source_info_path_update = dict(suffix="ave", task=task)
     else:
         source_info_path_update = cfg.source_info_path_update
     in_files["info"] = bids_path.copy().update(**source_info_path_update)
@@ -152,7 +153,7 @@ def run_forward(
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=None,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,

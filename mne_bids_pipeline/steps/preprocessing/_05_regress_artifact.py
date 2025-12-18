@@ -118,7 +118,7 @@ def run_regress_artifact(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (regression)",
+            title_prefix="Raw (regression)",
             tags=("regression",),
             raw=raw,
         )

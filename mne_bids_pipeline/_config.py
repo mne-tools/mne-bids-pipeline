@@ -9,9 +9,9 @@ from mne import Covariance
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline.typing import (
-    ArbitraryContrast,
     BaselineTypeT,
     ConditionsTypeT,
+    ContrastSequenceT,
     DigMontageType,
     FloatArrayLike,
     PathLike,
@@ -1710,24 +1710,22 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 
 # ## Condition contrasts
 
-contrasts: Sequence[tuple[str, str] | ArbitraryContrast] = []
+contrasts: ContrastSequenceT | dict[str, ContrastSequenceT] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
-list corresponds to a single contrast.
+list corresponds to a single contrast. For each entry in the list:
 
-A tuple specifies a one-vs-one contrast, where the second condition is
-subtracted from the first.
+1. A tuple specifies a one-vs-one contrast, where the second condition is
+   subtracted from the first.
 
-If a dictionary, must contain the following keys:
+2. If a dictionary, must contain the following keys:
 
-- `name`: a custom name of the contrast
-- `conditions`: the conditions to contrast
-- `weights`: the weights associated with each condition.
-- `task`: must be present if there are multiple tasks in the dataset
+    - `name`: a custom name of the contrast
+    - `conditions`: the conditions to contrast
+    - `weights`: the weights associated with each condition.
 
 Pass an empty list to avoid calculation of any contrasts.
-A dictionary must be used if multiple tasks are present in the dataset.
 
 For the contrasts to be computed, the appropriate conditions must have been
 epoched, and therefore the conditions should either match or be subsets of

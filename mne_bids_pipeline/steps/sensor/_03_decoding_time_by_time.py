@@ -31,19 +31,19 @@ from sklearn.pipeline import make_pipeline
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
+    _get_sst,
+    _get_task_decoding_contrasts,
     _restrict_analyze_channels,
-    get_decoding_contrasts,
     get_eeg_reference,
-    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import LogReg, _decoding_preproc_steps
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, get_parallel_backend_name
 from mne_bids_pipeline._report import (
+    _get_prefix_tags,
     _open_report,
     _plot_decoding_time_generalization,
     _plot_time_by_time_decoding_scores,
-    _sanitize_cond_tag,
 )
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -59,6 +59,7 @@ def get_input_fnames_time_decoding(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     condition1: str,
     condition2: str,
 ) -> InFilesT:
@@ -93,6 +94,7 @@ def run_time_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     condition1: str,
     condition2: str,
     in_files: InFilesT,
@@ -235,21 +237,17 @@ def run_time_decoding(
 
     # Report
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         msg = "Adding time-by-time decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
 
         section = "Decoding: time-by-time"
         for contrast in cfg.contrasts:
+            prefix, extra_tags = _get_prefix_tags(task, contrast=contrast)
             cond_1, cond_2 = contrast
             a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-            tags = (
-                "epochs",
-                "contrast",
-                "decoding",
-                f"{_sanitize_cond_tag(contrast[0])}–{_sanitize_cond_tag(contrast[1])}",
-            )
+            tags = ("epochs", "contrast", "decoding") + extra_tags
 
             processing = f"{a_vs_b}+TimeByTime+{cfg.decoding_metric}"
             processing = processing.replace("_", "-").replace("-", "")
@@ -273,7 +271,7 @@ def run_time_decoding(
                 f"{epoch_counts[cond_1]} × {cond_1} vs. "
                 f"{epoch_counts[cond_2]} × {cond_2}"
             )
-            title = f"Decoding over time: {cond_1} vs. {cond_2}"
+            title = f"Decoding over time: {prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,
@@ -315,10 +313,11 @@ def run_time_decoding(
 def get_config(
     *,
     config: SimpleNamespace,
+    task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        contrasts=get_decoding_contrasts(config),
+        contrasts=_get_task_decoding_contrasts(config, task=task),
         decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
@@ -351,15 +350,16 @@ def main(*, config: SimpleNamespace) -> None:
         run_time_decoding(
             cfg=get_config(
                 config=config,
+                task=task,
             ),
             exec_params=config.exec_params,
             subject=subject,
+            session=session,
+            task=task,
             condition1=cond_1,
             condition2=cond_2,
-            session=session,
         )
-        for subject, sessions in get_subjects_sessions(config).items()
-        for session in sessions
-        for cond_1, cond_2 in get_decoding_contrasts(config)
+        for subject, session, task in _get_sst(config=config)
+        for cond_1, cond_2 in _get_task_decoding_contrasts(config, task=task)
     ]
     save_logs(config=config, logs=logs)

@@ -22,7 +22,7 @@ from mne_bids import BIDSPath
 from mne_bids.stats import count_events
 from scipy.io import loadmat
 
-from ._config_utils import get_all_contrasts
+from ._config_utils import _get_task_contrasts
 from ._decoding import _handle_csp_args
 from ._logging import _linkfile, gen_log_kwargs, logger
 from .typing import FloatArrayT
@@ -487,6 +487,7 @@ def add_event_counts(
     cfg: SimpleNamespace,
     subject: str | None,
     session: str | None,
+    task: str | None,
     report: mne.Report,
 ) -> None:
     try:
@@ -555,18 +556,48 @@ def _cached_sys_info() -> str:
         return f.getvalue()
 
 
-def _all_conditions(*, cfg: SimpleNamespace) -> list[str]:
+def _all_conditions(*, cfg: SimpleNamespace, task: str | None) -> list[str]:
     if isinstance(cfg.conditions, dict):
         conditions = list(cfg.conditions.keys())
     else:
         conditions = list(cfg.conditions)
-    all_contrasts = get_all_contrasts(cfg)
+    all_contrasts = _get_task_contrasts(cfg, task=task)
     conditions.extend([contrast["name"] for contrast in all_contrasts])
     return conditions
 
 
 def _sanitize_cond_tag(cond: str) -> str:
     return str(cond).lower().replace("'", "").replace('"', "").replace(" ", "-")
+
+
+def _get_prefix_tags(
+    task: str | None,
+    *,
+    run: str | None = None,
+    condition: str | None = None,
+    contrast: tuple[str, str] | None = None,
+    add_contrast: bool = False,
+) -> tuple[str, tuple[str, ...]]:
+    prefixes = []
+    tags: tuple[str, ...] = ()
+    if task is not None:
+        prefixes.append(f"task-{task}")
+        tags += (f"task-{task}",)
+    if run is not None:
+        prefixes.append(f"run-{run}")
+        tags += (f"run-{run}",)
+    if condition is not None:
+        condition = _sanitize_cond_tag(condition)
+        prefixes += (condition,)
+        tags += (condition,)
+    if contrast is not None:
+        cond_1 = _sanitize_cond_tag(contrast[0])
+        cond_2 = _sanitize_cond_tag(contrast[1])
+        tags += (f"{cond_1}–{cond_2}",)
+        if add_contrast:
+            prefixes.append(f"{cond_1} vs. {cond_2}")
+    prefix = " ".join(prefixes)
+    return prefix, tags
 
 
 def _imshow_tf(
@@ -610,6 +641,7 @@ def add_csp_grand_average(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     report: mne.Report,
     cond_1: str,
     cond_2: str,
@@ -685,14 +717,15 @@ def add_csp_grand_average(
     ax.legend()
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel(f"Mean decoding score ({metric})")
-    tags = (
+    prefix, extra_tags = _get_prefix_tags(task=task)
+    tags: tuple[str, ...] = (
         "epochs",
         "contrast",
         "decoding",
         "csp",
         f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-    )
-    title = f"CSP decoding: {cond_1} vs. {cond_2}"
+    ) + extra_tags
+    title = f"CSP decoding: {prefix}{cond_1} vs. {cond_2}"
     report.add_figure(
         fig=fig,
         title=title,
@@ -828,8 +861,8 @@ def add_csp_grand_average(
         "decoding",
         "csp",
         f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-    )
-    title = f"CSP TF decoding: {cond_1} vs. {cond_2}"
+    ) + extra_tags
+    title = f"CSP TF decoding: {prefix}{cond_1} vs. {cond_2}"
     report.add_figure(
         fig=fig,
         title=title,
@@ -866,20 +899,18 @@ def _add_raw(
     report: mne.report.Report,
     bids_path_in: BIDSPath,
     raw: BaseRaw,
-    title: str,
+    title_prefix: str,
     tags: tuple[str, ...] = (),
     extra_html: str | None = None,
 ) -> None:
-    if bids_path_in.run is not None:
-        title += f", run {bids_path_in.run}"
-    elif bids_path_in.task in ("noise", "rest"):
-        title += f", {bids_path_in.task}"
+    prefix, extra_tags = _get_prefix_tags(task=bids_path_in.task)
+    title = f"{title_prefix}: {prefix}"
     plot_raw_psd = (
         cfg.plot_psd_for_runs == "all"
         or bids_path_in.run in cfg.plot_psd_for_runs
         or bids_path_in.task in cfg.plot_psd_for_runs
     )
-    tags = ("raw", f"run-{bids_path_in.run}") + tags
+    tags = ("raw",) + tags + extra_tags
     with mne.use_log_level("error"):
         report.add_raw(
             raw=raw,

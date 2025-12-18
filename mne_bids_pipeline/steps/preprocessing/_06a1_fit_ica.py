@@ -20,8 +20,10 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
+    _get_task_float,
     get_eeg_reference,
     get_runs_tasks,
+    get_tasks,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -358,6 +360,7 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
+    task = get_tasks(config=config)[0]
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
@@ -379,8 +382,8 @@ def get_config(
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
+        epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
+        epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
         epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,

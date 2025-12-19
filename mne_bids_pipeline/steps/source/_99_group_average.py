@@ -273,7 +273,9 @@ def main(*, config: SimpleNamespace) -> None:
             exec_params=exec_params,
             session=session,
             subject=average_subj,
+            task=task,
         )
         for session in all_sessions
+        for task in config.all_tasks
     ]
     save_logs(config=config, logs=logs)

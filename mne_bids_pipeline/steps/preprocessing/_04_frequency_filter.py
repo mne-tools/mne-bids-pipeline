@@ -62,10 +62,13 @@ def get_input_fnames_frequency_filter(
         task=task,
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
 
 
 def zapline(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -89,6 +92,8 @@ def zapline(
 
 
 def notch_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -125,6 +130,8 @@ def notch_filter(
 
 
 def bandpass_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -165,6 +172,8 @@ def bandpass_filter(
 
 
 def resample(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -249,6 +258,7 @@ def filter_data(
 
     raw.load_data()
     zapline(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -258,6 +268,7 @@ def filter_data(
         iter_=cfg.zapline_iter,
     )
     notch_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -271,6 +282,7 @@ def filter_data(
         notch_extra_kws=cfg.notch_extra_kws,
     )
     bandpass_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -285,6 +297,7 @@ def filter_data(
         bandpass_extra_kws=cfg.bandpass_extra_kws,
     )
     resample(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -324,7 +337,7 @@ def filter_data(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (filtered)",
+            title_prefix="Raw (filtered)",
             tags=("filtered",),
             raw=raw,
         )

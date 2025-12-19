@@ -18,7 +18,7 @@ from mne_bids_pipeline._config_utils import (
     _pl,
     _proj_path,
     get_ecg_channel,
-    get_runs,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -48,7 +48,6 @@ def get_input_fnames_run_ssp(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -58,10 +57,10 @@ def get_input_fnames_run_ssp(
         check=False,
     )
     in_files = dict()
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -81,7 +80,9 @@ def run_ssp(
     import matplotlib.pyplot as plt
 
     # compute SSP on all runs of raw
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
 
     out_files = dict(proj=_proj_path(cfg=cfg, subject=subject, session=session))
     msg = (
@@ -247,6 +248,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         eog_channels=config.eog_channels,
@@ -263,7 +265,9 @@ def get_config(
         ch_types=config.ch_types,
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(
+            config=config, subject=subject, session=session, which=("runs", "rest")
+        ),
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
@@ -286,6 +290,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,

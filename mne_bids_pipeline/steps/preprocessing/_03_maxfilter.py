@@ -61,6 +61,7 @@ def get_input_fnames_esss(
         task="noise",
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
@@ -203,6 +204,7 @@ def get_input_fnames_maxwell_filter(
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
@@ -212,7 +214,7 @@ def get_input_fnames_maxwell_filter(
     # head positions
     if cfg.mf_mc:
         if run is None and task == "noise":
-            pos_run, pos_task = cfg.mf_reference_run, cfg.task
+            pos_run, pos_task = cfg.mf_reference_run, cfg.mf_reference_task
         else:
             pos_run, pos_task = run, task
         path = _get_run_path(
@@ -239,7 +241,7 @@ def get_input_fnames_maxwell_filter(
                 extension=".fif",
                 root=cfg.deriv_root,
                 check=False,
-                task=pos_task,
+                task=None,
                 run=None,
             )
     if cfg.mf_esss:
@@ -577,7 +579,7 @@ def run_maxwell_filter(
             cfg=cfg,
             report=report,
             bids_path_in=out_files["sss_raw"],
-            title="Raw (maxwell filtered)",
+            title_prefix="Raw (maxwell filtered)",
             tags=("sss",),
             raw=raw_sss,
             extra_html=extra_html,

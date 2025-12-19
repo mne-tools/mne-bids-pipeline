@@ -15,11 +15,11 @@ import mne
 import numpy as np
 from mne_bids import BIDSPath
 
-from mne_bids_pipeline._config_utils import _bids_kwargs, _get_ss
+from mne_bids_pipeline._config_utils import _bids_kwargs, _get_sst
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._reject import _get_reject
-from mne_bids_pipeline._report import _open_report
+from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _update_for_splits,
@@ -36,11 +36,12 @@ def get_input_fnames_drop_ptp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -66,6 +67,7 @@ def drop_ptp(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     import matplotlib.pyplot as plt
@@ -76,6 +78,7 @@ def drop_ptp(
         .copy()
         .update(
             processing="clean",
+            task=task,
             split=None,
         )
     )
@@ -193,11 +196,12 @@ def drop_ptp(
     logger.info(**gen_log_kwargs(message=msg))
     # Add PSD plots for 30s of data or all epochs if we have less available
     psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
-    tags = ("epochs", "clean")
+    prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
+    tags = ("epochs", "clean") + extra_tags
     kind = cfg.reject if isinstance(cfg.reject, str) else "Rejection"
-    title = "Epochs: after cleaning"
+    title = f"Epochs (clean){prefix}"
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         if cfg.reject == "autoreject_local":
             caption = (
@@ -261,10 +265,10 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run epochs."""
-    ss = _get_ss(config=config)
+    sst = _get_sst(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            drop_ptp, exec_params=config.exec_params, n_iter=len(ss)
+            drop_ptp, exec_params=config.exec_params, n_iter=len(sst)
         )
         logs = parallel(
             run_func(
@@ -274,7 +278,8 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
-            for subject, session in ss
+            for subject, session, task in sst
         )
     save_logs(config=config, logs=logs)

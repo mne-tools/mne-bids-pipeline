@@ -100,13 +100,14 @@ class _MBPLogger:
         subject: str | None = None,
         session: str | None = None,
         run: str | None = None,
+        task: str | None = None,
         emoji: str = "",
     ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
         # Construct str
-        essr = " ".join(x for x in [emoji, subject, session, run] if x)
+        essr = " ".join(x for x in [emoji, subject, session, task, run] if x)
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
@@ -144,10 +145,19 @@ def gen_log_kwargs(
         session = up_locals.get("session", None)
     if run is None:
         run = up_locals.get("run", None)
-        if run is None:
-            task = task or up_locals.get("task", None)
-            if task in ("noise", "rest"):
-                run = task
+    if task is None:
+        task = up_locals.get("task", None)
+        if task not in ("noise", "rest"):
+            # If task is set but there's only one task, don't show it
+            n_tasks = 2
+            cfg = up_locals.get("cfg", None)
+            if cfg is None:
+                config = up_locals.get("config", None)
+                n_tasks = len(getattr(config, "all_tasks", []))
+            else:
+                n_tasks = len(getattr(cfg, "all_tasks", []))
+            if n_tasks == 1:
+                task = None
 
     # Do some nice formatting
     if subject is not None:
@@ -171,6 +181,8 @@ def gen_log_kwargs(
         extra["session"] = session
     if run:
         extra["run"] = run
+    if task and task != "run":
+        extra["task"] = task
 
     kwargs: LogKwargsT = {
         "msg": message,

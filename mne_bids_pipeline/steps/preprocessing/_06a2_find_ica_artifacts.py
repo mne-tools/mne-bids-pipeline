@@ -21,7 +21,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     get_eeg_reference,
-    get_runs,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -97,7 +97,7 @@ def get_input_fnames_find_ica_artifacts(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=None,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -109,13 +109,15 @@ def get_input_fnames_find_ica_artifacts(
     in_files = dict()
     in_files["epochs"] = bids_basename.copy().update(processing="icafit", suffix="epo")
     _update_for_splits(in_files, "epochs", single=True)
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
-    in_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
+    in_files["ica"] = bids_basename.copy().update(
+        processing="icafit", suffix="ica", task=None
+    )
     return in_files
 
 
@@ -131,8 +133,12 @@ def find_ica_artifacts(
     in_files: InFilesT,
 ) -> OutFilesT:
     """Run ICA."""
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
+    bids_basename = (
+        raw_fnames[0].copy().update(processing=None, split=None, run=None, task=None)
+    )
     out_files = dict()
     out_files["ica"] = bids_basename.copy().update(processing="ica", suffix="ica")
     out_files["ecg"] = bids_basename.copy().update(processing="ica+ecg", suffix="ave")
@@ -354,7 +360,6 @@ def find_ica_artifacts(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.task,
     ) as report:
         logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
@@ -567,11 +572,7 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        conditions=config.conditions,
-        runs=get_runs(config=config, subject=subject),
-        task_is_rest=config.task_is_rest,
-        ica_l_freq=config.ica_l_freq,
-        ica_reject=config.ica_reject,
+        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
         ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,
@@ -580,24 +581,9 @@ def get_config(
         ica_icalabel_include=config.ica_icalabel_include,
         ica_exclusion_thresholds=config.ica_exclusion_thresholds,
         ica_class_thresholds=config.ica_class_thresholds,
-        autoreject_n_interpolate=config.autoreject_n_interpolate,
-        random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
-        epochs_decim=config.epochs_decim,
-        raw_resample_sfreq=config.raw_resample_sfreq,
-        event_repeated=config.event_repeated,
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
         eog_channels=config.eog_channels,
-        rest_epochs_duration=config.rest_epochs_duration,
-        rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )

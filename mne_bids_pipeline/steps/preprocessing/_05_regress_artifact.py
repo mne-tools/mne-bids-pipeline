@@ -41,6 +41,7 @@ def get_input_fnames_regress_artifact(
         task=task,
         kind="filt",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
     assert len(out)
     return out
@@ -117,7 +118,7 @@ def run_regress_artifact(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (regression)",
+            title_prefix="Raw (regression)",
             tags=("regression",),
             raw=raw,
         )

@@ -19,7 +19,6 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
-from ._config_utils import get_task
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesT, OutFilesT
 
@@ -265,7 +264,7 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
-                        msg = "Computation unnecessary (cached) …"
+                        msg = f"Computation unnecessary (cached {func.__name__}(…)) …"
                         emoji = "cache"
             # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface
@@ -327,7 +326,8 @@ class ConditionalStepMemory:
 
 
 def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
-    fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
+    all_tasks = "-".join(map(str, config.all_tasks))
+    fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 
     # Get the script from which the function is called for logging
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")

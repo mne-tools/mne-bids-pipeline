@@ -184,6 +184,8 @@ def run_ica(
         these_epochs.load_data()  # Remove reference to raw
         del raw  # free memory
 
+        # TODO: This creates epochs for all tasks using tmin/tmax from the first task
+        # only. Hopefully that's good enough but it's a bit of a hack...
         if epochs is None:
             epochs = these_epochs
         else:
@@ -361,8 +363,6 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
-    # TODO: This currently just creates ICA for the first task! We should probably
-    # find some way to concatenate the epochs instances instead
     task = config.all_tasks[0]
     cfg = SimpleNamespace(
         conditions=config.conditions,

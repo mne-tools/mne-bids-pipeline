@@ -76,7 +76,9 @@ def make_epochs(
         #
         # We only keep conditions that will be analyzed.
         conditions_dict = _get_task_conditions_dict(conditions=conditions, task=task)
-        conditions = list(conditions_dict.values())
+        # We need the keys here because the events have already been remapped to our
+        # new names
+        conditions = list(conditions_dict)
 
         # Handle grouped / hierarchical event names.
         row_event_names = mne.event.match_event_names(

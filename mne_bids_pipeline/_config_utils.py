@@ -170,7 +170,7 @@ def _get_task_average_epochs_tlims(
         for epochs_lim in (config.epochs_tmin, config.epochs_tmax)
     )
     out = tuple(float(v) for v in vals)
-    assert len(out) == 2
+    assert len(out) == 2  # just to make mypy happy
     return out
 
 

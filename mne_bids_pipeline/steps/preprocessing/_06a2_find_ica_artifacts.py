@@ -116,7 +116,9 @@ def get_input_fnames_find_ica_artifacts(
             run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
-    in_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
+    in_files["ica"] = bids_basename.copy().update(
+        processing="icafit", suffix="ica", task=None
+    )
     return in_files
 
 

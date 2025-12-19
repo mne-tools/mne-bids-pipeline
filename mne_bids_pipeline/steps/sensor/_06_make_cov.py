@@ -105,7 +105,9 @@ def compute_cov_from_epochs(
     in_files: InFilesT,
     out_files: InFilesT,
 ) -> mne.Covariance:
-    epo_fnames = [in_files.pop(key) for key in in_files if key.startswith("epochs")]
+    epo_fnames = [
+        in_files.pop(key) for key in list(in_files) if key.startswith("epochs")
+    ]
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
     logger.info(**gen_log_kwargs(message=msg))

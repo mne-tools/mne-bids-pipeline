@@ -91,7 +91,9 @@ def run_ica(
         in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
     ]
     out_files = dict()
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    bids_basename = (
+        raw_fnames[0].copy().update(processing=None, split=None, run=None, task=None)
+    )
     out_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
     out_files["epochs"] = (
         out_files["ica"].copy().update(suffix="epo", processing="icafit")

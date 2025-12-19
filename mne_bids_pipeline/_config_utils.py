@@ -488,7 +488,7 @@ def get_mf_reference_run_task(config: SimpleNamespace) -> tuple[str | None, str 
                 f"{get_runs_all_subjects(config, task=None)}"
             )
         out_run = inter_runs[0]
-    # TODO: Add config.mf_reference_task handling here, might not match otherwise
+    # TODO: Add mf_reference_task handling here, might not match otherwise
     out_task = get_tasks(config=config)[0]
     return out_run, out_task
 

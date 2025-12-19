@@ -137,7 +137,9 @@ def find_ica_artifacts(
     raw_fnames = [
         in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
     ]
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    bids_basename = (
+        raw_fnames[0].copy().update(processing=None, split=None, run=None, task=None)
+    )
     out_files = dict()
     out_files["ica"] = bids_basename.copy().update(processing="ica", suffix="ica")
     out_files["ecg"] = bids_basename.copy().update(processing="ica+ecg", suffix="ave")

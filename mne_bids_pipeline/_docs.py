@@ -32,6 +32,8 @@ _MANUAL_KWS = {
         "find_flat_channels_meg",
         "find_noisy_channels_meg",
     ),
+    "preprocessing/_06a1_fit_ica:get_config:epochs_tmin": ("epochs_tmin",),
+    "preprocessing/_06a1_fit_ica:get_config:epochs_tmax": ("epochs_tmax",),
 }
 # Some don't show up so force them to be empty
 _EXECUTION_OPTIONS = (

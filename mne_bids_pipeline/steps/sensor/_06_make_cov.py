@@ -119,11 +119,11 @@ def compute_cov_from_epochs(
     all_epochs = []
     for epo_fname in epo_fnames:
         all_epochs.append(mne.read_epochs(epo_fname, preload=False))
-        all_epochs[-1].crop(tmin=tmin, tmax=tmax)
+        all_epochs[-1].load_data().crop(tmin=tmin, tmax=tmax)
     epochs = (
         all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
     )
-    epochs.load_data().apply_baseline()
+    epochs.apply_baseline()
 
     cov = mne.compute_covariance(
         epochs,

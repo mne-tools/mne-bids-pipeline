@@ -20,7 +20,7 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
-    _get_task_float,
+    _get_task_average_epochs_tlims,
     get_eeg_reference,
     get_runs_tasks,
 )
@@ -363,7 +363,9 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
-    task = config.all_tasks[0]
+    # Not necessarily the right thing to do here, but since we can't concat epochs of
+    # different lengths, let's use the average tmin/tmax across tasks
+    epochs_tmin, epochs_tmax = _get_task_average_epochs_tlims(config=config)
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
@@ -385,8 +387,8 @@ def get_config(
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,
-        epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
-        epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
+        epochs_tmin=epochs_tmin,
+        epochs_tmax=epochs_tmax,
         epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,

@@ -584,7 +584,7 @@ def _all_conditions(*, cfg: SimpleNamespace, task: str | None) -> list[str]:
 
 
 def _sanitize_cond_tag(cond: str) -> str:
-    return str(cond).lower().replace("'", "").replace('"', "").replace(" ", "-")
+    return str(cond).replace("'", "").replace('"', "").replace(" ", "-")
 
 
 def _get_prefix_tags(

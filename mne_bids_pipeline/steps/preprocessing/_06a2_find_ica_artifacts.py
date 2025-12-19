@@ -20,7 +20,6 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
-    _get_task_float,
     get_eeg_reference,
     get_runs_tasks,
 )
@@ -98,7 +97,7 @@ def get_input_fnames_find_ica_artifacts(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.all_tasks[0],
+        task=None,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -361,7 +360,6 @@ def find_ica_artifacts(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.all_tasks[0],
     ) as report:
         logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
@@ -573,13 +571,8 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
-    task = config.all_tasks[0]
     cfg = SimpleNamespace(
-        conditions=config.conditions,
         runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
-        task_is_rest=config.task_is_rest,
-        ica_l_freq=config.ica_l_freq,
-        ica_reject=config.ica_reject,
         ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,
@@ -588,24 +581,9 @@ def get_config(
         ica_icalabel_include=config.ica_icalabel_include,
         ica_exclusion_thresholds=config.ica_exclusion_thresholds,
         ica_class_thresholds=config.ica_class_thresholds,
-        autoreject_n_interpolate=config.autoreject_n_interpolate,
-        random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
-        epochs_decim=config.epochs_decim,
-        raw_resample_sfreq=config.raw_resample_sfreq,
-        event_repeated=config.event_repeated,
-        epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
-        epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
         eog_channels=config.eog_channels,
-        rest_epochs_duration=config.rest_epochs_duration,
-        rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )

@@ -159,6 +159,21 @@ def _get_task_float(val: dict[str, float] | float, task: str | None) -> float:
     return task_float
 
 
+def _get_task_average_epochs_tlims(
+    *,
+    config: SimpleNamespace,
+) -> tuple[float, float]:
+    # Not necessarily the right thing to do here, but since we can't concat epochs of
+    # different lengths, let's use the average tmin/tmax across tasks
+    vals = tuple(
+        np.mean([_get_task_float(epochs_lim, task=task) for task in config.all_tasks])
+        for epochs_lim in (config.epochs_tmin, config.epochs_tmax)
+    )
+    out = tuple(float(v) for v in vals)
+    assert len(out) == 2
+    return out
+
+
 def _get_task_baseline(
     baseline: BaselineTypeT | dict[str, BaselineTypeT], task: str | None
 ) -> BaselineTypeT:

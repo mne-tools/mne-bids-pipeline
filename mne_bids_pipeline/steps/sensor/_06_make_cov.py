@@ -123,7 +123,6 @@ def compute_cov_from_epochs(
     epochs = (
         all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
     )
-    epochs.apply_baseline()
 
     cov = mne.compute_covariance(
         epochs,

@@ -1028,6 +1028,7 @@ def get_config(
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         decode=config.decode,
+        decoding_time=config.decoding_time,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
@@ -1128,28 +1129,29 @@ def _run_decoding(*, config: SimpleNamespace, task: str | None) -> None:
                 for session in sessions
             ]
             # Time-by-time
-            sc = [
-                (session, contrast)
-                for session in sessions
-                for contrast in decoding_contrasts
-            ]
-            parallel, run_func = parallel_func(
-                average_time_by_time_decoding,
-                exec_params=exec_params,
-                n_iter=len(sc),
-            )
-            logs += parallel(
-                run_func(
-                    cfg=cfg,
+            if cfg.decoding_time:
+                sc = [
+                    (session, contrast)
+                    for session in sessions
+                    for contrast in decoding_contrasts
+                ]
+                parallel, run_func = parallel_func(
+                    average_time_by_time_decoding,
                     exec_params=exec_params,
-                    subject=subject,
-                    session=session,
-                    task=task,
-                    cond_1=contrast[0],
-                    cond_2=contrast[1],
+                    n_iter=len(sc),
                 )
-                for session, contrast in sc
-            )
+                logs += parallel(
+                    run_func(
+                        cfg=cfg,
+                        exec_params=exec_params,
+                        subject=subject,
+                        session=session,
+                        task=task,
+                        cond_1=contrast[0],
+                        cond_2=contrast[1],
+                    )
+                    for session, contrast in sc
+                )
 
         # 3. CSP
         if cfg.decoding_csp and decoding_contrasts:

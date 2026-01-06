@@ -180,6 +180,7 @@ def one_subject_decoding(
     preproc_steps = _decoding_preproc_steps(
         subject=subject,
         session=session,
+        task=task,
         epochs=epochs,
     )
 

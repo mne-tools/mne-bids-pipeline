@@ -32,6 +32,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
     _get_sst,
+    _get_task_conditions_dict,
     _get_task_decoding_contrasts,
     _restrict_analyze_channels,
     get_eeg_reference,
@@ -114,12 +115,9 @@ def run_time_decoding(
     _restrict_analyze_channels(epochs, cfg)
 
     # We define the epochs and the labels
-    if isinstance(cfg.conditions, dict):
-        epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
-        cond_names = [condition1, condition2]
-    else:
-        epochs_conds = cond_names = [condition1, condition2]
-        epochs_conds = [condition1, condition2]
+    assert isinstance(cfg.conditions, dict)
+    epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
+    cond_names = [condition1, condition2]
     epoch_counts = dict()
     for contrast in cfg.contrasts:
         for cond in contrast:
@@ -141,6 +139,7 @@ def run_time_decoding(
     pre_steps = _decoding_preproc_steps(
         subject=subject,
         session=session,
+        task=task,
         epochs=epochs,
         pca=False,
     )
@@ -316,7 +315,7 @@ def get_config(
     task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        conditions=config.conditions,
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_decoding_contrasts(config, task=task),
         decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
@@ -341,6 +340,10 @@ def main(*, config: SimpleNamespace) -> None:
         return
 
     if not config.decode:
+        logger.info(**gen_log_kwargs(message="SKIP"))
+        return
+
+    if not config.decoding_time:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 

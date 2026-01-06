@@ -35,8 +35,7 @@ conditions = [
     "visual/standard",
     # "visual/deviant",
 ]
-decode = False
-decoding_time_generalization = False
+decoding_time = False
 
 # contrasts
 # contrasts = [("auditory", "visual")]

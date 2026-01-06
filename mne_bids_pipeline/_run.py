@@ -63,9 +63,12 @@ def failsafe_run(
                     for k in ("subject", "session", "task", "run")
                     if k in kwargs
                 }
-                message = f"A critical error occurred. The error message was: {str(e)}"
+                e_str = "\n".join(
+                    traceback.format_exception_only(e, show_group=True)
+                ).strip()
+                message = f"A critical error occurred. The error message was: {e_str}"
                 log_info["success"] = False
-                log_info["error_message"] = str(e)
+                log_info["error_message"] = e_str
 
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
@@ -78,7 +81,7 @@ def failsafe_run(
                         # generally be stuff from this file and joblib
                         tb_list = tb_list[fi:]
                         break
-                tb = "".join(traceback.format_list(tb_list))
+                tb = "".join(traceback.format_list(tb_list) + [e_str])
 
                 if on_error == "abort":
                     message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"

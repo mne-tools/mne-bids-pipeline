@@ -74,24 +74,40 @@ class _MBPLogger:
         self._level = level
 
     def debug(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="debug", msg=msg, **(extra or {}))
+        self._log_message(kind="debug", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def info(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="info", msg=msg, **(extra or {}))
+        self._log_message(kind="info", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def warning(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="warning", msg=msg, **(extra or {}))
+        self._log_message(kind="warning", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def error(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="error", msg=msg, **(extra or {}))
+        self._log_message(kind="error", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def _log_message(
         self,
@@ -102,6 +118,7 @@ class _MBPLogger:
         run: str | None = None,
         task: str | None = None,
         emoji: str = "",
+        sanitize: bool = True,
     ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
@@ -111,6 +128,8 @@ class _MBPLogger:
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
+        if sanitize:
+            msg = msg.replace("[", r"\[")
         msg = f"[asctime]{asctime} [/][prefix]{essr}[/][{kind}]{msg}[/]"
         self._console.print(msg)
 

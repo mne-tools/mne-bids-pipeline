@@ -101,7 +101,7 @@ def _open_report(
                 logger.warning(f"Failed: {exc}")
             fname_report_html = fname_report.with_suffix(".html")
             msg = f"Saving {name}: {_linkfile(fname_report_html)}"
-            logger.info(**gen_log_kwargs(message=msg))
+            logger.info(**gen_log_kwargs(message=msg), sanitize=False)
             report.save(fname_report, overwrite=True)
             report.save(fname_report_html, overwrite=True, open_browser=False)
 

@@ -1834,9 +1834,19 @@ The number of folds (also called "splits") to use in the K-fold cross-validation
 scheme.
 """
 
+decoding_time: bool = True
+"""
+Whether to perform time-by-time decoding. `decode` must also be `True` for this
+to have any effect.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
 decoding_time_generalization: bool = False
 """
-Whether to perform time generalization.
+Whether to perform time generalization. `decode` and `decoding_time` must both be `True`
+for this to have any effect.
 
 Time generalization (also called "temporal generalization" or "generalization
 across time", GAT) is an extension of the time-by-time decoding approach.
@@ -1845,7 +1855,7 @@ testing the model on the same time point in the test data, it will be tested
 on **all** time points.
 
 !!! cite ""
-    [T]he manner in which the trained classifiers generalize across time, and
+    The manner in which the trained classifiers generalize across time, and
     from one experimental condition to another, sheds light on the temporal
     organization of information-processing stages.
 
@@ -1857,7 +1867,8 @@ procedure may take a significant amount of time.
 
 decoding_time_generalization_decim: int = 1
 """
-Says how much to decimate data before time generalization decoding.
+Says how much to decimate data before time-based decoding (both time-by-time and
+time generalization).
 This is done in addition to the decimation done at the epochs level via the
 [`epochs_decim`][mne_bids_pipeline._config.epochs_decim] parameter. This can be
 used to greatly speed up time generalization at the cost of lower time

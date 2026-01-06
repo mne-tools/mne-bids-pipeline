@@ -63,9 +63,7 @@ def failsafe_run(
                     for k in ("subject", "session", "task", "run")
                     if k in kwargs
                 }
-                e_str = "\n".join(
-                    traceback.format_exception_only(e, show_group=True)
-                ).strip()
+                e_str = "\n".join(traceback.format_exception_only(e)).strip()
                 message = f"A critical error occurred. The error message was: {e_str}"
                 log_info["success"] = False
                 log_info["error_message"] = e_str

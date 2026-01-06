@@ -16,6 +16,7 @@
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
 - Add support for processing multiple tasks simultaneously using a list like [`task = ["task1", "task2"]`][mne_bids_pipeline._config.task] in the config file (#1141 by @larsoner)
 - Add support for disabling time-by-time decoding while still performing full-epochs decoding using [`decoding_time`][mne_bids_pipeline._config.decoding_time] (#1141 by @larsoner)
+- Add support for setting decimation for time-by-time decoding using [`decoding_time_decim`][mne_bids_pipeline._config.decoding_time_decim] (#1141 by @larsoner)
 
 ### :warning: Behavior changes
 

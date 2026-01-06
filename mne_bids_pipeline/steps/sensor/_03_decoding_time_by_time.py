@@ -116,8 +116,13 @@ def run_time_decoding(
 
     # We define the epochs and the labels
     assert isinstance(cfg.conditions, dict)
-    epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
-    cond_names = [condition1, condition2]
+    if condition1 in cfg.conditions:
+        epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
+        cond_names = [condition1, condition2]
+    else:  # could be a metadata query
+        epochs_conds = cond_names = [condition1, condition2]
+        epochs_conds = [condition1, condition2]
+    del condition1, condition2
     epoch_counts = dict()
     for contrast in cfg.contrasts:
         for cond in contrast:
@@ -137,6 +142,7 @@ def run_time_decoding(
     # We can't use the full rank here because the number of samples can just be the
     # number of epochs (which can be fewer than the number of channels)
     pre_steps = _decoding_preproc_steps(
+        cfg=cfg,
         subject=subject,
         session=session,
         task=task,
@@ -151,8 +157,10 @@ def run_time_decoding(
     #     )
     # )
 
-    decim = cfg.decoding_time_generalization_decim
-    if cfg.decoding_time_generalization and decim > 1:
+    decim = cfg.decoding_time_decim
+    if cfg.decoding_time_generalization:
+        decim = max(cfg.decoding_time_generalization_decim, decim)
+    if decim > 1:
         epochs.decimate(decim, verbose="error")
 
     X = epochs.get_data()
@@ -321,6 +329,7 @@ def get_config(
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
+        decoding_time_decim=config.decoding_time_decim,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=config.decoding_time_generalization_decim,  # noqa: E501
         random_state=config.random_state,

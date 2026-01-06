@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from typing import Any
 
 import mne
@@ -104,6 +105,7 @@ def _handle_csp_args(
 
 
 def _decoding_preproc_steps(
+    cfg: SimpleNamespace,
     subject: str,
     session: str | None,
     task: str | None,

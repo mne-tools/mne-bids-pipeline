@@ -105,8 +105,12 @@ def run_epochs_decoding(
 
     # We define the epochs and the labels
     assert isinstance(cfg.conditions, dict)
-    epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
-    cond_names = [condition1, condition2]
+    if condition1 in cfg.conditions:
+        epochs_conds = [cfg.conditions[condition1], cfg.conditions[condition2]]
+        cond_names = [condition1, condition2]
+    else:  # could be a metadata query
+        epochs_conds = cond_names = [condition1, condition2]
+        epochs_conds = [condition1, condition2]
 
     # We have to use this approach because the conditions could be based on
     # metadata selection, so simply using epochs[conds[0], conds[1]] would
@@ -124,6 +128,7 @@ def run_epochs_decoding(
     )
     epochs.pick(pick_idx)
     pre_steps = _decoding_preproc_steps(
+        cfg=cfg,
         subject=subject,
         session=session,
         task=task,

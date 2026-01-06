@@ -365,9 +365,11 @@ def average_time_by_time_decoding(
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=False)
-    dtg_decim = cfg.decoding_time_generalization_decim
-    if cfg.decoding_time_generalization and dtg_decim > 1:
-        epochs.decimate(dtg_decim, verbose="error")
+    decim = cfg.decoding_time_decim
+    if cfg.decoding_time_generalization:
+        decim = max(cfg.decoding_time_generalization_decim, decim)
+    if decim > 1:
+        epochs.decimate(decim, verbose="error")
     times = epochs.times
     del epochs
 
@@ -381,7 +383,7 @@ def average_time_by_time_decoding(
         "cond_2": cond_2,
         "times": times,
         "N": n_subjects,
-        "decim": dtg_decim,
+        "decim": decim,
         "mean": np.empty(time_points_shape),
         "mean_min": np.empty(time_points_shape),
         "mean_max": np.empty(time_points_shape),
@@ -1029,6 +1031,7 @@ def get_config(
         time_frequency_freq_max=config.time_frequency_freq_max,
         decode=config.decode,
         decoding_time=config.decoding_time,
+        decoding_time_decim=config.decoding_time_decim,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,

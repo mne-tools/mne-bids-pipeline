@@ -1843,6 +1843,14 @@ to have any effect.
     Added in v1.10.0.
 """
 
+decoding_time_decim: int = 1
+"""
+Says how much to decimate data before time-by-time based decoding.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
 decoding_time_generalization: bool = False
 """
 Whether to perform time generalization. `decode` and `decoding_time` must both be `True`
@@ -1867,8 +1875,8 @@ procedure may take a significant amount of time.
 
 decoding_time_generalization_decim: int = 1
 """
-Says how much to decimate data before time-based decoding (both time-by-time and
-time generalization).
+Says how much to decimate data before time generalization. The max of this value and
+`decoding_time_decim` will be used for time generalization computations.
 This is done in addition to the decimation done at the epochs level via the
 [`epochs_decim`][mne_bids_pipeline._config.epochs_decim] parameter. This can be
 used to greatly speed up time generalization at the cost of lower time

@@ -111,14 +111,15 @@ class _MBPLogger:
 
     def _log_message(
         self,
+        *,
         kind: str,
         msg: str,
+        sanitize: bool,
         subject: str | None = None,
         session: str | None = None,
         run: str | None = None,
         task: str | None = None,
         emoji: str = "",
-        sanitize: bool = True,
     ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:

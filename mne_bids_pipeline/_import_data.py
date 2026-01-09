@@ -15,6 +15,7 @@ from ._config_utils import (
     get_mf_reference_run,
     get_runs,
     get_task,
+    get_eog_channels,
 )
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
@@ -858,7 +859,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         # 3. _create_bipolar_channels
         eeg_bipolar_channels=config.eeg_bipolar_channels,
         ch_types=config.ch_types,
-        eog_channels=config.eog_channels,
+        eog_channels=get_eog_channels(config.eog_channels, subject),
         # 4. _drop_channels_func
         drop_channels=config.drop_channels,
         # 5. _find_breaks_func

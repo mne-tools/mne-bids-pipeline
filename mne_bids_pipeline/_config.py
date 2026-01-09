@@ -247,7 +247,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Sequence[str] | None = None
+eog_channels: Sequence[str] | dict[str, Sequence[str]] | None = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -270,6 +270,10 @@ If `None`, only actual EOG channels will be used for EOG recovery.
 If there are multiple actual EOG channels in your data, and you only specify
 a subset of them here, only this subset will be used during processing.
 
+A dictionary can be provided to specify subject and/or session-level EOG,
+with subjects (and optionally session) as keys and a sequence of channels as
+values (see Examples).
+
 ???+ example "Example"
     Treat `Fp1` as virtual EOG channel:
     ```python
@@ -279,6 +283,13 @@ a subset of them here, only this subset will be used during processing.
     Treat `Fp1` and `Fp2` as virtual EOG channels:
     ```python
     eog_channels = ['Fp1', 'Fp2']
+    ```
+
+    Use `LEOG`, but for sub-04, use Fp1 and for sub-05 ignore EOG:
+    ```python
+    eog_channels = defaultdict(['Fp1', 'Fp2'])
+    eog_channels['sub-04'] = ['Fp1']
+    eog_channels['sub-05'] = []
     ```
 """
 

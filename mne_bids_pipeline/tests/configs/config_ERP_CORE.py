@@ -22,7 +22,7 @@ components from a total of 6 experimental tasks:
                 event-related potential research. *NeuroImage* 225: 117465.
                 [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
-
+from collections import defaultdict
 import argparse
 import sys
 
@@ -56,6 +56,7 @@ eeg_bipolar_channels = {
     "VEOG": ("VEOG_lower", "FP2"),
 }
 drop_channels = ["HEOG_left", "HEOG_right", "VEOG_lower"]
+
 eog_channels = ["HEOG", "VEOG"]
 
 l_freq = 0.1

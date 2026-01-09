@@ -1,6 +1,7 @@
 """Funloc data."""
 
 from pathlib import Path
+from collections import defaultdict
 
 data_root = Path("~/mne_data").expanduser().resolve()
 bids_root = data_root / "MNE-funloc-data"
@@ -23,6 +24,9 @@ process_raw_clean = False
 ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": "MEG0141"}
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
+
+eog_channels = defaultdict(lambda: None)
+eog_channels['sub-02'] = ["EOG061"]
 
 # Epochs
 epochs_tmin = -0.2

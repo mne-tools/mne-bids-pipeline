@@ -20,6 +20,7 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
+    get_eog_channels,
     get_eeg_reference,
     get_runs,
 )
@@ -228,7 +229,7 @@ def find_ica_artifacts(
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
                 raw.set_eeg_reference("average", projection=True).apply_proj()
-            if cfg.eog_channels:
+            if cfg.eog_channels is not None:  # explicit None-check to allow []
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
             else:
@@ -595,7 +596,7 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=config.eog_channels,
+        eog_channels=get_eog_channels(config.eog_channels, subject, session),
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",

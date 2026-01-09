@@ -20,8 +20,8 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
-    get_eog_channels,
     get_eeg_reference,
+    get_eog_channels,
     get_runs,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger

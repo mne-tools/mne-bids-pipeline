@@ -22,7 +22,7 @@ components from a total of 6 experimental tasks:
                 event-related potential research. *NeuroImage* 225: 117465.
                 [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
 """
-from collections import defaultdict
+
 import argparse
 import sys
 

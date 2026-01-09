@@ -3,7 +3,7 @@
 import copy
 import functools
 import pathlib
-from collections.abc import Iterable, Sized, Sequence
+from collections.abc import Iterable, Sequence, Sized
 from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
@@ -489,15 +489,15 @@ def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) 
     return ""  # mypy
 
 
-def get_eog_channels(config: SimpleNamespace, subject: str='', session: str | None='') -> Sequence:
+def get_eog_channels(
+    config: SimpleNamespace, subject: str = "", session: str | None = ""
+) -> Sequence:
     if isinstance(config.eog_channels, (Sequence, None)):
-       return config.eog_channels
+        return config.eog_channels
 
     elif isinstance(config.eog_channels, dict):
-
-        # session specific ch definition superseeds subject-level ch definition
+        # session specific ch definition supersedes subject-level ch definition
         for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
-
             # empty list and None are explicitly allowed
             if key in config.eog_channels:
                 subj_spec_channels = config.eog_channels[key]
@@ -508,8 +508,7 @@ def get_eog_channels(config: SimpleNamespace, subject: str='', session: str | No
         return config.get(f"sub-{subject}")
 
     else:
-        raise ValueError('config.eog_channels must be Sequence, dict or None')
-
+        raise ValueError("config.eog_channels must be Sequence, dict or None")
 
 
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:

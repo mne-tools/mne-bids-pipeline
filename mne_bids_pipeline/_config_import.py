@@ -338,7 +338,6 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"Missing entries in ssp_ecg_channel:\n  {newline_indent.join(missing)}"
             )
 
-
     # if `dict` passed for eog_channel, make sure its keys are valid
     if config.eog_channels and isinstance(config.eog_channels, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
@@ -365,7 +364,6 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             raise ConfigError(
                 f"Missing entries in eog_channels:\n  {newline_indent.join(missing)}"
             )
-
 
     reject = config.reject
     ica_reject = config.ica_reject

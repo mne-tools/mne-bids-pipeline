@@ -12,10 +12,10 @@ from ._config_utils import (
     _do_mf_autobad,
     _pl,
     get_datatype,
+    get_eog_channels,
     get_mf_reference_run,
     get_runs,
     get_task,
-    get_eog_channels,
 )
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger

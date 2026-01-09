@@ -17,8 +17,8 @@ from mne_bids_pipeline._config_utils import (
     _get_ss,
     _pl,
     _proj_path,
-    get_eog_channels,
     get_ecg_channel,
+    get_eog_channels,
     get_runs,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger

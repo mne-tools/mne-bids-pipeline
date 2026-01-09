@@ -42,6 +42,7 @@
 - Sanitize report tags that contain `"` or `'`, e.g., for certain metadata contrasts (#1097 by @harrisonritz)
 - `sub-average` is no longer run when ``--subject`` is passed to the pipeline command line interface, allowing easier and more correct single-subject iteration (#1133 by @larsoner)
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
+- Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
 
 ### :books: Documentation
 

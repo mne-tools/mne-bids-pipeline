@@ -1,6 +1,8 @@
 """Test that all config values are documented."""
 
 import ast
+import importlib
+import inspect
 import logging
 import os
 import re
@@ -13,8 +15,25 @@ import yaml
 
 from mne_bids_pipeline._config_import import _get_default_config, _import_config
 from mne_bids_pipeline._config_template import create_template_config
+from mne_bids_pipeline._config_utils import (
+    _get_decoding_proc,
+    _limit_which_clean,
+    _restrict_analyze_channels,
+    get_all_contrasts,
+    get_fs_subject,
+    get_mf_cal_fname,
+    get_mf_ctc_fname,
+)
 from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
+from mne_bids_pipeline._import_data import _import_data_kwargs
 from mne_bids_pipeline._logging import _log_context
+from mne_bids_pipeline._report import (
+    _all_conditions,
+    add_csp_grand_average,
+)
+from mne_bids_pipeline.steps.preprocessing._07_make_epochs import (
+    _add_epochs_image_kwargs,
+)
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
@@ -77,7 +96,7 @@ def test_options_documented() -> None:
     assert in_config.difference(in_doc_all) == set(), f"Values missing from {what}"
 
 
-def test_config_options_used() -> None:
+def test_config_options_passed_to_any_steps() -> None:
     """Test that all config options are used somewhere."""
     config = _get_default_config()
     config_names = set(d for d in dir(config) if not d.startswith("__"))
@@ -92,6 +111,99 @@ def test_config_options_used() -> None:
     assert missing_from_steps == [], f"Missing from steps: {missing_from_steps}"
     for key, val in pcs.steps.items():
         assert val, f"No steps for {key}"
+
+
+def test_config_options_used_in_steps() -> None:
+    """Test that config options passed to a given step are referenced in that step."""
+    # Find our mapping from config vars from get_config() to steps...
+    pcs = _ParseConfigSteps()  # allow the force_empty defaults here
+    # ... and invert it so it maps steps to get_config() vars
+    step_vars: dict[str, set[str]] = {}
+    for key, steps in pcs.steps.items():
+        for step in steps:
+            step_vars.setdefault(step, set())
+            step_vars[step].add(key)
+    del pcs
+
+    # Some explicit ignores
+    ignores = {
+        # Triaged in get_config itself
+        "source/_04_make_forward": ["mri_landmarks_kind", "mri_t1_path_generator"],
+    }
+    # Parse some helper functions to find nested config uses
+    helpers: dict[str, set[str]] = {}
+    for func, count, nested in (
+        # These "count" values can be updated when the helper functions change,
+        # but it's nice to make sure we're getting what we expect otherwise
+        (_import_data_kwargs, 27, ()),
+        (_limit_which_clean, 3, ()),
+        (_restrict_analyze_channels, 3, ()),
+        (_get_decoding_proc, 1, ()),
+        (_all_conditions, 2, (get_all_contrasts,)),
+        (add_csp_grand_average, 9, ()),
+        (get_fs_subject, 1, ()),
+        (_add_epochs_image_kwargs, 1, ()),
+        (get_mf_cal_fname, 3, ()),
+        (get_mf_ctc_fname, 3, ()),
+    ):
+        this_key = f"{func.__name__}("
+        helpers[this_key] = set()
+        for this_func in (func,) + nested:
+            spec = inspect.getfullargspec(this_func)
+            kind = "cfg" if "cfg" in (spec.args + spec.kwonlyargs) else "config"
+            vars_ = set(
+                re.findall(rf"\b{kind}\.([a-z_]+)\b", inspect.getsource(this_func))
+            )
+            helpers[this_key].update(vars_)
+        assert len(helpers[this_key]) == count, (
+            f"{this_key} has {len(helpers[this_key])} vars, expected {count}, does the "
+            "'count' need to be updated due to code changes?"
+        )
+
+    # Now let's go through each step and ensure each config var is used
+    errors = []
+    for step in step_vars:
+        # Get the step source
+        step_mod = importlib.import_module(
+            f"mne_bids_pipeline.steps.{step.replace('/', '.')}"
+        )
+        step_main = step_mod.main
+        step_src = inspect.getsource(step_mod)
+        step_src = "\n".join(line.split("#")[0] for line in step_src.splitlines())
+        # find the main() call and its source
+        step_main_src = inspect.getsource(step_main)
+        step_main_src = "\n".join(
+            line.split("#")[0] for line in step_main_src.splitlines()
+        )
+        for var in sorted(step_vars[step]):
+            if var in ignores.get(step, []):
+                continue
+            # cfg.<var> in step source?
+            if re.search(rf"\bcfg\.{var}\b", step_src):
+                continue
+            # config.<var> in main() source (need to avoid looking at get_config, etc.)?
+            if re.search(rf"\bconfig\.{var}\b", step_main_src):
+                continue
+            # do any helpers use it?
+            helpers_use = False
+            for helper, helper_vars in helpers.items():
+                if helper in step_src and var in helper_vars:
+                    helpers_use = True
+                    break
+            if helpers_use:
+                continue
+            errors.append((f"mne_bids_pipeline/steps/{step}.py", var))
+    if errors:  # pragma: no cover
+        use_len = max(len(err[0]) for err in errors)
+        error_str = "\n".join(f"{err[0].ljust(use_len)} : {err[1]}" for err in errors)
+        error_str += (
+            "\n\nIf this is a false alarm and a config var truly used, update this "
+            "test by expanding the list of 'helpers', adding the variable to the "
+            "'ignores' dict, or otherwise improve this test to be smarter."
+        )
+        raise AssertionError(
+            f"{len(errors)} config option(s) not used in steps:\n{error_str}"
+        )
 
 
 def test_datasets_in_doc() -> None:

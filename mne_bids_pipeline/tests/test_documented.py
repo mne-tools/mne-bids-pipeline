@@ -19,7 +19,7 @@ from mne_bids_pipeline._config_utils import (
     _get_decoding_proc,
     _limit_which_clean,
     _restrict_analyze_channels,
-    get_all_contrasts,
+    _get_task_contrasts,
     get_fs_subject,
     get_mf_cal_fname,
     get_mf_ctc_fname,
@@ -135,11 +135,11 @@ def test_config_options_used_in_steps() -> None:
     for func, count, nested in (
         # These "count" values can be updated when the helper functions change,
         # but it's nice to make sure we're getting what we expect otherwise
-        (_import_data_kwargs, 27, ()),
+        (_import_data_kwargs, 28, ()),
         (_limit_which_clean, 3, ()),
         (_restrict_analyze_channels, 3, ()),
         (_get_decoding_proc, 1, ()),
-        (_all_conditions, 2, (get_all_contrasts,)),
+        (_all_conditions, 2, (_get_task_contrasts,)),
         (add_csp_grand_average, 9, ()),
         (get_fs_subject, 1, ()),
         (_add_epochs_image_kwargs, 1, ()),

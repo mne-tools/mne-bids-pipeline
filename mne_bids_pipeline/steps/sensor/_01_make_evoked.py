@@ -23,7 +23,6 @@ from mne_bids_pipeline._report import (
 )
 from mne_bids_pipeline._run import (
     _prep_out_files,
-    _sanitize_callable,
     _update_for_splits,
     failsafe_run,
     save_logs,
@@ -175,7 +174,6 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
-        noise_cov=_sanitize_callable(config.noise_cov),
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         ch_types=config.ch_types,

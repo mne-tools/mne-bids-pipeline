@@ -251,8 +251,6 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        baseline=config.baseline,
-        ica_reject=config.ica_reject,
         ica_use_icalabel=config.ica_use_icalabel,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,

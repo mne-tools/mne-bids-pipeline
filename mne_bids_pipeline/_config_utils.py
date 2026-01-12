@@ -492,7 +492,6 @@ def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) 
 def get_eog_channels(
     config: SimpleNamespace, subject: str = "", session: str | None = ""
 ) -> Sequence:
-
     if isinstance(config.eog_channels, Sequence | None):
         return config.eog_channels
 

@@ -1006,7 +1006,6 @@ def get_config(
         time_frequency_freq_max=config.time_frequency_freq_max,
         decode=config.decode,
         decoding_metric=config.decoding_metric,
-        decoding_n_splits=config.decoding_n_splits,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=config.decoding_time_generalization_decim,
         decoding_csp=config.decoding_csp,

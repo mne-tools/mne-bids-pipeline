@@ -527,7 +527,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters
-        use_maxwell_filter=config.use_maxwell_filter,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
@@ -543,7 +542,6 @@ def get_config(
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
         decoding_contrasts=get_decoding_contrasts(config),
-        n_boot=config.n_boot,
         random_state=config.random_state,
         **_bids_kwargs(config=config),
     )

@@ -491,8 +491,7 @@ def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) 
 
 def get_eog_channels(
     config: SimpleNamespace, subject: str = "", session: str | None = ""
-) -> Sequence:
-
+) -> Sequence[str] | None:
     if isinstance(config.eog_channels, Sequence | None):
         return config.eog_channels
 
@@ -506,7 +505,7 @@ def get_eog_channels(
                 return subj_spec_channels
 
         # only if subj-key is explicitly not found, return default value
-        return config.get(f"sub-{subject}")
+        return config.eog_channels.get(f"sub-{subject}")
 
     else:
         raise ValueError("config.eog_channels must be Sequence, dict or None")

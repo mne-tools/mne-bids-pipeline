@@ -247,7 +247,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Sequence[str] | None | dict[str, (Sequence[str], None)] = None
+eog_channels: Sequence[str] | None | dict[str, Sequence[str] | None] = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 

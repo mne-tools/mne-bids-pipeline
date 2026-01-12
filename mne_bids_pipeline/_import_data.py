@@ -93,7 +93,7 @@ def make_epochs(
             metadata_tmax = tmax
 
         # The returned `events` and `event_id` will only contain
-        # the events from `row_event_names` – which is basically equivalent to
+        # the events from `row_event_names` – which is basically equivalent to
         # what the user requested via `config.conditions` (only with potential
         # nested event names expanded, e.g. `visual` might now be
         # `visual/left` and `visual/right`)
@@ -859,7 +859,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         # 3. _create_bipolar_channels
         eeg_bipolar_channels=config.eeg_bipolar_channels,
         ch_types=config.ch_types,
-        eog_channels=get_eog_channels(config.eog_channels, subject),
+        eog_channels=get_eog_channels(config, subject),
         # 4. _drop_channels_func
         drop_channels=config.drop_channels,
         # 5. _find_breaks_func

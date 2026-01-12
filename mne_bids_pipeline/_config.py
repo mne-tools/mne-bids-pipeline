@@ -247,7 +247,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Sequence[str] | dict[str, Sequence[str]] | None = None
+eog_channels: Sequence[str] | None | dict[str, (Sequence[str], None)] = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -1474,7 +1474,7 @@ MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
 data); and in the second step, the principal components are passed
 to the actual ICA. You can select how many of the total principal
-components to pass to ICA – it can be all or just a subset. This determines
+components to pass to ICA – it can be all or just a subset. This determines
 how many independent components to fit, and can be controlled via this
 setting.
 

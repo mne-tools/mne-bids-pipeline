@@ -250,7 +250,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        eog_channels=get_eog_channels(config.eog_channels, subject),
+        eog_channels=get_eog_channels(config, subject),
         ssp_ecg_channel=config.ssp_ecg_channel,
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,

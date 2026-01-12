@@ -343,9 +343,11 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
         matches = set(filter(pattern.match, config.eog_channels))
         newline_indent = "\n  "
+
         if mismatch := (set(config.eog_channels) - matches):
             raise ConfigError(
-                "Malformed keys in eog_channels dict:\n  "
+                "Malformed keys in eog_channels dict, "
+                "must be $SUBJ or sub-$SUBJ or sub-$SUBJ_ses-$SESS:\n  "
                 f"{newline_indent.join(sorted(mismatch))}"
             )
         # also make sure there are values for all subjects/sessions:
@@ -353,13 +355,17 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         subjects_sessions = get_subjects_sessions(config)
         for sub, sessions in subjects_sessions.items():
             for ses in sessions:
-                if (
-                    config.eog_channels.get(f"sub-{sub}") is None
-                    and config.eog_channels.get(f"sub-{sub}_ses-{ses}") is None
-                ):
-                    missing.append(
-                        f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
-                    )
+
+                try:
+                    config.eog_channels[f"sub-{sub}"]
+                except KeyError:
+                    try:
+                        config.eog_channels[f"sub-{sub}_ses-{ses}"]
+                    except KeyError:
+                            missing.append(
+                               f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
+                            )
+
         if missing:
             raise ConfigError(
                 f"Missing entries in eog_channels:\n  {newline_indent.join(missing)}"

@@ -107,8 +107,11 @@ def run_ssp(
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
     ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
-    if cfg.eog_channels:
-        ch_name["eog"] = cfg.eog_channels
+
+    eog_channels_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+
+    if eog_channels_subj_sess:
+        ch_name["eog"] = eog_channels_subj_sess
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
@@ -222,8 +225,8 @@ def run_ssp(
                     picks_trace = "ecg"
             else:
                 assert kind == "eog"
-                if cfg.eog_channels:
-                    picks_trace = cfg.eog_channels
+                if eog_channels_subj_sess:
+                    picks_trace = eog_channels_subj_sess
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(
@@ -250,7 +253,7 @@ def get_config(
     subject: str,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        eog_channels=get_eog_channels(config, subject),
+        eog_channels=config.eog_channels,
         ssp_ecg_channel=config.ssp_ecg_channel,
         ssp_reject_ecg=config.ssp_reject_ecg,
         ecg_proj_from_average=config.ecg_proj_from_average,

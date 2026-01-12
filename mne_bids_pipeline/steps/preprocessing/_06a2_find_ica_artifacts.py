@@ -221,6 +221,7 @@ def find_ica_artifacts(
                 )
 
     # EOG component detection
+    eog_channels_subj_sess = get_eog_channels(cfg, subject, session)
     epochs_eog = None
     eog_ics: list[int] = []
     eog_scores: FloatArrayT = np.zeros(0)
@@ -229,8 +230,8 @@ def find_ica_artifacts(
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
                 raw.set_eeg_reference("average", projection=True).apply_proj()
-            if cfg.eog_channels is not None:  # explicit None-check to allow []
-                ch_names = cfg.eog_channels
+            if eog_channels_subj_sess is not None:  # explicit None-check to allow []
+                ch_names = eog_channels_subj_sess
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
             else:
                 eog_picks = mne.pick_types(raw.info, meg=False, eog=True)
@@ -263,7 +264,7 @@ def find_ica_artifacts(
                 which="eog",
                 epochs=epochs_eog,
                 ica=ica,
-                ch_names=cfg.eog_channels,
+                ch_names=eog_channels_subj_sess,
                 subject=subject,
                 session=session,
             )
@@ -580,7 +581,7 @@ def get_config(
         ica_class_thresholds=config.ica_class_thresholds,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=get_eog_channels(config, subject, session),
+        eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",

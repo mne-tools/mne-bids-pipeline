@@ -21,7 +21,6 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     get_eeg_reference,
-    get_eog_channels,
     get_runs,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
@@ -385,7 +384,6 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=get_eog_channels(config, subject, session),
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",

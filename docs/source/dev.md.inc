@@ -49,6 +49,7 @@
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 - Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
+- Add more info on test suite installation and running (#1154 by @skjerns)
 
 ### :medical_symbol: Code health and infrastructure
 

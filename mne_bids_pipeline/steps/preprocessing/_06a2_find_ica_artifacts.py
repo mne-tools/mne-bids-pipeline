@@ -222,6 +222,10 @@ def find_ica_artifacts(
 
     # EOG component detection
     eog_channels_subj_sess = get_eog_channels(cfg, subject, session)
+
+    if eog_channels_subj_sess is not None:
+        eog_channels_subj_sess = list(eog_channels_subj_sess)
+
     epochs_eog = None
     eog_ics: list[int] = []
     eog_scores: FloatArrayT = np.zeros(0)

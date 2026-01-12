@@ -111,7 +111,7 @@ def run_ssp(
     eog_channels_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
 
     if eog_channels_subj_sess:
-        ch_name["eog"] = eog_channels_subj_sess
+        ch_name["eog"] = list(eog_channels_subj_sess)
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
@@ -226,7 +226,7 @@ def run_ssp(
             else:
                 assert kind == "eog"
                 if eog_channels_subj_sess:
-                    picks_trace = eog_channels_subj_sess
+                    picks_trace = list(eog_channels_subj_sess)
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(

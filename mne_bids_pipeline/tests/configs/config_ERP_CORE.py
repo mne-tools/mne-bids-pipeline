@@ -56,7 +56,6 @@ eeg_bipolar_channels = {
     "VEOG": ("VEOG_lower", "FP2"),
 }
 drop_channels = ["HEOG_left", "HEOG_right", "VEOG_lower"]
-
 eog_channels = ["HEOG", "VEOG"]
 
 l_freq = 0.1

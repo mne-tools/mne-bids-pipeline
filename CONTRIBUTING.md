@@ -48,11 +48,8 @@ For every pull request or merge into the `main` branch of the
 [CircleCI](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline)
 will run tests as defined in `./circleci/config.yml`.
 
-You can run the pre-commit hook locally after installing `pip install pre-commit` via
+You can add the pre-commit hook locally after installing `pip install pre-commit` via  `pre-commit install`, or run them manually via `pre-commit run --all-files`.
 
-```
-pre-commit run --all-files
-```
 
 ### Debugging
 

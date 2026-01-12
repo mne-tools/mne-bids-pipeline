@@ -493,7 +493,7 @@ def get_eog_channels(
     config: SimpleNamespace, subject: str = "", session: str | None = ""
 ) -> Sequence:
 
-    if isinstance(config.eog_channels, (Sequence, type(None))):
+    if isinstance(config.eog_channels, Sequence | None)):
         return config.eog_channels
 
     elif isinstance(config.eog_channels, dict):
@@ -502,7 +502,7 @@ def get_eog_channels(
             # empty list and None are explicitly allowed
             if key in config.eog_channels:
                 subj_spec_channels = config.eog_channels[key]
-                assert isinstance(subj_spec_channels, (Sequence, type(None)))  # mypy
+                assert isinstance(subj_spec_channels, Sequence | None))  # mypy
                 return subj_spec_channels
 
         # only if subj-key is explicitly not found, return default value

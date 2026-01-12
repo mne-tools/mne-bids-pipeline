@@ -490,22 +490,24 @@ def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) 
 
 
 def get_eog_channels(
-    config: SimpleNamespace, subject: str = "", session: str | None = ""
+    eog_channels: Sequence[str] | None | dict[str, Sequence[str] | None],
+    subject: str = "",
+    session: str | None = "",
 ) -> Sequence[str] | None:
-    if isinstance(config.eog_channels, Sequence | None):
-        return config.eog_channels
+    if isinstance(eog_channels, Sequence | None):
+        return eog_channels
 
-    elif isinstance(config.eog_channels, dict):
+    elif isinstance(eog_channels, dict):
         # session specific ch definition supersedes subject-level ch definition
         for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
             # empty list and None are explicitly allowed
-            if key in config.eog_channels:
-                subj_spec_channels = config.eog_channels[key]
+            if key in eog_channels:
+                subj_spec_channels = eog_channels[key]
                 assert isinstance(subj_spec_channels, Sequence | None)  # mypy
                 return subj_spec_channels
 
         # only if subj-key is explicitly not found, return default value
-        return config.eog_channels.get(f"sub-{subject}")
+        return eog_channels.get(f"sub-{subject}")
 
     else:
         raise ValueError("config.eog_channels must be Sequence, dict or None")

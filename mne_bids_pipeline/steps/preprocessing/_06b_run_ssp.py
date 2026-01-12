@@ -108,10 +108,10 @@ def run_ssp(
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
     ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
 
-    eog_channels_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+    eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
 
-    if eog_channels_subj_sess:
-        ch_name["eog"] = list(eog_channels_subj_sess)
+    if eog_chs_subj_sess:
+        ch_name["eog"] = list(eog_chs_subj_sess)
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
@@ -225,8 +225,9 @@ def run_ssp(
                     picks_trace = "ecg"
             else:
                 assert kind == "eog"
-                if eog_channels_subj_sess:
-                    picks_trace = list(eog_channels_subj_sess)
+                if eog_chs_subj_sess:
+                    # convert to list for compatibility of type annotations
+                    picks_trace = list(eog_chs_subj_sess)
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(

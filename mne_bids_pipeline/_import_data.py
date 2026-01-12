@@ -352,17 +352,17 @@ def _create_bipolar_channels(
         # location, so one might get unexpected results otherwise, as the
         # channel would influence e.g. in GFP calculations, but not appear on
         # topographic maps.
-        eog_channels_subj_sess = get_eog_channels(cfg, subject, session)
-        if eog_channels_subj_sess and any(
+        eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+        if eog_chs_subj_sess and any(
             [
                 eog_ch_name in cfg.eeg_bipolar_channels
-                for eog_ch_name in eog_channels_subj_sess
+                for eog_ch_name in eog_chs_subj_sess
             ]
         ):
             msg = "Setting channel type of new bipolar EOG channel(s) …"
             logger.info(**gen_log_kwargs(message=msg))
-        if eog_channels_subj_sess is not None:
-            for eog_ch_name in eog_channels_subj_sess:
+        if eog_chs_subj_sess is not None:
+            for eog_ch_name in eog_chs_subj_sess:
                 if eog_ch_name in cfg.eeg_bipolar_channels:
                     msg = f"    {eog_ch_name} -> eog"
                     logger.info(**gen_log_kwargs(message=msg))

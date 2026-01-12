@@ -12,7 +12,6 @@ from ._config_utils import (
     _do_mf_autobad,
     _pl,
     get_datatype,
-    get_eog_channels,
     get_mf_reference_run,
     get_runs,
     get_task,

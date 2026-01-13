@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -exo pipefail
 
 pip install --upgrade --progress-bar off pip setuptools

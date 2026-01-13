@@ -44,12 +44,14 @@
 - `sub-average` is no longer run when ``--subject`` is passed to the pipeline command line interface, allowing easier and more correct single-subject iteration (#1133 by @larsoner)
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 - Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
+- Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
 
 ### :books: Documentation
 
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 - Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
+- Add more info on test suite installation and running (#1154 by @skjerns)
 
 ### :medical_symbol: Code health and infrastructure
 

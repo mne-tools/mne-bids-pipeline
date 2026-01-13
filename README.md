@@ -59,3 +59,7 @@ for EEG and MEG. See the following two references:
 > Tadel, F., Wexler, J., Baillet, S. (2018). MEG-BIDS, the brain imaging data
 > structure extended to magnetoencephalography. Scientific Data, 5, 180110.
 > <https://doi.org/10.1038/sdata.2018.110>
+
+## Contributing
+
+see <./CONTRIBUTING.md>

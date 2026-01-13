@@ -193,6 +193,7 @@ jobs:
           keys:
             - data-cache-ds000248-7
       - bash_env
+      - aws-cli/setup
       - run:
           name: Get ds000248
           command: |

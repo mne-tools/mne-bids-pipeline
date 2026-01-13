@@ -107,7 +107,9 @@ def run_ica(
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs, raw_fnames)):
         msg = f"Processing raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        raw = mne.io.read_raw_fif(raw_fname)
+        # limit to channels that will be processed
+        raw.pick(picks=cfg.datatype).load_data()
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!

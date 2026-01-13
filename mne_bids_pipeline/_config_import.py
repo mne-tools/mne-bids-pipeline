@@ -18,7 +18,7 @@ import numpy as np
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from ._config_utils import get_subjects_sessions
+from ._config_utils import get_eog_channels, get_subjects_sessions
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
@@ -354,16 +354,11 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         missing = list()
         subjects_sessions = get_subjects_sessions(config)
         for sub, sessions in subjects_sessions.items():
-            for ses in sessions:
-                try:
-                    config.eog_channels[f"sub-{sub}"]
-                except KeyError:
-                    try:
-                        config.eog_channels[f"sub-{sub}_ses-{ses}"]
-                    except KeyError:
-                        missing.append(
-                            f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
-                        )
+            try:
+                for sess in sessions:
+                    get_eog_channels(config.eog_channels, subject=sub, session=sess)
+            except KeyError:
+                missing.append(f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}")
 
         if missing:
             raise ConfigError(

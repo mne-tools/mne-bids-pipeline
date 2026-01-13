@@ -589,8 +589,6 @@ def get_config(
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
         eog_channels=config.eog_channels,
-        # rest_epochs_duration=config.rest_epochs_duration,
-        # rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )

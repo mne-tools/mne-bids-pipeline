@@ -497,20 +497,18 @@ def get_eog_channels(
     if isinstance(eog_channels, Sequence | None):
         return eog_channels
 
-    elif isinstance(eog_channels, dict):
-        # session specific ch definition supersedes subject-level ch definition
-        for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
-            # empty list and None are explicitly allowed
-            if key in eog_channels:
-                subj_spec_channels = eog_channels[key]
-                assert isinstance(subj_spec_channels, Sequence | None)  # mypy
-                return subj_spec_channels
+    assert isinstance(eog_channels, dict), "eog_channels must be list/dict/None"
 
-        # only if subj-key is explicitly not found, return default value
-        return eog_channels.get(f"sub-{subject}")
+    # session specific ch definition supersedes subject-level ch definition
+    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
+        # empty list and None are explicitly allowed
+        if key in eog_channels:
+            subj_spec_channels = eog_channels[key]
+            assert isinstance(subj_spec_channels, Sequence | None)  # mypy
+            return subj_spec_channels
 
-    else:
-        raise ValueError("config.eog_channels must be Sequence, dict or None")
+    # only if subj-key is explicitly not found, return default value
+    return eog_channels.get(f"sub-{subject}")
 
 
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:

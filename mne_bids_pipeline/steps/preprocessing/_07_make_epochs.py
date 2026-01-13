@@ -106,7 +106,7 @@ def run_epochs(
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs_for_task, raw_fnames)):
         msg = f"Loading filtered raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        raw = mne.io.read_raw_fif(raw_fname).load_data()
 
         # Only keep the subset of the mapping that applies to the current run
         if cfg.task_is_rest:

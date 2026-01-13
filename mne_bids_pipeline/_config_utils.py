@@ -599,39 +599,6 @@ def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) 
     return ""  # mypy
 
 
-def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:
-    # Return names of the channels of the channel types we wish to analyze.
-    # We also include channels marked as "bad" here.
-    # `exclude=[]`: keep "bad" channels, too.
-    kwargs = dict(eog=True, ecg=True, exclude=())
-    if get_datatype(config) == "meg" and _meg_in_ch_types(config.ch_types):
-        pick_idx = mne.pick_types(info, **kwargs)
-
-        if "mag" in config.ch_types:
-            pick_idx = np.concatenate(
-                [pick_idx, mne.pick_types(info, meg="mag", exclude=[])]
-            )
-        if "grad" in config.ch_types:
-            pick_idx = np.concatenate(
-                [pick_idx, mne.pick_types(info, meg="grad", exclude=[])]
-            )
-        if "meg" in config.ch_types:
-            pick_idx = mne.pick_types(info, meg=True, exclude=[])
-        pick_idx.sort()
-    elif config.ch_types == ["eeg"]:
-        pick_idx = mne.pick_types(
-            info, meg=False, eeg=True, eog=True, ecg=True, exclude=[]
-        )
-    else:
-        raise RuntimeError(
-            "Something unexpected happened. Please contact "
-            "the mne-bids-pipeline developers. Thank you."
-        )
-
-    ch_names = [info["ch_names"][i] for i in pick_idx]
-    return ch_names
-
-
 def sanitize_cond_name(cond: str) -> str:
     cond = cond.replace("/", "").replace("_", "").replace("-", "").replace(" ", "")
     return cond

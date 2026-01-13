@@ -28,7 +28,9 @@ def _get_bem_params(cfg: SimpleNamespace) -> tuple[str, Path, Path]:
     mri_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "mri"
     flash_dir = mri_dir / "flash" / "parameter_maps"
     if cfg.bem_mri_images == "FLASH" and not flash_dir.exists():
-        raise RuntimeError("Cannot locate FLASH MRI images.")
+        raise RuntimeError(
+            f"Cannot locate FLASH MRI images, directory not found: {flash_dir}"
+        )
     if cfg.bem_mri_images == "FLASH":
         mri_images = "FLASH"
     elif cfg.bem_mri_images == "auto" and flash_dir.exists():

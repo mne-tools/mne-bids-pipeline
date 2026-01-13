@@ -347,7 +347,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         if mismatch := (set(config.eog_channels) - matches):
             raise ConfigError(
                 "Malformed keys in eog_channels dict, "
-                "must be <subject>, sub-<subject>, or sub-<subject>_ses-<session>:\n  "
+                "must be sub-<subject> or sub-<subject>_ses-<session>:\n  "
                 f"{newline_indent.join(sorted(repr(miss) for miss in mismatch))}"
             )
         # also make sure there are values for all subjects/sessions:

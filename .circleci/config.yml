@@ -57,7 +57,7 @@ jobs:
       - run:
           name: Check installation
           command: |
-            make check
+            ./.circleci/check_installation.sh
       - persist_to_workspace:
           root: ~/
           paths:
@@ -1086,7 +1086,7 @@ jobs:
           command: |
             set -eo pipefail
             ls ~/mne_data/derivatives/mne-bids-pipeline/*/*/*/*.html
-            make doc
+            ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site
@@ -1119,7 +1119,7 @@ jobs:
           # 1GB doc build to workspace then go retrieve it
           name: Build documentation again
           command: |
-            make doc
+            ./docs/build-docs.sh
       - run:
           name: Deploy docs to gh-pages branch
           # https://github.com/jimporter/mike

@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.12.4
+    - image: cimg/python:3.13.11
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
@@ -47,15 +47,12 @@ jobs:
       - run:
           name: Get Python running
           command: |
-            pip install --upgrade --progress-bar off pip
-            # TODO: Restore https://api.github.com/repos/mne-tools/mne-bids/zipball/main pending https://github.com/mne-tools/mne-bids/pull/1349/files#r1885104885
-            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" numba
-            pip install -ve .[tests] onnxruntime "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
+            ./.circleci/install_deps.sh
       - run:
           name: Check Qt
           command: |
             wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
-            bash check_qt_import.sh PyQt6
+            bash check_qt_import.sh PySide6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -194,7 +191,10 @@ jobs:
       - run:
           name: Get ds000248
           command: |
-            $DOWNLOAD_DATA ds000248
+            # $DOWNLOAD_DATA ds000248
+            # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
+            aws s3 sync --no-sign-request s3://openneuro.org/ds000248 ~/mne_data/ds000248
+            rm -Rf ~/mne_data/ds000248/derivatives/freesurfer/subjects/01
       - codecov/upload
       - save_cache:
           key: data-cache-ds000248-7

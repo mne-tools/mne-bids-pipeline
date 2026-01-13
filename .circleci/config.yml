@@ -198,6 +198,7 @@ jobs:
             # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
             pip install awscli
             aws s3 sync --no-sign-request s3://openneuro.org/ds000248 ~/mne_data/ds000248
+            rm -Rf ~/mne_data/ds000248/derivatives/freesurfer/subjects/01
       - codecov/upload
       - save_cache:
           key: data-cache-ds000248-7

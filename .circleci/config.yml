@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.12.4
+    - image: cimg/python:3.13.11
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
@@ -52,7 +52,7 @@ jobs:
           name: Check Qt
           command: |
             wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
-            bash check_qt_import.sh PyQt6
+            bash check_qt_import.sh PySide6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation

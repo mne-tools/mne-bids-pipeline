@@ -3,6 +3,8 @@ version: 2.1
 orbs:
   browser-tools: circleci/browser-tools@1.2
   codecov: codecov/codecov@5.3.0
+  # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
+  aws-cli: circleci/aws-cli@5.4.1
 
 # Aliases to reuse
 _imageconfig: &imageconfig
@@ -194,7 +196,9 @@ jobs:
       - run:
           name: Get ds000248
           command: |
-            $DOWNLOAD_DATA ds000248
+            # $DOWNLOAD_DATA ds000248
+            # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
+            aws s3 sync --no-sign-request s3://openneuro.org/ds000248 ~/mne_data/ds000248
       - codecov/upload
       - save_cache:
           key: data-cache-ds000248-7

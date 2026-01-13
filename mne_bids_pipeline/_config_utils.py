@@ -508,7 +508,15 @@ def get_eog_channels(
             return subj_spec_channels
 
     # only if subj-key is explicitly not found, return default value
-    return eog_channels.get(f"sub-{subject}")
+    if f"sub-{subject}" in eog_channels:
+        return eog_channels[f"sub-{subject}"]
+    if "" in eog_channels:
+        return eog_channels[""]
+    raise KeyError(
+        f"Could not find appropriate EOG channel setting for {subject=} and {session=} "
+        "in eog_channels, set it explicitly or set a default using the empty-string "
+        ' key "".'
+    )
 
 
 def get_channels_to_analyze(info: mne.Info, config: SimpleNamespace) -> list[str]:

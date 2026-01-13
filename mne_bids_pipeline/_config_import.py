@@ -341,14 +341,14 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # if `dict` passed for eog_channel, make sure its keys are valid
     if config.eog_channels and isinstance(config.eog_channels, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
-        matches = set(filter(pattern.match, config.eog_channels))
+        matches = set(filter(pattern.match, config.eog_channels)).union({""})
         newline_indent = "\n  "
 
         if mismatch := (set(config.eog_channels) - matches):
             raise ConfigError(
                 "Malformed keys in eog_channels dict, "
-                "must be $SUBJ or sub-$SUBJ or sub-$SUBJ_ses-$SESS:\n  "
-                f"{newline_indent.join(sorted(mismatch))}"
+                "must be <subject>, sub-<subject>, or sub-<subject>_ses-<session>:\n  "
+                f"{newline_indent.join(sorted(repr(miss) for miss in mismatch))}"
             )
         # also make sure there are values for all subjects/sessions:
         missing = list()

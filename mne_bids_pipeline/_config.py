@@ -287,10 +287,13 @@ values (see Examples).
 
     Use `LEOG`, but for sub-04, use Fp1 and for sub-05 ignore EOG:
     ```python
-    eog_channels = defaultdict(['Fp1', 'Fp2'])
+    eog_channels = dict()
+    eog_channels[""] = ['Fp1', 'Fp2']  # use "" to mean default
     eog_channels['sub-04'] = ['Fp1']
     eog_channels['sub-05'] = []
     ```
+    Note that `collections.defaultdict` cannot be used because it causes problems
+    with pickling, which is used under the hood for caching and parallelization.
 """
 
 eeg_bipolar_channels: dict[str, tuple[str, str]] | None = None

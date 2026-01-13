@@ -22,8 +22,8 @@ jobs:
       with:
         python-version: "3.12"
     - run: pip install --upgrade pip
-    - run: pip install -ve .[tests] "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
-    - run: make codespell-error
+    - run: pip install -ve .[tests] "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr" pre-commit
+    - run: pre-commit run --all  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
     - uses: codecov/codecov-action@v5
       if: success()

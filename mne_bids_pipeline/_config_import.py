@@ -38,6 +38,7 @@ def _import_config(
     config_path: PathLike | None,
     overrides: SimpleNamespace | None = None,
     check: bool = True,
+    add_all_tasks: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
@@ -134,7 +135,8 @@ def _import_config(
     config.exec_params = exec_params
 
     # And we need these for some steps, too
-    config.all_tasks = get_tasks(config=config)
+    if add_all_tasks:
+        config.all_tasks = get_tasks(config=config)
 
     return config
 

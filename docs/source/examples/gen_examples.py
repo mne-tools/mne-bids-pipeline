@@ -58,6 +58,7 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict[str, bool]:
                 config_path=example_config_path,
                 overrides=None,
                 check=False,
+                add_all_tasks=False,
             )
         ch_types = [c.upper() for c in config.ch_types]
         funcs["MEG processing"] = "MEG" in ch_types

@@ -108,8 +108,14 @@ def run_ica(
         msg = f"Processing raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
         raw = mne.io.read_raw_fif(raw_fname)
-        # limit to channels that will be processed
-        raw.pick(picks=cfg.datatype).load_data()
+        picks = raw.get_channel_types(unique=True)
+        # if we have M/EEG data but only want to process EEG data, we need to remove
+        # the EEG data here to avoid issues with ICA application later.
+        # picking just the cfg.datatype will exclude stuff like EOG channels that
+        # are needed for analysis.
+        if "eeg" not in cfg.datatype and "eeg" in picks:
+            picks.remove("eeg")
+        raw.pick(picks=picks).load_data()
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!

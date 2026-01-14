@@ -115,7 +115,9 @@ def run_ssp(
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
-        ch_name["ecg"] = get_ecg_channel(config=cfg, subject=subject, session=session)
+        ch_name["ecg"] = get_ecg_channel(
+            ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
+        )
         if ch_name["ecg"] not in raw.ch_names:
             raise ConfigError(
                 f"SSP ECG channel '{ch_name['ecg']}' not found in data for "
@@ -219,7 +221,11 @@ def run_ssp(
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
                     picks_trace = [
-                        get_ecg_channel(config=cfg, subject=subject, session=session)
+                        get_ecg_channel(
+                            ecg_channel=cfg.ssp_ecg_channel,
+                            subject=subject,
+                            session=session,
+                        )
                     ]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"

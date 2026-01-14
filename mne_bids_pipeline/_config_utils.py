@@ -479,14 +479,35 @@ def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
     return which
 
 
-def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
-    if isinstance(config.ssp_ecg_channel, str):
-        return config.ssp_ecg_channel
-    for key in (f"sub-{subject}", f"sub-{subject}_ses-{session}"):
-        if val := config.ssp_ecg_channel.get(key):
-            assert isinstance(val, str)  # mypy
-            return val
-    return ""  # mypy
+def get_ecg_channel(
+    ecg_channel: str | dict[str, str],
+    subject: str = "",
+    session: str | None = "",
+) -> str:
+    if isinstance(ecg_channel, str):
+        return ecg_channel
+
+    assert isinstance(ecg_channel, dict), "ecg_channel must be dict/str"
+
+    # session specific ch definition supersedes subject-level ch definition
+    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
+        # empty list and None are explicitly allowed
+        if key in ecg_channel:
+            subj_spec_channel = ecg_channel[key]
+            assert isinstance(subj_spec_channel, str | None)  # mypy
+            return subj_spec_channel
+
+    # use try/catch to allow for pickleable defaultdict implementation
+    try:
+        default_channel = ecg_channel["default"]
+        assert isinstance(default_channel, str | None)  # mypy
+        return default_channel
+    except KeyError as e:
+        raise KeyError(
+            f"Could not find appropriate ECG channel setting for {subject=} "
+            f"and {session=} in ssp_ecg_channel, set it explicitly or set a "
+            'default using the string key "default".'
+        ) from e
 
 
 def get_eog_channels(
@@ -507,16 +528,17 @@ def get_eog_channels(
             assert isinstance(subj_spec_channels, Sequence | None)  # mypy
             return subj_spec_channels
 
-    # only if subj-key is explicitly not found, return default value
-    if f"sub-{subject}" in eog_channels:
-        return eog_channels[f"sub-{subject}"]
-    if "" in eog_channels:
-        return eog_channels[""]
-    raise KeyError(
-        f"Could not find appropriate EOG channel setting for {subject=} and {session=} "
-        "in eog_channels, set it explicitly or set a default using the empty-string "
-        ' key "".'
-    )
+    # use try/catch to allow for pickleable defaultdict implementation
+    try:
+        default_channels = eog_channels["default"]
+        assert isinstance(default_channels, Sequence | None)  # mypy
+        return default_channels
+    except KeyError as e:
+        raise KeyError(
+            f"Could not find appropriate EOG channels setting for {subject=} "
+            f"and {session=} in eog_channels, set it explicitly or set a "
+            'default using the string key "default".'
+        ) from e
 
 
 def sanitize_cond_name(cond: str) -> str:

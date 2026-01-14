@@ -314,7 +314,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
     if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
-        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        matches = set(filter(pattern.match, config.ssp_ecg_channel)).union("default")
         newline_indent = "\n  "
         if mismatch := (set(config.ssp_ecg_channel) - matches):
             raise ConfigError(
@@ -341,7 +341,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # if `dict` passed for eog_channel, make sure its keys are valid
     if config.eog_channels and isinstance(config.eog_channels, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
-        matches = set(filter(pattern.match, config.eog_channels)).union({""})
+        matches = set(filter(pattern.match, config.eog_channels)).union({"default"})
         newline_indent = "\n  "
 
         if mismatch := (set(config.eog_channels) - matches):

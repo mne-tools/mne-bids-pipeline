@@ -25,7 +25,7 @@ n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 
 
-eog_channels = {"": None, "sub-02": ["EOG061"]}
+eog_channels = {"default": None, "sub-02": ["EOG061"]}
 
 # Epochs
 epochs_tmin = -0.2

@@ -251,7 +251,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Sequence[str] | None = None
+eog_channels: Sequence[str] | None | dict[str, Sequence[str] | None] = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -274,6 +274,11 @@ If `None`, only actual EOG channels will be used for EOG recovery.
 If there are multiple actual EOG channels in your data, and you only specify
 a subset of them here, only this subset will be used during processing.
 
+A dictionary can be provided to specify subject and/or session-level EOG,
+with subjects (and optionally session) as keys and a sequence of channels as
+values (see Examples). Use "default" as a key to set channels for all non-
+specified subjects/sessions
+
 ???+ example "Example"
     Treat `Fp1` as virtual EOG channel:
     ```python
@@ -284,6 +289,16 @@ a subset of them here, only this subset will be used during processing.
     ```python
     eog_channels = ['Fp1', 'Fp2']
     ```
+
+    Per default use `LEOG`, but for sub-04 use Fp1 and for sub-05 ignore EOG:
+    ```python
+    eog_channels = dict()
+    eog_channels["default"] = ['LEOG']
+    eog_channels['sub-04'] = ['Fp1']
+    eog_channels['sub-05'] = []
+    ```
+    Note that `collections.defaultdict` cannot be used because it causes problems
+    with pickling, which is used under the hood for caching and parallelization.
 """
 
 eeg_bipolar_channels: dict[str, tuple[str, str]] | None = None
@@ -1376,7 +1391,24 @@ is not reliable. If `str`, the same channel will be used for all subjects.
 If `dict`, possibly different channels will be used for each subject/session.
 Dict values must be channel names, and dict keys must have the form `"sub-X"` (to use
 the same channel for each session within a subject) or `"sub-X_ses-Y"` (to use possibly
-different channels for each session of a given subject).
+different channels for each session of a given subject). Use dict key `"default"`
+to set a default channel when using a dict.
+
+???+ example "Example"
+    Treat `T8` as virtual ECG channel:
+    ```python
+    ecg_channel = 'T8'
+    ```
+
+    Use `ECG`, but for sub-04, use MISC001 and for sub-05 session 1 use MISC002:
+    ```python
+    ssp_ecg_channel = dict()
+    ssp_ecg_channel["default"] = 'ECG'
+    ssp_ecg_channel['sub-04'] = 'MISC001'
+    ssp_ecg_channel['sub-05_ses-1'] = 'MISC002'
+    ```
+    Note that `collections.defaultdict` cannot be used because it causes problems
+    with pickling, which is used under the hood for caching and parallelization.
 """
 
 ica_reject: dict[str, float] | Literal["autoreject_local"] | None = None
@@ -1482,7 +1514,7 @@ MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
 data); and in the second step, the principal components are passed
 to the actual ICA. You can select how many of the total principal
-components to pass to ICA – it can be all or just a subset. This determines
+components to pass to ICA – it can be all or just a subset. This determines
 how many independent components to fit, and can be controlled via this
 setting.
 

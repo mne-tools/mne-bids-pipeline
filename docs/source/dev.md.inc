@@ -17,6 +17,7 @@
 - Add support for processing multiple tasks simultaneously using a list like [`task = ["task1", "task2"]`][mne_bids_pipeline._config.task] in the config file (#1141 by @larsoner)
 - Add support for disabling time-by-time decoding while still performing full-epochs decoding using [`decoding_time`][mne_bids_pipeline._config.decoding_time] (#1141 by @larsoner)
 - Add support for setting decimation for time-by-time decoding using [`decoding_time_decim`][mne_bids_pipeline._config.decoding_time_decim] (#1141 by @larsoner)
+- Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
 
 ### :warning: Behavior changes
 

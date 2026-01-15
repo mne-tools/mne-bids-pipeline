@@ -22,6 +22,7 @@ from ._config_utils import (
     _get_task_baseline,
     _get_task_float,
     _validate_contrasts,
+    get_eog_channels,
     get_subjects_sessions,
     get_tasks,
 )
@@ -330,7 +331,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
     if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
-        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        matches = set(filter(pattern.match, config.ssp_ecg_channel)).union("default")
         newline_indent = "\n  "
         if mismatch := (set(config.ssp_ecg_channel) - matches):
             raise ConfigError(
@@ -352,6 +353,33 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         if missing:
             raise ConfigError(
                 f"Missing entries in ssp_ecg_channel:\n  {newline_indent.join(missing)}"
+            )
+
+    # if `dict` passed for eog_channel, make sure its keys are valid
+    if config.eog_channels and isinstance(config.eog_channels, dict):
+        pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
+        matches = set(filter(pattern.match, config.eog_channels)).union({"default"})
+        newline_indent = "\n  "
+
+        if mismatch := (set(config.eog_channels) - matches):
+            raise ConfigError(
+                "Malformed keys in eog_channels dict, "
+                "must be sub-<subject> or sub-<subject>_ses-<session>:\n  "
+                f"{newline_indent.join(sorted(repr(miss) for miss in mismatch))}"
+            )
+        # also make sure there are values for all subjects/sessions:
+        missing = list()
+        subjects_sessions = get_subjects_sessions(config)
+        for sub, sessions in subjects_sessions.items():
+            try:
+                for sess in sessions:
+                    get_eog_channels(config.eog_channels, subject=sub, session=sess)
+            except KeyError:
+                missing.append(f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}")
+
+        if missing:
+            raise ConfigError(
+                f"Missing entries in eog_channels:\n  {newline_indent.join(missing)}"
             )
 
     reject = config.reject

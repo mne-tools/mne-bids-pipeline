@@ -24,6 +24,9 @@ ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": "MEG0141"}
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 
+
+eog_channels = {"default": None, "sub-02": ["EOG061"]}
+
 # Epochs
 epochs_tmin = -0.2
 epochs_tmax = 0.5

@@ -465,7 +465,5 @@ def main(*, config: SimpleNamespace) -> None:
                 task=task,
             )
             for subject, session, run, task in ssrt
-            # for subject in get_subjects(config)
-            # for session in get_sessions(config)
         )
     save_logs(config=config, logs=logs)

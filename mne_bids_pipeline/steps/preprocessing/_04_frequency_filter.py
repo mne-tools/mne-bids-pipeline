@@ -211,6 +211,8 @@ def filter_data(
         bids_path_ref_in = in_files.pop("raw_ref_run", None)
         if bids_path_ref_in is not None and bids_path_in.processing != "sss":
             bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads")
+        else:
+            bids_path_ref_bads_in = None
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,

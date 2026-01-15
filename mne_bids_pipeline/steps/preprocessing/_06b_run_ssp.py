@@ -18,6 +18,7 @@ from mne_bids_pipeline._config_utils import (
     _pl,
     _proj_path,
     get_ecg_channel,
+    get_eog_channels,
     get_runs,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -106,12 +107,17 @@ def run_ssp(
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
     ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
-    if cfg.eog_channels:
-        ch_name["eog"] = cfg.eog_channels
+
+    eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+
+    if eog_chs_subj_sess:
+        ch_name["eog"] = list(eog_chs_subj_sess)
         assert ch_name["eog"] is not None
         assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
     if cfg.ssp_ecg_channel:
-        ch_name["ecg"] = get_ecg_channel(config=cfg, subject=subject, session=session)
+        ch_name["ecg"] = get_ecg_channel(
+            ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
+        )
         if ch_name["ecg"] not in raw.ch_names:
             raise ConfigError(
                 f"SSP ECG channel '{ch_name['ecg']}' not found in data for "
@@ -215,14 +221,19 @@ def run_ssp(
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
                     picks_trace = [
-                        get_ecg_channel(config=cfg, subject=subject, session=session)
+                        get_ecg_channel(
+                            ecg_channel=cfg.ssp_ecg_channel,
+                            subject=subject,
+                            session=session,
+                        )
                     ]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:
                 assert kind == "eog"
-                if cfg.eog_channels:
-                    picks_trace = cfg.eog_channels
+                if eog_chs_subj_sess:
+                    # convert to list for compatibility of type annotations
+                    picks_trace = list(eog_chs_subj_sess)
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(

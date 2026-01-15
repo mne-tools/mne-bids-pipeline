@@ -3,7 +3,7 @@
 import copy
 import functools
 import pathlib
-from collections.abc import Iterable, Sized
+from collections.abc import Iterable, Sequence, Sized
 from inspect import signature
 from types import ModuleType, SimpleNamespace
 from typing import Any, Literal, TypeVar
@@ -479,14 +479,63 @@ def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
     return which
 
 
-def get_ecg_channel(config: SimpleNamespace, subject: str, session: str | None) -> str:
-    if isinstance(config.ssp_ecg_channel, str):
-        return config.ssp_ecg_channel
-    for key in (f"sub-{subject}", f"sub-{subject}_ses-{session}"):
-        if val := config.ssp_ecg_channel.get(key):
-            assert isinstance(val, str)  # mypy
-            return val
-    return ""  # mypy
+def _get_channels_generic(
+    channels: Any,
+    subject: str = "",
+    session: str | None = "",
+    *,
+    variable_name: str = "_unspecified_",
+) -> Any:
+    if not isinstance(channels, dict):
+        return channels
+
+    assert isinstance(channels, dict), "channels must be dict or concrete value"
+
+    # session specific ch definition supersedes subject-level ch definition
+    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
+        # empty list and None are explicitly allowed
+        if key in channels:
+            return channels[key]
+
+    # use try/catch to allow for pickleable defaultdict implementation
+    try:
+        return channels["default"]
+    except KeyError as e:
+        raise KeyError(
+            f"Could not find appropriate channel setting for {subject=} "
+            f"and {session=} in config.{variable_name}, set it explicitly "
+            'or set a default using the string key "default".'
+        ) from e
+
+
+def get_ecg_channel(
+    ecg_channel: str | dict[str, str],
+    subject: str = "",
+    session: str | None = "",
+) -> str:
+    out = _get_channels_generic(
+        ecg_channel,
+        subject,
+        session,
+        variable_name="ssp_ecg_channel",
+    )
+    assert isinstance(out, str)  # mypy
+    return out
+
+
+def get_eog_channels(
+    eog_channels: Sequence[str] | None | dict[str, Sequence[str] | None],
+    subject: str = "",
+    session: str | None = "",
+) -> Sequence[str] | None:
+    out = _get_channels_generic(
+        eog_channels,
+        subject,
+        session,
+        variable_name="eog_channels",
+    )
+    assert isinstance(out, Sequence | None)  # mypy
+    return out
 
 
 def sanitize_cond_name(cond: str) -> str:

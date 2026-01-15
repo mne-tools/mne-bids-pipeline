@@ -12,6 +12,7 @@ from ._config_utils import (
     _do_mf_autobad,
     _pl,
     get_datatype,
+    get_eog_channels,
     get_mf_reference_run,
     get_runs,
     get_task,
@@ -92,7 +93,7 @@ def make_epochs(
             metadata_tmax = tmax
 
         # The returned `events` and `event_id` will only contain
-        # the events from `row_event_names` – which is basically equivalent to
+        # the events from `row_event_names` – which is basically equivalent to
         # what the user requested via `config.conditions` (only with potential
         # nested event names expanded, e.g. `visual` might now be
         # `visual/left` and `visual/right`)
@@ -351,19 +352,21 @@ def _create_bipolar_channels(
         # location, so one might get unexpected results otherwise, as the
         # channel would influence e.g. in GFP calculations, but not appear on
         # topographic maps.
-        if cfg.eog_channels and any(
+        eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+        if eog_chs_subj_sess and any(
             [
                 eog_ch_name in cfg.eeg_bipolar_channels
-                for eog_ch_name in cfg.eog_channels
+                for eog_ch_name in eog_chs_subj_sess
             ]
         ):
             msg = "Setting channel type of new bipolar EOG channel(s) …"
             logger.info(**gen_log_kwargs(message=msg))
-        for eog_ch_name in cfg.eog_channels:
-            if eog_ch_name in cfg.eeg_bipolar_channels:
-                msg = f"    {eog_ch_name} -> eog"
-                logger.info(**gen_log_kwargs(message=msg))
-                raw.set_channel_types({eog_ch_name: "eog"})
+        if eog_chs_subj_sess is not None:
+            for eog_ch_name in eog_chs_subj_sess:
+                if eog_ch_name in cfg.eeg_bipolar_channels:
+                    msg = f"    {eog_ch_name} -> eog"
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.set_channel_types({eog_ch_name: "eog"})
 
 
 def _set_eeg_montage(

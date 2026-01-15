@@ -480,17 +480,16 @@ def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
 
 
 def _get_channels_generic(
-    channels,
+    channels: Any,
     subject: str = "",
     session: str | None = "",
     *,
     variable_name: str = "_unspecified_",
-):
+) -> Any:
     if not isinstance(channels, dict):
         return channels
 
-    assert isinstance(channels, dict), \
-        "channels must be dict or concrete value"
+    assert isinstance(channels, dict), "channels must be dict or concrete value"
 
     # session specific ch definition supersedes subject-level ch definition
     for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
@@ -520,7 +519,7 @@ def get_ecg_channel(
         session,
         variable_name="ssp_ecg_channel",
     )
-    assert isinstance(out, str | None)  # mypy
+    assert isinstance(out, str)  # mypy
     return out
 
 

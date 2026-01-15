@@ -32,6 +32,7 @@ from mne_bids_pipeline._config_utils import (
     get_runs_tasks,
 )
 from mne_bids_pipeline._import_data import (
+    _get_bids_path_in,
     _get_mf_reference_run_path,
     _get_run_path,
     _get_run_rest_noise_path,
@@ -81,19 +82,15 @@ def _get_allbads_path(
     subject: str,
     session: str | None,
 ) -> BIDSPath:
-    run, task = cfg.runs_tasks[0]
-    key = f"raw_task-{task}_run-{run}-bads"
-    path = _get_run_path(
+    path = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
         session=session,
-        run=run,
-        task=task,
-        kind="orig",
-    )[key]
-    path.update(
         run=None,
         task=None,
+        kind="orig",
+    )
+    path.update(
         suffix="allbads",
         extension=".tsv",
         root=cfg.deriv_root,
@@ -122,7 +119,7 @@ def compute_all_bads(
         in_key = f"raw_task-{task}_run-{run}"
         bids_path_bads_in = in_files.pop(f"{in_key}-bads")
         bads_tsv = pd.read_csv(bids_path_bads_in.fpath, sep="\t", header=0)
-        assert bads_tsv.columns == ["name", "reason"], bads_tsv.columns
+        assert list(bads_tsv.columns) == ["name", "reason"], bads_tsv.columns
         counts.append(len(bads_tsv))
         for name, reason in bads_tsv.itertuples(index=False):
             assert isinstance(name, str)
@@ -133,8 +130,8 @@ def compute_all_bads(
         del run, task
     # Write the bad channels to disk.
     msg = (
-        f"Using {len(bads_dict)} bad channel{_pl(bads_dict)} (each task and run: "
-        f"{', '.join(str(c) for c in counts)})"
+        f"Using {len(bads_dict)} bad channel{_pl(bads_dict)} (union from "
+        f"{', '.join(str(c) for c in counts)}): {sorted(bads_dict)})"
     )
     logger.info(**gen_log_kwargs(message=msg))
     reasons = [", ".join(val) for val in bads_dict.values()]

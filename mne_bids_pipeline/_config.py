@@ -2378,6 +2378,23 @@ The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
 """
 
+cov_rank: Literal["info"] | dict[str, Any] = "info"
+"""
+Specifies how to determine the rank of the data and associated noise covariance.
+This is used when computing an inverse operator and when preprocessing data for
+decoding. If set to `"info"` (default), the rank will be computed from the measurement
+information. If it's a `dict`, the rank will be computed from the data used to
+compute the covariance, with the `cov_rank` dict passed as keyword arguments
+as `mne.compute_rank(inst, info=info, **cov_rank)` (where the `inst` and `info` will
+automatically be determined by the `noise_cov` type).
+
+???+ example "Example"
+    Compute the rank from the data:
+    ```python
+    cov_rank = {"tol_kind": "relative", "tol": 1e-4}
+    ```
+"""
+
 source_info_path_update: dict[str, str] | None = None
 """
 When computing the forward and inverse solutions, it is important to
@@ -2411,7 +2428,6 @@ file specified in `noise_cov`, or the cleaned evoked
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]
 """
-
 On which data to apply the inverse operator. Currently, the only supported
 target is `'evoked'`. If no inverse computation should be done, pass an
 empty list, `[]`.

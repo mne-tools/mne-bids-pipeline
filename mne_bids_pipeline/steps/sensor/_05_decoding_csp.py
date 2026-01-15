@@ -174,6 +174,7 @@ def one_subject_decoding(
         epochs.subtract_evoked()
 
     preproc_steps = _decoding_preproc_steps(
+        cfg=cfg,
         subject=subject,
         session=session,
         epochs=epochs,
@@ -542,6 +543,7 @@ def get_config(
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
         decoding_contrasts=get_decoding_contrasts(config),
+        cov_rank=config.cov_rank,
         random_state=config.random_state,
         **_bids_kwargs(config=config),
     )

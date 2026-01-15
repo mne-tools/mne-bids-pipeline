@@ -12,11 +12,13 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_rank,
     _get_ss,
     _restrict_analyze_channels,
     get_eeg_reference,
     get_noise_cov_bids_path,
 )
+from mne_bids_pipeline._io import _write_json
 from mne_bids_pipeline._logging import _log_context, gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
@@ -91,7 +93,7 @@ def get_input_fnames_cov(
     return in_files
 
 
-def compute_cov_from_epochs(
+def compute_cov_rank_from_epochs(
     *,
     tmin: float | None,
     tmax: float | None,
@@ -101,7 +103,7 @@ def compute_cov_from_epochs(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
+) -> tuple[mne.Covariance, dict[str, int]]:
     epo_fname = in_files.pop("epochs")
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
@@ -112,18 +114,19 @@ def compute_cov_from_epochs(
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(epo_fname, preload=True)
+    rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=epochs)
     cov = mne.compute_covariance(
         epochs,
         tmin=tmin,
         tmax=tmax,
         method=cfg.noise_cov_method,
-        rank="info",
+        rank=rank,
         verbose="error",  # TODO: not baseline corrected, maybe problematic?
     )
-    return cov
+    return cov, rank
 
 
-def compute_cov_from_raw(
+def compute_cov_rank_from_raw(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -131,7 +134,7 @@ def compute_cov_from_raw(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
+) -> tuple[mne.Covariance, dict[str, int]]:
     fname_raw = in_files.pop("raw")
     run_msg = "resting-state" if fname_raw.task == "rest" else "empty-room"
     msg = f"Computing regularized covariance based on {run_msg} recording."
@@ -142,15 +145,16 @@ def compute_cov_from_raw(
     logger.info(**gen_log_kwargs(message=msg))
 
     raw_noise = mne.io.read_raw_fif(fname_raw, preload=True)
+    rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=raw_noise)
     cov = mne.compute_raw_covariance(
         raw_noise,
         method=cfg.noise_cov_method,
-        rank="info",
+        rank=rank,
     )
-    return cov
+    return cov, rank
 
 
-def retrieve_custom_cov(
+def retrieve_custom_cov_rank(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -158,7 +162,7 @@ def retrieve_custom_cov(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
+) -> tuple[mne.Covariance, dict[str, int]]:
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
     with _log_context(logging.CRITICAL):
@@ -194,7 +198,15 @@ def retrieve_custom_cov(
 
     cov = config.noise_cov(evoked_bids_path)
     assert isinstance(cov, mne.Covariance)
-    return cov
+    evoked = mne.read_evokeds(evoked_bids_path)[0]
+    rank = _get_rank(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        inst=cov,
+        info=evoked.info,
+    )
+    return cov, rank
 
 
 def _get_cov_type(cfg: SimpleNamespace) -> str:
@@ -225,11 +237,12 @@ def run_covariance(
     out_files["cov"] = get_noise_cov_bids_path(
         cfg=cfg, subject=subject, session=session
     )
+    out_files["rank"] = out_files["cov"].copy().update(suffix="rank", extension=".json")
     cov_type = _get_cov_type(cfg)
     fname_info = in_files.pop("report_info")
     fname_evoked = in_files.pop("evoked", None)
     if cov_type == "custom":
-        cov = retrieve_custom_cov(
+        cov, rank = retrieve_custom_cov_rank(
             cfg=cfg,
             subject=subject,
             session=session,
@@ -238,7 +251,7 @@ def run_covariance(
             exec_params=exec_params,
         )
     elif cov_type == "raw":
-        cov = compute_cov_from_raw(
+        cov, rank = compute_cov_rank_from_raw(
             cfg=cfg,
             subject=subject,
             session=session,
@@ -248,7 +261,7 @@ def run_covariance(
         )
     else:
         tmin, tmax = cfg.noise_cov
-        cov = compute_cov_from_epochs(
+        cov, rank = compute_cov_rank_from_epochs(
             tmin=tmin,
             tmax=tmax,
             cfg=cfg,
@@ -259,6 +272,7 @@ def run_covariance(
             exec_params=exec_params,
         )
     cov.save(out_files["cov"], overwrite=True)
+    _write_json(out_files["rank"], rank)
 
     # Report
     with _open_report(
@@ -266,10 +280,18 @@ def run_covariance(
     ) as report:
         msg = "Rendering noise covariance matrix and corresponding SVD."
         logger.info(**gen_log_kwargs(message=msg))
+        section = "Noise covariance"
+        report.add_html(
+            html=f"<code>{rank}</code>",
+            title="Rank",
+            section=section,
+            tags=("covariance",),
+            replace=True,
+        )
         report.add_covariance(
             cov=cov,
             info=fname_info,
-            title="Noise covariance",
+            title=section,
             replace=True,
         )
         if fname_evoked is not None:
@@ -278,7 +300,6 @@ def run_covariance(
             all_evoked = mne.read_evokeds(fname_evoked)
             conditions = _all_conditions(cfg=cfg)
             assert len(all_evoked) == len(conditions)
-            section = "Noise covariance"
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
                 tags: tuple[str, ...] = (
@@ -289,7 +310,7 @@ def run_covariance(
                 title = f"Whitening: {condition}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
-                fig = evoked.plot_white(cov, verbose="error")
+                fig = evoked.plot_white(cov, rank=rank, verbose="error")
                 report.add_figure(
                     fig=fig,
                     title=title,
@@ -316,6 +337,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
+        cov_rank=config.cov_rank,
         **_bids_kwargs(config=config),
     )
     return cfg

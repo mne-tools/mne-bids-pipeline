@@ -137,6 +137,7 @@ def run_time_decoding(
     # We can't use the full rank here because the number of samples can just be the
     # number of epochs (which can be fewer than the number of channels)
     pre_steps = _decoding_preproc_steps(
+        cfg=cfg,
         subject=subject,
         session=session,
         epochs=epochs,
@@ -319,6 +320,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=config.conditions,
         contrasts=get_decoding_contrasts(config),
+        cov_rank=config.cov_rank,
         decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,

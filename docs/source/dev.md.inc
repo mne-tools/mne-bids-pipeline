@@ -15,6 +15,7 @@
 - New config option [`process_raw_clean`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
 - Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
+- Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
 
 ### :warning: Behavior changes
 

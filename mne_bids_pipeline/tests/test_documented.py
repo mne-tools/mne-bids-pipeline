@@ -111,6 +111,8 @@ def test_config_options_passed_to_any_steps() -> None:
     assert missing_from_steps == [], f"Missing from steps: {missing_from_steps}"
     for key, val in pcs.steps.items():
         assert val, f"No steps for {key}"
+    # Spot check for EXTRA_FUNCS
+    assert "sensor/_03_decoding_time_by_time" in pcs.steps["cov_rank"]
 
 
 def test_config_options_used_in_steps() -> None:

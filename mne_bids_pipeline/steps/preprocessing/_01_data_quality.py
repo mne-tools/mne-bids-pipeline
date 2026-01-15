@@ -60,6 +60,7 @@ def get_input_fnames_data_quality(
 
     # set calibration and crosstalk files (if provided)
     if _do_mf_autobad(cfg=cfg):
+        # add these explicitly to in_files (duplicating with cfg) for proper caching
         if cfg.mf_cal_fname is not None:
             in_files["mf_cal_fname"] = cfg.mf_cal_fname
         if cfg.mf_ctc_fname is not None:
@@ -118,8 +119,8 @@ def assess_data_quality(
     auto_flat_chs: list[str] = []
     if _do_mf_autobad(cfg=cfg):
         # use calibration and crosstalk files (if provided)
-        cfg.mf_cal_fname = in_files.pop("mf_cal_fname", None)
-        cfg.mf_ctc_fname = in_files.pop("mf_ctc_fname", None)
+        in_files.pop("mf_cal_fname", None)
+        in_files.pop("mf_ctc_fname", None)
 
         (
             auto_noisy_chs,

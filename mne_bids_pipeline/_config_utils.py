@@ -479,35 +479,49 @@ def _limit_which_clean(*, config: SimpleNamespace) -> tuple[str, ...]:
     return which
 
 
+def _get_channels_generic(
+    channels,
+    subject: str = "",
+    session: str | None = "",
+    *,
+    variable_name: str = "_unspecified_",
+):
+    if not isinstance(channels, dict):
+        return channels
+
+    assert isinstance(channels, dict), \
+        "channels must be dict or concrete value"
+
+    # session specific ch definition supersedes subject-level ch definition
+    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
+        # empty list and None are explicitly allowed
+        if key in channels:
+            return channels[key]
+
+    # use try/catch to allow for pickleable defaultdict implementation
+    try:
+        return channels["default"]
+    except KeyError as e:
+        raise KeyError(
+            f"Could not find appropriate channel setting for {subject=} "
+            f"and {session=} in config.{variable_name}, set it explicitly "
+            'or set a default using the string key "default".'
+        ) from e
+
+
 def get_ecg_channel(
     ecg_channel: str | dict[str, str],
     subject: str = "",
     session: str | None = "",
 ) -> str:
-    if isinstance(ecg_channel, str):
-        return ecg_channel
-
-    assert isinstance(ecg_channel, dict), "ecg_channel must be dict/str"
-
-    # session specific ch definition supersedes subject-level ch definition
-    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
-        # empty list and None are explicitly allowed
-        if key in ecg_channel:
-            subj_spec_channel = ecg_channel[key]
-            assert isinstance(subj_spec_channel, str | None)  # mypy
-            return subj_spec_channel
-
-    # use try/catch to allow for pickleable defaultdict implementation
-    try:
-        default_channel = ecg_channel["default"]
-        assert isinstance(default_channel, str | None)  # mypy
-        return default_channel
-    except KeyError as e:
-        raise KeyError(
-            f"Could not find appropriate ECG channel setting for {subject=} "
-            f"and {session=} in ssp_ecg_channel, set it explicitly or set a "
-            'default using the string key "default".'
-        ) from e
+    out = _get_channels_generic(
+        ecg_channel,
+        subject,
+        session,
+        variable_name="ssp_ecg_channel",
+    )
+    assert isinstance(out, str | None)  # mypy
+    return out
 
 
 def get_eog_channels(
@@ -515,30 +529,14 @@ def get_eog_channels(
     subject: str = "",
     session: str | None = "",
 ) -> Sequence[str] | None:
-    if isinstance(eog_channels, Sequence | None):
-        return eog_channels
-
-    assert isinstance(eog_channels, dict), "eog_channels must be list/dict/None"
-
-    # session specific ch definition supersedes subject-level ch definition
-    for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):
-        # empty list and None are explicitly allowed
-        if key in eog_channels:
-            subj_spec_channels = eog_channels[key]
-            assert isinstance(subj_spec_channels, Sequence | None)  # mypy
-            return subj_spec_channels
-
-    # use try/catch to allow for pickleable defaultdict implementation
-    try:
-        default_channels = eog_channels["default"]
-        assert isinstance(default_channels, Sequence | None)  # mypy
-        return default_channels
-    except KeyError as e:
-        raise KeyError(
-            f"Could not find appropriate EOG channels setting for {subject=} "
-            f"and {session=} in eog_channels, set it explicitly or set a "
-            'default using the string key "default".'
-        ) from e
+    out = _get_channels_generic(
+        eog_channels,
+        subject,
+        session,
+        variable_name="eog_channels",
+    )
+    assert isinstance(out, Sequence | None)  # mypy
+    return out
 
 
 def sanitize_cond_name(cond: str) -> str:

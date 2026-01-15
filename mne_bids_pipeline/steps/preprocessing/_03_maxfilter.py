@@ -89,7 +89,6 @@ def _get_allbads_path(
         session=session,
         run=run,
         task=task,
-        add_bads=False,
         kind="orig",
     )[key]
     path.update(
@@ -180,7 +179,6 @@ def get_input_fnames_esss(
         cfg=cfg,
         subject=subject,
         session=session,
-        add_bads=False,
     )
     in_files.update(
         _get_mf_reference_run_path(
@@ -335,7 +333,6 @@ def get_input_fnames_maxwell_filter(
         cfg=cfg,
         subject=subject,
         session=session,
-        add_bads=False,
     )
     in_key = f"raw_task-{task}_run-{run}"
     assert in_key in in_files
@@ -348,7 +345,6 @@ def get_input_fnames_maxwell_filter(
         path = _get_run_path(
             run=pos_run,
             task=pos_task,
-            add_bads=False,
             kind="orig",
             cfg=cfg,
             subject=subject,
@@ -395,7 +391,6 @@ def get_input_fnames_maxwell_filter(
             cfg=cfg,
             subject=subject,
             session=session,
-            add_bads=False,
         )
     )
 

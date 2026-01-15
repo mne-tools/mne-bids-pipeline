@@ -47,7 +47,6 @@ def get_input_fnames_data_quality(
         cfg=cfg,
         subject=subject,
         session=session,
-        add_bads=False,
     )
     # When doing autobad for the noise run, we also need the reference run
     if _do_mf_autobad(cfg=cfg) and run is None and task == "noise":
@@ -56,7 +55,6 @@ def get_input_fnames_data_quality(
                 cfg=cfg,
                 subject=subject,
                 session=session,
-                add_bads=False,
             )
         )
 

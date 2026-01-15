@@ -9,7 +9,6 @@ from mne_bids import BIDSPath, get_bids_path_from_fname, read_raw_bids
 
 from ._config_utils import (
     _bids_kwargs,
-    _do_mf_autobad,
     _pl,
     get_datatype,
     get_eog_channels,
@@ -616,7 +615,7 @@ def _get_run_path(
     run: str | None,
     task: str | None,
     kind: RunKindT,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
     allow_missing: bool = False,
     key: str | None = None,
 ) -> InFilesT:
@@ -646,7 +645,7 @@ def _get_rest_path(
     subject: str,
     session: str | None,
     kind: RunKindT,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if not (cfg.process_rest and not cfg.task_is_rest):
         return dict()
@@ -669,7 +668,7 @@ def _get_noise_path(
     session: str | None,
     kind: RunKindT,
     mf_reference_run: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
@@ -717,7 +716,7 @@ def _get_run_rest_noise_path(
     task: str | None,
     kind: RunKindT,
     mf_reference_run: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if run is None and task in ("noise", "rest"):
         if task == "noise":
@@ -756,7 +755,7 @@ def _get_mf_reference_run_path(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     return _get_run_path(
         cfg=cfg,
@@ -780,15 +779,13 @@ def _path_dict(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
     kind: RunKindT,
     allow_missing: bool,
     key: str | None = None,
     subject: str,
     session: str | None,
 ) -> InFilesT:
-    if add_bads is None:
-        add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()
     key = key or f"raw_task-{bids_path_in.task}_run-{bids_path_in.run}"
     in_files[key] = bids_path_in

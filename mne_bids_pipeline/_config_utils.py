@@ -375,7 +375,6 @@ def get_runs_tasks(
             subject=subject,
             session=session,
             kind="orig",
-            add_bads=False,
         )
         if rest_path:
             runs.append(None)
@@ -388,7 +387,6 @@ def get_runs_tasks(
             subject=subject,
             session=session,
             kind="orig",
-            add_bads=False,
         )
         if noise_path:
             runs.append(None)

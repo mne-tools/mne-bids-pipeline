@@ -19,6 +19,7 @@
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
+- Maxwell filtering steps now use the union of bad channels across all tasks and runs to help ensure more consistent rank and behavior (#1158 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 

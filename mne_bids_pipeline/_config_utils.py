@@ -489,8 +489,7 @@ def _get_channels_generic(
     if not isinstance(channels, dict):
         return channels
 
-    assert isinstance(channels, dict), \
-        "channels must be dict or concrete value"
+    assert isinstance(channels, dict), "channels must be dict or concrete value"
 
     # session specific ch definition supersedes subject-level ch definition
     for key in (f"sub-{subject}_ses-{session}", f"sub-{subject}"):

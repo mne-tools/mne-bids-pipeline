@@ -234,7 +234,7 @@ def _fake_sss_context() -> Generator[None, None, None]:
     def replacement(*args, **kwargs):  # type: ignore[no-untyped-def]
         out = list(orig(*args, **kwargs))
         assert len(out) == 3 and isinstance(out[-1], bool)
-        out[-1] = "grad" in out[0] or "mag" in out[0]  # has_sss = True if MEG
+        out[-1] = out[-2]  # has_sss = has_meg (which really means: mag + grad)
         return tuple(out)
 
     mne.viz.utils._check_sss = replacement
@@ -261,7 +261,6 @@ def run_covariance(
     out_files["cov"] = get_noise_cov_bids_path(
         cfg=cfg, subject=subject, session=session
     )
-    out_files
     out_files["rank"] = out_files["cov"].copy().update(suffix="rank", extension=".json")
     cov_type = _get_cov_type(cfg)
     fname_info = in_files.pop("report_info")

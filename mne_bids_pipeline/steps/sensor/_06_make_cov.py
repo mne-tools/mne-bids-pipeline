@@ -3,7 +3,9 @@
 Covariance matrices are computed and saved.
 """
 
+import contextlib
 import logging
+from collections.abc import Generator
 from types import SimpleNamespace
 
 import mne
@@ -220,6 +222,28 @@ def _get_cov_type(cfg: SimpleNamespace) -> str:
         return "epochs"
 
 
+# Workaround for https://github.com/mne-tools/mne-python/pull/13595
+# to get MNE < 1.11.1 to tolerate rank=dict(meg=...)
+@contextlib.contextmanager
+def _fake_sss_context() -> Generator[None, None, None]:
+    """Fake SSS context manager for MNE < 1.11.1."""
+    import mne.viz.evoked
+
+    orig = mne.viz.evoked._triage_rank_sss
+
+    def replacement(*args, **kwargs):  # type: ignore[no-untyped-def]
+        out = list(orig(*args, **kwargs))
+        assert len(out) == 4 and isinstance(out[-1], bool)
+        out[-1] = True
+        return tuple(out)
+
+    mne.viz.evoked._triage_rank_sss = replacement
+    try:
+        yield
+    finally:
+        mne.viz.evoked._triage_rank_sss = orig
+
+
 @failsafe_run(
     get_input_fnames=get_input_fnames_cov,
 )
@@ -310,22 +334,8 @@ def run_covariance(
                 title = f"Whitening: {condition}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
-                # Workaround for https://github.com/mne-tools/mne-python/pull/13595
-                # to get MNE < 1.11.1 to tolerate rank=dict(meg=...)
-                if (
-                    cfg.cov_rank != "info"
-                    # match
-                    # https://github.com/mne-tools/mne-python/blob/main/mne/viz/utils.py#L2049-L2053
-                    and "grad" in evoked
-                    and "mag" in evoked
-                    and (
-                        len(evoked.info["proc_history"]) == 0
-                        or evoked.info["proc_history"][0].get("max_info") is None
-                    )
-                ):
-                    with evoked.info._unlock():
-                        evoked.info["proc_history"] = [dict(max_info=dict())]
-                fig = evoked.plot_white(cov, rank=rank, verbose="error")
+                with _fake_sss_context():
+                    fig = evoked.plot_white(cov, rank=rank, verbose="error")
                 report.add_figure(
                     fig=fig,
                     title=title,

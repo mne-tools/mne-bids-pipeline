@@ -499,10 +499,12 @@ def import_er_data(
 
     _drop_channels_func(cfg, raw=raw_er, subject="emptyroom", session=session)
     if bids_path_er_bads_in is not None:
-        raw_er.info["bads"] = _read_bads_tsv(
+        all_bads = _read_bads_tsv(
             cfg=cfg,
             bids_path_bads=bids_path_er_bads_in,
         )
+        # There could be EEG channels in this list, so pick subset by name
+        raw_er.info["bads"] = [bad for bad in all_bads if bad in raw_er.ch_names]
 
     # Don't deal with ref for now (initial data quality / auto bad step)
     if bids_path_ref_in is None:

@@ -310,6 +310,21 @@ def run_covariance(
                 title = f"Whitening: {condition}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
+                # Workaround for https://github.com/mne-tools/mne-python/pull/13595
+                # to get MNE < 1.11.1 to tolerate rank=dict(meg=...)
+                if (
+                    cfg.cov_rank != "info"
+                    # match
+                    # https://github.com/mne-tools/mne-python/blob/main/mne/viz/utils.py#L2049-L2053
+                    and "grad" in evoked
+                    and "mag" in evoked
+                    and (
+                        len(evoked.info["proc_history"]) == 0
+                        or evoked.info["proc_history"][0].get("max_info") is None
+                    )
+                ):
+                    with evoked.info._unlock():
+                        evoked.info["proc_history"] = [dict(max_info=dict())]
                 fig = evoked.plot_white(cov, rank=rank, verbose="error")
                 report.add_figure(
                     fig=fig,

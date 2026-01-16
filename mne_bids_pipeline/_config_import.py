@@ -275,6 +275,11 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # just change the ones that are easy
 
     config.bids_root.resolve(strict=True)
+    if config.bids_root == config.deriv_root:
+        raise ValueError(
+            "bids_root and deriv_root cannot be the same directory "
+            f"({config.bids_root})."
+        )
 
     if (
         config.use_maxwell_filter

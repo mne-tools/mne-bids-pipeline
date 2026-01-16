@@ -192,6 +192,11 @@ def retrieve_custom_cov_rank(
         root=cfg.deriv_root,
         check=False,
     )
+    info_path = evoked_bids_path
+    if not info_path.fpath.exists():  # no evoked data
+        info_path = evoked_bids_path.copy().update(processing="clean", suffix="epo")
+        assert info_path.fpath.exists()
+    info = mne.read_info(info_path)
 
     msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
@@ -200,13 +205,12 @@ def retrieve_custom_cov_rank(
 
     cov = config.noise_cov(evoked_bids_path)
     assert isinstance(cov, mne.Covariance)
-    evoked = mne.read_evokeds(evoked_bids_path)[0]
     rank = _get_rank(
         cfg=cfg,
         subject=subject,
         session=session,
         inst=cov,
-        info=evoked.info,
+        info=info,
     )
     return cov, rank
 

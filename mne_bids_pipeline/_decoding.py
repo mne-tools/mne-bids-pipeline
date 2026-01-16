@@ -115,7 +115,9 @@ def _decoding_preproc_steps(
     scaler = mne.decoding.Scaler(epochs.info)
     steps = [scaler]
     if pca:
-        ranks = _get_rank(cfg=cfg, subject=subject, session=session, inst=epochs)
+        ranks = _get_rank(
+            cfg=cfg, subject=subject, session=session, inst=epochs, log=False
+        )
         rank = sum(ranks.values())
         msg = f"Reducing data dimension via PCA; new rank: {rank} (from {ranks})."
         logger.info(**gen_log_kwargs(message=msg))

@@ -20,6 +20,7 @@
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
+- The path passed to `noise_cov` callbles is no longer the evoked dataset but instead epochs. Note that the epochs have `processing="clean"` in the `BIDSPath`. (#1159 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 
@@ -46,6 +47,7 @@
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 - Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
+- Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
 
 ### :books: Documentation
 

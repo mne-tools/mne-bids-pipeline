@@ -177,7 +177,7 @@ def retrieve_custom_cov_rank(
     assert in_files == {}, in_files  # unknown
 
     # ... so we construct the input file we need here
-    evoked_bids_path = BIDSPath(
+    epochs_bids_path = BIDSPath(
         subject=subject,
         session=session,
         task=cfg.task,
@@ -186,24 +186,23 @@ def retrieve_custom_cov_rank(
         processing="clean",
         recording=cfg.rec,
         space=cfg.space,
-        suffix="ave",
+        suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,
         root=cfg.deriv_root,
         check=False,
     )
-    info_path = evoked_bids_path
-    if not info_path.fpath.exists():  # no evoked data
-        info_path = evoked_bids_path.copy().update(processing="clean", suffix="epo")
-        assert info_path.fpath.exists()
-    info = mne.read_info(info_path)
+    info_bids_path = epochs_bids_path
+    if not info_bids_path.fpath.exists():
+        info_bids_path = info_bids_path.copy().update(split="01")
 
     msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
+    info = mne.io.read_info(info_bids_path)
 
-    cov = config.noise_cov(evoked_bids_path)
+    cov = config.noise_cov(epochs_bids_path)
     assert isinstance(cov, mne.Covariance)
     rank = _get_rank(
         cfg=cfg,

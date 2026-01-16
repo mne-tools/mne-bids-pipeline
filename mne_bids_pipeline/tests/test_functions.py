@@ -17,16 +17,23 @@ def test_all_functions_return(module_name: str) -> None:
     # Find the functions within the module that use the failsafe_run decorator
     module = FLAT_MODULES[module_name]
     funcs = list()
+    ignore = {  # decorated functions that we can safely ignore
+        "_fake_sss_context"
+    }
     for name in dir(module):
         obj = getattr(module, name)
         if not callable(obj):
             continue
         if getattr(obj, "__module__", None) != module_name:
             continue
-        if not hasattr(obj, "__wrapped__"):
+        if not hasattr(obj, "__wrapped__"):  # not decorated
+            continue
+        if name in ignore:
             continue
         # All our failsafe_run decorated functions should look like this
-        assert "__mne_bids_pipeline_failsafe_wrapper__" in repr(obj.__code__)
+        assert "__mne_bids_pipeline_failsafe_wrapper__" in repr(obj.__code__), (
+            f"{module_name}.{name} is missing failsafe_run decorator"
+        )
         funcs.append(obj)
     # Some module names we know don't have any
     if module_name.split(".")[-1] in ("_01_recon_all",):

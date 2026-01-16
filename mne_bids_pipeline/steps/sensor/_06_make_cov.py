@@ -227,21 +227,21 @@ def _get_cov_type(cfg: SimpleNamespace) -> str:
 @contextlib.contextmanager
 def _fake_sss_context() -> Generator[None, None, None]:
     """Fake SSS context manager for MNE < 1.11.1."""
-    import mne.viz.evoked
+    import mne.viz.utils
 
-    orig = mne.viz.evoked._triage_rank_sss
+    orig = mne.viz.utils._check_sss
 
     def replacement(*args, **kwargs):  # type: ignore[no-untyped-def]
         out = list(orig(*args, **kwargs))
-        assert len(out) == 4 and isinstance(out[-1], bool)
+        assert len(out) == 3 and isinstance(out[-1], bool)
         out[-1] = True
         return tuple(out)
 
-    mne.viz.evoked._triage_rank_sss = replacement
+    mne.viz.utils._check_sss = replacement
     try:
         yield
     finally:
-        mne.viz.evoked._triage_rank_sss = orig
+        mne.viz.utils._check_sss = orig
 
 
 @failsafe_run(

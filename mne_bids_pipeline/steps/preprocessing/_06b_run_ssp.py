@@ -241,7 +241,7 @@ def run_ssp(
             fig = mne.viz.plot_projs_joint(
                 these_projs, proj_epochs.average(picks="all"), picks_trace=picks_trace
             )
-            assert isinstance (proj_epochs.drop_log, list)
+            assert isinstance(proj_epochs.drop_log, list)
             caption = (
                 f"Computed using {len(proj_epochs)} epochs "
                 f"(from {len(proj_epochs.drop_log)} original events)"

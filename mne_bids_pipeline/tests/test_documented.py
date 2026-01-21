@@ -62,7 +62,7 @@ def test_options_documented() -> None:
     settings_path = root_path.parent / "docs" / "source" / "settings"
     sys.path.append(str(settings_path))
     try:
-        from gen_settings import main  # pyright: ignore [reportMissingImports]
+        from gen_settings import main  # type: ignore [unresolved-import]
     finally:
         sys.path.pop()
     main()
@@ -282,8 +282,7 @@ def test_datasets_in_doc() -> None:
             return None
 
     SafeLoaderIgnoreUnknown.add_constructor(
-        # PyYAML stubs have an error -- this can be None but mypy says it can't
-        None,  # type: ignore
+        None,
         SafeLoaderIgnoreUnknown.ignore_unknown,
     )
 

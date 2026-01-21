@@ -10,7 +10,7 @@ from mne_bids.utils import _write_json
 
 from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run
+from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import OutFilesT
 
 
@@ -37,9 +37,7 @@ def init_dataset(cfg: SimpleNamespace, exec_params: SimpleNamespace) -> OutFiles
     }
 
     _write_json(out_files["json"], ds_json, overwrite=True)
-    return _prep_out_files(
-        exec_params=exec_params, out_files=out_files, bids_only=False
-    )
+    return _prep_out_files_path(exec_params=exec_params, out_files=out_files)
 
 
 def init_subject_dirs(

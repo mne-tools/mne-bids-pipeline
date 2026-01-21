@@ -11,4 +11,4 @@ pip install --upgrade --progress-bar off -v \
     onnxruntime \
     PySide6 \
     awscli \
-    -e .[tests]
+    -e . --group dev

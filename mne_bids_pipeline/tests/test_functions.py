@@ -62,4 +62,4 @@ def test_all_functions_return(module_name: str) -> None:
             what = f"Function does _prep_out_files: {what}"
             assert isinstance(r, ast.Call), what
             assert isinstance(r.func, ast.Name), what
-            assert r.func.id == "_prep_out_files", what
+            assert r.func.id in ("_prep_out_files", "_prep_out_files_path"), what

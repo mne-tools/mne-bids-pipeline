@@ -21,9 +21,10 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
+    - uses: astral-sh/setup-uv@v7
     - run: pip install --upgrade pip
-    - run: pip install -ve .[tests] "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr" pre-commit
-    - run: pre-commit run --all  # fail early if code style issues!
+    - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+    - run: lefthook run pre-commit --all-files  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
     - uses: codecov/codecov-action@v5
       if: success()
@@ -60,7 +61,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "${{ matrix.python }}"
-      - run: pip install -ve .[tests] --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+      - run: pip install -ve . --group dev --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
       - uses: actions/cache@v5
         with:
           key: ${{ matrix.dataset }}
@@ -98,7 +99,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install -ve .[tests] pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
+      - run: pip install -ve . --group dev pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
       - uses: actions/cache@v5
         with:
           key: MNE-funloc-data

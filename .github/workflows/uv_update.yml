@@ -5,8 +5,6 @@ on:  # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 0'  # weekly on Sunday at 00:00
   workflow_dispatch:
-  # TODO: Remove before merge!
-  pull_request:
 
 jobs:
   upgrade:

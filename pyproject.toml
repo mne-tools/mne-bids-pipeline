@@ -62,7 +62,6 @@ mne_bids_pipeline = "mne_bids_pipeline._main:main"
 dev = [
   "Pygments",
   "codespell",
-  "coverage",
   "httpx >= 0.20",
   "jinja2",
   "lefthook",
@@ -79,6 +78,7 @@ dev = [
 ]
 docs = [
   "black",  # docstring reformatting
+  "coverage",
   "livereload",
   "mike",
   "mkdocs",

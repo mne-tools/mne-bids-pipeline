@@ -60,6 +60,7 @@ dev = [
   "codespell",
   "httpx >= 0.20",
   "jinja2",
+  "lefthook",
   "openneuro-py >= 2022.2.0",
   "pooch",
   "psutil",

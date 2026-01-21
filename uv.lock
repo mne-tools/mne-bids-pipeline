@@ -1773,6 +1773,15 @@ wheels = [
 ]
 
 [[package]]
+name = "lefthook"
+version = "2.0.15"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/8f/e90724128f481c637b7e9343b6535622cfa136541959a49f8a3de0d0e7a5/lefthook-2.0.15.tar.gz", hash = "sha256:8a32c9f2d44f0ff0f3e3ab48f9802ca10f1222b491f3f14e03f577ec175b6649", size = 50175274, upload-time = "2026-01-13T10:02:58.76Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/d5/243d967f541d422a7252f92dbcc201cfd588bd404a66935baacc83be49c5/lefthook-2.0.15-py3-none-any.whl", hash = "sha256:54b174520f18a4fa2545ff1e5eae4c4d2515539fb25b8c4fe04b9224a2ff07ee", size = 50416709, upload-time = "2026-01-13T10:02:55.761Z" },
+]
+
+[[package]]
 name = "livereload"
 version = "2.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2340,6 +2349,7 @@ dev = [
     { name = "codespell" },
     { name = "httpx" },
     { name = "jinja2" },
+    { name = "lefthook" },
     { name = "openneuro-py" },
     { name = "pooch" },
     { name = "psutil" },
@@ -2403,6 +2413,7 @@ dev = [
     { name = "codespell" },
     { name = "httpx", specifier = ">=0.20" },
     { name = "jinja2" },
+    { name = "lefthook" },
     { name = "openneuro-py", specifier = ">=2022.2.0" },
     { name = "pooch" },
     { name = "psutil" },

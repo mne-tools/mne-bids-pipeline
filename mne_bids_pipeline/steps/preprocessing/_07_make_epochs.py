@@ -206,7 +206,7 @@ def run_epochs(
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
-    assert isinstance(epochs.drop_log, list)
+    assert isinstance(epochs.drop_log, tuple)
     n_epochs_before_metadata_query = len(epochs.drop_log)
 
     msg = (

@@ -68,9 +68,8 @@ def run_head_pos(
     )
     # Now take everything from the bids_path_in and overwrite the parameters
     assert bids_path_in.subject is not None
-    assert bids_path_in.session is not None
-    subject = bids_path_in.subject  # noqa: F841
-    session = bids_path_in.session  # noqa: F841
+    subject: str = bids_path_in.subject  # noqa: F841
+    session: str | None = bids_path_in.session  # noqa: F841
     run = bids_path_in.run
 
     raw = import_experimental_data(

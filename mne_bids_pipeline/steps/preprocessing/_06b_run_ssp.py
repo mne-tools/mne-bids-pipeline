@@ -108,6 +108,8 @@ def run_ssp(
 
     eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
 
+    ch_name_ecg: str | None = None
+    ch_name_eog: str | list[str] | None = None
     if eog_chs_subj_sess:
         ch_name_eog = list(eog_chs_subj_sess)
         assert ch_name_eog is not None

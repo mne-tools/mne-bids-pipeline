@@ -21,8 +21,9 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
+    - uses: astral-sh/setup-uv@v7
     - run: pip install --upgrade pip
-    - run: pip install -ve . --group dev uv "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+    - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
     - run: lefthook run pre-commit --all-files  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
     - uses: codecov/codecov-action@v5

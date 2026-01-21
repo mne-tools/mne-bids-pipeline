@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import sys
-from collections.abc import Collection
+from collections.abc import Collection, Generator
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, TypedDict
@@ -147,7 +147,7 @@ _n_jobs = {
 
 
 @pytest.fixture()
-def dataset_test(request: pytest.FixtureRequest) -> None:
+def dataset_test(request: pytest.FixtureRequest) -> Generator[None, None, None]:
     """Provide a defined context for our dataset tests."""
     # There is probably a cleaner way to get this param, but this works for now
     capsys = request.getfixturevalue("capsys")
@@ -299,6 +299,7 @@ def test_session_specific_mri(
     # copy the dataset to a tmpdir, and in the destination location make it
     # seem like there's only one subj with different MRIs for different sessions
     new_bids_path = BIDSPath(root=tmp_path / dataset, subject="01", session="a")
+    assert new_bids_path.root is not None
     # sub-01/* → sub-01/ses-a/* ;  sub-02/* → sub-01/ses-b/*
     for src_subj, dst_sess in (("01", "a"), ("02", "b")):
         src_dir = config_obj.bids_root / f"sub-{src_subj}"

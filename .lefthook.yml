@@ -1,0 +1,25 @@
+pre-commit:
+  parallel: true
+  commands:
+    ruff-lint:
+      glob: "*.py"
+      exclude: "mne_bids_pipeline/steps/freesurfer/contrib/*.py"
+      run: uv run ruff check --fix {staged_files}
+    ruff-format:
+      glob: "*.py"
+      exclude: "mne_bids_pipeline/steps/freesurfer/contrib/*.py"
+      run: uv run ruff format {staged_files}
+    tombi-format:
+      glob: "*.toml"
+      run: uv run tombi format {staged_files}
+    tombi-lint:
+      glob: "*.toml"
+      run: uv run tombi lint {staged_files}
+    ty:
+      glob: "mne_bids_pipeline/**/*.py"
+      exclude: "mne_bids_pipeline/steps/freesurfer/contrib/*.py"
+      run: uv run ty check {staged_files}
+    codespell:
+      glob: "*.{py,yaml,yml,md,txt}"
+      exclude: "mne_bids_pipeline/steps/freesurfer/contrib/*.py"
+      run: uv run codespell {staged_files}

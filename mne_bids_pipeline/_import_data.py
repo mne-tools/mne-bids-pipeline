@@ -202,7 +202,7 @@ def make_epochs(
     return epochs
 
 
-def annotations_to_events(*, raw_paths: list[PathLike]) -> dict[str, int]:
+def annotations_to_events(*, raw_paths: list[PathLike | BIDSPath]) -> dict[str, int]:
     """Generate a unique event name -> event code mapping.
 
     The mapping can that can be used across all passed raws.

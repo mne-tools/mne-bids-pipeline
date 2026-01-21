@@ -1080,7 +1080,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -ve .[docs]
+            pip install -ve . --group docs
       - run:
           name: Build documentation
           command: |
@@ -1112,7 +1112,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -ve .[docs]
+            pip install -ve . --group docs
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist

@@ -106,7 +106,7 @@ def _handle_csp_args(
 def _decoding_preproc_steps(
     subject: str,
     session: str | None,
-    epochs: mne.Epochs,
+    epochs: mne.BaseEpochs,
     pca: bool = True,
 ) -> list[BaseEstimator]:
     scaler = mne.decoding.Scaler(epochs.info)

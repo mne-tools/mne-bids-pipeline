@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatch-vcs", "hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -9,85 +9,87 @@ description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE.txt" }
-keywords = ["science", "neuroscience", "psychology"]
 authors = [
   { name = "Eric Larson" },
   { name = "Alexandre Gramfort" },
   { name = "Mainak Jas" },
   { name = "Richard Höchenberger", email = "richard.hoechenberger@gmail.com" },
 ]
+keywords = ["neuroscience", "psychology", "science"]
 classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python",
 ]
 dependencies = [
-  "psutil",               # for joblib
-  "packaging",
-  "numpy",
-  "scipy",
-  "matplotlib",
-  "nibabel",
+  "annotated-types",  # for distributed dashboard
+  "autoreject",  # to have dask and jupyter working together
+  "bokeh",  # for joblib
+  "dask[distributed]",  # from pandas
+  "filelock",
   "joblib >= 0.14",
-  "threadpoolctl",
-  "dask[distributed]",
-  "bokeh",            # for distributed dashboard
-  "jupyter-server-proxy", # to have dask and jupyter working together
-  "scikit-learn",
-  "pandas",
-  "pyarrow",              # from pandas
-  "seaborn",
   "json_tricks",
-  "pydantic >= 2.0.0",
-  "annotated-types",
-  "rich",
-  "python-picard",
-  "qtpy",
-  "pyvista",
-  "pyvistaqt",
-  "openpyxl",
-  "autoreject",
-  "mne[hdf5] >=1.7",
+  "jupyter-server-proxy",
+  "matplotlib",
+  "meegkit",
   "mne-bids[full]",
   "mne-icalabel",
-  "filelock",
-  "meegkit"
+  "mne[hdf5] >=1.7",
+  "nibabel",
+  "numpy",
+  "openpyxl",
+  "packaging",
+  "pandas",
+  "psutil",
+  "pyarrow",
+  "pydantic >= 2.0.0",
+  "python-picard",
+  "pyvista",
+  "pyvistaqt",
+  "qtpy",
+  "rich",
+  "scikit-learn",
+  "scipy",
+  "seaborn",
+  "threadpoolctl"
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-tests = [
-  "pytest",
-  "pytest-cov",
-  "pooch",
-  "psutil",
-  "ruff",
+[dependency-groups]
+dev = [
+  "Pygments",
+  "codespell",
+  "httpx >= 0.20",
   "jinja2",
   "openneuro-py >= 2022.2.0",
-  "httpx >= 0.20",
-  "tqdm",
-  "Pygments",
+  "pooch",
+  "psutil",
+  "pytest",
+  "pytest-cov",
   "pyyaml",
+  "ruff",
+  "tqdm",
+  "ty>=0.0.12",
 ]
 docs = [
-  "mkdocs",
-  "mkdocs-material >= 9.0.4",
-  "mkdocs-material-extensions",
-  "mkdocs-macros-plugin",
-  "mkdocs-include-markdown-plugin",
-  "mkdocs-exclude",
-  "mkdocstrings-python",
-  "mike",
+  "black",  # docstring reformatting
   "livereload",
-  "black",                          # docstring reformatting
+  "mike",
+  "mkdocs",
+  "mkdocs-exclude",
+  "mkdocs-include-markdown-plugin",
+  "mkdocs-macros-plugin",
+  "mkdocs-material-extensions",
+  "mkdocs-material >= 9.0.4",
+  "mkdocstrings-python",
 ]
 
 [project.scripts]
 mne_bids_pipeline = "mne_bids_pipeline._main:main"
 
 [project.urls]
+changelog = "http://mne.tools/mne-bids-pipeline/changes.html"
 homepage = "https://mne.tools/mne-bids-pipeline"
 repository = "https://github.com/mne-tools/mne-bids-pipeline"
-changelog = "http://mne.tools/mne-bids-pipeline/changes.html"
 
 [tool.hatch.version]
 source = "vcs"
@@ -99,7 +101,7 @@ exclude = [
   "/codecov.yml",
   "**/tests",
   "/docs",
-  "/docs/source/examples/gen_examples.py", # specify explicitly because its exclusion is negated in .gitignore
+  "/docs/source/examples/gen_examples.py",  # specify explicitly because its exclusion is negated in .gitignore
   "/Makefile",
   "/CONTRIBUTING.md",
   "ignore_words.txt",
@@ -125,7 +127,7 @@ exclude = ["**/freesurfer/contrib", "dist/", "build/", "**/.*cache"]
 [tool.ruff.lint]
 select = ["A", "B006", "D", "E", "F", "I", "W", "UP", "TID252"]
 ignore = [
-  "D104", # Missing docstring in public package
+  "D104",  # Missing docstring in public package
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -133,31 +135,3 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-
-[tool.mypy]
-ignore_errors = false
-scripts_are_modules = true
-disable_error_code = [
-  # For libraries like matplotlib that we don't have types for
-  "import-not-found",
-  "import-untyped",
-]
-strict = true
-modules = ["mne_bids_pipeline", "docs.source"]
-
-[[tool.mypy.overrides]]
-module = ["mne_bids_pipeline.steps.freesurfer.contrib.*"]
-ignore_errors = true  # not our code, don't validate
-
-[[tool.mypy.overrides]]
-module = ["mne_bids_pipeline.tests.*"]
-disable_error_code = [
-  "misc",  # Untyped decorator makes function "test_all_functions_return" untyped
-]
-
-[[tool.mypy.overrides]]
-module = ['mne_bids_pipeline.tests.configs.*']
-disable_error_code = [
-  "assignment",  # Incompatible types in assignment
-  "var-annotated",  # Need type annotation for "plot_psd_for_runs"
-]

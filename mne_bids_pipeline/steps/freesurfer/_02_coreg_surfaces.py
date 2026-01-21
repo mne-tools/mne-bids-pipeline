@@ -18,7 +18,7 @@ from mne_bids_pipeline._config_utils import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run
+from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 fs_bids_app = Path(__file__).parent / "contrib" / "run.py"
@@ -77,11 +77,10 @@ def make_coreg_surfaces(
         overwrite=True,
     )
     out_files = get_output_fnames_coreg_surfaces(cfg=cfg, subject=subject)
-    return _prep_out_files(
+    return _prep_out_files_path(
         exec_params=exec_params,
         out_files=out_files,
         check_relative=cfg.fs_subjects_dir,
-        bids_only=False,
     )
 
 

@@ -68,6 +68,7 @@ dev = [
   "pytest-cov",
   "pyyaml",
   "ruff",
+  "tombi",
   "tqdm",
   "ty>=0.0.12",
 ]

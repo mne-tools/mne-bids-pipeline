@@ -2359,7 +2359,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "codespell" },
-    { name = "coverage" },
     { name = "httpx" },
     { name = "jinja2" },
     { name = "lefthook" },
@@ -2377,6 +2376,7 @@ dev = [
 ]
 docs = [
     { name = "black" },
+    { name = "coverage" },
     { name = "livereload" },
     { name = "mike" },
     { name = "mkdocs" },
@@ -2425,7 +2425,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "codespell" },
-    { name = "coverage" },
     { name = "httpx", specifier = ">=0.20" },
     { name = "jinja2" },
     { name = "lefthook" },
@@ -2443,6 +2442,7 @@ dev = [
 ]
 docs = [
     { name = "black" },
+    { name = "coverage" },
     { name = "livereload" },
     { name = "mike" },
     { name = "mkdocs" },

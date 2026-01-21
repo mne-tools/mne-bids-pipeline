@@ -29,7 +29,7 @@ instructions on [their website](https://surfer.nmr.mgh.harvard.edu/).
 Then install the packages required for testing while in the cloned repo via
 
 ```
-pip install -e .[tests]
+pip install -e . --group dev
 ```
 
 ## Testing

@@ -63,3 +63,4 @@
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
 - Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)
 - Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)
+- Moved to `ty`, `lefthook`, and `dependency-groups` for development (#1166 by @larsoner)

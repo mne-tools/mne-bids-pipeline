@@ -841,7 +841,7 @@ def average_csp_decoding(
     if not len(time_bins):
         fname_csp_cluster_results = None
     else:
-        time_bins_df = pd.DataFrame(time_bins, columns=["t_min", "t_max"])  # type: ignore
+        time_bins_df = pd.DataFrame(time_bins, columns=["t_min", "t_max"])
         del time_bins
         data_for_clustering = {}
         for freq_range_name in freq_name_to_bins_map:

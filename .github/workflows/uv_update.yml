@@ -1,4 +1,4 @@
-name: uv upgrade
+name: uv lock
 
 on:  # yamllint disable-line rule:truthy
   # Scheduled actions only run on the main repo branch, which is exactly what we want
@@ -9,11 +9,11 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
 
 jobs:
-  update_uv:
+  upgrade:
     permissions:
       contents: write
       pull-requests: write
-    name: Update
+    name: upgrade
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.MNE_BOT_TOKEN }}
@@ -23,7 +23,7 @@ jobs:
         with:
           persist-credentials: true
       - uses: astral-sh/setup-uv@v7
-      - run: uv upgrade
+      - run: uv lock --upgrade
       - run: |
           git diff && git status --porcelain
           if [[ $(git status --porcelain) ]]; then

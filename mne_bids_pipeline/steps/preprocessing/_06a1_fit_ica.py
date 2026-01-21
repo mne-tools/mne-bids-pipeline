@@ -151,8 +151,10 @@ def run_ica(
                 msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
             if cfg.ica_l_freq is not None or h_freq is not None:
                 logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
-            del nyq, h_freq
+            del nyq
+
+        if cfg.ica_l_freq is not None or h_freq is not None:
+            raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()

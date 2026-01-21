@@ -2419,7 +2419,7 @@ dev = [
     { name = "pooch" },
     { name = "psutil" },
     { name = "pygments" },
-    { name = "pytest" },
+    { name = "pytest", specifier = ">=9.0" },
     { name = "pytest-cov" },
     { name = "pyyaml" },
     { name = "ruff" },

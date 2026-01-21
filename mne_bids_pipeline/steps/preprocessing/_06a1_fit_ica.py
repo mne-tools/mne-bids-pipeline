@@ -149,7 +149,7 @@ def run_ica(
                 msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
             elif h_freq is not None:
                 msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
-            if cfg.ica_l_freq is not None or h_freq is not None:
+            if msg:
                 logger.info(**gen_log_kwargs(message=msg))
             del nyq
 

@@ -78,7 +78,6 @@ dev = [
 ]
 docs = [
   "black",  # docstring reformatting
-  "coverage",
   "livereload",
   "mike",
   "mkdocs",

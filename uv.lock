@@ -2376,7 +2376,6 @@ dev = [
 ]
 docs = [
     { name = "black" },
-    { name = "coverage" },
     { name = "livereload" },
     { name = "mike" },
     { name = "mkdocs" },
@@ -2442,7 +2441,6 @@ dev = [
 ]
 docs = [
     { name = "black" },
-    { name = "coverage" },
     { name = "livereload" },
     { name = "mike" },
     { name = "mkdocs" },

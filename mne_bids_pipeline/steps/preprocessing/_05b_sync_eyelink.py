@@ -99,7 +99,7 @@ def get_input_fnames_sync_eyelink(
         task=et_task,
         acquisition=cfg.acq,
         recording=cfg.rec,
-        datatype="beh",
+        datatype="misc",
         root=cfg.bids_root,
         suffix="et",
         check=False,
@@ -112,7 +112,7 @@ def get_input_fnames_sync_eyelink(
         task=et_task,
         acquisition=cfg.acq,
         recording=cfg.rec,
-        datatype="beh",
+        datatype="misc",
         root=cfg.bids_root,
         suffix="et",
         check=False,
@@ -181,13 +181,13 @@ def sync_eyelink(
     del bids_basename
 
     # Ideally, this would be done in one of the previous steps where all folders are created (in `_01_init_derivatives_dir.py`). 
-    logger.info(**gen_log_kwargs(message=f"Create `beh` folder for eye-tracking events."))
-    out_dir_beh = cfg.deriv_root / f"sub-{subject}"
+    logger.info(**gen_log_kwargs(message=f"Create `misc` folder for eye-tracking events."))
+    out_dir_misc = cfg.deriv_root / f"sub-{subject}"
     if session is not None:
-        out_dir_beh /= f"ses-{session}"
+        out_dir_misc /= f"ses-{session}"
 
-    out_dir_beh /= "beh"
-    out_dir_beh.mkdir(exist_ok=True, parents=True) # TODO: Check whether the parameter settings make sense or if there is a danger that something could be accidentally overwritten
+    out_dir_misc /= "misc"
+    out_dir_misc.mkdir(exist_ok=True, parents=True) # TODO: Check whether the parameter settings make sense or if there is a danger that something could be accidentally overwritten
 
     out_files["eyelink_et_events"] = et_fname.copy().update(root=cfg.deriv_root, suffix="et_events", extension=".tsv")
     

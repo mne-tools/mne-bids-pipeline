@@ -155,7 +155,7 @@ def test_config_options_used_in_steps() -> None:
         for this_func in (func,) + nested:
             spec = inspect.getfullargspec(this_func)
             kind = "cfg" if "cfg" in (spec.args + spec.kwonlyargs) else "config"
-            this_src = inspect.getsource(this_func)  # type: ignore[arg-type]
+            this_src = inspect.getsource(this_func)
             vars_ = set(re.findall(rf"\b{kind}\.([a-z_]+)\b", this_src))
             helpers[this_key].update(vars_)
         assert len(helpers[this_key]) == count, (

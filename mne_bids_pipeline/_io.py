@@ -13,6 +13,6 @@ def _write_json(fname: PathLike | BIDSPath, data: dict[str, Any] | None) -> None
         json_tricks.dump(data, fp=f, allow_nan=True, sort_keys=False)
 
 
-def _read_json(fname: PathLike) -> Any:
+def _read_json(fname: PathLike | BIDSPath) -> Any:
     with open(fname, encoding="utf-8") as f:
         return json_tricks.load(f)

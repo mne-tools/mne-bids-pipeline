@@ -234,13 +234,13 @@ def _fake_sss_context() -> Generator[None, None, None]:
 
     orig = mne.viz.utils._check_sss
 
-    def replacement(*args, **kwargs):  # type: ignore[no-untyped-def]
+    def replacement(*args, **kwargs):
         out = list(orig(*args, **kwargs))
         assert len(out) == 3 and isinstance(out[-1], bool)
         out[-1] = out[-2]  # has_sss = has_meg (which really means: mag + grad)
         return tuple(out)
 
-    mne.viz.utils._check_sss = replacement
+    mne.viz.utils._check_sss = replacement  # type: ignore[assignment]
     try:
         yield
     finally:

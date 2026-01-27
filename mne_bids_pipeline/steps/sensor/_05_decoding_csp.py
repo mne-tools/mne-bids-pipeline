@@ -499,8 +499,8 @@ def one_subject_decoding(
                     va="center",
                     rotation=90,
                 )
-            ax.set_xlim([np.min(tmin_list), np.max(tmax_list)])
-            ax.set_ylim([np.min(fmin_list), np.max(fmax_list)])
+            ax.set_xlim((np.min(tmin_list), np.max(tmax_list)))
+            ax.set_ylim((np.min(fmin_list), np.max(fmax_list)))
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Frequency (Hz)")
             cbar = fig.colorbar(

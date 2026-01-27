@@ -68,8 +68,9 @@ def run_head_pos(
         check=False,
     )
     # Now take everything from the bids_path_in and overwrite the parameters
-    subject = bids_path_in.subject  # noqa: F841
-    session = bids_path_in.session  # noqa: F841
+    assert bids_path_in.subject is not None
+    subject: str = bids_path_in.subject  # noqa: F841
+    session: str | None = bids_path_in.session  # noqa: F841
     run = bids_path_in.run
 
     raw = import_experimental_data(
@@ -150,7 +151,7 @@ def get_input_fnames_twa_head_pos(
     subject: str,
     session: str | None,
     task: str | None,
-) -> dict[str, BIDSPath | list[BIDSPath]]:
+) -> dict[str, BIDSPath]:
     """Get paths of files required by compute_twa_head_pos function."""
     in_files: dict[str, BIDSPath] = dict()
     # can't use `_get_run_path()` here because we don't loop over runs/tasks.

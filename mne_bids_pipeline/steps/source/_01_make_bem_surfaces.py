@@ -20,7 +20,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report, _render_bem
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run, save_logs
 from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
@@ -115,11 +115,10 @@ def make_bem_surfaces(
         subject=subject,
         session=session,
     )
-    return _prep_out_files(
+    return _prep_out_files_path(
         exec_params=exec_params,
         out_files=out_files,
         check_relative=cfg.fs_subjects_dir,
-        bids_only=False,
     )
 
 

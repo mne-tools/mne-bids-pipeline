@@ -46,6 +46,7 @@
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 - Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
+- Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
 
 ### :books: Documentation
 
@@ -63,3 +64,4 @@
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
 - Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)
 - Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)
+- Moved to `ty`, `lefthook`, and `dependency-groups` for development (#1166 by @larsoner)

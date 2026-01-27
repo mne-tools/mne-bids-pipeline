@@ -276,6 +276,7 @@ def run_covariance(
             msg = "Rendering whitened evoked data."
             logger.info(**gen_log_kwargs(message=msg))
             all_evoked = mne.read_evokeds(fname_evoked)
+            assert isinstance(all_evoked, list)
             conditions = _all_conditions(cfg=cfg)
             assert len(all_evoked) == len(conditions)
             section = "Noise covariance"

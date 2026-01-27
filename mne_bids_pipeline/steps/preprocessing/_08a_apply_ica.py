@@ -12,7 +12,7 @@ import pandas as pd
 from mne.preprocessing import read_ica
 from mne_bids import BIDSPath
 
-from mne_bids_pipeline._config_utils import _get_ssrt, _get_sst, _limit_which_clean
+from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt, _limit_which_clean, get_eeg_reference
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -153,6 +153,12 @@ def apply_ica_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
+    # Re-reference data (again) after applying ICA
+    if cfg.eeg_reference == "average":
+        epochs_cleaned.set_eeg_reference("average", projection=True).apply_proj()
+    else:
+        epochs_cleaned.set_eeg_reference(cfg.eeg_reference)
+
     msg = f"Saving {len(epochs)} reconstructed epochs after ICA."
     logger.info(**gen_log_kwargs(message=msg))
     epochs_cleaned.save(
@@ -218,11 +224,21 @@ def apply_ica_raw(
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
+
     if cfg.ica_use_icalabel:
         raw.set_eeg_reference("average", projection=True).apply_proj()
+
     ica.apply(raw)
+
+    # Re-reference data (again) after applying ICA
+    if cfg.eeg_reference == "average":
+        raw.set_eeg_reference("average", projection=True).apply_proj()
+    else:
+        raw.set_eeg_reference(cfg.eeg_reference)
+    
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
+
     # Report
     with _open_report(
         cfg=cfg,
@@ -253,7 +269,8 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ica_use_icalabel=config.ica_use_icalabel,
-        processing="filt" if config.regress_artifact is None else "regress",
+        eeg_reference=get_eeg_reference(config),        
+        processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )

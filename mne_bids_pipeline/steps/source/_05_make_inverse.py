@@ -119,6 +119,7 @@ def run_inverse(
     if "evoked" in in_files:
         fname_ave = in_files.pop("evoked")
         evokeds = mne.read_evokeds(fname_ave)
+        assert isinstance(evokeds, list)
 
         for condition, evoked in zip(conditions, evokeds):
             suffix = f"{sanitize_cond_name(condition)}+{method}+hemi"

@@ -109,7 +109,7 @@ def _decoding_preproc_steps(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    epochs: mne.Epochs,
+    epochs: mne.BaseEpochs,
     pca: bool = True,
 ) -> list[BaseEstimator]:
     scaler = mne.decoding.Scaler(epochs.info)

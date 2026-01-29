@@ -40,6 +40,7 @@ conditions = [
 ]
 decode = False
 decoding_time_generalization = False
+cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]

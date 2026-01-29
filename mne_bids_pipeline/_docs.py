@@ -8,7 +8,7 @@ from typing import Any
 
 from tqdm import tqdm
 
-from . import _config_utils, _import_data
+from . import _config_utils, _decoding, _import_data
 
 _CONFIG_RE = re.compile(r"config\.([a-zA-Z_]+)")
 
@@ -104,6 +104,7 @@ _EXTRA_FUNCS = {
     "_import_data_kwargs": ("get_mf_reference_run",),
     "get_runs": ("get_runs_all_subjects",),
     "get_sessions": ("_get_sessions",),
+    "_decoding_preproc_steps": ("_get_rank",),
 }
 
 
@@ -247,6 +248,8 @@ class _ParseConfigSteps:
                         # Get the source and regex for config values
                         if key == "_import_data_kwargs":
                             funcs = [getattr(_import_data, key)]
+                        elif key == "_decoding_preproc_steps":
+                            funcs = [getattr(_decoding, key)]
                         else:
                             funcs = [getattr(_config_utils, key)]
                         for func_name in _EXTRA_FUNCS.get(key, ()):

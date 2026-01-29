@@ -2322,7 +2322,7 @@ If `'ad-hoc'`, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing
-the generated evoked data.
+the generated cleaned epochs data.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -2354,13 +2354,13 @@ the generated evoked data.
     Use a custom covariance derived from raw data:
     ```python
     def noise_cov(bids_path):
-        bp = bids_path.copy().update(task='rest', run=None, suffix='meg')
+        bp = bids_path.copy().update(task="rest", run=None)
         raw_rest = mne_bids.read_raw_bids(bp)
-        raw.crop(tmin=5, tmax=60)
-        cov = mne.compute_raw_covariance(raw, rank='info')
+        raw_rest.crop(tmin=5, tmax=60)
+        cov = mne.compute_raw_covariance(raw_rest, rank="info")
         return cov
     ```
-"""
+"""  # noqa: E501
 
 noise_cov_method: Literal[
     "shrunk",
@@ -2376,6 +2376,23 @@ noise_cov_method: Literal[
 """
 The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
+"""
+
+cov_rank: Literal["info"] | dict[str, Any] = "info"
+"""
+Specifies how to determine the rank of the data and associated noise covariance.
+This is used when computing an inverse operator and when preprocessing data for
+decoding. If set to `"info"` (default), the rank will be computed from the measurement
+information. If it's a `dict`, the rank will be computed from the data used to
+compute the covariance, with the `cov_rank` dict passed as keyword arguments
+as `mne.compute_rank(inst, info=info, **cov_rank)` (where the `inst` and `info` will
+automatically be determined by the `noise_cov` type).
+
+???+ example "Example"
+    Compute the rank from the data:
+    ```python
+    cov_rank = {"tol_kind": "relative", "tol": 1e-4}
+    ```
 """
 
 source_info_path_update: dict[str, str] | None = None
@@ -2411,7 +2428,6 @@ file specified in `noise_cov`, or the cleaned evoked
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]
 """
-
 On which data to apply the inverse operator. Currently, the only supported
 target is `'evoked'`. If no inverse computation should be done, pass an
 empty list, `[]`.

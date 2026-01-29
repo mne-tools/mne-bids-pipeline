@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from typing import Any
 
 import mne
@@ -8,6 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
+from ._config_utils import _get_rank
 from ._logging import gen_log_kwargs, logger
 from .typing import FloatArrayT
 
@@ -104,6 +106,7 @@ def _handle_csp_args(
 
 
 def _decoding_preproc_steps(
+    cfg: SimpleNamespace,
     subject: str,
     session: str | None,
     epochs: mne.BaseEpochs,
@@ -112,7 +115,9 @@ def _decoding_preproc_steps(
     scaler = mne.decoding.Scaler(epochs.info)
     steps = [scaler]
     if pca:
-        ranks = mne.compute_rank(inst=epochs, rank="info")
+        ranks = _get_rank(
+            cfg=cfg, subject=subject, session=session, inst=epochs, log=False
+        )
         rank = sum(ranks.values())
         msg = f"Reducing data dimension via PCA; new rank: {rank} (from {ranks})."
         logger.info(**gen_log_kwargs(message=msg))

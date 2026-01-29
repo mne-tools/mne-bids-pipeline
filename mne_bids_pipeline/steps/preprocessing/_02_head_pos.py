@@ -229,7 +229,8 @@ def compute_twa_head_pos(
         ignore_nosub=True,
         check=True,
     )
-    raw_fnames = [bp.fpath for bp in all_runs_raw_bidspaths]
+    # for split files, we need to include only the first one here
+    raw_fnames = [bp.fpath for bp in all_runs_raw_bidspaths if bp.split in (None, "01")]
     raws = [
         mne.io.read_raw_fif(fname, allow_maxshield=True, verbose="ERROR", preload=False)
         for fname in raw_fnames

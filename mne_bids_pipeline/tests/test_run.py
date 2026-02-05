@@ -351,10 +351,13 @@ contrasts = {{}}
     assert len(ssrt) == want_count
 
 
-@pytest.mark.parametrize("runs", [
-    pytest.param([0, 1, 2], id="0,1,2"),
-    pytest.param([3, 4, 5, 6], id="3,4,5,6"),
-])
+@pytest.mark.parametrize(
+    "runs",
+    [
+        pytest.param([0, 1, 2], id="0,1,2"),
+        pytest.param([3, 4, 5, 6], id="3,4,5,6"),
+    ],
+)
 def test_all_runs_picked(tmp_path: Path, runs: list[str]) -> None:
     """Test that if a task is given, only runs from that task are scanned."""
     dataset = "gh-1140"
@@ -384,8 +387,14 @@ conditions = ["zzz"]
     config_path = tmp_path / "fake_config_missing_session.py"
     config_path.write_text(config_content, encoding="utf-8")
     config = _import_config(config_path=config_path)
-    from mne_bids_pipeline.steps.preprocessing._01_data_quality import get_config as get_config_data_quality, get_input_fnames_data_quality
     from mne_bids_pipeline._config_utils import _get_ssrt
+    from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+        get_config as get_config_data_quality,
+    )
+    from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+        get_input_fnames_data_quality,
+    )
+
     cfg = get_config_data_quality(config=config, subject=subject, session=None)
     ssrt = _get_ssrt(config=config, which=("runs",))
     assert len(ssrt) == len(runs)

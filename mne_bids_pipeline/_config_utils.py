@@ -289,143 +289,60 @@ def get_subjects_given_session(
     return subjects
 
 
-def get_runs_all_subjects(
-    config: SimpleNamespace,
-    task: str | None = None,
-) -> dict[str, tuple[None] | tuple[str, ...]]:
-    """Give the mapping between subjects and their runs.
-
-    Returns
-    -------
-    a dict of runs present in the bids_path
-    for each subject asked in the configuration file
-    (and not for each subject present in the bids_path).
-    """
-    tasks = get_tasks(config=config)
-    ignore_tasks: tuple[str, ...] | None = None
-    if task is not None and len(tasks) > 1:
-        ignore_tasks = tuple(t for t in tasks if t != task and t is not None)
-    # Use caching under the hood for speed
-    return _get_runs_all_subjects_cached(
-        bids_root=config.bids_root,
-        data_type=config.data_type,
-        ch_types=tuple(config.ch_types),
-        subjects=tuple(config.subjects) if config.subjects != "all" else "all",
-        exclude_subjects=tuple(config.exclude_subjects),
-        exclude_runs=tuple(config.exclude_runs) if config.exclude_runs else None,
-        ignore_tasks=ignore_tasks,
-    )
-
-
-@functools.cache
-def _get_runs_all_subjects_cached(
-    ignore_tasks: tuple[str, ...] | None = None,
-    **config_dict: dict[str, Any],
-) -> dict[str, tuple[None] | tuple[str, ...]]:
-    config = SimpleNamespace(**config_dict)
-    # Sometimes we check list equivalence for ch_types, so convert it back
-    config.ch_types = list(config.ch_types)
-    subj_runs: dict[str, tuple[None] | tuple[str, ...]] = dict()
-    for subject in get_subjects(config):
-        # Only traverse through the current subject's directory
-        valid_runs_subj = _get_entity_vals_cached(
-            config.bids_root / f"sub-{subject}",
-            entity_key="run",
-            ignore_datatypes=_get_ignore_datatypes(config),
-            ignore_tasks=ignore_tasks,
-        )
-
-        # If we don't have any `run` entities, just set it to None, as we
-        # commonly do when creating a BIDSPath.
-        if valid_runs_subj:
-            if subject in (config.exclude_runs or {}):
-                valid_runs_subj = tuple(
-                    r for r in valid_runs_subj if r not in config.exclude_runs[subject]
-                )
-            subj_runs[subject] = valid_runs_subj
-        else:
-            subj_runs[subject] = (None,)
-
-    return subj_runs
-
-
-def get_intersect_run(config: SimpleNamespace) -> list[str | None]:
-    """Return the intersection of all the runs of all subjects."""
-    subj_runs = get_runs_all_subjects(config, task=None)
-    # Do not use something like:
-    # list(set.intersection(*map(set, subj_runs.values())))
-    # as it will not preserve order. Instead just be explicit and preserve order.
-    # We could use "sorted", but it's probably better to use the order provided by
-    # the user (if they want to put `runs=["02", "01"]` etc. it's better to use "02")
-    all_runs: list[str | None] = list()
-    for runs in subj_runs.values():
-        for run in runs:
-            if run not in all_runs:
-                all_runs.append(run)
-    return all_runs
-
-
-def _get_runs_for_task(
+def _get_runs_sst(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
     task: str | None,
-    verbose: bool = False,
 ) -> list[str | None]:
-    """Return a list of runs for a given task in the BIDS input data.
-
-    Parameters
-    ----------
-    subject
-        Returns a list of the runs of this subject.
-    verbose
-        Notify if different subjects do not share the same runs.
-
-    Returns
-    -------
-    The list of runs of the subject. If no BIDS `run` entity could be found,
-    returns `[None]`.
-    """
+    """Return a list of runs for a given task in the BIDS input data."""
     if subject == "average":  # Used when creating the report
         return [None]
 
-    subj_runs = get_runs_all_subjects(config=config, task=task)
-    valid_runs = subj_runs[subject]
+    kwargs = dict(ignore_datatypes=_get_ignore_datatypes(config))
+    # Only traverse through the current subject's directory
+    subj_root = config.bids_root / f"sub-{subject}"
+    # Limit to session of interest
+    if session is not None:
+        sessions = _get_entity_vals_cached(subj_root, entity_key="session", **kwargs)
+        kwargs["ignore_sessions"] = tuple(set(sessions) - set([session]))
+        del session
+    # Limit to task of interest
+    tasks = _get_entity_vals_cached(subj_root, entity_key="task", **kwargs)
+    if task:
+        kwargs["ignore_tasks"] = tuple(set(tasks) - set([task]))
+    del tasks
+    # Get the runs for that task
+    runs = _get_entity_vals_cached(subj_root, entity_key="run", **kwargs)
 
-    if len(get_subjects(config)) > 1:
-        # Notify if different subjects do not share the same runs
+    # If we don't have any `run` entities, just set it to None, as we
+    # commonly do when creating a BIDSPath.
+    if runs:
+        valid_runs = tuple(
+            r for r in runs
+            if r not in (config.exclude_runs or {}).get(subject, [])
+        )
+    else:
+        valid_runs = (None,)
+    del runs
 
-        same_runs = True
-        for runs_sub_i in subj_runs.values():
-            if set(runs_sub_i) != set(list(subj_runs.values())[0]):
-                same_runs = False
-
-        if not same_runs and verbose:
-            msg = (
-                "Extracted all the runs. "
-                "Beware, not all subjects share the same "
-                "set of runs."
-            )
-            logger.info(**gen_log_kwargs(message=msg))
-
-    runs_out: list[str | None] = list()
+    runs_sst: list[str | None] = list()
     if config.runs == "all":
-        runs_out[:] = valid_runs
+        runs_sst[:] = valid_runs
     elif isinstance(config.runs, dict):
-        runs_out[:] = config.runs[task]
+        runs_sst[:] = config.runs[task]
     else:
         assert isinstance(config.runs, list)
-        runs_out[:] = config.runs
+        runs_sst[:] = config.runs
 
-    if not runs_out:
-        runs_out[:] = [None]
-    else:
-        inclusion = set(runs_out).issubset(set(valid_runs))
-        if not inclusion:
-            raise ValueError(
-                f"Invalid run. It can be a subset of {valid_runs} but got {runs_out}"
-            )
-    return runs_out
+    inclusion = set(runs_sst).issubset(set(valid_runs))
+    if not inclusion:
+        raise ValueError(
+            f"Invalid run. It can be a subset of {valid_runs} but got {runs_sst}"
+        )
+
+    return runs_sst
 
 
 def get_runs_tasks(
@@ -446,9 +363,10 @@ def get_runs_tasks(
         for task in get_tasks(config=config):
             runs_tasks += [
                 (run, task)
-                for run in _get_runs_for_task(
+                for run in  _get_runs_sst(
                     config=config,
                     subject=subject,
+                    session=session,
                     task=task,
                 )
             ]

@@ -52,6 +52,7 @@
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
 - Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
 - Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
+- Fix bug where `runs` were not handled properly when a single `task` was specified but multiple tasks existed in a dataset (#1141 by @larsoner)
 
 ### :books: Documentation
 

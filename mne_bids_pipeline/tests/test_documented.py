@@ -17,8 +17,8 @@ from mne_bids_pipeline._config_import import _get_default_config, _import_config
 from mne_bids_pipeline._config_template import create_template_config
 from mne_bids_pipeline._config_utils import (
     _get_decoding_proc,
-    _get_task_contrasts,
     _get_rank,
+    _get_task_contrasts,
     _limit_which_clean,
     _restrict_analyze_channels,
     get_fs_subject,

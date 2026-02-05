@@ -18,10 +18,12 @@
 - Add support for disabling time-by-time decoding while still performing full-epochs decoding using [`decoding_time`][mne_bids_pipeline._config.decoding_time] (#1141 by @larsoner)
 - Add support for setting decimation for time-by-time decoding using [`decoding_time_decim`][mne_bids_pipeline._config.decoding_time_decim] (#1141 by @larsoner)
 - Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
+- Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
 
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
+- The path passed to `noise_cov` callables is no longer the evoked dataset but instead epochs. Note that the epochs have `processing="clean"` in the `BIDSPath`. (#1159 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 
@@ -48,6 +50,8 @@
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 - Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
+- Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
+- Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
 
 ### :books: Documentation
 
@@ -65,3 +69,4 @@
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
 - Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)
 - Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)
+- Moved to `ty`, `lefthook`, and `dependency-groups` for development (#1166 by @larsoner)

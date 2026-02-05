@@ -148,7 +148,8 @@ def run_epochs(
             epochs_all_runs = epochs
         else:
             epochs_all_runs = mne.concatenate_epochs(
-                [epochs_all_runs, epochs], on_mismatch="warn"
+                [epochs_all_runs, epochs],  # type: ignore[unresolved-reference]
+                on_mismatch="warn",
             )
 
         if cfg.use_maxwell_filter:
@@ -208,6 +209,7 @@ def run_epochs(
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
 
+    assert isinstance(epochs.drop_log, tuple)
     n_epochs_before_metadata_query = len(epochs.drop_log)
 
     msg = (

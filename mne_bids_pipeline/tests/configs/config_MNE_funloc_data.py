@@ -39,6 +39,7 @@ conditions = [
     # "visual/deviant",
 ]
 decoding_time = False
+cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]

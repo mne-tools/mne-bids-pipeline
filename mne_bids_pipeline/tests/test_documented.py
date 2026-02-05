@@ -18,6 +18,7 @@ from mne_bids_pipeline._config_template import create_template_config
 from mne_bids_pipeline._config_utils import (
     _get_decoding_proc,
     _get_task_contrasts,
+    _get_rank,
     _limit_which_clean,
     _restrict_analyze_channels,
     get_fs_subject,
@@ -62,7 +63,7 @@ def test_options_documented() -> None:
     settings_path = root_path.parent / "docs" / "source" / "settings"
     sys.path.append(str(settings_path))
     try:
-        from gen_settings import main  # pyright: ignore [reportMissingImports]
+        from gen_settings import main  # type: ignore [unresolved-import]
     finally:
         sys.path.pop()
     main()
@@ -111,6 +112,8 @@ def test_config_options_passed_to_any_steps() -> None:
     assert missing_from_steps == [], f"Missing from steps: {missing_from_steps}"
     for key, val in pcs.steps.items():
         assert val, f"No steps for {key}"
+    # Spot check for EXTRA_FUNCS
+    assert "sensor/_03_decoding_time_by_time" in pcs.steps["cov_rank"]
 
 
 def test_config_options_used_in_steps() -> None:
@@ -138,22 +141,22 @@ def test_config_options_used_in_steps() -> None:
         (_import_data_kwargs, 28, ()),
         (_limit_which_clean, 3, ()),
         (_restrict_analyze_channels, 3, ()),
-        (_get_decoding_proc, 1, ()),
+        (_get_decoding_proc, 2, (_get_rank,)),
         (_all_conditions, 2, (_get_task_contrasts,)),
         (add_csp_grand_average, 9, ()),
         (get_fs_subject, 1, ()),
         (_add_epochs_image_kwargs, 1, ()),
         (get_mf_cal_fname, 3, ()),
         (get_mf_ctc_fname, 3, ()),
+        (_get_rank, 1, ()),
     ):
         this_key = f"{func.__name__}("
         helpers[this_key] = set()
         for this_func in (func,) + nested:
             spec = inspect.getfullargspec(this_func)
             kind = "cfg" if "cfg" in (spec.args + spec.kwonlyargs) else "config"
-            vars_ = set(
-                re.findall(rf"\b{kind}\.([a-z_]+)\b", inspect.getsource(this_func))
-            )
+            this_src = inspect.getsource(this_func)
+            vars_ = set(re.findall(rf"\b{kind}\.([a-z_]+)\b", this_src))
             helpers[this_key].update(vars_)
         assert len(helpers[this_key]) == count, (
             f"{this_key} has {len(helpers[this_key])} vars, expected {count}, does the "
@@ -195,14 +198,14 @@ def test_config_options_used_in_steps() -> None:
             errors.append((f"mne_bids_pipeline/steps/{step}.py", var))
     if errors:  # pragma: no cover
         use_len = max(len(err[0]) for err in errors)
-        error_str = "\n".join(f"{err[0].ljust(use_len)} : {err[1]}" for err in errors)
+        error_str = "\n".join(f"- {err[0].ljust(use_len)} : {err[1]}" for err in errors)
         error_str += (
             "\n\nIf this is a false alarm and a config var truly used, update this "
             "test by expanding the list of 'helpers', adding the variable to the "
             "'ignores' dict, or otherwise improve this test to be smarter."
         )
         raise AssertionError(
-            f"{len(errors)} config option(s) not used in steps:\n{error_str}"
+            f"{len(errors)} config option(s) not used in steps:\n\n{error_str}"
         )
 
 
@@ -282,8 +285,7 @@ def test_datasets_in_doc() -> None:
             return None
 
     SafeLoaderIgnoreUnknown.add_constructor(
-        # PyYAML stubs have an error -- this can be None but mypy says it can't
-        None,  # type: ignore
+        None,
         SafeLoaderIgnoreUnknown.ignore_unknown,
     )
 

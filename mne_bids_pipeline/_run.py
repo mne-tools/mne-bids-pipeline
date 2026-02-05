@@ -20,7 +20,7 @@ from joblib import Memory
 from mne_bids import BIDSPath
 
 from ._logging import _is_testing, gen_log_kwargs, logger
-from .typing import InFilesT, OutFilesT
+from .typing import InFilesPathT, InFilesT, OutFilesT
 
 
 def failsafe_run(
@@ -446,18 +446,32 @@ def _prep_out_files(
     exec_params: SimpleNamespace,
     out_files: InFilesT,
     check_relative: pathlib.Path | None = None,
-    bids_only: bool = True,
+) -> OutFilesT:
+    for key, fname in out_files.items():
+        assert isinstance(fname, BIDSPath), (
+            f'out_files["{key}"] must be a BIDSPath, got {type(fname)}'
+        )
+        if fname.suffix not in ("raw", "epo"):
+            assert fname.split is None, fname
+    return _prep_out_files_path(
+        exec_params=exec_params,
+        out_files=out_files,
+        check_relative=check_relative,
+    )
+
+
+def _prep_out_files_path(
+    *,
+    exec_params: SimpleNamespace,
+    out_files: InFilesPathT,
+    check_relative: pathlib.Path | None = None,
 ) -> OutFilesT:
     if check_relative is None:
         check_relative = exec_params.deriv_root
     for key, fname in out_files.items():
         # Sanity check that we only ever write to the derivatives directory
-        if bids_only:
-            assert isinstance(fname, BIDSPath), (type(fname), fname)
         # raw and epochs can split on write, and .save should check for us now, so
         # we only need to check *other* types (these should never split)
-        if isinstance(fname, BIDSPath) and fname.suffix not in ("raw", "epo"):
-            assert fname.split is None, fname
         fname = pathlib.Path(fname)
         if not fname.is_relative_to(check_relative):
             raise RuntimeError(

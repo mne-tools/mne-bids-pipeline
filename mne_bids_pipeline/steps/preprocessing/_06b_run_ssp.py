@@ -102,26 +102,26 @@ def run_ssp(
     projs: dict[str, list[mne.Projection]] = dict()
     proj_kinds = ("ecg", "eog")
     rate_names = dict(ecg="heart", eog="blink")
-    events_fun = dict(ecg=_find_ecg_events, eog=find_eog_events)
     minimums = dict(ecg=cfg.min_ecg_epochs, eog=cfg.min_eog_epochs)
     rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
-    ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
 
     eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
 
+    ch_name_ecg: str | None = None
+    ch_name_eog: str | list[str] | None = None
     if eog_chs_subj_sess:
-        ch_name["eog"] = list(eog_chs_subj_sess)
-        assert ch_name["eog"] is not None
-        assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
+        ch_name_eog = list(eog_chs_subj_sess)
+        assert ch_name_eog is not None
+        assert all(ch_name in raw.ch_names for ch_name in ch_name_eog)
     if cfg.ssp_ecg_channel:
-        ch_name["ecg"] = get_ecg_channel(
+        ch_name_ecg = get_ecg_channel(
             ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
         )
-        if ch_name["ecg"] not in raw.ch_names:
+        if ch_name_ecg not in raw.ch_names:
             raise ConfigError(
-                f"SSP ECG channel '{ch_name['ecg']}' not found in data for "
+                f"SSP ECG channel '{ch_name_ecg}' not found in data for "
                 f"subject {subject}, session {session}"
             )
     if cfg.ssp_meg == "auto":
@@ -130,7 +130,11 @@ def run_ssp(
         projs[kind] = []
         if not any(n_projs[kind].values()):
             continue
-        events = events_fun[kind](raw=raw, ch_name=ch_name[kind])
+        if kind == "ecg":
+            assert isinstance(ch_name_ecg, str | None)
+            events = _find_ecg_events(raw=raw, ch_name=ch_name_ecg)
+        else:
+            events = find_eog_events(raw=raw, ch_name=ch_name_eog)
         n_orig = len(events)
         rate = n_orig / raw.times[-1] * 60
         bpm_msg = f"{rate:5.1f} bpm"
@@ -240,6 +244,7 @@ def run_ssp(
             fig = mne.viz.plot_projs_joint(
                 these_projs, proj_epochs.average(picks="all"), picks_trace=picks_trace
             )
+            assert isinstance(proj_epochs.drop_log, tuple)
             caption = (
                 f"Computed using {len(proj_epochs)} epochs "
                 f"(from {len(proj_epochs.drop_log)} original events)"

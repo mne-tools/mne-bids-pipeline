@@ -8,7 +8,7 @@ from typing import Any
 
 from tqdm import tqdm
 
-from . import _config_utils, _import_data
+from . import _config_utils, _decoding, _import_data
 
 _CONFIG_RE = re.compile(r"config\.([a-zA-Z_]+)")
 
@@ -104,6 +104,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
 _EXTRA_FUNCS = {
     "_import_data_kwargs": ("get_mf_reference_run_task",),
     "get_sessions": ("_get_sessions",),
+    "_decoding_preproc_steps": ("_get_rank",),
 }
 
 
@@ -139,7 +140,7 @@ class _ParseConfigSteps:
             for attr in ast.walk(ast.parse(inspect.getsource(func_extra))):
                 if not isinstance(attr, ast.Attribute):
                     continue
-                if not (isinstance(attr.value, ast.Name) and attr.value.id in ("config", "cfg")):
+                if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
                     continue
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
@@ -276,6 +277,8 @@ class _ParseConfigSteps:
                         # Get the source and regex for config values
                         if key == "_import_data_kwargs":
                             funcs = [getattr(_import_data, key)]
+                        elif key == "_decoding_preproc_steps":
+                            funcs = [getattr(_decoding, key)]
                         else:
                             funcs = [getattr(_config_utils, key)]
                         for func_name in _EXTRA_FUNCS.get(key, ()):

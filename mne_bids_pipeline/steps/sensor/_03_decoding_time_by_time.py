@@ -325,6 +325,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_decoding_contrasts(config, task=task),
+        cov_rank=config.cov_rank,
         decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,

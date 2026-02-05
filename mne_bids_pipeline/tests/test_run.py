@@ -294,12 +294,7 @@ allow_missing_sessions = {allow_missing_sessions}
 @pytest.mark.parametrize(
     "task", ("taskA", pytest.param(["taskA", "taskB"], id="taskA+B"))
 )
-def test_tasks_runs_picked(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-    task: str | list[str],
-) -> None:
+def test_tasks_runs_picked(tmp_path: Path, task: str | list[str]) -> None:
     """Test that if a task is given, only runs from that task are scanned."""
     # test for gh-1174
     dataset = "fake"

@@ -763,7 +763,7 @@ def _get_run_rest_noise_path(
     return path
 
 
-def _get_mf_reference_run_path(
+def _get_mf_reference_path(
     *,
     cfg: SimpleNamespace,
     subject: str,
@@ -849,9 +849,13 @@ def _read_bads_tsv(
     return out
 
 
-def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, Any]:
+def _import_data_kwargs(
+    *, config: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, Any]:
     """Get config params needed for any raw data loading."""
-    mf_reference_run, mf_reference_task = get_mf_reference_run_task(config=config)
+    mf_reference_run, mf_reference_task = get_mf_reference_run_task(
+        config=config, subject=subject, session=session
+    )
     return dict(
         # import_experimental_data / general
         task=config.task,

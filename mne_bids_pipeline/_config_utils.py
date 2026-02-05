@@ -318,6 +318,7 @@ def _get_runs_sst(
 
     # If we don't have any `run` entities, just set it to None, as we
     # commonly do when creating a BIDSPath.
+    valid_runs: tuple[str, ...] | tuple[None]
     if runs:
         valid_runs = tuple(
             r for r in runs if r not in (config.exclude_runs or {}).get(subject, [])
@@ -381,7 +382,9 @@ def get_runs_tasks(
             runs_tasks.append((None, "rest"))
     if "noise" in which:
         mf_reference_run, mf_reference_task = get_mf_reference_run_task(
-            config=config, subject=subject, session=session,
+            config=config,
+            subject=subject,
+            session=session,
         )
         noise_path = _get_noise_path(
             mf_reference_run=mf_reference_run,
@@ -410,7 +413,10 @@ def get_mf_reference_run_task(
     else:
         task = get_tasks(config=config)[0]
     task_runs = _get_runs_sst(
-        config=config, subject=subject, session=session, task=task,
+        config=config,
+        subject=subject,
+        session=session,
+        task=task,
     )
     if config.mf_reference_run is not None:
         assert isinstance(config.mf_reference_run, str), type(config.mf_reference_run)

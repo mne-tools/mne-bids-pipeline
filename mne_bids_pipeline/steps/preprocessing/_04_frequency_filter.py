@@ -350,6 +350,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         l_freq=config.l_freq,
@@ -365,7 +366,7 @@ def get_config(
         regress_artifact=config.regress_artifact,
         notch_extra_kws=config.notch_extra_kws,
         bandpass_extra_kws=config.bandpass_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -382,6 +383,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,

@@ -142,7 +142,9 @@ def main(*, config: SimpleNamespace) -> None:
     logs = list()
     for subject, sessions in get_subjects_sessions(config).items():
         for session in sessions:
-            run, task = get_mf_reference_run_task(config=config)
+            run, task = get_mf_reference_run_task(
+                config=config, subject=subject, session=session
+            )
             logs.append(
                 find_empty_room(
                     cfg=get_config(config=config),

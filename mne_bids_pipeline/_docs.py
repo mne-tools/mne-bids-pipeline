@@ -23,8 +23,6 @@ _IGNORE_OPTIONS = {
 }
 # We don't need to parse the config itself, just the steps
 _MANUAL_KWS = {
-    "source/_04_make_forward:get_config:t1_bids_path": ("mri_t1_path_generator",),
-    "source/_04_make_forward:get_config:landmarks_kind": ("mri_landmarks_kind",),
     "preprocessing/_01_data_quality:get_config:extra_kwargs": (
         "mf_cal_fname",
         "mf_ctc_fname",
@@ -34,6 +32,8 @@ _MANUAL_KWS = {
     ),
     "preprocessing/_06a1_fit_ica:get_config:epochs_tmin": ("epochs_tmin",),
     "preprocessing/_06a1_fit_ica:get_config:epochs_tmax": ("epochs_tmax",),
+    "source/_04_make_forward:get_config:t1_bids_path": ("mri_t1_path_generator",),
+    "source/_04_make_forward:get_config:landmarks_kind": ("mri_landmarks_kind",),
 }
 # Some don't show up so force them to be empty
 _EXECUTION_OPTIONS = (
@@ -89,8 +89,6 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
     "t_break_annot_stop_before_next_event",
     "rename_events",
     "on_rename_missing_events",
-    "mf_reference_run",  # TODO: Make clearer that this changes a lot
-    "mf_reference_task",  # same ^
     "fix_stim_artifact",
     "stim_artifact_tmin",
     "stim_artifact_tmax",
@@ -105,7 +103,6 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
 # Eventually we could parse AST to get these, but this is simple enough
 _EXTRA_FUNCS = {
     "_import_data_kwargs": ("get_mf_reference_run_task",),
-    "_get_runs_for_task": ("get_runs_all_subjects",),
     "get_sessions": ("_get_sessions",),
 }
 
@@ -135,13 +132,14 @@ class _ParseConfigSteps:
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
             _config_utils.get_subjects_sessions,
+            _import_data._get_mf_reference_path,
         ):
             this_list: list[str] = []
             assert isinstance(func_extra, FunctionType)
             for attr in ast.walk(ast.parse(inspect.getsource(func_extra))):
                 if not isinstance(attr, ast.Attribute):
                     continue
-                if not (isinstance(attr.value, ast.Name) and attr.value.id == "config"):
+                if not (isinstance(attr.value, ast.Name) and attr.value.id in ("config", "cfg")):
                     continue
                 if attr.attr not in this_list:
                     this_list.append(attr.attr)
@@ -265,7 +263,7 @@ class _ParseConfigSteps:
                         if key not in (
                             "_bids_kwargs",
                             "_import_data_kwargs",
-                            "_get_runs_for_task",
+                            "_get_runs_sst",
                             "get_datatype",
                             "get_runs_tasks",
                             "get_subjects",

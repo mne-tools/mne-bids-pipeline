@@ -16,7 +16,7 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
-    _get_runs_for_task,
+    _get_runs_sst,
     _get_sst,
     _get_task_float,
     get_eeg_reference,
@@ -324,6 +324,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
     task: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
@@ -347,7 +348,9 @@ def get_config(
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
-        runs_for_task=_get_runs_for_task(config=config, subject=subject, task=task),
+        runs_for_task=_get_runs_sst(
+            config=config, subject=subject, session=session, task=task
+        ),
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
@@ -366,6 +369,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                     task=task,
                 ),
                 exec_params=config.exec_params,

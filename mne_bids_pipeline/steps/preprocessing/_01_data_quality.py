@@ -14,7 +14,7 @@ from mne_bids_pipeline._config_utils import (
 )
 from mne_bids_pipeline._import_data import (
     _bads_path,
-    _get_mf_reference_run_path,
+    _get_mf_reference_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
     _read_raw_msg,
@@ -53,7 +53,7 @@ def get_input_fnames_data_quality(
     # When doing autobad for the noise run, we also need the reference run
     if _do_mf_autobad(cfg=cfg) and run is None and task == "noise":
         in_files.update(
-            _get_mf_reference_run_path(
+            _get_mf_reference_path(
                 cfg=cfg,
                 subject=subject,
                 session=session,
@@ -373,7 +373,7 @@ def get_config(
         # find_flat_channels_meg=config.find_flat_channels_meg,
         # find_noisy_channels_meg=config.find_noisy_channels_meg,
         # find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
         **extra_kwargs,
     )
     return cfg

@@ -723,12 +723,20 @@ mf_reference_run: str | None = None
 """
 Which run to take as the reference for adjusting the head position of all
 runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
-If `None`, pick the first run.
+If `None`, pick the first run for the
+[`mf_reference_task`][mne_bids_pipeline._config.mf_reference_task].
 
 ???+ example "Example"
     ```python
     mf_reference_run = '01'  # Use run "01"
     ```
+"""
+
+mf_reference_task: str | None = None
+"""
+Which task to take as the reference for adjusting the head position of all
+runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
+If `None`, pick the first task found in the BIDS dataset.
 """
 
 mf_cal_fname: str | None = None

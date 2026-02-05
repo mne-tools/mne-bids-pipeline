@@ -265,7 +265,7 @@ def get_config_head_pos(
         mf_mc_gof_limit=config.mf_mc_gof_limit,
         mf_mc_dist_limit=config.mf_mc_dist_limit,
         mf_mc_t_window=config.mf_mc_t_window,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -285,7 +285,7 @@ def get_config_twa(
         ),
         mf_mc=config.mf_mc,
         mf_destination=config.mf_destination,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

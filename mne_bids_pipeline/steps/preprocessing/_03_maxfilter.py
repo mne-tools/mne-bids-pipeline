@@ -30,7 +30,7 @@ from mne_bids_pipeline._config_utils import (
     get_mf_ctc_fname,
 )
 from mne_bids_pipeline._import_data import (
-    _get_mf_reference_run_path,
+    _get_mf_reference_path,
     _get_run_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -66,13 +66,7 @@ def get_input_fnames_esss(
         subject=subject,
         session=session,
     )
-    in_files.update(
-        _get_mf_reference_run_path(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-        )
-    )
+    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
     return in_files
 
 
@@ -263,13 +257,7 @@ def get_input_fnames_maxwell_filter(
 
     # reference run (used for `destination` and also bad channels for noise)
     # use add_bads=None here to mean "add if autobad is turned on"
-    in_files.update(
-        _get_mf_reference_run_path(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-        )
-    )
+    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
@@ -598,7 +586,7 @@ def get_config_esss(
     cfg = SimpleNamespace(
         mf_esss=config.mf_esss,
         mf_esss_reject=config.mf_esss_reject,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -633,7 +621,7 @@ def get_config_maxwell_filter(
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
         mf_extra_kws=config.mf_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

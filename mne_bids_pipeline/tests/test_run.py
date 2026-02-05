@@ -14,8 +14,15 @@ from h5io import read_hdf5
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from mne_bids_pipeline._config_import import _import_config
+from mne_bids_pipeline._config_utils import _get_ssrt, get_tasks
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
+from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+    get_config as get_config_data_quality,
+)
+from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+    get_input_fnames_data_quality,
+)
 
 BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
 
@@ -282,6 +289,72 @@ allow_missing_sessions = {allow_missing_sessions}
         print()
         with context:
             main()
+
+
+@pytest.mark.parametrize(
+    "task", ("taskA", pytest.param(["taskA", "taskB"], id="taskA+B"))
+)
+def test_tasks_runs_picked(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    task: str | list[str],
+) -> None:
+    """Test that if a task is given, only runs from that task are scanned."""
+    # test for gh-
+    dataset = "fake"
+    subject = "002"
+    bids_root = tmp_path / dataset
+    files = [
+        "dataset_description.json",
+        *(f"participants.{x}" for x in ("json", "tsv")),
+    ]
+    for t, r in (("taskA", None), ("taskB", "1"), ("taskB", "2")):
+        path = f"sub-{subject}/meg/sub-{subject}_task-{t}"
+        if r is not None:
+            path += f"_run-{r}"
+        files.extend([f"{path}_{x}" for x in ("channels.tsv", "events.tsv", "meg.fif")])
+    for _file in files:
+        path = bids_root / _file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
+    config_content = f"""
+bids_root = "{bids_root}"
+deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
+subjects = ["{subject}"]
+ch_types = ["meg"]
+task = {task!r}
+conditions = ["zzz"]
+contrasts = {{}}
+"""
+    config_path = tmp_path / "fake_config_missing_session.py"
+    config_path.write_text(config_content, encoding="utf-8")
+    config = _import_config(config_path=config_path)
+    cfg = get_config_data_quality(config=config, subject=subject, session=None)
+    got_tasks = get_tasks(config=config)
+    if task == "taskA":
+        assert got_tasks == [task]
+    else:
+        assert isinstance(task, list)
+        assert got_tasks == task
+    ssrt = _get_ssrt(config=config, which=("runs",))
+    for this_subject, session, this_run, this_task in ssrt:
+        assert this_subject == subject
+        assert session is None
+        if task == "taskA":
+            assert this_task == task
+        if this_task == "taskA":
+            assert this_run is None
+        else:
+            assert this_run is not None
+        fnames = get_input_fnames_data_quality(
+            cfg=cfg, subject=this_subject, session=session, run=this_run, task=this_task
+        )
+        for key, path in fnames.items():
+            assert path.fpath.is_file(), f"File for {key=} not found: {path.fpath}"
+    want_count = 1 if task == "taskA" else 3
+    assert len(ssrt) == want_count
 
 
 @pytest.mark.dataset_test

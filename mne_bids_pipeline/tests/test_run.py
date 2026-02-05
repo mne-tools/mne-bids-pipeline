@@ -301,7 +301,7 @@ def test_tasks_runs_picked(
     task: str | list[str],
 ) -> None:
     """Test that if a task is given, only runs from that task are scanned."""
-    # test for gh-
+    # test for gh-1174
     dataset = "fake"
     subject = "002"
     bids_root = tmp_path / dataset

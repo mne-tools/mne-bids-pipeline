@@ -150,7 +150,6 @@ def get_input_fnames_twa_head_pos(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    task: str | None,
 ) -> dict[str, BIDSPath]:
     """Get paths of files required by compute_twa_head_pos function."""
     in_files: dict[str, BIDSPath] = dict()
@@ -188,10 +187,6 @@ def get_input_fnames_twa_head_pos(
                 root=cfg.deriv_root,
             )
         )
-
-    # ideally we'd do the path-finding for `all_runs_raw_bidspaths` and
-    # `all_runs_headpos_bidspaths` here, but we can't because MBP is strict about only
-    # returning paths, not lists of paths :(
     return in_files
 
 

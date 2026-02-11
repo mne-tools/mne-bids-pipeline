@@ -302,7 +302,7 @@ def run_ica(
         max_iter=cfg.ica_max_iterations,
     )
     # TODO: THis is breaking because EOGs are excluded by setting the picks
-    ica.fit(picks='data', decim=cfg.ica_decim)
+    ica.fit(epochs, picks='data', decim=cfg.ica_decim)
     explained_var = (
         ica.pca_explained_variance_[: ica.n_components_].sum()
         / ica.pca_explained_variance_.sum()

@@ -238,12 +238,11 @@ def compute_twa_head_pos(
         mne.io.read_raw_fif(fname, allow_maxshield=True, verbose="ERROR", preload=False)
         for fname in raw_fnames
     ]
+    # all remaining files are head position files
     head_poses = [
-        mne.chpi.read_head_pos(in_files[key].fpath)
-        for key in in_files
-        if key.startswith("headpos")
+        mne.chpi.read_head_pos(in_files.pop(key).fpath)
+        for key in list(in_files)
     ]
-    in_files.clear()
     # compute time-weighted average head position and save it to disk
     destination = mne.preprocessing.compute_average_dev_head_t(raws, head_poses)
     mne.write_trans(fname=dest_path.fpath, trans=destination, overwrite=True)

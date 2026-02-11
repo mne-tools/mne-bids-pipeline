@@ -54,7 +54,7 @@ def main() -> None:
         'source', 'report',  or 'all',  or the name of a processing group plus
         the desired step sans the step number and
         filename extension, separated by a '/'. For example, to run ICA, you
-        would pass 'sensor/run_ica`. If unspecified, will run all processing
+        would pass 'preprocessing/ica`. If unspecified, will run all processing
         steps. Can also be a tuple of steps."""
         ),
     )

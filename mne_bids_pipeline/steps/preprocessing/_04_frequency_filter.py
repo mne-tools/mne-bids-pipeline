@@ -62,6 +62,7 @@ def get_input_fnames_frequency_filter(
         task=task,
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
+        add_bads=(kind == "orig"),
     )
 
 
@@ -198,19 +199,27 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
+    if bids_path_in.processing == "sss":
+        bids_path_bads_in = None
+    else:
+        bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter:
         raw = mne.io.read_raw_fif(bids_path_in)
     elif run is None and task == "noise":
+        bids_path_ref_in = in_files.pop("raw_ref_run", None)
+        if bids_path_ref_in is not None and bids_path_in.processing != "sss":
+            bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads")
+        else:
+            bids_path_ref_bads_in = None
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
-            bids_path_ref_in=in_files.pop("raw_ref_run", None),
+            bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads_in,
-            # take bads from this run (0)
-            bids_path_ref_bads_in=in_files.pop("raw_ref_run-bads", None),
+            # take bads from the reference run
+            bids_path_ref_bads_in=bids_path_ref_bads_in,
             prepare_maxwell_filter=False,
         )
     else:

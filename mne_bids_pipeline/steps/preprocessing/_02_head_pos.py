@@ -37,6 +37,7 @@ def get_input_fnames_head_pos(
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        add_bads=True,
     )
 
 
@@ -57,7 +58,7 @@ def run_head_pos(
 
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
+    bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     out_files = dict()
     key = f"raw_run-{run}-pos"
     out_files[key] = bids_path_in.copy().update(
@@ -170,7 +171,6 @@ def get_input_fnames_twa_head_pos(
         subject=subject,
         session=session,
         bids_path_in=bids_path_in,
-        add_bads=False,
         allow_missing=False,
         kind="orig",
     )[f"raw_task-{task}_run-{run}"]

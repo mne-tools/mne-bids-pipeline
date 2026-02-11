@@ -73,7 +73,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000117-3
+            - data-cache-ds000117-4
       - bash_env
       - run:
           name: Get ds000117
@@ -81,7 +81,7 @@ jobs:
             $DOWNLOAD_DATA ds000117
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000117-3
+          key: data-cache-ds000117-4
           paths:
             - ~/mne_data/ds000117
 
@@ -92,14 +92,14 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003775-2
+            - data-cache-ds003775-3
       - bash_env
       - run:
           name: Get ds003775
           command: |
             $DOWNLOAD_DATA ds003775
       - save_cache:
-          key: data-cache-ds003775-2
+          key: data-cache-ds003775-3
           paths:
             - ~/mne_data/ds003775
 
@@ -110,7 +110,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds001971-2
+            - data-cache-ds001971-3
       - bash_env
       - run:
           name: Get ds001971
@@ -118,7 +118,7 @@ jobs:
             $DOWNLOAD_DATA ds001971
       - codecov/upload
       - save_cache:
-          key: data-cache-ds001971-2
+          key: data-cache-ds001971-3
           paths:
             - ~/mne_data/ds001971
 
@@ -129,7 +129,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004107-2
+            - data-cache-ds004107-3
       - bash_env
       - run:
           name: Get ds004107
@@ -137,7 +137,7 @@ jobs:
             $DOWNLOAD_DATA ds004107
       - codecov/upload
       - save_cache:
-          key: data-cache-ds004107-2
+          key: data-cache-ds004107-3
           paths:
             - ~/mne_data/ds004107
 
@@ -148,7 +148,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000246-3
+            - data-cache-ds000246-4
       - bash_env
       - run:
           name: Get ds000246
@@ -156,7 +156,7 @@ jobs:
             $DOWNLOAD_DATA ds000246
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000246-3
+          key: data-cache-ds000246-4
           paths:
             - ~/mne_data/ds000246
 
@@ -167,7 +167,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000247-3
+            - data-cache-ds000247-4
       - bash_env
       - run:
           name: Get ds000247
@@ -175,7 +175,7 @@ jobs:
             $DOWNLOAD_DATA ds000247
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000247-3
+          key: data-cache-ds000247-4
           paths:
             - ~/mne_data/ds000247
 
@@ -208,7 +208,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds001810-2
+            - data-cache-ds001810-3
       - bash_env
       - run:
           name: Get ds001810
@@ -216,7 +216,7 @@ jobs:
             $DOWNLOAD_DATA ds001810
       - codecov/upload
       - save_cache:
-          key: data-cache-ds001810-2
+          key: data-cache-ds001810-3
           paths:
             - ~/mne_data/ds001810
 
@@ -227,7 +227,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003104-2
+            - data-cache-ds003104-3
       - bash_env
       - run:
           name: Get ds003104
@@ -235,7 +235,7 @@ jobs:
             $DOWNLOAD_DATA ds003104
       - codecov/upload
       - save_cache:
-          key: data-cache-ds003104-2
+          key: data-cache-ds003104-3
           paths:
             - ~/mne_data/ds003104
 
@@ -246,7 +246,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003392-2
+            - data-cache-ds003392-3
       - bash_env
       - run:
           name: Get ds003392
@@ -254,7 +254,7 @@ jobs:
             $DOWNLOAD_DATA ds003392
       - codecov/upload
       - save_cache:
-          key: data-cache-ds003392-2
+          key: data-cache-ds003392-3
           paths:
             - ~/mne_data/ds003392
 
@@ -265,7 +265,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004229-103
+            - data-cache-ds004229-3
       - bash_env
       - run:
           name: Get ds004229
@@ -273,7 +273,7 @@ jobs:
             $DOWNLOAD_DATA ds004229
       - codecov/upload
       - save_cache:
-          key: data-cache-ds004229-103
+          key: data-cache-ds004229-3
           paths:
             - ~/mne_data/ds004229
 
@@ -361,7 +361,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000117-3
+            - data-cache-ds000117-4
       - run:
           name: test ds000117
           command: $RUN_TESTS ds000117
@@ -387,7 +387,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003775-2
+            - data-cache-ds003775-3
       - run:
           name: test ds003775
           command: $RUN_TESTS ds003775
@@ -413,7 +413,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds001971-2
+            - data-cache-ds001971-3
       - run:
           name: test ds001971
           command: $RUN_TESTS ds001971
@@ -440,7 +440,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds004107-2
+            - data-cache-ds004107-3
       - run:
           name: test ds004107
           command: $RUN_TESTS ds004107
@@ -466,7 +466,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000246-3
+            - data-cache-ds000246-4
       - run:
           name: test ds000246
           no_output_timeout: 15m
@@ -494,7 +494,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000247-3
+            - data-cache-ds000247-4
       - run:
           name: test ds000247
           command: $RUN_TESTS ds000247
@@ -675,7 +675,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds001810-2
+            - data-cache-ds001810-3
       - run:
           name: test ds001810
           command: $RUN_TESTS ds001810
@@ -701,7 +701,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003104-2
+            - data-cache-ds003104-3
       - run:
           name: test ds003104
           command: $RUN_TESTS ds003104
@@ -727,7 +727,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003392-2
+            - data-cache-ds003392-3
       - run:
           name: test ds003392
           command: $RUN_TESTS ds003392
@@ -756,7 +756,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds004229-103
+            - data-cache-ds004229-3
       - run:
           name: test ds004229
           command: $RUN_TESTS ds004229

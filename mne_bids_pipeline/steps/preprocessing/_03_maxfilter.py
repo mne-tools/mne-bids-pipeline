@@ -14,8 +14,8 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
-from collections import defaultdict
 import gc
+from collections import defaultdict
 from copy import deepcopy
 from types import SimpleNamespace
 

@@ -435,7 +435,7 @@ def import_experimental_data(
     subject = bids_path_in.subject
     session = bids_path_in.session
     run = bids_path_in.run
-    task = bids_path_in.task  # noqa: F841
+    task = bids_path_in.task
 
     # 1. _load_data (_crop_data)
     raw = _load_data(cfg=cfg, bids_path=bids_path_in)

@@ -9,7 +9,6 @@ from mne_bids import BIDSPath, get_bids_path_from_fname, read_raw_bids
 
 from ._config_utils import (
     _bids_kwargs,
-    _do_mf_autobad,
     _get_task_conditions_dict,
     _pl,
     get_datatype,
@@ -507,10 +506,12 @@ def import_er_data(
 
     _drop_channels_func(cfg, raw=raw_er, subject="emptyroom", session=session)
     if bids_path_er_bads_in is not None:
-        raw_er.info["bads"] = _read_bads_tsv(
+        all_bads = _read_bads_tsv(
             cfg=cfg,
             bids_path_bads=bids_path_er_bads_in,
         )
+        # There could be EEG channels in this list, so pick subset by name
+        raw_er.info["bads"] = [bad for bad in all_bads if bad in raw_er.ch_names]
 
     # Don't deal with ref for now (initial data quality / auto bad step)
     if bids_path_ref_in is None:
@@ -623,7 +624,7 @@ def _get_run_path(
     run: str | None,
     task: str | None,
     kind: RunKindT,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
     allow_missing: bool = False,
     key: str | None = None,
 ) -> InFilesT:
@@ -655,7 +656,7 @@ def _get_rest_path(
     subject: str,
     session: str | None,
     kind: RunKindT,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if not (cfg.process_rest and not cfg.task_is_rest):
         return dict()
@@ -679,7 +680,7 @@ def _get_noise_path(
     kind: RunKindT,
     mf_reference_run: str | None,
     mf_reference_task: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
@@ -728,7 +729,7 @@ def _get_run_rest_noise_path(
     kind: RunKindT,
     mf_reference_run: str | None,
     mf_reference_task: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     if run is None and task in ("noise", "rest"):
         if task == "noise":
@@ -768,7 +769,7 @@ def _get_mf_reference_path(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
 ) -> InFilesT:
     return _get_run_path(
         cfg=cfg,
@@ -792,15 +793,13 @@ def _path_dict(
     *,
     cfg: SimpleNamespace,
     bids_path_in: BIDSPath,
-    add_bads: bool | None = None,
+    add_bads: bool = False,
     kind: RunKindT,
     allow_missing: bool,
     key: str | None = None,
     subject: str,
     session: str | None,
 ) -> InFilesT:
-    if add_bads is None:
-        add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
     in_files = dict()
     key = key or f"raw_task-{bids_path_in.task}_run-{bids_path_in.run}"
     in_files[key] = bids_path_in

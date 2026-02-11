@@ -23,6 +23,7 @@
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
+- Maxwell filtering steps now use the union of bad channels across all tasks and runs to help ensure more consistent rank and behavior (#1158 by @larsoner)
 - The path passed to `noise_cov` callables is no longer the evoked dataset but instead epochs. Note that the epochs have `processing="clean"` in the `BIDSPath`. (#1159 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))

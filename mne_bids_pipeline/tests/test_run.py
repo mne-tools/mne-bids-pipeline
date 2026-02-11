@@ -14,7 +14,7 @@ from h5io import read_hdf5
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from mne_bids_pipeline._config_import import _import_config
-from mne_bids_pipeline._config_utils import _get_ssrt, get_tasks
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
 from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
@@ -291,124 +291,6 @@ allow_missing_sessions = {allow_missing_sessions}
             main()
 
 
-@pytest.mark.parametrize(
-    "task", ("taskA", pytest.param(["taskA", "taskB"], id="taskA+B"))
-)
-def test_tasks_runs_picked(tmp_path: Path, task: str | list[str]) -> None:
-    """Test that if a task is given, only runs from that task are scanned."""
-    dataset = "gh-1174"
-    subject = "002"
-    bids_root = tmp_path / dataset
-    files = [
-        "dataset_description.json",
-        *(f"participants.{x}" for x in ("json", "tsv")),
-    ]
-    for t, r in (("taskA", None), ("taskB", "1"), ("taskB", "2")):
-        path = f"sub-{subject}/meg/sub-{subject}_task-{t}"
-        if r is not None:
-            path += f"_run-{r}"
-        files.extend([f"{path}_{x}" for x in ("channels.tsv", "events.tsv", "meg.fif")])
-    for _file in files:
-        path = bids_root / _file
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch()
-    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
-    config_content = f"""
-bids_root = "{bids_root}"
-deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
-subjects = ["{subject}"]
-ch_types = ["meg"]
-task = {task!r}
-conditions = ["zzz"]
-contrasts = {{}}
-"""
-    config_path = tmp_path / "fake_config_missing_session.py"
-    config_path.write_text(config_content, encoding="utf-8")
-    config = _import_config(config_path=config_path)
-    cfg = get_config_data_quality(config=config, subject=subject, session=None)
-    got_tasks = get_tasks(config=config)
-    if task == "taskA":
-        assert got_tasks == [task]
-    else:
-        assert isinstance(task, list)
-        assert got_tasks == task
-    ssrt = _get_ssrt(config=config, which=("runs",))
-    for this_subject, session, this_run, this_task in ssrt:
-        assert this_subject == subject
-        assert session is None
-        if task == "taskA":
-            assert this_task == task
-        if this_task == "taskA":
-            assert this_run is None
-        else:
-            assert this_run is not None
-        fnames = get_input_fnames_data_quality(
-            cfg=cfg, subject=this_subject, session=session, run=this_run, task=this_task
-        )
-        for key, path in fnames.items():
-            assert path.fpath.is_file(), f"File for {key=} not found: {path.fpath}"
-    want_count = 1 if task == "taskA" else 3
-    assert len(ssrt) == want_count
-
-
-@pytest.mark.parametrize(
-    "runs",
-    [
-        pytest.param([0, 1, 2], id="0,1,2"),
-        pytest.param([3, 4, 5, 6], id="3,4,5,6"),
-    ],
-)
-def test_all_runs_picked(tmp_path: Path, runs: list[str]) -> None:
-    """Test that if a task is given, only runs from that task are scanned."""
-    dataset = "gh-1140"
-    subject = "001"
-    task = "FCSRT"
-    bids_root = tmp_path / dataset
-    files = [
-        "dataset_description.json",
-        *(f"participants.{x}" for x in ("json", "tsv")),
-    ]
-    for r in runs:
-        path = f"sub-{subject}/meg/sub-{subject}_task-{task}_run-{r:02d}"
-        files.extend([f"{path}_{x}" for x in ("channels.tsv", "events.tsv", "meg.fif")])
-    for _file in files:
-        path = bids_root / _file
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch()
-    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
-    config_content = f"""
-bids_root = "{bids_root}"
-deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
-subjects = ["{subject}"]
-runs = "all"
-ch_types = ["meg"]
-conditions = ["zzz"]
-"""
-    config_path = tmp_path / "fake_config_missing_session.py"
-    config_path.write_text(config_content, encoding="utf-8")
-    config = _import_config(config_path=config_path)
-    from mne_bids_pipeline._config_utils import _get_ssrt
-    from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
-        get_config as get_config_data_quality,
-    )
-    from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
-        get_input_fnames_data_quality,
-    )
-
-    cfg = get_config_data_quality(config=config, subject=subject, session=None)
-    ssrt = _get_ssrt(config=config, which=("runs",))
-    assert len(ssrt) == len(runs)
-    for this_subject, session, this_run, this_task in ssrt:
-        assert this_subject == subject
-        assert session is None
-        assert this_run is not None
-        fnames = get_input_fnames_data_quality(
-            cfg=cfg, subject=this_subject, session=session, run=this_run, task=this_task
-        )
-        for key, path in fnames.items():
-            assert path.fpath.is_file(), f"File for {key=} not found: {path.fpath}"
-
-
 @pytest.mark.dataset_test
 def test_session_specific_mri(
     monkeypatch: pytest.MonkeyPatch,
@@ -537,3 +419,68 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
         assert float(result.group("dist")) < 3  # fit between pts and outer_skin < 3 mm
         results.append(result.groups())
     assert results[0] != results[1]  # different npts and/or different mean distance
+
+
+@pytest.mark.parametrize(
+    "runs",
+    [
+        pytest.param([0, 1, 2], id="0,1,2"),
+        pytest.param([3, 4, 5, 6], id="3,4,5,6"),
+    ],
+)
+def test_all_runs_picked(tmp_path: Path, runs: list[str]) -> None:
+    """Test that if a task is given, only runs from that task are scanned."""
+    dataset = "gh-1140"
+    subject = "001"
+    task = "FCSRT"
+    session = "M0"
+    bids_root = tmp_path / dataset
+    files = [
+        "dataset_description.json",
+        *(f"participants.{x}" for x in ("json", "tsv")),
+    ]
+    for r in runs:
+        path = (
+            f"sub-{subject}/ses-{session}/eeg/"
+            f"sub-{subject}_ses-{session}_task-{task}_run-{r:02d}"
+        )
+        files.extend(
+            [
+                f"{path}_{x}"
+                for x in (
+                    "channels.tsv",
+                    "events.tsv",
+                    "eeg.vhdr",
+                )
+            ]
+        )
+    for _file in files:
+        path = bids_root / _file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
+    config_content = f"""
+bids_root = "{bids_root}"
+deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
+subjects = ["{subject}"]
+runs = "all"
+ch_types = ["eeg"]
+conditions = ["zzz"]
+"""
+    config_path = tmp_path / "fake_config_missing_session.py"
+    config_path.write_text(config_content, encoding="utf-8")
+    config = _import_config(config_path=config_path)
+    cfg = get_config_data_quality(config=config, subject=subject, session=session)
+    ssrt = _get_ssrt(config=config, which=("runs",))
+    assert len(ssrt) == len(runs)
+    for ri, (this_subject, this_session, this_run, this_task) in enumerate(ssrt):
+        assert this_subject == subject
+        assert this_session == session
+        assert this_run is not None
+        assert this_task == task
+        assert int(this_run) == runs[ri]
+        fnames = get_input_fnames_data_quality(
+            cfg=cfg, subject=subject, session=session, run=this_run, task=this_task
+        )
+        for key, path in fnames.items():
+            assert path.fpath.is_file(), f"File for {key=} not found: {path.fpath}"

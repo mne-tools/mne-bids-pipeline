@@ -15,12 +15,14 @@ The function loads machine-specific calibration files.
 """
 
 import gc
+from collections import defaultdict
 from copy import deepcopy
 from types import SimpleNamespace
 
 import mne
 import numpy as np
-from mne_bids import read_raw_bids
+import pandas as pd
+from mne_bids import BIDSPath, read_raw_bids
 
 from mne_bids_pipeline._config_utils import (
     _get_ss,
@@ -28,8 +30,10 @@ from mne_bids_pipeline._config_utils import (
     _pl,
     get_mf_cal_fname,
     get_mf_ctc_fname,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._import_data import (
+    _get_bids_path_in,
     _get_mf_reference_path,
     _get_run_path,
     _get_run_rest_noise_path,
@@ -48,8 +52,116 @@ from mne_bids_pipeline._run import (
 )
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
+# %% all_bads
+
+
+def get_input_fnames_all_bads(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> dict[str, BIDSPath]:
+    """Get paths of files required by compute_all_bads function."""
+    in_files: dict[str, BIDSPath] = dict()
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}-bads"
+        in_files[key] = _get_run_path(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            run=run,
+            task=task,
+            add_bads=True,
+            kind="orig",
+        )[key]
+    return in_files
+
+
+def _get_allbads_path(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> BIDSPath:
+    path = _get_bids_path_in(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        run=None,
+        task=None,
+        kind="orig",
+    )
+    path.update(
+        suffix="allbads",
+        extension=".tsv",
+        root=cfg.deriv_root,
+        split=None,
+        check=False,
+    )
+    return path
+
+
+@failsafe_run(
+    get_input_fnames=get_input_fnames_all_bads,
+)
+def compute_all_bads(
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: str | None,
+    in_files: InFilesT,
+) -> OutFilesT:
+    out_files = dict()
+    out_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
+    bads_dict: dict[str, list[str]] = defaultdict(list)
+    counts = []
+    for run, task in cfg.runs_tasks:
+        in_key = f"raw_task-{task}_run-{run}"
+        bids_path_bads_in = in_files.pop(f"{in_key}-bads")
+        bads_tsv = pd.read_csv(bids_path_bads_in.fpath, sep="\t", header=0)
+        assert list(bads_tsv.columns) == ["name", "reason"], bads_tsv.columns
+        counts.append(len(bads_tsv))
+        for name, reason in bads_tsv.itertuples(index=False):
+            assert isinstance(name, str)
+            assert isinstance(reason, str)
+            if reason not in bads_dict[name]:
+                bads_dict[name].append(reason)
+        del run, task
+    # Write the bad channels to disk.
+    msg = (
+        f"Using {len(bads_dict)} bad channel{_pl(bads_dict)} (union from "
+        f"{', '.join(str(c) for c in counts)}): {sorted(bads_dict)})"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+    reasons = [", ".join(val) for val in bads_dict.values()]
+    tsv_data = pd.DataFrame(dict(name=list(bads_dict), reason=reasons))
+    tsv_data = tsv_data.sort_values(by="name")
+    tsv_data.to_csv(out_files["bads_tsv"], sep="\t", index=False)
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
+def get_config_all_bads(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
+        runs_tasks=get_runs_tasks(
+            config=config,
+            subject=subject,
+            session=session,
+            which=("runs", "noise", "rest"),
+        ),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
+    )
+    return cfg
+
 
 # %% eSSS
+
+
 def get_input_fnames_esss(
     *,
     cfg: SimpleNamespace,
@@ -67,6 +179,7 @@ def get_input_fnames_esss(
         session=session,
     )
     in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
+    in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     return in_files
 
 
@@ -86,17 +199,14 @@ def compute_esss_proj(
     run, task = None, "noise"
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)  # noqa
     bids_path_ref_in = in_files.pop("raw_ref_run")
-    bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
+    bids_path_bads = in_files.pop("bads_tsv")
     raw_noise = import_er_data(
         cfg=cfg,
         bids_path_er_in=bids_path_in,
         bids_path_ref_in=bids_path_ref_in,
-        # TODO: This must match below, so we don't pass it
-        # bids_path_er_bads_in=bids_path_bads_in,
-        bids_path_er_bads_in=None,
-        bids_path_ref_bads_in=bids_path_ref_bads_in,
+        bids_path_er_bads_in=bids_path_bads,
+        bids_path_ref_bads_in=bids_path_bads,
         prepare_maxwell_filter=True,
     )
     logger.info(
@@ -181,6 +291,20 @@ def compute_esss_proj(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
+def get_config_esss(
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> SimpleNamespace:
+    cfg = SimpleNamespace(
+        mf_esss=config.mf_esss,
+        mf_esss_reject=config.mf_esss_reject,
+        **_import_data_kwargs(config=config, subject=subject, session=session),
+    )
+    return cfg
+
+
 # %% maxwell_filter
 
 
@@ -214,7 +338,6 @@ def get_input_fnames_maxwell_filter(
         path = _get_run_path(
             run=pos_run,
             task=pos_task,
-            add_bads=False,
             kind="orig",
             cfg=cfg,
             subject=subject,
@@ -255,8 +378,7 @@ def get_input_fnames_maxwell_filter(
             )
         )
 
-    # reference run (used for `destination` and also bad channels for noise)
-    # use add_bads=None here to mean "add if autobad is turned on"
+    # reference run (used for `destination`)
     in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
 
     is_rest_noise = run is None and task in ("noise", "rest")
@@ -280,6 +402,9 @@ def get_input_fnames_maxwell_filter(
         in_files["mf_cal_fname"] = cfg.mf_cal_fname
     if cfg.mf_ctc_fname is not None:
         in_files["mf_ctc_fname"] = cfg.mf_ctc_fname
+
+    # add bads
+    in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
 
     return in_files
 
@@ -321,7 +446,7 @@ def run_maxwell_filter(
         recording_type = "experimental"
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
+    bids_path_bads = in_files.pop("bads_tsv")
     bids_path_out_kwargs = dict(
         subject=subject,  # need these in the case of an empty room match
         session=session,
@@ -345,7 +470,6 @@ def run_maxwell_filter(
         extra_params=cfg.reader_extra_params,
         verbose=cfg.read_raw_bids_verbose,
     )
-    bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads", None)
     # triage string-valued destinations
     if isinstance(destination, str):
         if destination == "reference_run":
@@ -399,7 +523,7 @@ def run_maxwell_filter(
         raw = import_experimental_data(
             cfg=cfg,
             bids_path_in=bids_path_in,
-            bids_path_bads_in=bids_path_bads_in,
+            bids_path_bads_in=bids_path_bads,
             data_is_rest=data_is_rest,
         )
         fr = raw.info["dev_head_t"]["trans"]
@@ -409,12 +533,8 @@ def run_maxwell_filter(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
-            # TODO: This can break processing, need to use union for all,
-            # otherwise can get for ds003392:
-            # "Reference run data rank does not match empty-room data rank"
-            # bids_path_er_bads_in=bids_path_noise_bads,
-            bids_path_er_bads_in=None,
-            bids_path_ref_bads_in=bids_path_ref_bads_in,
+            bids_path_er_bads_in=bids_path_bads,
+            bids_path_ref_bads_in=bids_path_bads,
             prepare_maxwell_filter=True,
         )
         fr = np.eye(4)
@@ -577,20 +697,6 @@ def run_maxwell_filter(
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
-def get_config_esss(
-    *,
-    config: SimpleNamespace,
-    subject: str,
-    session: str | None,
-) -> SimpleNamespace:
-    cfg = SimpleNamespace(
-        mf_esss=config.mf_esss,
-        mf_esss_reject=config.mf_esss_reject,
-        **_import_data_kwargs(config=config, subject=subject, session=session),
-    )
-    return cfg
-
-
 def get_config_maxwell_filter(
     *,
     config: SimpleNamespace,
@@ -635,7 +741,25 @@ def main(*, config: SimpleNamespace) -> None:
     ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
         logs = list()
-        # First step: compute eSSS projectors
+        # 1: compute union of all bads
+        parallel, run_func = parallel_func(
+            compute_all_bads, exec_params=config.exec_params, n_iter=len(ss)
+        )
+        logs += parallel(
+            run_func(
+                cfg=get_config_all_bads(
+                    config=config,
+                    subject=subject,
+                    session=session,
+                ),
+                exec_params=config.exec_params,
+                subject=subject,
+                session=session,
+            )
+            for subject, session in ss
+        )
+
+        # 2: compute eSSS projectors
         if config.mf_esss:
             parallel, run_func = parallel_func(
                 compute_esss_proj, exec_params=config.exec_params, n_iter=len(ss)
@@ -654,7 +778,7 @@ def main(*, config: SimpleNamespace) -> None:
                 for subject, session in ss
             )
 
-        # Second: maxwell_filter
+        # 3: maxwell_filter
         # We need to guarantee that the reference_run completes before the
         # noise/rest runs are processed, so we split the loops.
         for which in [("runs",), ("noise", "rest")]:

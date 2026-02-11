@@ -15,11 +15,13 @@
 - New config option [`process_raw_clean`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
 - Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
+- Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
 
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
 - Maxwell filtering steps now use the union of bad channels across all tasks and runs to help ensure more consistent rank and behavior (#1158 by @larsoner)
+- The path passed to `noise_cov` callables is no longer the evoked dataset but instead epochs. Note that the epochs have `processing="clean"` in the `BIDSPath`. (#1159 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 
@@ -46,6 +48,7 @@
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
 - Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
+- Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
 - Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
 
 ### :books: Documentation

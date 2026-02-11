@@ -871,3 +871,30 @@ def _proj_path(
         suffix="proj",
         check=False,
     )
+
+
+def _get_rank(
+    *,
+    cfg: SimpleNamespace,
+    subject: str,
+    session: str | None,
+    inst: mne.io.BaseRaw | mne.BaseEpochs | mne.Covariance,
+    info: mne.Info | None = None,
+    log: bool = True,
+) -> dict[str, int]:
+    if cfg.cov_rank == "info":
+        kwargs = dict(rank="info")
+        from_where = "from info"
+    else:
+        assert isinstance(cfg.cov_rank, dict)
+        kwargs = cfg.cov_rank
+        from_where = "compute from data"
+    if info is None:
+        assert not isinstance(inst, mne.Covariance)
+        info = inst.info
+    rank = mne.compute_rank(inst, info=info, **kwargs)
+    assert isinstance(rank, dict)
+    if log:
+        msg = f"Using rank {from_where}: {rank}"
+        logger.info(**gen_log_kwargs(message=msg))
+    return rank

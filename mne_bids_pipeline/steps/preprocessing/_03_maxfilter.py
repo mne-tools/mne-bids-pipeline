@@ -14,6 +14,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
+from collections import defaultdict
 import gc
 from copy import deepcopy
 from types import SimpleNamespace
@@ -60,7 +61,7 @@ def get_input_fnames_all_bads(
     subject: str,
     session: str | None,
 ) -> dict[str, BIDSPath]:
-    """Get paths of files required by compute_twa_head_pos function."""
+    """Get paths of files required by compute_all_bads function."""
     in_files: dict[str, BIDSPath] = dict()
     for run, task in cfg.runs_tasks:
         key = f"raw_task-{task}_run-{run}-bads"
@@ -113,7 +114,7 @@ def compute_all_bads(
 ) -> OutFilesT:
     out_files = dict()
     out_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
-    bads_dict: dict[str, list[str]] = dict()
+    bads_dict: dict[str, list[str]] = defaultdict(list)
     counts = []
     for run, task in cfg.runs_tasks:
         in_key = f"raw_task-{task}_run-{run}"
@@ -124,9 +125,8 @@ def compute_all_bads(
         for name, reason in bads_tsv.itertuples(index=False):
             assert isinstance(name, str)
             assert isinstance(reason, str)
-            bads_dict.setdefault(name, list())
             if reason not in bads_dict[name]:
-                bads_dict[name] = bads_dict.get(name, []) + [reason]
+                bads_dict[name].append(reason)
         del run, task
     # Write the bad channels to disk.
     msg = (

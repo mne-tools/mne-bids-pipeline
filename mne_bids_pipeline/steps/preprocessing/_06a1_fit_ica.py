@@ -27,6 +27,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._reject import _get_reject
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
@@ -207,10 +208,12 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
-        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
-        if cfg.ica_use_icalabel:
-            epochs.apply_proj()  # Apply the reference projection
+        if cfg.eeg_reference == "average":
+            set_initial_average_reference(epochs, cfg)
+            if cfg.ica_use_icalabel:
+                epochs.apply_proj()  # Apply the reference projection
+        else:
+            epochs.set_eeg_reference(cfg.eeg_reference, projection=False)
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -307,7 +310,8 @@ def run_ica(
         fit_params=fit_params,
         max_iter=cfg.ica_max_iterations,
     )
-    ica.fit(epochs, decim=cfg.ica_decim)
+    # TODO: This works for our pipeline (exclude eye-tracking data for ICA) but probably not in general
+    ica.fit(epochs.pick(picks="eeg"), decim=cfg.ica_decim)
     explained_var = (
         ica.pca_explained_variance_[: ica.n_components_].sum()
         / ica.pca_explained_variance_.sum()
@@ -405,6 +409,9 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",

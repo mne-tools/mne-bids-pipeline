@@ -16,6 +16,7 @@ from mne_bids_pipeline._config_utils import _get_ss, _get_ssrt, _limit_which_cle
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -142,8 +143,10 @@ def apply_ica_epochs(
     logger.info(**gen_log_kwargs(message=msg))
 
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+
+    # Average reference should have already been set in _07_make_epochs.py, therefore we only apply it here
     if cfg.ica_use_icalabel:
-        epochs.set_eeg_reference("average", projection=True).apply_proj()
+        epochs.apply_proj()
 
     # Now actually reject the components.
     msg = (
@@ -154,10 +157,11 @@ def apply_ica_epochs(
     epochs_cleaned = ica.apply(epochs.copy())  # Copy b/c works in-place!
 
     # Re-reference data (again) after applying ICA
-    if cfg.eeg_reference == "average":
-        epochs_cleaned.set_eeg_reference("average", projection=True).apply_proj()
-    else:
-        epochs_cleaned.set_eeg_reference(cfg.eeg_reference)
+    # TODO: We decided against applying the reference again after the ICA because it's not yet clear whether that's necessary or desired
+    # if cfg.eeg_reference == "average":
+    #     epochs_cleaned.set_eeg_reference("average", projection=True).apply_proj()
+    # else:
+    #     epochs_cleaned.set_eeg_reference(cfg.eeg_reference)
 
     msg = f"Saving {len(epochs)} reconstructed epochs after ICA."
     logger.info(**gen_log_kwargs(message=msg))
@@ -225,16 +229,22 @@ def apply_ica_raw(
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
-    if cfg.ica_use_icalabel:
-        raw.set_eeg_reference("average", projection=True).apply_proj()
+    if "eeg" in cfg.ch_types:
+        if cfg.eeg_reference == "average":
+            set_initial_average_reference(raw, cfg)
+            if cfg.ica_use_icalabel:
+                raw.apply_proj()
+        else:
+            raw.set_eeg_reference(cfg.eeg_reference, projection=False)
 
     ica.apply(raw)
 
     # Re-reference data (again) after applying ICA
-    if cfg.eeg_reference == "average":
-        raw.set_eeg_reference("average", projection=True).apply_proj()
-    else:
-        raw.set_eeg_reference(cfg.eeg_reference)
+    # TODO: We decided against applying the reference again after the ICA because it's not yet clear to us whether that's necessary or desired
+    # if cfg.eeg_reference == "average":
+    #     raw.set_eeg_reference("average", projection=True).apply_proj()
+    # else:
+    #     raw.set_eeg_reference(cfg.eeg_reference)
     
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
@@ -269,7 +279,10 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ica_use_icalabel=config.ica_use_icalabel,
-        eeg_reference=get_eeg_reference(config),        
+        eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,        
         processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_import_data_kwargs(config=config, subject=subject, session=session),

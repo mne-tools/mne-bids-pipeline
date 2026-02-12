@@ -233,12 +233,15 @@ def compute_twa_head_pos(
         )
     )
     # need raw files from all runs
-    raw_fnames = [in_files[key].fpath for key in in_files if key.startswith("raw")]
+    raw_fnames = [
+        in_files.pop(key).fpath for key in list(in_files) if key.startswith("raw")
+    ]
     raws = [
         mne.io.read_raw_fif(fname, allow_maxshield=True, verbose="ERROR", preload=False)
         for fname in raw_fnames
     ]
     # all remaining files are head position files
+    assert all(key.startswith("headpos") for key in in_files), list(in_files)
     head_poses = [
         mne.chpi.read_head_pos(in_files.pop(key).fpath) for key in list(in_files)
     ]

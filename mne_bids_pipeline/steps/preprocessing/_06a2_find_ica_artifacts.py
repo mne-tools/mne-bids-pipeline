@@ -25,6 +25,7 @@ from mne_bids_pipeline._config_utils import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -163,7 +164,7 @@ def find_ica_artifacts(
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
             if cfg.ica_use_icalabel:
-                raw.set_eeg_reference("average", projection=True).apply_proj()
+                set_initial_average_reference(raw, cfg).apply_proj()
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -227,7 +228,7 @@ def find_ica_artifacts(
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
-                raw.set_eeg_reference("average", projection=True).apply_proj()
+                set_initial_average_reference(raw, cfg).apply_proj()
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -597,6 +598,9 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,
         eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,

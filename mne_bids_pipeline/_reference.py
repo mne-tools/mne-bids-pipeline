@@ -5,6 +5,16 @@ from types import SimpleNamespace
 import mne
 
 def set_initial_average_reference(inst, cfg: SimpleNamespace):
+    """Set an average EEG reference with the option to add the online flat channel before re-referencing.
+
+    If `cfg.add_online_reference_channel` is True and the specified `cfg.eeg_online_reference_channel` is not yet present,
+    it is added as a flat reference channel, increasing the number of channels in `inst` by one.
+
+    Note: 
+    - The average reference is added as a projection and not yet applied.
+    - If you want to drop the online reference channel after re-referencing,
+      first apply the projection and then drop the channel.
+    """
 
     assert_msg = "An average reference projection has already been applied to the data. You cannot add the online reference as a flat channel anymore. Given this function is rather used internally, you might want to raise an issue on GitHub."
     assert not mne._fiff.proj._has_eeg_average_ref_proj(inst.info), assert_msg
@@ -27,11 +37,5 @@ def set_initial_average_reference(inst, cfg: SimpleNamespace):
 
     # We use this instead of projection=False to later being able to check if the average projection was already applied
     inst.set_eeg_reference("average", projection=True)#.apply_proj()
-
-    if cfg.drop_channel_after_rereference:
-        
-        msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
-        logger.info(**gen_log_kwargs(message=msg))
-        inst.drop_channels(cfg.eeg_online_reference_channel)
     
     return inst

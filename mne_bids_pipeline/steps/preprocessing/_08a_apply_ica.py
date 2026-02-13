@@ -147,6 +147,10 @@ def apply_ica_epochs(
     # Average reference should have already been set in _07_make_epochs.py, therefore we only apply it here
     if cfg.ica_use_icalabel:
         epochs.apply_proj()
+        if cfg.drop_channel_after_rereference:
+            msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+            logger.info(**gen_log_kwargs(message=msg))
+            epochs.drop_channels(cfg.eeg_online_reference_channel)
 
     # Now actually reject the components.
     msg = (
@@ -234,6 +238,10 @@ def apply_ica_raw(
             set_initial_average_reference(raw, cfg)
             if cfg.ica_use_icalabel:
                 raw.apply_proj()
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.drop_channels(cfg.eeg_online_reference_channel)
         else:
             raw.set_eeg_reference(cfg.eeg_reference, projection=False)
 

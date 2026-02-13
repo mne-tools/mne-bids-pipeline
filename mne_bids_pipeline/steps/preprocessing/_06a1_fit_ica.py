@@ -212,6 +212,11 @@ def run_ica(
             set_initial_average_reference(epochs, cfg)
             if cfg.ica_use_icalabel:
                 epochs.apply_proj()  # Apply the reference projection
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    epochs.drop_channels(cfg.eeg_online_reference_channel)
+
         else:
             epochs.set_eeg_reference(cfg.eeg_reference, projection=False)
 

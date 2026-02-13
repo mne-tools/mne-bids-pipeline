@@ -62,11 +62,14 @@ def get_input_fnames_frequency_filter(
         task=task,
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         add_bads=(kind == "orig"),
     )
 
 
 def zapline(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -90,6 +93,8 @@ def zapline(
 
 
 def notch_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -126,6 +131,8 @@ def notch_filter(
 
 
 def bandpass_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -166,6 +173,8 @@ def bandpass_filter(
 
 
 def resample(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -258,6 +267,7 @@ def filter_data(
 
     raw.load_data()
     zapline(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -267,6 +277,7 @@ def filter_data(
         iter_=cfg.zapline_iter,
     )
     notch_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -280,6 +291,7 @@ def filter_data(
         notch_extra_kws=cfg.notch_extra_kws,
     )
     bandpass_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -294,6 +306,7 @@ def filter_data(
         bandpass_extra_kws=cfg.bandpass_extra_kws,
     )
     resample(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -333,7 +346,7 @@ def filter_data(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (filtered)",
+            title_prefix="Raw (filtered)",
             tags=("filtered",),
             raw=raw,
         )
@@ -346,6 +359,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         l_freq=config.l_freq,
@@ -361,7 +375,7 @@ def get_config(
         regress_artifact=config.regress_artifact,
         notch_extra_kws=config.notch_extra_kws,
         bandpass_extra_kws=config.bandpass_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -378,6 +392,7 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,

@@ -34,7 +34,7 @@ from mne_bids_pipeline._config_utils import (
 )
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
-    _get_mf_reference_run_path,
+    _get_mf_reference_path,
     _get_run_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -154,7 +154,7 @@ def get_config_all_bads(
             session=session,
             which=("runs", "noise", "rest"),
         ),
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -173,17 +173,12 @@ def get_input_fnames_esss(
         task="noise",
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
     )
-    in_files.update(
-        _get_mf_reference_run_path(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-        )
-    )
+    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
     in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     return in_files
 
@@ -305,7 +300,7 @@ def get_config_esss(
     cfg = SimpleNamespace(
         mf_esss=config.mf_esss,
         mf_esss_reject=config.mf_esss_reject,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -327,6 +322,7 @@ def get_input_fnames_maxwell_filter(
         task=task,
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
@@ -336,7 +332,7 @@ def get_input_fnames_maxwell_filter(
     # head positions
     if cfg.mf_mc:
         if run is None and task == "noise":
-            pos_run, pos_task = cfg.mf_reference_run, cfg.task
+            pos_run, pos_task = cfg.mf_reference_run, cfg.mf_reference_task
         else:
             pos_run, pos_task = run, task
         path = _get_run_path(
@@ -362,7 +358,7 @@ def get_input_fnames_maxwell_filter(
                 extension=".fif",
                 root=cfg.deriv_root,
                 check=False,
-                task=pos_task,
+                task=None,
                 run=None,
             )
     if cfg.mf_esss:
@@ -383,13 +379,7 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination`)
-    in_files.update(
-        _get_mf_reference_run_path(
-            cfg=cfg,
-            subject=subject,
-            session=session,
-        )
-    )
+    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
@@ -697,7 +687,7 @@ def run_maxwell_filter(
             cfg=cfg,
             report=report,
             bids_path_in=out_files["sss_raw"],
-            title="Raw (maxwell filtered)",
+            title_prefix="Raw (maxwell filtered)",
             tags=("sss",),
             raw=raw_sss,
             extra_html=extra_html,
@@ -737,7 +727,7 @@ def get_config_maxwell_filter(
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
         mf_extra_kws=config.mf_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

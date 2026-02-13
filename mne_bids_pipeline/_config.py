@@ -9,10 +9,13 @@ from mne import Covariance
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline.typing import (
-    ArbitraryContrast,
+    BaselineTypeT,
+    ConditionsTypeT,
+    ContrastSequenceT,
     DigMontageType,
     FloatArrayLike,
     PathLike,
+    RunsTypeT,
     UniqueSequence,
 )
 
@@ -87,9 +90,9 @@ Whether to continue processing the dataset if some combinations of `subjects` an
 `sessions` are missing.
 """
 
-task: str = ""
+task: str | Sequence[str] = ""
 """
-The task to process.
+The task(s) to process.
 """
 
 task_is_rest: bool = False
@@ -97,10 +100,11 @@ task_is_rest: bool = False
 Whether the task should be treated as resting-state data.
 """
 
-runs: Sequence[str] | Literal["all"] = "all"
+runs: RunsTypeT | dict[str, RunsTypeT] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
+Can be a dict mapping tasks to runs to process as well.
 """
 
 exclude_runs: dict[str, list[str]] | None = None
@@ -719,12 +723,20 @@ mf_reference_run: str | None = None
 """
 Which run to take as the reference for adjusting the head position of all
 runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
-If `None`, pick the first run.
+If `None`, pick the first run for the
+[`mf_reference_task`][mne_bids_pipeline._config.mf_reference_task].
 
 ???+ example "Example"
     ```python
     mf_reference_run = '01'  # Use run "01"
     ```
+"""
+
+mf_reference_task: str | None = None
+"""
+Which task to take as the reference for adjusting the head position of all
+runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
+If `None`, pick the first task found in the BIDS dataset.
 """
 
 mf_cal_fname: str | None = None
@@ -1114,7 +1126,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """
 
-conditions: Sequence[str] | dict[str, str] | None = None
+conditions: ConditionsTypeT | dict[str, ConditionsTypeT] | None = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1125,6 +1137,10 @@ for more information.
 
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
+
+Passing a dictionary whose values are dictionaries or sequences themselves allows to
+specify conditions per task (first has ``task`` keys, second level has desired
+condition name keys).
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
@@ -1146,11 +1162,19 @@ error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
+    Pass a per-task dictionary:
+    ```python
+    conditions = {
+        "localizer": ['stimulus/left', 'stimulus/right'],
+        "main_task": ['target/left', 'target/right']
+    }
+    ```
 """
 
-epochs_tmin: float = -0.2
+epochs_tmin: float | dict[str, float] = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmin values.
 
 ???+ example "Example"
     ```python
@@ -1158,9 +1182,11 @@ The beginning of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-epochs_tmax: float = 0.5
+epochs_tmax: float | dict[str, float] = 0.5
 """
 The end of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmax values.
+
 ???+ example "Example"
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
@@ -1178,10 +1204,11 @@ Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
-baseline: tuple[float | None, float | None] | None = (None, 0)
+baseline: BaselineTypeT | dict[str, BaselineTypeT] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
 if `None`, no baseline correction is applied.
+Can be a dict mapping task names to baseline values.
 
 ???+ example "Example"
     ```python
@@ -1723,20 +1750,20 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 
 # ## Condition contrasts
 
-contrasts: Sequence[tuple[str, str] | ArbitraryContrast] = []
+contrasts: ContrastSequenceT | dict[str, ContrastSequenceT] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
-list corresponds to a single contrast.
+list corresponds to a single contrast. For each entry in the list:
 
-A tuple specifies a one-vs-one contrast, where the second condition is
-subtracted from the first.
+1. A tuple specifies a one-vs-one contrast, where the second condition is
+   subtracted from the first.
 
-If a dictionary, must contain the following keys:
+2. If a dictionary, must contain the following keys:
 
-- `name`: a custom name of the contrast
-- `conditions`: the conditions to contrast
-- `weights`: the weights associated with each condition.
+    - `name`: a custom name of the contrast
+    - `conditions`: the conditions to contrast
+    - `weights`: the weights associated with each condition.
 
 Pass an empty list to avoid calculation of any contrasts.
 
@@ -1847,9 +1874,27 @@ The number of folds (also called "splits") to use in the K-fold cross-validation
 scheme.
 """
 
+decoding_time: bool = True
+"""
+Whether to perform time-by-time decoding. `decode` must also be `True` for this
+to have any effect.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
+decoding_time_decim: int = 1
+"""
+Says how much to decimate data before time-by-time based decoding.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
 decoding_time_generalization: bool = False
 """
-Whether to perform time generalization.
+Whether to perform time generalization. `decode` and `decoding_time` must both be `True`
+for this to have any effect.
 
 Time generalization (also called "temporal generalization" or "generalization
 across time", GAT) is an extension of the time-by-time decoding approach.
@@ -1858,7 +1903,7 @@ testing the model on the same time point in the test data, it will be tested
 on **all** time points.
 
 !!! cite ""
-    [T]he manner in which the trained classifiers generalize across time, and
+    The manner in which the trained classifiers generalize across time, and
     from one experimental condition to another, sheds light on the temporal
     organization of information-processing stages.
 
@@ -1870,7 +1915,8 @@ procedure may take a significant amount of time.
 
 decoding_time_generalization_decim: int = 1
 """
-Says how much to decimate data before time generalization decoding.
+Says how much to decimate data before time generalization. The max of this value and
+`decoding_time_decim` will be used for time generalization computations.
 This is done in addition to the decimation done at the epochs level via the
 [`epochs_decim`][mne_bids_pipeline._config.epochs_decim] parameter. This can be
 used to greatly speed up time generalization at the cost of lower time

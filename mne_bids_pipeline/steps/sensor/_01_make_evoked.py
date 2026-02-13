@@ -7,15 +7,20 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
-    _get_ss,
+    _get_sst,
+    _get_task_conditions_dict,
+    _get_task_contrasts,
     _pl,
     _restrict_analyze_channels,
-    get_all_contrasts,
     get_eeg_reference,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
+from mne_bids_pipeline._report import (
+    _all_conditions,
+    _get_prefix_tags,
+    _open_report,
+)
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _update_for_splits,
@@ -30,11 +35,12 @@ def get_input_fnames_evoked(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -61,6 +67,7 @@ def run_evoked(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     out_files = dict()
@@ -85,16 +92,10 @@ def run_evoked(
     msg = "Creating evoked data based on experimental conditions …"
     logger.info(**gen_log_kwargs(message=msg))
     all_evoked = dict()
-
-    if isinstance(cfg.conditions, dict):
-        for new_cond_name, orig_cond_name in cfg.conditions.items():
-            evoked = epochs[orig_cond_name].average()
-            evoked.comment = evoked.comment.replace(orig_cond_name, new_cond_name)
-            all_evoked[new_cond_name] = evoked
-    else:
-        for condition in cfg.conditions:
-            evoked = epochs[condition].average()
-            all_evoked[condition] = evoked
+    for new_cond_name, orig_cond_name in cfg.conditions.items():
+        evoked = epochs[orig_cond_name].average()
+        evoked.comment = evoked.comment.replace(orig_cond_name, new_cond_name)
+        all_evoked[new_cond_name] = evoked
 
     if cfg.contrasts:
         msg = "Contrasting evoked responses …"
@@ -121,19 +122,22 @@ def run_evoked(
     else:
         msg = "No evoked conditions or contrasts found."
     logger.info(**gen_log_kwargs(message=msg))
-    all_conditions = _all_conditions(cfg=cfg)
+    all_conditions = _all_conditions(cfg=cfg, task=task)
     assert list(all_conditions) == list(all_evoked)  # otherwise we have a bug
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         for condition, evoked in all_evoked.items():
             _restrict_analyze_channels(evoked, cfg)
 
-            tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition
+            )
+            tags: tuple[str, ...] = ("evoked",) + extra_tags
             if condition in cfg.conditions:
-                title = f"Condition: {condition}"
+                title = f"Condition{prefix}"
             else:  # It's a contrast of two conditions.
-                title = f"Contrast: {condition}"
+                title = f"Contrast{prefix}"
                 tags = tags + ("contrast",)
 
             report.add_evokeds(
@@ -165,10 +169,11 @@ def run_evoked(
 def get_config(
     *,
     config: SimpleNamespace,
+    task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        conditions=config.conditions,
-        contrasts=get_all_contrasts(config),
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
+        contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         ch_types=config.ch_types,
@@ -185,20 +190,22 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message=msg))
         return
 
-    ss = _get_ss(config=config)
+    sst = _get_sst(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_evoked, exec_params=config.exec_params, n_iter=len(ss)
+            run_evoked, exec_params=config.exec_params, n_iter=len(sst)
         )
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
+                    task=task,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
-            for subject, session in ss
+            for subject, session, task in sst
         )
     save_logs(config=config, logs=logs)

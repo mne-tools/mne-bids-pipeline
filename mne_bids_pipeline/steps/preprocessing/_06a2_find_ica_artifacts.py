@@ -22,7 +22,7 @@ from mne_bids_pipeline._config_utils import (
     _get_ss,
     get_eeg_reference,
     get_eog_channels,
-    get_runs,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -98,7 +98,7 @@ def get_input_fnames_find_ica_artifacts(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=None,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -110,13 +110,15 @@ def get_input_fnames_find_ica_artifacts(
     in_files = dict()
     in_files["epochs"] = bids_basename.copy().update(processing="icafit", suffix="epo")
     _update_for_splits(in_files, "epochs", single=True)
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
-    in_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
+    in_files["ica"] = bids_basename.copy().update(
+        processing="icafit", suffix="ica", task=None
+    )
     return in_files
 
 
@@ -132,8 +134,12 @@ def find_ica_artifacts(
     in_files: InFilesT,
 ) -> OutFilesT:
     """Run ICA."""
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
+    bids_basename = (
+        raw_fnames[0].copy().update(processing=None, split=None, run=None, task=None)
+    )
     out_files = dict()
     out_files["ica"] = bids_basename.copy().update(processing="ica", suffix="ica")
     out_files["ecg"] = bids_basename.copy().update(processing="ica+ecg", suffix="ave")
@@ -363,7 +369,6 @@ def find_ica_artifacts(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.task,
     ) as report:
         logger.info(**gen_log_kwargs(message=f'Adding "{title}" to report.'))
         report.add_ica(
@@ -576,8 +581,7 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs=get_runs(config=config, subject=subject),
-        task_is_rest=config.task_is_rest,
+        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
         ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,

@@ -18,7 +18,14 @@ import numpy as np
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from ._config_utils import get_eog_channels, get_subjects_sessions
+from ._config_utils import (
+    _get_task_baseline,
+    _get_task_float,
+    _validate_contrasts,
+    get_eog_channels,
+    get_subjects_sessions,
+    get_tasks,
+)
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
@@ -32,6 +39,7 @@ def _import_config(
     config_path: PathLike | None,
     overrides: SimpleNamespace | None = None,
     check: bool = True,
+    add_all_tasks: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
@@ -126,6 +134,11 @@ def _import_config(
         if k not in in_both:
             delattr(config, k)
     config.exec_params = exec_params
+
+    # And we need these for some steps, too
+    if add_all_tasks:
+        config.all_tasks = get_tasks(config=config)
+
     return config
 
 
@@ -281,6 +294,10 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             f"({config.bids_root})."
         )
 
+    # tasks
+    tasks = get_tasks(config=config)  # will raise if something is wrong
+
+    # preprocessing
     if (
         config.use_maxwell_filter
         and len(set(config.ch_types).intersection(("meg", "grad", "mag"))) == 0
@@ -440,21 +457,28 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "update MNE-BIDS (or if on the latest version, install the dev version)."
         )
 
-    bl = config.baseline
-    if bl is not None:
-        if (bl[0] is not None and bl[0] < config.epochs_tmin) or (
-            bl[1] is not None and bl[1] > config.epochs_tmax
-        ):
-            raise ValueError(
-                f"baseline {bl} outside of epochs interval "
-                f"{[config.epochs_tmin, config.epochs_tmax]}."
-            )
+    for task in tasks:
+        bl = _get_task_baseline(baseline=config.baseline, task=task)
+        tmin = _get_task_float(config.epochs_tmin, task=task)
+        tmax = _get_task_float(config.epochs_tmax, task=task)
+        if bl is not None:
+            if (bl[0] is not None and bl[0] < tmin) or (
+                bl[1] is not None and bl[1] > tmax
+            ):
+                raise ValueError(
+                    f"baseline {bl} for task {task} outside of epochs interval "
+                    f"{[tmin, tmax]}."
+                )
 
-        if bl[0] is not None and bl[1] is not None and bl[0] >= bl[1]:
-            raise ValueError(
-                f"The end of the baseline period must occur after its start, "
-                f"but you set baseline={bl}"
-            )
+            if bl[0] is not None and bl[1] is not None and bl[0] >= bl[1]:
+                raise ValueError(
+                    f"The end of the baseline period must occur after its start, "
+                    f"but you set baseline={bl} for task {task}"
+                )
+        del task, bl, tmin, tmax
+
+    # Contrasts
+    _validate_contrasts(config.contrasts, tasks=config.task)
 
     # check cluster permutation parameters
     if config.cluster_n_permutations < 10 / config.cluster_permutation_p_threshold:
@@ -605,6 +629,9 @@ _REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     ),
 }
 
+# False alarms
+_IGNORED_SIMILAR_NAMES = {"BaselineTypeT"}
+
 
 def _check_misspellings_removals(
     *,
@@ -618,8 +645,13 @@ def _check_misspellings_removals(
         if user_name not in valid_names:
             # find the closest match
             closest_match = difflib.get_close_matches(user_name, valid_names, n=1)
+            other = closest_match[0] if closest_match else None
             msg = f"Found a variable named {repr(user_name)} in your custom config,"
-            if closest_match and closest_match[0] not in user_names:
+            if (
+                closest_match
+                and other not in user_names
+                and user_name not in _IGNORED_SIMILAR_NAMES
+            ):
                 this_msg = (
                     f"{msg} did you mean {repr(closest_match[0])}? "
                     "If so, please correct the error. If not, please rename "

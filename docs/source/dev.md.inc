@@ -14,6 +14,9 @@
 - New config option [`epochs_custom_metadata`][mne_bids_pipeline._config.epochs_custom_metadata] allows for custom metadata when creating epochs. (#1088 by @harrisonritz)
 - New config option [`process_raw_clean`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
+- Add support for processing multiple tasks simultaneously using a list like [`task = ["task1", "task2"]`][mne_bids_pipeline._config.task] in the config file (#1141 by @larsoner)
+- Add support for disabling time-by-time decoding while still performing full-epochs decoding using [`decoding_time`][mne_bids_pipeline._config.decoding_time] (#1141 by @larsoner)
+- Add support for setting decimation for time-by-time decoding using [`decoding_time_decim`][mne_bids_pipeline._config.decoding_time_decim] (#1141 by @larsoner)
 - Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
 - Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
 
@@ -50,6 +53,7 @@
 - Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
 - Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
 - Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
+- Fix bug where `runs` were not handled properly when a single `task` was specified but multiple tasks existed in a dataset (#1141 by @larsoner)
 
 ### :books: Documentation
 

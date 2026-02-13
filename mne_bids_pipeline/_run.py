@@ -19,7 +19,6 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
-from ._config_utils import get_task
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -64,9 +63,10 @@ def failsafe_run(
                     for k in ("subject", "session", "task", "run")
                     if k in kwargs
                 }
-                message = f"A critical error occurred. The error message was: {str(e)}"
+                e_str = "\n".join(traceback.format_exception_only(e)).strip()
+                message = f"A critical error occurred. The error message was: {e_str}"
                 log_info["success"] = False
-                log_info["error_message"] = str(e)
+                log_info["error_message"] = e_str
 
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
@@ -79,7 +79,7 @@ def failsafe_run(
                         # generally be stuff from this file and joblib
                         tb_list = tb_list[fi:]
                         break
-                tb = "".join(traceback.format_list(tb_list))
+                tb = "".join(traceback.format_list(tb_list) + [e_str])
 
                 if on_error == "abort":
                     message += f"\n\nAborting pipeline run. The traceback is:\n\n{tb}"
@@ -265,7 +265,7 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
-                        msg = "Computation unnecessary (cached) …"
+                        msg = f"Computation unnecessary (cached {func.__name__}(…)) …"
                         emoji = "cache"
             # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface
@@ -327,7 +327,8 @@ class ConditionalStepMemory:
 
 
 def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
-    fname = config.deriv_root / f"task-{get_task(config)}_log.xlsx"
+    all_tasks = "+".join(map(str, config.all_tasks))
+    fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 
     # Get the script from which the function is called for logging
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")

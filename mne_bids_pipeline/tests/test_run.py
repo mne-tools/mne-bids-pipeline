@@ -403,8 +403,9 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
             / "sub-01"
             / f"ses-{sess}"
             / "meg"
-            / f"sub-01_ses-{sess}_task-funloc_report.h5"
+            / f"sub-01_ses-{sess}_report.h5"
         )
+        assert fname.is_file()
         report = read_hdf5(fname, title="mnepython")
         coregs = next(
             filter(lambda x: x["dom_id"] == "Sensor_alignment", report["_content"])

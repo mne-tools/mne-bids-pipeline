@@ -19,11 +19,10 @@ _IGNORE_OPTIONS = {
     "PIPELINE_NAME",
     "VERSION",
     "CODE_URL",
+    "all_tasks",
 }
 # We don't need to parse the config itself, just the steps
 _MANUAL_KWS = {
-    "source/_04_make_forward:get_config:t1_bids_path": ("mri_t1_path_generator",),
-    "source/_04_make_forward:get_config:landmarks_kind": ("mri_landmarks_kind",),
     "preprocessing/_01_data_quality:get_config:extra_kwargs": (
         "mf_cal_fname",
         "mf_ctc_fname",
@@ -31,6 +30,10 @@ _MANUAL_KWS = {
         "find_flat_channels_meg",
         "find_noisy_channels_meg",
     ),
+    "preprocessing/_06a1_fit_ica:get_config:epochs_tmin": ("epochs_tmin",),
+    "preprocessing/_06a1_fit_ica:get_config:epochs_tmax": ("epochs_tmax",),
+    "source/_04_make_forward:get_config:t1_bids_path": ("mri_t1_path_generator",),
+    "source/_04_make_forward:get_config:landmarks_kind": ("mri_landmarks_kind",),
 }
 # Some don't show up so force them to be empty
 _EXECUTION_OPTIONS = (
@@ -86,7 +89,6 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
     "t_break_annot_stop_before_next_event",
     "rename_events",
     "on_rename_missing_events",
-    "mf_reference_run",  # TODO: Make clearer that this changes a lot
     "fix_stim_artifact",
     "stim_artifact_tmin",
     "stim_artifact_tmax",
@@ -100,9 +102,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
 )
 # Eventually we could parse AST to get these, but this is simple enough
 _EXTRA_FUNCS = {
-    "_bids_kwargs": ("get_task",),
-    "_import_data_kwargs": ("get_mf_reference_run",),
-    "get_runs": ("get_runs_all_subjects",),
+    "_import_data_kwargs": ("get_mf_reference_run_task",),
     "get_sessions": ("_get_sessions",),
     "_decoding_preproc_steps": ("_get_rank",),
 }
@@ -118,20 +118,22 @@ class _ParseConfigSteps:
         steps: dict[str, Any] = defaultdict(list)
 
         def _add_step_option(step: str, option: str) -> None:
-            if step not in steps[option]:
+            if option not in _IGNORE_OPTIONS and step not in steps[option]:
                 steps[option].append(step)
 
         # Add a few helper functions
         for func_extra in (
+            _config_utils._get_task_conditions_dict,
+            _config_utils._get_task_contrasts,
+            _config_utils._get_task_decoding_contrasts,
+            _config_utils._limit_which_clean,
             _config_utils.get_eeg_reference,
-            _config_utils.get_all_contrasts,
-            _config_utils.get_decoding_contrasts,
             _config_utils.get_fs_subject,
             _config_utils.get_fs_subjects_dir,
             _config_utils.get_mf_cal_fname,
             _config_utils.get_mf_ctc_fname,
             _config_utils.get_subjects_sessions,
-            _config_utils._limit_which_clean,
+            _import_data._get_mf_reference_path,
         ):
             this_list: list[str] = []
             assert isinstance(func_extra, FunctionType)
@@ -152,7 +154,8 @@ class _ParseConfigSteps:
             found = False  # found at least one?
             # Walk the module file for "get_config*" functions (can be multiple!)
             assert module.__file__ is not None
-            for func in ast.walk(ast.parse(Path(module.__file__).read_text("utf-8"))):
+            source = Path(module.__file__).read_text("utf-8")
+            for func in ast.walk(ast.parse(source)):
                 if not isinstance(func, ast.FunctionDef):
                     continue
                 where = f"{step}:{func.name}"
@@ -179,15 +182,35 @@ class _ParseConfigSteps:
                             for option in _MANUAL_KWS[key]:
                                 _add_step_option(step, option)
 
-                    # Also look for root-level conditionals like use_maxwell_filter
-                    # or spatial_filter
-                    for cond in ast.iter_child_nodes(func):
+                    # Also look for root-level conditionals like use_maxwell_filter,
+                    # spatial_filter, or inverse_targets
+                    for cond in ast.walk(func):
                         # is a conditional in main()
                         if not isinstance(cond, ast.If):
                             continue
-                        # has a return statement somewhere inside it
+                        # missing a return statement inside it
                         if not any(isinstance(c, ast.Return) for c in ast.walk(cond)):
+                            if isinstance(cond.test, ast.Compare) and isinstance(
+                                cond.test.comparators[0], ast.Attribute
+                            ):
+                                attr = cond.test.comparators[0]
+                                if (
+                                    isinstance(attr.value, ast.Name)
+                                    and attr.value.id == "config"
+                                ):
+                                    _add_step_option(step, attr.attr)
+                            # This sort of debugging can help next time something
+                            # isn't added in a main() conditional:
+                            #
+                            # this_source = ast.get_source_segment(source, cond.test)
+                            # if (
+                            #     this_source is not None
+                            #     and "inverse_targets" in this_source
+                            # ):
+                            #     1/0
+                            #
                             continue
+                        # Okay, we know it has a return statement inside somewhere
                         for attr in ast.walk(cond.test):
                             if not isinstance(attr, ast.Attribute):
                                 continue
@@ -220,12 +243,17 @@ class _ParseConfigSteps:
                             for option in _MANUAL_KWS[key]:
                                 _add_step_option(step, option)
                             continue
-                        if keyword.value.func.id == "_sanitize_callable":
+                        func_id = keyword.value.func.id
+                        if func_id in (
+                            "_sanitize_callable",
+                            "_get_task_float",
+                        ):
                             assert len(keyword.value.args) == 1
                             assert isinstance(keyword.value.args[0], ast.Attribute)
                             assert isinstance(keyword.value.args[0].value, ast.Name)
                             assert keyword.value.args[0].value.id == "config"
-                            _add_step_option(step, keyword.value.args[0].attr)
+                            option = keyword.value.args[0].attr
+                            _add_step_option(step, option)
                             continue
                         # Allowlist of function names that we ignore when deciding
                         # which config options are used. Things like `_bids_kwargs`
@@ -236,7 +264,8 @@ class _ParseConfigSteps:
                         if key not in (
                             "_bids_kwargs",
                             "_import_data_kwargs",
-                            "get_runs",
+                            "_get_runs_sst",
+                            "get_datatype",
                             "get_runs_tasks",
                             "get_subjects",
                             "get_sessions",
@@ -256,12 +285,15 @@ class _ParseConfigSteps:
                             funcs.append(getattr(_config_utils, func_name))
                         for fi, func in enumerate(funcs):
                             assert isinstance(func, FunctionType), func
-                            source = inspect.getsource(func)
-                            assert "config: SimpleNamespace" in source, key
+                            func_source = inspect.getsource(func)
+                            assert "config: SimpleNamespace" in func_source, key
                             if fi == 0:
                                 for func_name in _EXTRA_FUNCS.get(key, ()):
-                                    assert f"{func_name}(" in source, (key, func_name)
-                            attrs = _CONFIG_RE.findall(source)
+                                    assert f"{func_name}(" in func_source, (
+                                        key,
+                                        func_name,
+                                    )
+                            attrs = _CONFIG_RE.findall(func_source)
                             # pure wrappers
                             if key not in (
                                 "get_sessions",

@@ -38,8 +38,7 @@ conditions = [
     "visual/standard",
     # "visual/deviant",
 ]
-decode = False
-decoding_time_generalization = False
+decoding_time = False
 cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts

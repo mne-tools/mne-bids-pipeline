@@ -8,7 +8,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _pl,
     get_datatype,
-    get_mf_reference_run,
+    get_mf_reference_run_task,
     get_subjects_sessions,
 )
 from mne_bids_pipeline._import_data import _empty_room_match_path
@@ -24,14 +24,20 @@ from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_find_empty_room(
-    *, subject: str, session: str | None, run: str | None, cfg: SimpleNamespace
+    *,
+    subject: str,
+    session: str | None,
+    run: str | None,
+    task: str | None,
+    cfg: SimpleNamespace,
 ) -> InFilesT:
     """Get paths of files required by find_empty_room function."""
+    # This must match the logic of _import_data.py
     bids_path_in = BIDSPath(
         subject=subject,
         run=run,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -41,8 +47,8 @@ def get_input_fnames_find_empty_room(
         check=False,
     )
     in_files: InFilesT = dict()
-    in_files[f"raw_run-{run}"] = bids_path_in
-    _update_for_splits(in_files, f"raw_run-{run}", single=True)
+    in_files["raw"] = bids_path_in
+    _update_for_splits(in_files, "raw", single=True)
     if hasattr(bids_path_in, "find_matching_sidecar"):
         in_files["sidecar"] = (
             bids_path_in.copy()
@@ -69,17 +75,16 @@ def find_empty_room(
     subject: str,
     session: str | None,
     run: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
-    raw_path = in_files.pop(f"raw_run-{run}")
+    raw_path = in_files.pop("raw")
     in_files.pop("sidecar", None)
     try:
         fname = raw_path.find_empty_room(use_sidecar_only=True)
     except (FileNotFoundError, AssertionError, ValueError):
         fname = ""
     if fname is None:
-        # sidecar is very fast and checking all can be slow (seconds), so only
-        # log when actually looking through files
         ending = "empty-room files"
         if len(in_files):  # MNE-BIDS < 0.12 missing get_empty_room_candidates
             ending = f"{len(in_files)} empty-room file{_pl(in_files)}"
@@ -95,9 +100,16 @@ def find_empty_room(
             fname = None
         in_files.clear()  # MNE-BIDS find_empty_room should have looked at all
     elif fname == "":
+        msg = "Skipping, empty-room match unavailable …"
+        logger.info(**gen_log_kwargs(message=msg))
         fname = None  # not downloaded, or EEG data
     elif not fname.fpath.exists():
+        msg = f"Path found in sidecar does not exist: {fname.fpath}"
+        logger.warning(**gen_log_kwargs(message=msg))
         fname = None  # path found by sidecar but does not exist
+    else:
+        msg = f"Empty-room match found from sidecar: {fname.fpath.name}"
+        logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     out_files["empty_room_match"] = _empty_room_match_path(raw_path, cfg)
     _write_json(out_files["empty_room_match"], dict(fname=fname))
@@ -109,6 +121,7 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        data_type=get_datatype(config),
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -129,7 +142,9 @@ def main(*, config: SimpleNamespace) -> None:
     logs = list()
     for subject, sessions in get_subjects_sessions(config).items():
         for session in sessions:
-            run = get_mf_reference_run(config=config)
+            run, task = get_mf_reference_run_task(
+                config=config, subject=subject, session=session
+            )
             logs.append(
                 find_empty_room(
                     cfg=get_config(config=config),
@@ -137,6 +152,7 @@ def main(*, config: SimpleNamespace) -> None:
                     subject=subject,
                     session=session,
                     run=run,
+                    task=task,
                 )
             )
     save_logs(config=config, logs=logs)

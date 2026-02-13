@@ -16,9 +16,12 @@ from scipy.io import loadmat, savemat
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_task_conditions_dict,
+    _get_task_contrasts,
+    _get_task_decoding_contrasts,
+    _get_task_float,
     _pl,
     _restrict_analyze_channels,
-    get_decoding_contrasts,
     get_eeg_reference,
     get_sessions,
     get_subjects,
@@ -30,6 +33,7 @@ from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import (
     _all_conditions,
     _contrasts_to_names,
+    _get_prefix_tags,
     _open_report,
     _plot_decoding_time_generalization,
     _plot_full_epochs_decoding_scores,
@@ -53,6 +57,7 @@ def get_input_fnames_average_evokeds(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     in_files = dict()
     # for each session, only use subjects who actually have data for that session
@@ -61,7 +66,7 @@ def get_input_fnames_average_evokeds(
         in_files[f"evoked-{this_subject}"] = BIDSPath(
             subject=this_subject,
             session=session,
-            task=cfg.task,
+            task=task,
             acquisition=cfg.acq,
             run=None,
             recording=cfg.rec,
@@ -84,11 +89,12 @@ def average_evokeds(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     logger.info(**gen_log_kwargs(message="Creating grand averages"))
     # Container for all conditions:
-    conditions = _all_conditions(cfg=cfg)
+    conditions = _all_conditions(cfg=cfg, task=task)
     evokeds_nested: list[list[mne.Evoked]] = [list() for _ in range(len(conditions))]
 
     keys = list(in_files)
@@ -120,7 +126,7 @@ def average_evokeds(
     fname_out = out_files["evokeds"] = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         processing="clean",
@@ -154,7 +160,7 @@ def average_evokeds(
     # Reporting
     evokeds = [_restrict_analyze_channels(evoked, cfg) for evoked in evokeds]
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         # Add event stats.
         add_event_counts(
@@ -162,6 +168,7 @@ def average_evokeds(
             report=report,
             subject=subject,
             session=session,
+            task=task,
         )
 
         # Evoked responses
@@ -180,13 +187,15 @@ def average_evokeds(
         if n_missing := (len(cfg.subjects) - len(subjects_in_grand_avg)):
             _title += f"{n_missing} subjects excluded due to missing session data"
         for condition, evoked in zip(conditions, evokeds):
-            tags: tuple[str, ...] = ("evoked", _sanitize_cond_tag(condition))
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition
+            )
+            tags = ("evoked",) + extra_tags
             if condition in cfg.conditions:
-                title = f"Average (sensor): {condition}, {_title}"
+                title = f"Average (sensor){prefix}, {_title}"
             else:  # It's a contrast of two conditions.
-                title = f"Average (sensor) contrast: {condition}, {_title}"
+                title = f"Average (sensor) contrast{prefix}, {_title}"
                 tags = tags + ("contrast",)
-
             report.add_evokeds(
                 evokeds=evoked,
                 titles=title,
@@ -246,6 +255,7 @@ def _get_epochs_in_files(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     in_files = dict()
     # here we just need one subject's worth of Epochs, to get the time domain. But we
@@ -253,7 +263,7 @@ def _get_epochs_in_files(
     in_files["epochs"] = BIDSPath(
         subject=get_subjects_given_session(cfg, session)[0],
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -275,6 +285,7 @@ def _decoding_out_fname(
     session: str | None,
     cond_1: str | None,
     cond_2: str | None,
+    task: str | None,
     kind: str,
     extension: str = ".mat",
 ) -> BIDSPath:
@@ -292,7 +303,7 @@ def _decoding_out_fname(
     return BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -311,17 +322,21 @@ def _get_input_fnames_decoding(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     cond_1: str,
     cond_2: str,
     kind: str,
     extension: str = ".mat",
 ) -> InFilesT:
-    in_files = _get_epochs_in_files(cfg=cfg, subject="ignored", session=session)
+    in_files = _get_epochs_in_files(
+        cfg=cfg, subject="ignored", session=session, task=task
+    )
     for this_subject in cfg.subjects:
         in_files[f"scores-{this_subject}"] = _decoding_out_fname(
             cfg=cfg,
             subject=this_subject,
             session=session,
+            task=task,
             cond_1=cond_1,
             cond_2=cond_2,
             kind=kind,
@@ -342,6 +357,7 @@ def average_time_by_time_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     cond_1: str,
     cond_2: str,
     in_files: InFilesT,
@@ -350,9 +366,11 @@ def average_time_by_time_decoding(
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=False)
-    dtg_decim = cfg.decoding_time_generalization_decim
-    if cfg.decoding_time_generalization and dtg_decim > 1:
-        epochs.decimate(dtg_decim, verbose="error")
+    decim = cfg.decoding_time_decim
+    if cfg.decoding_time_generalization:
+        decim = max(cfg.decoding_time_generalization_decim, decim)
+    if decim > 1:
+        epochs.decimate(decim, verbose="error")
     times = epochs.times
     del epochs
 
@@ -372,7 +390,7 @@ def average_time_by_time_decoding(
         "cond_2": cond_2,
         "times": times,
         "N": n_subjects,
-        "decim": dtg_decim,
+        "decim": decim,
         "mean": mean,
         "mean_min": mean_min,
         "mean_max": mean_max,
@@ -482,6 +500,7 @@ def average_time_by_time_decoding(
         cfg=cfg,
         subject=subject,
         session=session,
+        task=task,
         cond_1=cond_1,
         cond_2=cond_2,
         kind="TimeByTime",
@@ -490,17 +509,16 @@ def average_time_by_time_decoding(
 
     section = f"Decoding: time-by-time, N = {len(cfg.subjects)}"
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        logger.info(**gen_log_kwargs(message="Adding time-by-time decoding results"))
         import matplotlib.pyplot as plt
 
-        tags = (
-            "epochs",
-            "contrast",
-            "decoding",
-            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
+        logger.info(**gen_log_kwargs(message="Adding time-by-time decoding results"))
+
+        prefix, extra_tags = _get_prefix_tags(
+            cfg=cfg, task=task, contrast=(cond_1, cond_2), add_contrast=True
         )
+        tags = ("epochs", "contrast", "decoding") + extra_tags
         decoding_data = loadmat(out_files["mat"])
 
         # Plot scores
@@ -544,7 +562,7 @@ def average_time_by_time_decoding(
             )
             report.add_figure(
                 fig=fig,
-                title=f"t-values across time: {cond_1} vs. {cond_2}",
+                title=f"t-values across time{prefix}",
                 caption=caption,
                 section=section,
                 tags=tags,
@@ -564,7 +582,7 @@ def average_time_by_time_decoding(
                 f"on all other time points. The results were averaged across "
                 f"N={decoding_data['N'].item()} subjects."
             )
-            title = f"Time generalization: {cond_1} vs. {cond_2}"
+            title = f"Time generalization{prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,
@@ -592,6 +610,7 @@ def average_full_epochs_decoding(
     session: str | None,
     cond_1: str,
     cond_2: str,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     n_subjects = len(cfg.subjects)
@@ -652,6 +671,7 @@ def average_full_epochs_decoding(
         session=session,
         cond_1=cond_1,
         cond_2=cond_2,
+        task=task,
         kind="FullEpochs",
     )
     if not fname_out.fpath.parent.exists():
@@ -665,6 +685,7 @@ def get_input_files_average_full_epochs_report(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     decoding_contrasts: list[list[str]],
 ) -> InFilesT:
     in_files = dict()
@@ -673,6 +694,7 @@ def get_input_files_average_full_epochs_report(
             cfg=cfg,
             subject=subject,
             session=session,
+            task=task,
             cond_1=contrast[0],
             cond_2=contrast[1],
             kind="FullEpochs",
@@ -689,6 +711,7 @@ def average_full_epochs_report(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     decoding_contrasts: list[list[str]],
     in_files: InFilesT,
 ) -> OutFilesT:
@@ -698,6 +721,7 @@ def average_full_epochs_report(
         cfg=cfg,
         subject=subject,
         session=session,
+        task=task,
         cond_1=None,
         cond_2=None,
         kind="FullEpochs",
@@ -705,10 +729,11 @@ def average_full_epochs_report(
     )
 
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         import matplotlib.pyplot as plt  # nested import to help joblib
 
+        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task)
         logger.info(
             **gen_log_kwargs(message="Adding full-epochs decoding results to report")
         )
@@ -730,23 +755,19 @@ def average_full_epochs_report(
         )
         with pd.ExcelWriter(out_files["cluster"]) as w:
             data.to_excel(w, sheet_name="FullEpochs", index=False)
+        tags = ("epochs", "contrast", "decoding") + extra_tags
+        tags += tuple(
+            f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
+            for cond_1, cond_2 in cfg.decoding_contrasts
+        )
         report.add_figure(
             fig=fig,
-            title="Full-epochs decoding",
+            title=f"Full-epochs decoding{prefix}",
             section=f"Decoding: full-epochs, N = {len(cfg.subjects)}",
             caption=caption,
-            tags=(
-                "epochs",
-                "contrast",
-                "decoding",
-                *[
-                    f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
-                    for cond_1, cond_2 in cfg.decoding_contrasts
-                ],
-            ),
+            tags=tags,
             replace=True,
         )
-        # close figure to save memory
         plt.close(fig)
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
@@ -764,6 +785,7 @@ def average_csp_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     cond_1: str,
     cond_2: str,
     in_files: InFilesT,
@@ -814,6 +836,7 @@ def average_csp_decoding(
         cfg=cfg,
         subject=subject,
         session=session,
+        task=task,
         cond_1=cond_1,
         cond_2=cond_2,
         kind="CSP",
@@ -920,12 +943,13 @@ def average_csp_decoding(
 
     assert subject == "average"
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         add_csp_grand_average(
             cfg=cfg,
             subject=subject,
             session=session,
+            task=task,
             report=report,
             cond_1=cond_1,
             cond_2=cond_2,
@@ -1000,25 +1024,28 @@ def _average_csp_time_freq(
 def get_config(
     *,
     config: SimpleNamespace,
+    task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
         allow_missing_sessions=config.allow_missing_sessions,
         task_is_rest=config.task_is_rest,
-        conditions=config.conditions,
-        contrasts=config.contrasts,
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
+        conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
+        contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
+        epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
+        epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         decode=config.decode,
+        decoding_time=config.decoding_time,
+        decoding_time_decim=config.decoding_time_decim,
         decoding_metric=config.decoding_metric,
         decoding_time_generalization=config.decoding_time_generalization,
         decoding_time_generalization_decim=config.decoding_time_generalization_decim,
         decoding_csp=config.decoding_csp,
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
-        decoding_contrasts=get_decoding_contrasts(config),
+        decoding_contrasts=_get_task_decoding_contrasts(config, task=task),
         random_state=config.random_state,
         n_boot=config.n_boot,
         cluster_forming_t_threshold=config.cluster_forming_t_threshold,
@@ -1044,17 +1071,28 @@ def main(*, config: SimpleNamespace) -> None:
         msg = 'Skipping, task is "rest" …'
         logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
-    cfg = get_config(
-        config=config,
-    )
     exec_params = config.exec_params
     if hasattr(exec_params.overrides, "subjects"):
         msg = "Skipping, --subject is set …"
         logger.info(**gen_log_kwargs(message=msg, subject=subject))
         return
+
+    # In theory we could make this a tiny bit more efficient by combining the
+    # parallelization across tasks, but it's a pain given how get_config works
+    for task in config.all_tasks:
+        _run_decoding(config=config, task=task)
+
+
+def _run_decoding(*, config: SimpleNamespace, task: str | None) -> None:
+    subject = "average"
+    exec_params = config.exec_params
+    cfg = get_config(
+        config=config,
+        task=task,
+    )
     sessions = get_sessions(config=config)
     if cfg.decode or cfg.decoding_csp:
-        decoding_contrasts = get_decoding_contrasts(config=cfg)
+        decoding_contrasts = _get_task_decoding_contrasts(config=cfg, task=task)
     else:
         decoding_contrasts = []
     logs = list()
@@ -1066,6 +1104,7 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
             for session in sessions
         ]
@@ -1079,6 +1118,7 @@ def main(*, config: SimpleNamespace) -> None:
                     cfg=cfg,
                     subject=subject,
                     session=session,
+                    task=task,
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                     exec_params=exec_params,
@@ -1092,32 +1132,35 @@ def main(*, config: SimpleNamespace) -> None:
                     exec_params=exec_params,
                     subject=subject,
                     session=session,
+                    task=task,
                     decoding_contrasts=decoding_contrasts,
                 )
                 for session in sessions
             ]
             # Time-by-time
-            sc = [
-                (session, contrast)
-                for session in sessions
-                for contrast in decoding_contrasts
-            ]
-            parallel, run_func = parallel_func(
-                average_time_by_time_decoding,
-                exec_params=exec_params,
-                n_iter=len(sc),
-            )
-            logs += parallel(
-                run_func(
-                    cfg=cfg,
+            if cfg.decoding_time:
+                sc = [
+                    (session, contrast)
+                    for session in sessions
+                    for contrast in decoding_contrasts
+                ]
+                parallel, run_func = parallel_func(
+                    average_time_by_time_decoding,
                     exec_params=exec_params,
-                    subject=subject,
-                    session=session,
-                    cond_1=contrast[0],
-                    cond_2=contrast[1],
+                    n_iter=len(sc),
                 )
-                for session, contrast in sc
-            )
+                logs += parallel(
+                    run_func(
+                        cfg=cfg,
+                        exec_params=exec_params,
+                        subject=subject,
+                        session=session,
+                        task=task,
+                        cond_1=contrast[0],
+                        cond_2=contrast[1],
+                    )
+                    for session, contrast in sc
+                )
 
         # 3. CSP
         if cfg.decoding_csp and decoding_contrasts:
@@ -1130,6 +1173,7 @@ def main(*, config: SimpleNamespace) -> None:
                     exec_params=exec_params,
                     subject=subject,
                     session=session,
+                    task=task,
                     cond_1=contrast[0],
                     cond_2=contrast[1],
                 )

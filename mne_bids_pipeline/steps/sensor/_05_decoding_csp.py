@@ -15,9 +15,10 @@ from sklearn.pipeline import make_pipeline
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_decoding_proc,
-    _get_ss,
+    _get_sst,
+    _get_task_decoding_contrasts,
+    _get_task_float,
     _restrict_analyze_channels,
-    get_decoding_contrasts,
     get_eeg_reference,
 )
 from mne_bids_pipeline._decoding import (
@@ -28,6 +29,7 @@ from mne_bids_pipeline._decoding import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import (
+    _get_prefix_tags,
     _imshow_tf,
     _open_report,
     _plot_full_epochs_decoding_scores,
@@ -116,13 +118,14 @@ def get_input_fnames_csp(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     contrast: tuple[str],
 ) -> InFilesT:
     proc = _get_decoding_proc(config=cfg)
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -147,6 +150,7 @@ def one_subject_decoding(
     exec_params: SimpleNamespace,
     subject: str,
     session: str,
+    task: str | None,
     contrast: tuple[str, str],
     in_files: InFilesT,
 ) -> OutFilesT:
@@ -177,6 +181,7 @@ def one_subject_decoding(
         cfg=cfg,
         subject=subject,
         session=session,
+        task=task,
         epochs=epochs,
     )
 
@@ -368,22 +373,17 @@ def one_subject_decoding(
 
     # Report
     with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session
+        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
         msg = "Adding CSP decoding results to the report."
         logger.info(**gen_log_kwargs(message=msg))
         section = "Decoding: CSP"
         all_csp_tf_results = dict()
         for contrast in cfg.decoding_contrasts:
+            prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, contrast=contrast)
             cond_1, cond_2 = contrast
             a_vs_b = f"{cond_1}+{cond_2}".replace(op.sep, "")
-            tags = (
-                "epochs",
-                "contrast",
-                "decoding",
-                "csp",
-                f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
-            )
+            tags = ("epochs", "contrast", "decoding", "csp") + extra_tags
             processing = f"{a_vs_b}+CSP+{cfg.decoding_metric}"
             processing = processing.replace("_", "-").replace("-", "")
             fname_decoding = bids_path.copy().update(
@@ -425,7 +425,7 @@ def one_subject_decoding(
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,
             )
-            title = f"CSP decoding: {cond_1} vs. {cond_2}"
+            title = f"CSP decoding{prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,
@@ -524,7 +524,11 @@ def one_subject_decoding(
 
 
 def get_config(
-    *, config: SimpleNamespace, subject: str, session: str | None
+    *,
+    config: SimpleNamespace,
+    subject: str,
+    session: str | None,
+    task: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters
@@ -532,8 +536,8 @@ def get_config(
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
         # Processing parameters
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
+        epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
+        epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
         time_frequency_freq_min=config.time_frequency_freq_min,
         time_frequency_freq_max=config.time_frequency_freq_max,
         time_frequency_subtract_evoked=config.time_frequency_subtract_evoked,
@@ -542,7 +546,7 @@ def get_config(
         decoding_csp_freqs=config.decoding_csp_freqs,
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
-        decoding_contrasts=get_decoding_contrasts(config),
+        decoding_contrasts=_get_task_decoding_contrasts(config, task=task),
         cov_rank=config.cov_rank,
         random_state=config.random_state,
         **_bids_kwargs(config=config),
@@ -561,24 +565,27 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
-    ss = _get_ss(config=config)
-    ssc = [
-        (subject, session, contrast)
-        for subject, session in ss
-        for contrast in get_decoding_contrasts(config)
+    sst = _get_sst(config=config)
+    sstc = [
+        (subject, session, task, contrast)
+        for subject, session, task in sst
+        for contrast in _get_task_decoding_contrasts(config, task=task)
     ]
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            one_subject_decoding, exec_params=config.exec_params, n_iter=len(ssc)
+            one_subject_decoding, exec_params=config.exec_params, n_iter=len(sstc)
         )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject, session=session),
+                cfg=get_config(
+                    config=config, subject=subject, session=session, task=task
+                ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
                 contrast=contrast,
             )
-            for subject, session, contrast in ssc
+            for subject, session, task, contrast in sstc
         )
         save_logs(logs=logs, config=config)

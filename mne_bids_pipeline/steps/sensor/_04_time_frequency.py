@@ -12,7 +12,7 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
-    _get_ss,
+    _get_sst,
     _restrict_analyze_channels,
     get_eeg_reference,
     sanitize_cond_name,
@@ -34,11 +34,12 @@ def get_input_fnames_time_frequency(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
 ) -> InFilesT:
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -65,6 +66,7 @@ def run_time_frequency(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
+    task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
     import matplotlib.pyplot as plt
@@ -185,10 +187,10 @@ def main(*, config: SimpleNamespace) -> None:
         logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
-    ss = _get_ss(config=config)
+    sst = _get_sst(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_time_frequency, exec_params=config.exec_params, n_iter=len(ss)
+            run_time_frequency, exec_params=config.exec_params, n_iter=len(sst)
         )
         logs = parallel(
             run_func(
@@ -198,7 +200,8 @@ def main(*, config: SimpleNamespace) -> None:
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
+                task=task,
             )
-            for subject, session in ss
+            for subject, session, task in sst
         )
     save_logs(config=config, logs=logs)

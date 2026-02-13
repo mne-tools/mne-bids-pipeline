@@ -165,6 +165,10 @@ def find_ica_artifacts(
             raw = mne.io.read_raw(raw_fname, preload=False)
             if cfg.ica_use_icalabel:
                 set_initial_average_reference(raw, cfg).apply_proj()
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.drop_channels(cfg.eeg_online_reference_channel)
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -229,6 +233,10 @@ def find_ica_artifacts(
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
                 set_initial_average_reference(raw, cfg).apply_proj()
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.drop_channels(cfg.eeg_online_reference_channel)
             if cfg.eog_channels:
                 ch_names = cfg.eog_channels
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])

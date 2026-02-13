@@ -445,10 +445,10 @@ def get_tasks(config: SimpleNamespace) -> list[str | None]:
             tasks.append(config.task)
         else:
             tasks.extend(config.task)
-        if set(tasks) - set(_valid_tasks):
+        if missing_tasks := (set(tasks) - set(_valid_tasks)):
             raise ValueError(
                 "The following requested tasks were not found in the dataset: "
-                f"{set(tasks) - set(_valid_tasks)}"
+                f"{missing_tasks}"
             )
     else:
         if not _valid_tasks:

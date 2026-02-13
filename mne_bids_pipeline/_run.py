@@ -327,7 +327,7 @@ class ConditionalStepMemory:
 
 
 def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
-    all_tasks = "-".join(map(str, config.all_tasks))
+    all_tasks = "+".join(map(str, config.all_tasks))
     fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 
     # Get the script from which the function is called for logging

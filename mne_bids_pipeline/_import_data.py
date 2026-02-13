@@ -594,7 +594,7 @@ def _get_bids_path_in(
         check=False,
     )
     if kind != "orig":
-        assert kind in ("sss", "filt"), kind
+        assert kind in ("sss", "filt", "eyelink"), kind
         path_kwargs["root"] = cfg.deriv_root
         path_kwargs["suffix"] = "raw"
         path_kwargs["extension"] = ".fif"

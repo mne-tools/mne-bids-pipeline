@@ -18,7 +18,11 @@ updates:
     commit-message:
       prefix: "[dependabot]"
   - package-ecosystem: "uv"
-    directory: "/uv.lock"
+    directory: "/"
+    # dependabot/dependabot-core#13960
+    exclude-paths:
+      - "LICENSE.txt"
+      - "ignore_words.txt"
     allow:
       - dependency-type: "all"
     groups:

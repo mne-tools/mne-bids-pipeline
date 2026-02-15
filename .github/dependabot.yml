@@ -13,3 +13,11 @@ updates:
       - "dependabot"
     commit-message:
       prefix: "[dependabot]"
+  - package-ecosystem: uv
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependabot"
+    commit-message:
+      prefix: "[dependabot]"

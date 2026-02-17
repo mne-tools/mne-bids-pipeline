@@ -315,8 +315,7 @@ def run_ica(
         fit_params=fit_params,
         max_iter=cfg.ica_max_iterations,
     )
-    # TODO: Check whether `cfg.ch_types` is the best solution since it only includes eeg/meg channels not e.g. eog
-    ica.fit(epochs, picks=cfg.ch_types, decim=cfg.ica_decim)
+    ica.fit(epochs, decim=cfg.ica_decim)
     explained_var = (
         ica.pca_explained_variance_[: ica.n_components_].sum()
         / ica.pca_explained_variance_.sum()

@@ -20,7 +20,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report, _render_bem
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run, save_logs
 from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
@@ -28,7 +28,9 @@ def _get_bem_params(cfg: SimpleNamespace) -> tuple[str, Path, Path]:
     mri_dir = Path(cfg.fs_subjects_dir) / cfg.fs_subject / "mri"
     flash_dir = mri_dir / "flash" / "parameter_maps"
     if cfg.bem_mri_images == "FLASH" and not flash_dir.exists():
-        raise RuntimeError("Cannot locate FLASH MRI images.")
+        raise RuntimeError(
+            f"Cannot locate FLASH MRI images, directory not found: {flash_dir}"
+        )
     if cfg.bem_mri_images == "FLASH":
         mri_images = "FLASH"
     elif cfg.bem_mri_images == "auto" and flash_dir.exists():
@@ -113,11 +115,10 @@ def make_bem_surfaces(
         subject=subject,
         session=session,
     )
-    return _prep_out_files(
+    return _prep_out_files_path(
         exec_params=exec_params,
         out_files=out_files,
         check_relative=cfg.fs_subjects_dir,
-        bids_only=False,
     )
 
 

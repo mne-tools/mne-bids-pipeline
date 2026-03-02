@@ -107,7 +107,15 @@ def run_ica(
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs, raw_fnames)):
         msg = f"Processing raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        raw = mne.io.read_raw_fif(raw_fname)
+        picks = raw.get_channel_types(unique=True)
+        # if we have M/EEG data but only want to process EEG data, we need to remove
+        # the EEG data here to avoid issues with ICA application later.
+        # picking just the cfg.datatype will exclude stuff like EOG channels that
+        # are needed for analysis.
+        if "eeg" not in cfg.datatype and "eeg" in picks:
+            picks.remove("eeg")
+        raw.pick(picks=picks).load_data()
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!
@@ -141,10 +149,12 @@ def run_ica(
                 msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
             elif h_freq is not None:
                 msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
-            if cfg.ica_l_freq is not None or h_freq is not None:
+            if msg:
                 logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
-            del nyq, h_freq
+            del nyq
+
+        if cfg.ica_l_freq is not None or h_freq is not None:
+            raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()
@@ -291,8 +301,8 @@ def run_ica(
         fit_params=fit_params,
         max_iter=cfg.ica_max_iterations,
     )
-    # TODO: This works for our pipeline (exclude eye-tracking data for ICA) but probably not in general
-    ica.fit(epochs.pick(picks="eeg"), decim=cfg.ica_decim)
+    # TODO: Check whether `cfg.ch_types` is the best solution since it only includes eeg/meg channels not e.g. eog
+    ica.fit(epochs, picks=cfg.ch_types, decim=cfg.ica_decim)
     explained_var = (
         ica.pca_explained_variance_[: ica.n_components_].sum()
         / ica.pca_explained_variance_.sum()
@@ -364,7 +374,6 @@ def get_config(
         task_is_rest=config.task_is_rest,
         ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,
-        h_freq=config.h_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,
@@ -386,7 +395,6 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",

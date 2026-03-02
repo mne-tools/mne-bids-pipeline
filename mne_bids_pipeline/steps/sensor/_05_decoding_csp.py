@@ -174,6 +174,7 @@ def one_subject_decoding(
         epochs.subtract_evoked()
 
     preproc_steps = _decoding_preproc_steps(
+        cfg=cfg,
         subject=subject,
         session=session,
         epochs=epochs,
@@ -499,8 +500,8 @@ def one_subject_decoding(
                     va="center",
                     rotation=90,
                 )
-            ax.set_xlim([np.min(tmin_list), np.max(tmax_list)])
-            ax.set_ylim([np.min(fmin_list), np.max(fmax_list)])
+            ax.set_xlim((np.min(tmin_list), np.max(tmax_list)))
+            ax.set_ylim((np.min(fmin_list), np.max(fmax_list)))
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Frequency (Hz)")
             cbar = fig.colorbar(
@@ -527,7 +528,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         # Data parameters
-        use_maxwell_filter=config.use_maxwell_filter,
         analyze_channels=config.analyze_channels,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
@@ -543,7 +543,7 @@ def get_config(
         decoding_csp_times=config.decoding_csp_times,
         decoding_n_splits=config.decoding_n_splits,
         decoding_contrasts=get_decoding_contrasts(config),
-        n_boot=config.n_boot,
+        cov_rank=config.cov_rank,
         random_state=config.random_state,
         **_bids_kwargs(config=config),
     )

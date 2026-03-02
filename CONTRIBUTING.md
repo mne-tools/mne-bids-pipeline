@@ -26,6 +26,12 @@ If you do not know how to use git, download the pipeline as a zip file
 Finally, for source analysis you'll also need `FreeSurfer`, follow the
 instructions on [their website](https://surfer.nmr.mgh.harvard.edu/).
 
+Then install the packages required for testing while in the cloned repo via
+
+```
+pip install -e . --group dev
+```
+
 ## Testing
 
 ### Running the tests, and continuous integration
@@ -41,6 +47,9 @@ For every pull request or merge into the `main` branch of the
 `mne-bids-pipeline`,
 [CircleCI](https://circleci.com/gh/brainthemind/CogBrainDyn_MEG_Pipeline)
 will run tests as defined in `./circleci/config.yml`.
+
+You can add the pre-commit hook locally after installing `lefthook` with `pip install --group dev` or similar then running `lefthook install`, or run them manually via `lefthook run pre-commit --all-files`.
+
 
 ### Debugging
 

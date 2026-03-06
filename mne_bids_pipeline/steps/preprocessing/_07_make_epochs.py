@@ -25,6 +25,7 @@ from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _sanitize_callable,
@@ -206,8 +207,10 @@ def run_epochs(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
-        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
+        if cfg.eeg_reference == "average":
+            set_initial_average_reference(epochs, cfg)
+        else:
+            epochs.set_eeg_reference(cfg.eeg_reference, projection=False)
 
     assert isinstance(epochs.drop_log, tuple)
     n_epochs_before_metadata_query = len(epochs.drop_log)
@@ -347,6 +350,9 @@ def get_config(
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,

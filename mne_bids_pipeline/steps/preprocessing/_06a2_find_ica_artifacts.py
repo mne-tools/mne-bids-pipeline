@@ -26,6 +26,7 @@ from mne_bids_pipeline._config_utils import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -170,7 +171,11 @@ def find_ica_artifacts(
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
             if cfg.ica_use_icalabel:
-                raw.set_eeg_reference("average", projection=True).apply_proj()
+                set_initial_average_reference(raw, cfg).apply_proj()
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.drop_channels(cfg.eeg_online_reference_channel)
             # ECG epochs
             if not (
                 "ecg" in raw.get_channel_types()
@@ -242,7 +247,12 @@ def find_ica_artifacts(
         for ri, raw_fname in enumerate(raw_fnames):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
-                raw.set_eeg_reference("average", projection=True).apply_proj()
+                set_initial_average_reference(raw, cfg).apply_proj()
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    raw.drop_channels(cfg.eeg_online_reference_channel)
+                    
             if eog_chs_subj_sess is not None:  # explicit None-check to allow []
                 ch_names = eog_chs_subj_sess
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
@@ -592,6 +602,9 @@ def get_config(
         ica_class_thresholds=config.ica_class_thresholds,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,
         eog_channels=config.eog_channels,
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),

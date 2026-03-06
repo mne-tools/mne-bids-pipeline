@@ -25,6 +25,8 @@ subjects = ["001"]
 runs = ["01"]
 epochs_decim = 5  # to 100 Hz
 
+eeg_online_reference_channel = "dummy_ref" # Should be changed to real online reference
+
 # This is mostly for testing purposes!
 decode = True
 decoding_time_generalization = True

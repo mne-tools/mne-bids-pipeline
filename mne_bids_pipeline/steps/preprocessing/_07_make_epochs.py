@@ -148,7 +148,7 @@ def run_epochs(
             epochs_all_runs = epochs
         else:
             epochs_all_runs = mne.concatenate_epochs(
-                [epochs_all_runs, epochs],  # type: ignore[unresolved-reference]
+                [epochs_all_runs, epochs],
                 on_mismatch="warn",
             )
 

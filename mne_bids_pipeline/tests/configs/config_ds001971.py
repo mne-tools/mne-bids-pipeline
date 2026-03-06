@@ -17,7 +17,7 @@ contrasts = [
     ArbitraryContrast(
         name="AdvanceMinusDelay",
         conditions=["AdvanceTempo", "DelayTempo"],
-        weights=[1, -1],
+        weights=[1.0, -1.0],
     ),
 ]
 

@@ -18,7 +18,7 @@ from ._config_utils import (
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from .typing import ConditionsTypeT, InFilesT, PathLike, RunKindT, RunTypeT
+from .typing import ConditionsTypeT, InFilesT, RunKindT, RunTypeT
 
 
 def make_epochs(
@@ -204,7 +204,7 @@ def make_epochs(
     return epochs
 
 
-def annotations_to_events(*, raw_paths: list[PathLike | BIDSPath]) -> dict[str, int]:
+def annotations_to_events(*, raw_paths: list[BIDSPath]) -> dict[str, int]:
     """Generate a unique event name -> event code mapping.
 
     The mapping can that can be used across all passed raws.

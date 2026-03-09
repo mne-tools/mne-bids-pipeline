@@ -397,7 +397,6 @@ def get_config(
         eeg_online_reference_channel=config.eeg_online_reference_channel,
         add_online_reference_channel=config.add_online_reference_channel,
         drop_channel_after_rereference=config.drop_channel_after_rereference,
-        eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="eyelink" if config.sync_eyelink else "filt" if config.regress_artifact is None else "regress",

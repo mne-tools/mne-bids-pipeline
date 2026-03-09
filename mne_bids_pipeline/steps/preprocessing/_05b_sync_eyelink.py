@@ -93,7 +93,7 @@ def get_input_fnames_sync_eyelink(
         extension=".fif",
     )
 
-    et_asc_bids_basename = BIDSPath(
+    et_bids_basename = BIDSPath(
         subject=subject,
         session=session,
         task=et_task,
@@ -106,19 +106,7 @@ def get_input_fnames_sync_eyelink(
         extension=".asc",
     )
 
-    et_edf_bids_basename = BIDSPath(
-        subject=subject,
-        session=session,
-        task=et_task,
-        acquisition=cfg.acq,
-        recording=cfg.rec,
-        datatype="misc",
-        root=cfg.bids_root,
-        suffix="et",
-        check=False,
-        extension=".edf",
-    )
-
+ 
     in_files = dict()
 
     key = f"raw_run-{run}"
@@ -126,29 +114,31 @@ def get_input_fnames_sync_eyelink(
         processing=cfg.processing, suffix="raw"
     )
 
-    et_bids_basename_temp = et_asc_bids_basename.copy()
+    
 
     if cfg.et_has_run:
-        et_bids_basename_temp.update(run=run)
+        et_bids_basename.update(run=run)
 
     # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
 
-    if not os.path.isfile(et_bids_basename_temp):
-        logger.info(**gen_log_kwargs(message=f"Couldn't find {et_bids_basename_temp} file. If edf file exists, edf2asc will be called."))
+    if not os.path.isfile(et_bids_basename):
+        logger.info(**gen_log_kwargs(message=f"Couldn't find {et_bids_basename} file. Trying suffix='physio' before checking .edf."))
+        et_bids_basename.update(suffix="physio")
 
-        et_bids_basename_temp = et_edf_bids_basename.copy()
 
-        if cfg.et_has_run:
-            et_bids_basename_temp.update(run=run)
+        if not os.path.isfile(et_bids_basename):
+            logger.info(**gen_log_kwargs(message=f"Also couldn't find {et_bids_basename}; checking .edf for suffix='et'."))
+            et_bids_basename.update(suffix="et",extension=".edf")
 
-        # _update_for_splits(in_files, key, single=True) # TODO: Find out if we need to add this or not
-
-        if not os.path.isfile(et_bids_basename_temp):
-            logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename_temp} file, one of both needs to exist for ET sync."))
-            raise FileNotFoundError(f"For run {run}, could neither find .asc or .edf eye-tracking file. Please double-check the file names.")
+            if not os.path.isfile(et_bids_basename):
+                logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename} file, last try, edf with suffix _physio"))
+                et_bids_basename.update(suffix="physio")
+                if not os.path.isfile(et_bids_basename):
+                    logger.error(**gen_log_kwargs(message=f"Also didn't find {et_bids_basename} file, one of both needs to exist for ET sync."))
+                    raise FileNotFoundError(f"For run {run}, could neither find .asc or .edf eye-tracking file. Please double-check the file names.")
 
     key = f"et_run-{run}"
-    in_files[key] = et_bids_basename_temp
+    in_files[key] = et_bids_basename
   
     return in_files
 

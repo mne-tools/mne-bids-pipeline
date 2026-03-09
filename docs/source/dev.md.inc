@@ -14,10 +14,13 @@
 - New config option [`epochs_custom_metadata`][mne_bids_pipeline._config.epochs_custom_metadata] allows for custom metadata when creating epochs. (#1088 by @harrisonritz)
 - New config option [`process_raw_clean`] to allow not fully cleaning raw data to save computing resources (#1136 by @larsoner)
 - Automatically avoid using `joblib.Parallel` when only one iteration is needed (and `dask` is not being used), allowing multithreaded linear algebra operations to be used (#1136 by @larsoner)
+- Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
+- Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
 
 ### :warning: Behavior changes
 
 - The pipeline will now raise an error if a loaded `SourceSpaces` object has a `._subject` attribute different from what the pipeline expects / would have used if creating the `SourceSpaces` anew. (#1056 by @drammock)
+- The path passed to `noise_cov` callables is no longer the evoked dataset but instead epochs. Note that the epochs have `processing="clean"` in the `BIDSPath`. (#1159 by @larsoner)
 
 [//]: # (- Whatever (#000 by @whoever))
 
@@ -42,12 +45,17 @@
 - Sanitize report tags that contain `"` or `'`, e.g., for certain metadata contrasts (#1097 by @harrisonritz)
 - `sub-average` is no longer run when ``--subject`` is passed to the pipeline command line interface, allowing easier and more correct single-subject iteration (#1133 by @larsoner)
 - Fix bug where time-weighted head position was not cached properly (#1135 by @larsoner)
+- Fix bug where some config options were unnecessarily passed to steps, possibly leading to unnecessary cache misses (#1152 by @larsoner)
+- Fix bug where the [`config.data_type`][mne_bids_pipeline._config.data_type] channels were not properly picked during ICA fitting, leading to potential errors during ICA application (#1156 by @larsoner)
+- Fix bug where a nonexistent evoked `BIDSPath` was passed to user-defined [`noise_cov`][mne_bids_pipeline._config.noise_cov] callables, a path to epochs is now passed instead (#1159 by @larsoner)
+- Fix bug where ICA pre-filtering was only applied to run-1, now filters all runs (#1164 by @Okimoka)
 
 ### :books: Documentation
 
 - Choose the theme (dark of light) automatically based on the user's operating system setting (#979 by @hoechenberger)
 - Bundle all previously-external JavaScript to better preserve users' privacy (#982 by @hoechenberger)
 - Document the need for offscreen rendering support when running on headless servers (#997 by @drammock)
+- Add more info on test suite installation and running (#1154 by @skjerns)
 
 ### :medical_symbol: Code health and infrastructure
 
@@ -58,3 +66,4 @@
 - New testing/example dataset "funloc" added. (#1045 by @drammock)
 - Bugfixes and better testing of session-specific MRIs. (#1039 and #1067 by @drammock)
 - Drop legacy function `inst.pick_types` in favor of `inst.pick` (#1073 by @PierreGtch)
+- Moved to `ty`, `lefthook`, and `dependency-groups` for development (#1166 by @larsoner)

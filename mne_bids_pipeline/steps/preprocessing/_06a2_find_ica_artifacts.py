@@ -21,6 +21,7 @@ from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
     get_eeg_reference,
+    get_eog_channels,
     get_runs,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -225,6 +226,14 @@ def find_ica_artifacts(
                 )
 
     # EOG component detection
+
+    # get subject and session specific EOG channel
+    eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+
+    if eog_chs_subj_sess is not None:
+        # convert to list for type annotation compatibility
+        eog_chs_subj_sess = list(eog_chs_subj_sess)
+
     epochs_eog = None
     eog_ics: list[int] = []
     eog_scores: FloatArrayT = np.zeros(0)
@@ -237,8 +246,8 @@ def find_ica_artifacts(
                     msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
                     logger.info(**gen_log_kwargs(message=msg))
                     raw.drop_channels(cfg.eeg_online_reference_channel)
-            if cfg.eog_channels:
-                ch_names = cfg.eog_channels
+            if eog_chs_subj_sess is not None:  # explicit None-check to allow []
+                ch_names = eog_chs_subj_sess
                 assert all([ch_name in raw.ch_names for ch_name in ch_names])
             else:
                 eog_picks = mne.pick_types(raw.info, meg=False, eog=True)
@@ -271,7 +280,7 @@ def find_ica_artifacts(
                 which="eog",
                 epochs=epochs_eog,
                 ica=ica,
-                ch_names=cfg.eog_channels,
+                ch_names=eog_chs_subj_sess,
                 subject=subject,
                 session=session,
             )
@@ -578,11 +587,8 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        conditions=config.conditions,
         runs=get_runs(config=config, subject=subject),
         task_is_rest=config.task_is_rest,
-        ica_l_freq=config.ica_l_freq,
-        ica_reject=config.ica_reject,
         ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,
@@ -591,20 +597,7 @@ def get_config(
         ica_icalabel_include=config.ica_icalabel_include,
         ica_exclusion_thresholds=config.ica_exclusion_thresholds,
         ica_class_thresholds=config.ica_class_thresholds,
-        autoreject_n_interpolate=config.autoreject_n_interpolate,
-        random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
-        epochs_decim=config.epochs_decim,
-        raw_resample_sfreq=config.raw_resample_sfreq,
-        event_repeated=config.event_repeated,
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
         eeg_online_reference_channel=config.eeg_online_reference_channel,
         add_online_reference_channel=config.add_online_reference_channel,

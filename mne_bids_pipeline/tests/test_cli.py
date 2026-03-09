@@ -1,6 +1,6 @@
 """Test some CLI options."""
 
-import importlib
+import importlib.util
 import sys
 from pathlib import Path
 

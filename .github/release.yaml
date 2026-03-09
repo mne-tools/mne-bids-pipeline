@@ -4,4 +4,5 @@ changelog:
     authors:
       - dependabot[bot]
       - pre-commit-ci[bot]
+      - mne[bot]
       - mne-bot

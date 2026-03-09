@@ -165,7 +165,6 @@ def get_config(
     cfg = SimpleNamespace(
         time_frequency_conditions=config.time_frequency_conditions,
         analyze_channels=config.analyze_channels,
-        spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
         time_frequency_freq_min=config.time_frequency_freq_min,

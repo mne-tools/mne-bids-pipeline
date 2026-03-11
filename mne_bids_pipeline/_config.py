@@ -378,7 +378,9 @@ Specify the EEG channel that was used as reference channel during the recording.
 drop_channel_after_rereference: bool = True
 """
 Whether the reconstructed online reference channel should be dropped again after applying
-an average reference. 
+an average reference.
+Note: As of 03-2026 the reference (calculated as a projection) is only applied when using ICLabel.
+In all other cases and outputs,  `raw.apply_proj()` is needed to actually apply the reference. Thus, if the reference channel should be dropped after applying the reference, it has to be done manually by the user.
 """
 
 eeg_template_montage: str | DigMontageType | None = None

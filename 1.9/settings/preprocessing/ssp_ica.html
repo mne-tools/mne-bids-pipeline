@@ -1,0 +1,3364 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and EEG data.">
+      
+      
+        <meta name="author" content="MNE-BIDS-Pipeline authors">
+      
+      
+      
+        <link rel="prev" href="stim_artifact.html">
+      
+      
+        <link rel="next" href="artifacts.html">
+      
+      
+      <link rel="icon" href="../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+    
+    
+      
+        <title>SSP, ICA, and artifact regression - MNE-BIDS-Pipeline</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mne_bids_pipeline._config.regress_artifact" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest stable version of MNE-BIDS-Pipeline.
+  <a href="../../..">
+    <strong>Click here to go to stable.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../index.html" title="MNE-BIDS-Pipeline" class="md-header__button md-logo" aria-label="MNE-BIDS-Pipeline" data-md-component="logo">
+      
+  <img src="../../assets/mne.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MNE-BIDS-Pipeline
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SSP, ICA, and artifact regression
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mne-tools/mne-bids-pipeline" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../index.html" class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/install.html" class="md-tabs__link">
+          
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../features/overview.html" class="md-tabs__link">
+          
+  
+  Processing steps
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../general.html" class="md-tabs__link">
+          
+  
+  Configuration options
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/examples.html" class="md-tabs__link">
+          
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changes.html" class="md-tabs__link">
+        
+  
+    
+  
+  What's new
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../tags.html" class="md-tabs__link">
+        
+  
+    
+  
+  Tags
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../index.html" title="MNE-BIDS-Pipeline" class="md-nav__button md-logo" aria-label="MNE-BIDS-Pipeline" data-md-component="logo">
+      
+  <img src="../../assets/mne.svg" alt="logo">
+
+    </a>
+    MNE-BIDS-Pipeline
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mne-tools/mne-bids-pipeline" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/basic_usage.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Basic usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/freesurfer.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Preparations for source-level analyses
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Processing steps
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Processing steps
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/overview.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/steps.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    List of processing steps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Configuration options
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration options
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General settings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Preprocessing
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Preprocessing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="breaks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Break detection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="autobads.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bad channel detection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="maxfilter.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Maxwell filter
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2_4" id="__nav_4_2_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Filtering & resampling
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Filtering & resampling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="filter.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Filtering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="resample.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Resampling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="epochs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epoching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_2_6" id="__nav_4_2_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Artifact removal
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_2_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Artifact removal
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="stim_artifact.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Stimulation artifact
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    SSP, ICA, and artifact regression
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="ssp_ica.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    SSP, ICA, and artifact regression
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.regress_artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      regress_artifact
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.spatial_filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      spatial_filter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.min_ecg_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      min_ecg_epochs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.min_eog_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      min_eog_epochs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.n_proj_eog" class="md-nav__link">
+    <span class="md-ellipsis">
+      n_proj_eog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.n_proj_ecg" class="md-nav__link">
+    <span class="md-ellipsis">
+      n_proj_ecg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ecg_proj_from_average" class="md-nav__link">
+    <span class="md-ellipsis">
+      ecg_proj_from_average
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.eog_proj_from_average" class="md-nav__link">
+    <span class="md-ellipsis">
+      eog_proj_from_average
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_meg" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_meg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_reject_ecg" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_reject_ecg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_reject_eog" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_reject_eog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_ecg_channel" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_ecg_channel
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_reject" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_reject
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_algorithm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_l_freq" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_l_freq
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_max_iterations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_max_iterations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_n_components" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_n_components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_decim" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_decim
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_ecg_threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_ecg_threshold
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_eog_threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_eog_threshold
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="artifacts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Amplitude-based artifact rejection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Sensor-level analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Sensor-level analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sensor/contrasts.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Condition contrasts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sensor/mvpa.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Decoding / MVPA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sensor/time_freq.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time-frequency analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sensor/group_level.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Group-level analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Source-level analysis
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Source-level analysis
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source/general.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General settings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source/bem.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BEM surface
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source/forward.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Source space & forward solution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source/inverse.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inverse solution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/report_generation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Report generation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../caching.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Caching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parallelization.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Parallelization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../error_handling.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Error handling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/examples.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Examples Gallery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds003392.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    hMT+ Localizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds004229.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Single-subject infant dataset for testing maxwell_filter with movecomp.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000246.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Brainstorm - Auditory Dataset.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000247.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OMEGA Resting State Sample Data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000248_base.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MNE Sample Data: M/EEG combined processing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000248_ica.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MNE Sample Data: ICA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000248_T1_BEM.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MNE Sample Data: BEM from T1 images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000248_FLASH_BEM.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MNE Sample Data: BEM from FLASH images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000248_no_mri.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MNE Sample Data: Using the `fsaverage` template MRI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds003104.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Somato
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/eeg_matchingpennies.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Matchingpennies EEG experiment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/MNE-phantom-KIT-data.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    KIT phantom data.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds001810.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tDCS EEG
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds000117.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Faces dataset
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds003775.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SRM Resting-state EEG
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds004107.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MIND DATA.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ds001971.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Mobile brain body imaging (MoBI) gait adaptation experiment.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/ERP_CORE.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ERP CORE.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changes.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    What's new
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tags.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.regress_artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      regress_artifact
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.spatial_filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      spatial_filter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.min_ecg_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      min_ecg_epochs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.min_eog_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      min_eog_epochs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.n_proj_eog" class="md-nav__link">
+    <span class="md-ellipsis">
+      n_proj_eog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.n_proj_ecg" class="md-nav__link">
+    <span class="md-ellipsis">
+      n_proj_ecg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ecg_proj_from_average" class="md-nav__link">
+    <span class="md-ellipsis">
+      ecg_proj_from_average
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.eog_proj_from_average" class="md-nav__link">
+    <span class="md-ellipsis">
+      eog_proj_from_average
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_meg" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_meg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_reject_ecg" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_reject_ecg
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_reject_eog" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_reject_eog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ssp_ecg_channel" class="md-nav__link">
+    <span class="md-ellipsis">
+      ssp_ecg_channel
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_reject" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_reject
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_algorithm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_l_freq" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_l_freq
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_max_iterations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_max_iterations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_n_components" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_n_components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_decim" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_decim
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_ecg_threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_ecg_threshold
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mne_bids_pipeline._config.ica_eog_threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      ica_eog_threshold
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+<nav class="md-tags" >
+  
+    
+    
+    
+      <a href="../../tags.html#preprocessing" class="md-tag">preprocessing</a>
+    
+  
+    
+    
+    
+      <a href="../../tags.html#artifact-removal" class="md-tag">artifact-removal</a>
+    
+  
+    
+    
+    
+      <a href="../../tags.html#raw" class="md-tag">raw</a>
+    
+  
+    
+    
+    
+      <a href="../../tags.html#epochs" class="md-tag">epochs</a>
+    
+  
+    
+    
+    
+      <a href="../../tags.html#ssp" class="md-tag">ssp</a>
+    
+  
+    
+    
+    
+      <a href="../../tags.html#ica" class="md-tag">ica</a>
+    
+  
+</nav>
+
+
+  
+  
+
+
+  <h1>SSP, ICA, and artifact regression</h1>
+
+<div class="doc doc-object doc-module">
+
+
+
+
+    <div class="doc doc-contents first">
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.regress_artifact" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">regress_artifact</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.regress_artifact" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">regress_artifact</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Keyword arguments to pass to the <code>mne.preprocessing.EOGRegression</code> model used
+in <code>mne.preprocessing.regress_artifact</code>. If <code>None</code>, no time-domain regression will
+be applied. Note that any channels picked in <code>regress_artifact["picks_artifact"]</code> will
+have the same time-domain filters applied to them as the experimental data.</p>
+<p>Artifact regression is applied before SSP or ICA.</p>
+<details class="example" open="open">
+<summary>Example</summary>
+<p>For example, if you have MEG reference channel data recorded in three
+miscellaneous channels, you could do:</p>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">regress_artifact</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;picks&quot;</span><span class="p">:</span> <span class="s2">&quot;meg&quot;</span><span class="p">,</span> <span class="s2">&quot;picks_artifact&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;MISC 001&quot;</span><span class="p">,</span> <span class="s2">&quot;MISC 002&quot;</span><span class="p">,</span> <span class="s2">&quot;MISC 003&quot;</span><span class="p">]}</span>
+</code></pre></div>
+</details>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>regress_artifact</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_04_frequency_filter</code></li>
+        <li><code>preprocessing/_05_regress_artifact</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.spatial_filter" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">spatial_filter</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.spatial_filter" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">spatial_filter</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;ssp&#39;</span><span class="p">,</span> <span class="s1">&#39;ica&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Whether to use a spatial filter to detect and remove artifacts. The BIDS
+Pipeline offers the use of signal-space projection (SSP) and independent
+component analysis (ICA).</p>
+<p>Use <code>'ssp'</code> for SSP, <code>'ica'</code> for ICA, and <code>None</code> if you do not wish to apply
+a spatial filter for artifact removal.</p>
+<p>The Pipeline will try to automatically discover EOG and ECG artifacts. For SSP,
+it will then produce projection vectors that remove ("project out") these
+artifacts from the data. For ICA, the independent components related to
+EOG and ECG activity will be omitted during the signal reconstruction step in
+order to remove the artifacts. The ICA procedure can be configured in various
+ways using the configuration options you can find below.</p>
+<div class="admonition warning">
+<p class="admonition-title">ICA requires manual intervention!</p>
+<p>After the automatic ICA component detection step, review each subject's
+<code>*_report.html</code> report file check if the set of ICA components to be removed
+is correct. Adjustments should be made to the <code>*_proc-ica_components.tsv</code>
+file, which will then be used in the step that is applied during ICA.</p>
+<p>ICA component order can be considered arbitrary, so any time the ICA is
+re-fit – i.e., if you change any parameters that affect steps prior to
+ICA fitting – this file will need to be updated!</p>
+</div>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>spatial_filter</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+        <li><code>preprocessing/_06a2_find_ica_artifacts</code></li>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+        <li><code>preprocessing/_08a_apply_ica</code></li>
+        <li><code>preprocessing/_08b_apply_ssp</code></li>
+        <li><code>preprocessing/_09_ptp_reject</code></li>
+        <li><code>sensor/_04_time_frequency</code></li>
+        <li><code>sensor/_06_make_cov</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.min_ecg_epochs" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">min_ecg_epochs</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.min_ecg_epochs" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">min_ecg_epochs</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">5</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Minimal number of ECG epochs needed to compute SSP projectors.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>min_ecg_epochs</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.min_eog_epochs" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">min_eog_epochs</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.min_eog_epochs" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">min_eog_epochs</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Ge</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">5</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Minimal number of EOG epochs needed to compute SSP projectors.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>min_eog_epochs</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.n_proj_eog" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">n_proj_eog</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.n_proj_eog" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">n_proj_eog</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_mag</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_grad</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_eeg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Number of SSP vectors to create for EOG artifacts for each channel type.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>n_proj_eog</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.n_proj_ecg" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">n_proj_ecg</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.n_proj_ecg" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">n_proj_ecg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_mag</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_grad</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_eeg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Number of SSP vectors to create for ECG artifacts for each channel type.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>n_proj_ecg</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ecg_proj_from_average" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ecg_proj_from_average</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ecg_proj_from_average" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ecg_proj_from_average</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Whether to calculate the ECG projection vectors based on the the averaged or
+on individual ECG epochs.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ecg_proj_from_average</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.eog_proj_from_average" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">eog_proj_from_average</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.eog_proj_from_average" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">eog_proj_from_average</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Whether to calculate the EOG projection vectors based on the the averaged or
+on individual EOG epochs.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>eog_proj_from_average</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ssp_meg" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ssp_meg</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ssp_meg" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_meg</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;separate&#39;</span><span class="p">,</span> <span class="s1">&#39;combined&#39;</span><span class="p">,</span> <span class="s1">&#39;auto&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Whether to compute SSP vectors for MEG channels separately (<code>'separate'</code>)
+or jointly (<code>'combined'</code>) for magnetometers and gradiomenters. When using
+Maxwell filtering, magnetometer and gradiometer signals are synthesized from
+multipole moments jointly and are no longer independent, so it can be useful to
+estimate projectors from all MEG sensors simultaneously. The default is
+<code>'auto'</code>, which will use <code>'combined'</code> when Maxwell filtering is used and
+<code>'separate'</code> otherwise.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ssp_meg</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ssp_reject_ecg" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ssp_reject_ecg</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ssp_reject_ecg" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_reject_ecg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;autoreject_global&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Peak-to-peak amplitude limits of the ECG epochs to exclude from SSP fitting.
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.</p>
+<p>The pipeline will automatically try to detect ECG artifacts in
+your data, and remove them via SSP. For this to work properly, it is
+recommended to <strong>not</strong> specify rejection thresholds for ECG channels here –
+otherwise, SSP won't be able to "see" these artifacts.</p>
+<details class="example" open="open">
+<summary>Example</summary>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_reject_ecg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">10e-10</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">20e-12</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">400e-6</span><span class="p">}</span>
+<span class="n">ssp_reject_ecg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">15e-10</span><span class="p">}</span>
+<span class="n">ssp_reject_ecg</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+</details>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ssp_reject_ecg</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ssp_reject_eog" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ssp_reject_eog</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ssp_reject_eog" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_reject_eog</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;autoreject_global&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Peak-to-peak amplitude limits of the EOG epochs to exclude from SSP fitting.
+This allows you to remove strong transient artifacts, which could negatively
+affect SSP performance.</p>
+<p>The pipeline will automatically try to detect EOG artifacts in
+your data, and remove them via SSP. For this to work properly, it is
+recommended to <strong>not</strong> specify rejection thresholds for EOG channels here –
+otherwise, SSP won't be able to "see" these artifacts.</p>
+<details class="example" open="open">
+<summary>Example</summary>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_reject_eog</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">10e-10</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">20e-12</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">400e-6</span><span class="p">}</span>
+<span class="n">ssp_reject_eog</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">15e-10</span><span class="p">}</span>
+<span class="n">ssp_reject_eog</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+</details>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ssp_reject_eog</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ssp_ecg_channel" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ssp_ecg_channel</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ssp_ecg_channel" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ssp_ecg_channel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
+is not reliable.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ssp_ecg_channel</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06b_run_ssp</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_reject" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_reject</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_reject" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_reject</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;autoreject_local&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Peak-to-peak amplitude limits to exclude epochs from ICA fitting. This allows you to
+remove strong transient artifacts from the epochs used for fitting ICA, which could
+negatively affect ICA performance.</p>
+<p>The parameter values are the same as for <a class="autorefs autorefs-internal" href="artifacts.html#mne_bids_pipeline._config.reject"><code>reject</code></a>,
+but <code>"autoreject_global"</code> is not supported. <code>"autoreject_local"</code> here behaves
+differently, too: it is only used to exclude bad epochs from ICA fitting; we do not
+perform any interpolation.</p>
+<details class="info" open="open">
+<summary>Info</summary>
+<p>We don't support <code>"autoreject_global"</code> here (as opposed to
+<a class="autorefs autorefs-internal" href="artifacts.html#mne_bids_pipeline._config.reject"><code>reject</code></a>) because in the past, we found that
+rejection thresholds were too strict before running ICA, i.e., too many epochs
+got rejected. <code>"autoreject_local"</code>, however, usually performed nicely.
+The <code>autoreject</code> documentation
+[recommends][<a href="https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html">https://autoreject.github.io/stable/auto_examples/plot_autoreject_workflow.html</a>]
+running local <code>autoreject</code> before and after ICA, which can be achieved by setting
+both, <code>ica_reject</code> and <a class="autorefs autorefs-internal" href="artifacts.html#mne_bids_pipeline._config.reject"><code>reject</code></a>, to
+<code>"autoreject_local"</code>.</p>
+</details>
+<p>If passing a dictionary, the rejection limits will also be applied to the ECG and EOG
+epochs created to find heart beats and ocular artifacts.</p>
+<details class="info" open="open">
+<summary>Info</summary>
+<p>MNE-BIDS-Pipeline will automatically try to detect EOG and ECG artifacts in
+your data, and remove them. For this to work properly, it is recommended
+to <strong>not</strong> specify rejection thresholds for EOG and ECG channels here –
+otherwise, ICA won't be able to "see" these artifacts.</p>
+</details>
+<details class="info" open="open">
+<summary>Info</summary>
+<p>This setting is applied only to the epochs that are used for <strong>fitting</strong> ICA. The
+goal is to make it easier for ICA to produce a good decomposition. After fitting,
+ICA is applied to the epochs to be analyzed, usually with one or more components
+removed (as to remove artifacts). But even after ICA cleaning, some epochs may still
+contain large-amplitude artifacts. Those epochs can then be rejected by using
+the <a class="autorefs autorefs-internal" href="artifacts.html#mne_bids_pipeline._config.reject"><code>reject</code></a> parameter.</p>
+</details>
+<details class="example" open="open">
+<summary>Example</summary>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_reject</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">10e-10</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">20e-12</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">400e-6</span><span class="p">}</span>
+<span class="n">ica_reject</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">15e-10</span><span class="p">}</span>
+<span class="n">ica_reject</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># no rejection before fitting ICA</span>
+<span class="n">ica_reject</span> <span class="o">=</span> <span class="s2">&quot;autoreject_global&quot;</span>  <span class="c1"># find global (per channel type) PTP thresholds before fitting ICA</span>
+<span class="n">ica_reject</span> <span class="o">=</span> <span class="s2">&quot;autoreject_local&quot;</span>  <span class="c1"># find local (per channel) thresholds and repair epochs before fitting ICA</span>
+</code></pre></div>
+</details>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_reject</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+        <li><code>preprocessing/_06a2_find_ica_artifacts</code></li>
+        <li><code>preprocessing/_08a_apply_ica</code></li>
+        <li><code>preprocessing/_09_ptp_reject</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_algorithm" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_algorithm</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_algorithm" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_algorithm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">&quot;picard&quot;</span><span class="p">,</span> <span class="s2">&quot;fastica&quot;</span><span class="p">,</span> <span class="s2">&quot;extended_infomax&quot;</span><span class="p">,</span> <span class="s2">&quot;picard-extended_infomax&quot;</span>
+<span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;picard&quot;</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>The ICA algorithm to use. <code>"picard-extended_infomax"</code> operates <code>picard</code> such that the
+generated ICA decomposition is identical to the one generated by the extended Infomax
+algorithm (but may converge in less time).</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_algorithm</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_l_freq" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_l_freq</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_l_freq" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_l_freq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">1.0</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>The cutoff frequency of the high-pass filter to apply before running ICA.
+Using a relatively high cutoff like 1 Hz will remove slow drifts from the
+data, yielding improved ICA results. Must be set to 1 Hz or above.</p>
+<p>Set to <code>None</code> to not apply an additional high-pass filter.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The filter will be applied to raw data which was already filtered
+  according to the <code>l_freq</code> and <code>h_freq</code> settings. After filtering, the
+  data will be epoched, and the epochs will be submitted to ICA.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The Pipeline will only allow you to perform ICA on data that has been
+high-pass filtered with a 1 Hz cutoff or higher. This is a conscious,
+opinionated (but partially data-driven) decision made by the developers.
+If you have reason to challenge this behavior, please get in touch with
+us so we can discuss.</p>
+</div>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_l_freq</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+        <li><code>preprocessing/_06a2_find_ica_artifacts</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_max_iterations" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_max_iterations</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_max_iterations" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>Maximum number of iterations to decompose the data into independent
+components. A low number means to finish earlier, but the consequence is
+that the algorithm may not have finished converging. To ensure
+convergence, pick a high number here (e.g. 3000); yet the algorithm will
+terminate as soon as it determines that is has successfully converged, and
+not necessarily exhaust the maximum number of iterations. Note that the
+default of 200 seems to be sufficient for Picard in many datasets, because
+it converges quicker than the other algorithms; but e.g. for FastICA, this
+limit may be too low to achieve convergence.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_max_iterations</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_n_components" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_n_components</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_n_components" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_n_components</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
+on the data (trying to exclude zero-valued components in rank-deficient
+data); and in the second step, the principal components are passed
+to the actual ICA. You can select how many of the total principal
+components to pass to ICA – it can be all or just a subset. This determines
+how many independent components to fit, and can be controlled via this
+setting.</p>
+<p>If int, specifies the number of principal components that are passed to the
+ICA algorithm, which will be the number of independent components to
+fit. It must not be greater than the rank of your data (which is typically
+the number of channels, but may be less in some cases).</p>
+<p>If float between 0 and 1, all principal components with cumulative
+explained variance less than the value specified here will be passed to
+ICA.</p>
+<p>If <code>None</code> (default), <code>0.999999</code> will be used to avoid issues when working with
+rank-deficient data.</p>
+<p>This setting may drastically alter the time required to compute ICA.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_n_components</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_decim" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_decim</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_decim" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_decim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>The decimation parameter to compute ICA. If 5 it means
+that 1 every 5 sample is used by ICA solver. The higher the faster
+it is to run but the less data you have to compute a good ICA. Set to
+<code>1</code> or <code>None</code> to not perform any decimation.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_decim</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a1_fit_ica</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_ecg_threshold" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_ecg_threshold</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_ecg_threshold" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_ecg_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>The cross-trial phase statistics (CTPS) threshold parameter used for detecting
+ECG-related ICs.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_ecg_threshold</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a2_find_ica_artifacts</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="mne_bids_pipeline._config.ica_eog_threshold" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">ica_eog_threshold</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#mne_bids_pipeline._config.ica_eog_threshold" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">Python</span><pre><span></span><code><span class="n">ica_eog_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+
+      <p>The threshold to use during automated EOG classification. Lower values mean
+that more ICs will be identified as EOG-related. If too low, the
+false-alarm rate increases dramatically.</p>
+
+    <details class="abstract">
+      <summary>Pipeline steps using this setting</summary>
+      <p>
+        The following steps are directly affected by changes to
+        <code>ica_eog_threshold</code>:
+      </p>
+      <ul>
+        <li><code>preprocessing/_06a2_find_ica_artifacts</code></li>
+      </ul>
+    </details>
+
+  </div>
+
+</div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; MNE-BIDS-Pipeline authors, last updated 2024/06/22
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/mne-tools/mne-bids-pipeline" target="_blank" rel="noopener" title="GitHub repository" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+    
+    
+    
+    <a href="https://fosstodon.org/@mne" target="_blank" rel="noopener me" title="MNE news on Mastodon" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M433 179.11c0-97.2-63.71-125.7-63.71-125.7-62.52-28.7-228.56-28.4-290.48 0 0 0-63.72 28.5-63.72 125.7 0 115.7-6.6 259.4 105.63 289.1 40.51 10.7 75.32 13 103.33 11.4 50.81-2.8 79.32-18.1 79.32-18.1l-1.7-36.9s-36.31 11.4-77.12 10.1c-40.41-1.4-83-4.4-89.63-54a102.54 102.54 0 0 1-.9-13.9c85.63 20.9 158.65 9.1 178.75 6.7 56.12-6.7 105-41.3 111.23-72.9 9.8-49.8 9-121.5 9-121.5zm-75.12 125.2h-46.63v-114.2c0-49.7-64-51.6-64 6.9v62.5h-46.33V197c0-58.5-64-56.6-64-6.9v114.2H90.19c0-122.1-5.2-147.9 18.41-175 25.9-28.9 79.82-30.8 103.83 6.1l11.6 19.5 11.6-19.5c24.11-37.1 78.12-34.8 103.83-6.1 23.71 27.3 18.4 53 18.4 175z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://twitter.com/mne_news" target="_blank" rel="noopener" title="MNE news on Twitter" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tracking", "content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      
+        <script src="https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js"></script>
+      
+        <script src="../../javascripts/tablesort.js"></script>
+      
+    
+  </body>
+</html>

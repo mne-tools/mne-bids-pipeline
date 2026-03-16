@@ -9,10 +9,14 @@ from mne import Covariance
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline.typing import (
-    ArbitraryContrast,
+    BaselineTypeT,
+    ConditionsTypeT,
+    ContrastSequenceT,
     DigMontageType,
     FloatArrayLike,
     PathLike,
+    RunsTypeT,
+    UniqueSequence,
 )
 
 # %%
@@ -86,9 +90,9 @@ Whether to continue processing the dataset if some combinations of `subjects` an
 `sessions` are missing.
 """
 
-task: str = ""
+task: str | Sequence[str] = ""
 """
-The task to process.
+The task(s) to process.
 """
 
 task_is_rest: bool = False
@@ -96,10 +100,11 @@ task_is_rest: bool = False
 Whether the task should be treated as resting-state data.
 """
 
-runs: Sequence[str] | Literal["all"] = "all"
+runs: RunsTypeT | dict[str, RunsTypeT] = "all"
 """
 The runs to process. If `'all'`, will process all runs found in the
 BIDS dataset.
+Can be a dict mapping tasks to runs to process as well.
 """
 
 exclude_runs: dict[str, list[str]] | None = None
@@ -246,7 +251,7 @@ If `None`, we will assume that the data type matches the channel type.
     ```
 """
 
-eog_channels: Sequence[str] | None = None
+eog_channels: Sequence[str] | None | dict[str, Sequence[str] | None] = None
 """
 Specify EOG channels to use, or create virtual EOG channels.
 
@@ -269,6 +274,11 @@ If `None`, only actual EOG channels will be used for EOG recovery.
 If there are multiple actual EOG channels in your data, and you only specify
 a subset of them here, only this subset will be used during processing.
 
+A dictionary can be provided to specify subject and/or session-level EOG,
+with subjects (and optionally session) as keys and a sequence of channels as
+values (see Examples). Use "default" as a key to set channels for all non-
+specified subjects/sessions
+
 ???+ example "Example"
     Treat `Fp1` as virtual EOG channel:
     ```python
@@ -279,6 +289,16 @@ a subset of them here, only this subset will be used during processing.
     ```python
     eog_channels = ['Fp1', 'Fp2']
     ```
+
+    Per default use `LEOG`, but for sub-04 use Fp1 and for sub-05 ignore EOG:
+    ```python
+    eog_channels = dict()
+    eog_channels["default"] = ['LEOG']
+    eog_channels['sub-04'] = ['Fp1']
+    eog_channels['sub-05'] = []
+    ```
+    Note that `collections.defaultdict` cannot be used because it causes problems
+    with pickling, which is used under the hood for caching and parallelization.
 """
 
 eeg_bipolar_channels: dict[str, tuple[str, str]] | None = None
@@ -703,12 +723,20 @@ mf_reference_run: str | None = None
 """
 Which run to take as the reference for adjusting the head position of all
 runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
-If `None`, pick the first run.
+If `None`, pick the first run for the
+[`mf_reference_task`][mne_bids_pipeline._config.mf_reference_task].
 
 ???+ example "Example"
     ```python
     mf_reference_run = '01'  # Use run "01"
     ```
+"""
+
+mf_reference_task: str | None = None
+"""
+Which task to take as the reference for adjusting the head position of all
+runs when [`mf_destination="reference_run"`][mne_bids_pipeline._config.mf_destination].
+If `None`, pick the first task found in the BIDS dataset.
 """
 
 mf_cal_fname: str | None = None
@@ -1098,7 +1126,7 @@ unknown metadata column, a warning will be emitted and all epochs will be kept.
     ```
 """
 
-conditions: Sequence[str] | dict[str, str] | None = None
+conditions: ConditionsTypeT | dict[str, ConditionsTypeT] | None = None
 """
 The time-locked events based on which to create evoked responses.
 This can either be name of the experimental condition as specified in the
@@ -1109,6 +1137,10 @@ for more information.
 
 Passing a dictionary allows to assign a name to map a complex condition name
 (value) to a more legible one (value).
+
+Passing a dictionary whose values are dictionaries or sequences themselves allows to
+specify conditions per task (first has ``task`` keys, second level has desired
+condition name keys).
 
 This is a **required** parameter in the configuration file, unless you are
 processing resting-state data. If left as `None` and
@@ -1130,11 +1162,19 @@ error.
     conditions = {'simple_name': 'complex/condition/with_subconditions'}
     conditions = {'correct': 'response/correct',
                   'incorrect': 'response/incorrect'}
+    Pass a per-task dictionary:
+    ```python
+    conditions = {
+        "localizer": ['stimulus/left', 'stimulus/right'],
+        "main_task": ['target/left', 'target/right']
+    }
+    ```
 """
 
-epochs_tmin: float = -0.2
+epochs_tmin: float | dict[str, float] = -0.2
 """
 The beginning of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmin values.
 
 ???+ example "Example"
     ```python
@@ -1142,9 +1182,11 @@ The beginning of an epoch, relative to the respective event, in seconds.
     ```
 """
 
-epochs_tmax: float = 0.5
+epochs_tmax: float | dict[str, float] = 0.5
 """
 The end of an epoch, relative to the respective event, in seconds.
+Can be a dict mapping task names to tmax values.
+
 ???+ example "Example"
     ```python
     epochs_tmax = 0.5  # 500 ms after event onset
@@ -1162,10 +1204,11 @@ Overlap between epochs in seconds. This is used if the task is `'rest'`
 and when the annotations do not contain any stimulation or behavior events.
 """
 
-baseline: tuple[float | None, float | None] | None = (None, 0)
+baseline: BaselineTypeT | dict[str, BaselineTypeT] = (None, 0)
 """
 Specifies which time interval to use for baseline correction of epochs;
 if `None`, no baseline correction is applied.
+Can be a dict mapping task names to baseline values.
 
 ???+ example "Example"
     ```python
@@ -1262,6 +1305,14 @@ ways using the configuration options you can find below.
     ICA fitting – this file will need to be updated!
 """
 
+process_raw_clean: bool = True
+"""
+Whether to apply the spatial filter to the raw data to produce `_proc-clean_raw.fif`
+files. If `False`, only the epochs will be cleaned, which can save on processing time,
+disk space, and report length. Regardless of this setting, necessary intermediate
+processed raw files like `_proc-filt_raw.fif` and similar files will be saved to disk.
+"""
+
 min_ecg_epochs: Annotated[int, Ge(1)] = 5
 """
 Minimal number of ECG epochs needed to compute SSP projectors.
@@ -1348,7 +1399,24 @@ is not reliable. If `str`, the same channel will be used for all subjects.
 If `dict`, possibly different channels will be used for each subject/session.
 Dict values must be channel names, and dict keys must have the form `"sub-X"` (to use
 the same channel for each session within a subject) or `"sub-X_ses-Y"` (to use possibly
-different channels for each session of a given subject).
+different channels for each session of a given subject). Use dict key `"default"`
+to set a default channel when using a dict.
+
+???+ example "Example"
+    Treat `T8` as virtual ECG channel:
+    ```python
+    ecg_channel = 'T8'
+    ```
+
+    Use `ECG`, but for sub-04, use MISC001 and for sub-05 session 1 use MISC002:
+    ```python
+    ssp_ecg_channel = dict()
+    ssp_ecg_channel["default"] = 'ECG'
+    ssp_ecg_channel['sub-04'] = 'MISC001'
+    ssp_ecg_channel['sub-05_ses-1'] = 'MISC002'
+    ```
+    Note that `collections.defaultdict` cannot be used because it causes problems
+    with pickling, which is used under the hood for caching and parallelization.
 """
 
 ica_reject: dict[str, float] | Literal["autoreject_local"] | None = None
@@ -1430,6 +1498,11 @@ Set to `None` to not apply an additional high-pass filter.
     us so we can discuss.
 """
 
+ica_h_freq: float | None = None
+"""
+The cutoff frequency of the low-pass filter to apply before running ICA.
+"""
+
 ica_max_iterations: int = 500
 """
 Maximum number of iterations to decompose the data into independent
@@ -1449,7 +1522,7 @@ MNE conducts ICA as a sort of a two-step procedure: First, a PCA is run
 on the data (trying to exclude zero-valued components in rank-deficient
 data); and in the second step, the principal components are passed
 to the actual ICA. You can select how many of the total principal
-components to pass to ICA – it can be all or just a subset. This determines
+components to pass to ICA – it can be all or just a subset. This determines
 how many independent components to fit, and can be controlled via this
 setting.
 
@@ -1476,10 +1549,20 @@ it is to run but the less data you have to compute a good ICA. Set to
 `1` or `None` to not perform any decimation.
 """
 
+ica_use_ecg_detection: bool = True
+"""
+Whether to use the MNE ECG detection on the ICA components.
+"""
+
 ica_ecg_threshold: float = 0.1
 """
 The cross-trial phase statistics (CTPS) threshold parameter used for detecting
 ECG-related ICs.
+"""
+
+ica_use_eog_detection: bool = True
+"""
+Whether to use the MNE EOG detection on the ICA components.
 """
 
 ica_eog_threshold: float = 3.0
@@ -1488,6 +1571,90 @@ The threshold to use during automated EOG classification. Lower values mean
 that more ICs will be identified as EOG-related. If too low, the
 false-alarm rate increases dramatically.
 """
+
+ica_use_icalabel: bool = False
+"""
+Whether to use MNE-ICALabel to automatically label ICA components. Only available for
+EEG data.
+
+!!! info
+    Using MNE-ICALabel mandates that you also set:
+    ```python
+    eeg_reference = "average"
+    ica_l_freq = 1
+    ica_h_freq = 100
+    ```
+    It will also apply the average reference to the data before running or applying ICA.
+
+!!! info
+    Using this requires `mne-icalabel` package, which in turn will require you to
+    install a suitable runtime (`onnxruntime` or `pytorch`).
+"""
+
+ica_icalabel_include: Annotated[
+    UniqueSequence[
+        Literal[
+            "brain",
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise",
+            "other",
+        ]
+    ],
+    Len(1, 7),
+] = ("brain", "other")
+"""
+Which independent components (ICs) to keep based on the labels given by ICLabel.
+Possible labels are:
+```
+["brain", "muscle artifact", "eye blink", "heart beat", "line noise", "channel noise", "other"]
+```
+Default behaviour: keeps all components except those with a label other then specified
+IF they meet the default exclusion threshold of 0.8
+"""  # noqa: E501
+
+ica_exclusion_thresholds: dict[str, float] = {
+    "brain": 0.8,
+    "muscle artifact": 0.8,
+    "eye blink": 0.8,
+    "heart beat": 0.8,
+    "line noise": 0.8,
+    "channel noise": 0.8,
+    "other": 0.8,
+}
+"""
+ICLabel class minimum probability thresholds for excluding components.
+You can set single values like `{"eye blink": 0.7,"brain": 0.8}` with the remaining
+values being the default.
+
+Each component gets a probability distribution over all classes e.g.
+`[0.7, 0.1, 0.1, 0.05, 0.05, 0, 0]` (order as in the dict). Flags components to be
+dropped IF they meet any of the exclusion thresholds of classes not in
+`ica_icalabel_include`.
+"""
+
+ica_class_thresholds: dict[str, float] = {
+    "brain": 0.3,
+    "muscle artifact": 0.3,
+    "eye blink": 0.3,
+    "heart beat": 0.3,
+    "line noise": 0.3,
+    "channel noise": 0.3,
+    "other": 0.3,
+}
+"""
+ICLabel class minimum probability thresholds for considering components member of a
+class (like "brain", etc). You can set single values like
+`{"eye blink": 0.3,"brain": 0.3}` with the remaining values being the default.
+
+Each component gets a probability distribution over all classes e.g.
+`[0.7, 0.1, 0.1, 0, 0, 0, 0]` (order as in the dict). Makes sure components are kept IF
+they meet any of the class thresholds of classes in `ica_icalabel_include`.
+"""
+
+# noqa: E501
 
 # ### Amplitude-based artifact rejection
 #
@@ -1583,20 +1750,20 @@ exceeds this value, the channels won't be interpolated and the epoch will be dro
 
 # ## Condition contrasts
 
-contrasts: Sequence[tuple[str, str] | ArbitraryContrast] = []
+contrasts: ContrastSequenceT | dict[str, ContrastSequenceT] = []
 """
 The conditions to contrast via a subtraction of ERPs / ERFs. The list elements
 can either be tuples or dictionaries (or a mix of both). Each element in the
-list corresponds to a single contrast.
+list corresponds to a single contrast. For each entry in the list:
 
-A tuple specifies a one-vs-one contrast, where the second condition is
-subtracted from the first.
+1. A tuple specifies a one-vs-one contrast, where the second condition is
+   subtracted from the first.
 
-If a dictionary, must contain the following keys:
+2. If a dictionary, must contain the following keys:
 
-- `name`: a custom name of the contrast
-- `conditions`: the conditions to contrast
-- `weights`: the weights associated with each condition.
+    - `name`: a custom name of the contrast
+    - `conditions`: the conditions to contrast
+    - `weights`: the weights associated with each condition.
 
 Pass an empty list to avoid calculation of any contrasts.
 
@@ -1707,9 +1874,27 @@ The number of folds (also called "splits") to use in the K-fold cross-validation
 scheme.
 """
 
+decoding_time: bool = True
+"""
+Whether to perform time-by-time decoding. `decode` must also be `True` for this
+to have any effect.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
+decoding_time_decim: int = 1
+"""
+Says how much to decimate data before time-by-time based decoding.
+
+!!! alert
+    Added in v1.10.0.
+"""
+
 decoding_time_generalization: bool = False
 """
-Whether to perform time generalization.
+Whether to perform time generalization. `decode` and `decoding_time` must both be `True`
+for this to have any effect.
 
 Time generalization (also called "temporal generalization" or "generalization
 across time", GAT) is an extension of the time-by-time decoding approach.
@@ -1718,7 +1903,7 @@ testing the model on the same time point in the test data, it will be tested
 on **all** time points.
 
 !!! cite ""
-    [T]he manner in which the trained classifiers generalize across time, and
+    The manner in which the trained classifiers generalize across time, and
     from one experimental condition to another, sheds light on the temporal
     organization of information-processing stages.
 
@@ -1730,7 +1915,8 @@ procedure may take a significant amount of time.
 
 decoding_time_generalization_decim: int = 1
 """
-Says how much to decimate data before time generalization decoding.
+Says how much to decimate data before time generalization. The max of this value and
+`decoding_time_decim` will be used for time generalization computations.
 This is done in addition to the decimation done at the epochs level via the
 [`epochs_decim`][mne_bids_pipeline._config.epochs_decim] parameter. This can be
 used to greatly speed up time generalization at the cost of lower time
@@ -2182,7 +2368,7 @@ If `'ad-hoc'`, a diagonal ad-hoc noise covariance matrix will be used.
 
 You can also pass a function that accepts a `BIDSPath` and returns an
 `mne.Covariance` instance. The `BIDSPath` will point to the file containing
-the generated evoked data.
+the generated cleaned epochs data.
 
 ???+ example "Example"
     Use the period from start of the epoch until 100 ms before the experimental
@@ -2214,13 +2400,13 @@ the generated evoked data.
     Use a custom covariance derived from raw data:
     ```python
     def noise_cov(bids_path):
-        bp = bids_path.copy().update(task='rest', run=None, suffix='meg')
+        bp = bids_path.copy().update(task="rest", run=None)
         raw_rest = mne_bids.read_raw_bids(bp)
-        raw.crop(tmin=5, tmax=60)
-        cov = mne.compute_raw_covariance(raw, rank='info')
+        raw_rest.crop(tmin=5, tmax=60)
+        cov = mne.compute_raw_covariance(raw_rest, rank="info")
         return cov
     ```
-"""
+"""  # noqa: E501
 
 noise_cov_method: Literal[
     "shrunk",
@@ -2236,6 +2422,23 @@ noise_cov_method: Literal[
 """
 The noise covariance estimation method to use. See the MNE-Python documentation
 of `mne.compute_covariance` for details.
+"""
+
+cov_rank: Literal["info"] | dict[str, Any] = "info"
+"""
+Specifies how to determine the rank of the data and associated noise covariance.
+This is used when computing an inverse operator and when preprocessing data for
+decoding. If set to `"info"` (default), the rank will be computed from the measurement
+information. If it's a `dict`, the rank will be computed from the data used to
+compute the covariance, with the `cov_rank` dict passed as keyword arguments
+as `mne.compute_rank(inst, info=info, **cov_rank)` (where the `inst` and `info` will
+automatically be determined by the `noise_cov` type).
+
+???+ example "Example"
+    Compute the rank from the data:
+    ```python
+    cov_rank = {"tol_kind": "relative", "tol": 1e-4}
+    ```
 """
 
 source_info_path_update: dict[str, str] | None = None
@@ -2271,7 +2474,6 @@ file specified in `noise_cov`, or the cleaned evoked
 
 inverse_targets: list[Literal["evoked"]] = ["evoked"]
 """
-
 On which data to apply the inverse operator. Currently, the only supported
 target is `'evoked'`. If no inverse computation should be done, pass an
 empty list, `[]`.

@@ -16,6 +16,7 @@ conditions = ["61450", "61511"]
 contrasts = [("61450", "61511"), ("letter=='a'", "letter=='b'")]
 decode = True
 decoding_n_splits = 3  # only for testing, use 5 otherwise
+decoding_time_decim = 3  # for speed
 
 l_freq = 0.3
 

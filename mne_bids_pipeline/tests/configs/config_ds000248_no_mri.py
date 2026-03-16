@@ -12,6 +12,7 @@ contrasts = [("Auditory/Right", "Auditory/Left")]
 ch_types = ["meg"]
 use_maxwell_filter = False
 process_empty_room = False
+process_raw_clean = False
 
 use_template_mri = "fsaverage"
 adjust_coreg = True

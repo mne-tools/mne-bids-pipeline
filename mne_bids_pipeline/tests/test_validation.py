@@ -107,3 +107,9 @@ def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     bad_text += "on_error = 'debug' if debug else 'raise'\n"
     config_path.write_text(bad_text)
     _import_config(config_path=config_path)  # this is okay
+    # matching deriv and bids
+    bad_text = working_text
+    bad_text += f"deriv_root = '{tmp_path}'"
+    config_path.write_text(bad_text)
+    with pytest.raises(ValueError, match="cannot be the same"):
+        _import_config(config_path=config_path)

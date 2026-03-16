@@ -13,11 +13,11 @@ from mne_bids import BIDSPath, get_head_mri_trans
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_bem_conductivity,
+    _get_ss,
     _meg_in_ch_types,
     get_fs_subject,
     get_fs_subjects_dir,
-    get_runs,
-    get_subjects_sessions,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -81,9 +81,11 @@ def _prepare_trans_subject(
     msg = "Computing head ↔ MRI transform from matched fiducials"
     logger.info(**gen_log_kwargs(message=msg))
 
+    run, task = cfg.runs_tasks[0]
     trans = get_head_mri_trans(
         bids_path.copy().update(
-            run=cfg.runs[0],
+            run=run,
+            task=task,
             root=cfg.bids_root,
             processing=cfg.proc,
             extension=None,
@@ -100,10 +102,11 @@ def _prepare_trans_subject(
 def get_input_fnames_forward(
     *, cfg: SimpleNamespace, subject: str, session: str | None
 ) -> InFilesT:
+    task = cfg.runs_tasks[0][1]
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=task,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -122,7 +125,7 @@ def get_input_fnames_forward(
                 processing="clean", suffix="raw", task=cfg.noise_cov
             )
         else:
-            source_info_path_update = dict(suffix="ave")
+            source_info_path_update = dict(suffix="ave", task=task)
     else:
         source_info_path_update = cfg.source_info_path_update
     in_files["info"] = bids_path.copy().update(**source_info_path_update)
@@ -150,7 +153,7 @@ def run_forward(
     bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=None,
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -268,7 +271,7 @@ def get_config(
         )
 
     cfg = SimpleNamespace(
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
         mindist=config.mindist,
         spacing=config.spacing,
         use_template_mri=config.use_template_mri,
@@ -289,11 +292,14 @@ def main(*, config: SimpleNamespace) -> None:
     """Run forward."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_forward, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_forward, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject, session=session),
@@ -301,7 +307,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

@@ -19,9 +19,13 @@ crop_runs = (40, 190)
 mf_st_duration = 60.0
 # SSP
 spatial_filter = "ssp"
+process_raw_clean = False
 ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": "MEG0141"}
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
+
+
+eog_channels = {"default": None, "sub-02": ["EOG061"]}
 
 # Epochs
 epochs_tmin = -0.2
@@ -34,8 +38,8 @@ conditions = [
     "visual/standard",
     # "visual/deviant",
 ]
-decode = False
-decoding_time_generalization = False
+decoding_time = False
+cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]

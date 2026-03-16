@@ -1,21 +1,34 @@
+from types import SimpleNamespace
 from typing import Any
 
 import mne
 import numpy as np
 from joblib import parallel_backend
-from mne.utils import _validate_type
+from mne.utils import _validate_type, check_version
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 
+from ._config_utils import _get_rank
 from ._logging import gen_log_kwargs, logger
 from .typing import FloatArrayT
 
 
 class LogReg(LogisticRegression):  # type: ignore[misc]
-    """Hack to avoid a warning with n_jobs != 1 when using dask."""
+    """Logistic Regression with fixed parameters suitable for our internal decoding."""
+
+    def __init__(self, *, random_state: int | None) -> None:
+        kwargs = dict(
+            random_state=random_state,
+            solver="liblinear",  # much faster than the default
+        )
+        # TODO: Once we require sklearn 1.8 we should drop n_jobs
+        if not check_version("sklearn", "1.8"):
+            kwargs["n_jobs"] = 1
+        super().__init__(**kwargs)
 
     def fit(self, *args, **kwargs):  # type: ignore
+        # Hack to avoid a warning with n_jobs != 1 when using dask
         with parallel_backend("loky"):
             return super().fit(*args, **kwargs)
 
@@ -93,15 +106,19 @@ def _handle_csp_args(
 
 
 def _decoding_preproc_steps(
+    cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-    epochs: mne.Epochs,
+    task: str | None,
+    epochs: mne.BaseEpochs,
     pca: bool = True,
 ) -> list[BaseEstimator]:
     scaler = mne.decoding.Scaler(epochs.info)
     steps = [scaler]
     if pca:
-        ranks = mne.compute_rank(inst=epochs, rank="info")
+        ranks = _get_rank(
+            cfg=cfg, subject=subject, session=session, inst=epochs, log=False
+        )
         rank = sum(ranks.values())
         msg = f"Reducing data dimension via PCA; new rank: {rank} (from {ranks})."
         logger.info(**gen_log_kwargs(message=msg))

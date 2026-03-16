@@ -19,6 +19,7 @@
 - Add support for setting decimation for time-by-time decoding using [`decoding_time_decim`][mne_bids_pipeline._config.decoding_time_decim] (#1141 by @larsoner)
 - Add support for subject and session-specific EOG channels in config and change ssp_ecg_channel to accept 'default' key when dict (#1151 by @skjerns)
 - Add support for computing data rank using `mne.compute_rank` via [`cov_rank`][mne_bids_pipeline._config.cov_rank] (#1159 by @larsoner)
+- Add support for setting the number of smoothing steps when averaging via [`smoothing_steps`][mne_bids_pipeline._config.smoothing_steps] (#1195 by @larsoner)
 
 ### :warning: Behavior changes
 

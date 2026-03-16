@@ -958,7 +958,7 @@ def _render_bem(
     subject: str,
     session: str | None,
 ) -> None:
-    logger.info(**gen_log_kwargs(message="Rendering MRI slices with BEM contours."))
+    logger.info(**gen_log_kwargs(message="Rendering MRI slices with BEM contours"))
     report.add_bem(
         subject=cfg.fs_subject,
         subjects_dir=cfg.fs_subjects_dir,

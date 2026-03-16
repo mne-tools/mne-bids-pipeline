@@ -97,14 +97,10 @@ def average_evokeds(
     conditions = _all_conditions(cfg=cfg, task=task)
     evokeds_nested: list[list[mne.Evoked]] = [list() for _ in range(len(conditions))]
 
-    keys = list(in_files)
-    subjects_in_grand_avg = list()
-    for key in keys:
-        if key.startswith("evoked-"):
-            subjects_in_grand_avg.append(key.replace("evoked-", ""))
-        else:
-            continue
-        fname_in = in_files.pop(key)
+    subjects = get_subjects_given_session(cfg, session)
+    n_subjects = len(subjects)
+    for subject in subjects:
+        fname_in = in_files.pop(f"evoked-{subject}")
         these_evokeds = mne.read_evokeds(fname_in)
         assert isinstance(these_evokeds, list)
         for idx, evoked in enumerate(these_evokeds):
@@ -177,14 +173,15 @@ def average_evokeds(
             n_signals = len(evokeds) - n_contrasts
             msg = (
                 f"Adding {n_signals} evoked response{_pl(n_signals)} and "
-                f"{n_contrasts} contrast{_pl(n_contrasts)} to the report."
+                f"{n_contrasts} contrast{_pl(n_contrasts)} using N={n_subjects} "
+                "subject(s) to the report"
             )
         else:
             msg = "No evoked conditions or contrasts found."
         logger.info(**gen_log_kwargs(message=msg))
         # construct the common part of the titles
-        _title = f"N = {len(subjects_in_grand_avg)}"
-        if n_missing := (len(cfg.subjects) - len(subjects_in_grand_avg)):
+        _title = f"N = {n_subjects}"
+        if n_missing := (len(cfg.subjects) - n_subjects):
             _title += f"{n_missing} subjects excluded due to missing session data"
         for condition, evoked in zip(conditions, evokeds):
             prefix, extra_tags = _get_prefix_tags(
@@ -260,8 +257,9 @@ def _get_epochs_in_files(
     in_files = dict()
     # here we just need one subject's worth of Epochs, to get the time domain. But we
     # still must be careful that the subject actually has data for the requested session
+    subjects = get_subjects_given_session(cfg, session)
     in_files["epochs"] = BIDSPath(
-        subject=get_subjects_given_session(cfg, session)[0],
+        subject=subjects[0],
         session=session,
         task=task,
         acquisition=cfg.acq,
@@ -331,7 +329,8 @@ def _get_input_fnames_decoding(
     in_files = _get_epochs_in_files(
         cfg=cfg, subject="ignored", session=session, task=task
     )
-    for this_subject in cfg.subjects:
+    subjects = get_subjects_given_session(cfg, session)
+    for this_subject in subjects:
         in_files[f"scores-{this_subject}"] = _decoding_out_fname(
             cfg=cfg,
             subject=this_subject,
@@ -378,7 +377,8 @@ def average_time_by_time_decoding(
     if cfg.decoding_time_generalization:
         time_points_shape += (len(times),)
 
-    n_subjects = len(cfg.subjects)
+    subjects = get_subjects_given_session(cfg, session)
+    n_subjects = len(subjects)
     mean = np.empty(time_points_shape)
     mean_min = np.empty(time_points_shape)
     mean_max = np.empty(time_points_shape)
@@ -507,7 +507,7 @@ def average_time_by_time_decoding(
     )
     savemat(out_files["mat"], contrast_score_stats)
 
-    section = f"Decoding: time-by-time, N = {len(cfg.subjects)}"
+    section = f"Decoding: time-by-time, N = {len(subjects)}"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
@@ -613,15 +613,16 @@ def average_full_epochs_decoding(
     task: str | None,
     in_files: InFilesT,
 ) -> OutFilesT:
-    n_subjects = len(cfg.subjects)
+    subjects = get_subjects_given_session(cfg, session)
+    n_subjects = len(subjects)
     in_files.pop("epochs")  # not used but okay to include
 
     contrast_score_stats = {
         "cond_1": cond_1,
         "cond_2": cond_2,
         "N": n_subjects,
-        "subjects": cfg.subjects,
-        "scores": np.nan,
+        "subjects": subjects,
+        "scores": np.empty(0, float),
         "mean": np.nan,
         "mean_min": np.nan,
         "mean_max": np.nan,
@@ -727,6 +728,7 @@ def average_full_epochs_report(
         kind="FullEpochs",
         extension=".xlsx",
     )
+    subjects = get_subjects_given_session(cfg, session)
 
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
@@ -763,7 +765,7 @@ def average_full_epochs_report(
         report.add_figure(
             fig=fig,
             title=f"Full-epochs decoding{prefix}",
-            section=f"Decoding: full-epochs, N = {len(cfg.subjects)}",
+            section=f"Decoding: full-epochs, N = {len(subjects)}",
             caption=caption,
             tags=tags,
             replace=True,
@@ -793,6 +795,7 @@ def average_csp_decoding(
     msg = f"Summarizing CSP results: {cond_1} - {cond_2}."
     logger.info(**gen_log_kwargs(message=msg))
     in_files.pop("epochs")
+    subjects = get_subjects_given_session(cfg, session)
 
     all_decoding_data_freq = []
     all_decoding_data_time_freq = []
@@ -851,7 +854,6 @@ def average_csp_decoding(
     del grand_average_time_freq
 
     # Perform a cluster-based permutation test.
-    subjects = cfg.subjects
     freq_name_to_bins_map, time_bins = _handle_csp_args(
         cfg.decoding_csp_times,
         cfg.decoding_csp_freqs,
@@ -899,7 +901,7 @@ def average_csp_decoding(
 
             cluster_forming_t_threshold = scipy.stats.t.ppf(
                 1 - 0.05,
-                len(cfg.subjects) - 1,  # one-sided test
+                len(subjects) - 1,  # one-sided test
             )
         else:
             cluster_forming_t_threshold = cfg.cluster_forming_t_threshold
@@ -977,7 +979,8 @@ def _average_csp_time_freq(
     grand_average["mean_ci_upper"] = np.nan
 
     # Now generate descriptive and bootstrapped statistics.
-    n_subjects = len(cfg.subjects)
+    subjects = get_subjects_given_session(cfg, session)
+    n_subjects = len(subjects)
     rng = np.random.default_rng(seed=cfg.random_state)
     for row_idx, row in grand_average.iterrows():
         all_scores = np.array([df.loc[row_idx, "mean_crossval_score"] for df in data])
@@ -986,7 +989,7 @@ def _average_csp_time_freq(
 
         # Abort here if we only have a single subject – no need to bootstrap
         # CIs etc.
-        if len(cfg.subjects) == 1:
+        if n_subjects == 1:
             continue
 
         # Bootstrap the mean, and calculate the

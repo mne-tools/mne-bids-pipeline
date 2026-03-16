@@ -247,7 +247,6 @@ def get_config(
         use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
-        spacing=config.spacing,
         smoothing_steps=config.smoothing_steps,
         # TODO: needed because get_datatype gets called again...
         data_type=config.data_type,

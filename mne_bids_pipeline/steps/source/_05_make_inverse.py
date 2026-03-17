@@ -195,8 +195,12 @@ def apply_inverse_data(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, condition=condition)
         for condition in conditions:
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg,
+                task=task,
+                condition=condition,
+            )
             msg = f"Rendering inverse solution for {condition=}"
             logger.info(**gen_log_kwargs(message=msg))
             tags = ("source-estimate",) + extra_tags
@@ -227,7 +231,6 @@ def get_config_make_inverse(
         source_info_path_update=config.source_info_path_update,
         loose=config.loose,
         depth=config.depth,
-        inverse_method=config.inverse_method,
         noise_cov=_sanitize_callable(config.noise_cov),
         **_bids_kwargs(config=config),
     )

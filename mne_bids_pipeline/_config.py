@@ -2495,6 +2495,13 @@ empty list, `[]`.
 
 # ## Report generation
 
+smoothing_steps: int | None = None
+"""
+Specifies the number of smoothing steps to use when morphing from individual subject
+data to the average subject. See the `smooth` parameter of `mne.compute_source_morph`
+for details.
+"""
+
 report_evoked_n_time_points: int | None = None
 """
 Specifies the number of time points to display for each evoked

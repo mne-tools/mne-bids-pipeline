@@ -195,8 +195,10 @@ def apply_inverse_data(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, condition=condition)
         for condition in conditions:
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg, task=task, condition=condition,
+            )
             msg = f"Rendering inverse solution for {condition=}"
             logger.info(**gen_log_kwargs(message=msg))
             tags = ("source-estimate",) + extra_tags

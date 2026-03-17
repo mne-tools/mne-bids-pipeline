@@ -193,7 +193,7 @@ def run_average(
             condition=condition,
             morphed=True,
         )
-        out_files[condition].parent.mkdir(parents=True, exist_ok=True)
+        out_files[condition].fpath.parent.mkdir(parents=True, exist_ok=True)
         stc.save(out_files[condition], ftype="h5", overwrite=True)
 
     #######################################################################

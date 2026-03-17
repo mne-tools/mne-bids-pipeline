@@ -197,7 +197,9 @@ def apply_inverse_data(
     ) as report:
         for condition in conditions:
             prefix, extra_tags = _get_prefix_tags(
-                cfg=cfg, task=task, condition=condition,
+                cfg=cfg,
+                task=task,
+                condition=condition,
             )
             msg = f"Rendering inverse solution for {condition=}"
             logger.info(**gen_log_kwargs(message=msg))

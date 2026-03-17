@@ -227,7 +227,6 @@ def get_config_make_inverse(
         source_info_path_update=config.source_info_path_update,
         loose=config.loose,
         depth=config.depth,
-        inverse_method=config.inverse_method,
         noise_cov=_sanitize_callable(config.noise_cov),
         **_bids_kwargs(config=config),
     )

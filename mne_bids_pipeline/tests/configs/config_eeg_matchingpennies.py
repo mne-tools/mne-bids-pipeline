@@ -18,3 +18,6 @@ l_freq = None
 h_freq = 100
 zapline_fline = 50
 zapline_iter = False
+
+# To speed up processing, crop the runs to the first ~10 minutes (rather than all ~31)
+crop_runs = (0, 600)

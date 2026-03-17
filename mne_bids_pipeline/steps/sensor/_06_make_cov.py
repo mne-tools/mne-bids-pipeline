@@ -3,6 +3,9 @@
 Covariance matrices are computed and saved.
 """
 
+import contextlib
+import logging
+from collections.abc import Generator
 from types import SimpleNamespace
 
 import mne
@@ -11,14 +14,20 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_rank,
+    _get_ss,
     _restrict_analyze_channels,
     get_eeg_reference,
     get_noise_cov_bids_path,
-    get_subjects_sessions,
 )
-from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._io import _write_json
+from mne_bids_pipeline._logging import _log_context, gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._report import _all_conditions, _open_report, _sanitize_cond_tag
+from mne_bids_pipeline._report import (
+    _all_conditions,
+    _get_prefix_tags,
+    _open_report,
+)
 from mne_bids_pipeline._run import (
     _prep_out_files,
     _sanitize_callable,
@@ -40,7 +49,7 @@ def get_input_fnames_cov(
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
         acquisition=cfg.acq,
         run=None,
         recording=cfg.rec,
@@ -54,19 +63,21 @@ def get_input_fnames_cov(
     )
     in_files["report_info"] = fname_epochs.copy().update(processing="clean")
     _update_for_splits(in_files, "report_info", single=True)
-    fname_evoked = fname_epochs.copy().update(
-        suffix="ave", processing=None, check=False
-    )
-    if fname_evoked.fpath.exists():
-        in_files["evoked"] = fname_evoked
+    for task in cfg.all_tasks:
+        fname_evoked = fname_epochs.copy().update(
+            suffix="ave", processing=None, check=False, task=task
+        )
+        if fname_evoked.fpath.exists():
+            in_files[f"evoked_task-{task}"] = fname_evoked
     if cov_type == "custom":
         in_files["__unknown_inputs__"] = "custom noise_cov callable"
         return in_files
     if cov_type == "raw":
-        bids_path_raw_noise = BIDSPath(
+        assert cfg.noise_cov in ("rest", "emptyroom"), cfg.noise_cov
+        in_files["raw"] = BIDSPath(
             subject=subject,
             session=session,
-            task=cfg.task,
+            task="rest" if cfg.noise_cov == "rest" else "noise",
             acquisition=cfg.acq,
             run=None,
             recording=cfg.rec,
@@ -78,19 +89,16 @@ def get_input_fnames_cov(
             root=cfg.deriv_root,
             check=False,
         )
-        if cfg.noise_cov == "rest":
-            bids_path_raw_noise.task = "rest"
-        else:
-            bids_path_raw_noise.task = "noise"
-        in_files["raw"] = bids_path_raw_noise
     else:
         assert cov_type == "epochs", cov_type
-        in_files["epochs"] = fname_epochs
-        _update_for_splits(in_files, "epochs", single=True)
+        for task in cfg.all_tasks:
+            key = f"epochs_task-{task}"
+            in_files[key] = fname_epochs.copy().update(task=task)
+            _update_for_splits(in_files, key, single=True)
     return in_files
 
 
-def compute_cov_from_epochs(
+def compute_cov_rank_from_epochs(
     *,
     tmin: float | None,
     tmax: float | None,
@@ -100,29 +108,37 @@ def compute_cov_from_epochs(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
-    epo_fname = in_files.pop("epochs")
+) -> tuple[mne.Covariance, dict[str, int]]:
+    epo_fnames = [
+        in_files.pop(key) for key in list(in_files) if key.startswith("epochs")
+    ]
 
     msg = "Computing regularized covariance based on epochs' baseline periods."
     logger.info(**gen_log_kwargs(message=msg))
-    msg = f"Input:  {epo_fname.basename}"
+    inputs = ", ".join(fname.basename for fname in epo_fnames)
+    msg = f"Input:  {inputs}"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
+    all_epochs = []
+    for epo_fname in epo_fnames:
+        all_epochs.append(mne.read_epochs(epo_fname, preload=False))
+        all_epochs[-1].load_data().crop(tmin=tmin, tmax=tmax)
+    epochs = (
+        all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
+    )
 
-    epochs = mne.read_epochs(epo_fname, preload=True)
+    rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=epochs)
     cov = mne.compute_covariance(
         epochs,
-        tmin=tmin,
-        tmax=tmax,
         method=cfg.noise_cov_method,
-        rank="info",
+        rank=rank,
         verbose="error",  # TODO: not baseline corrected, maybe problematic?
     )
-    return cov
+    return cov, rank
 
 
-def compute_cov_from_raw(
+def compute_cov_rank_from_raw(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -130,7 +146,7 @@ def compute_cov_from_raw(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
+) -> tuple[mne.Covariance, dict[str, int]]:
     fname_raw = in_files.pop("raw")
     run_msg = "resting-state" if fname_raw.task == "rest" else "empty-room"
     msg = f"Computing regularized covariance based on {run_msg} recording."
@@ -141,15 +157,16 @@ def compute_cov_from_raw(
     logger.info(**gen_log_kwargs(message=msg))
 
     raw_noise = mne.io.read_raw_fif(fname_raw, preload=True)
+    rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=raw_noise)
     cov = mne.compute_raw_covariance(
         raw_noise,
         method=cfg.noise_cov_method,
-        rank="info",
+        rank=rank,
     )
-    return cov
+    return cov, rank
 
 
-def retrieve_custom_cov(
+def retrieve_custom_cov_rank(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
@@ -157,43 +174,54 @@ def retrieve_custom_cov(
     session: str | None,
     in_files: InFilesT,
     out_files: InFilesT,
-) -> mne.Covariance:
+) -> tuple[mne.Covariance, dict[str, int]]:
     # This should be the only place we use config.noise_cov (rather than cfg.*
     # entries)
-    config = _import_config(
-        config_path=exec_params.config_path,
-        check=False,
-        log=False,
-    )
+    with _log_context(logging.CRITICAL):
+        config = _import_config(
+            config_path=exec_params.config_path,
+            check=False,
+        )
     assert cfg.noise_cov == "custom"
     assert callable(config.noise_cov)
     assert in_files == {}, in_files  # unknown
 
     # ... so we construct the input file we need here
-    evoked_bids_path = BIDSPath(
+    epochs_bids_path = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
         acquisition=cfg.acq,
         run=None,
         processing="clean",
         recording=cfg.rec,
         space=cfg.space,
-        suffix="ave",
+        suffix="epo",
         extension=".fif",
         datatype=cfg.datatype,
         root=cfg.deriv_root,
         check=False,
     )
+    info_bids_path = epochs_bids_path
+    if not info_bids_path.fpath.exists():
+        info_bids_path = info_bids_path.copy().update(split="01")
 
     msg = "Retrieving noise covariance matrix from custom user-supplied function"
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output: {out_files['cov'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
+    info = mne.io.read_info(info_bids_path)
 
-    cov = config.noise_cov(evoked_bids_path)
+    cov = config.noise_cov(epochs_bids_path)
     assert isinstance(cov, mne.Covariance)
-    return cov
+    rank = _get_rank(
+        cfg=cfg,
+        subject=subject,
+        session=session,
+        inst=cov,
+        info=info,
+    )
+    return cov, rank
 
 
 def _get_cov_type(cfg: SimpleNamespace) -> str:
@@ -205,6 +233,28 @@ def _get_cov_type(cfg: SimpleNamespace) -> str:
         return "raw"
     else:
         return "epochs"
+
+
+# Workaround for https://github.com/mne-tools/mne-python/pull/13595
+# to get MNE < 1.11.1 to tolerate rank=dict(meg=...)
+@contextlib.contextmanager
+def _fake_sss_context() -> Generator[None, None, None]:
+    """Fake SSS context manager for MNE < 1.11.1."""
+    import mne.viz.utils
+
+    orig = mne.viz.utils._check_sss
+
+    def replacement(*args, **kwargs):
+        out = list(orig(*args, **kwargs))
+        assert len(out) == 3 and isinstance(out[-1], bool)
+        out[-1] = out[-2]  # has_sss = has_meg (which really means: mag + grad)
+        return tuple(out)
+
+    mne.viz.utils._check_sss = replacement  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        mne.viz.utils._check_sss = orig
 
 
 @failsafe_run(
@@ -224,11 +274,14 @@ def run_covariance(
     out_files["cov"] = get_noise_cov_bids_path(
         cfg=cfg, subject=subject, session=session
     )
+    out_files["rank"] = out_files["cov"].copy().update(suffix="rank", extension=".json")
     cov_type = _get_cov_type(cfg)
     fname_info = in_files.pop("report_info")
-    fname_evoked = in_files.pop("evoked", None)
+    fnames_evoked = [
+        in_files.pop(key) for key in list(in_files) if key.startswith("evoked")
+    ]
     if cov_type == "custom":
-        cov = retrieve_custom_cov(
+        cov, rank = retrieve_custom_cov_rank(
             cfg=cfg,
             subject=subject,
             session=session,
@@ -237,7 +290,7 @@ def run_covariance(
             exec_params=exec_params,
         )
     elif cov_type == "raw":
-        cov = compute_cov_from_raw(
+        cov, rank = compute_cov_rank_from_raw(
             cfg=cfg,
             subject=subject,
             session=session,
@@ -247,7 +300,7 @@ def run_covariance(
         )
     else:
         tmin, tmax = cfg.noise_cov
-        cov = compute_cov_from_epochs(
+        cov, rank = compute_cov_rank_from_epochs(
             tmin=tmin,
             tmax=tmax,
             cfg=cfg,
@@ -258,6 +311,7 @@ def run_covariance(
             exec_params=exec_params,
         )
     cov.save(out_files["cov"], overwrite=True)
+    _write_json(out_files["rank"], rank)
 
     # Report
     with _open_report(
@@ -265,30 +319,39 @@ def run_covariance(
     ) as report:
         msg = "Rendering noise covariance matrix and corresponding SVD."
         logger.info(**gen_log_kwargs(message=msg))
+        section = "Noise covariance"
+        report.add_html(
+            html=f"<code>{rank}</code>",
+            title="Rank",
+            section=section,
+            tags=("covariance",),
+            replace=True,
+        )
         report.add_covariance(
             cov=cov,
             info=fname_info,
-            title="Noise covariance",
+            title=section,
             replace=True,
         )
-        if fname_evoked is not None:
-            msg = "Rendering whitened evoked data."
+        for fname_evoked in fnames_evoked:
+            task = fname_evoked.task
+            msg = f"Rendering whitened evoked data for task={task!r}."
             logger.info(**gen_log_kwargs(message=msg))
             all_evoked = mne.read_evokeds(fname_evoked)
-            conditions = _all_conditions(cfg=cfg)
+            conditions = _all_conditions(cfg=cfg, task=task)
+            assert isinstance(all_evoked, list)
             assert len(all_evoked) == len(conditions)
-            section = "Noise covariance"
             for evoked, condition in zip(all_evoked, conditions):
                 _restrict_analyze_channels(evoked, cfg)
-                tags: tuple[str, ...] = (
-                    "evoked",
-                    "covariance",
-                    _sanitize_cond_tag(condition),
+                prefix, extra_tags = _get_prefix_tags(
+                    cfg=cfg, task=task, condition=condition
                 )
-                title = f"Whitening: {condition}"
+                tags = ("evoked", "covariance") + extra_tags
+                title = f"Whitening{prefix}"
                 if condition not in cfg.conditions:
                     tags = tags + ("contrast",)
-                fig = evoked.plot_white(cov, verbose="error")
+                with _fake_sss_context():
+                    fig = evoked.plot_white(cov, rank=rank, verbose="error")
                 report.add_figure(
                     fig=fig,
                     title=title,
@@ -297,6 +360,7 @@ def run_covariance(
                     replace=True,
                 )
                 plt.close(fig)
+            del task
 
     assert len(in_files) == 0, in_files
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
@@ -307,7 +371,6 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        spatial_filter=config.spatial_filter,
         ch_types=config.ch_types,
         run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
@@ -316,6 +379,7 @@ def get_config(
         analyze_channels=config.analyze_channels,
         eeg_reference=get_eeg_reference(config),
         noise_cov_method=config.noise_cov_method,
+        cov_rank=config.cov_rank,
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -325,7 +389,7 @@ def main(*, config: SimpleNamespace) -> None:
     """Run cov."""
     if not config.run_source_estimation:
         msg = "Skipping, run_source_estimation is set to False …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
     # Note that we're using config.noise_cov here and not adding it to
@@ -333,12 +397,13 @@ def main(*, config: SimpleNamespace) -> None:
 
     if config.noise_cov == "ad-hoc":
         msg = "Skipping, using ad-hoc diagonal covariance …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message=msg))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_covariance, exec_params=config.exec_params
+            run_covariance, exec_params=config.exec_params, n_iter=len(ss)
         )
         logs = parallel(
             run_func(
@@ -347,7 +412,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

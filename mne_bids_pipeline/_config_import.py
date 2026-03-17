@@ -5,6 +5,7 @@ import importlib.util
 import os
 import pathlib
 import re
+import types
 from dataclasses import field
 from functools import partial
 from inspect import signature
@@ -17,7 +18,14 @@ import numpy as np
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from ._config_utils import get_subjects_sessions
+from ._config_utils import (
+    _get_task_baseline,
+    _get_task_float,
+    _validate_contrasts,
+    get_eog_channels,
+    get_subjects_sessions,
+    get_tasks,
+)
 from ._logging import gen_log_kwargs, logger
 from .typing import PathLike
 
@@ -31,7 +39,7 @@ def _import_config(
     config_path: PathLike | None,
     overrides: SimpleNamespace | None = None,
     check: bool = True,
-    log: bool = True,
+    add_all_tasks: bool = True,
 ) -> SimpleNamespace:
     """Import the default config and the user's config."""
     # Get the default
@@ -54,7 +62,6 @@ def _import_config(
         config=config,
         config_path=config_path,
         overrides=overrides,
-        log=log,
     )
 
     extra_exec_params_keys: tuple[str, ...] = ()
@@ -86,7 +93,6 @@ def _import_config(
         _check_misspellings_removals(
             valid_names=valid_names,
             user_names=user_names,
-            log=log,
             config_validation=config.config_validation,
         )
 
@@ -120,10 +126,19 @@ def _import_config(
     ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    override_keys = ("subjects",)
+    exec_params.overrides = SimpleNamespace(
+        **{k: getattr(overrides, k) for k in override_keys if hasattr(overrides, k)}
+    )
     for k in keys:
         if k not in in_both:
             delattr(config, k)
     config.exec_params = exec_params
+
+    # And we need these for some steps, too
+    if add_all_tasks:
+        config.all_tasks = get_tasks(config=config)
+
     return config
 
 
@@ -175,7 +190,20 @@ def _update_config_from_path(
             if include_private or not key.startswith("_"):
                 user_names.append(key)
             val = getattr(custom_cfg, key)
-            logger.debug(f"Overwriting: {key} -> {val}")
+            # Don't log about class types like ArbirtaryContrast, Ge, Path, etc.
+            if not (
+                isinstance(val, type)
+                or isinstance(val, types.ModuleType)
+                # there would be a way to detect if something is a type annotation but
+                # I couldn't figure it out easily. This is debug level anyway so
+                # hopefully not too bad to just maintain a blocklist here.
+                or key in ("Annotated", "Path", "PathLike", "Literal", "FloatArrayLike")
+            ):
+                # Spacing here to match "Overriding" messages
+                rep = repr(val).replace("\n", " ")
+                rep = rep[:100] + "…" if len(rep) > 100 else rep
+                msg = f"Assigning  {key} = {rep}"
+                logger.debug(**gen_log_kwargs(message=msg, emoji="📝"))
             setattr(config, key, val)
     return user_names
 
@@ -185,7 +213,6 @@ def _update_with_user_config(
     config: SimpleNamespace,  # modified in-place
     config_path: PathLike | None,
     overrides: SimpleNamespace | None,
-    log: bool = False,
 ) -> list[str]:
     # 1. Basics and hidden vars
     from . import __version__
@@ -212,9 +239,8 @@ def _update_with_user_config(
     for name in dir(overrides):
         if not name.startswith("__"):
             val = getattr(overrides, name)
-            if log:
-                msg = f"Overriding config.{name} = {repr(val)}"
-                logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+            msg = f"Overriding config.{name} = {repr(val)}"
+            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
             setattr(config, name, val)
 
     # 4. Env vars and other triaging
@@ -235,18 +261,18 @@ def _update_with_user_config(
     # 5. Consistency
     log_kwargs = dict(emoji="override")
     if config.interactive:
-        if log and config.on_error != "debug":
+        if config.on_error != "debug":
             msg = 'Setting config.on_error="debug" because of interactive mode'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.on_error = "debug"
     else:
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
-        if log and config.n_jobs != 1:
+        if config.n_jobs != 1:
             msg = 'Setting config.n_jobs=1 because config.on_error="debug"'
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.n_jobs = 1
-        if log and config.parallel_backend != "loky":
+        if config.parallel_backend != "loky":
             msg = (
                 'Setting config.parallel_backend="loky" because config.on_error="debug"'
             )
@@ -262,7 +288,16 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # just change the ones that are easy
 
     config.bids_root.resolve(strict=True)
+    if config.bids_root == config.deriv_root:
+        raise ValueError(
+            "bids_root and deriv_root cannot be the same directory "
+            f"({config.bids_root})."
+        )
 
+    # tasks
+    tasks = get_tasks(config=config)  # will raise if something is wrong
+
+    # preprocessing
     if (
         config.use_maxwell_filter
         and len(set(config.ch_types).intersection(("meg", "grad", "mag"))) == 0
@@ -301,7 +336,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # if `dict` passed for ssp_ecg_channel, make sure its keys are valid
     if config.ssp_ecg_channel and isinstance(config.ssp_ecg_channel, dict):
         pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
-        matches = set(filter(pattern.match, config.ssp_ecg_channel))
+        matches = set(filter(pattern.match, config.ssp_ecg_channel)).union("default")
         newline_indent = "\n  "
         if mismatch := (set(config.ssp_ecg_channel) - matches):
             raise ConfigError(
@@ -323,6 +358,33 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         if missing:
             raise ConfigError(
                 f"Missing entries in ssp_ecg_channel:\n  {newline_indent.join(missing)}"
+            )
+
+    # if `dict` passed for eog_channel, make sure its keys are valid
+    if config.eog_channels and isinstance(config.eog_channels, dict):
+        pattern = re.compile(r"^sub-[A-Za-z\d]+(_ses-[A-Za-z\d]+)?$")
+        matches = set(filter(pattern.match, config.eog_channels)).union({"default"})
+        newline_indent = "\n  "
+
+        if mismatch := (set(config.eog_channels) - matches):
+            raise ConfigError(
+                "Malformed keys in eog_channels dict, "
+                "must be sub-<subject> or sub-<subject>_ses-<session>:\n  "
+                f"{newline_indent.join(sorted(repr(miss) for miss in mismatch))}"
+            )
+        # also make sure there are values for all subjects/sessions:
+        missing = list()
+        subjects_sessions = get_subjects_sessions(config)
+        for sub, sessions in subjects_sessions.items():
+            try:
+                for sess in sessions:
+                    get_eog_channels(config.eog_channels, subject=sub, session=sess)
+            except KeyError:
+                missing.append(f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}")
+
+        if missing:
+            raise ConfigError(
+                f"Missing entries in eog_channels:\n  {newline_indent.join(missing)}"
             )
 
     reject = config.reject
@@ -378,6 +440,13 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "Please set process_empty_room = True"
         )
 
+    if config.noise_cov == "raw" and not config.process_raw_clean:
+        raise ValueError(
+            "You requested noise covariance estimation from raw data by "
+            '"setting noise_cov = "raw", but you did not enable '
+            "writing cleaned raw data. Please set process_raw_clean = True"
+        )
+
     if (
         config.allow_missing_sessions
         and "ignore_suffixes" not in signature(get_entity_vals).parameters
@@ -388,21 +457,28 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "update MNE-BIDS (or if on the latest version, install the dev version)."
         )
 
-    bl = config.baseline
-    if bl is not None:
-        if (bl[0] is not None and bl[0] < config.epochs_tmin) or (
-            bl[1] is not None and bl[1] > config.epochs_tmax
-        ):
-            raise ValueError(
-                f"baseline {bl} outside of epochs interval "
-                f"{[config.epochs_tmin, config.epochs_tmax]}."
-            )
+    for task in tasks:
+        bl = _get_task_baseline(baseline=config.baseline, task=task)
+        tmin = _get_task_float(config.epochs_tmin, task=task)
+        tmax = _get_task_float(config.epochs_tmax, task=task)
+        if bl is not None:
+            if (bl[0] is not None and bl[0] < tmin) or (
+                bl[1] is not None and bl[1] > tmax
+            ):
+                raise ValueError(
+                    f"baseline {bl} for task {task} outside of epochs interval "
+                    f"{[tmin, tmax]}."
+                )
 
-        if bl[0] is not None and bl[1] is not None and bl[0] >= bl[1]:
-            raise ValueError(
-                f"The end of the baseline period must occur after its start, "
-                f"but you set baseline={bl}"
-            )
+            if bl[0] is not None and bl[1] is not None and bl[0] >= bl[1]:
+                raise ValueError(
+                    f"The end of the baseline period must occur after its start, "
+                    f"but you set baseline={bl} for task {task}"
+                )
+        del task, bl, tmin, tmax
+
+    # Contrasts
+    _validate_contrasts(config.contrasts, tasks=config.task)
 
     # check cluster permutation parameters
     if config.cluster_n_permutations < 10 / config.cluster_permutation_p_threshold:
@@ -427,6 +503,26 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
                 f"but got shape {destination.shape}"
             )
 
+    # MNE-ICALabel
+    if config.ica_use_icalabel:
+        pre = "When using MNE-ICALabel, you must set"
+        if config.ica_l_freq != 1.0 or config.ica_h_freq != 100.0:
+            raise ValueError(
+                f"{pre} ica_l_freq=1 and h_freq=100, "
+                f"but got: ica_l_freq={config.ica_l_freq} and "
+                f"ica_h_freq={config.ica_h_freq}"
+            )
+        if config.eeg_reference != "average":
+            raise ValueError(
+                f'{pre} eeg_reference="average", but got: '
+                f"eeg_reference={config.eeg_reference}"
+            )
+        if config.ica_algorithm not in ("picard-extended_infomax", "extended_infomax"):
+            raise ValueError(
+                f'{pre} ica_algorithm="picard-extended_infomax" or "extended_infomax", '
+                f"but got: ica_algorithm={repr(config.ica_algorithm)}"
+            )
+
 
 def _default_factory(key: str, val: Any) -> Any:
     # convert a default to a default factory if needed, having an explicit
@@ -436,6 +532,25 @@ def _default_factory(key: str, val: Any) -> Any:
         {"custom": (8, 24.0, 40)},  # decoding_csp_freqs
         ["evoked"],  # inverse_targets
         [4, 8, 16],  # autoreject_n_interpolate
+        ("brain", "other"),  # ica_icalabel_include
+        {
+            "brain": 0.8,
+            "muscle artifact": 0.8,
+            "eye blink": 0.8,
+            "heart beat": 0.8,
+            "line noise": 0.8,
+            "channel noise": 0.8,
+            "other": 0.8,
+        },  # ica_exclusion_thresholds
+        {
+            "brain": 0.3,
+            "muscle artifact": 0.3,
+            "eye blink": 0.3,
+            "heart beat": 0.3,
+            "line noise": 0.3,
+            "channel noise": 0.3,
+            "other": 0.3,
+        },  # ica_class_thresholds
     ]
 
     def default_factory() -> Any:
@@ -514,12 +629,14 @@ _REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     ),
 }
 
+# False alarms
+_IGNORED_SIMILAR_NAMES = {"BaselineTypeT"}
+
 
 def _check_misspellings_removals(
     *,
     valid_names: list[str],
     user_names: list[str],
-    log: bool,
     config_validation: str,
 ) -> None:
     # for each name in the user names, check if it's in the valid names but
@@ -528,15 +645,20 @@ def _check_misspellings_removals(
         if user_name not in valid_names:
             # find the closest match
             closest_match = difflib.get_close_matches(user_name, valid_names, n=1)
+            other = closest_match[0] if closest_match else None
             msg = f"Found a variable named {repr(user_name)} in your custom config,"
-            if closest_match and closest_match[0] not in user_names:
+            if (
+                closest_match
+                and other not in user_names
+                and user_name not in _IGNORED_SIMILAR_NAMES
+            ):
                 this_msg = (
                     f"{msg} did you mean {repr(closest_match[0])}? "
                     "If so, please correct the error. If not, please rename "
                     "the variable to reduce ambiguity and avoid this message, "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
-                _handle_config_error(this_msg, log, config_validation)
+                _handle_config_error(this_msg, config_validation)
             if user_name in _REMOVED_NAMES:
                 new = _REMOVED_NAMES[user_name]["new_name"]
                 if new not in user_names:
@@ -547,16 +669,14 @@ def _check_misspellings_removals(
                         f"{msg} this variable has been removed as a valid "
                         f"config option, {instead}."
                     )
-                    _handle_config_error(this_msg, log, config_validation)
+                    _handle_config_error(this_msg, config_validation)
 
 
 def _handle_config_error(
     msg: str,
-    log: bool,
     config_validation: str,
 ) -> None:
     if config_validation == "raise":
         raise ValueError(msg)
-    elif config_validation == "warn":
-        if log:
-            logger.warning(**gen_log_kwargs(message=msg, emoji="🛟"))
+    logger_call = logger.warning if config_validation == "warn" else logger.debug
+    logger_call(**gen_log_kwargs(message=msg, emoji="🛟"))

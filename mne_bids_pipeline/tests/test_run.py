@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import sys
-from collections.abc import Collection
+from collections.abc import Collection, Generator
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, TypedDict
@@ -14,8 +14,15 @@ from h5io import read_hdf5
 from mne_bids import BIDSPath, get_bids_path_from_fname
 
 from mne_bids_pipeline._config_import import _import_config
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
+from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+    get_config as get_config_data_quality,
+)
+from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+    get_input_fnames_data_quality,
+)
 
 BIDS_PIPELINE_DIR = Path(__file__).absolute().parents[1]
 
@@ -147,7 +154,7 @@ _n_jobs = {
 
 
 @pytest.fixture()
-def dataset_test(request: pytest.FixtureRequest) -> None:
+def dataset_test(request: pytest.FixtureRequest) -> Generator[None, None, None]:
     """Provide a defined context for our dataset tests."""
     # There is probably a cleaner way to get this param, but this works for now
     capsys = request.getfixturevalue("capsys")
@@ -299,6 +306,7 @@ def test_session_specific_mri(
     # copy the dataset to a tmpdir, and in the destination location make it
     # seem like there's only one subj with different MRIs for different sessions
     new_bids_path = BIDSPath(root=tmp_path / dataset, subject="01", session="a")
+    assert new_bids_path.root is not None
     # sub-01/* → sub-01/ses-a/* ;  sub-02/* → sub-01/ses-b/*
     for src_subj, dst_sess in (("01", "a"), ("02", "b")):
         src_dir = config_obj.bids_root / f"sub-{src_subj}"
@@ -395,8 +403,9 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
             / "sub-01"
             / f"ses-{sess}"
             / "meg"
-            / f"sub-01_ses-{sess}_task-funloc_report.h5"
+            / f"sub-01_ses-{sess}_report.h5"
         )
+        assert fname.is_file()
         report = read_hdf5(fname, title="mnepython")
         coregs = next(
             filter(lambda x: x["dom_id"] == "Sensor_alignment", report["_content"])
@@ -410,3 +419,68 @@ deriv_root = Path("{new_bids_path.root}") / "derivatives" / "mne-bids-pipeline" 
         assert float(result.group("dist")) < 3  # fit between pts and outer_skin < 3 mm
         results.append(result.groups())
     assert results[0] != results[1]  # different npts and/or different mean distance
+
+
+@pytest.mark.parametrize(
+    "runs",
+    [
+        pytest.param([0, 1, 2], id="0,1,2"),
+        pytest.param([3, 4, 5, 6], id="3,4,5,6"),
+    ],
+)
+def test_all_runs_picked(tmp_path: Path, runs: list[str]) -> None:
+    """Test that if a task is given, only runs from that task are scanned."""
+    dataset = "gh-1140"
+    subject = "001"
+    task = "FCSRT"
+    session = "M0"
+    bids_root = tmp_path / dataset
+    files = [
+        "dataset_description.json",
+        *(f"participants.{x}" for x in ("json", "tsv")),
+    ]
+    for r in runs:
+        path = (
+            f"sub-{subject}/ses-{session}/eeg/"
+            f"sub-{subject}_ses-{session}_task-{task}_run-{r:02d}"
+        )
+        files.extend(
+            [
+                f"{path}_{x}"
+                for x in (
+                    "channels.tsv",
+                    "events.tsv",
+                    "eeg.vhdr",
+                )
+            ]
+        )
+    for _file in files:
+        path = bids_root / _file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    # fake a config file (can't use static file because `bids_root` is in `tmp_path`)
+    config_content = f"""
+bids_root = "{bids_root}"
+deriv_root = "{tmp_path / "derivatives" / "mne-bids-pipeline" / dataset}"
+subjects = ["{subject}"]
+runs = "all"
+ch_types = ["eeg"]
+conditions = ["zzz"]
+"""
+    config_path = tmp_path / "fake_config_missing_session.py"
+    config_path.write_text(config_content, encoding="utf-8")
+    config = _import_config(config_path=config_path)
+    cfg = get_config_data_quality(config=config, subject=subject, session=session)
+    ssrt = _get_ssrt(config=config, which=("runs",))
+    assert len(ssrt) == len(runs)
+    for ri, (this_subject, this_session, this_run, this_task) in enumerate(ssrt):
+        assert this_subject == subject
+        assert this_session == session
+        assert this_run is not None
+        assert this_task == task
+        assert int(this_run) == runs[ri]
+        fnames = get_input_fnames_data_quality(
+            cfg=cfg, subject=subject, session=session, run=this_run, task=this_task
+        )
+        for key, path in fnames.items():
+            assert path.fpath.is_file(), f"File for {key=} not found: {path.fpath}"

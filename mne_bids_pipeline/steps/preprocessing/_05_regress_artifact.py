@@ -6,7 +6,7 @@ import mne
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -41,6 +41,7 @@ def get_input_fnames_regress_artifact(
         task=task,
         kind="filt",
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
     )
     assert len(out)
     return out
@@ -117,7 +118,7 @@ def run_regress_artifact(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (regression)",
+            title_prefix="Raw (regression)",
             tags=("regression",),
             raw=raw,
         )
@@ -128,10 +129,11 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         regress_artifact=config.regress_artifact,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
@@ -139,20 +141,20 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run artifact regression."""
     if config.regress_artifact is None:
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(
-            run_regress_artifact, exec_params=config.exec_params
+            run_regress_artifact, exec_params=config.exec_params, n_iter=len(ssrt)
         )
-
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
@@ -160,13 +162,7 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
 
     save_logs(config=config, logs=logs)

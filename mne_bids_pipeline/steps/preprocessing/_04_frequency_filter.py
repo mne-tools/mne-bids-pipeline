@@ -24,7 +24,7 @@ from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
-from mne_bids_pipeline._config_utils import get_runs_tasks, get_subjects_sessions
+from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -62,10 +62,14 @@ def get_input_fnames_frequency_filter(
         task=task,
         kind=kind,
         mf_reference_run=cfg.mf_reference_run,
+        mf_reference_task=cfg.mf_reference_task,
+        add_bads=(kind == "orig"),
     )
 
 
 def zapline(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -85,10 +89,12 @@ def zapline(
     data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
     func = dss.dss_line_iter if iter_ else dss.dss_line
     out, _ = func(data, fline, sfreq)
-    raw._data[picks] = out.T
+    raw._data[picks] = out.T  # type: ignore[invalid-assignment]
 
 
 def notch_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -125,6 +131,8 @@ def notch_filter(
 
 
 def bandpass_filter(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -165,6 +173,8 @@ def bandpass_filter(
 
 
 def resample(
+    *,
+    cfg: SimpleNamespace,
     raw: mne.io.BaseRaw,
     subject: str,
     session: str | None,
@@ -198,19 +208,27 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads", None)
+    if bids_path_in.processing == "sss":
+        bids_path_bads_in = None
+    else:
+        bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter:
         raw = mne.io.read_raw_fif(bids_path_in)
     elif run is None and task == "noise":
+        bids_path_ref_in = in_files.pop("raw_ref_run", None)
+        if bids_path_ref_in is not None and bids_path_in.processing != "sss":
+            bids_path_ref_bads_in = in_files.pop("raw_ref_run-bads")
+        else:
+            bids_path_ref_bads_in = None
         raw = import_er_data(
             cfg=cfg,
             bids_path_er_in=bids_path_in,
-            bids_path_ref_in=in_files.pop("raw_ref_run", None),
+            bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads_in,
-            # take bads from this run (0)
-            bids_path_ref_bads_in=in_files.pop("raw_ref_run-bads", None),
+            # take bads from the reference run
+            bids_path_ref_bads_in=bids_path_ref_bads_in,
             prepare_maxwell_filter=False,
         )
     else:
@@ -249,6 +267,7 @@ def filter_data(
 
     raw.load_data()
     zapline(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -258,6 +277,7 @@ def filter_data(
         iter_=cfg.zapline_iter,
     )
     notch_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -271,6 +291,7 @@ def filter_data(
         notch_extra_kws=cfg.notch_extra_kws,
     )
     bandpass_filter(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -285,6 +306,7 @@ def filter_data(
         bandpass_extra_kws=cfg.bandpass_extra_kws,
     )
     resample(
+        cfg=cfg,
         raw=raw,
         subject=subject,
         session=session,
@@ -324,7 +346,7 @@ def filter_data(
             cfg=cfg,
             report=report,
             bids_path_in=out_files[in_key],
-            title="Raw (filtered)",
+            title_prefix="Raw (filtered)",
             tags=("filtered",),
             raw=raw,
         )
@@ -337,6 +359,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         l_freq=config.l_freq,
@@ -352,21 +375,24 @@ def get_config(
         regress_artifact=config.regress_artifact,
         notch_extra_kws=config.notch_extra_kws,
         bandpass_extra_kws=config.bandpass_extra_kws,
-        **_import_data_kwargs(config=config, subject=subject),
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 
 
 def main(*, config: SimpleNamespace) -> None:
     """Run filter."""
+    ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(filter_data, exec_params=config.exec_params)
-
+        parallel, run_func = parallel_func(
+            filter_data, exec_params=config.exec_params, n_iter=len(ssrt)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
@@ -374,13 +400,6 @@ def main(*, config: SimpleNamespace) -> None:
                 run=run,
                 task=task,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
-            for run, task in get_runs_tasks(
-                config=config,
-                subject=subject,
-                session=session,
-            )
+            for subject, session, run, task in ssrt
         )
-
     save_logs(config=config, logs=logs)

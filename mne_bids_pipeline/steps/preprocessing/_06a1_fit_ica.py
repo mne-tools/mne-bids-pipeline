@@ -19,9 +19,10 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
+    _get_task_average_epochs_tlims,
     get_eeg_reference,
-    get_runs,
-    get_subjects_sessions,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -46,7 +47,6 @@ def get_input_fnames_run_ica(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -56,10 +56,10 @@ def get_input_fnames_run_ica(
         extension=".fif",
     )
     in_files = dict()
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -79,9 +79,21 @@ def run_ica(
     """Run ICA."""
     import matplotlib.pyplot as plt
 
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
+    if cfg.ica_use_icalabel:
+        # The ICALabel network was trained on extended-Infomax ICA decompositions fit
+        # on data flltered between 1 and 100 Hz.
+        assert cfg.ica_algorithm in ["picard-extended_infomax", "extended_infomax"]
+        assert cfg.ica_l_freq == 1.0
+        assert cfg.ica_h_freq == 100.0
+        assert cfg.eeg_reference == "average"
+
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
     out_files = dict()
-    bids_basename = raw_fnames[0].copy().update(processing=None, split=None, run=None)
+    bids_basename = (
+        raw_fnames[0].copy().update(processing=None, split=None, run=None, task=None)
+    )
     out_files["ica"] = bids_basename.copy().update(processing="icafit", suffix="ica")
     out_files["epochs"] = (
         out_files["ica"].copy().update(suffix="epo", processing="icafit")
@@ -96,29 +108,57 @@ def run_ica(
     event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
 
     epochs = None
-    for idx, (run, raw_fname) in enumerate(zip(cfg.runs, raw_fnames)):
+    for idx, ((run, task), raw_fname) in enumerate(zip(cfg.runs_tasks, raw_fnames)):
         msg = f"Processing raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(raw_fname, preload=True)
+        raw = mne.io.read_raw_fif(raw_fname)
+        picks = raw.get_channel_types(unique=True)
+        # if we have M/EEG data but only want to process EEG data, we need to remove
+        # the EEG data here to avoid issues with ICA application later.
+        # picking just the cfg.datatype will exclude stuff like EOG channels that
+        # are needed for analysis.
+        if "eeg" not in cfg.datatype and "eeg" in picks:
+            picks.remove("eeg")
+        raw.pick(picks=picks).load_data()
 
         # Produce high-pass filtered version of the data for ICA.
         # Sanity check – make sure we're using the correct data!
         if cfg.raw_resample_sfreq is not None:
             assert np.allclose(raw.info["sfreq"], cfg.raw_resample_sfreq)
-        if cfg.l_freq is not None:
-            assert np.allclose(raw.info["highpass"], cfg.l_freq)
 
         if idx == 0:
-            if cfg.ica_l_freq is None:
+            # We have to do some gymnastics here to permit for example 128 Hz-sampled
+            # data to be used with mne-icalabel, which wants data low-pass filtered
+            # at 100 Hz
+            h_freq = cfg.ica_h_freq
+            nyq = raw.info["sfreq"] / 2.0
+            if h_freq is not None and h_freq >= nyq:
                 msg = (
-                    f"Not applying high-pass filter (data is already filtered, "
-                    f"cutoff: {raw.info['highpass']} Hz)."
+                    f"Low-pass filter cutoff {h_freq} Hz is higher "
+                    f"than Nyquist {nyq} Hz"
                 )
+                if cfg.ica_use_icalabel:
+                    msg += ", setting to None for compatibility with MNE-ICALabel."
+                    logger.warning(**gen_log_kwargs(message=msg))
+                    h_freq = None
+                else:
+                    raise ValueError(msg)
+            msg = ""
+            if cfg.ica_l_freq is not None and h_freq is not None:
+                msg = (
+                    f"Applying band-pass filter with {cfg.ica_l_freq}-{h_freq} "
+                    "Hz cutoffs"
+                )
+            elif cfg.ica_l_freq is not None:
+                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff"
+            elif h_freq is not None:
+                msg = f"Applying low-pass filter with {h_freq} Hz cutoff"
+            if msg:
                 logger.info(**gen_log_kwargs(message=msg))
-            else:
-                msg = f"Applying high-pass filter with {cfg.ica_l_freq} Hz cutoff …"
-                logger.info(**gen_log_kwargs(message=msg))
-                raw.filter(l_freq=cfg.ica_l_freq, h_freq=None, n_jobs=1)
+            del nyq
+
+        if cfg.ica_l_freq is not None or h_freq is not None:
+            raw.filter(l_freq=cfg.ica_l_freq, h_freq=h_freq, n_jobs=1)
 
         # Only keep the subset of the mapping that applies to the current run
         event_id = event_name_to_code_map.copy()
@@ -132,7 +172,7 @@ def run_ica(
         these_epochs = make_epochs(
             subject=subject,
             session=session,
-            task=cfg.task,
+            task=cfg.all_tasks[0],
             conditions=cfg.conditions,
             raw=raw,
             event_id=event_id,
@@ -154,6 +194,8 @@ def run_ica(
         these_epochs.load_data()  # Remove reference to raw
         del raw  # free memory
 
+        # TODO: This creates epochs for all tasks using tmin/tmax from the first task
+        # only. Hopefully that's good enough but it's a bit of a hack...
         if epochs is None:
             epochs = these_epochs
         else:
@@ -167,6 +209,8 @@ def run_ica(
     if "eeg" in cfg.ch_types:
         projection = True if cfg.eeg_reference == "average" else False
         epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
+        if cfg.ica_use_icalabel:
+            epochs.apply_proj()  # Apply the reference projection
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -286,7 +330,7 @@ def run_ica(
         exec_params=exec_params,
         subject=subject,
         session=session,
-        task=cfg.task,
+        task=cfg.all_tasks[0],
     ) as report:
         report.add_epochs(
             epochs=epochs,
@@ -329,25 +373,31 @@ def get_config(
     subject: str,
     session: str | None = None,
 ) -> SimpleNamespace:
+    # Not necessarily the right thing to do here, but since we can't concat epochs of
+    # different lengths, let's use the average tmin/tmax across tasks
+    epochs_tmin, epochs_tmax = _get_task_average_epochs_tlims(config=config)
     cfg = SimpleNamespace(
         conditions=config.conditions,
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(
+            config=config, subject=subject, session=session, which=("runs", "rest")
+        ),
         task_is_rest=config.task_is_rest,
+        ica_h_freq=config.ica_h_freq,
         ica_l_freq=config.ica_l_freq,
         ica_algorithm=config.ica_algorithm,
         ica_n_components=config.ica_n_components,
         ica_max_iterations=config.ica_max_iterations,
         ica_decim=config.ica_decim,
         ica_reject=config.ica_reject,
+        ica_use_icalabel=config.ica_use_icalabel,
         autoreject_n_interpolate=config.autoreject_n_interpolate,
         random_state=config.random_state,
         ch_types=config.ch_types,
-        l_freq=config.l_freq,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
         event_repeated=config.event_repeated,
-        epochs_tmin=config.epochs_tmin,
-        epochs_tmax=config.epochs_tmax,
+        epochs_tmin=epochs_tmin,
+        epochs_tmax=epochs_tmax,
         epochs_custom_metadata=config.epochs_custom_metadata,
         epochs_metadata_tmin=config.epochs_metadata_tmin,
         epochs_metadata_tmax=config.epochs_metadata_tmax,
@@ -355,7 +405,6 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        eog_channels=config.eog_channels,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
@@ -368,12 +417,14 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run ICA."""
     if config.spatial_filter != "ica":
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_ica, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_ica, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(config=config, subject=subject),
@@ -381,7 +432,6 @@ def main(*, config: SimpleNamespace) -> None:
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

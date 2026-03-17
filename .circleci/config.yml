@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.12.4
+    - image: cimg/python:3.13.11
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
@@ -47,21 +47,17 @@ jobs:
       - run:
           name: Get Python running
           command: |
-            pip install --upgrade --progress-bar off pip
-            # TODO: Restore https://api.github.com/repos/mne-tools/mne-bids/zipball/main pending https://github.com/mne-tools/mne-bids/pull/1349/files#r1885104885
-            pip install --upgrade --progress-bar off "autoreject @ https://api.github.com/repos/autoreject/autoreject/zipball/master" "mne[hdf5] @ git+https://github.com/mne-tools/mne-python@main" "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" numba
-            pip install -ve .[tests]
-            pip install "PyQt6!=6.6.1" "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3,!=6.7.0"
+            ./.circleci/install_deps.sh
       - run:
           name: Check Qt
           command: |
             wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/check_qt_import.sh
-            bash check_qt_import.sh PyQt6
+            bash check_qt_import.sh PySide6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
           command: |
-            make check
+            ./.circleci/check_installation.sh
       - persist_to_workspace:
           root: ~/
           paths:
@@ -77,7 +73,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000117-3
+            - data-cache-ds000117-4
       - bash_env
       - run:
           name: Get ds000117
@@ -85,7 +81,7 @@ jobs:
             $DOWNLOAD_DATA ds000117
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000117-3
+          key: data-cache-ds000117-4
           paths:
             - ~/mne_data/ds000117
 
@@ -96,14 +92,14 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003775-2
+            - data-cache-ds003775-3
       - bash_env
       - run:
           name: Get ds003775
           command: |
             $DOWNLOAD_DATA ds003775
       - save_cache:
-          key: data-cache-ds003775-2
+          key: data-cache-ds003775-3
           paths:
             - ~/mne_data/ds003775
 
@@ -114,7 +110,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds001971-2
+            - data-cache-ds001971-3
       - bash_env
       - run:
           name: Get ds001971
@@ -122,7 +118,7 @@ jobs:
             $DOWNLOAD_DATA ds001971
       - codecov/upload
       - save_cache:
-          key: data-cache-ds001971-2
+          key: data-cache-ds001971-3
           paths:
             - ~/mne_data/ds001971
 
@@ -133,7 +129,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004107-2
+            - data-cache-ds004107-3
       - bash_env
       - run:
           name: Get ds004107
@@ -141,7 +137,7 @@ jobs:
             $DOWNLOAD_DATA ds004107
       - codecov/upload
       - save_cache:
-          key: data-cache-ds004107-2
+          key: data-cache-ds004107-3
           paths:
             - ~/mne_data/ds004107
 
@@ -152,7 +148,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000246-3
+            - data-cache-ds000246-4
       - bash_env
       - run:
           name: Get ds000246
@@ -160,7 +156,7 @@ jobs:
             $DOWNLOAD_DATA ds000246
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000246-3
+          key: data-cache-ds000246-4
           paths:
             - ~/mne_data/ds000246
 
@@ -171,7 +167,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000247-3
+            - data-cache-ds000247-4
       - bash_env
       - run:
           name: Get ds000247
@@ -179,7 +175,7 @@ jobs:
             $DOWNLOAD_DATA ds000247
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000247-3
+          key: data-cache-ds000247-4
           paths:
             - ~/mne_data/ds000247
 
@@ -190,15 +186,18 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - bash_env
       - run:
           name: Get ds000248
           command: |
-            $DOWNLOAD_DATA ds000248
+            # $DOWNLOAD_DATA ds000248
+            # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
+            aws s3 sync --no-sign-request s3://openneuro.org/ds000248 ~/mne_data/ds000248
+            rm -Rf ~/mne_data/ds000248/derivatives/freesurfer/subjects/01
       - codecov/upload
       - save_cache:
-          key: data-cache-ds000248-4
+          key: data-cache-ds000248-7
           paths:
             - ~/mne_data/ds000248
 
@@ -209,7 +208,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds001810-2
+            - data-cache-ds001810-3
       - bash_env
       - run:
           name: Get ds001810
@@ -217,7 +216,7 @@ jobs:
             $DOWNLOAD_DATA ds001810
       - codecov/upload
       - save_cache:
-          key: data-cache-ds001810-2
+          key: data-cache-ds001810-3
           paths:
             - ~/mne_data/ds001810
 
@@ -228,7 +227,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003104-2
+            - data-cache-ds003104-3
       - bash_env
       - run:
           name: Get ds003104
@@ -236,7 +235,7 @@ jobs:
             $DOWNLOAD_DATA ds003104
       - codecov/upload
       - save_cache:
-          key: data-cache-ds003104-2
+          key: data-cache-ds003104-3
           paths:
             - ~/mne_data/ds003104
 
@@ -247,7 +246,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003392-2
+            - data-cache-ds003392-3
       - bash_env
       - run:
           name: Get ds003392
@@ -255,7 +254,7 @@ jobs:
             $DOWNLOAD_DATA ds003392
       - codecov/upload
       - save_cache:
-          key: data-cache-ds003392-2
+          key: data-cache-ds003392-3
           paths:
             - ~/mne_data/ds003392
 
@@ -266,7 +265,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds004229-103
+            - data-cache-ds004229-3
       - bash_env
       - run:
           name: Get ds004229
@@ -274,7 +273,7 @@ jobs:
             $DOWNLOAD_DATA ds004229
       - codecov/upload
       - save_cache:
-          key: data-cache-ds004229-103
+          key: data-cache-ds004229-3
           paths:
             - ~/mne_data/ds004229
 
@@ -362,7 +361,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000117-3
+            - data-cache-ds000117-4
       - run:
           name: test ds000117
           command: $RUN_TESTS ds000117
@@ -388,7 +387,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003775-2
+            - data-cache-ds003775-3
       - run:
           name: test ds003775
           command: $RUN_TESTS ds003775
@@ -414,7 +413,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds001971-2
+            - data-cache-ds001971-3
       - run:
           name: test ds001971
           command: $RUN_TESTS ds001971
@@ -441,7 +440,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds004107-2
+            - data-cache-ds004107-3
       - run:
           name: test ds004107
           command: $RUN_TESTS ds004107
@@ -467,7 +466,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000246-3
+            - data-cache-ds000246-4
       - run:
           name: test ds000246
           no_output_timeout: 15m
@@ -495,7 +494,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000247-3
+            - data-cache-ds000247-4
       - run:
           name: test ds000247
           command: $RUN_TESTS ds000247
@@ -521,7 +520,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_base
           # Forces rerunning (cov and FLASH BEM) so don't check
@@ -550,7 +549,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_ica
           command: $RUN_TESTS ds000248_ica
@@ -577,7 +576,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test BEM from FLASH
           command: $RUN_TESTS -r ds000248_FLASH_BEM
@@ -603,7 +602,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
@@ -630,7 +629,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test head surface creation for MNE coregistration
           command: $RUN_TESTS -c -r ds000248_coreg_surfaces
@@ -649,7 +648,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds000248-4
+            - data-cache-ds000248-7
       - run:
           name: test ds000248_no_mri
           command: $RUN_TESTS ds000248_no_mri
@@ -676,7 +675,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds001810-2
+            - data-cache-ds001810-3
       - run:
           name: test ds001810
           command: $RUN_TESTS ds001810
@@ -702,7 +701,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003104-2
+            - data-cache-ds003104-3
       - run:
           name: test ds003104
           command: $RUN_TESTS ds003104
@@ -728,7 +727,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003392-2
+            - data-cache-ds003392-3
       - run:
           name: test ds003392
           command: $RUN_TESTS ds003392
@@ -757,7 +756,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds004229-103
+            - data-cache-ds004229-3
       - run:
           name: test ds004229
           command: $RUN_TESTS ds004229
@@ -1081,13 +1080,13 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -ve .[docs]
+            pip install -ve . --group docs
       - run:
           name: Build documentation
           command: |
             set -eo pipefail
             ls ~/mne_data/derivatives/mne-bids-pipeline/*/*/*/*.html
-            make doc
+            ./docs/build-docs.sh
       - store_artifacts:
           path: docs/site
           destination: site
@@ -1113,14 +1112,14 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip install -ve .[docs]
+            pip install -ve . --group docs
       - run:
           # This is a bit computationally inefficient, but it should be much
           # faster to "cp" directly on the machine rather than persist
           # 1GB doc build to workspace then go retrieve it
           name: Build documentation again
           command: |
-            make doc
+            ./docs/build-docs.sh
       - run:
           name: Deploy docs to gh-pages branch
           # https://github.com/jimporter/mike

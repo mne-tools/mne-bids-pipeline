@@ -1,9 +1,11 @@
 """Logging."""
 
+import contextlib
 import datetime
 import inspect
 import logging
 import os
+from collections.abc import Generator
 
 import rich.console
 import rich.theme
@@ -72,42 +74,63 @@ class _MBPLogger:
         self._level = level
 
     def debug(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="debug", msg=msg, **(extra or {}))
+        self._log_message(kind="debug", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def info(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="info", msg=msg, **(extra or {}))
+        self._log_message(kind="info", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def warning(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="warning", msg=msg, **(extra or {}))
+        self._log_message(kind="warning", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def error(
-        self, msg: str, *, extra: LogKwargsT | dict[str, str] | None = None
+        self,
+        msg: str,
+        *,
+        extra: LogKwargsT | dict[str, str] | None = None,
+        sanitize: bool = True,
     ) -> None:
-        self._log_message(kind="error", msg=msg, **(extra or {}))
+        self._log_message(kind="error", msg=msg, sanitize=sanitize, **(extra or {}))
 
     def _log_message(
         self,
+        *,
         kind: str,
         msg: str,
+        sanitize: bool,
         subject: str | None = None,
         session: str | None = None,
         run: str | None = None,
+        task: str | None = None,
         emoji: str = "",
     ) -> None:
         this_level = getattr(logging, kind.upper())
         if this_level < self.level:
             return
         # Construct str
-        essr = " ".join(x for x in [emoji, subject, session, run] if x)
+        essr = " ".join(x for x in [emoji, subject, session, task, run] if x)
         if essr:
             essr += " "
         asctime = datetime.datetime.now().strftime("│%H:%M:%S│")
+        if sanitize:
+            msg = msg.replace("[", r"\[")
         msg = f"[asctime]{asctime} [/][prefix]{essr}[/][{kind}]{msg}[/]"
         self._console.print(msg)
 
@@ -116,28 +139,45 @@ logger = _MBPLogger()
 
 
 def gen_log_kwargs(
-    message: str,
+    message: str,  # special shortcut value: SKIP
     *,
     subject: str | int | None = None,
     session: str | int | None = None,
     run: str | int | None = None,
     task: str | None = None,
-    emoji: str = "⏳️",
+    emoji: str | None = None,
 ) -> LogKwargsT:
     # Try to figure these out
     assert isinstance(message, str), type(message)
+    default_subject = None
+    if message == "SKIP":
+        message = "Skipping, not requested …"
+    default_emoji = "skip" if message.startswith("Skipping") else "hourglass"
+    if emoji is None:
+        emoji = default_emoji
+    if emoji == "skip":
+        default_subject = "*"
     stack = inspect.stack()
     up_locals = stack[1].frame.f_locals
     if subject is None:
-        subject = up_locals.get("subject", None)
+        subject = up_locals.get("subject", default_subject)
     if session is None:
         session = up_locals.get("session", None)
     if run is None:
         run = up_locals.get("run", None)
-        if run is None:
-            task = task or up_locals.get("task", None)
-            if task in ("noise", "rest"):
-                run = task
+    if task is None:
+        task = up_locals.get("task", None)
+        if task not in ("noise", "rest"):
+            # If task is set but there's only one task, don't show it
+            n_tasks = 2
+            cfg = up_locals.get("cfg", None)
+            if cfg is None:
+                config = up_locals.get("config", None)
+                n_tasks = len(getattr(config, "all_tasks", []))
+            else:
+                n_tasks = len(getattr(cfg, "all_tasks", []))
+            if n_tasks == 1:
+                task = None
 
     # Do some nice formatting
     if subject is not None:
@@ -150,8 +190,9 @@ def gen_log_kwargs(
     # Choose some to be our standards
     emoji = dict(
         cache="✅",
-        skip="⏩",
+        hourglass="⏳️",
         override="❌",
+        skip="⏩",
     ).get(emoji, emoji)
     extra = {"emoji": emoji}
     if subject:
@@ -160,6 +201,8 @@ def gen_log_kwargs(
         extra["session"] = session
     if run:
         extra["run"] = run
+    if task and task != "run":
+        extra["task"] = task
 
     kwargs: LogKwargsT = {
         "msg": message,
@@ -174,3 +217,14 @@ def _linkfile(uri: str) -> str:
 
 def _is_testing() -> bool:
     return os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true"
+
+
+@contextlib.contextmanager
+def _log_context(level: int) -> Generator[None, None, None]:
+    """Set logging level temporarily."""
+    old_level = logger.level
+    logger.level = level
+    try:
+        yield
+    finally:
+        logger.level = old_level

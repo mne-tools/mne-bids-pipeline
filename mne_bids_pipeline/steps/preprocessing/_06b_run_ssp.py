@@ -14,11 +14,12 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_import import ConfigError
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
+    _get_ss,
     _pl,
     _proj_path,
     get_ecg_channel,
-    get_runs,
-    get_subjects_sessions,
+    get_eog_channels,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -48,7 +49,6 @@ def get_input_fnames_run_ssp(
     bids_basename = BIDSPath(
         subject=subject,
         session=session,
-        task=cfg.task,
         acquisition=cfg.acq,
         recording=cfg.rec,
         space=cfg.space,
@@ -58,10 +58,10 @@ def get_input_fnames_run_ssp(
         check=False,
     )
     in_files = dict()
-    for run in cfg.runs:
-        key = f"raw_run-{run}"
+    for run, task in cfg.runs_tasks:
+        key = f"raw_task-{task}_run-{run}"
         in_files[key] = bids_basename.copy().update(
-            run=run, processing=cfg.processing, suffix="raw"
+            run=run, task=task, processing=cfg.processing, suffix="raw"
         )
         _update_for_splits(in_files, key, single=True)
     return in_files
@@ -81,7 +81,9 @@ def run_ssp(
     import matplotlib.pyplot as plt
 
     # compute SSP on all runs of raw
-    raw_fnames = [in_files.pop(f"raw_run-{run}") for run in cfg.runs]
+    raw_fnames = [
+        in_files.pop(f"raw_task-{task}_run-{run}") for run, task in cfg.runs_tasks
+    ]
 
     out_files = dict(proj=_proj_path(cfg=cfg, subject=subject, session=session))
     msg = (
@@ -100,21 +102,26 @@ def run_ssp(
     projs: dict[str, list[mne.Projection]] = dict()
     proj_kinds = ("ecg", "eog")
     rate_names = dict(ecg="heart", eog="blink")
-    events_fun = dict(ecg=_find_ecg_events, eog=find_eog_events)
     minimums = dict(ecg=cfg.min_ecg_epochs, eog=cfg.min_eog_epochs)
     rejects = dict(ecg=cfg.ssp_reject_ecg, eog=cfg.ssp_reject_eog)
     avg = dict(ecg=cfg.ecg_proj_from_average, eog=cfg.eog_proj_from_average)
     n_projs = dict(ecg=cfg.n_proj_ecg, eog=cfg.n_proj_eog)
-    ch_name: dict[str, str | list[str] | None] = dict(ecg=None, eog=None)
-    if cfg.eog_channels:
-        ch_name["eog"] = cfg.eog_channels
-        assert ch_name["eog"] is not None
-        assert all(ch_name in raw.ch_names for ch_name in ch_name["eog"])
+
+    eog_chs_subj_sess = get_eog_channels(cfg.eog_channels, subject, session)
+
+    ch_name_ecg: str | None = None
+    ch_name_eog: str | list[str] | None = None
+    if eog_chs_subj_sess:
+        ch_name_eog = list(eog_chs_subj_sess)
+        assert ch_name_eog is not None
+        assert all(ch_name in raw.ch_names for ch_name in ch_name_eog)
     if cfg.ssp_ecg_channel:
-        ch_name["ecg"] = get_ecg_channel(config=cfg, subject=subject, session=session)
-        if ch_name["ecg"] not in raw.ch_names:
+        ch_name_ecg = get_ecg_channel(
+            ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
+        )
+        if ch_name_ecg not in raw.ch_names:
             raise ConfigError(
-                f"SSP ECG channel '{ch_name['ecg']}' not found in data for "
+                f"SSP ECG channel '{ch_name_ecg}' not found in data for "
                 f"subject {subject}, session {session}"
             )
     if cfg.ssp_meg == "auto":
@@ -123,7 +130,11 @@ def run_ssp(
         projs[kind] = []
         if not any(n_projs[kind].values()):
             continue
-        events = events_fun[kind](raw=raw, ch_name=ch_name[kind])
+        if kind == "ecg":
+            assert isinstance(ch_name_ecg, str | None)
+            events = _find_ecg_events(raw=raw, ch_name=ch_name_ecg)
+        else:
+            events = find_eog_events(raw=raw, ch_name=ch_name_eog)
         n_orig = len(events)
         rate = n_orig / raw.times[-1] * 60
         bpm_msg = f"{rate:5.1f} bpm"
@@ -215,19 +226,25 @@ def run_ssp(
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
                     picks_trace = [
-                        get_ecg_channel(config=cfg, subject=subject, session=session)
+                        get_ecg_channel(
+                            ecg_channel=cfg.ssp_ecg_channel,
+                            subject=subject,
+                            session=session,
+                        )
                     ]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:
                 assert kind == "eog"
-                if cfg.eog_channels:
-                    picks_trace = cfg.eog_channels
+                if eog_chs_subj_sess:
+                    # convert to list for compatibility of type annotations
+                    picks_trace = list(eog_chs_subj_sess)
                 elif "eog" in proj_epochs:
                     picks_trace = "eog"
             fig = mne.viz.plot_projs_joint(
                 these_projs, proj_epochs.average(picks="all"), picks_trace=picks_trace
             )
+            assert isinstance(proj_epochs.drop_log, tuple)
             caption = (
                 f"Computed using {len(proj_epochs)} epochs "
                 f"(from {len(proj_epochs.drop_log)} original events)"
@@ -247,6 +264,7 @@ def get_config(
     *,
     config: SimpleNamespace,
     subject: str,
+    session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         eog_channels=config.eog_channels,
@@ -263,7 +281,9 @@ def get_config(
         ch_types=config.ch_types,
         epochs_decim=config.epochs_decim,
         use_maxwell_filter=config.use_maxwell_filter,
-        runs=get_runs(config=config, subject=subject),
+        runs_tasks=get_runs_tasks(
+            config=config, subject=subject, session=session, which=("runs", "rest")
+        ),
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),
     )
@@ -273,23 +293,25 @@ def get_config(
 def main(*, config: SimpleNamespace) -> None:
     """Run SSP."""
     if config.spatial_filter != "ssp":
-        msg = "Skipping …"
-        logger.info(**gen_log_kwargs(message=msg, emoji="skip"))
+        logger.info(**gen_log_kwargs(message="SKIP"))
         return
 
+    ss = _get_ss(config=config)
     with get_parallel_backend(config.exec_params):
-        parallel, run_func = parallel_func(run_ssp, exec_params=config.exec_params)
+        parallel, run_func = parallel_func(
+            run_ssp, exec_params=config.exec_params, n_iter=len(ss)
+        )
         logs = parallel(
             run_func(
                 cfg=get_config(
                     config=config,
                     subject=subject,
+                    session=session,
                 ),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,
             )
-            for subject, sessions in get_subjects_sessions(config).items()
-            for session in sessions
+            for subject, session in ss
         )
     save_logs(config=config, logs=logs)

@@ -82,6 +82,8 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:.*Liblinear failed to converge.*:
     # json-tricks
     ignore:json-tricks.*numpy scalar serialization.*:UserWarning
+    # pooch
+    ignore:.*filter extracted tar archives.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

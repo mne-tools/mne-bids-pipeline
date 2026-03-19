@@ -119,7 +119,7 @@ def run_ssp(
         ch_name_ecg = get_ecg_channel(
             ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
         )
-        if ch_name_ecg not in raw.ch_names:
+        if ch_name_ecg is not None and ch_name_ecg not in raw.ch_names:
             raise ConfigError(
                 f"SSP ECG channel '{ch_name_ecg}' not found in data for "
                 f"subject {subject}, session {session}"
@@ -225,13 +225,15 @@ def run_ssp(
             picks_trace: str | list[str] | None = None
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
-                    picks_trace = [
-                        get_ecg_channel(
-                            ecg_channel=cfg.ssp_ecg_channel,
-                            subject=subject,
-                            session=session,
-                        )
-                    ]
+                    this_ch: str | None = get_ecg_channel(
+                        ecg_channel=cfg.ssp_ecg_channel,
+                        subject=subject,
+                        session=session,
+                    )
+                    if this_ch is None:  # "use MNE default ECG channel"
+                        picks_trace = "ecg"
+                    else:
+                        picks_trace = [this_ch]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:

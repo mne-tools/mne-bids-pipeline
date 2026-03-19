@@ -119,7 +119,7 @@ def run_ssp(
         ch_name_ecg = get_ecg_channel(
             ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
         )
-        if ch_name_ecg not in raw.ch_names:
+        if ch_name_ecg is not None and ch_name_ecg not in raw.ch_names:
             raise ConfigError(
                 f"SSP ECG channel '{ch_name_ecg}' not found in data for "
                 f"subject {subject}, session {session}"

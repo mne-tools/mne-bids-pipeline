@@ -349,8 +349,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         for sub, sessions in subjects_sessions.items():
             for ses in sessions:
                 if (
-                    config.ssp_ecg_channel.get(f"sub-{sub}") is None
-                    and config.ssp_ecg_channel.get(f"sub-{sub}_ses-{ses}") is None
+                    f"sub-{sub}" not in config.ssp_ecg_channel
+                    and f"sub-{sub}_ses-{ses}" not in config.ssp_ecg_channel
                 ):
                     missing.append(
                         f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"

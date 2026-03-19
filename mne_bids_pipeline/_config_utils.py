@@ -546,14 +546,14 @@ def get_ecg_channel(
     ecg_channel: str | dict[str, str],
     subject: str = "",
     session: str | None = "",
-) -> str:
+) -> str | None:
     out = _get_channels_generic(
         ecg_channel,
         subject,
         session,
         variable_name="ssp_ecg_channel",
     )
-    assert isinstance(out, str)  # mypy
+    assert isinstance(out, str | None)  # mypy
     return out
 
 

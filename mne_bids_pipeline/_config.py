@@ -1392,7 +1392,7 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_ecg_channel: str | dict[str, str] | None = None
+ssp_ecg_channel: str | dict[str, str | None] | None = None
 """
 Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
 is not reliable. If `str`, the same channel will be used for all subjects.

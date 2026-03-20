@@ -37,6 +37,7 @@ def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:
         target_dir=ds_path,
         include=options.get("include", []),
         exclude=options.get("exclude", []),
+        tag=options.get("tag", None),
     )
     print(f"Downloading with openneuro.download(**{kwargs})")
     openneuro.download(**kwargs)

@@ -227,7 +227,7 @@ jobs:
           at: ~/
       - restore_cache:
           keys:
-            - data-cache-ds003104-3
+            - data-cache-ds003104-4
       - bash_env
       - run:
           name: Get ds003104
@@ -235,7 +235,7 @@ jobs:
             $DOWNLOAD_DATA ds003104
       - codecov/upload
       - save_cache:
-          key: data-cache-ds003104-3
+          key: data-cache-ds003104-4
           paths:
             - ~/mne_data/ds003104
 
@@ -701,7 +701,7 @@ jobs:
       - bash_env
       - restore_cache:
           keys:
-            - data-cache-ds003104-3
+            - data-cache-ds003104-4
       - run:
           name: test ds003104
           command: $RUN_TESTS ds003104

@@ -26,7 +26,7 @@ jobs:
     - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
     - run: lefthook run pre-commit --all-files  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
-    - uses: codecov/codecov-action@v5
+    - uses: codecov/codecov-action@v6
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
@@ -79,7 +79,7 @@ jobs:
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         timeout-minutes: 1
         name: Rerun ${{ matrix.dataset }} test to check all steps cached
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         if: success() || failure()
   non-doc-dataset-tests:
     name: 'Non-doc dataset tests'

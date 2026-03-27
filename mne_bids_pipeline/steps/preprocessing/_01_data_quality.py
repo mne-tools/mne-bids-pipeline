@@ -288,21 +288,56 @@ def assess_data_quality(
             report.remove(title=title)
             report.add_html(text_html, **text_kwargs)
         if cfg.pyprep_bad_chans:
+            import pdb
+            pdb.set_trace()
             raw.set_annotations(None) # annotations only bother us here
             msg = "Adding pyprep bad channels to report"
             logger.info(**gen_log_kwargs(message=msg))
-            for k, v in pyprep_bads.items():
-                raw.info["bads"] = v
-                if not v or k == "all_bads":
-                    continue
-                _add_raw(
-                    cfg=cfg,
-                    report=report,
-                    bids_path_in=bids_path_in,
-                    title=f"Raw, algorithm {k}",
-                    tags=("bad_channel",),
-                    raw=raw,
-                )
+
+            # Reshape from long to wide format
+            bad_channels_df = pd.pivot_table(tsv_data, columns="reason", index="name", aggfunc=lambda x: True, fill_value=False)
+            color_map = lambda x: 'background-color: #FFB3B3' if x else 'background-color: #B3B3FF' # Colour-code whether a channel was marked as bad by an algorithm
+            styled_df = bad_channels_df.style.map(color_map)
+
+            # Convert pandas df to html table and do some formatting
+            bad_channels_html = styled_df.to_html(header=False)
+            styled_html = f"""
+            <div style="width:100%; overflow-x:auto;">
+                <style>
+                    table {{ width: 100%; }}
+                    th, td {{
+                        min-width: 100px;
+                        padding: 10px;
+                    }}
+                </style>
+                {bad_channels_html}
+            </div>
+            """
+            report.add_html(section="Bad channel detection using PyPREP", title="Bad channel detection overview", html=styled_html)
+            raw.info["bads"] = pyprep_bads["bad_all"]
+            _add_raw(
+                cfg=cfg,
+                report=report,
+                bids_path_in=bids_path_in,
+                section="Bad channel detection using PyPREP",
+                title=f"Raw, bad_all",
+                tags=tags+["bad_channel"],
+                raw=raw,
+            )
+
+
+            # for k, v in pyprep_bads.items():
+            #     raw.info["bads"] = v
+            #     if not v or k == "all_bads":
+            #         continue
+            #     _add_raw(
+            #         cfg=cfg,
+            #         report=report,
+            #         bids_path_in=bids_path_in,
+            #         title=f"Raw, algorithm {k}",
+            #         tags=("bad_channel",),
+            #         raw=raw,
+            #     )
 
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

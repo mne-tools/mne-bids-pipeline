@@ -30,6 +30,7 @@ def set_initial_average_reference(inst, cfg: SimpleNamespace):
             logger.info(**gen_log_kwargs(message=msg))
 
             mne.add_reference_channels(inst, ref_channels=[cfg.eeg_online_reference_channel], copy=False)
+            inst.set_montage(cfg.eeg_template_montage, match_case=False, match_alias=True)
 
     else:
         msg = "Re-referencing to average reference assuming the online reference channel was already added as a flat channel."

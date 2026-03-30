@@ -288,8 +288,6 @@ def assess_data_quality(
             report.remove(title=title)
             report.add_html(text_html, **text_kwargs)
         if cfg.pyprep_bad_chans:
-            import pdb
-            pdb.set_trace()
             raw.set_annotations(None) # annotations only bother us here
             msg = "Adding pyprep bad channels to report"
             logger.info(**gen_log_kwargs(message=msg))
@@ -313,15 +311,18 @@ def assess_data_quality(
                 {bad_channels_html}
             </div>
             """
-            report.add_html(section="Bad channel detection using PyPREP", title="Bad channel detection overview", html=styled_html)
+            report.add_html(
+                section="Bad channel detection using PyPREP",
+                title="Bad channel detection overview",
+                tags=tags+("bad_channel",),
+                html=styled_html)
             raw.info["bads"] = pyprep_bads["bad_all"]
             _add_raw(
                 cfg=cfg,
                 report=report,
                 bids_path_in=bids_path_in,
-                section="Bad channel detection using PyPREP",
                 title=f"Raw, bad_all",
-                tags=tags+["bad_channel"],
+                tags=("bad_channel",),
                 raw=raw,
             )
 

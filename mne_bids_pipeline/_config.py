@@ -375,7 +375,7 @@ Specify the EEG channel that was used as reference channel during the recording.
     ```
 """
 
-drop_channel_after_rereference: bool = True
+drop_channel_after_rereference: bool = False
 """
 Whether the reconstructed online reference channel should be dropped again after applying
 an average reference.

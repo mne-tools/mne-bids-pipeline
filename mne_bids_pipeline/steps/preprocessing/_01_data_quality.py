@@ -454,7 +454,6 @@ def get_config(
         # detection
         # find_flat_channels_meg=config.find_flat_channels_meg,
         # find_noisy_channels_meg=config.find_noisy_channels_meg,
-        pyprep_bad_chans=config.pyprep_bad_chans,
         pyprep_all_bads=config.pyprep_all_bads,
         pyprep_all_bads_params=config.pyprep_all_bads_params,
         pyprep_by_SNR=config.pyprep_by_SNR,

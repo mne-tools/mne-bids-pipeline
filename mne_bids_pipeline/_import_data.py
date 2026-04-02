@@ -458,7 +458,7 @@ def import_experimental_data(
         bads = _read_bads_tsv(cfg=cfg, bids_path_bads=bids_path_bads_in)
         msg = f"Marking {len(bads)} channel{_pl(bads)} as bad."
         logger.info(**gen_log_kwargs(message=msg))
-        raw.info["bads"] = bads
+        raw.info["bads"] = sorted(set(bads)) # Remove duplicates and sort channels
         raw.info._check_consistency()
 
     return raw
@@ -788,7 +788,7 @@ def _path_dict(
     session: str | None,
 ) -> InFilesT:
     if add_bads is None:
-        add_bads = kind == "orig" and _do_mf_autobad(cfg=cfg)
+        add_bads = kind == "orig" and (_do_mf_autobad(cfg=cfg) or cfg.pyprep_bad_chans)
     in_files = dict()
     key = key or f"raw_task-{bids_path_in.task}_run-{bids_path_in.run}"
     in_files[key] = bids_path_in
@@ -852,6 +852,7 @@ def _import_data_kwargs(*, config: SimpleNamespace, subject: str) -> dict[str, A
         find_noisy_channels_meg=config.find_noisy_channels_meg,
         find_flat_channels_meg=config.find_flat_channels_meg,
         find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        pyprep_bad_chans=config.pyprep_bad_chans,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,

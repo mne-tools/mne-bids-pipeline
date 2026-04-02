@@ -89,7 +89,7 @@ def zapline(
     data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
     func = dss.dss_line_iter if iter_ else dss.dss_line
     out, _ = func(data, fline, sfreq)
-    raw._data[picks] = out.T  # type: ignore[invalid-assignment]
+    raw._data[picks] = out.T  # type: ignore
 
 
 def notch_filter(

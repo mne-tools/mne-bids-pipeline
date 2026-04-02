@@ -4,7 +4,8 @@ name = "mne-bids-pipeline"
 description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE.txt" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 authors = [
   { name = "Eric Larson" },
   { name = "Alexandre Gramfort" },

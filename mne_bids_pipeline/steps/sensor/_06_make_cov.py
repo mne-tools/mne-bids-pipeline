@@ -250,7 +250,7 @@ def _fake_sss_context() -> Generator[None, None, None]:
         out[-1] = out[-2]  # has_sss = has_meg (which really means: mag + grad)
         return tuple(out)
 
-    mne.viz.utils._check_sss = replacement  # type: ignore[assignment]
+    mne.viz.utils._check_sss = replacement  # type: ignore
     try:
         yield
     finally:

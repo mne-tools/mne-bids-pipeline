@@ -63,7 +63,7 @@ def test_options_documented() -> None:
     settings_path = root_path.parent / "docs" / "source" / "settings"
     sys.path.append(str(settings_path))
     try:
-        from gen_settings import main  # type: ignore [unresolved-import]
+        from gen_settings import main  # type: ignore
     finally:
         sys.path.pop()
     main()

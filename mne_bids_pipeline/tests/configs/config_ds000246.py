@@ -4,6 +4,8 @@ See https://openneuro.org/datasets/ds000246/versions/1.0.0 for more
 information.
 """
 
+import sys
+
 bids_root = "~/mne_data/ds000246"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000246"
 
@@ -26,7 +28,7 @@ on_error = "abort"
 plot_psd_for_runs = []  # too much memory on CIs
 
 parallel_backend = "dask"
-dask_worker_memory_limit = "2G"
+dask_worker_memory_limit = "3G" if sys.platform == "darwin" else "2G"
 dask_temp_dir = "./.dask-worker-space"
 dask_open_dashboard = True
 n_jobs = 2

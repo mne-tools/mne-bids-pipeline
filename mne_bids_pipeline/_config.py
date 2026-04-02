@@ -336,6 +336,12 @@ The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
 channel. To use multiple channels as reference, set to a list of channel names.
 
+!!! warning
+    If this option is set to `average`, AND `add_online_reference_channel` is `False`
+    (AND the online reference channel is not already included as flat channel), you 
+    will likely get incorrect results.
+    See https://github.com/mne-tools/mne-python/issues/13618
+    
 ???+ example "Example"
     Use the average reference:
     ```python
@@ -351,6 +357,30 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```python
     eeg_reference = ['P9', 'P10']
     ```
+"""
+
+add_online_reference_channel: bool = True
+"""
+Whether the online reference channel should be added to the data (as flat channel),
+if it is not included in the data already.
+"""
+
+eeg_online_reference_channel: str | None = None
+"""
+Specify the EEG channel that was used as reference channel during the recording.
+
+???+ example "Example"
+    ```python
+    eeg_online_reference_channel = "Cz"
+    ```
+"""
+
+drop_channel_after_rereference: bool = False
+"""
+Whether the reconstructed online reference channel should be dropped again after applying
+an average reference.
+Note: As of 03-2026 the reference (calculated as a projection) is only applied when using ICLabel.
+In all other cases and outputs,  `raw.apply_proj()` is needed to actually apply the reference. Thus, if the reference channel should be dropped after applying the reference, it has to be done manually by the user.
 """
 
 eeg_template_montage: str | DigMontageType | None = None

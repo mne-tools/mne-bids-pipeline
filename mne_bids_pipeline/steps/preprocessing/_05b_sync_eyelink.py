@@ -240,7 +240,7 @@ def sync_eyelink(
                                                                 raw_et.first_samp,
                                                                 raw.info["sfreq"]))
     
-    # the following code requires mne 1.11 - but there is a bug in reading eyelink-asc files so we cant use it
+    # the following code requires mne 1.11 - but there is a bug in reading eyelink-asc files so we can't use it
     #shift = (raw.first_samp - raw_et.first_samp) / raw.info["sfreq"]
 
     #et_shifted = mne.Annotations(

@@ -1097,14 +1097,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "3b:da:0c:a3:e7:e8:31:08:ff:db:c3:42:c9:b5:bf:77"
-      - restore_cache:
-          keys:
-            - source-cache
       - checkout
-      - save_cache:
-          key: source-cache
-          paths:
-            - ".git"
       - attach_workspace:
           at: ~/
       - bash_env
@@ -1128,6 +1121,7 @@ jobs:
             ARGS="--config-file docs/mkdocs.yml"
             # First we need to actually check out our current version of
             # gh-pages so we don't remove it!
+            set -x
             git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
             git fetch origin
             # If it's tagged as v*, deploy as "v*" and "stable" as well

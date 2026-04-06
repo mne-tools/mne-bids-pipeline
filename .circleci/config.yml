@@ -1141,6 +1141,9 @@ jobs:
               mike deploy dev $ARGS
             fi
             git checkout gh-pages
+            # TODO: On release, consider doing something like:
+            # $ rm 1.9/examples/*/sub-*_report.html
+            # To save ~500MB-1TB! Left as a manual step for now.
             git reset $(git commit-tree HEAD^{tree} -m "Deploy and squash docs [ci skip]")
             git log -n3  # should just be one, but let's be sure
             git push origin --force gh-pages

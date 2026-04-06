@@ -23,6 +23,7 @@ dependencies = [
   "bokeh",  # for joblib
   "dask[distributed]",  # from pandas
   "filelock",
+  "h5io",
   "joblib >= 0.14",
   "json_tricks",
   "jupyter-server-proxy",

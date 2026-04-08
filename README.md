@@ -3,9 +3,20 @@
 <!--keep description in sync with pyproject.toml-->
 
 <!--tagline-start-->
-**MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and
-EEG data.**
+**MNE-BIDS-EyeTracking-Pipeline is coregisterd eye-tracking fork of MNE-BIDS-Pipeline.**
 
+## Contributions
+- Bad Channel detection using PyPrep: Jevri Hanna, Judith Schepers
+- Correct common average reference: Judith Schepers
+- Synchronisation of EyeLink: Judith Schepers, Jevri Hanna, Benedikt Ehinger
+- Synchronisation of SMI: Okan Mazlum (not yet merged)
+- IClabel: Judith Schepers, Sven Naber -> already merged upstream
+- Zapline: Boschra Ariguib -> already merged upstream
+
+- Supervision & Code review: Benedikt Ehinger
+
+
+## Original readme starts here -->
 * It operates on data stored according to the [Brain Imaging Data
 Structure (BIDS)](https://bids.neuroimaging.io/).
 * Under the hood, it uses [MNE-Python](https://mne.tools).

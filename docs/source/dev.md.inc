@@ -2,7 +2,7 @@
 
 ### :new: New features & enhancements
 
-- Nothing yet
+- Improved performance by caching BIDSPath matches for Maxwell Filter calibration and cross-talk files (#1215 by @larsoner).
 
 [//]: # (- Whatever [`mf_filter_chpi`][mne_bids_pipeline._config.mf_filter_chpi] etc (#000 by @whoever))
 

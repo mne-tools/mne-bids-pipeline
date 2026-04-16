@@ -31,7 +31,7 @@ def failsafe_run(
 ) -> Callable[..., Any]:
     def failsafe_run_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)  # Preserve "identity" of original function
-        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs):  # type: ignore
+        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs) -> pd.Series | None:  # type: ignore
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
@@ -43,19 +43,14 @@ def failsafe_run(
                 func_name=f"{__mne_bids_pipeline_step__}::{func.__name__}",
             )
             t0 = time.time()
-            log_info = pd.concat(
-                [
-                    pd.Series(kwargs, dtype=object),
-                    pd.Series(index=["time", "success", "error_message"], dtype=object),
-                ]
-            )
 
+            success = True
+            error_message = ""
+            did_run = True
             try:
                 assert len(args) == 0, args  # make sure params are only kwargs
-                out = memory.cache(func)(*args, **kwargs)
-                assert out is None  # nothing should be returned
-                log_info["success"] = True
-                log_info["error_message"] = ""
+                did_run = memory.cache(func)(*args, **kwargs)
+                assert isinstance(did_run, bool)  # whether or not it ran
             except Exception as e:
                 # Only keep what gen_log_kwargs() can handle
                 kwargs_log = {
@@ -65,8 +60,8 @@ def failsafe_run(
                 }
                 e_str = "\n".join(traceback.format_exception_only(e)).strip()
                 message = f"A critical error occurred. The error message was: {e_str}"
-                log_info["success"] = False
-                log_info["error_message"] = e_str
+                success = False
+                error_message = e_str
 
                 # Find the limit / step where the error occurred
                 step_dir = pathlib.Path(__file__).parent / "steps"
@@ -104,7 +99,17 @@ def failsafe_run(
                     logger.error(
                         **gen_log_kwargs(message=message, **kwargs_log, emoji="🔂")
                     )
+            if not did_run:
+                return None  # no log info to return
+            log_info = pd.concat(
+                [
+                    pd.Series(kwargs, dtype=object),
+                    pd.Series(index=["time", "success", "error_message"], dtype=object),
+                ]
+            )
             log_info["time"] = round(time.time() - t0, ndigits=1)
+            log_info["success"] = success
+            log_info["error_message"] = error_message
             return log_info
 
         return __mne_bids_pipeline_failsafe_wrapper__
@@ -150,7 +155,7 @@ class ConditionalStepMemory:
         self.func_name = func_name
 
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> None:
+        def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> bool:
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -162,7 +167,7 @@ class ConditionalStepMemory:
             del these_kwargs
             if self.memory is None:
                 func(*args, **kwargs)
-                return
+                return True
 
             # This is an implementation detail so we don't need a proper error
             assert isinstance(in_files, dict), type(in_files)
@@ -205,11 +210,12 @@ class ConditionalStepMemory:
             # arguments are changed (e.g., `--pdb`). If it's not limited, it will have
             # some entries like this, which we inject ourselves during config import:
             NON_SPECIFIC_CONFIG_KEY = "PIPELINE_NAME"
-            assert NON_SPECIFIC_CONFIG_KEY not in kwargs["cfg"].__dict__, (
-                "\nInternal error: cfg should be limited to step-specific entries only "
-                f"for:\n\n{self.func_name}\n\nPlease report this to MNE-BIDS-Pipeline "
-                "developers."
-            )
+            if func.__name__ != "init_dataset":
+                assert NON_SPECIFIC_CONFIG_KEY not in kwargs["cfg"].__dict__, (
+                    "\nInternal error: cfg should be limited to step-specific entries "
+                    f"only for:\n\n{self.func_name}\n\nPlease report this to "
+                    "MNE-BIDS-Pipeline developers."
+                )
             kwargs["cfg"].hashes = hashes
             del in_files  # will be modified by func call
 
@@ -297,13 +303,14 @@ class ConditionalStepMemory:
             logger_call(**gen_log_kwargs(message=msg, emoji=emoji))
             del logger_call
             if short_circuit:
-                return
+                return False  # did not run
 
             # https://joblib.readthedocs.io/en/latest/memory.html#joblib.memory.MemorizedFunc.call  # noqa: E501
             if force_run or unknown_inputs or bad_out_files:
                 # Joblib 1.4.0 only returns the output, but 1.3.2 returns both.
                 # Fortunately we can use tuple-ness to tell the difference (we always
                 # return None or a dict)
+                done = False
                 out_files = memorized_func.call(*args, **kwargs)
                 if isinstance(out_files, tuple):
                     out_files = out_files[0]
@@ -319,6 +326,7 @@ class ConditionalStepMemory:
                     f"Internal error: step must return None, got {type(out_files)} "
                     f"for:\n{self.func_name}"
                 )
+            return not done
 
         return wrapper
 
@@ -326,7 +334,10 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
+def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series | None]) -> None:
+    usable_logs = [log for log in logs if log is not None]
+    if not usable_logs:
+        return
     all_tasks = "+".join(map(str, config.all_tasks))
     fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 
@@ -334,7 +345,7 @@ def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series]) -> None:
     sheet_name = _short_step_path(_get_step_path()).replace("/", "-")
     sheet_name = sheet_name[-30:]  # shorten due to limit of excel format
 
-    df = pd.DataFrame(logs)
+    df = pd.DataFrame(usable_logs)
     del logs
 
     with FileLock(fname.with_suffix(fname.suffix + ".lock")):

@@ -12,12 +12,15 @@ from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._report import _open_report, _report_path
 from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
-from mne_bids_pipeline.typing import OutFilesT
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
-@failsafe_run()
-def init_dataset(cfg: SimpleNamespace, exec_params: SimpleNamespace) -> OutFilesT:
+@failsafe_run(get_input_fnames=lambda *, cfg: dict())
+def init_dataset(
+    cfg: SimpleNamespace, exec_params: SimpleNamespace, in_files: InFilesT
+) -> OutFilesT:
     """Prepare the pipeline directory in /derivatives."""
+    assert not in_files, "init_dataset should not receive any input files"
     out_files = dict()
     out_files["json"] = cfg.deriv_root / "dataset_description.json"
     logger.info(**gen_log_kwargs(message="Initializing output directories."))

@@ -32,7 +32,9 @@ def failsafe_run(
 ) -> Callable[..., Any]:
     def failsafe_run_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)  # Preserve "identity" of original function
-        def __mne_bids_pipeline_failsafe_wrapper__(*args, **kwargs) -> pd.Series | None:  # type: ignore
+        def __mne_bids_pipeline_failsafe_wrapper__(
+            *args: list[Any], **kwargs: dict[str, Any]
+        ) -> pd.Series | None:
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
@@ -187,8 +189,7 @@ class ConditionalStepMemory:
                 hashes.append(hash_(k, v))
                 # also hash the sidecar files if this is a BIDSPath and
                 # MNE-BIDS is new enough
-                # TODO: Add test for self.sidecars here
-                if not hasattr(v, "find_matching_sidecar"):
+                if not (self.sidecars and hasattr(v, "find_matching_sidecar")):
                     continue
                 # from mne_bids/read.py
                 # The v.datatype is maybe not right, might need to use
@@ -205,9 +206,6 @@ class ConditionalStepMemory:
                     )
                     if sidecar is None:
                         continue
-                    # TODO: Remove this before merge!
-                    if not self.sidecars:
-                        raise RuntimeError
                     hashes.append(hash_(k, sidecar))
 
             kwargs["cfg"] = copy.deepcopy(kwargs["cfg"])

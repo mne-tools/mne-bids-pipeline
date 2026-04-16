@@ -67,6 +67,7 @@ def get_input_fnames_find_empty_room(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_find_empty_room,
+    sidecars=True,
 )
 def find_empty_room(
     *,

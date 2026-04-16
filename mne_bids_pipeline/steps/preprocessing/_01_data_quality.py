@@ -72,6 +72,7 @@ def get_input_fnames_data_quality(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_data_quality,
+    sidecars=True,
 )
 def assess_data_quality(
     *,

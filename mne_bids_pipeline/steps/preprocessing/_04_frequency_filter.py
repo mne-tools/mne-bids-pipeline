@@ -193,6 +193,7 @@ def resample(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_frequency_filter,
+    sidecars=True,
 )
 def filter_data(
     *,

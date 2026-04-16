@@ -28,6 +28,7 @@ def failsafe_run(
     get_input_fnames: Callable[..., Any] | None = None,
     get_output_fnames: Callable[..., Any] | None = None,
     require_output: bool = True,
+    sidecars: bool = False,
 ) -> Callable[..., Any]:
     def failsafe_run_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)  # Preserve "identity" of original function
@@ -41,6 +42,7 @@ def failsafe_run(
                 get_output_fnames=get_output_fnames,
                 require_output=require_output,
                 func_name=f"{__mne_bids_pipeline_step__}::{func.__name__}",
+                sidecars=sidecars,
             )
             t0 = time.time()
 
@@ -133,6 +135,7 @@ class ConditionalStepMemory:
         get_output_fnames: Callable[..., Any] | None,
         require_output: bool,
         func_name: str,
+        sidecars: bool = False,
     ) -> None:
         memory_location = exec_params.memory_location
         if memory_location is True:
@@ -153,6 +156,7 @@ class ConditionalStepMemory:
         self.memory_file_method = exec_params.memory_file_method
         self.require_output = require_output
         self.func_name = func_name
+        self.sidecars = sidecars
 
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> bool:
@@ -183,6 +187,7 @@ class ConditionalStepMemory:
                 hashes.append(hash_(k, v))
                 # also hash the sidecar files if this is a BIDSPath and
                 # MNE-BIDS is new enough
+                # TODO: Add test for self.sidecars here
                 if not hasattr(v, "find_matching_sidecar"):
                     continue
                 # from mne_bids/read.py
@@ -200,6 +205,9 @@ class ConditionalStepMemory:
                     )
                     if sidecar is None:
                         continue
+                    # TODO: Remove this before merge!
+                    if not self.sidecars:
+                        raise RuntimeError
                     hashes.append(hash_(k, sidecar))
 
             kwargs["cfg"] = copy.deepcopy(kwargs["cfg"])

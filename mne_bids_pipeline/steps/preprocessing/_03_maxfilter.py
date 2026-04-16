@@ -185,6 +185,7 @@ def get_input_fnames_esss(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_esss,
+    sidecars=True,
 )
 def compute_esss_proj(
     *,

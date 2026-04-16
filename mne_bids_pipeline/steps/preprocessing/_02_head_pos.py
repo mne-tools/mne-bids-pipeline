@@ -44,6 +44,7 @@ def get_input_fnames_head_pos(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_head_pos,
+    sidecars=True,
 )
 def run_head_pos(
     *,
@@ -193,6 +194,7 @@ def get_input_fnames_twa_head_pos(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_twa_head_pos,
+    sidecars=True,
 )
 def compute_twa_head_pos(
     *,

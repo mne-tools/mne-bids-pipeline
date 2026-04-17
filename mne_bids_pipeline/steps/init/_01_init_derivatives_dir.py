@@ -15,7 +15,12 @@ from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
-@failsafe_run(get_input_fnames=lambda *, cfg: dict())
+def get_input_fnames_init_dataset(*, cfg: SimpleNamespace) -> InFilesT:
+    """Get input filenames for init_dataset."""
+    return dict()
+
+
+@failsafe_run(get_input_fnames=get_input_fnames_init_dataset)
 def init_dataset(
     cfg: SimpleNamespace, exec_params: SimpleNamespace, in_files: InFilesT
 ) -> OutFilesT:

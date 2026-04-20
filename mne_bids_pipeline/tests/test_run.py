@@ -258,7 +258,7 @@ def test_run(
     # sub-average evoked present in report
     has_evoked_conditions = re.search(
         r"^\s*conditions =", config_data, flags=re.MULTILINE
-    )
+    ) is not None
     if "sensor" in steps and has_evoked_conditions:
         assert dataset not in ("ds000247", "ds000375")
         avg_subj_path = (

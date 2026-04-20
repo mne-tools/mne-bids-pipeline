@@ -161,7 +161,9 @@ class ConditionalStepMemory:
         self.sidecars = sidecars
 
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        def wrapper(*args: list[Any], **kwargs: dict[str, Any]) -> bool:
+        def __mbp_cached_func_wrapper__(
+            *args: list[Any], **kwargs: dict[str, Any]
+        ) -> bool:
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -257,9 +259,7 @@ class ConditionalStepMemory:
                     emoji = "🔂"
                 else:
                     # Check our output file hashes
-                    # Need to make a copy of kwargs["in_files"] in particular
-                    use_kwargs = copy.deepcopy(kwargs)
-                    out_files_hashes = memorized_func(*args, **use_kwargs)
+                    out_files_hashes = memorized_func(*args, **kwargs)
                     for key, (fname, this_hash) in out_files_hashes.items():
                         fname = pathlib.Path(fname)
                         if not fname.exists():
@@ -334,7 +334,7 @@ class ConditionalStepMemory:
                 )
             return not done
 
-        return wrapper
+        return __mbp_cached_func_wrapper__
 
     def clear(self) -> None:
         self.memory.clear()

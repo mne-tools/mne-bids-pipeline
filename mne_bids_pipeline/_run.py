@@ -189,7 +189,7 @@ class ConditionalStepMemory:
                 hashes.append(hash_(k, v))
                 # also hash the sidecar files if this is a BIDSPath and
                 # MNE-BIDS is new enough
-                if not (self.sidecars and hasattr(v, "find_matching_sidecar")):
+                if not (self.sidecars and isinstance(v, BIDSPath)):
                     continue
                 # from mne_bids/read.py
                 # The v.datatype is maybe not right, might need to use
@@ -201,8 +201,8 @@ class ConditionalStepMemory:
                     ("coordsystem", ".json"),
                     (v.datatype, ".json"),
                 ):
-                    sidecar = v.find_matching_sidecar(
-                        suffix=suffix, extension=extension, on_error="ignore"
+                    sidecar = _find_matching_sidecar_cached(
+                        v, suffix=suffix, extension=extension
                     )
                     if sidecar is None:
                         continue
@@ -502,6 +502,34 @@ def _prep_out_files_path(
             kind="out",
         )
     return out_files
+
+
+def _find_matching_sidecar_cached(
+    bids_path: BIDSPath, suffix: str | None, extension: str
+) -> pathlib.Path | None:
+    state = bids_path.entities
+    for key in ("root", "suffix", "extension", "datatype", "check"):
+        val = getattr(bids_path, key)
+        state[key] = val
+    return _find_matching_sidecar_cached_impl(
+        **state, pass_suffix=suffix, pass_extension=extension
+    )
+
+
+@functools.cache
+def _find_matching_sidecar_cached_impl(
+    *, pass_suffix: str | None, pass_extension: str, **state: dict[str, Any]
+) -> pathlib.Path | None:
+    # We have to do this dance because BIDSPath objects are not hashable, but we
+    # want to cache the sidecar finding (which can be expensive when there are
+    # many files in a directory). So we cache based on the BIDSPath's state, which
+    # is hashable (as it's just a dict of strings and bools).
+    bids_path = BIDSPath(**state)
+    return bids_path.find_matching_sidecar(
+        suffix=pass_suffix,
+        extension=pass_extension,
+        on_error="ignore",
+    )
 
 
 def _path_to_str_hash(

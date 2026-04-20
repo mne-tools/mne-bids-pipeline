@@ -2443,7 +2443,7 @@ requires-dist = [
     { name = "matplotlib" },
     { name = "meegkit" },
     { name = "mne", extras = ["hdf5"], specifier = ">=1.7" },
-    { name = "mne-bids", extras = ["full"] },
+    { name = "mne-bids", extras = ["full"], specifier = ">=0.12" },
     { name = "mne-icalabel" },
     { name = "nibabel" },
     { name = "numpy" },

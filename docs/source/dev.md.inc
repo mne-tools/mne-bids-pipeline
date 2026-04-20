@@ -11,7 +11,11 @@
 
 [//]: # (### :package: Requirements)
 
-[//]: # (### :bug: Bug fixes)
+### :bug: Bug fixes
+
+- Fixed a bug where the group average step would errantly write its sensor averaged Evoked plots to the last subject's report.
+  To fix this, delete the `derivatives/mne-bids-pipeline/sub-average/` and `derivatives/mne-bids-pipeline/sub-<LAST>` folders and rerun the pipeline.
+  (#1220 by @larsoner)
 
 [//]: # (### :books: Documentation)
 

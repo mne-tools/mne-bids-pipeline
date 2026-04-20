@@ -99,12 +99,14 @@ def average_evokeds(
 
     subjects = get_subjects_given_session(cfg, session)
     n_subjects = len(subjects)
-    for subject in subjects:
-        fname_in = in_files.pop(f"evoked-{subject}")
+    for this_subject in subjects:
+        fname_in = in_files.pop(f"evoked-{this_subject}")
         these_evokeds = mne.read_evokeds(fname_in)
         assert isinstance(these_evokeds, list)
         for idx, evoked in enumerate(these_evokeds):
             evokeds_nested[idx].append(evoked)  # Insert into the container
+    del this_subject
+    assert subject == "average", subject  # make sure we didn't bungle it
 
     evokeds: list[mne.Evoked] = list()
     for these_evokeds in evokeds_nested:
@@ -138,6 +140,8 @@ def average_evokeds(
     # given missing run)
     fname_verbose = fname_out.fpath.with_suffix(".fif.IS_INTENTIONALLY_EMPTY.txt")
     if not evokeds:
+        msg = "No evoked data present for any subject, writing empty file."
+        logger.info(**gen_log_kwargs(message=msg))
         fname_out.fpath.write_bytes(b"")
         fname_verbose.write_text("No evoked data present for any subject.\n", "utf-8")
         return _prep_out_files(exec_params=exec_params, out_files=out_files)

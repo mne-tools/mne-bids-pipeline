@@ -29,7 +29,7 @@ dependencies = [
   "jupyter-server-proxy",
   "matplotlib",
   "meegkit",
-  "mne-bids[full]",
+  "mne-bids[full] >=0.12",  # BIDSPath.find_matching_sidecar
   "mne-icalabel",
   "mne[hdf5] >=1.7",
   "nibabel",

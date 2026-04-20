@@ -189,7 +189,7 @@ class ConditionalStepMemory:
             hashes = []
             for k, v in in_files.items():
                 hashes.append(hash_(k, v))
-# also hash the sidecar files if this is a BIDSPath
+                # also hash the sidecar files if this is a BIDSPath
                 if not (self.sidecars and isinstance(v, BIDSPath)):
                     continue
                 # from mne_bids/read.py

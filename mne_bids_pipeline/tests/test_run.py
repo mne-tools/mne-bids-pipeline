@@ -251,20 +251,22 @@ def test_run(
     with capsys.disabled():
         print()
         main()
-    # post-run checks for correctness
 
-    # sub-average evoked present
+    # post-run checks for correctness
     config_data = config_path.read_text("utf-8")
-    avg_subj_path = (
-        DATA_DIR / "derivatives" / "mne-bids-pipeline" / dataset / "sub-average"
-    )
-    assert avg_subj_path.is_dir()
-    report_html_paths = list(avg_subj_path.rglob("sub-average*_report.html"))
-    assert len(report_html_paths)
-    parser = _ReportTOCFinder()
-    parser.feed(report_html_paths[0].read_text("utf-8"))
-    msg = "\n".join(["Not found in TOC titles:"] + parser.toc_links)
-    if "conditions" in config_data:
+
+    # sub-average evoked present in report
+    if re.search(r"^\s*conditions =", config_data, flags=re.MULTILINE):
+        assert dataset not in ("ds000247", "ds000375")
+        avg_subj_path = (
+            DATA_DIR / "derivatives" / "mne-bids-pipeline" / dataset / "sub-average"
+        )
+        assert avg_subj_path.is_dir()
+        report_html_paths = list(avg_subj_path.rglob("sub-average*_report.html"))
+        assert len(report_html_paths)
+        parser = _ReportTOCFinder()
+        parser.feed(report_html_paths[0].read_text("utf-8"))
+        msg = "\n".join(["Not found in TOC titles:"] + parser.toc_links)
         assert any("Average (sensor)" in name for name in parser.toc_links), msg
     else:
         # Just spot check a few that we know have "conditions" to make sure our

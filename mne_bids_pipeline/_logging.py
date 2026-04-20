@@ -157,27 +157,33 @@ def gen_log_kwargs(
         emoji = default_emoji
     if emoji == "skip":
         default_subject = "*"
-    stack = inspect.stack()
-    up_locals = stack[1].frame.f_locals
-    if subject is None:
-        subject = up_locals.get("subject", default_subject)
-    if session is None:
-        session = up_locals.get("session", None)
-    if run is None:
-        run = up_locals.get("run", None)
-    if task is None:
-        task = up_locals.get("task", None)
-        if task not in ("noise", "rest"):
-            # If task is set but there's only one task, don't show it
-            n_tasks = 2
-            cfg = up_locals.get("cfg", None)
-            if cfg is None:
-                config = up_locals.get("config", None)
-                n_tasks = len(getattr(config, "all_tasks", []))
-            else:
-                n_tasks = len(getattr(cfg, "all_tasks", []))
-            if n_tasks == 1:
-                task = None
+    frame = inspect.currentframe()
+    try:
+        up_locals = frame.f_back.f_locals
+    except Exception:
+        pass
+    else:
+        if subject is None:
+            subject = up_locals.get("subject", default_subject)
+        if session is None:
+            session = up_locals.get("session", None)
+        if run is None:
+            run = up_locals.get("run", None)
+        if task is None:
+            task = up_locals.get("task", None)
+            if task not in ("noise", "rest"):
+                # If task is set but there's only one task, don't show it
+                n_tasks = 2
+                cfg = up_locals.get("cfg", None)
+                if cfg is None:
+                    config = up_locals.get("config", None)
+                    n_tasks = len(getattr(config, "all_tasks", []))
+                else:
+                    n_tasks = len(getattr(cfg, "all_tasks", []))
+                if n_tasks == 1:
+                    task = None
+    finally:
+        del frame
 
     # Do some nice formatting
     if subject is not None:

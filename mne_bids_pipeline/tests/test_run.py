@@ -256,7 +256,9 @@ def test_run(
     config_data = config_path.read_text("utf-8")
 
     # sub-average evoked present in report
-    if re.search(r"^\s*conditions =", config_data, flags=re.MULTILINE):
+    if ("sensor" in steps
+        and re.search(r"^\s*conditions =", config_data, flags=re.MULTILINE)
+    ):
         assert dataset not in ("ds000247", "ds000375")
         avg_subj_path = (
             DATA_DIR / "derivatives" / "mne-bids-pipeline" / dataset / "sub-average"

@@ -950,9 +950,16 @@ def average_csp_decoding(
         fname_csp_cluster_results = out_files["cluster"]
 
     assert subject == "average"
-    with _open_report(
-        cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
-    ) as report, _ignore_warnings("Only a single dataset was passed"):
+    with (
+        _open_report(
+            cfg=cfg,
+            exec_params=exec_params,
+            subject=subject,
+            session=session,
+            task=task,
+        ) as report,
+        _ignore_warnings("Only a single dataset was passed"),
+    ):
         add_csp_grand_average(
             cfg=cfg,
             subject=subject,

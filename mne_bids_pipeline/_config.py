@@ -439,7 +439,7 @@ Parameters to be passed to `read_raw_bids()` calls when importing raw data.
     ```
 """
 
-read_raw_bids_verbose: Literal["error"] | None = None
+read_raw_bids_verbose: Literal["info", "warning", "error"] | None = None
 """
 Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
 If you know your dataset will contain files that are not perfectly BIDS
@@ -2629,16 +2629,39 @@ The maximum amount of RAM per Dask worker.
 #
 # These options control how much logging output is produced.
 
-log_level: Literal["info", "error"] = "info"
+log_level: Literal["info", "warning", "error"] = "info"
 """
 Set the pipeline logging verbosity.
 """
 
-mne_log_level: Literal["info", "error"] = "error"
+mne_log_level: Literal["info", "warning", "error"] = "warning"
 """
 Set the MNE-Python logging verbosity.
 """
 
+ignore_warnings: Sequence[str] = ()
+r"""
+A list of message strings to ignore during execution. This gives you
+finer-grained control over warnings to suppress during `read_raw_bids`,
+fitting sphere to headshape, etc. Each string is treated as a regular expression,
+and for convenience, they will be used with additional regex added at each end like:
+```
+warnings.ignorewarnings("ignore", message=rf"[\S\s]*{msg}[\S\s]*")
+```
+
+???+ example "Example"
+    Suppressing warnings for ds000117 can be done with:
+    ```python
+    ignore_warnings = (
+        "The number of channels in the channels.tsv sidecar file",
+        'contains a "stim_type" column. This column should be renamed to "trial_type"',
+        "Cannot set channel type for the following channels",
+        "Unable to map the following column",
+        "more than 20 mm from head frame origin",
+        "Did not find any (channels.tsv|meg.json) associated with sub-emptyroom_ses",
+    )
+    ```
+"""
 
 # %%
 # # Error handling

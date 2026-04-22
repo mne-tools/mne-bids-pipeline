@@ -204,6 +204,7 @@ def compute_esss_proj(
     bids_path_bads = in_files.pop("bads_tsv")
     raw_noise = import_er_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_er_in=bids_path_in,
         bids_path_ref_in=bids_path_ref_in,
         bids_path_er_bads_in=bids_path_bads,
@@ -470,7 +471,7 @@ def run_maxwell_filter(
     raw = read_raw_bids(
         bids_path=bids_path_ref_in,
         extra_params=cfg.reader_extra_params,
-        verbose=cfg.read_raw_bids_verbose,
+        verbose=exec_params.read_raw_bids_verbose,
     )
     # triage string-valued destinations
     if isinstance(destination, str):
@@ -524,6 +525,7 @@ def run_maxwell_filter(
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads,
             data_is_rest=data_is_rest,
@@ -533,6 +535,7 @@ def run_maxwell_filter(
     else:
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads,

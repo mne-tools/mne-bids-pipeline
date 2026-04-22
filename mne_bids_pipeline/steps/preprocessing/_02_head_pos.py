@@ -77,6 +77,7 @@ def run_head_pos(
 
     raw = import_experimental_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_in=bids_path_in,
         bids_path_bads_in=bids_path_bads_in,
         data_is_rest=None,  # autodetect

@@ -26,6 +26,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     _update_for_splits,
@@ -147,10 +148,12 @@ def run_epochs(
         if idx == 0:
             epochs_all_runs = epochs
         else:
-            epochs_all_runs = mne.concatenate_epochs(
-                [epochs_all_runs, epochs],
-                on_mismatch="warn",
-            )
+            # Okay to lose annotations here (hopefully)
+            with _ignore_warnings(["Concatenation of Annotations within Epochs"]):
+                epochs_all_runs = mne.concatenate_epochs(
+                    [epochs_all_runs, epochs],
+                    on_mismatch="warn",
+                )
 
         if cfg.use_maxwell_filter:
             # Keep track of the info corresponding to the run with the smallest

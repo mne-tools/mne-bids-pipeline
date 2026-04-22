@@ -273,7 +273,9 @@ def _rename_events_func(
     raw.annotations.description = np.array(descriptions_list, dtype=str)
 
 
-def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
+def _load_data(
+    *, cfg: SimpleNamespace, exec_params: SimpleNamespace, bids_path: BIDSPath
+) -> mne.io.BaseRaw:
     # read_raw_bids automatically
     # - populates bad channels using the BIDS channels.tsv
     # - sets channels types according to BIDS channels.tsv `type` column
@@ -283,7 +285,7 @@ def _load_data(cfg: SimpleNamespace, bids_path: BIDSPath) -> mne.io.BaseRaw:
     raw = read_raw_bids(
         bids_path=bids_path,
         extra_params=cfg.reader_extra_params or {},
-        verbose=cfg.read_raw_bids_verbose,
+        verbose=exec_params.read_raw_bids_verbose,
     )
 
     _crop_data(cfg, raw=raw, subject=subject)
@@ -409,6 +411,7 @@ def _fix_stim_artifact_func(cfg: SimpleNamespace, raw: mne.io.BaseRaw) -> None:
 def import_experimental_data(
     *,
     cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     bids_path_in: BIDSPath,
     bids_path_bads_in: BIDSPath | None,
     data_is_rest: bool | None,
@@ -419,6 +422,8 @@ def import_experimental_data(
     ----------
     cfg
         The local configuration.
+    exec_params
+        The execution parameters.
     bids_path_in
         The BIDS path to the data to import.
     bids_path_bads_in
@@ -438,7 +443,7 @@ def import_experimental_data(
     task = bids_path_in.task
 
     # 1. _load_data (_crop_data)
-    raw = _load_data(cfg=cfg, bids_path=bids_path_in)
+    raw = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_in)
     # 2. _set_eeg_montage
     _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
     # 3. _create_bipolar_channels
@@ -473,6 +478,7 @@ def import_experimental_data(
 def import_er_data(
     *,
     cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
     bids_path_er_in: BIDSPath,
     bids_path_ref_in: BIDSPath | None,
     bids_path_er_bads_in: BIDSPath | None,
@@ -485,6 +491,8 @@ def import_er_data(
     ----------
     cfg
         The local configuration.
+    exec_params
+        The execution parameters.
     bids_path_er_in
         The BIDS path to the empty room data.
     bids_path_ref_in
@@ -501,7 +509,7 @@ def import_er_data(
     raw_er
         The imported data.
     """
-    raw_er = _load_data(cfg, bids_path_er_in)
+    raw_er = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_er_in)
     session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject="emptyroom", session=session)
@@ -521,7 +529,7 @@ def import_er_data(
     raw_ref = read_raw_bids(
         bids_path_ref_in,
         extra_params=cfg.reader_extra_params or {},
-        verbose=cfg.read_raw_bids_verbose,
+        verbose=exec_params.read_raw_bids_verbose,
     )
     if bids_path_ref_bads_in is not None:
         bads = _read_bads_tsv(
@@ -873,7 +881,6 @@ def _import_data_kwargs(
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,
-        read_raw_bids_verbose=config.read_raw_bids_verbose,
         # 2. _set_eeg_montage
         eeg_template_montage=config.eeg_template_montage,
         # 3. _create_bipolar_channels

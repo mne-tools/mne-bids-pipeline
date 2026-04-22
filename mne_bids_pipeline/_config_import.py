@@ -99,9 +99,6 @@ def _import_config(
     # Finally, reduce to our actual supported params (all keep_names should be present)
     config = SimpleNamespace(**{k: getattr(config, k) for k in keep_names})
 
-    # Take some standard actions
-    mne.set_log_level(verbose=config.mne_log_level.upper())
-
     # Take variables out of config (which affects the pipeline outputs) and
     # put into config.exec_params (which affect the pipeline execution methods,
     # but not the outputs)
@@ -120,6 +117,11 @@ def _import_config(
         "memory_subdir",
         "memory_verbose",
         "memory_file_method",
+        # Logging
+        "log_level",
+        "mne_log_level",
+        "ignore_warnings",
+        "read_raw_bids_verbose",
         # Misc
         "deriv_root",
         "config_path",
@@ -138,6 +140,10 @@ def _import_config(
     # And we need these for some steps, too
     if add_all_tasks:
         config.all_tasks = get_tasks(config=config)
+
+    # Take some standard actions
+    mne.set_log_level(verbose=exec_params.mne_log_level.upper())
+    logger.level = exec_params.log_level
 
     return config
 

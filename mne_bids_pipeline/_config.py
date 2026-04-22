@@ -439,14 +439,6 @@ Parameters to be passed to `read_raw_bids()` calls when importing raw data.
     ```
 """
 
-read_raw_bids_verbose: Literal["info", "warning", "error"] | None = None
-"""
-Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
-If you know your dataset will contain files that are not perfectly BIDS
-compliant (e.g., "Did not find any meg.json..."), you can set this to
-`'error'` to suppress warnings emitted by read_raw_bids.
-"""
-
 plot_psd_for_runs: Literal["all"] | Sequence[str] = "all"
 """
 For which runs to add a power spectral density (PSD) plot to the generated
@@ -2637,6 +2629,14 @@ Set the pipeline logging verbosity.
 mne_log_level: Literal["info", "warning", "error"] = "warning"
 """
 Set the MNE-Python logging verbosity.
+"""
+
+read_raw_bids_verbose: Literal["info", "warning", "error"] | None = None
+"""
+Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
+If you know your dataset will contain files that are not perfectly BIDS
+compliant (e.g., "Did not find any meg.json..."), you can set this to
+`'error'` to suppress warnings emitted by read_raw_bids.
 """
 
 ignore_warnings: Sequence[str] = ()

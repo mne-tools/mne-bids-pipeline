@@ -44,6 +44,7 @@ from mne_bids_pipeline._report import (
     plot_time_by_time_decoding_t_values,
 )
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -112,11 +113,12 @@ def average_evokeds(
     for these_evokeds in evokeds_nested:
         if not these_evokeds:  # empty
             continue
-        evokeds.append(
-            mne.grand_average(
-                these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
-            )  # Combine subjects
-        )
+        with _ignore_warnings("Only a single dataset was passed"):
+            evokeds.append(
+                mne.grand_average(
+                    these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
+                )  # Combine subjects
+            )
         # Keep condition in comment
         evokeds[-1].comment = "Grand average: " + these_evokeds[0].comment
 
@@ -950,7 +952,7 @@ def average_csp_decoding(
     assert subject == "average"
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
-    ) as report:
+    ) as report, _ignore_warnings("Only a single dataset was passed"):
         add_csp_grand_average(
             cfg=cfg,
             subject=subject,

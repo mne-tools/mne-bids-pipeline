@@ -196,7 +196,8 @@ def main() -> None:
         overrides.on_error = on_error
     if not cache:
         overrides.memory_location = False
-    overrides.logger_level = logger.level
+    if options.logger_level:
+        overrides.logger_level = options.logger_level
 
     step_modules: list[ModuleType] = []
     STEP_MODULES = _get_step_modules()

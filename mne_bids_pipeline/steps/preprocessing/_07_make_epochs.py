@@ -149,7 +149,7 @@ def run_epochs(
             epochs_all_runs = epochs
         else:
             # Okay to lose annotations here (hopefully)
-            with _ignore_warnings(["Concatenation of Annotations within Epochs"]):
+            with _ignore_warnings("Concatenation of Annotations within Epochs"):
                 epochs_all_runs = mne.concatenate_epochs(
                     [epochs_all_runs, epochs],
                     on_mismatch="warn",

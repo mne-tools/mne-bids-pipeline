@@ -345,7 +345,9 @@ class ConditionalStepMemory:
 
 
 @contextlib.contextmanager
-def _ignore_warnings(ignore_warnings: Iterable[str]) -> Iterable[None]:
+def _ignore_warnings(ignore_warnings: Iterable[str] | str) -> Iterable[None]:
+    if isinstance(ignore_warnings, str):
+        ignore_warnings = [ignore_warnings]
     with warnings.catch_warnings():
         for msg in ignore_warnings:
             warnings.filterwarnings("ignore", message=rf"[\S\s]*{msg}[\S\s]*")

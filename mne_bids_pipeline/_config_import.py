@@ -243,11 +243,12 @@ def _update_with_user_config(
     # 3. Overrides via command-line switches
     overrides = overrides or SimpleNamespace()
     for name in dir(overrides):
-        if not name.startswith("__"):
-            val = getattr(overrides, name)
-            msg = f"Overriding config.{name} = {repr(val)}"
-            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-            setattr(config, name, val)
+        if name.startswith("__"):
+            continue
+        val = getattr(overrides, name)
+        msg = f"Overriding config.{name} = {repr(val)}"
+        logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+        setattr(config, name, val)
 
     # 4. Env vars and other triaging
     if not config.bids_root:

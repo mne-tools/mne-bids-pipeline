@@ -3,6 +3,12 @@
 bids_root = "~/mne_data/eeg_matchingpennies"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies"
 
+ignore_warnings = [
+    r"Did not find any eeg\.json associated with sub-",
+    "HED annotations were detected but could not be parsed",
+    r"Unable to map the following column\(s\)",  # handedness
+]
+
 subjects = ["05"]
 task = "matchingpennies"
 ch_types = ["eeg"]

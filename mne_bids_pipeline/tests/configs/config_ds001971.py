@@ -14,6 +14,7 @@ ignore_warnings = [
     'MNE mapping found for channel type "AUX"',  # HIP
     '"ARS" is not a BIDS-acceptable coordinate frame for EEG',
     "Unable to map the following column",  # handedness
+    "low-pass frequency of 40.0 Hz. The decim=5 parameter",  # minor aliasing risk
 ]
 
 task = "AudioCueWalkingStudy"
@@ -41,7 +42,7 @@ decoding_csp = True
 decoding_csp_freqs = {
     "beta": [13, 20, 30],
 }
-decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]
+decoding_csp_times = [-0.19, 0.0, 0.2, 0.4]
 
 # Just to test that MD5 works
 memory_file_method = "hash"

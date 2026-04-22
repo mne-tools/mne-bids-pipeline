@@ -23,6 +23,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report, _render_bem
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     failsafe_run,
@@ -82,19 +83,22 @@ def _prepare_trans_subject(
     logger.info(**gen_log_kwargs(message=msg))
 
     run, task = cfg.runs_tasks[0]
-    trans = get_head_mri_trans(
-        bids_path.copy().update(
-            run=run,
-            task=task,
-            root=cfg.bids_root,
-            processing=cfg.proc,
-            extension=None,
-        ),
-        t1_bids_path=cfg.t1_bids_path,
-        fs_subject=cfg.fs_subject,
-        fs_subjects_dir=cfg.fs_subjects_dir,
-        kind=cfg.landmarks_kind,
-    )
+    # TODO: FIX THIS BUG!
+    with _ignore_warnings("bids_path did not have a suffix set. Assuming"):
+        trans = get_head_mri_trans(
+            bids_path.copy().update(
+                run=run,
+                task=task,
+                root=cfg.bids_root,
+                processing=cfg.proc,
+                datatype=cfg.datatype,
+                extension=None,
+            ),
+            t1_bids_path=cfg.t1_bids_path,
+            fs_subject=cfg.fs_subject,
+            fs_subjects_dir=cfg.fs_subjects_dir,
+            kind=cfg.landmarks_kind,
+        )
 
     return trans
 

@@ -252,29 +252,31 @@ def run_epochs(
             events, event_id, sfreq, first_samp = _get_events(
                 cfg=cfg, subject=subject, session=session, task=task
             )
-            report.add_events(
-                events=events,
-                event_id=event_id,
-                sfreq=sfreq,
-                first_samp=first_samp,
-                title=f"Events{prefix}",
-                tags=("events",) + extra_tags,
-                # caption='Events in filtered continuous data',  # TODO upstr
-                replace=True,
-            )
+            with _ignore_warnings("More events than default colors available"):
+                report.add_events(
+                    events=events,
+                    event_id=event_id,
+                    sfreq=sfreq,
+                    first_samp=first_samp,
+                    title=f"Events{prefix}",
+                    tags=("events",) + extra_tags,
+                    # caption='Events in filtered continuous data',  # TODO upstr
+                    replace=True,
+                )
         msg = "Adding uncleaned epochs to report."
         logger.info(**gen_log_kwargs(message=msg))
         # Add PSD plots for 30s of data or all epochs if we have less available
         psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
-        report.add_epochs(
-            epochs=epochs,
-            title=f"Epochs (before cleaning){prefix}",
-            psd=psd,
-            drop_log_ignore=(),
-            replace=True,
-            tags=("epochs",) + extra_tags,
-            **_add_epochs_image_kwargs(cfg),
-        )
+        with _ignore_warnings(r"Disabling spatial colors\."):
+            report.add_epochs(
+                epochs=epochs,
+                title=f"Epochs (before cleaning){prefix}",
+                psd=psd,
+                drop_log_ignore=(),
+                replace=True,
+                tags=("epochs",) + extra_tags,
+                **_add_epochs_image_kwargs(cfg),
+            )
 
     # Interactive
     if exec_params.interactive:

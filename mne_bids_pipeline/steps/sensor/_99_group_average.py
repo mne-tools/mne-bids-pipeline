@@ -199,16 +199,17 @@ def average_evokeds(
             else:  # It's a contrast of two conditions.
                 title = f"Average (sensor) contrast{prefix}, {_title}"
                 tags = tags + ("contrast",)
-            report.add_evokeds(
-                evokeds=evoked,
-                titles=title,
-                projs=False,
-                tags=tags,
-                n_time_points=cfg.report_evoked_n_time_points,
-                # captions=evoked.comment,  # TODO upstream
-                replace=True,
-                n_jobs=1,  # don't auto parallelize
-            )
+            with _ignore_warnings("No .* channel locations found, cannot create"):
+                report.add_evokeds(
+                    evokeds=evoked,
+                    titles=title,
+                    projs=False,
+                    tags=tags,
+                    n_time_points=cfg.report_evoked_n_time_points,
+                    # captions=evoked.comment,  # TODO upstream
+                    replace=True,
+                    n_jobs=1,  # don't auto parallelize
+                )
 
     assert len(in_files) == 0, list(in_files)
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

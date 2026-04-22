@@ -3,9 +3,10 @@
 bids_root = "~/mne_data/ds003775"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003775"
 
-# To get all subjects for example:
-# from mne_bids import get_entity_vals
-# subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
+ignore_warnings = [
+    r"Unable to map the following column\(s\)",  # metadata
+]
+
 subjects = ["010"]
 
 reader_extra_params = {"units": "uV"}

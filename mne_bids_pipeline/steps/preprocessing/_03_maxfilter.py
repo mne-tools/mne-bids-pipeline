@@ -45,6 +45,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -239,7 +240,8 @@ def compute_esss_proj(
         root=cfg.deriv_root,
         check=False,
     )
-    mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
+    with _ignore_warnings("does not conform to MNE naming conventions"):
+        mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
 
     with _open_report(
         cfg=cfg,
@@ -478,7 +480,8 @@ def run_maxwell_filter(
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
         elif destination == "twa":
-            destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
+            with _ignore_warnings("does not conform to MNE naming conventions"):
+                destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 
@@ -496,7 +499,8 @@ def run_maxwell_filter(
         head_pos = None
     if cfg.mf_esss:
         extra.append("eSSS")
-        extended_proj = mne.read_proj(in_files.pop("esss_basis"))
+        with _ignore_warnings("does not conform to MNE naming conventions"):
+            extended_proj = mne.read_proj(in_files.pop("esss_basis"))
     else:
         extended_proj = ()
     if extra:

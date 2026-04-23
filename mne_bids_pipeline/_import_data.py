@@ -273,6 +273,17 @@ def _rename_events_func(
     raw.annotations.description = np.array(descriptions_list, dtype=str)
 
 
+def _get_reader_extra_params(
+    *, cfg: SimpleNamespace, bids_path: BIDSPath
+) -> dict[str, Any]:
+    if cfg.reader_extra_params != {}:
+        return cfg.reader_extra_params
+    # empty
+    if cfg.use_maxwell_filter and bids_path.datatype == "meg":
+        return dict(allow_maxshield="yes")
+    return dict()
+
+
 def _load_data(
     *, cfg: SimpleNamespace, exec_params: SimpleNamespace, bids_path: BIDSPath
 ) -> mne.io.BaseRaw:
@@ -284,7 +295,7 @@ def _load_data(
     subject = bids_path.subject
     raw = read_raw_bids(
         bids_path=bids_path,
-        extra_params=cfg.reader_extra_params or {},
+        extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path),
         verbose=exec_params.read_raw_bids_verbose,
     )
 
@@ -528,7 +539,7 @@ def import_er_data(
     # Load reference run plus its auto-bads
     raw_ref = read_raw_bids(
         bids_path_ref_in,
-        extra_params=cfg.reader_extra_params or {},
+        extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path_ref_in),
         verbose=exec_params.read_raw_bids_verbose,
     )
     if bids_path_ref_bads_in is not None:

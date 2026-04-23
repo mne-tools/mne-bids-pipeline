@@ -11,7 +11,6 @@ find_flat_channels_meg = False
 find_noisy_channels_meg = False
 use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
-reader_extra_params = dict(allow_maxshield="yes")
 ch_types = ["meg"]
 
 mf_cal_missing = "warn"

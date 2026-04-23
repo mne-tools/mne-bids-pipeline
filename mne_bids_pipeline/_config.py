@@ -431,6 +431,10 @@ preprocessing stage itself, nor to the source analysis stage.
 reader_extra_params: dict[str, Any] = {}
 """
 Parameters to be passed to `read_raw_bids()` calls when importing raw data.
+If an empty dict (default) is provided and
+[`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter] and
+the dataset uses FIF files, we will automatically set
+`reader_extra_params = dict(allow_maxshield="yes")`.
 
 ???+ example "Example"
     Enforce units for EDF files:

@@ -35,6 +35,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
     _get_mf_reference_path,
+    _get_reader_extra_params,
     _get_run_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -472,7 +473,7 @@ def run_maxwell_filter(
     bids_path_ref_in = in_files.pop("raw_ref_run")
     raw = read_raw_bids(
         bids_path=bids_path_ref_in,
-        extra_params=cfg.reader_extra_params,
+        extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path_ref_in),
         verbose=exec_params.read_raw_bids_verbose,
     )
     # triage string-valued destinations

@@ -55,9 +55,9 @@ echo
 echo -e "${EMPH}Copying files${RESET}"
 mkdir -p ~/reports/${DS}
 # these should always exist
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.html ~/reports/${DS}/
 cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
 # these are allowed to be optional
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.json ~/reports/${DS}/ || :
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/ || :
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.json ~/reports/${DS}/ || :
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.tsv ~/reports/${DS}/ || :
 ls -al test-results/*.xml

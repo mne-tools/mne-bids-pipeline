@@ -14,6 +14,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
+import contextlib
 import gc
 from collections import defaultdict
 from copy import deepcopy
@@ -526,7 +527,8 @@ def run_maxwell_filter(
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
-    if not (run is None and task == "noise"):
+    er_data = (run is None and task == "noise")
+    if not er_data:
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
@@ -665,7 +667,12 @@ def run_maxwell_filter(
             "<p>The raw data were annotated with the following movement-related bad "
             f"segment annotations:<ul>{''.join(extra_html_list)}</ul></p>"
         )
-        raw_sss.set_annotations(raw_sss.annotations + movement_annot)
+        if er_data:
+            ctx = _ignore_warnings(r"(Omitted|Limited) [0-9]+ annotation")
+        else:
+            ctx = contextlib.nullcontext()
+        with ctx:
+            raw_sss.set_annotations(raw_sss.annotations + movement_annot)
 
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"

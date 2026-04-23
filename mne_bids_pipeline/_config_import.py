@@ -663,6 +663,7 @@ def _check_misspellings_removals(
                     f"{msg} did you mean {repr(closest_match[0])}? "
                     "If so, please correct the error. If not, please rename "
                     "the variable to reduce ambiguity and avoid this message, "
+                    "prefix the variable name with an underscore (_), "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
                 _handle_config_error(this_msg, config_validation)

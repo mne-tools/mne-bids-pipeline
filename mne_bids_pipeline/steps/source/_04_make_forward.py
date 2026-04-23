@@ -83,22 +83,21 @@ def _prepare_trans_subject(
     logger.info(**gen_log_kwargs(message=msg))
 
     run, task = cfg.runs_tasks[0]
-    # TODO: FIX THIS BUG!
-    with _ignore_warnings("bids_path did not have a suffix set. Assuming"):
-        trans = get_head_mri_trans(
-            bids_path.copy().update(
-                run=run,
-                task=task,
-                root=cfg.bids_root,
-                processing=cfg.proc,
-                datatype=cfg.datatype,
-                extension=None,
-            ),
-            t1_bids_path=cfg.t1_bids_path,
-            fs_subject=cfg.fs_subject,
-            fs_subjects_dir=cfg.fs_subjects_dir,
-            kind=cfg.landmarks_kind,
-        )
+    trans = get_head_mri_trans(
+        bids_path.copy().update(
+            run=run,
+            task=task,
+            root=cfg.bids_root,
+            processing=cfg.proc,
+            datatype=cfg.datatype,
+            suffix=cfg.datatype,
+            extension=None,
+        ),
+        t1_bids_path=cfg.t1_bids_path,
+        fs_subject=cfg.fs_subject,
+        fs_subjects_dir=cfg.fs_subjects_dir,
+        kind=cfg.landmarks_kind,
+    )
 
     return trans
 

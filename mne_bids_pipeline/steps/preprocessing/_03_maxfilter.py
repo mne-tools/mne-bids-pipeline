@@ -527,7 +527,7 @@ def run_maxwell_filter(
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
-    er_data = (run is None and task == "noise")
+    er_data = run is None and task == "noise"
     if not er_data:
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(

@@ -18,7 +18,7 @@ ignore_warnings = (
     "Cannot set channel type for the following channels",
     "Unable to map the following column",
     "more than 20 mm from head frame origin",
-    "Did not find any (channels.tsv|meg.json) associated with sub-emptyroom_ses",
+    r"Did not find any (channels\.tsv|meg\.json) associated with sub-emptyroom_ses",
 )
 
 find_flat_channels_meg = True

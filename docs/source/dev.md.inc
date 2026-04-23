@@ -9,6 +9,7 @@
 [//]: # (### :warning: Behavior changes)
 
 - The default for [`mne_log_level`][mne_bids_pipeline._config.mne_log_level] has been changed from `'error'` to `'warning'` to make possible dataset and processing errors more visible (#1224 by @larsoner)
+
 [//]: # (### :package: Requirements)
 
 [//]: # (### :bug: Bug fixes)

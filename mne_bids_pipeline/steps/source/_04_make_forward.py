@@ -23,7 +23,6 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _open_report, _render_bem
 from mne_bids_pipeline._run import (
-    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     failsafe_run,

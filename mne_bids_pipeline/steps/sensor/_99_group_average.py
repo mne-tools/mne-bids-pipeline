@@ -104,6 +104,7 @@ def average_evokeds(
         these_evokeds = mne.read_evokeds(fname_in)
         assert isinstance(these_evokeds, list)
         for idx, evoked in enumerate(these_evokeds):
+            assert isinstance(evoked, mne.Evoked)
             evokeds_nested[idx].append(evoked)  # Insert into the container
     del this_subject
     assert subject == "average", subject  # make sure we didn't bungle it

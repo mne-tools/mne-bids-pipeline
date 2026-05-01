@@ -342,6 +342,7 @@ def run_covariance(
             assert isinstance(all_evoked, list)
             assert len(all_evoked) == len(conditions)
             for evoked, condition in zip(all_evoked, conditions):
+                assert isinstance(evoked, mne.Evoked)
                 _restrict_analyze_channels(evoked, cfg)
                 prefix, extra_tags = _get_prefix_tags(
                     cfg=cfg, task=task, condition=condition

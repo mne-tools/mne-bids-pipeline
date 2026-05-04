@@ -9,8 +9,6 @@ subjects_dir = bids_root / "derivatives" / "freesurfer" / "subjects"
 task = "funloc"
 ch_types = ["meg", "eeg"]
 data_type = "meg"
-# TODO: If not supplied, should probably be the default if use_maxwell_filter is True...
-reader_extra_params = dict(allow_maxshield="yes")
 
 # filter
 l_freq = None

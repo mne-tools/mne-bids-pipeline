@@ -1,4 +1,7 @@
-"""tDCS EEG."""
+"""ds001810: tDCS EEG.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds001810) for more information.
+"""
 
 import numpy as np
 import pandas as pd

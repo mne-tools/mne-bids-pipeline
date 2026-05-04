@@ -6,7 +6,6 @@ site_description: The MNE-BIDS-Pipeline is a full-flegded processing pipeline fo
 site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
-strict: true
 use_directory_urls: false  # For easier navigation on CircleCI
 watch:  # Additional directories to watch for changes during `mkdocs serve`
     - ../mne_bids_pipeline
@@ -109,7 +108,7 @@ nav:
         - Error handling: settings/error_handling.md
 
     - Examples:
-        - Examples Gallery: examples/examples.md
+        - examples/examples.md
         - examples/ds003392.md
         - examples/ds004229.md
         - examples/ds000246.md
@@ -129,8 +128,19 @@ nav:
         - examples/ds004107.md
         - examples/ds001971.md
         - examples/ERP_CORE.md
-    - What's new: changes.md
-    - Tags: tags.md
+    - What's new:
+        - dev.md
+        - v1.10.md
+        - v1.9.md
+        - v1.8.md
+        - v1.7.md
+        - v1.6.md
+        - v1.5.md
+        - v1.4.md
+        - v1.3.md
+        - v1.2.md
+        - v1.1.md
+        - v1.0.md
 
 plugins:
     - search
@@ -167,7 +177,6 @@ plugins:
     - mike:
         canonical_version: stable
 markdown_extensions:
-    - admonition
     - abbr
     - attr_list  # Allows to turn any element into a button
     - pymdownx.details

@@ -1,4 +1,7 @@
-"""Somato."""
+"""ds003104: Somatosensory.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds003104) for more information.
+"""
 
 bids_root = "~/mne_data/ds003104"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003104"

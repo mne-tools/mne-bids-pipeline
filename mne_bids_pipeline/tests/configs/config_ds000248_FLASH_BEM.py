@@ -1,4 +1,4 @@
-"""MNE Sample Data: BEM from FLASH images."""
+"""ds000248: MNE sample data FLASH processing."""
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_FLASH_BEM"

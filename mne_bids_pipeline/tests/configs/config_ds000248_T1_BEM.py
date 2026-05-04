@@ -1,4 +1,4 @@
-"""MNE Sample Data: BEM from T1 images."""
+"""ds000248: MNE sample data T1 processing."""
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_T1_BEM"

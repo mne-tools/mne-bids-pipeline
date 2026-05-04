@@ -89,8 +89,8 @@ section_tags = {
 }
 
 extra_headers = {
-    "general settings": """\
-!!! info
+    "general settings": """
+???+ Info
     Many settings in this section control the pipeline behavior very early in the
     pipeline. Therefore, for most of them (e.g., `bids_root`) we do not list the
     steps that directly depend on the setting. The options with drop-down step

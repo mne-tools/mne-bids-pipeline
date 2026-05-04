@@ -1,6 +1,7 @@
-"""Single-subject infant dataset for testing maxwell_filter with movecomp.
+"""ds004229: infant MEG data.
 
-https://openneuro.org/datasets/ds004229
+Single-subject infant dataset for testing maxwell_filter with movecomp.
+See [OpenNeuro](https://openneuro.org/datasets/ds004229) for more information.
 """
 
 import mne

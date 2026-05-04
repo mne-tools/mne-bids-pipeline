@@ -1,6 +1,7 @@
-"""Mobile brain body imaging (MoBI) gait adaptation experiment.
+"""ds001971: Gait adaptation.
 
-See ds001971 on OpenNeuro: https://github.com/OpenNeuroDatasets/ds001971
+Mobile brain body imaging (MoBI).
+For more information, see [OpenNeuro](https://openneuro.org/datasets/ds001971).
 """
 
 from mne_bids_pipeline.typing import ArbitraryContrast

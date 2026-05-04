@@ -1,4 +1,7 @@
-"""hMT+ Localizer."""
+"""ds003392: hMT+ Localizer.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
+"""
 
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"

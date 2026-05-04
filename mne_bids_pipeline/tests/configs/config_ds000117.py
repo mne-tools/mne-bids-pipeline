@@ -1,4 +1,7 @@
-"""Faces dataset."""
+"""ds000117: Faces MEG.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds000117) for more information.
+"""
 
 bids_root = "~/mne_data/ds000117"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000117"

@@ -1,4 +1,8 @@
-"""SRM Resting-state EEG."""
+"""ds003775: Resting-state EEG.
+
+SRM Resting State EEG Dataset.
+See [OpenNeuro](https://openneuro.org/datasets/ds003775) for more information.
+"""
 
 bids_root = "~/mne_data/ds003775"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003775"

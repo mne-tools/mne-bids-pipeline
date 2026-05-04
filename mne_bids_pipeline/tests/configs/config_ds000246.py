@@ -1,7 +1,6 @@
-"""Brainstorm - Auditory Dataset.
+"""ds000246: Brainstorm Auditory MEG.
 
-See https://openneuro.org/datasets/ds000246/versions/1.0.0 for more
-information.
+See [OpenNeuro](https://openneuro.org/datasets/ds000246) for more information.
 """
 
 import sys

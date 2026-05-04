@@ -1,4 +1,7 @@
-"""OMEGA Resting State Sample Data."""
+"""ds000247: OMEGA Resting State.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds000247) for more information.
+"""
 
 import numpy as np
 

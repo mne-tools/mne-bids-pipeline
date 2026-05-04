@@ -1,4 +1,7 @@
-"""MNE Sample Data: M/EEG combined processing."""
+"""ds000248: MNE sample data (M/EEG).
+
+See [OpenNeuro](https://openneuro.org/datasets/ds000248) for more information.
+"""
 
 import mne
 import mne_bids

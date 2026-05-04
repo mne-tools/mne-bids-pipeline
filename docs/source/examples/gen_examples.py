@@ -304,7 +304,7 @@ for test_dataset_name, test_dataset_options in ds_iter:
 # Finally, write our examples.html file with a table of examples
 
 _example_header = """\
-# Examples
+# Examples gallery
 
 Here you will find a number of examples using publicly available
 datasets, mostly taken from [OpenNeuro](https://openneuro.org).

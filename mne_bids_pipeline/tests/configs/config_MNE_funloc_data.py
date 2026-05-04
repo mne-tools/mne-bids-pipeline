@@ -1,4 +1,7 @@
-"""Funloc data."""
+"""osf.io: Funloc data.
+
+See [OSF](https://osf.io/download/upj3h) for more information.
+"""
 
 from pathlib import Path
 

@@ -1,4 +1,4 @@
-"""ERP CORE.
+"""ERP CORE EEG.
 
 This example demonstrates how to process 5 participants from the
 [ERP CORE](https://erpinfo.org/erp-core) dataset. It shows how to obtain 7 ERP
@@ -17,10 +17,13 @@ components from a total of 6 experimental tasks:
                        Andrew X. Stewart, and Steven J. Luck
 - **License:** CC-BY-4.0
 - **URL:** [https://erpinfo.org/erp-core](https://erpinfo.org/erp-core)
-- **Citation:** Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
-                & Luck, S. J. (2021). ERP CORE: An open resource for human
-                event-related potential research. *NeuroImage* 225: 117465.
-                [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
+- **Citation:**
+  ```
+  Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
+  & Luck, S. J. (2021). ERP CORE: An open resource for human
+  event-related potential research. *NeuroImage* 225: 117465.
+  https://doi.org/10.1016/j.neuroimage.2020.117465
+  ```
 """
 
 import argparse

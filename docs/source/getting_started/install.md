@@ -44,7 +44,7 @@ you installed MNE-Python.
 If the installation was successful, the command-line utility `mne_bids_pipeline`
 (mind the underscores!) should now be available in your Python environment.
 
-!!! info
+???+ Info
 
     `mne_bids_pipeline` will be used to operate the pipeline.
 

@@ -1,4 +1,7 @@
-"""Matchingpennies EEG experiment."""
+"""osf.io: Matchingpennies EEG.
+
+See [OSF](https://osf.io/download/8rbfk) for more information.
+"""
 
 bids_root = "~/mne_data/eeg_matchingpennies"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/eeg_matchingpennies"

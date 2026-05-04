@@ -1,10 +1,14 @@
-"""MIND DATA.
+"""ds004107: MIND DATA.
 
+See [OpenNeuro](https://openneuro.org/datasets/ds004107) for more information.
+
+```
 M.P. Weisend, F.M. Hanlon, R. Montaño, S.P. Ahlfors, A.C. Leuthold,
 D. Pantazis, J.C. Mosher, A.P. Georgopoulos, M.S. Hämäläinen, C.J.
 Aine,, V. (2007).
 Paving the way for cross-site pooling of magnetoencephalography (MEG) data.
 International Congress Series, Volume 1300, Pages 615-618.
+```
 """
 
 # This has auditory, median, indx, visual, rest, and emptyroom but let's just

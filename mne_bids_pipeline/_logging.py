@@ -69,7 +69,11 @@ class _MBPLogger:
         return self._level
 
     @level.setter
-    def level(self, level: int) -> None:
+    def level(self, level: int | str) -> None:
+        if isinstance(level, str):
+            level = getattr(logging, level.upper(), None)
+            if level is None:
+                raise ValueError(f"Invalid log level: {level}")
         level = int(level)
         self._level = level
 

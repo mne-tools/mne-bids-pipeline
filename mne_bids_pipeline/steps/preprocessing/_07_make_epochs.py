@@ -26,6 +26,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     _update_for_splits,
@@ -147,10 +148,12 @@ def run_epochs(
         if idx == 0:
             epochs_all_runs = epochs
         else:
-            epochs_all_runs = mne.concatenate_epochs(
-                [epochs_all_runs, epochs],
-                on_mismatch="warn",
-            )
+            # Okay to lose annotations here (hopefully)
+            with _ignore_warnings("Concatenation of Annotations within Epochs"):
+                epochs_all_runs = mne.concatenate_epochs(
+                    [epochs_all_runs, epochs],
+                    on_mismatch="warn",
+                )
 
         if cfg.use_maxwell_filter:
             # Keep track of the info corresponding to the run with the smallest
@@ -249,29 +252,31 @@ def run_epochs(
             events, event_id, sfreq, first_samp = _get_events(
                 cfg=cfg, subject=subject, session=session, task=task
             )
-            report.add_events(
-                events=events,
-                event_id=event_id,
-                sfreq=sfreq,
-                first_samp=first_samp,
-                title=f"Events{prefix}",
-                tags=("events",) + extra_tags,
-                # caption='Events in filtered continuous data',  # TODO upstr
-                replace=True,
-            )
+            with _ignore_warnings("More events than default colors available"):
+                report.add_events(
+                    events=events,
+                    event_id=event_id,
+                    sfreq=sfreq,
+                    first_samp=first_samp,
+                    title=f"Events{prefix}",
+                    tags=("events",) + extra_tags,
+                    # caption='Events in filtered continuous data',  # TODO upstr
+                    replace=True,
+                )
         msg = "Adding uncleaned epochs to report."
         logger.info(**gen_log_kwargs(message=msg))
         # Add PSD plots for 30s of data or all epochs if we have less available
         psd = True if len(epochs) * (epochs.tmax - epochs.tmin) < 30 else 30.0
-        report.add_epochs(
-            epochs=epochs,
-            title=f"Epochs (before cleaning){prefix}",
-            psd=psd,
-            drop_log_ignore=(),
-            replace=True,
-            tags=("epochs",) + extra_tags,
-            **_add_epochs_image_kwargs(cfg),
-        )
+        with _ignore_warnings(r"Disabling spatial colors\."):
+            report.add_epochs(
+                epochs=epochs,
+                title=f"Epochs (before cleaning){prefix}",
+                psd=psd,
+                drop_log_ignore=(),
+                replace=True,
+                tags=("epochs",) + extra_tags,
+                **_add_epochs_image_kwargs(cfg),
+            )
 
     # Interactive
     if exec_params.interactive:

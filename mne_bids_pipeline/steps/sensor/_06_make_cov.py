@@ -125,7 +125,9 @@ def compute_cov_rank_from_epochs(
         all_epochs.append(mne.read_epochs(epo_fname, preload=False))
         all_epochs[-1].load_data().crop(tmin=tmin, tmax=tmax)
     epochs = (
-        all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
+        all_epochs[0]
+        if len(all_epochs) == 1
+        else mne.concatenate_epochs(all_epochs, verbose="error")
     )
 
     rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=epochs)
@@ -342,6 +344,7 @@ def run_covariance(
             assert isinstance(all_evoked, list)
             assert len(all_evoked) == len(conditions)
             for evoked, condition in zip(all_evoked, conditions):
+                assert isinstance(evoked, mne.Evoked)
                 _restrict_analyze_channels(evoked, cfg)
                 prefix, extra_tags = _get_prefix_tags(
                     cfg=cfg, task=task, condition=condition

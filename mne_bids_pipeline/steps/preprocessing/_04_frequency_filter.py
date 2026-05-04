@@ -225,6 +225,7 @@ def filter_data(
             bids_path_ref_bads_in = None
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads_in,
@@ -236,6 +237,7 @@ def filter_data(
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads_in,
             data_is_rest=data_is_rest,

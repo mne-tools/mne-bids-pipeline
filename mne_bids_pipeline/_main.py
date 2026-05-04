@@ -1,5 +1,4 @@
 import argparse
-import logging
 import pathlib
 import time
 from textwrap import dedent
@@ -14,10 +13,7 @@ from ._logging import gen_log_kwargs, logger
 from ._parallel import get_parallel_backend
 from ._run import _short_step_path
 
-_LOGGING_OPTIONS = {
-    "debug": logging.DEBUG,
-    "info": logging.INFO,
-}
+_LOGGING_OPTIONS = ("info", "warning", "error")
 
 
 def main() -> None:
@@ -115,10 +111,13 @@ def main() -> None:
     parser.add_argument(
         "--logger-level",
         dest="logger_level",
-        default="info",
-        help=f"Set the logger level ({', '.join(_LOGGING_OPTIONS)}). Default is info.",
+        default=None,
+        help=(
+            f"Set the logger level ({', '.join(_LOGGING_OPTIONS)}). "
+            "Default will use the value in the configuration file.",
+        ),
         metavar="LEVEL",
-        choices=tuple(_LOGGING_OPTIONS),
+        choices=_LOGGING_OPTIONS,
     )
     options = parser.parse_args()
 
@@ -126,8 +125,6 @@ def main() -> None:
         target_path = pathlib.Path(options.create_config)
         create_template_config(target_path=target_path, overwrite=False)
         return
-
-    logger.level = _LOGGING_OPTIONS[options.logger_level]
 
     config = options.config
     config_switch = options.config_switch
@@ -199,7 +196,8 @@ def main() -> None:
         overrides.on_error = on_error
     if not cache:
         overrides.memory_location = False
-    overrides.logger_level = logger.level
+    if options.logger_level:
+        overrides.logger_level = options.logger_level
 
     step_modules: list[ModuleType] = []
     STEP_MODULES = _get_step_modules()

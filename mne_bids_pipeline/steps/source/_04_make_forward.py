@@ -88,6 +88,8 @@ def _prepare_trans_subject(
             task=task,
             root=cfg.bids_root,
             processing=cfg.proc,
+            datatype=cfg.datatype,
+            suffix=cfg.datatype,
             extension=None,
         ),
         t1_bids_path=cfg.t1_bids_path,

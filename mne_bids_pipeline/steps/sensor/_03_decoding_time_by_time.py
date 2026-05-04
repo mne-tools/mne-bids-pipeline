@@ -132,7 +132,10 @@ def run_time_decoding(
     # We have to use this approach because the conditions could be based on
     # metadata selection, so simply using epochs[conds[0], conds[1]] would
     # not work.
-    epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
+    epochs = mne.concatenate_epochs(
+        [epochs[epochs_conds[0]], epochs[epochs_conds[1]]],
+        verbose="error",
+    )
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
     pick_idx = mne.pick_types(

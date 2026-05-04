@@ -1,5 +1,6 @@
 """Script-running utilities."""
 
+import contextlib
 import copy
 import functools
 import hashlib
@@ -9,6 +10,7 @@ import pdb
 import sys
 import time
 import traceback
+import warnings
 from collections.abc import Callable, Iterable
 from types import SimpleNamespace
 from typing import Any, Literal
@@ -156,6 +158,7 @@ class ConditionalStepMemory:
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
         self.memory_file_method = exec_params.memory_file_method
+        self.ignore_warnings = exec_params.ignore_warnings
         self.require_output = require_output
         self.func_name = func_name
         self.sidecars = sidecars
@@ -316,11 +319,13 @@ class ConditionalStepMemory:
                 # Fortunately we can use tuple-ness to tell the difference (we always
                 # return None or a dict)
                 done = False
-                out_files = memorized_func.call(*args, **kwargs)
+                with _ignore_warnings(self.ignore_warnings):
+                    out_files = memorized_func.call(*args, **kwargs)
                 if isinstance(out_files, tuple):
                     out_files = out_files[0]
             else:
-                out_files = memorized_func(*args, **kwargs)
+                with _ignore_warnings(self.ignore_warnings):
+                    out_files = memorized_func(*args, **kwargs)
             if self.require_output:
                 assert isinstance(out_files, dict) and len(out_files), (
                     f"Internal error: step must return non-empty out_files dict, got "
@@ -337,6 +342,16 @@ class ConditionalStepMemory:
 
     def clear(self) -> None:
         self.memory.clear()
+
+
+@contextlib.contextmanager
+def _ignore_warnings(ignore_warnings: Iterable[str] | str) -> Iterable[None]:
+    if isinstance(ignore_warnings, str):
+        ignore_warnings = [ignore_warnings]
+    with warnings.catch_warnings():
+        for msg in ignore_warnings:
+            warnings.filterwarnings("ignore", message=rf"[\S\s]*{msg}[\S\s]*")
+        yield
 
 
 def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series | None]) -> None:

@@ -138,7 +138,7 @@ def test_config_options_used_in_steps() -> None:
     for func, count, nested in (
         # These "count" values can be updated when the helper functions change,
         # but it's nice to make sure we're getting what we expect otherwise
-        (_import_data_kwargs, 28, ()),
+        (_import_data_kwargs, 27, ()),
         (_limit_which_clean, 3, ()),
         (_restrict_analyze_channels, 3, ()),
         (_get_decoding_proc, 2, (_get_rank,)),

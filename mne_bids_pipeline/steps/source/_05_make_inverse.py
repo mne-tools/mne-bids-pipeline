@@ -181,6 +181,7 @@ def apply_inverse_data(
             extension=".h5",
         )
 
+        assert isinstance(evoked, mne.Evoked)
         if "eeg" in cfg.ch_types:
             with _ignore_warnings("An average reference projection was already added"):
                 evoked.set_eeg_reference("average", projection=True)

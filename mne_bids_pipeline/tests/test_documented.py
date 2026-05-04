@@ -296,6 +296,7 @@ def test_datasets_in_doc() -> None:
     examples = [ex.split("/")[-1].split(".")[0] for ex in examples]
     assert len(examples) == len(set(examples))
     examples = set(examples)
+    examples.remove("examples")
 
     # 4. DATASET_OPTIONS
     dataset_names_list = list(DATASET_OPTIONS)

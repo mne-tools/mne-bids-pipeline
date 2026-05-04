@@ -1,5 +1,4 @@
 pre-commit:
-  fail_on_changes: non-ci
   jobs:
     # Stage 1: Linting
     - name: lint

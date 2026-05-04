@@ -2,7 +2,9 @@
 
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
-
+ignore_warnings = [
+    "Internal Active Shielding data",  # until MNE-BIDS releases a fix for ERM finding
+]
 subjects = ["01"]
 
 task = "localizer"

@@ -16,7 +16,12 @@ from mne_bids_pipeline._import_data import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._run import (
+    _ignore_warnings,
+    _prep_out_files,
+    failsafe_run,
+    save_logs,
+)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -77,6 +82,7 @@ def run_head_pos(
 
     raw = import_experimental_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_in=bids_path_in,
         bids_path_bads_in=bids_path_bads_in,
         data_is_rest=None,  # autodetect
@@ -249,7 +255,8 @@ def compute_twa_head_pos(
     ]
     # compute time-weighted average head position and save it to disk
     destination = mne.preprocessing.compute_average_dev_head_t(raws, head_poses)
-    mne.write_trans(fname=dest_path.fpath, trans=destination, overwrite=True)
+    with _ignore_warnings("does not conform to MNE naming conventions"):
+        mne.write_trans(fname=dest_path.fpath, trans=destination, overwrite=True)
     # output
     out_files = dict(destination_head_pos=dest_path)
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

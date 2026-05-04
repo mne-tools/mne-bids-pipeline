@@ -11,6 +11,9 @@ deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds004229"
 
 task = "amnoise"
 crop_runs = (300.0, 600.0)  # 5 minutes from the middle of the recording for speed
+ignore_warnings = [
+    "Head position change is over 25 mm",  # head moves a lot for this dataset
+]
 
 find_flat_channels_meg = True
 find_noisy_channels_meg = True

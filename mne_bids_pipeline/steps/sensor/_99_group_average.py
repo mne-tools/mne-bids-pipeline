@@ -44,6 +44,7 @@ from mne_bids_pipeline._report import (
     plot_time_by_time_decoding_t_values,
 )
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -113,11 +114,12 @@ def average_evokeds(
     for these_evokeds in evokeds_nested:
         if not these_evokeds:  # empty
             continue
-        evokeds.append(
-            mne.grand_average(
-                these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
-            )  # Combine subjects
-        )
+        with _ignore_warnings("Only a single dataset was passed"):
+            evokeds.append(
+                mne.grand_average(
+                    these_evokeds, interpolate_bads=cfg.interpolate_bads_grand_average
+                )  # Combine subjects
+            )
         # Keep condition in comment
         evokeds[-1].comment = "Grand average: " + these_evokeds[0].comment
 
@@ -198,16 +200,17 @@ def average_evokeds(
             else:  # It's a contrast of two conditions.
                 title = f"Average (sensor) contrast{prefix}, {_title}"
                 tags = tags + ("contrast",)
-            report.add_evokeds(
-                evokeds=evoked,
-                titles=title,
-                projs=False,
-                tags=tags,
-                n_time_points=cfg.report_evoked_n_time_points,
-                # captions=evoked.comment,  # TODO upstream
-                replace=True,
-                n_jobs=1,  # don't auto parallelize
-            )
+            with _ignore_warnings("No .* channel locations found, cannot create"):
+                report.add_evokeds(
+                    evokeds=evoked,
+                    titles=title,
+                    projs=False,
+                    tags=tags,
+                    n_time_points=cfg.report_evoked_n_time_points,
+                    # captions=evoked.comment,  # TODO upstream
+                    replace=True,
+                    n_jobs=1,  # don't auto parallelize
+                )
 
     assert len(in_files) == 0, list(in_files)
     return _prep_out_files(exec_params=exec_params, out_files=out_files)

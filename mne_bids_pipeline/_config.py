@@ -431,20 +431,16 @@ preprocessing stage itself, nor to the source analysis stage.
 reader_extra_params: dict[str, Any] = {}
 """
 Parameters to be passed to `read_raw_bids()` calls when importing raw data.
+If an empty dict (default) is provided and
+[`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter] and
+the dataset uses FIF files, we will automatically set
+`reader_extra_params = dict(allow_maxshield="yes")`.
 
 ???+ example "Example"
     Enforce units for EDF files:
     ```python
     reader_extra_params = {"units": "uV"}
     ```
-"""
-
-read_raw_bids_verbose: Literal["error"] | None = None
-"""
-Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
-If you know your dataset will contain files that are not perfectly BIDS
-compliant (e.g., "Did not find any meg.json..."), you can set this to
-`'error'` to suppress warnings emitted by read_raw_bids.
 """
 
 plot_psd_for_runs: Literal["all"] | Sequence[str] = "all"
@@ -2629,16 +2625,47 @@ The maximum amount of RAM per Dask worker.
 #
 # These options control how much logging output is produced.
 
-log_level: Literal["info", "error"] = "info"
+log_level: Literal["info", "warning", "error"] = "info"
 """
 Set the pipeline logging verbosity.
 """
 
-mne_log_level: Literal["info", "error"] = "error"
+mne_log_level: Literal["info", "warning", "error"] = "warning"
 """
 Set the MNE-Python logging verbosity.
 """
 
+read_raw_bids_verbose: Literal["info", "warning", "error"] | None = None
+"""
+Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
+If you know your dataset will contain files that are not perfectly BIDS
+compliant (e.g., "Did not find any meg.json..."), you can set this to
+`'error'` to suppress warnings emitted by read_raw_bids.
+"""
+
+ignore_warnings: Sequence[str] = ()
+r"""
+A list of message strings to ignore during execution. This gives you
+finer-grained control over warnings to suppress during `read_raw_bids`,
+fitting sphere to headshape, etc. Each string is treated as a regular expression,
+and for convenience, they will be used with additional regex added at each end like:
+```
+warnings.ignorewarnings("ignore", message=rf"[\S\s]*{msg}[\S\s]*")
+```
+
+???+ example "Example"
+    Suppressing warnings for ds000117 can be done with:
+    ```python
+    ignore_warnings = (
+        "The number of channels in the channels.tsv sidecar file",
+        'contains a "stim_type" column. This column should be renamed to "trial_type"',
+        "Cannot set channel type for the following channels",
+        "Unable to map the following column",
+        "more than 20 mm from head frame origin",
+        "Did not find any (channels.tsv|meg.json) associated with sub-emptyroom_ses",
+    )
+    ```
+"""
 
 # %%
 # # Error handling

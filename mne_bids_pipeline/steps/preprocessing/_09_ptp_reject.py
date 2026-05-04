@@ -21,6 +21,7 @@ from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._reject import _get_reject
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -230,15 +231,16 @@ def drop_ptp(
                 tags=tags,
             )
 
-        report.add_epochs(
-            epochs=epochs,
-            title=title,
-            psd=psd,
-            drop_log_ignore=(),
-            tags=tags,
-            replace=True,
-            **_add_epochs_image_kwargs(cfg=cfg),
-        )
+        with _ignore_warnings(r"Disabling spatial colors\."):
+            report.add_epochs(
+                epochs=epochs,
+                title=title,
+                psd=psd,
+                drop_log_ignore=(),
+                tags=tags,
+                replace=True,
+                **_add_epochs_image_kwargs(cfg=cfg),
+            )
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 

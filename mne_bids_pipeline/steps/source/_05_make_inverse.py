@@ -33,6 +33,7 @@ from mne_bids_pipeline._report import (
     _open_report,
 )
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     failsafe_run,
@@ -182,7 +183,8 @@ def apply_inverse_data(
 
         assert isinstance(evoked, mne.Evoked)
         if "eeg" in cfg.ch_types:
-            evoked.set_eeg_reference("average", projection=True)
+            with _ignore_warnings("An average reference projection was already added"):
+                evoked.set_eeg_reference("average", projection=True)
 
         stc = apply_inverse(
             evoked=evoked,

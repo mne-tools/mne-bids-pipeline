@@ -22,6 +22,7 @@ from mne_bids_pipeline._report import (
     _open_report,
 )
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -140,14 +141,15 @@ def run_evoked(
                 title = f"Contrast{prefix}"
                 tags = tags + ("contrast",)
 
-            report.add_evokeds(
-                evokeds=evoked,
-                titles=title,
-                n_time_points=cfg.report_evoked_n_time_points,
-                tags=tags,
-                replace=True,
-                n_jobs=1,  # don't auto parallelize
-            )
+            with _ignore_warnings("No .* channel locations found, cannot create"):
+                report.add_evokeds(
+                    evokeds=evoked,
+                    titles=title,
+                    n_time_points=cfg.report_evoked_n_time_points,
+                    tags=tags,
+                    replace=True,
+                    n_jobs=1,  # don't auto parallelize
+                )
 
     # Interaction
     if exec_params.interactive:

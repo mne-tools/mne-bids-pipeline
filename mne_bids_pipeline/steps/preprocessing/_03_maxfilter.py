@@ -14,6 +14,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
+import contextlib
 import gc
 from collections import defaultdict
 from copy import deepcopy
@@ -35,6 +36,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
     _get_mf_reference_path,
+    _get_reader_extra_params,
     _get_run_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -45,6 +47,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -204,6 +207,7 @@ def compute_esss_proj(
     bids_path_bads = in_files.pop("bads_tsv")
     raw_noise = import_er_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_er_in=bids_path_in,
         bids_path_ref_in=bids_path_ref_in,
         bids_path_er_bads_in=bids_path_bads,
@@ -238,7 +242,8 @@ def compute_esss_proj(
         root=cfg.deriv_root,
         check=False,
     )
-    mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
+    with _ignore_warnings("does not conform to MNE naming conventions"):
+        mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
 
     with _open_report(
         cfg=cfg,
@@ -469,15 +474,16 @@ def run_maxwell_filter(
     bids_path_ref_in = in_files.pop("raw_ref_run")
     raw = read_raw_bids(
         bids_path=bids_path_ref_in,
-        extra_params=cfg.reader_extra_params,
-        verbose=cfg.read_raw_bids_verbose,
+        extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path_ref_in),
+        verbose=exec_params.read_raw_bids_verbose,
     )
     # triage string-valued destinations
     if isinstance(destination, str):
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
         elif destination == "twa":
-            destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
+            with _ignore_warnings("does not conform to MNE naming conventions"):
+                destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 
@@ -495,7 +501,8 @@ def run_maxwell_filter(
         head_pos = None
     if cfg.mf_esss:
         extra.append("eSSS")
-        extended_proj = mne.read_proj(in_files.pop("esss_basis"))
+        with _ignore_warnings("does not conform to MNE naming conventions"):
+            extended_proj = mne.read_proj(in_files.pop("esss_basis"))
     else:
         extended_proj = ()
     if extra:
@@ -520,10 +527,12 @@ def run_maxwell_filter(
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
-    if not (run is None and task == "noise"):
+    er_data = run is None and task == "noise"
+    if not er_data:
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads,
             data_is_rest=data_is_rest,
@@ -533,6 +542,7 @@ def run_maxwell_filter(
     else:
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads,
@@ -657,7 +667,12 @@ def run_maxwell_filter(
             "<p>The raw data were annotated with the following movement-related bad "
             f"segment annotations:<ul>{''.join(extra_html_list)}</ul></p>"
         )
-        raw_sss.set_annotations(raw_sss.annotations + movement_annot)
+        if er_data:
+            ctx = _ignore_warnings(r"(Omitted|Limited) [0-9]+ annotation")
+        else:
+            ctx = contextlib.nullcontext()
+        with ctx:
+            raw_sss.set_annotations(raw_sss.annotations + movement_annot)
 
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"

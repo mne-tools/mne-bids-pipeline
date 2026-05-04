@@ -12,6 +12,15 @@ subjects = ["01"]
 raw_resample_sfreq = 125.0
 crop_runs = (0, 300)  # Reduce memory usage on CI system
 
+ignore_warnings = (
+    "The number of channels in the channels.tsv sidecar file",
+    'contains a "stim_type" column. This column should be renamed to "trial_type"',
+    "Cannot set channel type for the following channels",
+    "Unable to map the following column",
+    "more than 20 mm from head frame origin",
+    r"Did not find any (channels\.tsv|meg\.json) associated with sub-emptyroom_ses",
+)
+
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
 use_maxwell_filter = True

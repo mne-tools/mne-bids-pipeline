@@ -100,6 +100,7 @@ def assess_data_quality(
     if run is None and task == "noise":
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_er_bads_in=None,
             bids_path_ref_in=bids_path_ref_in,
@@ -109,9 +110,10 @@ def assess_data_quality(
     else:
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
+            cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=None,
-            cfg=cfg,
             data_is_rest=data_is_rest,
         )
     preexisting_bads = sorted(raw.info["bads"])

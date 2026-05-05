@@ -1,3 +1,5 @@
+# Preparations for source-level analyses
+
 ???+ Info
     Preparations for inverse modeling involve the installation of
     [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/).

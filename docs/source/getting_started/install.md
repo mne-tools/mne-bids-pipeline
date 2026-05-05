@@ -1,3 +1,4 @@
+# Installation
 
 ## :package: Installing MNE-BIDS-Pipeline and all dependencies
 

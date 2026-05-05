@@ -7,7 +7,7 @@ from pathlib import Path
 from mne_bids_pipeline._config_utils import _get_step_modules
 
 autogen_header = f"""\
-[//]: # (AUTO-GENERATED, TO CHANGE EDIT {"/".join(Path(__file__).parts[-4:])})
+[//a]: # (AUTO-GENERATED, TO CHANGE EDIT {"/".join(Path(__file__).parts[-4:])})\
 """
 
 steps_pre = f"""\
@@ -25,7 +25,7 @@ instead to ensure that all steps affected by a given change are re-run.
 overview_pre = f"""\
 {autogen_header}
 
-# MNE-BIDS-Pipeline overview
+# Pipeline overview
 
 MNE-BIDS-Pipeline processes your data in a sequential manner, i.e., one step
 at a time. The next step is only run after the previous steps have been

@@ -87,6 +87,32 @@ section_tags = {
     "logging": ("logging", "error-handling"),
     "error handling": ("error-handling",),
 }
+section_titles = {
+    "general settings": "General settings",
+    "break detection": "Break detection",
+    "bad channel detection": "Bad channel detection",
+    "maxwell filter": "Maxwell filtering",
+    "filtering & resampling": "Filtering & resampling",
+    "filtering": "Filtering",
+    "resampling": "Resampling",
+    "epoching": "Epoching",
+    "stimulation artifact": "Stimulation artifact",
+    "ssp, ica,": "SSP, ICA, and artifact regression",
+    "amplitude-based artifact": "Amplitude-based artifact rejection",
+    "condition contrasts": "Condition contrasts",
+    "decoding /": "Decoding / MVPA",
+    "time-frequency analysis": "Time-frequency analysis",
+    "group-level analysis": "Group-level analysis",
+    "general source": "General settings",
+    "bem surface": "BEM surface",
+    "source space": "Source space & forward solution",
+    "inverse solution": "Inverse solution",
+    "report generation": "Report generation",
+    "caching": "Caching",
+    "parallelization": "Parallelization",
+    "logging": "Logging",
+    "error handling": "Error handling",
+}
 
 extra_headers = {
     "general settings": """
@@ -177,6 +203,10 @@ def main() -> None:
                 current_lines += ["---", "tags:"]
                 current_lines += [f"  - {tag}" for tag in section_tags[key]]
                 current_lines += ["---"]
+            if key in section_titles:
+                if current_lines:
+                    current_lines += [""]
+                current_lines += [f"# {section_titles[key]}", ""]
             if key in extra_headers:
                 current_lines.extend(["", extra_headers[key]])
             continue

@@ -71,41 +71,41 @@ not_in_nav: |
 nav:
     - Home: index.md
     - Getting started:
-        - Installation: getting_started/install.md
-        - Basic usage: getting_started/basic_usage.md
-        - Preparations for source-level analyses: getting_started/freesurfer.md
+        - getting_started/install.md
+        - getting_started/basic_usage.md
+        - getting_started/freesurfer.md
     - Processing steps:
-        - Overview: features/overview.md
-        - List of processing steps: features/steps.md
+        - features/overview.md
+        - features/steps.md
     - Configuration options:
-        - General settings: settings/general.md
+        - settings/general.md
         - Preprocessing:
-            - Break detection: settings/preprocessing/breaks.md
-            - Bad channel detection: settings/preprocessing/autobads.md
-            - Maxwell filter: settings/preprocessing/maxfilter.md
+            - settings/preprocessing/breaks.md
+            - settings/preprocessing/autobads.md
+            - settings/preprocessing/maxfilter.md
             - Filtering & resampling:
-                - Filtering: settings/preprocessing/filter.md
-                - Resampling: settings/preprocessing/resample.md
-            - Epoching: settings/preprocessing/epochs.md
+                - settings/preprocessing/filter.md
+                - settings/preprocessing/resample.md
+            - settings/preprocessing/epochs.md
             - Artifact removal:
-                - Stimulation artifact: settings/preprocessing/stim_artifact.md
-                - SSP, ICA, and artifact regression: settings/preprocessing/ssp_ica.md
-                - Amplitude-based artifact rejection: settings/preprocessing/artifacts.md
+                - settings/preprocessing/stim_artifact.md
+                - settings/preprocessing/ssp_ica.md
+                - settings/preprocessing/artifacts.md
         - Sensor-level analysis:
-            - Condition contrasts: settings/sensor/contrasts.md
-            - Decoding / MVPA: settings/sensor/mvpa.md
-            - Time-frequency analysis: settings/sensor/time_freq.md
-            - Group-level analysis: settings/sensor/group_level.md
+            - settings/sensor/contrasts.md
+            - settings/sensor/mvpa.md
+            - settings/sensor/time_freq.md
+            - settings/sensor/group_level.md
         - Source-level analysis:
-            - General settings: settings/source/general.md
-            - BEM surface: settings/source/bem.md
-            - Source space & forward solution: settings/source/forward.md
-            - Inverse solution: settings/source/inverse.md
-        - Report generation: settings/reports/report_generation.md
-        - Caching: settings/caching.md
-        - Parallelization: settings/parallelization.md
-        - Logging: settings/logging.md
-        - Error handling: settings/error_handling.md
+            - settings/source/general.md
+            - settings/source/bem.md
+            - settings/source/forward.md
+            - settings/source/inverse.md
+        - settings/reports/report_generation.md
+        - settings/caching.md
+        - settings/parallelization.md
+        - settings/logging.md
+        - settings/error_handling.md
 
     - Examples:
         - examples/examples.md
@@ -208,8 +208,12 @@ markdown_extensions:
 validation:
   # Everything set to "warn" will cause an error when building in strict mode with
   # mkdocs build --strict
-  omitted_files: warn
-  not_found: warn
-  absolute_links: warn
-  unrecognized_links: warn
-  anchors: warn
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn

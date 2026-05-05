@@ -1,4 +1,4 @@
-"""MNE Sample Data: Using the `fsaverage` template MRI."""
+"""ds000248: MNE sample data using template MRI."""
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_no_mri"

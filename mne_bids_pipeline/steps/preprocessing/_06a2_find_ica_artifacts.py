@@ -475,7 +475,9 @@ def _run_icalabel(
         f"component{_pl(icalabel_ics)} in {len(epochs)} epochs."
     )
     logger.info(**gen_log_kwargs(message=msg))
-    icalabel_df = pd.DataFrame(icalabel_class_probabilities, columns=_ICALABEL_CLASSES)
+    icalabel_df = pd.DataFrame(
+        icalabel_class_probabilities, columns=np.array(_ICALABEL_CLASSES)
+    )
 
     icalabel_df["Component"] = [
         f"ICA{i:03d}" for i in range(len(icalabel_component_labels))
@@ -614,7 +616,7 @@ def main(*, config: SimpleNamespace) -> None:
         )
         logs = parallel(
             run_func(
-                cfg=get_config(config=config, subject=subject),
+                cfg=get_config(config=config, subject=subject, session=session),
                 exec_params=config.exec_params,
                 subject=subject,
                 session=session,

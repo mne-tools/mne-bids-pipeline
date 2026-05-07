@@ -15,6 +15,7 @@
 ### :bug: Bug fixes
 
 - Fixed bug where [`log_level`][mne_bids_pipeline._config.log_level] was not being applied to the MBPlogger (#1224 by @larsoner)
+- Corrected import order: remove channels before setting template montage as stated in [`eeg_template_montage`][mne_bids_pipeline._config.eeg_template_montage] (#1220 by @dnacombo)
 
 [//5]: # (### :books: Documentation)
 

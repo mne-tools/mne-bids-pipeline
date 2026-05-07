@@ -455,14 +455,14 @@ def import_experimental_data(
 
     # 1. _load_data (_crop_data)
     raw = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_in)
-    # 2. _set_eeg_montage
-    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
-    # 3. _create_bipolar_channels
+    # 2. _create_bipolar_channels
     _create_bipolar_channels(
         cfg=cfg, raw=raw, subject=subject, session=session, run=run
     )
-    # 4. _drop_channels_func
+    # 3. _drop_channels_func
     _drop_channels_func(cfg=cfg, raw=raw, subject=subject, session=session)
+    # 4. _set_eeg_montage
+    _set_eeg_montage(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
     # 5. _find_breaks_func
     _find_breaks_func(cfg=cfg, raw=raw, subject=subject, session=session, run=run)
     if data_is_rest is None:

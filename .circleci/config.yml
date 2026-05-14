@@ -7,7 +7,7 @@ orbs:
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
-    - image: cimg/python:3.13.11
+    - image: cimg/python:3.14.5
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 

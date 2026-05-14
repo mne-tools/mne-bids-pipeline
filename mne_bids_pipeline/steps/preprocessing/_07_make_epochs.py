@@ -111,6 +111,8 @@ def run_epochs(
         msg = f"Bad channels differ across runs. Using union: {all_bads}"
         logger.info(**gen_log_kwargs(message=msg))
 
+    del run_bads
+
     # Now, generate epochs from each individual run.
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs_for_task, raw_fnames)):
         msg = f"Loading filtered raw data from {raw_fname.basename}"

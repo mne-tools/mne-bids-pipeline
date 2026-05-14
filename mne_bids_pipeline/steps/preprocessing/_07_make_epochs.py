@@ -148,6 +148,19 @@ def run_epochs(
         if idx == 0:
             epochs_all_runs = epochs
         else:
+            # Harmonize bad channels across runs by taking the union, as
+            # mne.concatenate_epochs() requires info['bads'] to match.
+            all_bads = sorted(
+                set(epochs_all_runs.info["bads"]) | set(epochs.info["bads"])
+            )
+            if set(epochs_all_runs.info["bads"]) != set(epochs.info["bads"]):
+                msg = (
+                    f"Bad channels differ across runs. Using the union of all "
+                    f"runs' bad channels: {all_bads}"
+                )
+                logger.info(**gen_log_kwargs(message=msg))
+            epochs_all_runs.info["bads"] = all_bads
+            epochs.info["bads"] = all_bads
             # Okay to lose annotations here (hopefully)
             with _ignore_warnings("Concatenation of Annotations within Epochs"):
                 epochs_all_runs = mne.concatenate_epochs(

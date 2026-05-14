@@ -16,12 +16,19 @@ jobs:
       # Will use MNE_BOT_TOKEN when running from workflow_dispatch or schedule
       GITHUB_TOKEN: ${{ secrets.MNE_BOT_TOKEN || secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v6
         with:
           token: ${{ env.GITHUB_TOKEN}}
-      - run: git fetch origin && git reset --hard "${{ github.event.ref }}"  # do a deeper checkout
+      - name: Do a deeper checkout
         if: github.event_name != 'pull_request'
+        run: |
+          set -x
+          git fetch origin "${{ github.event.ref }}"
+          git reset --hard "${{ github.event.ref }}"
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
         if: github.event_name == 'pull_request'

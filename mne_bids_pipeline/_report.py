@@ -745,7 +745,7 @@ def add_csp_grand_average(
         "csp",
         f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}",
     ) + extra_tags
-    title = f"CSP decoding{prefix}{cond_1} vs. {cond_2}"
+    title = f"CSP decoding: {prefix}{cond_1} vs. {cond_2}"
     report.add_figure(
         fig=fig,
         title=title,

@@ -103,6 +103,16 @@ def run_epochs(
     smallest_rank = None
     smallest_rank_info = None
 
+    # Compute the union of bad channels across all runs upfront so that
+    # mne.concatenate_epochs() doesn't raise due to mismatched info['bads'].
+    run_bads = [mne.io.read_info(f)["bads"] for f in raw_fnames]
+    all_bads = _union_bads(run_bads)
+    if any(sorted(bads) != all_bads for bads in run_bads):
+        msg = f"Bad channels differ across runs. Using union: {all_bads}"
+        logger.info(**gen_log_kwargs(message=msg))
+
+    del run_bads
+
     # Now, generate epochs from each individual run.
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs_for_task, raw_fnames)):
         msg = f"Loading filtered raw data from {raw_fname.basename}"
@@ -144,6 +154,7 @@ def run_epochs(
 
         epochs.load_data()  # Remove reference to raw
         del raw  # free memory
+        epochs.info["bads"] = all_bads
 
         if idx == 0:
             epochs_all_runs = epochs
@@ -284,6 +295,14 @@ def run_epochs(
         epochs.plot_image(combine="gfp", sigma=2.0, cmap="YlGnBu_r")
     assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
+
+
+def _union_bads(bads_per_run: list[list[str]]) -> list[str]:
+    """Return sorted union of bad channels across runs."""
+    combined = []
+    for bads in bads_per_run:
+        combined.extend(bads)
+    return sorted(set(combined))
 
 
 def _add_epochs_image_kwargs(cfg: SimpleNamespace) -> dict[str, dict[str, Any]]:

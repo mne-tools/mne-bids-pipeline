@@ -22,16 +22,16 @@ jobs:
           fetch-depth: 0
           token: ${{ env.GITHUB_TOKEN}}
       - uses: astral-sh/setup-uv@v7
-      #- run: uv sync --locked
-      #  if: github.event_name == 'pull_request'
+      - run: uv sync --locked
+        if: github.event_name == 'pull_request'
       - run: uv sync --upgrade
         #if: github.event_name != 'pull_request'
       - run: uv lock
       - run: uv run lefthook run pre-commit --all-files
-      #- uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a
-      #  if: github.event_name == 'pull_request' && (failure() || success())
+      - uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a
+        if: github.event_name == 'pull_request' && (failure() || success())
       - name: Create PR
-        # if: github.event_name != 'pull_request' && (failure() || success())
+        if: github.event_name != 'pull_request' && (failure() || success())
         run: |
           git diff && git status --porcelain
           if [[ ! $(git status --porcelain) ]]; then

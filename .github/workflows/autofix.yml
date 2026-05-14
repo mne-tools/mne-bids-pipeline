@@ -25,7 +25,7 @@ jobs:
       - run: uv sync --locked
         if: github.event_name == 'pull_request'
       - run: uv sync --upgrade
-        #if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
       - run: uv lock
       - run: uv run lefthook run pre-commit --all-files
       - uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a

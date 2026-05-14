@@ -425,7 +425,7 @@ def one_subject_decoding(
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,
             )
-            title = f"CSP decoding{prefix}"
+            title = f"CSP decoding: {prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,

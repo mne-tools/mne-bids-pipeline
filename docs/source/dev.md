@@ -20,4 +20,6 @@
 
 [//5]: # (### :books: Documentation)
 
-[//6]: # (### :medical_symbol: Code health and infrastructure)
+### :medical_symbol: Code health and infrastructure
+
+- Pinned Python version for development to 3.13. (#1243 by @hoechenberger)

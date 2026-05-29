@@ -892,7 +892,7 @@ def average_csp_decoding(
             ["subject", "freq_range_name", "t_min", "t_max"]
         )
 
-        for (subject_, freq_range_name, t_min, t_max), df in g:
+        for (subject_, freq_range_name, t_min, t_max), df in g:  # type: ignore
             scores = df["mean_crossval_score"]
             sub_idx = subjects.index(subject_)
             time_bin_idx = time_bins_df.loc[

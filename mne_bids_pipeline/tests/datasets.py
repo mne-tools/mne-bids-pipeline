@@ -43,6 +43,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
             "derivatives/freesurfer/subjects/01/mri/aparc.DKTatlas+aseg.mgz",
             "derivatives/freesurfer/subjects/01/mri/aparc.a2009s+aseg.mgz",
             "derivatives/freesurfer/subjects/01/bem/watershed",
+            "derivatives/freesurfer/subjects/01/touch",
         ],
         # https://github.com/OpenNeuroOrg/openneuro/issues/3816
         "tag": "1.0.0",

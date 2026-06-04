@@ -38,7 +38,6 @@ def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:
         include=options.get("include", []),
         exclude=options.get("exclude", []),
         tag=options.get("tag", None),
-        max_concurrent_downloads=1,  # avoid hitting timeout errors
     )
     print(f"Downloading with openneuro.download(**{kwargs})")
     openneuro.download(**kwargs)

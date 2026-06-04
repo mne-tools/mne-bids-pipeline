@@ -2519,7 +2519,7 @@ requires-dist = [
     { name = "pyvistaqt" },
     { name = "qtpy" },
     { name = "rich" },
-    { name = "scikit-learn" },
+    { name = "scikit-learn", specifier = "!=1.9.0" },
     { name = "scipy" },
     { name = "seaborn" },
     { name = "threadpoolctl" },

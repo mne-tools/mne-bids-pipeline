@@ -591,6 +591,52 @@ pre-stimulus period as bad.
     ```
 """
 
+break_start_regex: str | None = None
+"""
+Regular expression matching the annotation descriptions that mark the **start**
+of a break period (marker-based break detection). If both this and
+[`break_end_regex`][mne_bids_pipeline._config.break_end_regex] are set, breaks
+are detected by pairing these markers instead of by gap detection.
+
+For data with `block_start`/`block_end` markers, note that a break *starts*
+when a block *ends*, so this should match the block-end trigger.
+
+???+ example "Example"
+```python
+    break_start_regex = r"block\\d+_end"
+```
+"""
+
+break_end_regex: str | None = None
+"""
+Regular expression matching the annotation descriptions that mark the **end**
+of a break period (marker-based break detection). See
+[`break_start_regex`][mne_bids_pipeline._config.break_start_regex]. For
+`block_start`/`block_end` data this should match the block-start trigger, as a
+break *ends* when the next block *begins*.
+
+???+ example "Example"
+```python
+    break_end_regex = r"block\\d+_start"
+```
+"""
+
+task_event_regex: str | None = None
+"""
+Regular expression selecting the task events to keep when detecting breaks by
+gaps. Only annotations whose description matches are considered "real" events;
+everything else (e.g. regular synchronization pulses that would otherwise fill
+every gap) is ignored, so breaks re-emerge as long event-free spans. Used only
+when [`break_start_regex`][mne_bids_pipeline._config.break_start_regex] and
+[`break_end_regex`][mne_bids_pipeline._config.break_end_regex] are not set.
+
+???+ example "Example"
+```python
+    task_event_regex = r"stimulus/.*"
+```
+"""
+
+
 # %%
 # ## Bad channel detection
 #

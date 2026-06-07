@@ -27,6 +27,7 @@ from mne_bids_pipeline._config_utils import (
 from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import set_initial_average_reference
 from mne_bids_pipeline._reject import _get_reject
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
@@ -207,10 +208,17 @@ def run_ica(
 
     # Set an EEG reference
     if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
-        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
-        if cfg.ica_use_icalabel:
-            epochs.apply_proj()  # Apply the reference projection
+        if cfg.eeg_reference == "average":
+            set_initial_average_reference(epochs, cfg)
+            if cfg.ica_use_icalabel:
+                epochs.apply_proj()  # Apply the reference projection
+                if cfg.drop_channel_after_rereference:
+                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
+                    logger.info(**gen_log_kwargs(message=msg))
+                    epochs.drop_channels(cfg.eeg_online_reference_channel)
+
+        else:
+            epochs.set_eeg_reference(cfg.eeg_reference, projection=False)
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -405,6 +413,9 @@ def get_config(
         epochs_metadata_keep_last=config.epochs_metadata_keep_last,
         epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
+        add_online_reference_channel=config.add_online_reference_channel,
+        drop_channel_after_rereference=config.drop_channel_after_rereference,
         rest_epochs_duration=config.rest_epochs_duration,
         rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",

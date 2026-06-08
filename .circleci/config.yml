@@ -1,13 +1,18 @@
 version: 2.1
 
+# TODO: Occasionally we should update these (last checked 2026/06/08)
 orbs:
-  browser-tools: circleci/browser-tools@1.2
-  codecov: codecov/codecov@5.3.0
+  browser-tools: circleci/browser-tools@2.4.2
+  codecov: codecov/codecov@6.0.0
 
 # Aliases to reuse
 _imageconfig: &imageconfig
   docker:
     - image: cimg/python:3.14.5
+
+_codecov_upload: &codecov_upload
+  codecov/upload:
+    token: CODECOV_TOKEN
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 
@@ -43,6 +48,9 @@ jobs:
               git remote set-url origin "$CIRCLE_REPOSITORY_URL"
             fi
       - checkout
+      - restore_cache:
+          keys:
+            - minimal-cmds-0
       - bash_env
       - run:
           name: Get Python running
@@ -58,6 +66,10 @@ jobs:
           name: Check installation
           command: |
             ./.circleci/check_installation.sh
+      - save_cache:
+          key: minimal-cmds-0
+          paths:
+            - ~/minimal_cmds
       - persist_to_workspace:
           root: ~/
           paths:
@@ -79,7 +91,7 @@ jobs:
           name: Get ds000117
           command: |
             $DOWNLOAD_DATA ds000117
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds000117-4
           paths:
@@ -116,7 +128,7 @@ jobs:
           name: Get ds001971
           command: |
             $DOWNLOAD_DATA ds001971
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds001971-3
           paths:
@@ -135,7 +147,7 @@ jobs:
           name: Get ds004107
           command: |
             $DOWNLOAD_DATA ds004107
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds004107-3
           paths:
@@ -154,7 +166,7 @@ jobs:
           name: Get ds000246
           command: |
             $DOWNLOAD_DATA ds000246
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds000246-4
           paths:
@@ -173,7 +185,7 @@ jobs:
           name: Get ds000247
           command: |
             $DOWNLOAD_DATA ds000247
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds000247-4
           paths:
@@ -195,7 +207,7 @@ jobs:
             # Workaround for https://github.com/OpenNeuroOrg/openneuro/issues/3695
             aws s3 sync --no-sign-request s3://openneuro.org/ds000248 ~/mne_data/ds000248
             rm -Rf ~/mne_data/ds000248/derivatives/freesurfer/subjects/01
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds000248-7
           paths:
@@ -214,7 +226,7 @@ jobs:
           name: Get ds001810
           command: |
             $DOWNLOAD_DATA ds001810
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds001810-3
           paths:
@@ -233,7 +245,7 @@ jobs:
           name: Get ds003104
           command: |
             $DOWNLOAD_DATA ds003104
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds003104-4
           paths:
@@ -252,7 +264,7 @@ jobs:
           name: Get ds003392
           command: |
             $DOWNLOAD_DATA ds003392
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds003392-3
           paths:
@@ -271,7 +283,7 @@ jobs:
           name: Get ds004229
           command: |
             $DOWNLOAD_DATA ds004229
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ds004229-3
           paths:
@@ -290,7 +302,7 @@ jobs:
           name: Get eeg_matchingpennies
           command: |
             $DOWNLOAD_DATA eeg_matchingpennies
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-eeg_matchingpennies-1
           paths:
@@ -309,7 +321,7 @@ jobs:
           name: Get MNE-funloc-data
           command: |
             $DOWNLOAD_DATA MNE-funloc-data
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-MNE-funloc-data-5
           paths:
@@ -328,7 +340,7 @@ jobs:
           name: Get MNE-phantom-KIT-data
           command: |
             $DOWNLOAD_DATA MNE-phantom-KIT-data
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-MNE-phantom-KIT-data-1
           paths:
@@ -347,7 +359,7 @@ jobs:
           name: Get ERP_CORE
           command: |
             $DOWNLOAD_DATA ERP_CORE
-      - codecov/upload
+      - *codecov_upload
       - save_cache:
           key: data-cache-ERP_CORE-1
           paths:
@@ -365,7 +377,7 @@ jobs:
       - run:
           name: test ds000117
           command: $RUN_TESTS ds000117
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -391,7 +403,7 @@ jobs:
       - run:
           name: test ds003775
           command: $RUN_TESTS ds003775
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -417,7 +429,7 @@ jobs:
       - run:
           name: test ds001971
           command: $RUN_TESTS ds001971
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -444,7 +456,7 @@ jobs:
       - run:
           name: test ds004107
           command: $RUN_TESTS ds004107
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -471,7 +483,7 @@ jobs:
           name: test ds000246
           no_output_timeout: 15m
           command: $RUN_TESTS ds000246
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -498,7 +510,7 @@ jobs:
       - run:
           name: test ds000247
           command: $RUN_TESTS ds000247
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -525,7 +537,7 @@ jobs:
           name: test ds000248_base
           # Forces rerunning (cov and FLASH BEM) so don't check
           command: $RUN_TESTS -r ds000248_base
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -553,7 +565,7 @@ jobs:
       - run:
           name: test ds000248_ica
           command: $RUN_TESTS ds000248_ica
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -580,7 +592,7 @@ jobs:
       - run:
           name: test BEM from FLASH
           command: $RUN_TESTS -r ds000248_FLASH_BEM
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -607,7 +619,7 @@ jobs:
           name: test BEM from T1 (watershed)
           no_output_timeout: 20m
           command: $RUN_TESTS -r ds000248_T1_BEM
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -633,7 +645,7 @@ jobs:
       - run:
           name: test head surface creation for MNE coregistration
           command: $RUN_TESTS -c -r ds000248_coreg_surfaces
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -652,7 +664,7 @@ jobs:
       - run:
           name: test ds000248_no_mri
           command: $RUN_TESTS ds000248_no_mri
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -679,7 +691,7 @@ jobs:
       - run:
           name: test ds001810
           command: $RUN_TESTS ds001810
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -705,7 +717,7 @@ jobs:
       - run:
           name: test ds003104
           command: $RUN_TESTS ds003104
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -731,7 +743,7 @@ jobs:
       - run:
           name: test ds003392
           command: $RUN_TESTS ds003392
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -760,7 +772,7 @@ jobs:
       - run:
           name: test ds004229
           command: $RUN_TESTS ds004229
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -789,7 +801,7 @@ jobs:
       - run:
           name: test eeg_matchingpennies
           command: $RUN_TESTS eeg_matchingpennies
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -816,7 +828,7 @@ jobs:
       - run:
           name: test MNE-funloc-data
           command: $RUN_TESTS MNE-funloc-data
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -842,7 +854,7 @@ jobs:
       - run:
           name: test MNE-phantom-KIT-data
           command: $RUN_TESTS MNE-phantom-KIT-data
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -869,7 +881,8 @@ jobs:
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
-      - browser-tools/install-chrome
+      - browser-tools/install_chrome:
+          timeout: 5m
       - run:
           name: Check Chrome installation
           command: |
@@ -877,7 +890,7 @@ jobs:
       - run:
           name: test ERP CORE N400
           command: $RUN_TESTS ERP_CORE_N400
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -907,7 +920,7 @@ jobs:
       - run:
           name: test ERP CORE ERN
           command: $RUN_TESTS ERP_CORE_ERN
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -937,7 +950,7 @@ jobs:
       - run:
           name: test ERP CORE LRP
           command: $RUN_TESTS ERP_CORE_LRP
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -967,7 +980,7 @@ jobs:
       - run:
           name: test ERP CORE MMN
           command: $RUN_TESTS ERP_CORE_MMN
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -997,7 +1010,7 @@ jobs:
       - run:
           name: test ERP CORE N2pc
           command: $RUN_TESTS ERP_CORE_N2pc
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -1027,7 +1040,7 @@ jobs:
       - run:
           name: test ERP CORE N170
           command: $RUN_TESTS ERP_CORE_N170
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -1057,7 +1070,7 @@ jobs:
       - run:
           name: test ERP CORE P3
           command: $RUN_TESTS ERP_CORE_P3
-      - codecov/upload
+      - *codecov_upload
       - store_test_results:
           path: ./test-results
       - store_artifacts:

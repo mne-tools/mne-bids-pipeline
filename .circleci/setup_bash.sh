@@ -52,3 +52,4 @@ echo 'export MPLBACKEND=Agg' | tee -a "$BASH_ENV"
 echo "export MNE_3D_OPTION_MULTI_SAMPLES=1" | tee -a "$BASH_ENV"
 echo "export MNE_BIDS_PIPELINE_FORCE_TERMINAL=true" | tee -a "$BASH_ENV"
 echo "export FORCE_COLOR=1" | tee -a "$BASH_ENV"  # for rich to use color in logs
+echo "export CODECOV_TOKEN=80c2025f-a1c4-4adf-af58-daf42d1488f5" | tee -a "$BASH_ENV"  # for codecov upload

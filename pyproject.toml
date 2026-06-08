@@ -45,7 +45,7 @@ dependencies = [
   "pyvistaqt",
   "qtpy",
   "rich",
-  "scikit-learn !=1.9.0",
+  "scikit-learn",
   "scipy",
   "seaborn",
   "threadpoolctl"

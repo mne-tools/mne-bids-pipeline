@@ -43,6 +43,9 @@ jobs:
               git remote set-url origin "$CIRCLE_REPOSITORY_URL"
             fi
       - checkout
+      - restore_cache:
+          keys:
+            - minimal-cmds-0
       - bash_env
       - run:
           name: Get Python running
@@ -58,6 +61,10 @@ jobs:
           name: Check installation
           command: |
             ./.circleci/check_installation.sh
+      - save_cache:
+          key: minimal-cmds-0
+          paths:
+            - ~/minimal_cmds
       - persist_to_workspace:
           root: ~/
           paths:

@@ -877,7 +877,8 @@ jobs:
       - run:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
-      - browser-tools/install_chrome
+      - browser-tools/install_chrome:
+          timeout: 5m
       - run:
           name: Check Chrome installation
           command: |

@@ -12,7 +12,7 @@ _imageconfig: &imageconfig
 
 _codecov_upload: &codecov_upload
   codecov/upload:
-    CODECOV_TOKEN: 80c2025f-a1c4-4adf-af58-daf42d1488f5
+    token: 80c2025f-a1c4-4adf-af58-daf42d1488f5
 
 # https://circleci.com/docs/workflows/#executing-workflows-for-a-git-tag
 

@@ -36,11 +36,11 @@ echo "export RUN_TESTS=\".circleci/run_dataset_and_copy_files.sh\"" | tee -a "$B
 echo "export DOWNLOAD_DATA=\"coverage run -m mne_bids_pipeline._download\"" | tee -a "$BASH_ENV"
 
 # Similar CircleCI setup to mne-python (Xvfb, minimal commands, env vars)
-wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
-source get_minimal_commands.sh
 wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/setup_xvfb.sh
 bash setup_xvfb.sh
 sudo apt install -qq tcsh libxft2
+wget -q https://raw.githubusercontent.com/mne-tools/mne-python/main/tools/get_minimal_commands.sh
+source get_minimal_commands.sh
 mkdir -p ~/mne_data
 echo "set -e" | tee -a "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' | tee -a "$BASH_ENV"

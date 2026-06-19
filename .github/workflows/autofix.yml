@@ -20,7 +20,7 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ env.GITHUB_TOKEN}}
       - name: Do a deeper checkout

@@ -106,7 +106,8 @@ def run_time_decoding(
         kind = "time generalization"
     else:
         kind = "sliding estimator"
-    msg = f"Contrasting conditions ({kind}): {condition1} – {condition2}"
+    contrast_msg = f"{condition1} – {condition2}"
+    msg = f"Contrasting conditions ({kind}): {contrast_msg}"
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files["epochs"].copy().update(split=None)
@@ -230,6 +231,12 @@ def run_time_decoding(
             mean_crossval_score = np.diag(scores.mean(axis=0))
         else:
             mean_crossval_score = scores.mean(axis=0)
+        max_idx = np.argmax(mean_crossval_score)
+        msg = (
+            f"Max score for {contrast_msg}: t={epochs.times[max_idx]:0.3f} sec, "
+            f"{cfg.decoding_metric}={mean_crossval_score[max_idx]:0.3f}"
+        )
+        logger.info(**gen_log_kwargs(message=msg))
 
         out_files[f"tsv_{processing}"] = (
             out_files[mat_key].copy().update(extension=".tsv")

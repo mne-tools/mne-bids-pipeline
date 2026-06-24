@@ -242,6 +242,8 @@ def one_subject_decoding(
         freq_range_name: str,
         tmin: float | None = None,
         tmax: float | None = None,
+        *,
+        score: float,
     ) -> str:
         msg = (
             f"Contrast: {cond1} – {cond2}, "
@@ -249,6 +251,7 @@ def one_subject_decoding(
         )
         if tmin is not None:
             msg += f" {tmin:+5.3f}–{tmax:+5.3f} sec"
+        msg += f": {cfg.decoding_metric}={score:0.3f}"
         return msg
 
     for idx, row in freq_decoding_table.iterrows():
@@ -258,9 +261,6 @@ def one_subject_decoding(
         cond1 = row["cond_1"]
         cond2 = row["cond_2"]
         freq_range_name = row["freq_range_name"]
-
-        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
-        logger.info(**gen_log_kwargs(msg))
 
         # XXX We're filtering here again in each iteration. This should be
         # XXX optimized.
@@ -279,8 +279,11 @@ def one_subject_decoding(
             n_jobs=1,
             error_score="raise",
         )
-        freq_decoding_table.loc[idx, "mean_crossval_score"] = cv_scores.mean()
+        score = cv_scores.mean()
+        freq_decoding_table.loc[idx, "mean_crossval_score"] = score
         freq_decoding_table.at[idx, "scores"] = cv_scores
+        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, score=score)
+        logger.info(**gen_log_kwargs(msg))
         del fmin, fmax, cond1, cond2, freq_range_name
 
     # Loop over times x frequencies
@@ -351,8 +354,16 @@ def one_subject_decoding(
         score = cv_scores.mean()
         tf_decoding_table.loc[idx, "mean_crossval_score"] = score
         tf_decoding_table.at[idx, "scores"] = cv_scores
-        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
-        msg += f": {cfg.decoding_metric}={score:0.3f}"
+        msg = _fmt_contrast(
+            cond1,
+            cond2,
+            fmin,
+            fmax,
+            freq_range_name,
+            tmin,
+            tmax,
+            score=score,
+        )
         logger.info(**gen_log_kwargs(msg))
         del tmin, tmax, fmin, fmax, cond1, cond2, freq_range_name
 

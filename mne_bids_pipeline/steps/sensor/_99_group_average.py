@@ -369,7 +369,9 @@ def average_time_by_time_decoding(
     cond_2: str,
     in_files: InFilesT,
 ) -> OutFilesT:
-    logger.info(**gen_log_kwargs(message="Averaging time-by-time decoding results"))
+    contrast_msg = f"{cond_1} – {cond_2}"
+    msg = f"Averaging time-by-time decoding results: {contrast_msg}"
+    logger.info(**gen_log_kwargs(message=msg))
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
     epochs = mne.read_epochs(in_files.pop("epochs"), preload=False)
@@ -457,6 +459,8 @@ def average_time_by_time_decoding(
             n_permutations=cfg.cluster_n_permutations,
             random_seed=cfg.random_state,
         )
+        msg = f"Found {len(clusters)} cluster{_pl(clusters)} for {contrast_msg}"
+        logger.info(**gen_log_kwargs(message=msg))
 
         contrast_score_stats.update(
             {
@@ -800,7 +804,8 @@ def average_csp_decoding(
     cond_2: str,
     in_files: InFilesT,
 ) -> OutFilesT:
-    msg = f"Summarizing CSP results: {cond_1} - {cond_2}."
+    contrast_msg = f"{cond_1} – {cond_2}"
+    msg = f"Summarizing CSP results: {contrast_msg}"
     logger.info(**gen_log_kwargs(message=msg))
     in_files.pop("epochs")
     subjects = get_subjects_given_session(cfg, session)
@@ -933,7 +938,13 @@ def average_csp_decoding(
                     out_type="mask",
                     tail=1,  # one-sided: significantly above chance level
                     seed=cfg.random_state,
+                    verbose="error",  # ignore No clusters found
                 )
+                msg = (
+                    f"Found {len(all_clusters)} cluster{_pl(all_clusters)} for "
+                    f"{contrast_msg} in {freq_range_name}"
+                )
+                logger.info(**gen_log_kwargs(message=msg))
             n_permutations = H0.size - 1
             all_clusters = np.array(all_clusters)  # preserve "empty" 0th dimension
             cluster_permutation_results[freq_range_name] = {
@@ -1032,6 +1043,8 @@ def _average_csp_time_freq(
     return grand_average
 
 
+# TODO: Eventually split out the sensor grand-averaging from the decoding steps so that
+# tweaking decoding params doesn't affect sensor-level grand averaging
 def get_config(
     *,
     config: SimpleNamespace,

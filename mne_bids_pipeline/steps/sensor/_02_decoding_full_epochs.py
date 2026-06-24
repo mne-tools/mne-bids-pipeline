@@ -95,7 +95,8 @@ def run_epochs_decoding(
 ) -> OutFilesT:
     import matplotlib.pyplot as plt
 
-    msg = f"Contrasting conditions: {condition1} – {condition2}"
+    contrast_msg = f"{condition1} – {condition2}"
+    msg = f"Contrasting conditions: {contrast_msg}"
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files["epochs"].copy().update(split=None)
@@ -175,11 +176,13 @@ def run_epochs_decoding(
     )
     out_files[tsv_key] = out_files[mat_key].copy().update(extension=".tsv")
     savemat(out_files[f"mat_{processing}"], {"scores": scores})
+    msg = f"Mean score for {contrast_msg}: {cfg.decoding_metric}={scores.mean():0.3f}"
+    logger.info(**gen_log_kwargs(message=msg))
 
     tabular_data = pd.Series(
         {
-            "cond_1": cond_names[0],
-            "cond_2": cond_names[1],
+            "cond_1": condition1,
+            "cond_2": condition2,
             "mean_crossval_score": scores.mean(axis=0),
             "metric": cfg.decoding_metric,
         }

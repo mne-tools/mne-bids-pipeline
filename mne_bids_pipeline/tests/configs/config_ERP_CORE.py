@@ -171,6 +171,7 @@ elif task == "ERN":
         "gamma": [50, 63],
     }
     decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]
+    cluster_forming_t_threshold = 2  # Only for testing!
 elif task == "LRP":
     rename_events = {
         "stimulus/11": "compatible/left",

@@ -86,6 +86,8 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:.*filter extracted tar archives.*:DeprecationWarning
     # vtk<->NumPy 2.5
     ignore:.*Setting the shape on a NumPy array[\S\s]*:DeprecationWarning
+    # meegkit
+    ignore:pyriemann\.utils\.mean is deprecated.*:DeprecationWarning
     """
     for warning_line in warning_lines.split("\n"):
         warning_line = warning_line.strip()

@@ -43,9 +43,9 @@ def get_input_fnames_cov(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> InFilesT:
+) -> dict[str, BIDSPath | str]:
     cov_type = _get_cov_type(cfg)
-    in_files = dict()
+    in_files: InFilesT = dict()
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -61,7 +61,10 @@ def get_input_fnames_cov(
         root=cfg.deriv_root,
         check=False,
     )
-    in_files["report_info"] = fname_epochs.copy().update(processing="clean")
+    report_info = fname_epochs.copy().update(processing="clean")
+    assert isinstance(report_info, BIDSPath)
+    in_files["report_info"] = report_info
+    in_files_broad: dict[str, BIDSPath | str] = dict()
     _update_for_splits(in_files, "report_info", single=True)
     for task in cfg.all_tasks:
         fname_evoked = fname_epochs.copy().update(
@@ -70,8 +73,10 @@ def get_input_fnames_cov(
         if fname_evoked.fpath.exists():
             in_files[f"evoked_task-{task}"] = fname_evoked
     if cov_type == "custom":
-        in_files["__unknown_inputs__"] = "custom noise_cov callable"
-        return in_files
+        for key, val in in_files.items():
+            in_files_broad[key] = val
+        in_files_broad["__unknown_inputs__"] = "custom noise_cov callable"
+        return in_files_broad
     if cov_type == "raw":
         assert cfg.noise_cov in ("rest", "emptyroom"), cfg.noise_cov
         in_files["raw"] = BIDSPath(
@@ -95,7 +100,9 @@ def get_input_fnames_cov(
             key = f"epochs_task-{task}"
             in_files[key] = fname_epochs.copy().update(task=task)
             _update_for_splits(in_files, key, single=True)
-    return in_files
+    for key, val in in_files.items():
+        in_files_broad[key] = val
+    return in_files_broad
 
 
 def compute_cov_rank_from_epochs(

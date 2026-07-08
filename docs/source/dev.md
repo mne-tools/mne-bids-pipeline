@@ -5,6 +5,7 @@
 ### :new: New features & enhancements
 
 - Added [`ignore_warnings`][mne_bids_pipeline._config.ignore_warnings] config option to allow users to specify warnings to ignore when calling `read_raw_bids` (#1224 by @larsoner)
+- Added tracking of the current step in the terminal title (#1266 by @larsoner)
 
 ### :warning: Behavior changes
 

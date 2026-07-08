@@ -9,7 +9,7 @@ import numpy as np
 from ._config_import import _import_config
 from ._config_template import create_template_config
 from ._config_utils import _get_step_modules
-from ._logging import gen_log_kwargs, logger
+from ._logging import _terminal_title, gen_log_kwargs, logger
 from ._parallel import get_parallel_backend
 from ._run import _short_step_path
 
@@ -248,7 +248,8 @@ def main() -> None:
         assert step_module.__file__ is not None
         step = _short_step_path(pathlib.Path(step_module.__file__))
         logger.title(title=f"{step}")
-        step_module.main(config=config_imported)
+        with _terminal_title(f"MNE-BIDS-Pipeline: {step}"):
+            step_module.main(config=config_imported)
         elapsed = time.time() - start
         hours, remainder = divmod(elapsed, 3600)
         hours = int(hours)

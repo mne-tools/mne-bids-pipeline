@@ -18,6 +18,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
     get_runs_tasks,
+    get_src_fname,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
@@ -28,7 +29,7 @@ from mne_bids_pipeline._run import (
     failsafe_run,
     save_logs,
 )
-from mne_bids_pipeline.typing import InFilesT, OutFilesT
+from mne_bids_pipeline.typing import InFilesPathT, OutFilesT
 
 
 def _prepare_trans_template(
@@ -103,7 +104,7 @@ def _prepare_trans_subject(
 
 def get_input_fnames_forward(
     *, cfg: SimpleNamespace, subject: str, session: str | None
-) -> InFilesT:
+) -> InFilesPathT:
     task = cfg.runs_tasks[0][1]
     bids_path = BIDSPath(
         subject=subject,
@@ -134,7 +135,11 @@ def get_input_fnames_forward(
     bem_path = cfg.fs_subjects_dir / cfg.fs_subject / "bem"
     _, tag = _get_bem_conductivity(cfg)
     in_files["bem"] = bem_path / f"{cfg.fs_subject}-{tag}-bem-sol.fif"
-    in_files["src"] = bem_path / f"{cfg.fs_subject}-{cfg.spacing}-src.fif"
+    in_files["src"] = get_src_fname(
+        fs_subjects_dir=cfg.fs_subjects_dir,
+        fs_subject=cfg.fs_subject,
+        spacing=cfg.spacing,
+    )
     return in_files
 
 
@@ -147,7 +152,7 @@ def run_forward(
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-    in_files: InFilesT,
+    in_files: InFilesPathT,
 ) -> OutFilesT:
     # Do not use processing=cfg.proc here because the forward could actually be
     # influenced by previous steps (e.g., Maxwell filtering), so just make sure we

@@ -18,6 +18,7 @@
 - Corrected import order: remove channels before setting template montage as stated in [`eeg_template_montage`][mne_bids_pipeline._config.eeg_template_montage] (#1220 by @dnacombo)
 - Fixed crash when concatenating epochs from runs with different bad channels. The pipeline now uses the union of bad channels across runs. (#1242 by @hoechenberger)
 - Fixed a small CSP labeling glitch in the report. (#1241 by @hoechenberger)
+- The pipeline now recognizes source space files named with a dash between the spacing letters and number (e.g., `sample-oct-6-src.fif`), avoiding needless recomputation (#1047 by @larsoner)
 
 [//5]: # (### :books: Documentation)
 

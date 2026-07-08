@@ -11,6 +11,7 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_fs_subjects_dir,
     get_sessions,
+    get_src_fname,
     get_subjects_sessions,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -34,11 +35,10 @@ def get_output_fnames_setup_source_space(
     *, cfg: SimpleNamespace, subject: str
 ) -> InFilesPathT:
     out_files = dict()
-    out_files["src"] = (
-        cfg.fs_subjects_dir
-        / cfg.fs_subject
-        / "bem"
-        / f"{cfg.fs_subject}-{cfg.spacing}-src.fif"
+    out_files["src"] = get_src_fname(
+        fs_subjects_dir=cfg.fs_subjects_dir,
+        fs_subject=cfg.fs_subject,
+        spacing=cfg.spacing,
     )
     return out_files
 

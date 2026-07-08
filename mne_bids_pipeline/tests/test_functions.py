@@ -35,10 +35,6 @@ def test_all_functions_return(module_name: str) -> None:
             f"{module_name}.{name} is missing failsafe_run decorator"
         )
         funcs.append(obj)
-    # Some module names we know don't have any
-    if module_name.split(".")[-1] in ("_01_recon_all",):
-        assert len(funcs) == 0
-        return
 
     assert len(funcs) != 0, f"No failsafe_runs functions found in {module_name}"
 

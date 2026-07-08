@@ -11,7 +11,12 @@ from mne_bids.utils import _write_json
 from mne_bids_pipeline._config_utils import _bids_kwargs, get_subjects_sessions
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._report import _open_report, _report_path
-from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _prep_out_files_path,
+    failsafe_run,
+    save_logs,
+)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -49,14 +54,24 @@ def init_dataset(
     return _prep_out_files_path(exec_params=exec_params, out_files=out_files)
 
 
+def get_input_fnames_init_subject_dirs(
+    *, cfg: SimpleNamespace, subject: str, session: str | None
+) -> InFilesT:
+    """Get input filenames for init_subject_dirs."""
+    return dict()
+
+
+@failsafe_run(get_input_fnames=get_input_fnames_init_subject_dirs)
 def init_subject_dirs(
     *,
     cfg: SimpleNamespace,
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> None:
+    in_files: InFilesT,
+) -> OutFilesT:
     """Create processing data output directories for individual participants."""
+    assert not in_files, "init_subject_dirs should not receive any input files"
     out_dir = cfg.deriv_root / f"sub-{subject}"
     if session is not None:
         out_dir /= f"ses-{session}"
@@ -64,7 +79,9 @@ def init_subject_dirs(
 
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    if not _report_path(cfg=cfg, subject=subject, session=session).fpath.is_file():
+    out_files = dict()
+    out_files["report"] = _report_path(cfg=cfg, subject=subject, session=session)
+    if not out_files["report"].fpath.is_file():
         with _open_report(
             cfg=cfg,
             exec_params=exec_params,
@@ -72,9 +89,10 @@ def init_subject_dirs(
             session=session,
         ):
             pass
+    return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 
-def get_config(
+def get_config_init_dataset(
     *,
     config: SimpleNamespace,
 ) -> SimpleNamespace:
@@ -87,18 +105,33 @@ def get_config(
     return cfg
 
 
+def get_config_init_subject_dirs(
+    *,
+    config: SimpleNamespace,
+) -> SimpleNamespace:
+    # Deliberately excludes PIPELINE_NAME/VERSION/CODE_URL (unlike
+    # get_config_init_dataset): those aren't needed here, and including them would
+    # cause unnecessary cache misses whenever they change (e.g. between releases).
+    return SimpleNamespace(**_bids_kwargs(config=config))
+
+
 def main(*, config: SimpleNamespace) -> None:
     """Initialize the output directories."""
-    init_dataset(cfg=get_config(config=config), exec_params=config.exec_params)
+    logs = [
+        init_dataset(
+            cfg=get_config_init_dataset(config=config), exec_params=config.exec_params
+        )
+    ]
     # Don't bother with parallelization here as I/O operations are generally
     # not well parallelized (and this should be very fast anyway)
     for subject, sessions in get_subjects_sessions(config).items():
         for session in sessions:
-            init_subject_dirs(
-                cfg=get_config(
-                    config=config,
-                ),
-                exec_params=config.exec_params,
-                subject=subject,
-                session=session,
+            logs.append(
+                init_subject_dirs(
+                    cfg=get_config_init_subject_dirs(config=config),
+                    exec_params=config.exec_params,
+                    subject=subject,
+                    session=session,
+                )
             )
+    save_logs(config=config, logs=logs)

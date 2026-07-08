@@ -12,9 +12,6 @@ from . import _config_utils, _decoding, _import_data
 
 _CONFIG_RE = re.compile(r"config\.([a-zA-Z_]+)")
 
-_NO_CONFIG = {
-    "freesurfer/_01_recon_all",
-}
 _IGNORE_OPTIONS = {
     "PIPELINE_NAME",
     "VERSION",
@@ -326,10 +323,7 @@ class _ParseConfigSteps:
                     assert isinstance(keyword.value.value, ast.Name)
                     assert keyword.value.value.id == "config", f"{where} {keyword.value.value.id}"  # noqa: E501  # fmt: skip
                     _add_step_option(step, option)
-            if step in _NO_CONFIG:
-                assert not found, f"Found unexpected get_config* in {step}"
-            else:
-                assert found, f"Could not find get_config* in {step}"
+            assert found, f"Could not find get_config* in {step}"
         for key in self._force_empty:
             steps[key] = list()
         for key, val in steps.items():

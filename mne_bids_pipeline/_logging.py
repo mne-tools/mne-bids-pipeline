@@ -5,6 +5,7 @@ import datetime
 import inspect
 import logging
 import os
+import sys
 from collections.abc import Generator
 
 import rich.console
@@ -238,3 +239,20 @@ def _log_context(level: int) -> Generator[None, None, None]:
         yield
     finally:
         logger.level = old_level
+
+
+@contextlib.contextmanager
+def _terminal_title(title):
+    # Adapted from https://github.com/ipython/ipython/blob/0c587d631a01a3ba01eb783f790a0fc69f6cc953/IPython/utils/terminal.py#L68
+    # but with exception suppression (don't die because we can't write to the terminal)
+    # which is probably overkill since IPython doesn't bother (but they do provide
+    # a way to turn this behavior off)
+    with contextlib.suppress(Exception):
+        sys.stdout.write("\033[22;0t")  # saves the state
+        sys.stdout.write(f"\033]0;{title}\007")  # sets the title
+        sys.stdout.flush()
+    try:
+        yield
+    finally:
+        with contextlib.suppress(Exception):
+            sys.stdout.write("\033[23;0t")  # restores the state, but don't flush

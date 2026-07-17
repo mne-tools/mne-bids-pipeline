@@ -2,6 +2,7 @@ import ast
 import copy
 import difflib
 import importlib.util
+import inspect
 import os
 import pathlib
 import re
@@ -329,6 +330,13 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         raise ConfigError(
             f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
+        )
+    spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
+    if config.mf_mc_weighted and "weighted" not in spec.args + spec.kwonlyargs:
+        raise ConfigError(
+            "mf_mc_weighted is set to True, but your version of MNE-Python does not "
+            "support the `weighted` argument in mne.chpi.compute_head_pos. Please "
+            "update MNE-Python to >= 1.13"
         )
     # if `destination="twa"` make sure `mf_mc=True`
     if (

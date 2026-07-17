@@ -332,7 +332,7 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
         )
     spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
-    if config.mf_mc_weighted and "weighted" not in spec.args + spec.kwonlyargs:
+    if config.mf_mc and config.mf_mc_weighted and "weighted" not in spec.kwonlyargs:
         raise ConfigError(
             "mf_mc_weighted is set to True, but your version of MNE-Python does not "
             "support the `weighted` argument in mne.chpi.compute_head_pos. Please "

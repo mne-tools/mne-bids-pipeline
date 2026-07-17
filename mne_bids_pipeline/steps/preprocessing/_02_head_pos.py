@@ -1,5 +1,6 @@
 """Estimate head positions."""
 
+import inspect
 from types import SimpleNamespace
 
 import mne
@@ -105,11 +106,16 @@ def run_head_pos(
     logger.info(**gen_log_kwargs(message="Estimating cHPI locations"))
     chpi_locs = mne.chpi.compute_chpi_locs(raw.info, chpi_amplitudes)
     logger.info(**gen_log_kwargs(message="Estimating head positions"))
+    kwargs = dict()
+    spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
+    if "weighted" in spec.kwonlyargs:
+        kwargs["weighted"] = cfg.mf_mc_weighted
     head_pos = mne.chpi.compute_head_pos(
         raw.info,
         chpi_locs,
         gof_limit=cfg.mf_mc_gof_limit,
         dist_limit=cfg.mf_mc_dist_limit,
+        **kwargs,
     )
     mne.chpi.write_head_pos(out_files[key], head_pos)
 
@@ -273,6 +279,7 @@ def get_config_head_pos(
         mf_mc_gof_limit=config.mf_mc_gof_limit,
         mf_mc_dist_limit=config.mf_mc_dist_limit,
         mf_mc_t_window=config.mf_mc_t_window,
+        mf_mc_weighted=config.mf_mc_weighted,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

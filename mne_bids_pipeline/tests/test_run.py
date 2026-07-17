@@ -1,11 +1,12 @@
 """Download test data and run a test suite."""
 
+import contextlib
 import os
 import re
 import shutil
 import sys
+import warnings
 from collections.abc import Collection, Generator
-from contextlib import nullcontext
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, TypedDict
@@ -216,16 +217,17 @@ def test_run(
         extra_path.write_text(extra_config)
         monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING_EXTRA_CONFIG", str(extra_path))
 
-    # XXX Workaround for buggy date in ds000247. Remove this and the
-    # XXX file referenced here once fixed!!!
+    warning_ctx = contextlib.nullcontext
     fix_path = Path(__file__).parent
     if dataset == "ds000247":
+        # XXX Workaround for buggy date in ds000247. Remove this and the
+        # XXX file referenced here once fixed!!!
         dst = (
             DATA_DIR / "ds000247" / "sub-0002" / "ses-01" / "sub-0002_ses-01_scans.tsv"
         )
         shutil.copy(src=fix_path / "ds000247_scans.tsv", dst=dst)
-    # XXX Workaround for buggy participant_id in ds001971
     elif dataset == "ds001971":
+        # XXX Workaround for buggy participant_id in ds001971
         shutil.copy(
             src=fix_path / "ds001971_participants.tsv",
             dst=DATA_DIR / "ds001971" / "participants.tsv",
@@ -239,6 +241,18 @@ def test_run(
             / "ses-t1"
             / "sub-010_ses-t1_scans.tsv",
         )
+    elif dataset == "ds004229":
+
+        @contextlib.contextmanager
+        def warning_ctx():
+            with warnings.catch_warnings(record=True):
+                warnings.filterwarnings(
+                    "ignore", ".*SVD did not converge.*", category=RuntimeWarning
+                )
+                warnings.filterwarnings(
+                    "ignore", ".*cannot determine the transf.*", category=RuntimeWarning
+                )
+                yield
 
     # Run the tests.
     steps = test_options.get("steps", ("preprocessing", "sensor"))
@@ -250,7 +264,7 @@ def test_run(
         command.append("--n_jobs=1")
     monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING", "true")
     monkeypatch.setattr(sys, "argv", command)
-    with capsys.disabled():
+    with capsys.disabled(), warning_ctx():
         print()
         main()
 
@@ -382,7 +396,7 @@ def test_missing_sessions(
     )
     # set up the context handler
     context = (
-        nullcontext()
+        contextlib.nullcontext()
         if allow_missing_sessions
         else pytest.raises(RuntimeError, match=r"Subject 1 is missing session \['b'\]")
     )

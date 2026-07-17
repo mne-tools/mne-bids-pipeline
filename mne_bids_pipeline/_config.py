@@ -814,6 +814,12 @@ mf_mc_dist_limit: float = 0.005
 Minimum distance (m) to accept for cHPI position fitting.
 """
 
+mf_mc_weighted: bool = True
+"""
+Whether to use smooth weighting for HPI during movement compensation.
+Using `True` (default) requires MNE >= 1.13.
+"""
+
 mf_mc_rotation_velocity_limit: float | None = None
 """
 The rotation velocity limit (degrees/second) to use when annotating

@@ -247,10 +247,10 @@ def test_run(
         def warning_ctx():
             with warnings.catch_warnings(record=True):
                 warnings.filterwarnings(
-                    "ignore", "SVD did not converge", category=RuntimeWarning
+                    "ignore", ".*SVD did not converge.*", category=RuntimeWarning
                 )
                 warnings.filterwarnings(
-                    "ignore", "cannot determine the transformati", category=UserWarning
+                    "ignore", ".*cannot determine the transf.*", category=RuntimeWarning
                 )
                 yield
 

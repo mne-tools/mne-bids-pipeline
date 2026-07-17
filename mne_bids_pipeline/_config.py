@@ -1197,7 +1197,10 @@ Can be a dict mapping task names to tmax values.
 
 rest_epochs_duration: float | None = None
 """
-Duration of epochs in seconds.
+Duration of fixed-length epochs, in seconds. This parameter must be set when
+[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is `True`. Use
+[`rest_epochs_overlap`][mne_bids_pipeline._config.rest_epochs_overlap] to control
+the overlap between consecutive epochs.
 """
 
 rest_epochs_overlap: float | None = None

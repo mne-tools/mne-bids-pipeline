@@ -218,6 +218,7 @@ def test_run(
 
     # XXX Workaround for buggy date in ds000247. Remove this and the
     # XXX file referenced here once fixed!!!
+    warning_ctx = nullcontext()
     fix_path = Path(__file__).parent
     if dataset == "ds000247":
         dst = (
@@ -239,6 +240,8 @@ def test_run(
             / "ses-t1"
             / "sub-010_ses-t1_scans.tsv",
         )
+    elif dataset == "ds004229":
+        warning_ctx = pytest.warns(RuntimeWarning, match="cannot determine the transf")
 
     # Run the tests.
     steps = test_options.get("steps", ("preprocessing", "sensor"))
@@ -250,7 +253,7 @@ def test_run(
         command.append("--n_jobs=1")
     monkeypatch.setenv("_MNE_BIDS_STUDY_TESTING", "true")
     monkeypatch.setattr(sys, "argv", command)
-    with capsys.disabled():
+    with capsys.disabled(), warning_ctx:
         print()
         main()
 

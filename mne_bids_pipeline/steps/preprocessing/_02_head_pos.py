@@ -108,7 +108,7 @@ def run_head_pos(
     logger.info(**gen_log_kwargs(message="Estimating head positions"))
     kwargs = dict()
     spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
-    if "weighted" in spec.kwonlyargs:
+    if "weighted" in spec.args:
         kwargs["weighted"] = cfg.mf_mc_weighted
     head_pos = mne.chpi.compute_head_pos(
         raw.info,

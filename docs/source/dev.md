@@ -15,6 +15,7 @@
 
 ### :bug: Bug fixes
 
+- Raise an informative error if [`rest_epochs_duration`][mne_bids_pipeline._config.rest_epochs_duration] is not set for resting-state data and document the parameter (#1272 by @viranovskaya)
 - Fixed bug where [`log_level`][mne_bids_pipeline._config.log_level] was not being applied to the MBPlogger (#1224 by @larsoner)
 - Corrected import order: remove channels before setting template montage as stated in [`eeg_template_montage`][mne_bids_pipeline._config.eeg_template_montage] (#1220 by @dnacombo)
 - Fixed crash when concatenating epochs from runs with different bad channels. The pipeline now uses the union of bad channels across runs. (#1242 by @hoechenberger)

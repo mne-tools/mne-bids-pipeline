@@ -503,6 +503,12 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         )
 
     # Another check that depends on some of the functions defined above
+    if config.task_is_rest and config.rest_epochs_duration is None:
+        raise ValueError(
+            "Please set `rest_epochs_duration` in your configuration when "
+            "`task_is_rest` is True."
+        )
+
     if not config.task_is_rest and config.conditions is None:
         raise ValueError(
             "Please indicate the name of your conditions in your "

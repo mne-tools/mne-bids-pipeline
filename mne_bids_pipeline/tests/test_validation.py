@@ -11,11 +11,7 @@ from mne_bids_pipeline._config_import import ConfigError, _import_config
 def test_rest_epochs_duration_validation(tmp_path: Path) -> None:
     """Test that resting-state epoch duration is required."""
     config_path = tmp_path / "config.py"
-    config_text = (
-        f"bids_root = '{tmp_path}'\n"
-        "ch_types = ['eeg']\n"
-        "task_is_rest = True\n"
-    )
+    config_text = f"bids_root = '{tmp_path}'\nch_types = ['eeg']\ntask_is_rest = True\n"
     config_path.write_text(config_text)
 
     with pytest.raises(ValueError, match="Please set `rest_epochs_duration`"):

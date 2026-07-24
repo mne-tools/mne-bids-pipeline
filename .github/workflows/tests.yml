@@ -18,7 +18,7 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.12"
     - uses: astral-sh/setup-uv@v7
@@ -58,7 +58,7 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "${{ matrix.python }}"
       - run: pip install -ve . --group dev --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
@@ -96,7 +96,7 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -ve . --group dev pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"

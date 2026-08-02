@@ -8,6 +8,21 @@ import pytest
 from mne_bids_pipeline._config_import import ConfigError, _import_config
 
 
+def test_rest_epochs_duration_validation(tmp_path: Path) -> None:
+    """Test that resting-state epoch duration is required."""
+    config_path = tmp_path / "config.py"
+    config_text = f"bids_root = '{tmp_path}'\nch_types = ['eeg']\ntask_is_rest = True\n"
+    config_path.write_text(config_text)
+
+    with pytest.raises(ValueError, match="Please set `rest_epochs_duration`"):
+        _import_config(config_path=config_path)
+
+    config_path.write_text(
+        config_text + "rest_epochs_duration = 30\nrest_epochs_overlap = 0\n"
+    )
+    _import_config(config_path=config_path)
+
+
 def test_validation(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Test that misspellings are caught by our config import validator."""
     config_path = tmp_path / "config.py"

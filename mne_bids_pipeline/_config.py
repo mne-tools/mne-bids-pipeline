@@ -814,6 +814,12 @@ mf_mc_dist_limit: float = 0.005
 Minimum distance (m) to accept for cHPI position fitting.
 """
 
+mf_mc_weighted: bool = True
+"""
+Whether to use smooth weighting for HPI during movement compensation.
+Using `True` (default) requires MNE >= 1.13.
+"""
+
 mf_mc_rotation_velocity_limit: float | None = None
 """
 The rotation velocity limit (degrees/second) to use when annotating
@@ -1191,7 +1197,10 @@ Can be a dict mapping task names to tmax values.
 
 rest_epochs_duration: float | None = None
 """
-Duration of epochs in seconds.
+Duration of fixed-length epochs, in seconds. This parameter must be set when
+[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is `True`. Use
+[`rest_epochs_overlap`][mne_bids_pipeline._config.rest_epochs_overlap] to control
+the overlap between consecutive epochs.
 """
 
 rest_epochs_overlap: float | None = None

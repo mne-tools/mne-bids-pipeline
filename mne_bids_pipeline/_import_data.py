@@ -867,28 +867,43 @@ def _read_bads_tsv(
     return out
 
 
-def _import_data_kwargs(
+def _raw_path_kwargs(
     *, config: SimpleNamespace, subject: str, session: str | None
 ) -> dict[str, Any]:
-    """Get config params needed for any raw data loading."""
+    """Get config params needed to work out *which* raw files a step deals with.
+
+    This is the subset of :func:`_import_data_kwargs` needed by steps that read
+    already-derived data and so never re-run the raw import itself. Steps that do
+    import raw data want :func:`_import_data_kwargs`, which builds on this.
+    """
     mf_reference_run, mf_reference_task = get_mf_reference_run_task(
         config=config, subject=subject, session=session
     )
     return dict(
-        # import_experimental_data / general
-        task=config.task,
         process_empty_room=config.process_empty_room,
         process_rest=config.process_rest,
         task_is_rest=config.task_is_rest,
-        # _get_raw_paths, _get_noise_path
-        use_maxwell_filter=config.use_maxwell_filter,
         mf_reference_run=mf_reference_run,
         mf_reference_task=mf_reference_task,
         data_type=config.data_type,
-        # automatic add_bads
-        find_noisy_channels_meg=config.find_noisy_channels_meg,
-        find_flat_channels_meg=config.find_flat_channels_meg,
-        find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        ch_types=config.ch_types,
+        **_bids_kwargs(config=config),
+    )
+
+
+def _import_data_kwargs(
+    *, config: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, Any]:
+    """Get config params needed for any raw data loading.
+
+    Automatic bad-channel detection params are *not* included; only
+    ``preprocessing/_01_data_quality`` does that, and it adds them itself.
+    """
+    return dict(
+        # import_experimental_data / general
+        task=config.task,
+        # _get_raw_paths, _get_noise_path
+        use_maxwell_filter=config.use_maxwell_filter,
         # 1. _load_data
         reader_extra_params=config.reader_extra_params,
         crop_runs=config.crop_runs,
@@ -896,7 +911,6 @@ def _import_data_kwargs(
         eeg_template_montage=config.eeg_template_montage,
         # 3. _create_bipolar_channels
         eeg_bipolar_channels=config.eeg_bipolar_channels,
-        ch_types=config.ch_types,
         eog_channels=config.eog_channels,
         # 4. _drop_channels_func
         drop_channels=config.drop_channels,
@@ -912,10 +926,7 @@ def _import_data_kwargs(
         fix_stim_artifact=config.fix_stim_artifact,
         stim_artifact_tmin=config.stim_artifact_tmin,
         stim_artifact_tmax=config.stim_artifact_tmax,
-        # args used for all runs that process raw (reporting / writing)
-        plot_psd_for_runs=config.plot_psd_for_runs,
-        _raw_split_size=config._raw_split_size,
-        **_bids_kwargs(config=config),
+        **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
 
 

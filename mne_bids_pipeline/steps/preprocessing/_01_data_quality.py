@@ -370,11 +370,11 @@ def get_config(
         )
         extra_kwargs["mf_head_origin"] = config.mf_head_origin
     cfg = SimpleNamespace(
-        # These are included in _import_data_kwargs for automatic add_bads
-        # detection
-        # find_flat_channels_meg=config.find_flat_channels_meg,
-        # find_noisy_channels_meg=config.find_noisy_channels_meg,
-        # find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        # automatic add_bads detection; this is the only step that does it
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        plot_psd_for_runs=config.plot_psd_for_runs,
         **_import_data_kwargs(config=config, subject=subject, session=session),
         **extra_kwargs,
     )

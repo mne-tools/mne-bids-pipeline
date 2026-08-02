@@ -80,7 +80,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         spacing=config.spacing,
-        use_template_mri=config.use_template_mri,
         fs_subject=get_fs_subject(config=config, subject=subject, session=session),
         fs_subjects_dir=get_fs_subjects_dir(config),
     )

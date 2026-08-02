@@ -9,7 +9,7 @@ from mne.preprocessing import EOGRegression
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
-    _import_data_kwargs,
+    _raw_path_kwargs,
     _read_raw_msg,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -133,7 +133,9 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         regress_artifact=config.regress_artifact,
-        **_import_data_kwargs(config=config, subject=subject, session=session),
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
+        **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

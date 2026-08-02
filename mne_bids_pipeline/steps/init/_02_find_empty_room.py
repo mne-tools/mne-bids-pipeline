@@ -122,7 +122,6 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        data_type=get_datatype(config),
         **_bids_kwargs(config=config),
     )
     return cfg

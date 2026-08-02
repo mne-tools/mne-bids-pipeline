@@ -3,7 +3,7 @@ import inspect
 import textwrap
 from collections import defaultdict
 from pathlib import Path
-from types import FunctionType
+from types import FunctionType, ModuleType
 from typing import Any
 
 from tqdm import tqdm
@@ -38,15 +38,12 @@ _EXECUTION_OPTIONS = (
     "interactive",
 )
 _FORCE_EMPTY = _EXECUTION_OPTIONS + (
-    # Plus some BIDS one we don't detect because _bids_kwargs etc. above,
-    # which we could cross-check against the general.md list. A notable
-    # exception is random_state, since this does have more localized effects.
-    # These are used a lot at the very beginning, so adding them will lead
-    # to long lists. Instead, let's just mention at the top of General that
-    # messing with basic BIDS params will affect almost every step.
+    # Plus the basic BIDS params, which come in via _bids_kwargs and friends and
+    # so land on nearly every step. Listing them all would be noise, so instead we
+    # mention at the top of General that changing them affects almost every step.
+    # A notable exception is random_state, which does have more localized effects.
     "bids_root",
     "deriv_root",
-    "subjects_dir",
     "sessions",
     "acq",
     "proc",
@@ -56,25 +53,7 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
     "runs",
     "exclude_runs",
     "subjects",
-    "crop_runs",
-    "process_empty_room",
-    "process_rest",
-    "eeg_bipolar_channels",
     "eeg_reference",
-    "eeg_template_montage",
-    "drop_channels",
-    "reader_extra_params",
-    "plot_psd_for_runs",
-    "shortest_event",
-    "find_breaks",
-    "min_break_duration",
-    "t_break_annot_start_after_previous_event",
-    "t_break_annot_stop_before_next_event",
-    "rename_events",
-    "on_rename_missing_events",
-    "fix_stim_artifact",
-    "stim_artifact_tmin",
-    "stim_artifact_tmax",
     # And some that we force to be empty because they affect too many things
     # and what they affect is an incomplete list anyway
     "exclude_subjects",
@@ -85,38 +64,246 @@ _FORCE_EMPTY = _EXECUTION_OPTIONS + (
 )
 
 
-def _collect_options(
+def _bound_names(call: ast.Call, func: FunctionType, names: frozenset[str]) -> set[str]:
+    """Get the parameters of `func` that receive one of `names` at this call site.
+
+    This is what keeps the traversal honest: a helper's ``config`` parameter only
+    holds our object if the call site actually handed it over. Steps call helpers
+    both as ``f(cfg=cfg)`` and ``f(config=cfg)``, while unrelated functions (e.g.
+    ``_import_config``) have a ``config`` of their own that must not be followed.
+    """
+    try:
+        params = list(inspect.signature(func).parameters)
+    except (TypeError, ValueError):  # pragma: no cover
+        params = []
+    bound = set()
+    for pos, arg in enumerate(call.args):
+        if isinstance(arg, ast.Name) and arg.id in names and pos < len(params):
+            bound.add(params[pos])
+    for keyword in call.keywords:
+        if (
+            keyword.arg is not None
+            and isinstance(keyword.value, ast.Name)
+            and keyword.value.id in names
+        ):
+            bound.add(keyword.arg)
+    return bound
+
+
+def _collect_attrs(
     node: ast.AST,
     namespace: dict[str, Any],
-    options: list[str],
-    seen: set[tuple[str, str]],
+    names: frozenset[str],
+    attrs: set[str],
+    seen: set[tuple[str, str, frozenset[str]]],
+    *,
+    follow_get_config: bool,
 ) -> None:
-    """Collect config.* attribute accesses in node, recursing into called functions."""
+    """Collect ``<name>.<attr>`` accesses, recursing into functions that are called.
+
+    `names` are the local names currently bound to the object of interest (the
+    config for the "write" side, the cfg namespace for the "read" side). Only
+    functions defined in this package are followed, and only when the call site
+    passes the object to them. Each (function, binding) pair is visited at most
+    once, so recursive and mutually recursive helpers terminate.
+    """
     for sub in ast.walk(node):
         if isinstance(sub, ast.Attribute):
             if (
                 isinstance(sub.value, ast.Name)
-                and sub.value.id == "config"
+                and sub.value.id in names
                 and not sub.attr.startswith("__")
                 and sub.attr not in _IGNORE_OPTIONS
-                and sub.attr not in options
             ):
-                options.append(sub.attr)
+                attrs.add(sub.attr)
         elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
-            func = namespace.get(sub.func.id)
-            if func is not None:
-                func = inspect.unwrap(func)
-            if not isinstance(func, FunctionType):
+            func = _resolve_func(sub.func.id, namespace)
+            if func is None:
                 continue
-            # Only follow functions defined in this package
-            if not (func.__module__ or "").startswith(__package__):
+            # get_config* builds cfg; it is the "write" side, never a cfg reader
+            if not follow_get_config and func.__name__.startswith("get_config"):
                 continue
-            key = (func.__module__, func.__qualname__)
+            bound = _bound_names(sub, func, names)
+            if not bound:
+                continue
+            key = (func.__module__, func.__qualname__, frozenset(bound))
             if key in seen:
                 continue
             seen.add(key)
             source = textwrap.dedent(inspect.getsource(func))
-            _collect_options(ast.parse(source), func.__globals__, options, seen)
+            _collect_attrs(
+                ast.parse(source),
+                func.__globals__,
+                frozenset(bound),
+                attrs,
+                seen,
+                follow_get_config=follow_get_config,
+            )
+
+
+def _step_module_funcs(module: ModuleType) -> list[ast.FunctionDef]:
+    assert module.__file__ is not None
+    tree = ast.parse(Path(module.__file__).read_text("utf-8"))
+    return [node for node in tree.body if isinstance(node, ast.FunctionDef)]
+
+
+def get_step_options(module: ModuleType) -> set[str]:
+    """Get the config options a step writes into its ``cfg`` (or uses in ``main``).
+
+    This is the "write" side: ``get_config*`` and ``main`` are walked for
+    ``config.<option>`` accesses, following calls into package helpers.
+    """
+    funcs = _step_module_funcs(module)
+    assert any(func.name.startswith("get_config") for func in funcs), (
+        f"Could not find get_config* in {module.__name__}"
+    )
+    options: set[str] = set()
+    seen: set[tuple[str, str, frozenset[str]]] = set()
+    for func in funcs:
+        if func.name == "main" or func.name.startswith("get_config"):
+            _collect_attrs(
+                func,
+                vars(module),
+                frozenset({"config"}),
+                options,
+                seen,
+                follow_get_config=True,
+            )
+    return options
+
+
+def _resolve_func(name: str, namespace: dict[str, Any]) -> FunctionType | None:
+    func = namespace.get(name)
+    if func is not None:
+        func = inspect.unwrap(func)
+    if isinstance(func, FunctionType) and (func.__module__ or "").startswith(
+        __package__
+    ):
+        return func
+    return None
+
+
+def _dict_keys_assigned(scope: ast.AST, name: str) -> set[str]:
+    """Get the literal string keys assigned into a local dict, e.g. ``d["k"] = v``."""
+    keys = set()
+    for node in ast.walk(scope):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if (
+                isinstance(target, ast.Subscript)
+                and isinstance(target.value, ast.Name)
+                and target.value.id == name
+                and isinstance(target.slice, ast.Constant)
+                and isinstance(target.slice.value, str)
+            ):
+                keys.add(target.slice.value)
+    return keys
+
+
+def _fields_from_call(
+    call: ast.Call, namespace: dict[str, Any], fields: set[str], scope: ast.AST
+) -> None:
+    """Collect the field names a ``SimpleNamespace(...)``/``dict(...)`` call builds."""
+    for keyword in call.keywords:
+        if keyword.arg is not None:
+            fields.add(keyword.arg)
+            continue
+        # ``**extra_kwargs`` where a local dict was filled in conditionally
+        if isinstance(keyword.value, ast.Name):
+            fields |= _dict_keys_assigned(scope, keyword.value.id)
+            continue
+        # ``**_helper(...)`` expansion: recurse into the dict the helper returns
+        if not (
+            isinstance(keyword.value, ast.Call)
+            and isinstance(keyword.value.func, ast.Name)
+        ):
+            continue
+        func = _resolve_func(keyword.value.func.id, namespace)
+        if func is None:
+            continue
+        tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in ("dict", "SimpleNamespace")
+            ):
+                _fields_from_call(node, func.__globals__, fields, tree)
+
+
+def get_kwargs_helper_fields(func: FunctionType) -> set[str]:
+    """Get the cfg field names a ``*_kwargs`` helper contributes to a step."""
+    fields: set[str] = set()
+    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in ("dict", "SimpleNamespace")
+        ):
+            _fields_from_call(node, func.__globals__, fields, tree)
+    return fields - _IGNORE_OPTIONS
+
+
+def get_step_cfg_fields(module: ModuleType) -> set[str]:
+    """Get the ``cfg`` fields a step's ``get_config*`` builds.
+
+    Unlike :func:`get_step_options` (which reports *config options* consulted,
+    including ones read to compute a derived value), this reports the names that
+    end up on the ``cfg`` namespace, so it can be compared against
+    :func:`get_step_reads` to find fields that are passed but never read.
+    """
+    fields: set[str] = set()
+    for func in _step_module_funcs(module):
+        if not func.name.startswith("get_config"):
+            continue
+        for node in ast.walk(func):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "SimpleNamespace"
+            ):
+                _fields_from_call(node, vars(module), fields, func)
+    # symmetry with the read side, which also ignores these
+    return fields - _IGNORE_OPTIONS
+
+
+def get_step_reads(module: ModuleType) -> set[str]:
+    """Get the ``cfg`` fields a step actually reads at run time.
+
+    This is the "read" side, and the counterpart of :func:`get_step_options`.
+    Every function in the step module except ``get_config*`` is walked, and calls
+    into package helpers are followed. Helpers receive ``cfg`` under both names
+    (``f(cfg=cfg)`` and ``f(config=cfg)``), so accesses on either name count.
+
+    ``main`` is special: there ``config`` is the real config rather than ``cfg``,
+    so only direct ``cfg.<field>`` accesses count and calls are not followed
+    (the functions ``main`` hands ``cfg`` to are module-level, and walked anyway).
+    """
+    reads: set[str] = set()
+    seen: set[tuple[str, str, frozenset[str]]] = set()
+    for func in _step_module_funcs(module):
+        if func.name.startswith("get_config"):
+            continue
+        if func.name == "main":
+            for sub in ast.walk(func):
+                if (
+                    isinstance(sub, ast.Attribute)
+                    and isinstance(sub.value, ast.Name)
+                    and sub.value.id == "cfg"
+                ):
+                    reads.add(sub.attr)
+            continue
+        _collect_attrs(
+            func,
+            vars(module),
+            frozenset({"cfg"}),
+            reads,
+            seen,
+            follow_get_config=False,
+        )
+    return reads
 
 
 class _ParseConfigSteps:
@@ -137,23 +324,7 @@ class _ParseConfigSteps:
         )
         for module in tqdm(modules, desc="Generating option->step mapping"):
             step = "/".join(module.__name__.split(".")[-2:])
-            assert module.__file__ is not None
-            tree = ast.parse(Path(module.__file__).read_text("utf-8"))
-            # Walk get_config* (can be multiple!) and main
-            funcs = [
-                node
-                for node in tree.body
-                if isinstance(node, ast.FunctionDef)
-                and (node.name == "main" or node.name.startswith("get_config"))
-            ]
-            assert any(node.name.startswith("get_config") for node in funcs), (
-                f"Could not find get_config* in {step}"
-            )
-            options: list[str] = []
-            seen: set[tuple[str, str]] = set()
-            for func in funcs:
-                _collect_options(func, vars(module), options, seen)
-            for option in options:
+            for option in sorted(get_step_options(module)):
                 steps[option].append(step)
         for key in self._force_empty:
             steps[key] = list()

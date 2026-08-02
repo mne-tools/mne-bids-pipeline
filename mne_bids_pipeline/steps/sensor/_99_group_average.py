@@ -1053,7 +1053,6 @@ def get_config(
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
         allow_missing_sessions=config.allow_missing_sessions,
-        task_is_rest=config.task_is_rest,
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         epochs_tmin=_get_task_float(config.epochs_tmin, task=task),

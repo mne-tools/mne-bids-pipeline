@@ -744,6 +744,8 @@ def get_config_maxwell_filter(
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
         mf_extra_kws=config.mf_extra_kws,
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

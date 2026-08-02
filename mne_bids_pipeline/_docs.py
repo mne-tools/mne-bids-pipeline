@@ -274,26 +274,17 @@ def get_step_reads(module: ModuleType) -> set[str]:
 
     This is the "read" side, and the counterpart of :func:`get_step_options`.
     Every function in the step module except ``get_config*`` is walked, and calls
-    into package helpers are followed. Helpers receive ``cfg`` under both names
-    (``f(cfg=cfg)`` and ``f(config=cfg)``), so accesses on either name count.
+    into package helpers are followed.
 
-    ``main`` is special: there ``config`` is the real config rather than ``cfg``,
-    so only direct ``cfg.<field>`` accesses count and calls are not followed
-    (the functions ``main`` hands ``cfg`` to are module-level, and walked anyway).
+    Only the name ``cfg`` seeds the traversal, which is what makes ``main`` safe
+    to walk like any other function: its ``config`` is the real config, so
+    ``config.<option>`` there is not a cfg read and ``f(config=config)`` is not
+    followed, while ``f(config=cfg)`` -- which ``main`` does do -- is.
     """
     reads: set[str] = set()
     seen: set[tuple[str, str, frozenset[str]]] = set()
     for func in _step_module_funcs(module):
         if func.name.startswith("get_config"):
-            continue
-        if func.name == "main":
-            for sub in ast.walk(func):
-                if (
-                    isinstance(sub, ast.Attribute)
-                    and isinstance(sub.value, ast.Name)
-                    and sub.value.id == "cfg"
-                ):
-                    reads.add(sub.attr)
             continue
         _collect_attrs(
             func,

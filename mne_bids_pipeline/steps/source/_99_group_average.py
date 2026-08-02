@@ -242,6 +242,11 @@ def get_config(
         exclude_subjects=config.exclude_subjects,
         sessions=get_sessions(config),
         allow_missing_sessions=config.allow_missing_sessions,
+        # main() re-resolves the FreeSurfer subject per session by handing cfg to
+        # get_fs_subject(), which reads these two raw options rather than the
+        # fs_subjects_dir we already resolved above
+        subjects_dir=get_fs_subjects_dir(config),
+        use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
         smoothing_steps=config.smoothing_steps,

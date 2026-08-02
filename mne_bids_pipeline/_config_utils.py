@@ -962,6 +962,17 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
     )
 
 
+def _mf_cal_kwargs(
+    *, config: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, Any]:
+    """Get the Maxwell filter calibration / cross-talk params."""
+    return dict(
+        mf_cal_fname=get_mf_cal_fname(config=config, subject=subject, session=session),
+        mf_ctc_fname=get_mf_ctc_fname(config=config, subject=subject, session=session),
+        mf_head_origin=config.mf_head_origin,
+    )
+
+
 def _do_mf_autobad(*, cfg: SimpleNamespace) -> bool:
     return bool(cfg.find_noisy_channels_meg or cfg.find_flat_channels_meg)
 

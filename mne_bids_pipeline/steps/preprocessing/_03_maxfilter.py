@@ -28,9 +28,8 @@ from mne_bids import BIDSPath, read_raw_bids
 from mne_bids_pipeline._config_utils import (
     _get_ss,
     _get_ssrt,
+    _mf_cal_kwargs,
     _pl,
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
     get_runs_tasks,
 )
 from mne_bids_pipeline._import_data import (
@@ -721,19 +720,9 @@ def get_config_maxwell_filter(
     session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        mf_cal_fname=get_mf_cal_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
-        mf_ctc_fname=get_mf_ctc_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
+        **_mf_cal_kwargs(config=config, subject=subject, session=session),
         mf_st_duration=config.mf_st_duration,
         mf_st_correlation=config.mf_st_correlation,
-        mf_head_origin=config.mf_head_origin,
         mf_mc=config.mf_mc,
         mf_filter_chpi=config.mf_filter_chpi,
         mf_destination=config.mf_destination,

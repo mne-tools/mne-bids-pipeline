@@ -867,6 +867,21 @@ def _read_bads_tsv(
     return out
 
 
+def _epochs_kwargs(*, config: SimpleNamespace) -> dict[str, Any]:
+    """Get the config params that :func:`make_epochs` consumes."""
+    return dict(
+        epochs_custom_metadata=config.epochs_custom_metadata,
+        epochs_metadata_tmin=config.epochs_metadata_tmin,
+        epochs_metadata_tmax=config.epochs_metadata_tmax,
+        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
+        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
+        epochs_metadata_query=config.epochs_metadata_query,
+        event_repeated=config.event_repeated,
+        rest_epochs_duration=config.rest_epochs_duration,
+        rest_epochs_overlap=config.rest_epochs_overlap,
+    )
+
+
 def _raw_path_kwargs(
     *, config: SimpleNamespace, subject: str, session: str | None
 ) -> dict[str, Any]:

@@ -21,7 +21,11 @@ from mne_bids_pipeline._config_utils import (
     _get_task_float,
     get_eeg_reference,
 )
-from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
+from mne_bids_pipeline._import_data import (
+    _epochs_kwargs,
+    annotations_to_events,
+    make_epochs,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
@@ -354,25 +358,17 @@ def get_config(
     task: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
+        **_epochs_kwargs(config=config),
         use_maxwell_filter=config.use_maxwell_filter,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
         epochs_tmax=_get_task_float(config.epochs_tmax, task=task),
-        epochs_custom_metadata=config.epochs_custom_metadata,
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
-        event_repeated=config.event_repeated,
         epochs_decim=config.epochs_decim,
         report_add_epochs_image_kwargs=config.report_add_epochs_image_kwargs,
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=get_eeg_reference(config),
-        rest_epochs_duration=config.rest_epochs_duration,
-        rest_epochs_overlap=config.rest_epochs_overlap,
         _epochs_split_size=config._epochs_split_size,
         runs_for_task=_get_runs_sst(
             config=config, subject=subject, session=session, task=task

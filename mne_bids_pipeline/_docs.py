@@ -201,6 +201,28 @@ def _dict_keys_assigned(scope: ast.AST, name: str) -> set[str]:
     return keys
 
 
+def _fields_from_value(
+    value: ast.expr, namespace: dict[str, Any], fields: set[str], scope: ast.AST
+) -> None:
+    """Collect the field names an expression assigned to a kwargs dict contributes."""
+    if not (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)):
+        return
+    if value.func.id in ("dict", "SimpleNamespace"):
+        _fields_from_call(value, namespace, fields, scope)
+        return
+    func = _resolve_func(value.func.id, namespace)
+    if func is None:
+        return
+    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in ("dict", "SimpleNamespace")
+        ):
+            _fields_from_call(node, func.__globals__, fields, tree)
+
+
 def _fields_from_call(
     call: ast.Call, namespace: dict[str, Any], fields: set[str], scope: ast.AST
 ) -> None:
@@ -209,9 +231,16 @@ def _fields_from_call(
         if keyword.arg is not None:
             fields.add(keyword.arg)
             continue
-        # ``**extra_kwargs`` where a local dict was filled in conditionally
+        # ``**extra_kwargs`` where a local dict was built up conditionally, either
+        # by subscript assignment or by assigning a helper's return value
         if isinstance(keyword.value, ast.Name):
-            fields |= _dict_keys_assigned(scope, keyword.value.id)
+            name = keyword.value.id
+            fields |= _dict_keys_assigned(scope, name)
+            for node in ast.walk(scope):
+                if isinstance(node, ast.Assign) and any(
+                    isinstance(t, ast.Name) and t.id == name for t in node.targets
+                ):
+                    _fields_from_value(node.value, namespace, fields, scope)
             continue
         # ``**_helper(...)`` expansion: recurse into the dict the helper returns
         if not (

@@ -24,7 +24,11 @@ from mne_bids_pipeline._config_utils import (
     get_eeg_reference,
     get_runs_tasks,
 )
-from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
+from mne_bids_pipeline._import_data import (
+    _epochs_kwargs,
+    annotations_to_events,
+    make_epochs,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._reject import _get_reject
@@ -377,6 +381,7 @@ def get_config(
     # different lengths, let's use the average tmin/tmax across tasks
     epochs_tmin, epochs_tmax = _get_task_average_epochs_tlims(config=config)
     cfg = SimpleNamespace(
+        **_epochs_kwargs(config=config),
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
             config=config, subject=subject, session=session, which=("runs", "rest")
@@ -395,18 +400,9 @@ def get_config(
         ch_types=config.ch_types,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
-        event_repeated=config.event_repeated,
         epochs_tmin=epochs_tmin,
         epochs_tmax=epochs_tmax,
-        epochs_custom_metadata=config.epochs_custom_metadata,
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
-        rest_epochs_duration=config.rest_epochs_duration,
-        rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_bids_kwargs(config=config),

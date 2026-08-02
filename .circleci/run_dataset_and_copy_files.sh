@@ -47,6 +47,13 @@ else
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
+# Most of the pipeline runs in loky/dask worker processes, which write their own
+# coverage data files (see [tool.coverage.run] in pyproject.toml). Merge them into
+# the main one before the upload, or everything executed in a worker looks
+# uncovered. --append is required so the parent process's data is kept too.
+coverage combine --append || true
+coverage xml || true
+
 if [[ "$COPY_FILES" == "false" ]]; then
   echo -e "${EMPH}Not copying files${RESET}"
   exit 0

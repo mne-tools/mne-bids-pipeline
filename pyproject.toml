@@ -104,6 +104,29 @@ interactive = 3
 enable-colors = ""
 count = ""
 
+[tool.coverage.run]
+source = ["mne_bids_pipeline"]
+# Most of the pipeline runs inside joblib/loky or dask workers, which are
+# separate processes. Without these, everything executed in a worker is invisible
+# to coverage, which is why some steps used to look far less covered than they
+# are (and why a few test configs pinned n_jobs=1 just to be measurable).
+#
+# patch=subprocess makes coverage.py hand its config down to child processes,
+# which its .pth hook then picks up; parallel keeps each process writing its own
+# data file; sigterm saves data for workers that are terminated rather than
+# exiting cleanly (dask shuts its workers down that way).
+patch = ["subprocess", "_exit"]
+parallel = true
+concurrency = ["multiprocessing", "thread"]
+sigterm = true
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+]
+
 [tool.hatch.version]
 source = "vcs"
 raw-options = { version_scheme = "release-branch-semver" }
@@ -120,17 +143,21 @@ exclude = [
   "ignore_words.txt",
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = [
-  "--cov-report=",
   "--cov=mne_bids_pipeline",
+  "--cov-report=xml",
   "--durations=10",
   "--junit-xml=junit-results.xml",
+  "--strict-markers",
   "--tb=short",
   "-ra",
-  "-vv"
+  "-vv",
 ]
 junit_family = "xunit2"
+markers = [
+  "dataset_test: a test that downloads and processes a real BIDS dataset",
+]
 testpaths = ["mne_bids_pipeline"]
 
 [tool.ruff]

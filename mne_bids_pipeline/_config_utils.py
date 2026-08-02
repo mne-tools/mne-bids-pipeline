@@ -3,6 +3,7 @@
 import copy
 import functools
 import pathlib
+import re
 from collections.abc import Iterable, Sequence, Sized
 from inspect import signature
 from types import ModuleType, SimpleNamespace
@@ -711,6 +712,23 @@ def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float, ...] | Non
         conductivity = (0.3,)
         tag = "5120"
     return conductivity, tag
+
+
+def get_src_fname(
+    *, fs_subjects_dir: pathlib.Path, fs_subject: str, spacing: str | int
+) -> pathlib.Path:
+    """Get the path to src file for the given spacing, tolerant of an extra dash."""
+    bem_dir = fs_subjects_dir / fs_subject / "bem"
+    stem = str(spacing)
+    stems = [stem]
+    match = re.fullmatch(r"([a-zA-Z]+)(\d+)", stem)
+    if match:
+        stems.append(f"{match.group(1)}-{match.group(2)}")
+    for this_stem in stems:
+        fname = bem_dir / f"{fs_subject}-{this_stem}-src.fif"
+        if fname.exists():
+            return fname
+    return bem_dir / f"{fs_subject}-{stem}-src.fif"
 
 
 def _meg_in_ch_types(ch_types: str) -> bool:

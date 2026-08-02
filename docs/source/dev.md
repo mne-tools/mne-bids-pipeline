@@ -21,6 +21,7 @@
 - Fixed crash when concatenating epochs from runs with different bad channels. The pipeline now uses the union of bad channels across runs. (#1242 by @hoechenberger)
 - Fixed a small CSP labeling glitch in the report. (#1241 by @hoechenberger)
 - Fixed bug where [`on_error`][mne_bids_pipeline._config.on_error] `"continue"` and `"debug"` were not respected by the `init` and `freesurfer/recon_all` steps, which could abort the whole run instead of moving on to (or debugging) the next subject (#1022 by @larsoner)
+- The pipeline now recognizes source space files named with a dash between the spacing letters and number (e.g., `sample-oct-6-src.fif`), avoiding needless recomputation (#1047 by @larsoner)
 
 [//5]: # (### :books: Documentation)
 

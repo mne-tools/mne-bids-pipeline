@@ -358,7 +358,6 @@ def get_config(
     task: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        **_epochs_kwargs(config=config),
         use_maxwell_filter=config.use_maxwell_filter,
         task_is_rest=config.task_is_rest,
         conditions=config.conditions,
@@ -374,6 +373,7 @@ def get_config(
             config=config, subject=subject, session=session, task=task
         ),
         processing="filt" if config.regress_artifact is None else "regress",
+        **_epochs_kwargs(config=config),
         **_bids_kwargs(config=config),
     )
     return cfg

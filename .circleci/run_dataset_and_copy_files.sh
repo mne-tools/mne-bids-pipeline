@@ -47,10 +47,7 @@ else
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
-# Most of the pipeline runs in loky/dask worker processes, which write their own
-# coverage data files (see [tool.coverage.run] in pyproject.toml). Merge them into
-# the main one before the upload, or everything executed in a worker looks
-# uncovered. --append is required so the parent process's data is kept too.
+# Merge in coverage from loky/dask workers; --append keeps the parent's data.
 coverage combine --append || true
 coverage xml || true
 

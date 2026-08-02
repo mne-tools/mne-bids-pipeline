@@ -381,7 +381,6 @@ def get_config(
     # different lengths, let's use the average tmin/tmax across tasks
     epochs_tmin, epochs_tmax = _get_task_average_epochs_tlims(config=config)
     cfg = SimpleNamespace(
-        **_epochs_kwargs(config=config),
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
             config=config, subject=subject, session=session, which=("runs", "rest")
@@ -405,6 +404,7 @@ def get_config(
         eeg_reference=get_eeg_reference(config),
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
+        **_epochs_kwargs(config=config),
         **_bids_kwargs(config=config),
     )
     return cfg

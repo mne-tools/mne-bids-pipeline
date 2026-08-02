@@ -720,7 +720,6 @@ def get_config_maxwell_filter(
     session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        **_mf_cal_kwargs(config=config, subject=subject, session=session),
         mf_st_duration=config.mf_st_duration,
         mf_st_correlation=config.mf_st_correlation,
         mf_mc=config.mf_mc,
@@ -735,6 +734,7 @@ def get_config_maxwell_filter(
         mf_extra_kws=config.mf_extra_kws,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        **_mf_cal_kwargs(config=config, subject=subject, session=session),
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

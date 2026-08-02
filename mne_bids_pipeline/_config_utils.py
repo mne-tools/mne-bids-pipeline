@@ -281,10 +281,14 @@ def get_subjects_sessions(
 def get_subjects_given_session(
     config: SimpleNamespace, session: str | None
 ) -> tuple[str, ...]:
-    """Get the subjects who actually have data for a given session."""
-    sub_ses = get_subjects_sessions(config)
+    """Get the subjects who actually have data for a given session.
+
+    Steps call this at run time with their ``cfg``, so it reads the mapping that
+    ``get_config()`` already resolved instead of re-scanning the dataset (which
+    it used to do on every call, and then discard unless sessions were missing).
+    """
     subjects = (
-        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        tuple(sub for sub, ses in config.subjects_sessions.items() if session in ses)
         if config.allow_missing_sessions
         else config.subjects
     )

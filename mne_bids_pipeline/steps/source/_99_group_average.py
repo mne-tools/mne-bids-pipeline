@@ -17,6 +17,7 @@ from mne_bids_pipeline._config_utils import (
     get_sessions,
     get_subjects,
     get_subjects_given_session,
+    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -237,21 +238,12 @@ def get_config(
         conditions=config.conditions,
         inverse_method=config.inverse_method,
         fs_subjects_dir=get_fs_subjects_dir(config),
-        ch_types=config.ch_types,
         subjects=get_subjects(config=config),
-        exclude_subjects=config.exclude_subjects,
-        sessions=get_sessions(config),
+        subjects_sessions=get_subjects_sessions(config),
         allow_missing_sessions=config.allow_missing_sessions,
-        # main() re-resolves the FreeSurfer subject per session by handing cfg to
-        # get_fs_subject(), which reads these two raw options rather than the
-        # fs_subjects_dir we already resolved above
-        subjects_dir=get_fs_subjects_dir(config),
-        use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
         smoothing_steps=config.smoothing_steps,
-        # TODO: needed because get_datatype gets called again...
-        data_type=config.data_type,
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -285,7 +277,9 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=cfg,
                 exec_params=exec_params,
                 subject=subject,
-                fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
+                fs_subject=get_fs_subject(
+                    config=config, subject=subject, session=session
+                ),
                 session=session,
                 task=task,
             )

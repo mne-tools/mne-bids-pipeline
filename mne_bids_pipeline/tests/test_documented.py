@@ -24,6 +24,8 @@ from mne_bids_pipeline._config_utils import (
     get_fs_subject,
     get_mf_cal_fname,
     get_mf_ctc_fname,
+    get_mf_reference_run_task,
+    get_runs_tasks,
 )
 from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
 from mne_bids_pipeline._import_data import _import_data_kwargs
@@ -129,10 +131,7 @@ def test_config_options_used_in_steps() -> None:
     del pcs
 
     # Some explicit ignores
-    ignores = {
-        # Triaged in get_config itself
-        "source/_04_make_forward": ["mri_landmarks_kind", "mri_t1_path_generator"],
-    }
+    ignores: dict[str, list[str]] = {}
     # Parse some helper functions to find nested config uses
     helpers: dict[str, set[str]] = {}
     for func, count, nested in (
@@ -148,6 +147,8 @@ def test_config_options_used_in_steps() -> None:
         (_add_epochs_image_kwargs, 1, ()),
         (get_mf_cal_fname, 3, ()),
         (get_mf_ctc_fname, 3, ()),
+        (get_mf_reference_run_task, 2, ()),
+        (get_runs_tasks, 2, (get_mf_reference_run_task,)),
         (_get_rank, 1, ()),
     ):
         this_key = f"{func.__name__}("
@@ -183,6 +184,10 @@ def test_config_options_used_in_steps() -> None:
                 continue
             # cfg.<var> in step source?
             if re.search(rf"\bcfg\.{var}\b", step_src):
+                continue
+            # config.<var> used (not just passed through as a kwarg like
+            # <var>=config.<var>, which the lookbehind for "=" excludes)?
+            if re.search(rf"(?<!=)\bconfig\.{var}\b", step_src):
                 continue
             # config.<var> in main() source (need to avoid looking at get_config, etc.)?
             if re.search(rf"\bconfig\.{var}\b", step_main_src):
